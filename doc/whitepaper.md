@@ -10,9 +10,9 @@ The current state of counter-surveillance technologies has remained largely unch
 
 With the increasing amounts of value being transported in data packets on the Internet since the appearance of the Bitcoin network, the need for eliminating the risks of geographical correlation between payments and user locations continues to rise.
 
-However, without any way for users to pay routers without creating an audit trail, the networks have a severe scaling problem in that in anonymising data, there is an increase in privacy with the larger number of nodes and users, and thus attackers have largely been able to keep pace and pluck off high value targets with state-sized players, such as the Carnegie Mellon University [https://blog.torproject.org/did-fbi-pay-university-attack-tor-users/](https://blog.torproject.org/did-fbi-pay-university-attack-tor-users/). 
+However, without any way for users to pay routers without creating an audit trail, the networks have a severe scaling problem in that in anonymising data, there is an increase in privacy with the larger number of nodes and users, and thus attackers have largely been able to keep pace and pluck off high value targets with state-sized players, such as the Carnegie Mellon University: [https://blog.torproject.org/did-fbi-pay-university-attack-tor-users/](https://blog.torproject.org/did-fbi-pay-university-attack-tor-users/). 
 
-Thus, it is the central thesis of this paper to demonstrate how decorrelation between payments and session usage can be achieved and create a marketplace in routing services which can economically increase to a size that is beyond the capabilities of a state sized actor to fund.
+Thus, it is the central thesis of this paper to demonstrate how decorrelation between payments and session usage can be achieved and create a marketplace in routing services which can economically increase to a size that is beyond the capabilities of a state sized actor to fund an attack.
 
 ## 1. Chaumian Routing Vouchers
 
@@ -26,7 +26,7 @@ Thus, the purchases are made via payments, and each node passes on the decrypted
     Bob->>Carol: pay LN
     Carol->>Dave: pay LN
     loop issue voucher
-    	Dave->>Dave: aoeu
+    	Dave->>Dave: encrypt to key
     end
     Dave->>Eve: send voucher
     Eve->>Frank: send voucher
@@ -43,4 +43,4 @@ It is critical that no single entity in this chain knows any more than the origi
 
 The message segments are randomly positioned in the payload and obscure the sequence point of each participant's message in the process.
 
-In this way, a user pays for a voucher, and receives it without there being a direct trace either in the message forwarding or the ordering of lightning payments. The base of the fee size is a random amount excess and at the end part of Alice's original forward payment goes back.
+In this way, a user pays for a voucher, and receives it without there being a direct trace either in the message forwarding or the ordering of lightning payments. The base of the fee size is a random amount excess, between 2 and 3x and at the end part of Alice's original forward payment goes back.
