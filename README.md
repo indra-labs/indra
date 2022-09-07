@@ -5,6 +5,8 @@ integration.
 
 ## About
 
+[White Paper](doc/whitepaper.md)
+
 The ubiquitous use of encryption on the internet took some time to happen, 
 there was a time when the US government defined them as munitions and 
 claimed export restrictions, and famously the PGP project broke this via the 
