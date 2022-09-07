@@ -18,6 +18,8 @@ Thus, it is the central thesis of this paper to demonstrate how decorrelation be
 
 Through the use of blinded signatures, it becomes possible for a token to be created with some arbitrary data, usually a denomination of a currency, and the buy and sell cannot be correlated to each other, the signature is valid, but it cannot be directly linked with the minting.
 
+### Purchasing Protocol Flow
+
 Thus, the purchases are made via payments, and each node passes on the decrypted message, which then provides the payment destination for each subsequent hop, in a circle that goes through 5 nodes. This is the top level view of the process:
 
 ```mermaid
@@ -41,6 +43,14 @@ It is critical that no single entity in this chain knows any more than the origi
 4. Message to Carol, pay forward to Dave minus fee
 5. Message to Bob, pay forward to Carol minus fee
 
-The message segments are randomly positioned in the payload and obscure the sequence point of each participant's message in the process.
+The message segments are randomly positioned in the payload and obscure the sequence point of each participant's message in the process, coin flip between append or prepend for each layer, and the next message segment is padded with random values so each hop has an identical sized message with a section they decrypt and the remainder with the next hop message.
 
-In this way, a user pays for a voucher, and receives it without there being a direct trace either in the message forwarding or the ordering of lightning payments. The base of the fee size is a random amount excess, between 2 and 3x and at the end part of Alice's original forward payment goes back.
+In this way, a user pays for a voucher, and receives it without there being a direct trace either in the message forwarding or the ordering of lightning payments. The base of the fee size is a random amount excess, between 2 and 3x and at the end part of Alice's original forward payment goes back, eliminating any correlation between fee size and protocol sequence.
+
+### Spending Vouchers Flow
+
+Once a user has acquired these vouchers, they can then use them in their onion routing packets to initiate sessions and spend the tokens.
+
+The issuers receive special expiring payments that time out in case of the node going offline. When they receive the chaumian voucher, it contains the revocation key to stop the payment expiry and finalise it, which they can then apply at any point until the LN payment's expiry. Typical expiry would be something of the order of one day.
+
+They send back the session cookie, a 256 bit value, encrypted to a provided key, using a rendezvous routing packet, and after this, the user then attaches this to every packet in the relevant node's layer of the onion and the node will continue to forward them to the specified destinations until the session count of packets is used up.
