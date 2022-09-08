@@ -4,6 +4,16 @@
 
 [David Vennik](mailto:david@cybriq.systems) September 2022
 
+```mermaid
+graph TD;
+    Alice-->Bob;
+    Bob-->Carol;
+    Carol-->Dave;
+    Dave-->Eve;
+    Eve-->Frank;
+    Frank-->Alice;
+```
+
 ## Abstract
 
 The current state of counter-surveillance technologies has remained largely unchanged in the 20 years since the inception of the [Tor network](https://torproject.org). The primary use case has always been obscuring the location information of users from clearnet sites, and the more it has been used for this purpose, the more hostile clearnet sites have become towards this network, due to its frequent use to launch attacks on web services.
@@ -28,17 +38,15 @@ Thus, the purchase of these vouchers is protected by a 6 stage onion route that 
 
 Thus, the purchases are made via payments, and each node passes on the decrypted message, which then provides the payment destination for each subsequent hop, in a circle that goes through 5 nodes. This is the top level view of the process:
 
-```mermaid
-  sequenceDiagram
+```sequence
     Alice->>Bob: purchase + 5 fees + filler
     Bob-->>Alice: revocation
     Bob->>Carol: purchase + 4 fees + filler
     Carol-->>Bob: revocation
     Carol->>Dave: purchase + 3 fees + filler
     Dave-->>Carol: revocation
-    loop
-    	Dave->>Dave: Issue voucher encrypt to given key
-    end
+    note left of Dave: Issue voucher
+     note right of Dave: encrypt to given key
     Dave->>Eve: voucher + 2 fees + filler
     Eve-->>Dave: revocation
     Eve->>Frank: voucher + 2 fees + filler
@@ -130,17 +138,15 @@ In order to open a session with a router, a client node has performed a purchase
 
 Session initiation follows the same pattern as the purchase protocol, except instead of a forward payment for the voucher, the voucher is sent forward and there is only 5 hops:
 
-```mermaid
-  sequenceDiagram
+```sequence
     Alice->>Bob: voucher + 4 fees + filler
     Bob-->>Alice: revocation
     Bob->>Carol: voucher + 3 fees + filler
     Carol-->>Bob: revocation
     Carol->>Dave: session key + 2 fees + filler
     Dave-->>Carol: revocation
-    loop
-    	Dave->>Dave: Issue session key and encrypt to provided key
-    end
+    note left of Dave: Issue session key
+    note right of Dave: encrypt to provided key
     Dave->>Eve: session key + 1 fees + filler
     Eve-->>Dave: revocation
 	Eve->>Frank: session key + 1 fees + filler
@@ -182,19 +188,40 @@ On each side of the rendezvous, the client and the server create a 6 step circui
 
 The topology of the onion is the same as the Voucher Purchase and Session Initiation, except each layer only contains a session hash chain sequence, the next hop, and the payload.
 
-```mermaid
-sequenceDiagram
+```sequence
 	Alice->>Bob: 1
+	Bob-->>Alice: fail
 	Bob->>Carol: 2
-	Carol->>Dave: 3
-	loop
-		Dave->>Dave: Rendezvous relay point
-	end
+	Carol-->>Bob: fail
+    Carol->>Dave: 3
+	note left of Dave: listener
+	Dave-->>Carol: fail	
+    note right of Dave: sender
 	Dave->>Eve: 4
-	Eve->>Frank: 5
+	Eve-->>Dave: fail
+    Eve->>Frank: 5
+    Frank-->>Eve: fail
 	Frank->>Alice: 6
 ```
 
 The last 3 layers of the onion only provide the directions, but are encrypted to the sender's key, with the pre-negotiated hash chain sequence header and symmetric key for the next hop, concealing whether the packet is outbound or inbound, as their format is the same.
 
 On the other side for the hidden service, the same pattern is provided, and circuits complete when one side sends and then the other side completes its half way journey, and vice versa.
+
+#### Failure modes
+
+Note the "fail" segments are there for nodes to return a lack of acknowledgement from the forward send. This is a timeout, which will be about 1 second, as in general a congestion condition exists in the circuit if the acknowledgement is not sooner.
+
+Unlike the design of Tor, the idea with having pre-arranged sessions sitting open in reserve, the client can request a new circuit immediately and resume communication to the rendezvous point. This is therefore a special, extra error condition that would not exist on a point to point TCP connection, and is necessary to attempt to maintain contact.
+
+Thus also there should be a parameter in the connection for the timeout tolerance. One second is probably fine for most purposes but realtime interactive services it may be desirable to have it as low as 100ms, and for non time sensitive systems like downloads, several seconds may be acceptable dead time.
+
+This also brings up the subject of the eternal conflict between bulk and interactive transmissions. It should be a factor that can be determined by the latency of node hops, and there can therefore be probing circuits that merely test the latency landscape of the router network.
+
+Nodes that are seeing higher latency would be preferred for bulk type traffic, and lower latency would be preferred in selection for interactive circuits.
+
+Being able to adjust this on the fly will mean that a lowest common denominator will be reached, an average latency across the network.
+
+For this reason, it logically follows that nodes could offer low latency guarantees, and by this maintain a wider margin of circuits in operation versus bandwidth such that they achieve a low latency granularity.
+
+In general, this probably will not be a concern because the network runs on UDP rather than TCP, and does not have a session initiation cost. Nodes could therefore collect a higher fee for lower latency service and fulfil this by failing connections that exceed their limitations.
