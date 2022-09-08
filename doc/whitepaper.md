@@ -120,9 +120,9 @@ Peer to Peer network systems all have this difficulty of negotiating inbound rou
 
 Normally this is done simply through Rendezvous routing, for hidden services, but because this inbound routing issue can be a problem, the programmability of the routing paths in the previous section also means it can be simple for nodes to create "open" rendezvous points that do not attempt to hide the location of the server. This still results in traffic on the network that adds the anonymity set for the anonymising services, and can be charged for the same way.
 
-## Sessions
+## 4. Sessions
 
-In order to open a session with a router, a client node has performed a purchase operation where the desired router is the seller, and have a blinded signature on a packet that encodes the claim to settle the open payment transaction that the purchase creates.
+In order to open a session with a router, a client node has performed a purchase operation where the desired router is the seller, and have a blinded signature on a packet that encodes the claim while not identifying when or who made the purchase by paying for it using the purchase protocol.
 
 Session initiation follows the same pattern as the purchase protocol, except instead of a forward payment for the voucher, the voucher is sent forward and there is only 5 hops:
 
@@ -152,3 +152,23 @@ It is not practical to account for this situation, as the payment was made anony
 The worst case scenario here is a user may have to wait a few seconds to purchase a few sessions if they have run short, and lose a few parts of sessions or vouchers if the node goes offline.
 
 There is an attack potential in the creation of nodes that attract purchases and then go offline before their services are delivered. For this reason, nodes will prefer to buy vouchers from the longest lived routers and new routers will have a longer lead time in acquiring regular work.
+
+## 5. Creating Circuits
+
+This has been omitted in the foregoing descriptions because in part it is somewhat elementary and largely documented, but it needs some coverage because it's important to understand.
+
+Peer to peer network systems always have the need for a directory service. The Bitcoin network, and most "crypto" networks use very simple systems and have usually got a set of reliable "seed" nodes that can be relied upon to provide addresses of peers in the network. 
+
+One of the things that is interesting about Bitcoin is that despite the amount of value on the network, complex peer sharing protocols are not required. In contrast, the Tor network has more complicated consensus that stems in part from the fact that its first purpose is to enable tunneling. That is, Tor's need for a consensus stems from the fact it provides services outside of the peer to peer network.
+
+This is something that will not be a central concern for Indranet. Potentially such services could be developed, but these kinds of services will require a consensus and have inherent vulnerabilities, and this can be the concern of a separate project to run this.
+
+It's important to reiterate, that Indranet is aiming to be a minimalistic system for Bitcoin, Lightning and simple peer to peer client/server routing are all we are aiming to provide with Indranet.
+
+### Circuit Creation Protocol
+
+The unique feature of Indranet compared to other Onion Routing protocols is that before establishing a channel, a relationship is established between clients and routers. As such, this enables a more concise session establishment protocol than is conventional for onion routing. 
+
+Thus, the blinded signature token can then be used as seed points that are secret between the client and router that are not available to the clearnet.
+
+As such, this shortcuts some parts of the Double Ratchet protocol used to roll ciphers between messages on the network for establishment of the encryption. <note, here we have to actually add the refinement, because the token is a potential cipher seed that can cut out several message stages in the establishment>.
