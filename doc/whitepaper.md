@@ -155,20 +155,10 @@ There is an attack potential in the creation of nodes that attract purchases and
 
 ## 5. Creating Circuits
 
-This has been omitted in the foregoing descriptions because in part it is somewhat elementary and largely documented, but it needs some coverage because it's important to understand.
+In most descriptions of Onion Routing protocols, it is usual to discuss the circuit creation protocol. The foregoing sections describe the Purchase and Session Initiation protocols which form a shared secret which allows the fast establishment of circuits.
 
-Peer to peer network systems always have the need for a directory service. The Bitcoin network, and most "crypto" networks use very simple systems and have usually got a set of reliable "seed" nodes that can be relied upon to provide addresses of peers in the network. 
+The process of establishment of an onion routed path usually requires the creation of an secret key value that can be used to establish an initial cipher set for the onion path. Because these blinded signature Chaumian Vouchers are private between the client and router, these form a base to establish the send and receive keys used as well as establishing a bandwidth tracking protocol to enforce a session protocol.
 
-One of the things that is interesting about Bitcoin is that despite the amount of value on the network, complex peer sharing protocols are not required. In contrast, the Tor network has more complicated consensus that stems in part from the fact that its first purpose is to enable tunneling. That is, Tor's need for a consensus stems from the fact it provides services outside of the peer to peer network.
+Sessions then can be tracked by the use of a hash chain on each side of the routing protocol, so each subsequent packet must be the hash of the previous hash rooted in the original session key based on the blinded signature based voucher.
 
-This is something that will not be a central concern for Indranet. Potentially such services could be developed, but these kinds of services will require a consensus and have inherent vulnerabilities, and this can be the concern of a separate project to run this.
-
-It's important to reiterate, that Indranet is aiming to be a minimalistic system for Bitcoin, Lightning and simple peer to peer client/server routing are all we are aiming to provide with Indranet.
-
-### Circuit Creation Protocol
-
-The unique feature of Indranet compared to other Onion Routing protocols is that before establishing a channel, a relationship is established between clients and routers. As such, this enables a more concise session establishment protocol than is conventional for onion routing. 
-
-Thus, the blinded signature token can then be used as seed points that are secret between the client and router that are not available to the clearnet.
-
-As such, this shortcuts some parts of the Double Ratchet protocol used to roll ciphers between messages on the network for establishment of the encryption. <note, here we have to actually add the refinement, because the token is a potential cipher seed that can cut out several message stages in the establishment>.
+The router has a value stored in their paid routing service tokens, and the user has the blind signature token inside the blinding, enables both sides to have a private value that enables a faster session initiation than standard onion circuit establishment.
