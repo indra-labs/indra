@@ -30,25 +30,23 @@ Thus, the purchases are made via payments, and each node passes on the decrypted
 
 ```mermaid
   sequenceDiagram
-    Alice->>Bob: pay voucher + 5 fees + filler
+    Alice->>Bob: purchase + 5 fees + filler
     Bob-->>Alice: revocation
-    Bob->>Carol: pay voucher + 4 fees + filler
+    Bob->>Carol: purchase + 4 fees + filler
     Carol-->>Bob: revocation
-    Carol->>Dave: pay voucher + 3 fees + filler
+    Carol->>Dave: purchase + 3 fees + filler
     Dave-->>Carol: revocation
     loop
     	Dave->>Dave: Issue voucher encrypt to given key
     end
-    Dave->>Eve: send voucher + 2 fees + filler
+    Dave->>Eve: voucher + 2 fees + filler
     Eve-->>Dave: revocation
-    Eve->>Frank: send voucher + 2 fees + filler
+    Eve->>Frank: voucher + 2 fees + filler
     Frank-->>Eve: revocation
     Alice-->>Bob: trigger revocation if not delivered
     Frank->>Alice: send voucher + filler
 ```
-Each fee is different by 1, for example: 5, 6, 7, 8, 9, 10, enabling a check by the remainder at the last step of the route
-
-Filler is required to eliminate any leak of information about a node's stage in the process. Seller obviously will know they are 4th but they only know their previous and next.
+Each fee is different by 1, for example: 5, 6, 7, 8, 9, 10, enabling a check by the remainder at the last step of the route. This gives one source of information about the success of the circuit as well as whether any node has taken a greater fee than was specified in the onion. Filler is required to eliminate any leak of information about a node's stage in the process. Seller obviously will know they are 4th but they only know their previous and next. Thus, in a given circuit, if the remaining buffer does not match expectation, and nodes have overcharged, all nodes in the circuit will gain a ban score, and over time as the nodes are reused ban scores will rise on the ones that are common to circuits that are the cheaters. There is inherently a low cost in small gouges of fees in this process, sometimes. This can be considered to be a risk in exchange for the security, bounded by the filler.
 
 Revocation for each hop in the loop is an onion message that is encrypted to the previous sender, which unlocks the reversion transaction. If Alice doesn't get her voucher from Frank, before the period of the timeout, she can send the revocation key to Bob and Bob sends on through the other 5 and the channel state is reverted.
 
@@ -112,7 +110,11 @@ Latency can be improved by using parallel paths with two instead of three hops. 
 
 In addition to these simple parallel path patterns, it is also possible to open multiple sessions with a larger number of routers and vary the onion path in each packet, in addition to also potentially using short path for latency, in a way that further obscures the traffic's pathways.
 
+#### Notes
+
 These features may not be as useful as they sound in practice, but the means to implement them should be available.
+
+Note that parallel paths incur a proportional bandwidth cost, which should reasonably match up with the benefit of lower latency, increased reliability or higher security.
 
 ## 3. Rendezvous, Forwarding and Inbound Routing
 
@@ -122,7 +124,7 @@ Peer to Peer network systems all have this difficulty of negotiating inbound rou
 
 Normally this is done simply through Rendezvous routing, for hidden services, but because this inbound routing issue can be a problem, the programmability of the routing paths in the previous section also means it can be simple for nodes to create "open" rendezvous points that do not attempt to hide the location of the server. This still results in traffic on the network that adds the anonymity set for the anonymising services, and can be charged for the same way.
 
-## 4. Sessions
+## 4. Session Initiation
 
 In order to open a session with a router, a client node has performed a purchase operation where the desired router is the seller, and have a blinded signature on a packet that encodes the claim while not identifying when or who made the purchase by paying for it using the purchase protocol.
 
@@ -130,21 +132,21 @@ Session initiation follows the same pattern as the purchase protocol, except ins
 
 ```mermaid
   sequenceDiagram
-    Alice->>Bob: send voucher + 4 fees + filler
+    Alice->>Bob: voucher + 4 fees + filler
     Bob-->>Alice: revocation
-    Bob->>Carol: send voucher + 3 fees + filler
+    Bob->>Carol: voucher + 3 fees + filler
     Carol-->>Bob: revocation
-    Carol->>Dave: send session key + 2 fees + filler
+    Carol->>Dave: session key + 2 fees + filler
     Dave-->>Carol: revocation
     loop
     	Dave->>Dave: Issue session key and encrypt to provided key
     end
-    Dave->>Eve: send session key + 1 fees + filler
+    Dave->>Eve: session key + 1 fees + filler
     Eve-->>Dave: revocation
-	Eve->>Frank: send session key + 1 fees + filler
+	Eve->>Frank: session key + 1 fees + filler
 	Frank-->>Eve: revocation
     Alice-->>Bob: trigger revocation if not delivered
-    Frank->>Alice: send session key + filler
+    Frank->>Alice: session key + filler
 	
 ```
 
@@ -179,3 +181,20 @@ Since other than Bitcoin and Lightning networks, Indra does not provide, by prot
 On each side of the rendezvous, the client and the server create a 6 step circuit, not reusing the intermediary, so involving 5 other nodes, the middle point being the rendezvous, equivalent to the voucher purchase and session initiation.
 
 The topology of the onion is the same as the Voucher Purchase and Session Initiation, except each layer only contains a session hash chain sequence, the next hop, and the payload.
+
+```mermaid
+sequenceDiagram
+	Alice->>Bob: 1
+	Bob->>Carol: 2
+	Carol->>Dave: 3
+	loop
+		Dave->>Dave: Rendezvous relay point
+	end
+	Dave->>Eve: 4
+	Eve->>Frank: 5
+	Frank->>Alice: 6
+```
+
+The last 3 layers of the onion only provide the directions, but are encrypted to the sender's key, with the pre-negotiated hash chain sequence header and symmetric key for the next hop, concealing whether the packet is outbound or inbound, as their format is the same.
+
+On the other side for the hidden service, the same pattern is provided, and circuits complete when one side sends and then the other side completes its half way journey, and vice versa.
