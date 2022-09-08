@@ -30,21 +30,23 @@ Thus, the purchases are made via payments, and each node passes on the decrypted
 
 ```mermaid
   sequenceDiagram
-    Alice->>Bob: pay voucher + 4 fees + filler
+    Alice->>Bob: pay voucher + 5 fees + filler
     Bob-->>Alice: revocation
-    Bob->>Carol: pay voucher + 3 fees + filler
+    Bob->>Carol: pay voucher + 4 fees + filler
     Carol-->>Bob: revocation
-    loop
-    	Carol->>Carol: Issue voucher encrypt to given key
-    end
-    Carol->>Dave: pay voucher + 2 fees + filler
+    Carol->>Dave: pay voucher + 3 fees + filler
     Dave-->>Carol: revocation
-    Dave->>Eve: send voucher + 1 fees + filler
+    loop
+    	Dave->>Dave: Issue voucher encrypt to given key
+    end
+    Dave->>Eve: send voucher + 2 fees + filler
     Eve-->>Dave: revocation
+    Eve->>Frank: send voucher + 2 fees + filler
+    Frank-->>Eve: revocation
     Alice-->>Bob: trigger revocation if not delivered
-    Eve->>Alice: send voucher + filler
+    Frank->>Alice: send voucher + filler
 ```
-Each fee is different by 1, for example: 5, 6, 7, 8, 9, enabling a check by the remainder at the last step of the route
+Each fee is different by 1, for example: 5, 6, 7, 8, 9, 10, enabling a check by the remainder at the last step of the route
 
 Filler is required to eliminate any leak of information about a node's stage in the process. Seller obviously will know they are 4th but they only know their previous and next.
 
@@ -132,16 +134,17 @@ Session initiation follows the same pattern as the purchase protocol, except ins
     Bob-->>Alice: revocation
     Bob->>Carol: send voucher + 3 fees + filler
     Carol-->>Bob: revocation
-    loop
-    	Carol->>Carol: Issue session key and encrypt to provided key
-    end
-    Carol->>Dave: send voucher + 2 fees + filler
+    Carol->>Dave: send session key + 2 fees + filler
     Dave-->>Carol: revocation
-    Dave->>Eve: send voucher + 1 fees + filler
-    Eve-->>Dave: revocatio
-
+    loop
+    	Dave->>Dave: Issue session key and encrypt to provided key
+    end
+    Dave->>Eve: send session key + 1 fees + filler
+    Eve-->>Dave: revocation
+	Eve->>Frank: send session key + 1 fees + filler
+	Frank-->>Eve: revocation
     Alice-->>Bob: trigger revocation if not delivered
-    Eve->>Alice: send session key + filler
+    Frank->>Alice: send session key + filler
 	
 ```
 
@@ -162,3 +165,17 @@ The process of establishment of an onion routed path usually requires the creati
 Sessions then can be tracked by the use of a hash chain on each side of the routing protocol, so each subsequent packet must be the hash of the previous hash rooted in the original session key based on the blinded signature based voucher.
 
 The router has a value stored in their paid routing service tokens, and the user has the blind signature token inside the blinding, enables both sides to have a private value that enables a faster session initiation than standard onion circuit establishment.
+
+## 6. Session Encryption
+
+In order to reduce the potential for capturing encryption keys, all sessions, on each onion layer, use the [Double Ratchet](https://signal.org/docs/specifications/doubleratchet/) key negotiation algorithm. This key change will be triggered by the sender at a rate of around once per 4 seconds, to reasonably bound re-keying overhead. This will mean on average 1 key change per second per onion layer for exit paths and a little more for circular paths.
+
+The individual message segments, composed of one or several sequential UDP packets, will be identifiable by a hash chain sequence which is used by the nodes and clients to keep an account of the bandwidth remaining in a session. Since this is not cryptographically feasible attack target it will use HighwayHash 64 bit hash chains, which will restart every 4 seconds with the key change of the session re-key.
+
+## 7. Rendezvous  and Hidden Services
+
+Since other than Bitcoin and Lightning networks, Indra does not provide, by protocol, exit nodes to tunnel out of the network, the third and equally important endpoint for a 3 hop circuit is a rendezvous. 
+
+On each side of the rendezvous, the client and the server create a 6 step circuit, not reusing the intermediary, so involving 5 other nodes, the middle point being the rendezvous, equivalent to the voucher purchase and session initiation.
+
+The topology of the onion is the same as the Voucher Purchase and Session Initiation, except each layer only contains a session hash chain sequence, the next hop, and the payload.
