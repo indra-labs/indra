@@ -274,3 +274,24 @@ Owners of such networks will then have special owner keys which let them send tr
 This also can ultimately facilitate more security for IPFS and Bittorrent networks as well, because everything adds to the anonymity set, if it is tuned to work with it well. One of the big problems with Tor is it is tuned to the TCP/HTTP use case and this is only part of network traffic usages. So additionally to LN/Bitcoin there can be specific "exits" for IPFS and Bittorrent ports.
 
 Thus, as a later stage of implementation, these features should be included, and to enable it, an extensible proxy/socket protocol needs to be devised, built for the smallest use case set, and designed to be extensible for these several cases.
+
+It is however of importance because when appliances are built to provide this routing service, they can have optional wireless interfaces that can run open hotspots that provide free seeding (with bandwidth limits) of locally available Bitcoin block data and mempool, and facilitate opening Lightning channels to enable payments. This would mean devices with installed mobile clients, running Neutrino SPV nodes and on-net and Lightning wallet functions will always be able to connect and make payments anywhere a router is installed. This takes the burden of having internet connectivity away from the users, which can be very helpful for payment use case in that access to the payment network is free - and it is essentially quite a low cost additional to running the node, and the protocol compensates the users in accordance with their prescribed fee rates.
+
+## 9. Circuit Parameters
+
+When creating connections, different types of traffic have different requirements for reliability and latency. As such, based on standard TCP Type of Service flags, circuits can be set to have constant acknowledgement cycling or only turn on acknowledgement seeking after a given timeout.
+
+Conventional TCP services have a set of assumptions that don't hold well in the face of forward privacy onion circuit design. Thus, there are parameters that are used for Indra circuits:
+
+- timeout - how long to wait for message return before retry.
+- dead circuit retries - how many failed returns to count as triggering defining a circuit as dead, and start probing with acknowledgement back propagation onions to determine the router that is unresponsive, essentially a trigger that limits how long the connection stalls before probing the path. This then allows replacing the dead router with a working one in the circuit for a connection.
+- latency guarantee - to do this, each hop will back propagate an onion that carries a packet acknowledgement. These decrease circuit bandwidth by consuming more of the fixed size packet, but prevent long delays from routers in the path failing, thus raising the effective cost of bandwidth.
+
+## 10. Pricing of Bandwidth and Payment Channels
+
+When setting up a router, in the configuration a user can set the cost of bandwidth based on the parameters of their internet service costs, and define a margin. It can be the case that there is also bandwidth limitations, so this can also be part of this setting. If a node is running low on its time limited allocation (daily, monthly), it can raise the price of routing or simply cease to sell vouchers until the period elapses.
+
+It should also be pointed out that implicitly, Indra routers are providing some amount of Lightning Network channel capacity via their payment systems, and have a somewhat automatic mechanism that can augment the Autopilot channel balancing heuristics through bandwidth accounting. Nodes can set up broader channels than strictly necessary for the routing purpose, and in doing so, create an extensive increase in capacity and point to point connections. 
+
+Because the network naturally is highly liquid, in addition to providing connectivity and capacity, the large number of transactions that run over the channels in Indra network are thus also providing a greater resilience and more paths, because the type of payment traffic they engage in is small and frequent, this information can be used to help routers determine how to optimize payment throughput of the network towards nodes with greater bandwidth.
+
