@@ -5,13 +5,7 @@
 [David Vennik](mailto:david@cybriq.systems) September 2022
 
 ```mermaid
-graph TD;
-    Alice-->Bob;
-    Bob-->Carol;
-    Carol-->Dave;
-    Dave-->Eve;
-    Eve-->Frank;
-    Frank-->Alice;
+
 ```
 
 ## Abstract
@@ -40,18 +34,27 @@ Thus, the purchases are made via payments, and each node passes on the decrypted
 
 ```sequence
     Alice->>Bob: purchase + 5 fees + filler
+    Alice->>Bob: 5 onions
     Bob-->>Alice: revocation
     Bob->>Carol: purchase + 4 fees + filler
+    Bob->>Carol: 4 onions
     Carol-->>Bob: revocation
     Carol->>Dave: purchase + 3 fees + filler
+    Carol->>Dave: 3 onions
     Dave-->>Carol: revocation
     note left of Dave: Issue voucher
      note right of Dave: encrypt to given key
     Dave->>Eve: voucher + 2 fees + filler
+    Dave->>Eve: 2 onions
     Eve-->>Dave: revocation
     Eve->>Frank: voucher + 2 fees + filler
+    Eve->>Frank: 1 onion
     Frank-->>Eve: revocation
     Alice-->>Bob: trigger revocation if not delivered
+    Bob-->>Carol: trigger revocation if not delivered
+    Carol-->>Dave: trigger revocation if not delivered
+    Dave-->>Eve: trigger revocation if not delivered
+    Eve-->>Frank: trigger revocation if not delivered
     Frank->>Alice: send voucher + filler
 ```
 Each fee is different by 1, for example: 5, 6, 7, 8, 9, 10, enabling a check by the remainder at the last step of the route. This gives one source of information about the success of the circuit as well as whether any node has taken a greater fee than was specified in the onion. Filler is required to eliminate any leak of information about a node's stage in the process. Seller obviously will know they are 4th but they only know their previous and next. Thus, in a given circuit, if the remaining buffer does not match expectation, and nodes have overcharged, all nodes in the circuit will gain a ban score, and over time as the nodes are reused ban scores will rise on the ones that are common to circuits that are the cheaters. There is inherently a low cost in small gouges of fees in this process, sometimes. This can be considered to be a risk in exchange for the security, bounded by the filler.
@@ -139,21 +142,29 @@ In order to open a session with a router, a client node has performed a purchase
 Session initiation follows the same pattern as the purchase protocol, except instead of a forward payment for the voucher, the voucher is sent forward and there is only 5 hops:
 
 ```sequence
-    Alice->>Bob: voucher + 4 fees + filler
-    Bob-->>Alice: revocation
-    Bob->>Carol: voucher + 3 fees + filler
-    Carol-->>Bob: revocation
-    Carol->>Dave: session key + 2 fees + filler
-    Dave-->>Carol: revocation
-    note left of Dave: Issue session key
-    note right of Dave: encrypt to provided key
-    Dave->>Eve: session key + 1 fees + filler
-    Eve-->>Dave: revocation
-	Eve->>Frank: session key + 1 fees + filler
-	Frank-->>Eve: revocation
-    Alice-->>Bob: trigger revocation if not delivered
-    Frank->>Alice: session key + filler
-	
+Alice->>Bob: voucher + 4 fees + filler
+Alice->>Bob: 5 onions
+Bob-->>Alice: revocation
+Bob->>Carol: voucher + 3 fees + filler
+Bob->>Carol: 4 onions
+Carol-->>Bob: revocation
+Carol->>Dave: session key + 2 fees + filler
+Carol->>Dave: 3 onions
+Dave-->>Carol: revocation
+note left of Dave: Issue session key
+note right of Dave: encrypt to provided key
+Dave->>Eve: session key + 1 fees + filler
+Dave->>Eve: 2 onions
+Eve-->>Dave: revocation
+Eve->>Frank: session key + 1 fees + filler
+Eve->>Frank: 1 onion
+Frank-->>Eve: revocation
+Alice-->>Bob: trigger revocation if not delivered
+Bob-->>Carol: trigger revocation if not delivered
+Carol-->>Dave: trigger revocation if not delivered
+Dave-->>Eve: trigger revocation if not delivered
+Eve-->>Frank: trigger revocation if not delivered
+Frank->>Alice: session key + filler
 ```
 
 The failure mode here would require accounting the failure against the node and their voucher. A node would have to put the entry to the bottom of the list, as there can be a simple offline failure here, which may resolve in a period of time.
@@ -186,7 +197,7 @@ Since other than Bitcoin and Lightning networks, Indra does not provide, by prot
 
 On each side of the rendezvous, the client and the server create a 6 step circuit, not reusing the intermediary, so involving 5 other nodes, the middle point being the rendezvous, equivalent to the voucher purchase and session initiation.
 
-The topology of the onion is the same as the Voucher Purchase and Session Initiation, except each layer only contains a session hash chain sequence, the next hop, and the payload.
+The topology of the onion is the same as the Voucher Purchase and Session Initiation, except each layer only contains a session hash chain sequence, the onion route, a time to live, and the payload.
 
 ```sequence
 	Alice->>Bob: 1
@@ -210,18 +221,28 @@ On the other side for the hidden service, the same pattern is provided, and circ
 
 #### Failure modes
 
-Note the "fail" segments are there for nodes to return a lack of acknowledgement from the forward send. This is a timeout, which will be about 1 second, as in general a congestion condition exists in the circuit if the acknowledgement is not sooner.
+Note the "fail" paths - these are messages that propagate backwards if the TTL does not get an acknowledgement from the next step in the path. These allow the customisation for the type of traffic, for interactive versus bulk transfer. 
 
-Unlike the design of Tor, the idea with having pre-arranged sessions sitting open in reserve, the client can request a new circuit immediately and resume communication to the rendezvous point. This is therefore a special, extra error condition that would not exist on a point to point TCP connection, and is necessary to attempt to maintain contact.
+If the failure return cascades are triggered, it means a node in the circuit is either offline or congested, and the onion routing will be reconfigured with a different node in the failure point, which returns as the hash chain counter value, which identifies the node that failed to relay within the time limit.
 
-Thus also there should be a parameter in the connection for the timeout tolerance. One second is probably fine for most purposes but realtime interactive services it may be desirable to have it as low as 100ms, and for non time sensitive systems like downloads, several seconds may be acceptable dead time.
+### All traffic must be prompted by the client
 
-This also brings up the subject of the eternal conflict between bulk and interactive transmissions. It should be a factor that can be determined by the latency of node hops, and there can therefore be probing circuits that merely test the latency landscape of the router network.
+In order to enable this dynamic path changing, this network has a constant chatter. For every message that is desired to return to the client, there must be an onion constructed to shepherd the payload back from the rendezvous point or exit. Thus a ping will come with an onion that routes the pong back to the client, for example.
 
-Nodes that are seeing higher latency would be preferred for bulk type traffic, and lower latency would be preferred in selection for interactive circuits.
+Obviously this incurs a substantial cost in AES encryption for the onion layers, and forces a constant signaling pattern, but this improves the anonymity set anyway. The volume/structure of onion circuit construction has a signature in the traffic, which Indra works around by separating the voucher purchase and session initiation, which means that large scale surveillance operators do not have very much useful timing data as packets are largely uniform in size and constant frequency. This also dictates that the maximum payload size an onion can carry is limited, in order to ensure there is a uniform packet size and frequency, removing timing data of what is carried by the onions.
 
-Being able to adjust this on the fly will mean that a lowest common denominator will be reached, an average latency across the network.
+Note that return circuits the endpoint is provided the encryption keys for the three hops back, but these keys are built from the secret knowledge of the client from the session double ratchet, and change with every new message. Thus they give no information to the endpoint about the path back to the client.
 
-For this reason, it logically follows that nodes could offer low latency guarantees, and by this maintain a wider margin of circuits in operation versus bandwidth such that they achieve a low latency granularity.
+## 8. Anonymity is not everything
 
-In general, this probably will not be a concern because the network runs on UDP rather than TCP, and does not have a session initiation cost. Nodes could therefore collect a higher fee for lower latency service and fulfil this by failing connections that exceed their limitations.
+In addition to creating rendezvous paths of arbitrary structure to rendezvous points, there can be "clear" exit points, which essentially amount to connecting to servers running on the same node as the router. This is by default lightning and bitcoind, but could feasibly be anything, the security isolation would be a factor of the protocol's structure and sensitivity and value of the data it handles. In simple terms, it is like port forwarding on NAT.
+
+A second use case that is not related is providing internet service through an "open" hotspot. The hotspot would refuse to relay normally, but has an Indra listener which can be negotiated with to send vouchers or LN payments and then becomes a usable access point. This ends the conflict between open hotspots and abusive users, as all users have to then pay for bandwidth, at minimum, as for one hop in a chain of the Indra network. 
+
+Where you can go from there, depends on the policy of the router, which will generally mean you are inside Indra using LN, Bitcoin or Indra messaging. Because the router is running LN and Bitcoin, it can freely provide sync data for the chain and for the user's channels, and thus combined with Neutrino, enables ubiquitous full SPV nodes on mobile devices. Users running these hotspots can also alternatively levy a higher charge for clearnet exiting, but as a general default, the purpose of this network is to enable access to hidden services, not tunneling. Hidden service access costs are lower because the endpoint cannot correlate to the entry point, and thus do not potentially present a security liability for the node operators.
+
+Owners of such networks will then have special owner keys which let them send traffic on their own nodes without paying, and this service can then be exposed on unsecured wireless access points and become a direct source of income for the owner when others use it, while remaining secure by only carrying in-band traffic destined for other onion routers lightning/bitcoin and hidden services.
+
+This also can ultimately facilitate more security for IPFS and Bittorrent networks as well, because everything adds to the anonymity set, if it is tuned to work with it well. One of the big problems with Tor is it is tuned to the TCP/HTTP use case and this is only part of network traffic usages. So additionally to LN/BTC there can be specific "exits" for IPFS and Bittorrent ports.
+
+Thus, as a later stage of implementation, these features should be included, and to enable it, an extensible proxy/socket protocol needs to be devised, built for the smallest use case set, and designed to be extensible for these several cases.
