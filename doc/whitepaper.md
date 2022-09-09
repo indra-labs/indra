@@ -4,6 +4,8 @@
 
 [David Vennik](mailto:david@cybriq.systems) September 2022
 
+> Markdown format of this document is created with [Typora](https://typora.io) which renders the sequence and other graphs found in this document correctly. The PDF format may lag from the current state of the markdown document.
+
 ## Abstract
 
 The current state of counter-surveillance technologies has remained largely unchanged in the 20 years since the inception of the [Tor network](https://torproject.org). The primary use case has always been obscuring the location information of users from clearnet sites, and the more it has been used for this purpose, the more hostile clearnet sites have become towards this network, due to its frequent use to launch attacks on web services.
