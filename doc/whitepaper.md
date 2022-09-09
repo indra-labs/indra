@@ -4,10 +4,6 @@
 
 [David Vennik](mailto:david@cybriq.systems) September 2022
 
-```mermaid
-
-```
-
 ## Abstract
 
 The current state of counter-surveillance technologies has remained largely unchanged in the 20 years since the inception of the [Tor network](https://torproject.org). The primary use case has always been obscuring the location information of users from clearnet sites, and the more it has been used for this purpose, the more hostile clearnet sites have become towards this network, due to its frequent use to launch attacks on web services.
