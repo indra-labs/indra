@@ -46,11 +46,11 @@ for censoring the network.
 
 For comparison, this is Bitcoin's node count:
 
-![image-20220912120917831](/home/loki/.config/Typora/typora-user-images/image-20220912120917831.png)
+![image-20220912120917831](image-20220912120917831.png)
 
 Versus Tor in a comparable period:
 
-![img](https://metrics.torproject.org/networksize.png?start=2015-01-14&end=2022-09-12)
+![tor relay count](torrelaycount.png)
 
 It is not hard to see: Tor is not growing, it's flatlined. Bitcoin is growing. Not only that, you can also see that onion routing is forming an increasingly large component of Bitcoin connectivity.
 
