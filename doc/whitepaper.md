@@ -1,6 +1,6 @@
 # Indranet White Paper
 
-Programmable onion routing distributed virtual private network protocol with anonymised payments to create scaling incentives
+Programmable onion routing distributed virtual private network protocol with anonymised payments to create scaling incentives.
 
 [David Vennik](mailto:david@cybriq.systems) September 2022
 
@@ -42,6 +42,18 @@ Bitcoin/Lightning (and potentially other Bitcoin related systems) in order to
 reduce the attack surface from large actors who have thus no open justification
 for censoring the network.
 
+## Tor isn't Scaling, but Bitcoin Needs Onion Routing
+
+For comparison, this is Bitcoin's node count:
+
+![image-20220912120917831](/home/loki/.config/Typora/typora-user-images/image-20220912120917831.png)
+
+Versus Tor in a comparable period:
+
+![img](https://metrics.torproject.org/networksize.png?start=2015-01-14&end=2022-09-12)
+
+It is not hard to see: Tor is not growing, it's flatlined. Bitcoin is growing. Not only that, you can also see that onion routing is forming an increasingly large component of Bitcoin connectivity.
+
 ## Chaumian Routing Vouchers
 
 Through the use of blinded signatures, it becomes possible for a token to be
@@ -60,12 +72,18 @@ single participant in the process can know more than their adjacent nodes, and
 not know, with exception of the voucher seller, what position they are within
 the circuit.
 
+These messages are constructed in layers by the client only. They include layered messages inside them for returning acknowledgements to confirm the completion of each stage of the process.
+
 ### Purchasing Protocol Flow
 
 Thus, the purchases are made via an onion message and lightning network
 payments, and each node passes on the decrypted message, which then provides the
 payment destination for each subsequent hop, in a circle that goes through 5
-nodes. This is the top level view of the process:
+nodes. 
+
+The lightning payment goes first, and then the onion message contains this receipt in the header, as well as an acknowledgement packet that is returned to confirm forward payment. If a forward payment is not in fact done, the buyer knows because the following acknowledgement does not arrive, and thus the given node will be dropped to the bottom of the list for evaluating payment route candidates.
+
+This is the top level view of the process:
 
 ```sequence
 Alice->>Bob: purchase + 5 fees + filler
@@ -107,7 +125,7 @@ At each stage, there is an onion packet that is supposed to be forwarded back as
 acknowledgement. So for each subsequent hop the onion has one more layer, but
 this is obscured with a uniform size matching the 5 maximum.
 
-The timeout period for the process is fairly short, around 2 seconds, and if all
+The timeout period for the process is fairly short, around 6 seconds, and if all
 5 acknowledgements do not get received the buyer triggers the payment revocation
 onions which reverse the payments for every hop that succeeded.
 
@@ -124,7 +142,7 @@ part of this design on Blitz:
 https://www.usenix.org/system/files/sec21fall-aumayr.pdf
 
 Blitz has a one way flow and as it mentions deep in the appendix this can be
-done using onion routing, to protect identity.
+done using onion routing via Sphinx, to protect identity.
 
 The revocations in plain Blitz include all the identities along the chain. The
 key distinction here is that in the revocation packet each node gets, there is
@@ -142,14 +160,14 @@ chain has probably been broken, is to send out the revocation onion message
 which creates a revocation circuit that will then terminate at the attacker's
 channel.
 
-### Session Initiation
+## Session Initiation
 
 In order to open a session with a router, a client node has performed a purchase
 operation where the desired router is the seller, and have a blinded signature
 on a packet that encodes the claim while not identifying when or who made the
 purchase by paying for it using the purchase protocol.
 
-#### Session Initiation Flow
+### Session Initiation Flow
 
 Session initiation follows the same pattern as the purchase protocol. If the
 acknowledgements fail within the forward payment timeouts, the fees are reversed
@@ -214,7 +232,7 @@ services are shunned, and their node not advertised as frequently by preferring
 to advertise nodes with reliability and good uptime.
 
 The reality of network service is always that one gets a tiny fraction less than
-what is paid for no matter what.
+what is paid for no matter what, connections fail, systems crash, and sometimes they are malicious. Some cost always prevents full efficiency but this is the unavoidable consequence of entropy in all systems.
 
 ## Prices
 
@@ -243,6 +261,8 @@ also be part of this setting. If a node is running low on its time limited
 allocation (daily, monthly), it can raise the price of routing or simply cease
 to sell vouchers until the period elapses.
 
+Ultimately, the idea will be that many users will be providing router service in addition to consuming it. In this way, the fees charged for the various elements of the service amortize the usage costs, and preventing the free rider problem, which retards network scaling.
+
 ### Benefits to the Lightning Network
 
 It should also be pointed out that implicitly, Indra routers are providing some
@@ -253,7 +273,7 @@ strictly necessary for the routing purpose, and in doing so, create an extensive
 increase in capacity and point to point connections.
 
 The payment protocol naturally will result in easier balancing of channels, as
-many payments are deliberately intermediated for protecting privacy.
+many payments are deliberately intermediated for protecting privacy, most of the time, flows in both directions will be about equal, thanks to probability.
 
 Because the network naturally is highly liquid, in addition to providing
 connectivity and capacity, the large number of transactions that run over the
@@ -266,7 +286,7 @@ Indra will effectively fatten the tail of Lightning Network channel distribution
 by forming a very widely connected but low capacity paths, which coincides well
 with the fact that micropayments are likely to be the most likely kind of
 payment arrangement for pay per service of nodes running hidden services on
-Indra.
+Indra. Thus, in addition to protecting user's location and associations between them, Indra will improve the micropayments use case for Lightning Network.
 
 ## Routing Patterns
 
@@ -280,10 +300,7 @@ nodes and Lightning Network nodes.
 
 Because all Indranet nodes must be running a Lightning node, and therefore a
 Bitcoin node, these are valid exit networks that can be coded into the final
-inner layer of the outbound route onion. Potentially in later iterations a
-clearnet exit method may be added, but the liability and risk imposed on exit
-nodes means that this will be a premium priced service, and outside of the scope
-of the first generation of Indranet.
+inner layer of the outbound route onion. Other peer to peer networks also could be offered, such as IPFS and Bittorrent, and ultimately, exit routing. See later for discussion of this and how it is monetised.
 
 Because only the rendezvous paths are going to involve large quantities of data,
 it will need to be possible to vary the routing pattern to provide different
@@ -301,6 +318,8 @@ Correction (FEC), and sending these packets in parallel. Any balance of N of M
 redundancy can be specified to the onion construction engine, most likely
 patterns of 2, 3 and 4 parallel paths would be used.
 
+Fan out/redundancy patterns need to be understood by the endpoint, also. Thus, in the implementation, endpoint nodes will require queues to aggregate multiple message paths and unpack the single packet inside them.
+
 #### Latency
 
 Latency can be improved by using parallel paths with two instead of three hops.
@@ -308,6 +327,8 @@ Instead of, or in addition to redundancy, packet data is split into segments
 using Shamir's Secret Shares, and N of M must be received over a fan out/fan in
 two hop path for each side of the Rendezvous. The reliability can be tuned in
 parallel with this when packet drops occur.
+
+Again, the endpoint of such a path must reconstruct the pieces from what packets it gets from the multiple intermediary routers. The pieces are collected and then when valid, forwarded onwards. The forwarding from endpoints is atomic by nature.
 
 #### Obfuscation
 
@@ -335,14 +356,14 @@ to nodes that cannot.
 
 Peer to Peer network systems all have this difficulty of negotiating inbound
 routing in order to provide services. Thus, there is always a need to enable
-this proxying of inbound routing.
+this proxying of inbound routing. There needs to be nodes on the network with routeable addresses,  and these nodes get the benefit of the extra traffic for service provision within the network.
 
 Normally this is done simply through Rendezvous routing, for hidden services,
 but because this inbound routing issue can be a problem, the programmability of
 the routing paths in the previous section also means it can be simple for nodes
 to create "open" rendezvous points that do not attempt to hide the location of
 the server. This still results in traffic on the network that adds the anonymity
-set for the anonymising services, and can be charged for the same way.
+set for the anonymising services, and can be charged for the same way. There is a definite extra cost in enabling inbound routing, and this thus rationalises the extra earning capability for these nodes.
 
 The user pays, and the user's client software can be programmed to perform the
 routing as requested. Thus, where normally a rendezvous is a 3 hop circuit, it
@@ -353,16 +374,22 @@ directly advertise rendezvous points of one hop and save on routing fees, and
 still increase the anonymity set of the network, and work around a lack of
 available inbound routing for the endpoint.
 
+### Advertising Rates for Network Exit
+
 As part of the peer to peer node advertising system, nodes also list available
 services that exit on their router. Normally by default this will be lightning
 and bitcoin nodes, but it can be anything at all. Tunneling out to clearnet can
 be available too. In addition to the name of service, and port number related to
-it, a price per byte on this traffic can also be levied. This fee is managed in
+it, a price per byte on this traffic can also be levied.
+
+This fee is managed in
 the same way as simple internal network routing services, the buyer will want to
 use an onion route to purchase it if they are going to onion route to the exit
 as well. But again, one could skip the onion route for the payment, and go
 direct to the exit, and save on routing fees while adding to overall network
 traffic and the anonymity set.
+
+Making the route construction modular, and enabling potentially arbitrary paths, and charging for this with potentially anonymised payments, means that the bigger picture for Indra is that ultimately it can become in band payment layer for ALL internet traffic, *in potentia.*
 
 ## Creating Circuits
 
@@ -415,10 +442,12 @@ The individual message segments, composed of one or several sequential UDP
 packets, will be identifiable by a hash chain sequence which is used by the
 nodes and clients to keep an account of the bandwidth remaining in a session.
 
+In order to enable all this, there is a difference in the signaling patterns in Indra. That is, all traffic must be prompted. All return packets come via codes delivered in an initial request packet outbound. This guarantees a very noisy pattern to routing data that does not easily correlate to data volume, and most especially not to endpoints of the paths, unless they exit, and the exit protocol is immediate. Exiting messages to Bitcoin and Lightning don't have immediate and direct outbound signals, they are mediated by validation steps and their outbound direction is random depending on the state of nodes' current peers.
+
 ## Routing
 
 Since other than Bitcoin and Lightning networks, Indra does not provide, by
-protocol, exit nodes to tunnel out of the network, the third and equally
+protocol, in its core implementation, exit nodes to tunnel out of the network, the third and equally
 important endpoint for a 3 hop circuit is a rendezvous.
 
 On each side of the rendezvous, the client and the server create a 6 step
@@ -469,9 +498,9 @@ way journey, and vice versa.
 
 ### Failure modes
 
-Note the "fail" paths - these are messages that propagate backwards if the TTL
-does not get an acknowledgement from the next step in the path. These allow the
-customisation for the type of traffic, for interactive versus bulk transfer.
+Note the "fail" paths - these are messages that propagate backwards if the before the configured TTL
+the sender does not get an acknowledgement from the next step in the path. These allow the
+customisation for the type of traffic, for interactive versus bulk transfer. They enable only when timeouts are triggered, in order to diagnose the failure point in the path causing a transmit/receive failure.
 
 If the failure return cascades are triggered, it means a node in the circuit is
 either offline or congested, and the onion routing will be reconfigured with a
@@ -509,10 +538,12 @@ constant frequency. This also dictates that the maximum payload size an onion
 can carry is limited, in order to ensure there is a uniform packet size and
 frequency, removing timing data of what is carried by the onions.
 
+Shorter routes can be programmed by users if their need for privacy of a signal is not high. Standard 3 hop paths implicitly are 3 times as expensive to use as single hops.
+
 Note that return circuits the endpoint is provided the encryption keys for the
 three hops back, but these keys are built from the secret knowledge of the
-client from the session double ratchet, and change with every new message. Thus
-they give no information to the endpoint about the path back to the client.
+client from the session double ratchet, and change with every new message *cycle*. Thus
+they give no information to the endpoint about the path back to the client. The ratchet is not actuated every message, but periodically, with a data or time limit configured. The ratcheting is a separate message type to the out/inbound data delivery.
 
 ## Anonymity is not everything
 
@@ -569,7 +600,7 @@ hotspots that provide free seeding (with bandwidth limits) of locally available
 Bitcoin block data and mempool, and facilitate opening Lightning channels to
 enable payments.
 
-### Enabling Mobile Neutrino/lnd
+### Enabling Mobile `neutrino/lnd`
 
 This would mean devices with installed mobile clients, running Neutrino SPV
 nodes and on-net and Lightning wallet functions will always be able to connect
