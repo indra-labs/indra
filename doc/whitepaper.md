@@ -79,7 +79,10 @@ These messages are constructed in layers by the client only. They include layere
 Thus, the purchases are made via an onion message and lightning network
 payments, and each node passes on the decrypted message, which then provides the
 payment destination for each subsequent hop, in a circle that goes through 5
-nodes. 
+nodes.
+
+The following is based on [Fully Non-interactive Onion Routing with
+Forward-Secrecy](https://www.freehaven.net/anonbib/cache/acns11-certificateless.pdf) which is backed up [here](acns11-certificateless.pdf)
 
 The lightning payment goes first, and then the onion message contains this receipt in the header, as well as an acknowledgement packet that is returned to confirm forward payment. If a forward payment is not in fact done, the buyer knows because the following acknowledgement does not arrive, and thus the given node will be dropped to the bottom of the list for evaluating payment route candidates.
 
@@ -133,6 +136,8 @@ The payment revocations are carried in the forward packets but are locked by the
 keys that are sent in the revocation onion packet. Once the node has the
 revocation code they can cancel the forward payment on the channel and change it
 to paying themselves.
+
+By using reverse onion acknowledgements, the payment onion forward propagates without direct interaction from the buyer, and any mischief on the path causing acknowledgement failure is punished by propagating a payment revocation which cancels the payment that lead to the wormhole attacker.
 
 ### Onion Routing and Revocation
 
