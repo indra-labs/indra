@@ -1,4 +1,6 @@
-# Indranet White Paper
+![Indra Routing Protocol Logo](logo.svg)
+
+# Indra Routing Protocol White Paper
 
 Programmable onion routing distributed virtual private network protocol with
 anonymised payments to create scaling incentives.
@@ -96,5 +98,14 @@ will follow the same scheme, up until the seller, at which point ASP introduces
 the notion of a circular return path, which will also feature in the routing
 protocol.
 
-As such, we give a brief explanation here of how it works.
+### Generating Keys for the Path
+
+As described
+in [BOLT#4](https://github.com/lightning/bolts/blob/master/04-onion-routing.md#shared-secret)
+the sender generates a cipher for each router in the path based on a randomly
+generated key for each hop, combined
+using [ECDHE](https://en.wikipedia.org/wiki/Elliptic-curve_Diffie%E2%80%93Hellman)
+with the routers advertised public key. The routers see a public key for the
+secret being used at their hop, and can then combine it with their private key
+to decrypt the message.
 
