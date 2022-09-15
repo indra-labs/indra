@@ -1,6 +1,6 @@
 ![Indra Routing Protocol Logo](doc/logo.svg)
 
-# Indranet
+# Indra
 
 Lightning powered distributed virtual private network with Bitcoin and Lightning
 integration.
