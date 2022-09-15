@@ -107,6 +107,19 @@ subsequent ECDH public keys to pass with the sequence hash chain element to
 provide a constantly changing cipher that is invulnerable to reverse
 derivation (newer cipher cannot be used to derive past ciphers).
 
+### Exit Sessions and Charging
+
+Packets that are intended to be delivered, as occurs at the exit hop of a
+circuit, to another service, or across a rendezvous point, can have different
+rates charged.
+
+As such, in the return messages at the end of an IRP circuit the exit session
+sends back a value signifying the virtual bytes cost of each circuit's payload.
+In this way, users simply purchase a block of any arbitrary size, and the source
+router counts down for all involved paths, the exit path having the special
+property of being able to charge virtual bytes instead of literal bytes due to
+exit services.
+
 ### Path Hop Acknowledgements
 
 In order to ensure the session purchase protocol is properly executed, in each
@@ -188,3 +201,121 @@ Shares, as well as Reed Solomon Forward Error Correction to provide a reduction
 in path length or higher guarantee of messages passing in one try and failing
 paths to not impede signals if failures are below the RS parameters.
 
+### Packet Congestion Mitigation
+
+There will be 4 standard packet sizes, 8, 16, 32 and 64 kilobytes, the latter
+being the maximum frame for a UDP packet.
+
+These different sized packets are available in order to provide shorter transmit
+times or less frequent transmits for interactive versus bulk transit, and in
+order to prevent the two from overwhelming each other, routers will have a queue
+discipline that ensures that each different sized packet is alternated so that
+there is never more than 64 Kb between two short (8 and 16 Kb) packets.
+
+### Rendezvous
+
+Rendezvous is an important type of route to consider in the discussion of
+routing. Rendezvous are points where circuits are established between nodes at
+the exit point in a standard 5 hop IRP circuit.
+
+Users wishing to receive inbound connections from the network can use these to
+obscure their location. The client opens circuits to notify 6 different other
+routers, that a service with a given identity can be reached from it. These
+nodes send out a forward packet, and when another client routes to exit on the
+rendezvous, the exit point exchanges data to the return circuit and commence a
+communication session.
+
+Rendezvous especially highlights the value of using the circular path of IRP, as
+each side engages in a constant to and fro, sender passes message across the
+rendezvous, and receiver then closes their path back to the server listening. In
+response the listener must send out a new rendezvous listen circuit in order to
+pick up the next packet.
+
+### Liveness
+
+Because of the circular path and the reverse path after the middle carrying
+return messages, communication must always be prompted by the client in order
+for ongoing return messages to occur.
+
+IRP uses UDP, eliminating any session overhead, simply fire and forget, the path
+acknowledgements and return paths are already defined and there is no need for
+negotiating connections, data is simply forwarded around on the basis of
+pre-agreed contracts of service created by the purchase of data sessions.
+
+This messaging strategy does require a constant request/reply pattern, but a
+node does not need to send a second request unless the response does not come
+back within an expected time window. For some applications, this is fine, such
+as a terminal session, as while the user is not asking for anything, the
+listener does not either have to wait for anything. For this type of traffic
+there can be pings, which are short packets and do not need path diagnostics, so
+they are cheap for monitoring liveness.
+
+In addition, nodes monitor the state of other nodes in the clear and if the (
+uncharged) traffic of asking for status updates from peers reveals a node is
+unresponsive this is a back channel that can be used to trigger a circuit path
+change.
+
+## Additional Applications
+
+Aside from obscuring the paths of traffic between users on the network, some
+additional potential uses emerge that solve other long standing problems.
+
+### Wireless Hotspots - In Band Access Payments
+
+Because the wireless traffic can be bounded for this purpose, and does not
+represent a forward path to routing, Indra routers can provide chain and
+lightning data freely to mobile connected nodes for the purpose of sync and then
+establishing data sessions through the node with the wireless hotspot enabled.
+
+Mobile nodes can run Neutrino SPV Bitcoin light nodes, as full node data
+requirements are impractical and network data are excessive for a device which
+can only really act as a client.
+
+As such, we then create a potential use case for mobile devices to update their
+network state for free, with a limitation on how much the Bitcoin and LN node's
+provide to enable the spending of tokens to initiate a session, and by this, we
+thus enable operators to provide network access to mobile users while being paid
+for their traffic.
+
+The requirements for one or several nodes syncing via compact filters to get up
+to date versus the total on-network routing are light and do not greatly impact
+network performance on the internet side.
+
+### Meshes and Wide Area Network Redundancy
+
+Further, this opens up another potential use case, perhaps of lesser utility,
+but nevertheless notable, of where other routers in the vicinity of a router,
+also providing this network access, can negotiate connectivity, and serve to
+back up each other in the event their primary - and even secondary - routes go
+dark, there can be connectivity for the core network via connected peer
+hotspots.
+
+Since all traffic going across Indra is charged for anyway, this allows
+maintaining of connectivity for nearby routers to maintain access to the IRP
+network, with a greater uptime guarantee than any of the local cabled and/or
+wireless network services in use at a given location.
+
+This has extra relevance in the case of a sudden hostile turn of events, either
+government or natural disaster, keeping connections up as much as possible to
+enable people to find their way to safety.
+
+## Conclusion
+
+The central goal of Indra is to create an overlay network that is adequate to
+completely replace base layer of the network while providing extra security.
+Primarily against large scale surveillance and well heeled attackers attempting
+to unmask target users, but also to provide universal inbound routing, wireless
+mobile network access.
+
+Ultimately, to form the basis of a uniform in-band payment system for network
+routing that enables all node operators to make a slim margin of profit for
+running their infrastructure and making more efficient use of network
+infrastructure as a whole, by allowing use of traffic with direct compensation.
+
+Just as TLS/SSL has come to be universal, it is the hope of the designers of
+Indra Routing Protocol to eventually become a universal routing protocol that
+protects users data, physical location, money and helps secure against
+network-enabled attacks in general. Hackers cannot perform a denial of service
+attack if they cannot afford the traffic.
+
+##### End
