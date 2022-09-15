@@ -62,7 +62,7 @@ large component of Bitcoin connectivity.
 
 ## Goals of Indra Routing Protocol
 
-Three key elements of the Tor protocol make it less than desirable in general. O
+Three key elements of the Tor protocol make it less than desirable in general.
 
 1. the establishment of circuits is quite slow, taking a large number of steps
    to "telescope" into a channel. Source routing would be preferable.
@@ -93,19 +93,98 @@ which we cannot use by itself as it has no provision for returning an arbitrary
 package of data, nor the notion of an interacting midpoint in the loop, with the
 chain going back to the sender.
 
-It does however provide almost everything else, so a large part of this protocol
-will follow the same scheme, up until the seller, at which point ASP introduces
-the notion of a circular return path, which will also feature in the routing
-protocol.
+As distinct from this Lightning onion protocol, we use ed25519 for signatures
+and curve25519 for the ECDH, which is then used with AES-GCM to encrypt packets,
+with a two factor re-keying for each new packet (up to 64 Kb per packet).
 
-### Generating Keys for the Path
+### Session Tokens
 
-As described
-in [BOLT#4](https://github.com/lightning/bolts/blob/master/04-onion-routing.md#shared-secret)
-the sender generates a cipher for each router in the path based on a randomly
-generated key for each hop, combined
-using [ECDHE](https://en.wikipedia.org/wiki/Elliptic-curve_Diffie%E2%80%93Hellman)
-with the routers advertised public key. The routers see a public key for the
-secret being used at their hop, and can then combine it with their private key
-to decrypt the message.
+Session tokens are an arbitrary random value that must be present in the header
+of encrypted data and is hashed in a chain to provide a counter for the packet
+sequence within a session. This functions also as authentication for the
+session, and is then also used to hash with the secret key in the ECDH to derive
+subsequent ECDH public keys to pass with the sequence hash chain element to
+provide a constantly changing cipher that is invulnerable to reverse
+derivation (newer cipher cannot be used to derive past ciphers).
+
+### Path Hop Acknowledgements
+
+In order to ensure the session purchase protocol is properly executed, in each
+layer of the onion there is a multi layer onion message that is to be sent back
+to the previous step in the path, which contains further steps backwards until
+the buyer, as well as a specified cipher to use on the Lightning Network (LN)
+payment confirmation to carry back to the buyer.
+
+As each step proceeds, the router receives a payment from the previous via LN,
+and then the purchase onion message, unpacks their acknowledgement onion and
+returns it with the encrypted acknowledgement of their forwarding of the payment
+to the next hop.
+
+This reaches the router that is selling the session, which then forwards the
+encrypted session key and pays forwards the two remaining hops, again each step
+returning the acknowledgement onion, and in this way the buyer can expect 5
+acknowledgements to be successful and then receive the session key from the 5th
+node in the circuit.
+
+The acknowledgement onions are constructed so that nodes do not know what step
+they are, so each has space for 5 steps, which are masked using methods as
+described in BOLT#4.
+
+## Source Routing
+
+As distinct from TOR, IRP uses source routing, thanks to the magic of the
+session tokens and ECDH, means that in the event of a route path failing, a new
+path can be generated when a timeout occurs, and in addition, a timeout
+triggered reverse path diagnostic based on the Path Hop Acknowledgement onions
+above, and for time sensitive interactive applications, can be used at every
+step to ensure the moment one hop latency exceeds a threshold the source routing
+algorithm can then swap out a different node in the route and provide a strong
+latency guarantee.
+
+### Latency Guarantee and Path Timeout Diagnostics
+
+Some applications are very time sensitive. Real-time interactive shared
+environments such as games can have very serious consequences (to the players)
+when their connection starts to increase in latency putting them at disadvantage
+against their opponents, and in general, a sluggishness of the interactivity.
+
+Thus, there is two parameters that can be set on a route, one is a constant on
+path acknowledgement, which consumes a substantial extra segment of the space
+used for payload, the other is to turn this feature on when the circuit fails to
+return through the circuit.
+
+For extra security, a third parameter, can be that the return path used for
+acknowledgements can be further obfuscated to take two hops in each case back to
+the sender, which can be randomised for each one.
+
+### Circular Paths
+
+One of the key inventions of Indra is the notion of circular paths. These are
+two hops out to the end point, and two hops backwards, on a different path, for
+the return.
+
+By using this circular topology, the source can provide a return path that is
+not the same as the forward path, and when the path timeout diagnostics are not
+in play, there is no visible reverse path confirmation timing. That is to say,
+the packets appear to always only be going forward, and no correlation is easily
+made between, therefore, forward, or reverse paths, which is not the case with
+telescoped TOR protocol packets, and for most general purposes in IRP are
+avoided when traffic achieves the intended forward path without excessive
+latency.
+
+The return paths also serve as a conduit for the endpoint to return data back to
+the sender, while allowing the sender to dictate this return path.
+
+### Dancing Paths
+
+Thus, as well as introducing a mechanism for monitoring the progress of packets
+through paths, it then becomes possible, due to the source routing strategy, for
+every single path to be different, aside from the exit point of the path.
+
+### Redundant/Fragmented Parallel Paths
+
+In addition, a further feature for future work is the use of Shamir's Secret
+Shares, as well as Reed Solomon Forward Error Correction to provide a reduction
+in path length or higher guarantee of messages passing in one try and failing
+paths to not impede signals if failures are below the RS parameters.
 
