@@ -39,12 +39,11 @@ between payments and session usage can be achieved and create a marketplace in
 routing services which can economically increase to a size that is beyond the
 capabilities of a state sized actor to fund an attack.
 
-Indra creates mechanisms for anonymous purchase of chaumian vouchers used to
-initiate traffic sessions with router nodes, which then compensates routers for
-their running costs, and further, focuses on hidden services and
-Bitcoin/Lightning (and potentially other Bitcoin related systems) in order to
-reduce the attack surface from large actors who have thus no open justification
-for censoring the network.
+Indra creates mechanisms for anonymous purchase of traffic sessions with router
+nodes, which then compensates routers for their running costs, and further,
+focuses on hidden services and Bitcoin/Lightning (and potentially other
+Bitcoin related systems) in order to reduce the attack surface from large
+actors who have thus no open justification for censoring the network.
 
 ## Tor isn't Scaling, but Bitcoin Needs Onion Routing
 
