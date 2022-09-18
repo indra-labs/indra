@@ -29,10 +29,10 @@ high value
 targets, such as
 the [Carnegie Mellon University](https://blog.torproject.org/did-fbi-pay-university-attack-tor-users/) - implicated in part of what led to the arrest of the Silk Road founder, Ross Ulbricht.
 
-Thus, it is the central thesis of this paper to demonstrate how decorrelation
+It is the central thesis of this paper to demonstrate how obfuscating correlation
 between payments and session usage can be achieved and create a marketplace in
 routing services which can economically increase to a size that is beyond the
-capabilities of a state sized actor to fund an attack.
+capabilities of a state sized actor to fund an attack, while also improving latency and stability of routed connections.
 
 ## Tor Isn't Scaling, But Bitcoin Needs Onion Routing
 
@@ -62,13 +62,12 @@ Three key elements of the Tor protocol make it less than desirable in general.
 
 2. Once a circuit is running, when it fails, the failure is opaque to the client
    side, and there is no way to provide a latency guarantee or connection
-   stability.
+   stability. It is unsuitable for interactive and long living connections.
    
 3. There is no profit motive to drive expansion of router
-   capacity, and as such it has definitively flat-lined, and there is clear
-   signs that a growing number of nodes are in fact operated by Bitcoin users.
+   capacity.
 
-Tor is a poor solution for a very limited subset of use cases that benefit from the security of route obfuscation. Indra aims to provide what Tor has definitely now failed to achieve for a large majority of internet users: location privacy.
+Tor is a poor solution for a very limited subset of of the use cases that benefit from the security of route obfuscation. Indra aims to provide what Tor has definitely now failed to achieve for a large majority of internet users: location privacy.
 
 ## Anonymised Session Purchase Protocol
 
@@ -77,28 +76,29 @@ Without an existing circuit, how does a client node acquire tokens for sessions 
 creating hops in an onion route?
 
 For this, we borrow
-from [BOLT#4](https://github.com/lightning/bolts/blob/master/04-onion-routing.md)
+from Lightning Network protocol [BOLT#4](https://github.com/lightning/bolts/blob/master/04-onion-routing.md)
 which we cannot use by itself as it has no provision for returning an arbitrary
 package of data, nor the notion of an interacting midpoint in the loop, with the
 chain going back to the sender.
 
-As distinct from this Lightning onion protocol, we use ed25519 for signatures
-and curve25519 for the ECDH, which is then used with AES-GCM to encrypt packets. Rolling over encryption ciphers is done partly via hash chains and can also be periodically triggered in return messages from circuit exit points.
+As distinct from this `lightning-onion` protocol, we use ed25519 for signatures
+and curve25519 for the ECDH key exchange, and encrypt traffic with AES-GCM. Rolling over encryption ciphers is done partly via hash chains and can also be periodically triggered in return messages from circuit exit points.
 
 ### Session Tokens
 
 Session tokens are an arbitrary random value that must be present in the header
 of encrypted data and is hashed in a chain to provide a counter for the packet
-sequence within a session.
-
-This functions also as authentication for the
-session, and the cipher can be changed periodically via messages carried in the return leg of an onion circuit.
+sequence within a session. With these, routers check off remaining data in a client session, ensuring they deliver what was paid for and nothing more. They function as authentication as well as session accounting.
 
 ### Exit Sessions and Charging
 
 Packets that are intended to be delivered, as occurs at the exit hop of a
 circuit, to another service, or across a rendezvous point, can have different
 rates charged. These rates and the services they apply to are advertised as part of a router's status advertisement.
+
+Such exit traffic is paid for via the session chains same as for relaying. Exit relays include a double charge because of the return path, one charge for the exit, one for the return that comes back from the exit.
+
+Charges are part of the return payload so that clients confirm their remaining allocations. When a node fails, only its last acknowledged relays are charged for, or if the node goes offline, the client discovers this when they activate path hop acknowlegments.
 
 ### Path Hop Acknowledgements
 
@@ -168,23 +168,15 @@ In addition, a further feature for future work is the use of Shamir's Secret
 Shares, as well as Reed Solomon Forward Error Correction to provide a reduction
 in path length or higher guarantee of messages passing in one try via parallel paths. These paths require end points to collate the fragments and forward the combined packets to their destination.
 
-### Packet Congestion Mitigation
+### Packet Sizes
 
-There will be 4 standard packet sizes, 8, 16, 32 and 64 kilobytes.
-
-These different sized packets are available in order to provide shorter transmit
-times or less frequent transmits for interactive versus bulk transit, and in
-order to prevent the two from overwhelming each other, routers will have a queue
-discipline that ensures that each different sized packet is alternated so that
-there is never more than 64 Kb between two short (8 and 16 Kb) packets.
-
-In order to prevent size being a correlating factor between nodes in transit, all packets are transmitted as 8 Kb blocks, and ready packets of smaller size are interspersed to prevent timing correlation and numbers of sequential packets between nodes.
+All packets are 8 Kb in size. Acknowledgement onions increase overhead and reduce data that can be carried. Routers charge for the total payload. By making packets uniform, it is a simple matter of counting packets, and thus the hash-chain counters directly relate to total routed traffic volume.
 
 ### Rendezvous
 
 Rendezvous is an important type of route to consider in the discussion of
 routing. Rendezvous are points where circuits are established between nodes at
-the exit point in a standard 5 hop Indra circuit.
+the exit point (3rd) in a standard 5 hop Indra circuit.
 
 Users wishing to receive inbound connections from the network can use these to
 obscure their location.
@@ -205,11 +197,11 @@ acknowledgements and return paths are already defined in the onion packets.
 
 There is no need for
 negotiating connections, data is simply forwarded around on the basis of
-pre-agreed contracts of service created by the purchase of data sessions, and authenticated by valid session headers.
+pre-agreed contracts of service created by the purchase of data sessions, and authenticated by valid headers, which prove relation to the session root code.
 
 This messaging strategy does require a constant request/reply pattern, but a
 node does not need to send a second request unless the response does not come
-back within an expected time window.
+back within an expected time window, or is expected to have some amount of delay.
 
 For some applications, this is fine, such
 as a terminal session, as while the user is not asking for anything, the
