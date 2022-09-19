@@ -79,7 +79,7 @@ For this, we borrow
 from Lightning Network protocol [BOLT#4](https://github.com/lightning/bolts/blob/master/04-onion-routing.md)
 which we cannot use by itself as it has no provision for returning an arbitrary
 package of data, nor the notion of an interacting midpoint in the loop, with the
-chain going back to the sender.
+path going back to the sender.
 
 As distinct from this `lightning-onion` protocol, we use ed25519 for signatures
 and curve25519 for the ECDH key exchange, and encrypt traffic with AES-GCM. Rolling over encryption ciphers is done partly via hash chains and can also be periodically triggered in return messages from circuit exit points.
@@ -88,7 +88,9 @@ and curve25519 for the ECDH key exchange, and encrypt traffic with AES-GCM. Roll
 
 Session tokens are an arbitrary random value that must be present in the header
 of encrypted data and is hashed in a chain to provide a counter for the packet
-sequence within a session. With these, routers check off remaining data in a client session, ensuring they deliver what was paid for and nothing more. They function as authentication as well as session accounting.
+sequence within a session.
+
+With these, routers check off remaining data in a client session, ensuring they deliver what was paid for and nothing more. They function as authentication as well as session accounting.
 
 ### Exit Sessions and Charging
 
@@ -98,7 +100,7 @@ rates charged. These rates and the services they apply to are advertised as part
 
 Such exit traffic is paid for via the session chains same as for relaying. Exit relays include a double charge because of the return path, one charge for the exit, one for the return that comes back from the exit.
 
-Charges are part of the return payload so that clients confirm their remaining allocations. When a node fails, only its last acknowledged relays are charged for, or if the node goes offline, the client discovers this when they activate path hop acknowlegments.
+Charges are part of the return payload so that clients confirm their remaining allocations. When a node fails, only its last acknowledged relays are charged for, or if the node goes offline, the client discovers this when they activate path hop acknowledgments.
 
 ### Path Hop Acknowledgements
 
@@ -121,8 +123,6 @@ As distinct from TOR, Indra uses source routing, thanks to the magic of the
 session tokens and ECDH, means that in the event of a route path failing, a new
 path can be generated with a changed set of intermediate routers when a timeout occurs.
 
-When a prescribed timeout elapses, subsequent packets contain acknowledgement return onion packets, allowing the sender to discover the unresponsive hop in the path.
-
 ### Latency Guarantee and Path Timeout Diagnostics
 
 For time sensitive interactive applications, these progress detecting onions be used at every
@@ -135,6 +135,8 @@ environments such as games can have very serious consequences (to the players)
 when their connection starts to increase in latency putting them at disadvantage
 against their opponents, and in general, a sluggishness of the interactivity.
 
+Long lived sessions like SSH also can become tiresome when running over Tor when inevitably congestion or downtime hits a hop in the path. For applications where a few seconds stall do not disrupt the protocol, activating path timeout diagnostic onion acknowledgement packets enables the client to determine which hop needs to be replaced.
+
 For additional security, a user can configure the return onions to return via random, multi hop paths, rather than reversing the forward path.
 
 ### Circular Paths
@@ -145,7 +147,7 @@ the return.
 
 By using this circular topology, the source can provide a return path that is
 not the same as the forward path, and when the path timeout diagnostics are not
-in play, there is no visible reverse path confirmation timing.
+in play, there is no visible reverse path confirmation timing for large scale network traffic analysis.
 
 That is to say,
 the packets appear to always only be going forward, and no correlation is easily
@@ -154,7 +156,7 @@ telescoped TOR protocol packets, and for most general purposes in Indra are
 avoided when traffic achieves the intended forward path without excessive
 latency.
 
-The return paths also serve as a path to return a new cipher for an exit node, whose messages are carried with the return loop.
+The return paths also serve as a path to return a new cipher for an exit node, whose messages are carried with the return loop, as well as bandwidth accounting data, via provided ciphers for the return path payload.
 
 ### Dancing Paths
 
@@ -166,7 +168,7 @@ every single path to be different, aside from the exit point of the path.
 
 In addition, a further feature for future work is the use of Shamir's Secret
 Shares, as well as Reed Solomon Forward Error Correction to provide a reduction
-in path length or higher guarantee of messages passing in one try via parallel paths. These paths require end points to collate the fragments and forward the combined packets to their destination.
+in path length or higher guarantee of messages passing in one try via parallel paths. These paths require end points to collate the fragments and forward the combined packets to their destination. Such paths have a higher cost, in proportion with their redundancy, but enable strong retransmission avoidance.
 
 ### Packet Sizes
 
@@ -193,7 +195,7 @@ return messages, communication must always be prompted by the client in order
 for ongoing return messages to occur.
 
 Indra uses UDP, eliminating any session overhead, the path
-acknowledgements and return paths are already defined in the onion packets. 
+acknowledgements and return paths are already defined in the onion packets. TCP and QUIC can be carried across the circuits, as will often be the case for hidden services. Indra aware services can take advantage of the knowledge of the protocol and trigger features of the protocol such as return acknowledgements and the return hops to carry things like acknowledgements of packets received via their hash fingerprint.
 
 There is no need for
 negotiating connections, data is simply forwarded around on the basis of
@@ -201,7 +203,7 @@ pre-agreed contracts of service created by the purchase of data sessions, and au
 
 This messaging strategy does require a constant request/reply pattern, but a
 node does not need to send a second request unless the response does not come
-back within an expected time window, or is expected to have some amount of delay.
+back within an expected time window, or is expected to have some amount of delay, because the return path is already plotted, and the cipher provided to the exit hop in the circuit.
 
 For some applications, this is fine, such
 as a terminal session, as while the user is not asking for anything, the
@@ -209,7 +211,7 @@ listener does not either have to wait for anything. For this type of traffic
 there can be pings, which are short packets and do not need path diagnostics, so
 they are cheap for monitoring liveness.
 
-In addition, nodes monitor the state of other nodes in the clear and if the (uncharged) traffic of asking for status updates from peers reveals a node is
+In addition, nodes monitor the state of other nodes in the clear when gossiping status updates and advertisements, and if the (uncharged) traffic of asking for status updates from peers reveals a node is
 unresponsive this is a back channel that can be used to trigger a circuit path
 change to route around a dead router.
 
