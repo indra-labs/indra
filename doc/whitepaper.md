@@ -26,8 +26,7 @@ However, without any way for users to pay routers without creating an audit
 trail, the anonymising networks have not grown in nearly a decade, and
 thus well heeled attackers have largely been able to keep pace and pluck off
 high value targets, such as
-the [Carnegie Mellon University](https://blog.torproject.org/did-fbi-pay-university-attack-tor-users/)
-- implicated in part of what led
+the [Carnegie Mellon University](https://blog.torproject.org/did-fbi-pay-university-attack-tor-users/) - implicated in part of what led
 to the arrest of the Silk Road founder, Ross Ulbricht.
 
 It is the central thesis of this paper to demonstrate how obfuscating
