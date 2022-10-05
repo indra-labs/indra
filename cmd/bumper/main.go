@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -189,7 +188,7 @@ func Version() string {
 		Patch,
 	)
 	path := filepath.Join(PathBase, "version.go")
-	if e = ioutil.WriteFile(path, []byte(versionFileOut),
+	if e = os.WriteFile(path, []byte(versionFileOut),
 		0666); log.E.Chk(e) {
 		fmt.Println(e)
 	}
