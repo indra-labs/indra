@@ -1,5 +1,20 @@
 package ciph
 
+import (
+	"crypto/rand"
+)
+
+const NonceSize = 12
+
+type Nonce [NonceSize]byte
+
+// GetNonce reads from a cryptographically secure random number source
+func GetNonce() (nonce Nonce, e error) {
+	if _, e = rand.Read(nonce[:]); log.E.Chk(e) {
+	}
+	return
+}
+
 //
 // import (
 // 	"crypto/aes"
@@ -12,7 +27,7 @@ package ciph
 //
 // 	"golang.org/x/crypto/argon2"
 // )
-//
+
 // // Get returns a GCM cipher given a password string. Note that this cipher
 // // must be renewed every 4gb of encrypted data as it is GCM.
 // func Get(password []byte) (gcm cipher.AEAD, e error) {
@@ -33,7 +48,7 @@ package ciph
 // 	}
 // 	return
 // }
-//
+
 // // DecryptMessage attempts to decode the received message
 // func DecryptMessage(creator string, ciph cipher.AEAD, data []byte) (
 // 	msg []byte,
@@ -68,15 +83,6 @@ package ciph
 // 		)
 // 	} else {
 // 		msg = append(magic, data...)
-// 	}
-// 	return
-// }
-//
-// // GetNonce reads from a cryptographically secure random number source
-// func GetNonce(ciph cipher.AEAD) (nonce []byte, e error) {
-// 	// get a nonce for the packet, it is both message ID and salt
-// 	nonce = make([]byte, ciph.NonceSize())
-// 	if _, e = io.ReadFull(rand.Reader, nonce); log.E.Chk(e) {
 // 	}
 // 	return
 // }
