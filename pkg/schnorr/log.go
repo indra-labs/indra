@@ -1,4 +1,4 @@
-package ecdh
+package schnorr
 
 import (
 	"github.com/cybriq/proc"
