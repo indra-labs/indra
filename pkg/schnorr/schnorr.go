@@ -2,6 +2,7 @@ package schnorr
 
 import (
 	"crypto/sha256"
+	"fmt"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/schnorr"
@@ -12,6 +13,7 @@ const (
 	PubkeyLen      = schnorr.PubKeyBytesLen
 	SigLen         = schnorr.SignatureSize
 	FingerprintLen = 8
+	HashLen        = 32
 )
 
 // Privkey is a private key
@@ -30,6 +32,23 @@ type SignatureBytes [SigLen]byte
 // key when the full Pubkey will be available, and for easier human recognition.
 type Fingerprint [FingerprintLen]byte
 
+// Hash is just a byte type with a nice length validation function
+type Hash []byte
+
+func (h Hash) Valid() error {
+	if len(h) == HashLen {
+		return nil
+	}
+	return fmt.Errorf("invalid hash length of %d bytes, must be %d",
+		len(h), HashLen)
+}
+
+func (h Hash) Zero() {
+	for i := range h {
+		h[i] = 0
+	}
+}
+
 // SHA256D runs a standard double SHA256 hash and does all the slicing for you.
 func SHA256D(b []byte) []byte {
 	h := sha256.Sum256(b)
@@ -42,6 +61,13 @@ func (pub Pubkey) Fingerprint() (fp Fingerprint) {
 	h := SHA256D(pub.Serialize()[:])
 	copy(fp[:], h[:FingerprintLen])
 	return
+}
+
+func (pub PubkeyBytes) Fingerprint() (fp Fingerprint) {
+	h := SHA256D(pub[:])
+	copy(fp[:], h[:FingerprintLen])
+	return
+
 }
 
 // GeneratePrivkey generates a private key
@@ -79,6 +105,10 @@ func PrivkeyFromBytes(b []byte) (prv *Privkey) {
 	return
 }
 
+func (prv *PrivkeyBytes) Deserialize() (priv *Privkey) {
+	return PrivkeyFromBytes(prv[:])
+}
+
 var zero PrivkeyBytes
 
 // Zero zeroes out a private key in serial form. Note that sliced [:] form
@@ -95,6 +125,10 @@ func (pub *Pubkey) Serialize() (p *PubkeyBytes) {
 	return
 }
 
+func (pk *PubkeyBytes) Deserialize() (pub *Pubkey, e error) {
+	return PubkeyFromBytes(pk[:])
+}
+
 // PubkeyFromBytes converts a byte slice into a public key, if it is valid.
 func PubkeyFromBytes(b []byte) (pub *Pubkey, e error) {
 	var p *secp256k1.PublicKey
@@ -105,14 +139,19 @@ func PubkeyFromBytes(b []byte) (pub *Pubkey, e error) {
 	return
 }
 
-func (prv *Privkey) ECDH(pub *Pubkey) []byte {
+// ECDH computes an elliptic curve diffie hellman shared secret that can be
+// decrypted by the holder of the private key matching the public key provided.
+func (prv *Privkey) ECDH(pub *Pubkey) Hash {
 	pr := (*secp256k1.PrivateKey)(prv)
 	pu := (*secp256k1.PublicKey)(pub)
 	b := SHA256D(secp256k1.GenerateSharedSecret(pr, pu))
 	return b
 }
 
-func (prv *Privkey) Sign(hash []byte) (sig *Signature, e error) {
+func (prv *Privkey) Sign(hash Hash) (sig *Signature, e error) {
+	if log.E.Chk(hash.Valid()) {
+		return
+	}
 	var s *schnorr.Signature
 	if s, e = schnorr.Sign((*secp256k1.PrivateKey)(prv), hash); log.E.Chk(e) {
 		return
@@ -130,7 +169,10 @@ func ParseSignature(s []byte) (sig *Signature, e error) {
 	return
 }
 
-func (sig *Signature) Verify(hash []byte, pub *Pubkey) bool {
+func (sig *Signature) Verify(hash Hash, pub *Pubkey) bool {
+	if log.E.Chk(hash.Valid()) {
+		return false
+	}
 	return (*schnorr.Signature)(sig).
 		Verify(hash, (*secp256k1.PublicKey)(pub))
 }
@@ -138,5 +180,11 @@ func (sig *Signature) Verify(hash []byte, pub *Pubkey) bool {
 func (sig *Signature) Serialize() (s *SignatureBytes) {
 	s = &SignatureBytes{}
 	copy(s[:], (*schnorr.Signature)(sig).Serialize())
+	return
+}
+
+func (sb SignatureBytes) Deserialize() (sig *Signature, e error) {
+	if sig, e = ParseSignature(sb[:]); log.E.Chk(e) {
+	}
 	return
 }
