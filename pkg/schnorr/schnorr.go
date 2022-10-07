@@ -5,7 +5,6 @@ import (
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/schnorr"
-	"lukechampine.com/blake3"
 )
 
 const (
@@ -27,7 +26,7 @@ type PubkeyBytes [PubkeyLen]byte
 type Signature schnorr.Signature
 type SignatureBytes [SigLen]byte
 
-// Fingerprint is a truncated SHA256 hash of the pubkey, indicating the relevant
+// Fingerprint is a truncated SHA256D hash of the pubkey, indicating the relevant
 // key when the full Pubkey will be available, and for easier human recognition.
 type Fingerprint [FingerprintLen]byte
 
@@ -46,9 +45,9 @@ func (pub Pubkey) Fingerprint() (fp Fingerprint) {
 }
 
 // GeneratePrivkey generates a private key
-func GeneratePrivkey() (prv *Privkey, err error) {
+func GeneratePrivkey() (prv *Privkey, e error) {
 	var p *secp256k1.PrivateKey
-	if p, err = secp256k1.GeneratePrivateKey(); log.I.Chk(err) {
+	if p, e = secp256k1.GeneratePrivateKey(); log.I.Chk(e) {
 		return
 	}
 	prv = (*Privkey)(p)
@@ -97,9 +96,11 @@ func (pub *Pubkey) Serialize() (p *PubkeyBytes) {
 }
 
 // PubkeyFromBytes converts a byte slice into a public key, if it is valid.
-func PubkeyFromBytes(b []byte) (pub *Pubkey, err error) {
+func PubkeyFromBytes(b []byte) (pub *Pubkey, e error) {
 	var p *secp256k1.PublicKey
-	p, err = secp256k1.ParsePubKey(b)
+	if p, e = secp256k1.ParsePubKey(b); log.E.Chk(e) {
+		return
+	}
 	pub = (*Pubkey)(p)
 	return
 }
@@ -111,25 +112,27 @@ func (prv *Privkey) ECDH(pub *Pubkey) []byte {
 	return b
 }
 
-func (prv *Privkey) Sign(message []byte) (sig *Signature, err error) {
-	hash := blake3.Sum256(message)
+func (prv *Privkey) Sign(hash []byte) (sig *Signature, e error) {
 	var s *schnorr.Signature
-	s, err = schnorr.Sign((*secp256k1.PrivateKey)(prv), hash[:])
+	if s, e = schnorr.Sign((*secp256k1.PrivateKey)(prv), hash); log.E.Chk(e) {
+		return
+	}
 	sig = (*Signature)(s)
 	return
 }
 
-func ParseSignature(s []byte) (sig *Signature, err error) {
+func ParseSignature(s []byte) (sig *Signature, e error) {
 	var ss *schnorr.Signature
-	ss, err = schnorr.ParseSignature(s)
+	if ss, e = schnorr.ParseSignature(s); log.E.Chk(e) {
+		return
+	}
 	sig = (*Signature)(ss)
 	return
 }
 
-func (sig *Signature) Verify(message []byte, pub *Pubkey) bool {
-	hash := blake3.Sum256(message)
-	return (*schnorr.Signature)(sig).Verify(hash[:],
-		(*secp256k1.PublicKey)(pub))
+func (sig *Signature) Verify(hash []byte, pub *Pubkey) bool {
+	return (*schnorr.Signature)(sig).
+		Verify(hash, (*secp256k1.PublicKey)(pub))
 }
 
 func (sig *Signature) Serialize() (s *SignatureBytes) {
