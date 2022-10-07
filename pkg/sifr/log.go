@@ -1,4 +1,4 @@
-package ciph
+package sifr
 
 import (
 	"github.com/cybriq/proc"

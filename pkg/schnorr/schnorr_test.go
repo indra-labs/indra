@@ -33,17 +33,18 @@ func TestPrivkey_SignVerify(t *testing.T) {
 	if n, err = rand.Read(message); log.E.Chk(err) && n != msgSize {
 		t.Error(err)
 	}
+	messageHash := SHA256D(message)
 	var prv1 *Privkey
 	if prv1, err = GeneratePrivkey(); log.I.Chk(err) {
 		t.Error(err)
 	}
 	var sig *Signature
-	if sig, err = prv1.Sign(message); log.I.Chk(err) {
+	if sig, err = prv1.Sign(messageHash); log.I.Chk(err) {
 		t.Error(err)
 	}
 	var pub1 *Pubkey
 	pub1 = prv1.Pubkey()
-	if !sig.Verify(message, pub1) {
+	if !sig.Verify(messageHash, pub1) {
 		t.Error(err)
 	}
 }
@@ -86,12 +87,13 @@ func TestSignature_Serialize(t *testing.T) {
 	if n, err = rand.Read(message); log.E.Chk(err) && n != msgSize {
 		t.Error(err)
 	}
+	messageHash := SHA256D(message)
 	var prv1 *Privkey
 	if prv1, err = GeneratePrivkey(); log.I.Chk(err) {
 		t.Error(err)
 	}
 	var sig1, sig2 *Signature
-	if sig1, err = prv1.Sign(message); log.I.Chk(err) {
+	if sig1, err = prv1.Sign(messageHash); log.I.Chk(err) {
 		t.Error(err)
 	}
 	sig1B := sig1.Serialize()
@@ -103,4 +105,34 @@ func TestSignature_Serialize(t *testing.T) {
 		t.Error(err)
 	}
 
+}
+
+func BenchmarkPrivkey_ECDH(b *testing.B) {
+	var e error
+	var prv1, prv2 *Privkey
+	var pub1, pub2 *Pubkey
+	for n := 0; n < b.N; n++ {
+		if prv1, e = GeneratePrivkey(); log.E.Chk(e) {
+			return
+		}
+		pub1 = prv1.Pubkey()
+		if prv2, e = GeneratePrivkey(); log.E.Chk(e) {
+			return
+		}
+		pub2 = prv2.Pubkey()
+		prv2.ECDH(pub1)
+		prv1.ECDH(pub2)
+	}
+}
+
+func BenchmarkSHA256D(b *testing.B) {
+	var b32 [32]byte
+	var tmp []byte
+	if _, err := rand.Read(b32[:]); err != nil {
+		return
+	}
+	for n := 0; n < b.N; n++ {
+		tmp = SHA256D(b32[:])
+		copy(b32[:], tmp)
+	}
 }
