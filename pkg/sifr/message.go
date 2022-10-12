@@ -6,29 +6,33 @@ import (
 	"github.com/Indra-Labs/indra/pkg/schnorr"
 )
 
-const MessageOverhead = schnorr.PubkeyLen + NonceLen + schnorr.SigLen
+const MessageOverhead = schnorr.FingerprintLen + schnorr.PubkeyLen + NonceLen +
+	schnorr.SigLen
 
 type Message struct {
-	// Pubkey corresponds to the private key generated for
-	// the message/session, to be combined with recipient's
-	// advertised Pubkey's Privkey for the encryption using
+	// To is the fingerprint of the recipient public key which was used to
+	// generate the cipher for this message. The private key corresponding
+	// to this fingerprint plus the following Pubkey provides the cipher via
 	// ECDH.
-	Pubkey schnorr.PubkeyBytes
-	// Nonce is a 12 byte cryptographically random value used
-	// to provide entropy to the cipher.
-	Nonce Nonce
-	// Message is the payload data.
+	To *schnorr.Fingerprint
+	// Pubkey corresponds to the private key generated for the
+	// message/session, which is combined with the To key for the shared
+	// secret.
+	Sender *schnorr.PubkeyBytes
+	// Nonce is a 12 byte cryptographically random value used to provide
+	// entropy to the cipher.
+	Nonce *Nonce
+	// Message is the encrypted payload data.
 	Message []byte
-	// Signature corresponds to decrypted message, it must
-	// match the Pubkey above and the hash of the decrypted
-	// message.
-	Signature schnorr.SignatureBytes
+	// Signature corresponds to decrypted message, it must match the Pubkey
+	// above and the hash of the decrypted message.
+	Signature *schnorr.SignatureBytes
 }
 
 func (msg *Message) ToBytes() (bytes []byte) {
 	bytes = make([]byte, MessageOverhead, len(msg.Message))
 	var cursor int
-	copy(bytes[:schnorr.PubkeyLen], msg.Pubkey[:])
+	copy(bytes[:schnorr.PubkeyLen], msg.Sender[:])
 	cursor += schnorr.PubkeyLen
 	copy(bytes[cursor:cursor+NonceLen], msg.Nonce[:])
 	cursor += NonceLen
@@ -48,7 +52,7 @@ func FromBytes(msg []byte) (message *Message, e error) {
 	}
 	payloadLen := msgLen - MessageOverhead
 	var cursor int
-	copy(message.Pubkey[:], msg[cursor:cursor+schnorr.PubkeyLen])
+	copy(message.Sender[:], msg[cursor:cursor+schnorr.PubkeyLen])
 	cursor += schnorr.PubkeyLen
 	copy(message.Nonce[:], msg[cursor:cursor+NonceLen])
 	cursor += NonceLen

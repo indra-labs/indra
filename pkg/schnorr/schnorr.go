@@ -63,7 +63,8 @@ func (pub Pubkey) Fingerprint() (fp Fingerprint) {
 	return
 }
 
-func (pub PubkeyBytes) Fingerprint() (fp Fingerprint) {
+func (pub PubkeyBytes) Fingerprint() (fp *Fingerprint) {
+	fp = &Fingerprint{}
 	h := SHA256D(pub[:])
 	copy(fp[:], h[:FingerprintLen])
 	return
