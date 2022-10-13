@@ -16,3 +16,17 @@ In the case of sending multiple messages before reply, the party generates new c
 
 All keys generated for such messages must be kept for a time. When a reply is composed, all known received key fingerprints are appended to end of message to indicate they can be purged, in addition to the fingerprint in the To field.
 
+## Message Binary Format
+
+| Field        | Size                      | Description                                                  |
+| ------------ | ------------------------- | ------------------------------------------------------------ |
+| To           | 8 bytes                   | Fingerprint of public key of recipient used in with ECDH for cipher |
+| From         | 32 bytes                  | Public key of sender used with ECDH for cipher               |
+| MessageNonce | 12 bytes                  | Cryptographically random nonce for message encryption        |
+| MessageSize  | 4 bytes                   | Size of message (up to 4Gb)                                  |
+| Message      | variable, per MessageSize | Message is signed, signature appended, then encrypted with cipher |
+| ExpireCount  | 2 bytes                   | Number of expired public keys seen prior to dispatch of this message |
+| Expired      | 8 bytes                   | Fingerprint of expired public keys of recipient that have been seen |
+| …            | repeats per ExpireCount   |                                                              |
+| Signature    | 64 bytes                  | Signature over entire message data (all previous fields) to prevent tampering |
+
