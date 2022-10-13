@@ -7,5 +7,5 @@
 // This is used by the receiver in combination with the private key
 // corresponding to public key they advertise to enable ECDH forward secrecy.
 // It ensures that the secret is never the same except for the receiver's public
-// key.
+// key at the head of the message chain.
 package sifr
