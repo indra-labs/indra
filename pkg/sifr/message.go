@@ -18,7 +18,7 @@ type Message struct {
 	// Pubkey corresponds to the private key generated for the
 	// message/session, which is combined with the To key for the shared
 	// secret.
-	Sender *schnorr.PubkeyBytes
+	From *schnorr.PubkeyBytes
 	// Nonce is a 12 byte cryptographically random value used to provide
 	// entropy to the cipher.
 	Nonce *Nonce
@@ -32,7 +32,7 @@ type Message struct {
 func (msg *Message) ToBytes() (bytes []byte) {
 	bytes = make([]byte, MessageOverhead, len(msg.Message))
 	var cursor int
-	copy(bytes[:schnorr.PubkeyLen], msg.Sender[:])
+	copy(bytes[:schnorr.PubkeyLen], msg.From[:])
 	cursor += schnorr.PubkeyLen
 	copy(bytes[cursor:cursor+NonceLen], msg.Nonce[:])
 	cursor += NonceLen
@@ -52,7 +52,7 @@ func FromBytes(msg []byte) (message *Message, e error) {
 	}
 	payloadLen := msgLen - MessageOverhead
 	var cursor int
-	copy(message.Sender[:], msg[cursor:cursor+schnorr.PubkeyLen])
+	copy(message.From[:], msg[cursor:cursor+schnorr.PubkeyLen])
 	cursor += schnorr.PubkeyLen
 	copy(message.Nonce[:], msg[cursor:cursor+NonceLen])
 	cursor += NonceLen

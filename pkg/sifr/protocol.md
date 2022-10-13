@@ -2,30 +2,17 @@
 
 All nodes advertise a public key for which they have a private key that can be used to send secure messages to them with a shared secret created by Elliptic Curve Diffie-Hellman key exchange.
 
-Sending initial message:
+This table shows the sequence of events from left to right as relates to the fields of the messages:
 
-- Select recipient and acquire publicly advertised public key - RPub1
-- To: field with RPub1 fingerprint
-- Generate new private key for encryption - SPriv1
-- Signed: Sign cleartext message with SPriv1
-- From: field with SPub1 from SPriv1
-- Generate cipher1 from RPub1 and SPriv1
-- Nonce: generate new nonce
-- Message: encrypted by Cipher1
+|            Field | Initiator                                                    | Correspondent                                                | Initiator                                                   | Correspondent                                                |
+| ---------------: | :----------------------------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------- | ------------------------------------------------------------ |
+|               To | Fingerprint of CPub1 (advertised)                            | Fingerprint of IPub1                                         | Fingerprint of CPub2                                        | Fingerprint of IPub2                                         |
+|             From | Generate IPriv1, then IPub1 in this field                    | Generate CPriv2, then CPub2 for this field                   | Generate IPriv2, then IPub2 for this field                  | Generate CPriv3, then CPub3 in this field                    |
+|          Message | Signed with IPriv1, encrypted with Cipher1 from CPub1 and IPub1 ECDH | Signed with CPriv2, encrypted with Cipher2 from CPriv2 and IPub1 | Signed with IPriv2, encrypted Cipher3 from IPriv2 and CPub2 | Signed with CPRiv3, encrypted with Cipher4 from IPub2 and CPriv3 |
+|          Expires |                                                              | List of fingerprints of public keys in From fields seen at time of sending | “”                                                          | “”                                                           |
+| Packet Signature | Whole message data signed by IPriv1                          | Whole message data signed by CPRiv2                          | Whole message data signed by IPriv2                         | Whole message data signed by CPriv3                          |
 
-Receiver receives message:
+In the case of sending multiple messages before reply, the party generates new ciphers for each one, and cipher is created from known public key of the other party.
 
-- Recognise fingerprint to match RPub1
-- Combine message Spub1 with RPriv1 to get cipher.
-- Decrypt message
+All keys generated for such messages must be kept for a time. When a reply is composed, all known received key fingerprints are appended to end of message to indicate they can be purged, in addition to the fingerprint in the To field.
 
-Receiver needs to send message back based on message received:
-
-- Receiver public key becomes the public key in the ECDH cipher generation: RPub2
-- Generate new private key for reply message: SPriv2
-- Sign message with SPriv2
-- Generate public key from private key: SPub2
-- Generate new message Cipher2
-- Encrypt reply message with Cipher2
-- To: field with fingerprint of RPub2
-- 
