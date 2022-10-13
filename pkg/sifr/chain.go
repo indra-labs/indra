@@ -52,7 +52,7 @@ func Initiate(msg []byte,
 	cipherText = gcm.Seal(cipherText, c.Msg.Nonce[:], msg, nil)
 	m = &Message{
 		To:        recipient.Fingerprint(),
-		Sender:    c.LastPrivkey.Pubkey().Serialize(),
+		From:      c.LastPrivkey.Pubkey().Serialize(),
 		Nonce:     GetNonce(),
 		Message:   cipherText,
 		Signature: sig.Serialize(),
