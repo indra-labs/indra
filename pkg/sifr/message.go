@@ -57,11 +57,11 @@ type Outbound struct {
 	// From is the pubkey corresponding to the private key used in the ECDH
 	// key exchange.
 	From *schnorr.Privkey
-	// DataLen is the length of the payload of this message.
-	Data []byte
 	// Expires are the fingerprints of public keys that the correspondent
 	// can now discard as they will not be used again.
 	Expires []*schnorr.Pubkey
+	// Data is the payload of this message.
+	Data []byte
 }
 
 const MessageOverhead = schnorr.FingerprintLen + schnorr.PubkeyLen + NonceLen +
