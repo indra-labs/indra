@@ -33,7 +33,7 @@ func TestPrivkey_SignVerify(t *testing.T) {
 	if n, err = rand.Read(message); log.E.Chk(err) && n != msgSize {
 		t.Error(err)
 	}
-	messageHash := SHA256D(message)
+	messageHash := SHA256(message)
 	var prv1 *Privkey
 	if prv1, err = GeneratePrivkey(); log.I.Chk(err) {
 		t.Error(err)
@@ -87,7 +87,7 @@ func TestSignature_Serialize(t *testing.T) {
 	if n, err = rand.Read(message); log.E.Chk(err) && n != msgSize {
 		t.Error(err)
 	}
-	messageHash := SHA256D(message)
+	messageHash := SHA256(message)
 	var prv1 *Privkey
 	if prv1, err = GeneratePrivkey(); log.I.Chk(err) {
 		t.Error(err)
@@ -142,7 +142,7 @@ func BenchmarkGenerateSign(b *testing.B) {
 	if n, err = rand.Read(message); log.E.Chk(err) && n != msgSize {
 		return
 	}
-	messageHash := SHA256D(message)
+	messageHash := SHA256(message)
 	for n := 0; n < b.N; n++ {
 		var prv1 *Privkey
 		if prv1, err = GeneratePrivkey(); log.I.Chk(err) {
@@ -153,6 +153,7 @@ func BenchmarkGenerateSign(b *testing.B) {
 		}
 	}
 }
+
 func BenchmarkGenerateSignVerify(b *testing.B) {
 	const msgSize = 4096
 	message := make([]byte, msgSize)
@@ -161,7 +162,7 @@ func BenchmarkGenerateSignVerify(b *testing.B) {
 	if n, err = rand.Read(message); log.E.Chk(err) && n != msgSize {
 		return
 	}
-	messageHash := SHA256D(message)
+	messageHash := SHA256(message)
 	for n := 0; n < b.N; n++ {
 		var prv1 *Privkey
 		if prv1, err = GeneratePrivkey(); log.I.Chk(err) {

@@ -51,8 +51,12 @@ func (h Hash) Zero() {
 
 // SHA256D runs a standard double SHA256 hash and does all the slicing for you.
 func SHA256D(b []byte) []byte {
+	return SHA256(SHA256(b))
+}
+
+// SHA256 runs a standard SHA256 hash and does all the slicing for you.
+func SHA256(b []byte) []byte {
 	h := sha256.Sum256(b)
-	h = sha256.Sum256(h[:])
 	return h[:]
 }
 
