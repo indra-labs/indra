@@ -138,7 +138,7 @@ func PubkeyFromBytes(b []byte) (pub *Pubkey, e error) {
 func (prv *Privkey) ECDH(pub *Pubkey) Hash {
 	pr := (*secp256k1.PrivateKey)(prv)
 	pu := (*secp256k1.PublicKey)(pub)
-	b := sha256.Double(secp256k1.GenerateSharedSecret(pr, pu))
+	b := sha256.Hash(secp256k1.GenerateSharedSecret(pr, pu))
 	return b
 }
 
