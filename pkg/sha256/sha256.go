@@ -1,6 +1,8 @@
 package sha256
 
-import "crypto/sha256"
+import (
+	"github.com/minio/sha256-simd"
+)
 
 // Double runs a standard double SHA256 hash and does all the slicing for you.
 func Double(b []byte) []byte {

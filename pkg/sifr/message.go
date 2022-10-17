@@ -111,7 +111,6 @@ func (d *Dialog) Message(payload []byte) (wf *WireFrame, e error) {
 		return
 	}
 	wm.Signature = *sig.Serialize()
-	wm.Serialize()
 	return
 }
 
