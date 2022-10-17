@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/Indra-Labs/indra/pkg/schnorr"
+	"github.com/Indra-Labs/indra/pkg/sha256"
 )
 
 func TestEncryptDecryptMessage(t *testing.T) {
@@ -16,7 +17,7 @@ func TestEncryptDecryptMessage(t *testing.T) {
 	if n, e = rand.Read(message); log.E.Chk(e) && n != msgSize {
 		t.Error(e)
 	}
-	messageHash := schnorr.SHA256(message)
+	messageHash := sha256.Hash(message)
 	var prv1, prv2 *schnorr.Privkey
 	var pub1, pub2 *schnorr.Pubkey
 	if prv1, e = schnorr.GeneratePrivkey(); log.I.Chk(e) {
@@ -38,7 +39,7 @@ func TestEncryptDecryptMessage(t *testing.T) {
 	if log.E.Chk(e) {
 		t.Error(e)
 	}
-	decryptHash := schnorr.SHA256(decryptMessage)
+	decryptHash := sha256.Hash(decryptMessage)
 	if bytes.Compare(messageHash, decryptHash) != 0 {
 		t.Error("encryption/decryption failed")
 	}
