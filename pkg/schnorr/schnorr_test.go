@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"crypto/rand"
 	"testing"
+
+	"github.com/Indra-Labs/indra/pkg/sha256"
 )
 
 func TestPrivkey_ECDH(t *testing.T) {
@@ -33,7 +35,7 @@ func TestPrivkey_SignVerify(t *testing.T) {
 	if n, err = rand.Read(message); log.E.Chk(err) && n != msgSize {
 		t.Error(err)
 	}
-	messageHash := SHA256(message)
+	messageHash := sha256.Hash(message)
 	var prv1 *Privkey
 	if prv1, err = GeneratePrivkey(); log.I.Chk(err) {
 		t.Error(err)
@@ -87,7 +89,7 @@ func TestSignature_Serialize(t *testing.T) {
 	if n, err = rand.Read(message); log.E.Chk(err) && n != msgSize {
 		t.Error(err)
 	}
-	messageHash := SHA256(message)
+	messageHash := sha256.Hash(message)
 	var prv1 *Privkey
 	if prv1, err = GeneratePrivkey(); log.I.Chk(err) {
 		t.Error(err)
@@ -129,7 +131,7 @@ func BenchmarkSHA256D(b *testing.B) {
 		return
 	}
 	for n := 0; n < b.N; n++ {
-		tmp = SHA256D(b32[:])
+		tmp = sha256.Double(b32[:])
 		copy(b32[:], tmp)
 	}
 }
@@ -142,7 +144,7 @@ func BenchmarkGenerateSign(b *testing.B) {
 	if n, err = rand.Read(message); log.E.Chk(err) && n != msgSize {
 		return
 	}
-	messageHash := SHA256(message)
+	messageHash := sha256.Hash(message)
 	for n := 0; n < b.N; n++ {
 		var prv1 *Privkey
 		if prv1, err = GeneratePrivkey(); log.I.Chk(err) {
@@ -162,7 +164,7 @@ func BenchmarkGenerateSignVerify(b *testing.B) {
 	if n, err = rand.Read(message); log.E.Chk(err) && n != msgSize {
 		return
 	}
-	messageHash := SHA256(message)
+	messageHash := sha256.Hash(message)
 	for n := 0; n < b.N; n++ {
 		var prv1 *Privkey
 		if prv1, err = GeneratePrivkey(); log.I.Chk(err) {

@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/Indra-Labs/indra/pkg/schnorr"
+	"github.com/Indra-Labs/indra/pkg/sha256"
 )
 
 type Nonce [aes.BlockSize]byte
@@ -35,7 +36,7 @@ type Dialog struct {
 	// counterparty sending them in the Expires field.
 	Used []*schnorr.Privkey
 	// UsedFingerprints are 1:1 mapped to Used private keys for fast
-	// recognition.
+	// recognition. These have been sent in Expires field.
 	UsedFingerprints []schnorr.Fingerprint
 }
 
@@ -59,9 +60,59 @@ type WireFrame struct {
 	// Expires are the fingerprints of public keys that the correspondent
 	// can now discard as they will not be used again.
 	Expires []schnorr.Fingerprint
+	// Seen are all the keys excluding the To key to signal these can be
+	// deleted.
+	Seen []schnorr.Fingerprint
 	// Data is the payload of the message, which is wrapped in a
 	// WireMessage.
-	Data []byte
+	Data WireMessage
+}
+
+func (d *Dialog) Message(payload []byte) (wf *WireFrame, e error) {
+	d.Mutex.Lock()
+	defer d.Mutex.Unlock()
+	// We always send new messages to the last known correspondent pubkey.
+	tofp := d.LastIn.Fingerprint()
+	wf = &WireFrame{To: &tofp}
+	var prv *schnorr.Privkey
+	// generate the sender private key
+	if prv, e = schnorr.GeneratePrivkey(); log.I.Chk(e) {
+		return
+	}
+	// Move the last outbound private key into the Used field.
+	if d.LastOut != nil {
+		d.Used = append(d.Used, d.LastOut)
+	}
+	// Set current key to the last used.
+	d.LastOut = prv
+	// Fill in the 'From' key to the pubkey of the new private key.
+	pub := prv.Pubkey()
+	wf.From = pub.Serialize()
+	if len(d.Used) > 0 {
+		for i := range d.Used {
+			wf.Expires = append(wf.Expires,
+				d.Used[i].Pubkey().Fingerprint())
+		}
+	}
+	if len(d.Seen) > 0 {
+		for i := range d.Seen {
+			wf.Seen = append(wf.Seen, d.Seen[i].Fingerprint())
+		}
+	}
+	secret := prv.ECDH(d.LastIn)
+	var em *EncryptedMessage
+	if em, e = EncryptMessage(secret, payload, prv); log.E.Chk(e) {
+		return
+	}
+	wm := &WireMessage{Payload: em.Serialize()}
+	hash := sha256.Hash(wm.Payload)
+	var sig *schnorr.Signature
+	if sig, e = prv.Sign(hash); log.E.Chk(e) {
+		return
+	}
+	wm.Signature = *sig.Serialize()
+	wm.Serialize()
+	return
 }
 
 // WireMessage is simply a wrapper that provides tamper-proofing and
@@ -69,6 +120,19 @@ type WireFrame struct {
 type WireMessage struct {
 	Payload   []byte
 	Signature schnorr.SignatureBytes
+}
+
+func (wm *WireMessage) Serialize() (z []byte) {
+	z = append(wm.Payload, wm.Signature[:]...)
+	return
+}
+
+func Deserialize(b []byte) (wm *WireMessage) {
+	wm = &WireMessage{}
+	sigStart := len(b) - schnorr.SigLen
+	wm.Payload = b[:sigStart]
+	copy(wm.Signature[:], b[sigStart:])
+	return
 }
 
 // EncryptedMessage is a form of WireMessage that is encrypted. The cipher must
@@ -90,7 +154,7 @@ func EncryptMessage(secret schnorr.Hash, message []byte,
 		return
 	}
 	var sig *schnorr.Signature
-	if sig, e = signingKey.Sign(schnorr.SHA256(message)); log.E.Chk(e) {
+	if sig, e = signingKey.Sign(sha256.Hash(message)); log.E.Chk(e) {
 		return
 	}
 	var block cipher.Block
@@ -129,7 +193,7 @@ func DecryptMessage(secret schnorr.Hash, message []byte,
 	if sig, e = schnorr.ParseSignature(s); log.E.Chk(e) {
 		return
 	}
-	if !sig.Verify(schnorr.SHA256(m), pub) {
+	if !sig.Verify(sha256.Hash(m), pub) {
 		e = errors.New("message signature verification failed")
 		return
 	}

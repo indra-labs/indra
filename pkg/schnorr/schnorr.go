@@ -1,11 +1,11 @@
 package schnorr
 
 import (
-	"crypto/sha256"
 	"fmt"
 
+	"github.com/Indra-Labs/indra/pkg/schnorr/schnorr"
+	"github.com/Indra-Labs/indra/pkg/sha256"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	"github.com/decred/dcrd/dcrec/secp256k1/v4/schnorr"
 )
 
 const (
@@ -49,27 +49,16 @@ func (h Hash) Zero() {
 	}
 }
 
-// SHA256D runs a standard double SHA256 hash and does all the slicing for you.
-func SHA256D(b []byte) []byte {
-	return SHA256(SHA256(b))
-}
-
-// SHA256 runs a standard SHA256 hash and does all the slicing for you.
-func SHA256(b []byte) []byte {
-	h := sha256.Sum256(b)
-	return h[:]
-}
-
 // Fingerprint generates a fingerprint from a Pubkey
 func (pub Pubkey) Fingerprint() (fp Fingerprint) {
-	h := SHA256D(pub.Serialize()[:])
+	h := sha256.Double(pub.Serialize()[:])
 	copy(fp[:], h[:FingerprintLen])
 	return
 }
 
 func (pub PubkeyBytes) Fingerprint() (fp *Fingerprint) {
 	fp = &Fingerprint{}
-	h := SHA256D(pub[:])
+	h := sha256.Double(pub[:])
 	copy(fp[:], h[:FingerprintLen])
 	return
 
@@ -149,7 +138,7 @@ func PubkeyFromBytes(b []byte) (pub *Pubkey, e error) {
 func (prv *Privkey) ECDH(pub *Pubkey) Hash {
 	pr := (*secp256k1.PrivateKey)(prv)
 	pu := (*secp256k1.PublicKey)(pub)
-	b := SHA256D(secp256k1.GenerateSharedSecret(pr, pu))
+	b := sha256.Double(secp256k1.GenerateSharedSecret(pr, pu))
 	return b
 }
 
