@@ -1,4 +1,4 @@
-package schnorr
+package keys
 
 import (
 	"bytes"

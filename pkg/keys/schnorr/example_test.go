@@ -9,7 +9,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/Indra-Labs/indra/pkg/schnorr/schnorr"
+	"github.com/Indra-Labs/indra/pkg/keys/schnorr"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 
