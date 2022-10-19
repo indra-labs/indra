@@ -86,8 +86,8 @@ func (d *Dialog) Send(payload []byte) (wf *Frame, e error) {
 	// in the receiver function.
 	if len(d.Used) > 0 {
 		for i := range d.Used {
-			wf.Expires = append(wf.Expires,
-				d.Used[i].Pubkey().Fingerprint())
+			fp := d.Used[i].Pubkey().Fingerprint()
+			wf.Expires = append(wf.Expires, fp)
 		}
 	}
 	// Seen keys signal to the correspondent they can discard the related
