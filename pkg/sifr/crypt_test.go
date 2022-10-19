@@ -3,6 +3,7 @@ package sifr
 import (
 	"bytes"
 	"crypto/rand"
+	mrand "math/rand"
 	"testing"
 
 	"github.com/Indra-Labs/indra/pkg/schnorr"
@@ -10,7 +11,8 @@ import (
 )
 
 func TestEncryptDecryptMessage(t *testing.T) {
-	const msgSize = 4096
+	// Use a random length every time to make sure padding works.
+	msgSize := mrand.Intn(4096) + 1024
 	payload := make([]byte, msgSize)
 	var e error
 	var n int
@@ -28,7 +30,9 @@ func TestEncryptDecryptMessage(t *testing.T) {
 	if message, e = NewMessage(payload, prv1); log.I.Chk(e) {
 		t.Error(e)
 	}
-	log.I.S(message.Signature)
+	if e = message.Verify(pub1); log.E.Chk(e) {
+		t.Error("message failed verification with pubkey")
+	}
 	if prv2, e = schnorr.GeneratePrivkey(); log.I.Chk(e) {
 		t.Error(e)
 	}
@@ -40,12 +44,15 @@ func TestEncryptDecryptMessage(t *testing.T) {
 	if log.E.Chk(e) {
 		t.Error(e)
 	}
-	var decryptMessage *Message
-	if decryptMessage, e = DecryptMessage(secret2,
-		em.Serialize()); log.E.Chk(e) {
+	serial := em.Serialize()
+	var cr *Crypt
+	if cr, e = DeserializeCrypt(serial); log.E.Chk(e) {
 		t.Error(e)
 	}
-	log.I.S(decryptMessage.Signature)
+	var decryptMessage *Message
+	if decryptMessage, e = cr.Decrypt(secret2); log.E.Chk(e) {
+		t.Error(e)
+	}
 	if e = decryptMessage.Verify(pub1); log.E.Chk(e) {
 		t.Error("message failed verification with pubkey")
 	}
