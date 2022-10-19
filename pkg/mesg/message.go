@@ -7,14 +7,13 @@ import (
 
 	"github.com/Indra-Labs/indra/pkg/keys"
 	"github.com/Indra-Labs/indra/pkg/sha256"
-	"github.com/Indra-Labs/indra/pkg/sigs"
 )
 
 // Message is simply a wrapper that provides tamper-proofing and
 // authentication based on schnorr signatures.
 type Message struct {
 	Payload   []byte
-	Signature sigs.SignatureBytes
+	Signature keys.SignatureBytes
 }
 
 // New creates a new message with integrity/authentication using a
@@ -24,7 +23,7 @@ type Message struct {
 // there is no further allocations in the Serialize function or a following
 // encryption step.
 func New(payload []byte, prv *keys.Privkey) (m *Message, e error) {
-	var sig *sigs.Signature
+	var sig *keys.Signature
 	if sig, e = prv.Sign(sha256.Hash(payload)); log.E.Chk(e) {
 		return
 	}
@@ -36,7 +35,7 @@ func New(payload []byte, prv *keys.Privkey) (m *Message, e error) {
 // there is an error with the signature or the message does not validate an
 // error is returned.
 func (m *Message) Verify(pub *keys.Pubkey) (e error) {
-	var sig *sigs.Signature
+	var sig *keys.Signature
 	if sig, e = m.Signature.Deserialize(); log.E.Chk(e) {
 		return
 	}
@@ -67,8 +66,9 @@ func (m *Message) Serialize() (z []byte) {
 		padHash := sha256.Hash(m.Payload[:hashDataLen])
 		padBytes = padHash[:padLen]
 	}
-	z = append(append(append(mLenBytes, m.Payload...),
-		padBytes...), m.Signature[:]...)
+	z = append(mLenBytes, m.Payload...)
+	z = append(z, padBytes...)
+	z = append(z, m.Signature[:]...)
 	return
 }
 

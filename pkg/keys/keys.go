@@ -13,15 +13,15 @@ const (
 	PubkeyLen  = schnorr.PubKeyBytesLen
 )
 
-// Privkey is a private key
+// Privkey is a private key.
 type Privkey secp256k1.PrivateKey
 type PrivkeyBytes [PrivkeyLen]byte
 
-// Pubkey is a public key
+// Pubkey is a public key.
 type Pubkey secp256k1.PublicKey
 type PubkeyBytes [PubkeyLen]byte
 
-// GeneratePrivkey generates a private key
+// GeneratePrivkey generates a private key.
 func GeneratePrivkey() (prv *Privkey, e error) {
 	var p *secp256k1.PrivateKey
 	if p, e = secp256k1.GeneratePrivateKey(); log.I.Chk(e) {
@@ -31,12 +31,12 @@ func GeneratePrivkey() (prv *Privkey, e error) {
 	return
 }
 
-// Zero zeroes out a private key to prevent key scraping from memory
+// Zero zeroes out a private key to prevent key scraping from memory.
 func (prv *Privkey) Zero() {
 	(*secp256k1.PrivateKey)(prv).Zero()
 }
 
-// Pubkey generates a public key from the Privkey
+// Pubkey generates a public key from the Privkey.
 func (prv *Privkey) Pubkey() *Pubkey {
 	return (*Pubkey)((*secp256k1.PrivateKey)(prv).PubKey())
 }
@@ -51,14 +51,14 @@ func PubkeyFromBytes(b []byte) (pub *Pubkey, e error) {
 	return
 }
 
-// Fingerprint generates a fingerprint from a Pubkey
+// Fingerprint generates a fingerprint from a Pubkey.
 func (pub Pubkey) Fingerprint() (fp fing.Fingerprint) {
 	h := sha256.Double(pub.Serialize()[:])
 	copy(fp[:], h[:fing.FingerprintLen])
 	return
 }
 
-// Fingerprint generates a fingerprint from a PubkeyBytes
+// Fingerprint generates a fingerprint from a PubkeyBytes.
 func (pb PubkeyBytes) Fingerprint() (fp *fing.Fingerprint) {
 	fp = &fing.Fingerprint{}
 	h := sha256.Double(pb[:])
@@ -66,14 +66,14 @@ func (pb PubkeyBytes) Fingerprint() (fp *fing.Fingerprint) {
 	return
 }
 
-// Serialize returns the PrivkeyBytes serialized form
+// Serialize returns the PrivkeyBytes serialized form.
 func (prv *Privkey) Serialize() (b *PrivkeyBytes) {
 	b = &PrivkeyBytes{}
 	copy(b[:], (*secp256k1.PrivateKey)(prv).Serialize())
 	return
 }
 
-// PrivkeyFromBytes converts a byte slice into a private key
+// PrivkeyFromBytes converts a byte slice into a private key.
 func PrivkeyFromBytes(b []byte) (prv *Privkey) {
 	var p *secp256k1.PrivateKey
 	p = secp256k1.PrivKeyFromBytes(b)
@@ -88,7 +88,7 @@ func (pb *PrivkeyBytes) Deserialize() (prv *Privkey) {
 var zero PrivkeyBytes
 
 // Zero zeroes out a private key in serial form. Note that sliced [:] form
-// refers to the same bytes so they are also zeroed (todo: check this is true)
+// refers to the same bytes, so they are also zeroed.
 func (pb *PrivkeyBytes) Zero() {
 	copy(pb[:], zero[:])
 }

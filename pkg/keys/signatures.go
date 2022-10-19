@@ -15,7 +15,8 @@ func (prv *Privkey) Sign(hash hasj.Hash) (sig *Signature, e error) {
 		return
 	}
 	var s *schnorr.Signature
-	if s, e = schnorr.Sign((*secp256k1.PrivateKey)(prv), hash); log.E.Chk(e) {
+	p := (*secp256k1.PrivateKey)(prv)
+	if s, e = schnorr.Sign(p, hash); log.E.Chk(e) {
 		return
 	}
 	sig = (*Signature)(s)
@@ -35,8 +36,8 @@ func (sig *Signature) Verify(hash hasj.Hash, pub *Pubkey) bool {
 	if log.E.Chk(hash.Valid()) {
 		return false
 	}
-	return (*schnorr.Signature)(sig).
-		Verify(hash, (*secp256k1.PublicKey)(pub))
+	s := (*schnorr.Signature)(sig)
+	return s.Verify(hash, (*secp256k1.PublicKey)(pub))
 }
 
 func (sig *Signature) Serialize() (s *SignatureBytes) {
