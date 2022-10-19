@@ -38,13 +38,16 @@ func (cr *Crypt) Serialize() (b []byte) {
 	return
 }
 
-func DeserializeCrypt(b []byte) (cr *Crypt, e error) {
-	if len(b) < NonceSize {
-		e = fmt.Errorf("message too short to be a Crypt: %d", len(b))
+func DeserializeCrypt(message []byte) (cr *Crypt, e error) {
+	if len(message) < NonceSize {
+		e = fmt.Errorf("message too short to be a Crypt: %d",
+			len(message))
 		return
 	}
-	cr = &Crypt{Message: b[NonceSize:]}
-	copy(cr.Nonce[:], b[:NonceSize])
+	nonce := &Nonce{}
+	copy(nonce[:], message[:NonceSize])
+	msg := message[NonceSize:]
+	cr = &Crypt{Nonce: nonce, Message: msg}
 	return
 }
 
@@ -60,36 +63,5 @@ func (cr *Crypt) Decrypt(secret schnorr.Hash) (m *Message, e error) {
 	stream.XORKeyStream(cr.Message, cr.Message)
 	if m, e = DeserializeMessage(cr.Message); log.E.Chk(e) {
 	}
-	return
-}
-
-func DecryptMessage(secret schnorr.Hash, message []byte) (out *Message,
-	e error) {
-
-	if len(message) < NonceSize+schnorr.SigLen {
-		e = fmt.Errorf("message shorter than nonce + signature, "+
-			"minimum %d got %d",
-			NonceSize+schnorr.SigLen, len(message))
-		log.E.Chk(e)
-		return
-	}
-	if e = secret.Valid(); log.E.Chk(e) {
-		return
-	}
-	nonce := &Nonce{}
-	copy(nonce[:], message[:NonceSize])
-	msg := message[NonceSize:]
-	em := &Crypt{Nonce: nonce, Message: msg}
-	var block cipher.Block
-	if block, e = aes.NewCipher(secret); log.E.Chk(e) {
-		return
-	}
-	stream := cipher.NewCTR(block, nonce[:])
-	stream.XORKeyStream(em.Message, em.Message)
-	sigStart := len(msg) - schnorr.SigLen
-	m, s := em.Message[:sigStart], em.Message[sigStart:]
-	var sig schnorr.SignatureBytes
-	copy(sig[:], s)
-	out = &Message{Payload: m, Signature: sig}
 	return
 }

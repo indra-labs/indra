@@ -1,6 +1,7 @@
 package sifr
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
 
@@ -44,23 +45,45 @@ func (m *Message) Verify(pub *schnorr.Pubkey) (e error) {
 	return
 }
 
-// Serialize turns the message into a generic byte slice.
+// Serialize turns the message into a generic byte slice. The message has a 64
+// bit length prefix in order to pad to 32 byte segments, maintaining processor
+// word alignment and making the whole message align to both hash size and
+// AES block size.
 func (m *Message) Serialize() (z []byte) {
-	z = append(m.Payload, m.Signature[:]...)
+	// Using 64 bits of length prefix to keep processor word alignment.
+	mLen := len(m.Payload)
+	padLen := 32 - (mLen % 32)
+	mLenBytes := make([]byte, 8)
+	binary.LittleEndian.PutUint64(mLenBytes, uint64(mLen))
+	// Pad the data out to whole divisible amounts of 256 bits with the
+	// hash of the first 32 bytes of the message.
+	var padBytes []byte
+	if padLen > 0 {
+		hashDataLen := 32
+		if len(m.Payload) < 32 {
+			hashDataLen = len(m.Payload)
+		}
+		padHash := sha256.Hash(m.Payload[:hashDataLen])
+		padBytes = padHash[:padLen]
+	}
+	z = append(append(append(mLenBytes, m.Payload...),
+		padBytes...), m.Signature[:]...)
 	return
 }
 
 // DeserializeMessage accepts a slice of bytes as produced by Serialize and
 // returns a Message. This will allocate extra space for the Signature array.
 func DeserializeMessage(b []byte) (m *Message, e error) {
-	if len(b) < schnorr.SigLen {
+	if len(b) < 8 {
 		e = fmt.Errorf("message to short, size: %d minimal: %d",
-			len(b), schnorr.SigLen)
+			len(b), 8)
 		return
 	}
+	payloadLen := binary.LittleEndian.Uint64(b[:8])
+	padLen := 32 - (payloadLen % 32)
 	m = &Message{}
-	sigStart := len(b) - schnorr.SigLen
-	m.Payload = b[:sigStart]
+	sigStart := 8 + payloadLen + padLen
+	m.Payload = b[8 : payloadLen+8]
 	copy(m.Signature[:], b[sigStart:])
 	return
 }
