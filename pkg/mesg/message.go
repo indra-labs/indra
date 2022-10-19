@@ -1,4 +1,4 @@
-package sifr
+package mesg
 
 import (
 	"encoding/binary"
@@ -16,13 +16,13 @@ type Message struct {
 	Signature schnorr.SignatureBytes
 }
 
-// NewMessage creates a new message with integrity/authentication using a
+// New creates a new message with integrity/authentication using a
 // schnorr signature.
 //
 // It is advised to use buffers for the payload with some extra capacity so that
 // there is no further allocations in the Serialize function or a following
 // encryption step.
-func NewMessage(payload []byte, prv *schnorr.Privkey) (m *Message, e error) {
+func New(payload []byte, prv *schnorr.Privkey) (m *Message, e error) {
 	var sig *schnorr.Signature
 	if sig, e = prv.Sign(sha256.Hash(payload)); log.E.Chk(e) {
 		return
