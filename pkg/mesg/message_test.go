@@ -7,7 +7,7 @@ import (
 	mrand "math/rand"
 	"testing"
 
-	"github.com/Indra-Labs/indra/pkg/schnorr"
+	"github.com/Indra-Labs/indra/pkg/keys"
 )
 
 func TestSerializeDeserializeMessage(t *testing.T) {
@@ -19,9 +19,9 @@ func TestSerializeDeserializeMessage(t *testing.T) {
 	if n, e = rand.Read(payload); log.E.Chk(e) && n != msgSize {
 		t.Error(e)
 	}
-	var prv1 *schnorr.Privkey
-	var pub1 *schnorr.Pubkey
-	if prv1, e = schnorr.GeneratePrivkey(); log.I.Chk(e) {
+	var prv1 *keys.Privkey
+	var pub1 *keys.Pubkey
+	if prv1, e = keys.GeneratePrivkey(); log.I.Chk(e) {
 		t.Error(e)
 	}
 	pub1 = prv1.Pubkey()
@@ -54,8 +54,8 @@ func BenchmarkSerializeDeserializeMessage(b *testing.B) {
 	if n, e = rand.Read(payload); log.E.Chk(e) && n != msgSize {
 
 	}
-	var prv1 *schnorr.Privkey
-	if prv1, e = schnorr.GeneratePrivkey(); log.I.Chk(e) {
+	var prv1 *keys.Privkey
+	if prv1, e = keys.GeneratePrivkey(); log.I.Chk(e) {
 
 	}
 	// Use a random length every time to ensure padding works.

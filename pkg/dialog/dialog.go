@@ -3,8 +3,9 @@ package dialog
 import (
 	"sync"
 
+	"github.com/Indra-Labs/indra/pkg/fing"
+	"github.com/Indra-Labs/indra/pkg/keys"
 	"github.com/Indra-Labs/indra/pkg/mesg"
-	"github.com/Indra-Labs/indra/pkg/schnorr"
 	"github.com/Indra-Labs/indra/pkg/sifr"
 )
 
@@ -13,18 +14,18 @@ type Dialog struct {
 	sync.Mutex
 	// LastIn is the newest pubkey seen in a received message from the
 	// correspondent.
-	LastIn *schnorr.Pubkey
+	LastIn *keys.Pubkey
 	// LastOut is the newest privkey used in an outbound message.
-	LastOut *schnorr.Privkey
+	LastOut *keys.Privkey
 	// Seen are the keys that have been seen since the last new message sent
 	// out to the correspondent.
-	Seen []*schnorr.Pubkey
+	Seen []*keys.Pubkey
 	// Used are the recently used keys that have not been invalidated by the
 	// counterparty sending them in the Expires field.
-	Used []*schnorr.Privkey
+	Used []*keys.Privkey
 	// UsedFingerprints are 1:1 mapped to Used private keys for fast
 	// recognition. These have been sent in Expires field.
-	UsedFingerprints []schnorr.Fingerprint
+	UsedFingerprints []fing.Fingerprint
 	// SegmentSize is the size of packets used in the Dialog. Anything
 	// larger will be segmented and potentially augmented with Reed Solomon
 	// parity shards for retransmit avoidance.
@@ -35,7 +36,7 @@ type Dialog struct {
 // For the initiator, the pubkey is the current one advertised by the
 // correspondent, and for a correspondent, this pubkey is from the first one
 // appearing in the initial message.
-func New(pub *schnorr.Pubkey) (d *Dialog) {
+func New(pub *keys.Pubkey) (d *Dialog) {
 	d = &Dialog{LastIn: pub}
 	return
 }
@@ -44,16 +45,16 @@ func New(pub *schnorr.Pubkey) (d *Dialog) {
 // inside a Message and the payload is also inside a Message.
 type Frame struct {
 	// To is the fingerprint of the pubkey used in the ECDH key exchange.
-	To *schnorr.Fingerprint
+	To *fing.Fingerprint
 	// From is the pubkey corresponding to the private key used in the ECDH
 	// key exchange.
-	From *schnorr.PubkeyBytes
+	From *keys.PubkeyBytes
 	// Expires are the fingerprints of public keys that the correspondent
 	// can now discard as they will not be used again.
-	Expires []schnorr.Fingerprint
+	Expires []fing.Fingerprint
 	// Seen are all the keys excluding the To key to signal these can be
 	// deleted.
-	Seen []schnorr.Fingerprint
+	Seen []fing.Fingerprint
 	// Seq specifies the segment number of the message.
 	Seq uint32
 	// Data is a Crypt containing a Message.
@@ -63,8 +64,8 @@ type Frame struct {
 // Send issues a new message.
 func (d *Dialog) Send(payload []byte) (wf *Frame, e error) {
 	// generate the sender private key
-	var prv *schnorr.Privkey
-	if prv, e = schnorr.GeneratePrivkey(); log.I.Chk(e) {
+	var prv *keys.Privkey
+	if prv, e = keys.GeneratePrivkey(); log.I.Chk(e) {
 		return
 	}
 	pub := prv.Pubkey()

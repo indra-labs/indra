@@ -5,15 +5,16 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Indra-Labs/indra/pkg/schnorr"
+	"github.com/Indra-Labs/indra/pkg/keys"
 	"github.com/Indra-Labs/indra/pkg/sha256"
+	"github.com/Indra-Labs/indra/pkg/sigs"
 )
 
 // Message is simply a wrapper that provides tamper-proofing and
 // authentication based on schnorr signatures.
 type Message struct {
 	Payload   []byte
-	Signature schnorr.SignatureBytes
+	Signature sigs.SignatureBytes
 }
 
 // New creates a new message with integrity/authentication using a
@@ -22,8 +23,8 @@ type Message struct {
 // It is advised to use buffers for the payload with some extra capacity so that
 // there is no further allocations in the Serialize function or a following
 // encryption step.
-func New(payload []byte, prv *schnorr.Privkey) (m *Message, e error) {
-	var sig *schnorr.Signature
+func New(payload []byte, prv *keys.Privkey) (m *Message, e error) {
+	var sig *sigs.Signature
 	if sig, e = prv.Sign(sha256.Hash(payload)); log.E.Chk(e) {
 		return
 	}
@@ -34,8 +35,8 @@ func New(payload []byte, prv *schnorr.Privkey) (m *Message, e error) {
 // Verify checks the signature on the message against a given public key. If
 // there is an error with the signature or the message does not validate an
 // error is returned.
-func (m *Message) Verify(pub *schnorr.Pubkey) (e error) {
-	var sig *schnorr.Signature
+func (m *Message) Verify(pub *keys.Pubkey) (e error) {
+	var sig *sigs.Signature
 	if sig, e = m.Signature.Deserialize(); log.E.Chk(e) {
 		return
 	}

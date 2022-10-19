@@ -8,8 +8,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/Indra-Labs/indra/pkg/keys"
 	"github.com/Indra-Labs/indra/pkg/mesg"
-	"github.com/Indra-Labs/indra/pkg/schnorr"
 	"github.com/Indra-Labs/indra/pkg/sha256"
 )
 
@@ -23,9 +23,9 @@ func TestEncryptDecryptMessage(t *testing.T) {
 		t.Error(e)
 	}
 	messageHash := sha256.Hash(payload)
-	var prv1, prv2 *schnorr.Privkey
-	var pub1, pub2 *schnorr.Pubkey
-	if prv1, e = schnorr.GeneratePrivkey(); log.I.Chk(e) {
+	var prv1, prv2 *keys.Privkey
+	var pub1, pub2 *keys.Pubkey
+	if prv1, e = keys.GeneratePrivkey(); log.I.Chk(e) {
 		t.Error(e)
 	}
 	pub1 = prv1.Pubkey()
@@ -36,7 +36,7 @@ func TestEncryptDecryptMessage(t *testing.T) {
 	if e = message.Verify(pub1); log.E.Chk(e) {
 		t.Error("message failed verification with pubkey")
 	}
-	if prv2, e = schnorr.GeneratePrivkey(); log.I.Chk(e) {
+	if prv2, e = keys.GeneratePrivkey(); log.I.Chk(e) {
 		t.Error(e)
 	}
 	pub2 = prv2.Pubkey()
@@ -93,15 +93,15 @@ func BenchmarkEncryptDecryptMessage(b *testing.B) {
 		for i := 0; i < ncpu; i++ {
 			go func() {
 				wg.Add(1)
-				var prv1, prv2 *schnorr.Privkey
-				var pub1, pub2 *schnorr.Pubkey
-				if prv1, e = schnorr.GeneratePrivkey(); log.I.Chk(e) {
+				var prv1, prv2 *keys.Privkey
+				var pub1, pub2 *keys.Pubkey
+				if prv1, e = keys.GeneratePrivkey(); log.I.Chk(e) {
 				}
 				pub1 = prv1.Pubkey()
 				var message *mesg.Message
 				if message, e = mesg.New(payload, prv1); log.I.Chk(e) {
 				}
-				if prv2, e = schnorr.GeneratePrivkey(); log.I.Chk(e) {
+				if prv2, e = keys.GeneratePrivkey(); log.I.Chk(e) {
 				}
 				pub2 = prv2.Pubkey()
 				secret1 := prv1.ECDH(pub2)

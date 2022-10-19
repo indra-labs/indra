@@ -5,8 +5,8 @@ import (
 	"crypto/cipher"
 	"fmt"
 
+	"github.com/Indra-Labs/indra/pkg/hasj"
 	"github.com/Indra-Labs/indra/pkg/mesg"
-	"github.com/Indra-Labs/indra/pkg/schnorr"
 )
 
 // Crypt is a form of Message that is encrypted. The cipher must
@@ -17,7 +17,7 @@ type Crypt struct {
 }
 
 // NewCrypt takes a Message, encrypts it using a secret and returns a Crypt.
-func NewCrypt(message *mesg.Message, secret schnorr.Hash) (cr *Crypt, e error) {
+func NewCrypt(message *mesg.Message, secret hasj.Hash) (cr *Crypt, e error) {
 	if e = secret.Valid(); log.E.Chk(e) {
 		return
 	}
@@ -52,7 +52,7 @@ func DeserializeCrypt(message []byte) (cr *Crypt, e error) {
 	return
 }
 
-func (cr *Crypt) Decrypt(secret schnorr.Hash) (m *mesg.Message, e error) {
+func (cr *Crypt) Decrypt(secret hasj.Hash) (m *mesg.Message, e error) {
 	if e = secret.Valid(); log.E.Chk(e) {
 		return
 	}
