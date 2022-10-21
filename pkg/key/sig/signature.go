@@ -59,7 +59,7 @@ func (sig Bytes) Recover(hash sha256.Hash) (p *pub.Key, e error) {
 	var pk *secp256k1.PublicKey
 	// We are only using compressed keys, so we can ignore the compressed
 	// bool.
-	if pk, _, e = ecdsa.RecoverCompact(sig, hash); check(e) {
+	if pk, _, e = ecdsa.RecoverCompact(sig, hash); !check(e) {
 		p = (*pub.Key)(pk)
 	}
 	return

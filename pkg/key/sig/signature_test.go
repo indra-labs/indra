@@ -1,0 +1,38 @@
+package sig
+
+import (
+	"crypto/rand"
+	"errors"
+	"testing"
+
+	"github.com/Indra-Labs/indra/pkg/key/prv"
+	"github.com/Indra-Labs/indra/pkg/key/pub"
+)
+
+func TestSignRecover(t *testing.T) {
+
+	// msgSize := mrand.Intn(3072) + 1024
+	msgSize := 32
+	payload := make([]byte, msgSize)
+	var e error
+	var n int
+	if n, e = rand.Read(payload); log.E.Chk(e) && n != msgSize {
+		t.Error(e)
+	}
+	var prv1 *prv.Key
+	var pub1, rec1 *pub.Key
+	if prv1, e = prv.GenerateKey(); check(e) {
+		t.Error(e)
+	}
+	pub1 = pub.Derive(prv1)
+	var s Bytes
+	if s, e = Sign(prv1, payload); check(e) {
+		t.Error(e)
+	}
+	if rec1, e = s.Recover(payload); check(e) {
+		t.Error(e)
+	}
+	if !pub1.Equals(rec1) {
+		t.Error(errors.New("recovery did not extract same key"))
+	}
+}
