@@ -56,11 +56,10 @@ actors.
 Thus, it is essential that routers on Indranet get paid for their work, in
 order to maintain their connection and equipment costs.
 
-For this, Indranet uses a modified Lightning Network transaction scheme
-where users reserve session slots with routers via chaumian minting, which
-are then sent in onion layered packets to initiate sessions and in this
-payment, providing the node with the ability to claim the reservation
-payments that were made to acquire the vouchers.
+Clients purchase session keys via a circuit of proxies using onion encoded packets
+and lightning payments which can then be used to spend bytes from their sessions in
+arbitrary, source routed paths exiting to protocols which are also deducted
+from the session bandwidth allocation.
 
 In this way, nodes are unable to correlate between payments through LN and
 the spending of their vouchers, allowing routers to be paid, and thus
