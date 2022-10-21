@@ -29,7 +29,7 @@ func GetCipher(from *prv.Key, to *pub.Key, n nonce.IV) (s cipher.Stream,
 	secret := ecdh.Compute(from, to)
 	var block cipher.Block
 	if block, e = aes.NewCipher(secret); !check(e) {
-		s = cipher.NewCTR(block, n[:])
+		s = cipher.NewCTR(block, n)
 	}
 	return
 }

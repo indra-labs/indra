@@ -2,7 +2,6 @@ package pub
 
 import (
 	"github.com/Indra-Labs/indra"
-	"github.com/Indra-Labs/indra/pkg/key/fp"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/sha256"
 	log2 "github.com/cybriq/proc/pkg/log"
@@ -49,17 +48,21 @@ func (pub *Key) ToBytes() (p Bytes) {
 	return (*secp256k1.PublicKey)(pub).SerializeCompressed()
 }
 
+func (pub *Key) ToPublicKey() *secp256k1.PublicKey {
+	return (*secp256k1.PublicKey)(pub)
+}
+
 // Equals returns true if two public keys are the same.
 func (pub *Key) Equals(pub2 *Key) bool {
-	return (*secp256k1.PublicKey)(pub).IsEqual((*secp256k1.PublicKey)(pub2))
+	return pub.ToPublicKey().IsEqual(pub2.ToPublicKey())
 }
 
 // Fingerprint generates a fingerprint from a Bytes.
-func (pb Bytes) Fingerprint() (f fp.Key) {
-	return fp.Key(sha256.Hash(pb[:])[:fp.Len])
+func (pb Bytes) Fingerprint() (f Print) {
+	return Print(sha256.Hash(pb[:])[:Len])
 }
 
-// Receiver generates a longer 12 byte fingerprint from a Bytes.
-func (pb Bytes) Receiver() (receiver fp.Receiver) {
-	return fp.Receiver(sha256.Hash(pb[:])[:fp.ReceiverLen])
+// ReceiverPrint generates a longer 12 byte fingerprint from a Bytes.
+func (pb Bytes) ReceiverPrint() (receiver Receiver) {
+	return Receiver(sha256.Hash(pb[:])[:ReceiverLen])
 }

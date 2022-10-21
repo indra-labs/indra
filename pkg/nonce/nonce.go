@@ -19,7 +19,7 @@ type IV []byte
 
 // Get reads a nonce from a cryptographically secure random number source
 func Get() (n IV) {
-	n = IV{}
+	n = make(IV, Size)
 	if _, e := rand.Read(n[:]); check(e) {
 	}
 	return
