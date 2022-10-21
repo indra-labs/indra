@@ -7,6 +7,7 @@ require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0
 	github.com/minio/sha256-simd v1.0.0
 	gopkg.in/src-d/go-git.v4 v4.13.1
+	github.com/Indra-Labs/gotiny v1.0.0
 )
 
 require (
