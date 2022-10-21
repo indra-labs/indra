@@ -168,7 +168,7 @@ func Version() string {
 		"\nRepository Information\n",
 		"\tGit repository: "+URL+"\n",
 		"\tBranch: "+GitRef+"\n",
-		"\ParentGitCommit: "+ParentGitCommit+"\n",
+		"\tParentGitCommit: "+ParentGitCommit+"\n",
 		"\tBuilt: "+BuildTime+"\n",
 		"\tSemVer: "+SemVer+"\n",
 	)
