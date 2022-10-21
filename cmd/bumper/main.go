@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Indra-Labs/indra"
 	log2 "github.com/cybriq/proc/pkg/log"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
@@ -22,6 +23,10 @@ var (
 	SemVer              string
 	Major, Minor, Patch int
 	PathBase            string
+)
+var (
+	log   = log2.GetLogger(indra.PathBase)
+	check = log.E.Chk
 )
 
 func main() {
@@ -45,19 +50,16 @@ func main() {
 	BuildTime = time.Now().Format(time.RFC3339)
 	var cwd string
 	var e error
-	if cwd, e = os.Getwd(); log.E.Chk(e) {
-		fmt.Println(e)
-		return
+	if cwd, e = os.Getwd(); check(e) {
+		os.Exit(1)
 	}
 	var repo *git.Repository
-	if repo, e = git.PlainOpen(cwd); log.E.Chk(e) {
-		fmt.Println(e)
-		return
+	if repo, e = git.PlainOpen(cwd); check(e) {
+		os.Exit(1)
 	}
 	var rr []*git.Remote
-	if rr, e = repo.Remotes(); log.E.Chk(e) {
-		fmt.Println(e)
-		return
+	if rr, e = repo.Remotes(); check(e) {
+		os.Exit(1)
 	}
 	for i := range rr {
 		rs := rr[i].String()
@@ -78,24 +80,22 @@ func main() {
 		}
 	}
 	var tr *git.Worktree
-	if tr, e = repo.Worktree(); log.E.Chk(e) {
-		fmt.Println(e)
+	if tr, e = repo.Worktree(); check(e) {
 	}
 	var rh *plumbing.Reference
-	if rh, e = repo.Head(); log.E.Chk(e) {
-		fmt.Println(e)
-		return
+	if rh, e = repo.Head(); check(e) {
+		os.Exit(1)
 	}
 	rhs := rh.Strings()
 	GitRef = rhs[0]
 	ParentGitCommit = rhs[1]
 	var rt storer.ReferenceIter
-	if rt, e = repo.Tags(); log.E.Chk(e) {
-		fmt.Println(e)
-		return
+	if rt, e = repo.Tags(); check(e) {
+		os.Exit(1)
 	}
 	var maxVersion int
 	if e = rt.ForEach(
+
 		func(pr *plumbing.Reference) (e error) {
 			s := strings.Split(pr.String(), "/")
 			prs := s[2]
@@ -118,8 +118,7 @@ func main() {
 			}
 			return
 		},
-	); log.E.Chk(e) {
-		fmt.Println(e)
+	); check(e) {
 		return
 	}
 	// Bump to next patch version every time
@@ -188,9 +187,8 @@ func Version() string {
 		Patch,
 	)
 	path := filepath.Join(PathBase, "version.go")
-	if e = os.WriteFile(path, []byte(versionFileOut),
-		0666); log.E.Chk(e) {
-		fmt.Println(e)
+	if e = os.WriteFile(path, []byte(versionFileOut), 0666); check(e) {
+		os.Exit(1)
 	}
 	log.I.Ln(
 		"\nRepository Information\n",
@@ -203,31 +201,24 @@ func Version() string {
 		"\tMinor:", Minor, "\n",
 		"\tPatch:", Patch, "\n",
 	)
-	e = runCmd("git", "add", ".")
-	if log.E.Chk(e) {
-		panic(e)
+	if e = runCmd("git", "add", "."); check(e) {
+		os.Exit(1)
 	}
 	commitString := strings.Join(os.Args[1:], " ")
-
 	commitString = strings.ReplaceAll(commitString, " -- ", "\n\n")
-
-	e = runCmd("git", "commit", "-m"+commitString)
-	if log.E.Chk(e) {
-		panic(e)
+	if e = runCmd("git", "commit", "-m"+commitString); check(e) {
+		os.Exit(1)
 	}
-	e = runCmd("git", "tag", SemVer)
-	if log.E.Chk(e) {
-		panic(e)
+	if e = runCmd("git", "tag", SemVer); check(e) {
+		os.Exit(1)
 	}
 	gr := strings.Split(GitRef, "/")
 	branch := gr[2]
-	e = runCmd("git", "push", "origin", branch)
-	if log.E.Chk(e) {
-		panic(e)
+	if e = runCmd("git", "push", "origin", branch); check(e) {
+		os.Exit(1)
 	}
-	e = runCmd("git", "push", "origin", SemVer)
-	if log.E.Chk(e) {
-		panic(e)
+	if e = runCmd("git", "push", "origin", SemVer); check(e) {
+		os.Exit(1)
 	}
 	return
 }
