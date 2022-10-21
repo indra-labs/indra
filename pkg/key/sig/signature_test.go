@@ -3,16 +3,16 @@ package sig
 import (
 	"crypto/rand"
 	"errors"
+	mrand "math/rand"
 	"testing"
 
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
+	"github.com/Indra-Labs/indra/pkg/sha256"
 )
 
 func TestSignRecover(t *testing.T) {
-
-	// msgSize := mrand.Intn(3072) + 1024
-	msgSize := 32
+	msgSize := mrand.Intn(3072) + 1024
 	payload := make([]byte, msgSize)
 	var e error
 	var n int
@@ -26,10 +26,11 @@ func TestSignRecover(t *testing.T) {
 	}
 	pub1 = pub.Derive(prv1)
 	var s Bytes
-	if s, e = Sign(prv1, payload); check(e) {
+	hash := sha256.Single(payload)
+	if s, e = Sign(prv1, hash); check(e) {
 		t.Error(e)
 	}
-	if rec1, e = s.Recover(payload); check(e) {
+	if rec1, e = s.Recover(hash); check(e) {
 		t.Error(e)
 	}
 	if !pub1.Equals(rec1) {
