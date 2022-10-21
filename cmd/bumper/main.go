@@ -136,7 +136,7 @@ func main() {
 	// Update SemVer
 	SemVer = fmt.Sprintf("v%d.%d.%d", Major, Minor, Patch)
 	PathBase = tr.Filesystem.Root() + "/"
-	versionFile := `package proc
+	versionFile := `package indra
 
 import (
 	"fmt"
