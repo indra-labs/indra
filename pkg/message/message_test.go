@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"errors"
+	mrand "math/rand"
 	"testing"
 
 	"github.com/Indra-Labs/indra/pkg/key/prv"
@@ -12,8 +13,7 @@ import (
 )
 
 func TestEncode_Decode(t *testing.T) {
-	// msgSize := mrand.Intn(3072) + 1024
-	msgSize := 80
+	msgSize := mrand.Intn(3072) + 1024
 	payload := make([]byte, msgSize)
 	var e error
 	var n int
@@ -22,7 +22,6 @@ func TestEncode_Decode(t *testing.T) {
 	}
 	payload = append([]byte("payload"), payload...)
 	pHash := sha256.Single(payload)
-	// log.I.S(pHash)
 	var sendPriv, reciPriv *prv.Key
 	var sendPub, reciPub *pub.Key
 	if sendPriv, e = prv.GenerateKey(); check(e) {
