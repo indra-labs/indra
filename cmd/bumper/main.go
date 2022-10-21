@@ -220,6 +220,11 @@ func Version() string {
 	if e = runCmd("git", "push", "origin", SemVer); check(e) {
 		os.Exit(1)
 	}
+	// Lastly, we need to regenerate the version of bumper if it changed.
+	// Rather than check, we will just run the compilation command anyway.
+	if e = runCmd("go", "install", "./cmd/bumper/."); check(e) {
+		os.Exit(1)
+	}
 	return
 }
 
