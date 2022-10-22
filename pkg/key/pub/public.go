@@ -59,10 +59,5 @@ func (pub *Key) Equals(pub2 *Key) bool {
 
 // Fingerprint generates a fingerprint from a Bytes.
 func (pb Bytes) Fingerprint() (f Print) {
-	return Print(sha256.Hash(pb[:])[:Len])
-}
-
-// ReceiverPrint generates a longer 12 byte fingerprint from a Bytes.
-func (pb Bytes) ReceiverPrint() (receiver Receiver) {
-	return Receiver(sha256.Hash(pb[:])[:ReceiverLen])
+	return Print(sha256.Hash(pb[:])[:PrintLen])
 }

@@ -1,6 +1,7 @@
 package message
 
 import (
+	"crypto/cipher"
 	"fmt"
 
 	"github.com/Indra-Labs/indra"
@@ -34,57 +35,65 @@ var (
 type Form struct {
 	// To is the fingerprint of the pubkey used in the ECDH key exchange, 12
 	// bytes long.
-	To pub.Receiver
+	To pub.Print
+	// DataShards and ParityShards are reed solomon parameters for
+	// retransmit avoidance.
+	DataShards, ParityShards byte
 	// Seq specifies the segment number of the message, 4 bytes long.
-	Seq slice.Length
+	Seq slice.Size16
 	// Nonce is the IV for the encryption on the Payload. 16 bytes.
 	Nonce nonce.IV
+	// Payload is the encrypted message.
+	Payload []byte
 	// Seen is the SHA256 truncated hashes of previous received encryption
 	// public keys to indicate they won't be reused and can be discarded.
 	Seen []pub.Print
-	// Payload is the encrypted message.
-	Payload []byte
 }
 
-const FormDataMinSize = pub.ReceiverLen + slice.Len + nonce.Size + sig.Len
+const FormDataMinSize = pub.PrintLen + slice.Uint32Len*2 + nonce.Size + sig.Len
 
 // Encode creates a Form, encrypts the payload using the given private from key
 // and the public to key, serializes the form, signs the bytes and appends the
 // signature to the end.
-func Encode(to *pub.Key, from *prv.Key, seq int, data []byte,
+func Encode(to *pub.Key,
+	from *prv.Key,
+	blk cipher.Block,
+	dShards, pShards byte,
+	seq int,
+	data []byte,
 	seen []pub.Print) (pkt []byte, e error) {
 
 	f := &Form{
-		To:    to.ToBytes().ReceiverPrint(),
-		Nonce: nonce.Get(),
-		Seen:  seen,
-		Seq:   slice.NewLength(),
+		To:           to.ToBytes().Fingerprint(),
+		DataShards:   dShards,
+		ParityShards: pShards,
+		Seq:          slice.NewUint16(),
+		Nonce:        nonce.Get(),
+		Seen:         seen,
 	}
-	slice.EncodeUint32(f.Seq, seq)
+	slice.EncodeUint16(f.Seq, seq)
 	// This is needed for the decoding.
 	SeenCount := []byte{byte(len(seen))}
+	payloadLen := slice.NewUint32()
+	slice.EncodeUint32(payloadLen, len(data))
 	// Encrypt the payload
-	if e = ciph.Cipher(from, to, f.Nonce, data); check(e) {
-		return
-	}
+	ciph.Encipher(blk, f.Nonce, data)
 	f.Payload = data
 	// Append signature to the end of the packet.
 	var seenBytes []byte
 	for i := range f.Seen {
 		seenBytes = append(seenBytes, f.Seen[i][:]...)
 	}
-	// Assemble the slices into a slice, so we can preallocate capacity and
-	// avoid more than one allocation. Signature is copied over the final
-	// segment, so empty bytes are allocated for this.
-	cat := [][]byte{
+	pkt = slice.Concatenate(
 		f.To[:],
+		[]byte{f.DataShards, f.ParityShards},
 		f.Seq[:],
 		f.Nonce[:],
+		payloadLen,
+		f.Payload,
 		SeenCount,
 		seenBytes,
-		f.Payload,
-	}
-	pkt = slice.Concatenate(cat...)
+	)
 	// Sign the packet.
 	var s sig.Bytes
 	if s, e = sig.Sign(from, sha256.Single(pkt)); !check(e) {
@@ -115,12 +124,17 @@ func Decode(pkt []byte) (f *Form, p *pub.Key, e error) {
 		e = fmt.Errorf("error: '%s': packet checksum failed", e.Error())
 	}
 	f = &Form{}
-	f.To, d = slice.Cut(d, pub.ReceiverLen)
-	f.Seq, d = slice.Cut(d, slice.Len)
+	f.To, d = slice.Cut(d, pub.PrintLen)
+	f.DataShards, f.ParityShards = d[0], d[1]
+	d = d[2:]
+	f.Seq, d = slice.Cut(d, slice.Uint16Len)
 	f.Nonce, d = slice.Cut(d, nonce.Size)
+	var pl slice.Size32
+	pl, d = slice.Cut(d, slice.Uint32Len)
+	f.Payload, d = slice.Cut(d, slice.DecodeUint32(pl))
 	var sc byte
 	sc, d = d[0], d[1:]
-	if len(d) < int(sc)*slice.Len {
+	if len(d) < int(sc)*slice.Uint32Len {
 		e = fmt.Errorf("truncated packet")
 		log.E.Ln(e)
 		return
@@ -129,23 +143,8 @@ func Decode(pkt []byte) (f *Form, p *pub.Key, e error) {
 	var sn []byte
 	f.Seen = make([]pub.Print, sc)
 	for i := 0; i < int(sc); i++ {
-		sn, d = slice.Cut(d, pub.Len)
+		sn, d = slice.Cut(d, pub.PrintLen)
 		copy(f.Seen[i][:], sn)
 	}
-	if len(d) == 0 {
-		e = fmt.Errorf("empty message payload")
-		log.E.Ln(e)
-		return
-	}
-	f.Payload = d
 	return
-}
-
-// Crypt the Payload in a Form using a given key pair using ECDH to derive the
-// cipher. The receiver must have the private key matched to the To field, the
-// public key required is embedded in the signature.
-//
-// Note: calling this twice will return the packet to its encrypted form.
-func (f *Form) Crypt(to *prv.Key, from *pub.Key) (e error) {
-	return ciph.Cipher(to, from, f.Nonce, f.Payload)
 }
