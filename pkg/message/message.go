@@ -43,7 +43,7 @@ type Packet struct {
 	Seen []pub.Print
 }
 
-const FormDataMinSize = pub.PrintLen + slice.Uint16Len*4 + nonce.Size + sig.Len
+const PacketDataMinSize = pub.PrintLen + slice.Uint16Len*4 + nonce.Size + sig.Len
 
 type EP struct {
 	To      *pub.Key
@@ -105,15 +105,15 @@ func Encode(ep EP) (pkt []byte, e error) {
 	return
 }
 
-// Decode a packet and return the form with encrypted payload and signer's
+// Decode a packet and return the Packet with encrypted payload and signer's
 // public key.
 func Decode(pkt []byte) (f *Packet, p *pub.Key, e error) {
 	pktLen := len(pkt)
-	if pktLen < FormDataMinSize {
+	if pktLen < PacketDataMinSize {
 		// If this isn't checked the slice operations later can
 		// hit bounds errors.
 		e = fmt.Errorf("packet too small, min %d, got %d",
-			FormDataMinSize, pktLen)
+			PacketDataMinSize, pktLen)
 		log.E.Ln(e)
 		return
 	}
