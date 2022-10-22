@@ -26,7 +26,7 @@ func GetBlock(from *prv.Key, to *pub.Key) (block cipher.Block, e error) {
 	return
 }
 
-// Encipher XORs the data with the block stream. This encrypts encrypted data
+// Encipher XORs the data with the block stream. This encrypts unencrypted data
 // and decrypts encrypted data.
 func Encipher(blk cipher.Block, n nonce.IV, b []byte) {
 	if blk != nil {

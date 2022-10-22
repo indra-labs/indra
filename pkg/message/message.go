@@ -20,27 +20,20 @@ var (
 	check = log.E.Chk
 )
 
-// Form is an in memory structure that is structured more in order to be
-// mnemonic for the wire format it represents.
-//
-// The To, Length and Nonce fields are sized to be 32 bytes total length so the
-// Payload is also aligned on 32 byte boundaries.
-//
-// The signature is a BIP62 format signature which allows public key recovery
-// thus avoiding the need to also include the public key for ECDH.
-//
-// The hash that is required to recover it is the concatenation of the previous
-// message segments, 32 bytes from To, Length, Nonce and Payload, in the
-// encrypted form, thus also securing the authenticity of the entire packet.
-type Form struct {
+// Packet is the standard format for an encrypted, possibly segmented message
+// container with parameters for Reed Solomon Forward Error Correction and
+// contains previously seen cipher keys so the correspondent can free them.
+type Packet struct {
 	// To is the fingerprint of the pubkey used in the ECDH key exchange, 12
 	// bytes long.
 	To pub.Print
 	// DataShards and ParityShards are reed solomon parameters for
 	// retransmit avoidance.
-	DataShards, ParityShards byte
+	DataShards, ParityShards slice.Size16
 	// Seq specifies the segment number of the message, 4 bytes long.
 	Seq slice.Size16
+	// Tot is the number of segments in the batch
+	Tot slice.Size16
 	// Nonce is the IV for the encryption on the Payload. 16 bytes.
 	Nonce nonce.IV
 	// Payload is the encrypted message.
@@ -50,44 +43,53 @@ type Form struct {
 	Seen []pub.Print
 }
 
-const FormDataMinSize = pub.PrintLen + slice.Uint32Len*2 + nonce.Size + sig.Len
+const FormDataMinSize = pub.PrintLen + slice.Uint16Len*4 + nonce.Size + sig.Len
 
-// Encode creates a Form, encrypts the payload using the given private from key
-// and the public to key, serializes the form, signs the bytes and appends the
-// signature to the end.
-func Encode(to *pub.Key,
-	from *prv.Key,
-	blk cipher.Block,
-	dShards, pShards byte,
-	seq int,
-	data []byte,
-	seen []pub.Print) (pkt []byte, e error) {
+type EP struct {
+	To      *pub.Key
+	From    *prv.Key
+	Blk     cipher.Block
+	DShards int
+	PShards int
+	Seq     int
+	Tot     int
+	Data    []byte
+	Seen    []pub.Print
+}
 
-	f := &Form{
-		To:           to.ToBytes().Fingerprint(),
-		DataShards:   dShards,
-		ParityShards: pShards,
+// Encode creates a Packet, encrypts the payload using the given private from
+// key and the public to key, serializes the form, signs the bytes and appends
+// the signature to the end.
+func Encode(ep EP) (pkt []byte, e error) {
+	f := &Packet{
+		To:           ep.To.ToBytes().Fingerprint(),
+		DataShards:   slice.NewUint16(),
+		ParityShards: slice.NewUint16(),
 		Seq:          slice.NewUint16(),
+		Tot:          slice.NewUint16(),
 		Nonce:        nonce.Get(),
-		Seen:         seen,
+		Seen:         ep.Seen,
 	}
-	slice.EncodeUint16(f.Seq, seq)
-	// This is needed for the decoding.
-	SeenCount := []byte{byte(len(seen))}
+	slice.EncodeUint16(f.DataShards, ep.DShards)
+	slice.EncodeUint16(f.ParityShards, ep.PShards)
+	slice.EncodeUint16(f.Seq, ep.Seq)
+	slice.EncodeUint16(f.Tot, ep.Tot)
+	SeenCount := []byte{byte(len(ep.Seen))}
 	payloadLen := slice.NewUint32()
-	slice.EncodeUint32(payloadLen, len(data))
+	slice.EncodeUint32(payloadLen, len(ep.Data))
 	// Encrypt the payload
-	ciph.Encipher(blk, f.Nonce, data)
-	f.Payload = data
-	// Append signature to the end of the packet.
+	ciph.Encipher(ep.Blk, f.Nonce, ep.Data)
+	f.Payload = ep.Data
 	var seenBytes []byte
 	for i := range f.Seen {
 		seenBytes = append(seenBytes, f.Seen[i][:]...)
 	}
 	pkt = slice.Concatenate(
 		f.To[:],
-		[]byte{f.DataShards, f.ParityShards},
+		f.DataShards,
+		f.ParityShards,
 		f.Seq[:],
+		f.Tot,
 		f.Nonce[:],
 		payloadLen,
 		f.Payload,
@@ -96,7 +98,7 @@ func Encode(to *pub.Key,
 	)
 	// Sign the packet.
 	var s sig.Bytes
-	if s, e = sig.Sign(from, sha256.Single(pkt)); !check(e) {
+	if s, e = sig.Sign(ep.From, sha256.Single(pkt)); !check(e) {
 		// Signature space is pre-allocated so we copy it.
 		pkt = append(pkt, s...)
 	}
@@ -105,7 +107,7 @@ func Encode(to *pub.Key,
 
 // Decode a packet and return the form with encrypted payload and signer's
 // public key.
-func Decode(pkt []byte) (f *Form, p *pub.Key, e error) {
+func Decode(pkt []byte) (f *Packet, p *pub.Key, e error) {
 	pktLen := len(pkt)
 	if pktLen < FormDataMinSize {
 		// If this isn't checked the slice operations later can
@@ -123,23 +125,18 @@ func Decode(pkt []byte) (f *Form, p *pub.Key, e error) {
 	if p, e = s.Recover(sha256.Single(d)); check(e) {
 		e = fmt.Errorf("error: '%s': packet checksum failed", e.Error())
 	}
-	f = &Form{}
+	f = &Packet{}
 	f.To, d = slice.Cut(d, pub.PrintLen)
-	f.DataShards, f.ParityShards = d[0], d[1]
-	d = d[2:]
+	f.DataShards, d = slice.Cut(d, slice.Uint16Len)
+	f.ParityShards, d = slice.Cut(d, slice.Uint16Len)
 	f.Seq, d = slice.Cut(d, slice.Uint16Len)
+	f.Tot, d = slice.Cut(d, slice.Uint16Len)
 	f.Nonce, d = slice.Cut(d, nonce.Size)
 	var pl slice.Size32
 	pl, d = slice.Cut(d, slice.Uint32Len)
 	f.Payload, d = slice.Cut(d, slice.DecodeUint32(pl))
 	var sc byte
 	sc, d = d[0], d[1:]
-	if len(d) < int(sc)*slice.Uint32Len {
-		e = fmt.Errorf("truncated packet")
-		log.E.Ln(e)
-		return
-
-	}
 	var sn []byte
 	f.Seen = make([]pub.Print, sc)
 	for i := 0; i < int(sc); i++ {
