@@ -39,10 +39,20 @@ func TestEncode_Decode(t *testing.T) {
 		t.Error(e)
 	}
 	var pkt []byte
-	if pkt, e = Encode(reciPub, sendPriv, blk, 1, 0, 0, payload, nil); check(e) {
+	params := EP{
+		To:      reciPub,
+		From:    sendPriv,
+		Blk:     blk,
+		DShards: 1,
+		PShards: 0,
+		Seq:     0,
+		Tot:     1,
+		Data:    payload,
+	}
+	if pkt, e = Encode(params); check(e) {
 		t.Error(e)
 	}
-	var f *Form
+	var f *Packet
 	var pub3 *pub.Key
 	if f, pub3, e = Decode(pkt); check(e) {
 		t.Error(e)
