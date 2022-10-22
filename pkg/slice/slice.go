@@ -15,25 +15,44 @@ func SumLen(chunks ...[]byte) (l int) {
 	return
 }
 
-var PutUint32 = binary.LittleEndian.PutUint32
-var Uint32 = binary.LittleEndian.Uint32
+var put32 = binary.LittleEndian.PutUint32
+var get32 = binary.LittleEndian.Uint32
+var put16 = binary.LittleEndian.PutUint16
+var get16 = binary.LittleEndian.Uint16
 
 // DecodeUint32 returns an int containing the little endian encoded 32bit value
 // stored in a 4 byte long slice
-func DecodeUint32(b []byte) int    { return int(Uint32(b)) }
-func EncodeUint32(b []byte, n int) { PutUint32(b, uint32(n)) }
+func DecodeUint32(b []byte) int { return int(get32(b)) }
 
+// EncodeUint32 puts an int into a uint32 and then into 4 byte long slice.
+func EncodeUint32(b []byte, n int) { put32(b, uint32(n)) }
+
+// DecodeUint16 returns an int containing the little endian encoded 32bit value
+// stored in a 4 byte long slice
+func DecodeUint16(b []byte) int { return int(get16(b)) }
+
+// EncodeUint16 puts an int into a uint32 and then into 2 byte long slice.
+func EncodeUint16(b []byte, n int) { put16(b, uint16(n)) }
+
+// Concatenate takes a list of byte slices and packs them together in a packet.
+// The returned packet has its capacity pre-allocated to match what gets copied
+// into it by append.
 func Concatenate(chunks ...[]byte) (pkt []byte) {
+	l := SumLen(chunks...)
+	pkt = make([]byte, 0, l)
 	for i := range chunks {
 		pkt = append(pkt, chunks[i]...)
 	}
 	return
 }
 
-const Len = 4
+const Uint32Len = 4
+const Uint16Len = 2
 
-type Length []byte
+type Size32 []byte
+type Size16 []byte
 
-func NewLength() Length { return make(Length, 4) }
+func NewUint32() Size32 { return make(Size32, Uint32Len) }
+func NewUint16() Size16 { return make(Size16, Uint16Len) }
 
 func FromHash(b [32]byte) []byte { return b[:] }

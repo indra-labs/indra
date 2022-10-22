@@ -2,11 +2,13 @@ package message
 
 import (
 	"bytes"
+	"crypto/cipher"
 	"crypto/rand"
 	"errors"
 	mrand "math/rand"
 	"testing"
 
+	"github.com/Indra-Labs/indra/pkg/ciph"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/sha256"
@@ -32,8 +34,12 @@ func TestEncode_Decode(t *testing.T) {
 		t.Error(e)
 	}
 	reciPub = pub.Derive(reciPriv)
+	var blk cipher.Block
+	if blk, e = ciph.GetBlock(sendPriv, reciPub); check(e) {
+		t.Error(e)
+	}
 	var pkt []byte
-	if pkt, e = Encode(reciPub, sendPriv, 0, payload, nil); check(e) {
+	if pkt, e = Encode(reciPub, sendPriv, blk, 1, 0, 0, payload, nil); check(e) {
 		t.Error(e)
 	}
 	var f *Form
@@ -41,12 +47,10 @@ func TestEncode_Decode(t *testing.T) {
 	if f, pub3, e = Decode(pkt); check(e) {
 		t.Error(e)
 	}
-	if e = f.Crypt(sendPriv, reciPub); check(e) {
-		t.Error(e)
-	}
 	if !sendPub.Equals(pub3) {
 		t.Error(e)
 	}
+	ciph.Encipher(blk, f.Nonce, f.Payload)
 	dHash := sha256.Single(f.Payload)
 	if bytes.Compare(pHash, dHash) != 0 {
 		t.Error(errors.New("encode/decode unsuccessful"))
