@@ -15,6 +15,18 @@ func SumLen(chunks ...[]byte) (l int) {
 	return
 }
 
+func Segment(b []byte, segmentSize int) (segs [][]byte) {
+	count := len(b) / segmentSize
+	if len(b)%segmentSize != 0 {
+		count++
+	}
+	segs = make([][]byte, count)
+	for i := 0; i < count; i++ {
+		segs[i] = b[i*segmentSize : (i+1)*segmentSize]
+	}
+	return
+}
+
 var put32 = binary.LittleEndian.PutUint32
 var get32 = binary.LittleEndian.Uint32
 var put16 = binary.LittleEndian.PutUint16
