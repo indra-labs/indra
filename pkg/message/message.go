@@ -33,9 +33,9 @@ type Packet struct {
 	// total are parity shards.
 	DataShards, ParityShards byte
 	// Seq specifies the segment number of the message, 4 bytes long.
-	Seq slice.Size16
+	Seq uint16
 	// Tot is the number of segments in the batch
-	Tot slice.Size16
+	Tot uint16
 	// Nonce is the IV for the encryption on the Payload. 16 bytes.
 	Nonce nonce.IV
 	// Payload is the encrypted message.
@@ -46,7 +46,26 @@ type Packet struct {
 	Seen []pub.Print
 }
 
+func (p *Packet) Decipher(blk cipher.Block) *Packet {
+	ciph.Encipher(blk, p.Nonce, p.Payload)
+	return p
+}
+
 const Overhead = pub.PrintLen + 1 + 2 + slice.Uint16Len*3 + nonce.Size + sig.Len
+
+type Packets []*Packet
+
+func (p Packets) Len() int {
+	return len(p)
+}
+
+func (p Packets) Less(i, j int) bool {
+	return p[i].Seq < p[j].Seq
+}
+
+func (p Packets) Swap(i, j int) {
+	p[i], p[j] = p[j], p[i]
+}
 
 type EP struct {
 	To      *pub.Key
@@ -73,13 +92,13 @@ func Encode(ep EP) (pkt []byte, e error) {
 		To:           ep.To.ToBytes().Fingerprint(),
 		DataShards:   byte(ep.DShards),
 		ParityShards: byte(ep.PShards),
-		Seq:          slice.NewUint16(),
-		Tot:          slice.NewUint16(),
 		Nonce:        nonce.Get(),
 		Seen:         ep.Seen,
 	}
-	slice.EncodeUint16(f.Seq, ep.Seq)
-	slice.EncodeUint16(f.Tot, ep.Tot)
+	Seq := slice.NewUint16()
+	Tot := slice.NewUint16()
+	slice.EncodeUint16(Seq, ep.Seq)
+	slice.EncodeUint16(Tot, ep.Tot)
 	SeenCount := []byte{byte(len(ep.Seen))}
 	// We are not supporting packets longer than 64kb as this is the largest
 	// supported by current network devices for UDP packets. Larger messages
@@ -97,14 +116,14 @@ func Encode(ep EP) (pkt []byte, e error) {
 	}
 	var pad []byte
 	if ep.Pad > 0 {
-		slice.NoisePad(ep.Pad)
+		pad = slice.NoisePad(ep.Pad)
 	}
 	pkt = slice.Concatenate(
 		f.To[:],                // 8 bytes   \
 		[]byte{f.DataShards},   // 1 byte     |
 		[]byte{f.ParityShards}, // 1 byte     |
-		f.Seq[:],               // 2 bytes     > 32 bytes
-		f.Tot,                  // 2 bytes    |
+		Seq,                    // 2 bytes     > 32 bytes
+		Tot,                    // 2 bytes    |
 		payloadLen,             // 2 byte     |
 		f.Nonce[:],             // 16 bytes  /
 		f.Payload,              // payload starts on 32 byte boundary
@@ -136,24 +155,21 @@ func Decode(pkt []byte) (f *Packet, p *pub.Key, e error) {
 		log.E.Ln(e)
 		return
 	}
-	// split off the signature and recover the public key
-	sigStart := pktLen - sig.Len
-	var data []byte
-	var s sig.Bytes
-	data, s = pkt[:sigStart], pkt[sigStart:]
-	if p, e = s.Recover(sha256.Single(data)); check(e) {
-		e = fmt.Errorf("error: '%s': packet checksum failed", e.Error())
-	}
+	data := pkt
 	f = &Packet{}
 	f.To, data = slice.Cut(data, prl)
 	f.DataShards, data = data[0], data[1:]
 	f.ParityShards, data = data[0], data[1:]
-	f.Seq, data = slice.Cut(data, u16l)
-	f.Tot, data = slice.Cut(data, u16l)
+	var seq, tot slice.Size16
+	seq, data = slice.Cut(data, u16l)
+	f.Seq = uint16(slice.DecodeUint16(seq))
+	tot, data = slice.Cut(data, u16l)
+	f.Tot = uint16(slice.DecodeUint16(tot))
 	var payloadLength slice.Size16
 	payloadLength, data = slice.Cut(data, u16l)
 	f.Nonce, data = slice.Cut(data, nonce.Size)
-	f.Payload, data = slice.Cut(data, slice.DecodeUint16(payloadLength))
+	pl := slice.DecodeUint16(payloadLength)
+	f.Payload, data = slice.Cut(data, pl)
 	var sc byte
 	sc, data = data[0], data[1:]
 	var sn []byte
@@ -161,6 +177,13 @@ func Decode(pkt []byte) (f *Packet, p *pub.Key, e error) {
 	for i := 0; i < int(sc); i++ {
 		sn, data = slice.Cut(data, pub.PrintLen)
 		copy(f.Seen[i][:], sn)
+	}
+	// split off the signature and recover the public key
+	sigStart := pktLen - sig.Len
+	var s sig.Bytes
+	s = pkt[sigStart:]
+	if p, e = s.Recover(sha256.Single(pkt[:sigStart])); check(e) {
+		e = fmt.Errorf("error: '%s': packet checksum failed", e.Error())
 	}
 	return
 }
