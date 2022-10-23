@@ -19,7 +19,7 @@ func TestEncode_Decode(t *testing.T) {
 	payload := make([]byte, msgSize)
 	var e error
 	var n int
-	if n, e = rand.Read(payload); log.E.Chk(e) && n != msgSize {
+	if n, e = rand.Read(payload); check(e) && n != msgSize {
 		t.Error(e)
 	}
 	payload = append([]byte("payload"), payload...)
@@ -40,14 +40,15 @@ func TestEncode_Decode(t *testing.T) {
 	}
 	var pkt []byte
 	params := EP{
-		To:      reciPub,
-		From:    sendPriv,
-		Blk:     blk,
-		DShards: 1,
-		PShards: 0,
-		Seq:     0,
-		Tot:     1,
-		Data:    payload,
+		To:         reciPub,
+		From:       sendPriv,
+		Blk:        blk,
+		DShards:    1,
+		PShards:    0,
+		Seq:        0,
+		Tot:        1,
+		Data:       payload,
+		PayloadLen: len(payload),
 	}
 	if pkt, e = Encode(params); check(e) {
 		t.Error(e)

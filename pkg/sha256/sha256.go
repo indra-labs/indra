@@ -3,7 +3,6 @@ package sha256
 import (
 	"fmt"
 
-	"github.com/Indra-Labs/indra/pkg/slice"
 	"github.com/minio/sha256-simd"
 )
 
@@ -24,7 +23,7 @@ func New() Hash { return make(Hash, Len) }
 func Double(b []byte) []byte { return Single(Single(b)) }
 
 // Single runs a standard SHA256 hash and does all the slicing for you.
-func Single(b []byte) []byte { return slice.FromHash(sha256.Sum256(b)) }
+func Single(b []byte) []byte { return FromHash(sha256.Sum256(b)) }
 
 // Valid checks the hash value is the correct length.
 func (h Hash) Valid() (e error) {
@@ -39,3 +38,5 @@ var zero = string(New())
 
 // Zero out the values in the hash. Hashes can be used as secrets.
 func (h Hash) Zero() { copy(h, zero) }
+
+func FromHash(b [32]byte) []byte { return b[:] }
