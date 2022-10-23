@@ -46,23 +46,23 @@ type Packet struct {
 	Seen []pub.Print
 }
 
-const PacketOverhead = pub.PrintLen + slice.Uint16Len*4 + nonce.Size + sig.Len
+const Overhead = pub.PrintLen + 1 + 2 + slice.Uint16Len*3 + nonce.Size + sig.Len
 
 type EP struct {
-	To         *pub.Key
-	From       *prv.Key
-	Blk        cipher.Block
-	DShards    int
-	PShards    int
-	Seq        int
-	Tot        int
-	Data       []byte
-	Seen       []pub.Print
-	PayloadLen int
+	To      *pub.Key
+	From    *prv.Key
+	Blk     cipher.Block
+	DShards int
+	PShards int
+	Seq     int
+	Tot     int
+	Data    []byte
+	Seen    []pub.Print
+	Pad     int
 }
 
 func (ep EP) GetOverhead() int {
-	return PacketOverhead + len(ep.Seen)*pub.PrintLen
+	return Overhead + len(ep.Seen)*pub.PrintLen
 }
 
 // Encode creates a Packet, encrypts the payload using the given private from
@@ -85,15 +85,19 @@ func Encode(ep EP) (pkt []byte, e error) {
 	// supported by current network devices for UDP packets. Larger messages
 	// must be split. The length of 16 here also is to ensure that the
 	// actual payload starts on a 16 byte boundary to be optimal for the
-	// AES-CTR encryption, the preceding data total size is 16 bytes.
+	// AES-CTR encryption, the preceding data total size is 32 bytes.
 	payloadLen := slice.NewUint16()
-	slice.EncodeUint16(payloadLen, ep.PayloadLen)
+	slice.EncodeUint16(payloadLen, len(ep.Data))
 	// Encrypt the payload
 	ciph.Encipher(ep.Blk, f.Nonce, ep.Data)
 	f.Payload = ep.Data
 	var seenBytes []byte
 	for i := range f.Seen {
 		seenBytes = append(seenBytes, f.Seen[i][:]...)
+	}
+	var pad []byte
+	if ep.Pad > 0 {
+		slice.NoisePad(ep.Pad)
 	}
 	pkt = slice.Concatenate(
 		f.To[:],                // 8 bytes   \
@@ -106,6 +110,7 @@ func Encode(ep EP) (pkt []byte, e error) {
 		f.Payload,              // payload starts on 32 byte boundary
 		SeenCount,
 		seenBytes,
+		pad,
 	)
 	// Sign the packet.
 	var s sig.Bytes
@@ -123,11 +128,11 @@ func Decode(pkt []byte) (f *Packet, p *pub.Key, e error) {
 		prl  = pub.PrintLen
 	)
 	pktLen := len(pkt)
-	if pktLen < PacketOverhead {
+	if pktLen < Overhead {
 		// If this isn't checked the slice operations later can
 		// hit bounds errors.
 		e = fmt.Errorf("packet too small, min %d, got %d",
-			PacketOverhead, pktLen)
+			Overhead, pktLen)
 		log.E.Ln(e)
 		return
 	}
