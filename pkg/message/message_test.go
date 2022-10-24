@@ -43,7 +43,6 @@ func TestEncode_Decode(t *testing.T) {
 		To:      reciPub,
 		From:    sendPriv,
 		Blk:     blk,
-		DShards: 1,
 		PShards: 0,
 		Seq:     0,
 		Tot:     1,

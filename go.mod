@@ -6,6 +6,7 @@ require (
 	github.com/cybriq/proc v0.2.0
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0
 	github.com/minio/sha256-simd v1.0.0
+	github.com/templexxx/reedsolomon v1.1.3
 	gopkg.in/src-d/go-git.v4 v4.13.1
 )
 
@@ -19,6 +20,8 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/src-d/gcfg v1.4.0 // indirect
+	github.com/templexxx/cpu v0.0.1 // indirect
+	github.com/templexxx/xorsimd v0.1.1 // indirect
 	github.com/xanzy/ssh-agent v0.2.1 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	golang.org/x/crypto v0.0.0-20221005025214-4161e89ecf1b // indirect

@@ -27,11 +27,12 @@ type Packet struct {
 	// To is the fingerprint of the pubkey used in the ECDH key exchange, 12
 	// bytes long.
 	To pub.Print
-	// DataShards and ParityShards are reed solomon parameters for
-	// retransmit avoidance. These are a ratio and
-	// Tot / ParityShards * DataShards will define how many segments of the
-	// total are parity shards.
-	DataShards, ParityShards byte
+	// ParityShards is the factor of extra Reed Solomon versus 4. This
+	// number is the number of packets that can fail transmission or be
+	// corrupted before the message cannot be decoded. 4 is used as the base
+	// because it permits easy segmentation of the message as 4 segments of
+	// data then ParityShards redundant data, and so on.
+	ParityShards uint16
 	// Seq specifies the segment number of the message, 4 bytes long.
 	Seq uint16
 	// Tot is the number of segments in the batch
@@ -71,7 +72,6 @@ type EP struct {
 	To      *pub.Key
 	From    *prv.Key
 	Blk     cipher.Block
-	DShards int
 	PShards int
 	Seq     int
 	Tot     int
@@ -89,14 +89,14 @@ func (ep EP) GetOverhead() int {
 // the signature to the end.
 func Encode(ep EP) (pkt []byte, e error) {
 	f := &Packet{
-		To:           ep.To.ToBytes().Fingerprint(),
-		DataShards:   byte(ep.DShards),
-		ParityShards: byte(ep.PShards),
-		Nonce:        nonce.Get(),
-		Seen:         ep.Seen,
+		To:    ep.To.ToBytes().Fingerprint(),
+		Nonce: nonce.Get(),
+		Seen:  ep.Seen,
 	}
+	pShards := slice.NewUint16()
 	Seq := slice.NewUint16()
 	Tot := slice.NewUint16()
+	slice.EncodeUint16(pShards, ep.PShards)
 	slice.EncodeUint16(Seq, ep.Seq)
 	slice.EncodeUint16(Tot, ep.Tot)
 	SeenCount := []byte{byte(len(ep.Seen))}
@@ -119,14 +119,13 @@ func Encode(ep EP) (pkt []byte, e error) {
 		pad = slice.NoisePad(ep.Pad)
 	}
 	pkt = slice.Concatenate(
-		f.To[:],                // 8 bytes   \
-		[]byte{f.DataShards},   // 1 byte     |
-		[]byte{f.ParityShards}, // 1 byte     |
-		Seq,                    // 2 bytes     > 32 bytes
-		Tot,                    // 2 bytes    |
-		payloadLen,             // 2 byte     |
-		f.Nonce[:],             // 16 bytes  /
-		f.Payload,              // payload starts on 32 byte boundary
+		f.To[:],    // 8 bytes   \
+		pShards,    // 2 bytes     |
+		Seq,        // 2 bytes    | 32 bytes
+		Tot,        // 2 bytes    | total
+		payloadLen, // 2 byte     |
+		f.Nonce[:], // 16 bytes  /
+		f.Payload,  // payload starts on 32 byte boundary
 		SeenCount,
 		seenBytes,
 		pad,
@@ -158,9 +157,9 @@ func Decode(pkt []byte) (f *Packet, p *pub.Key, e error) {
 	data := pkt
 	f = &Packet{}
 	f.To, data = slice.Cut(data, prl)
-	f.DataShards, data = data[0], data[1:]
-	f.ParityShards, data = data[0], data[1:]
-	var seq, tot slice.Size16
+	var seq, tot, pShards slice.Size16
+	pShards, data = slice.Cut(data, u16l)
+	f.ParityShards = uint16(slice.DecodeUint16(pShards))
 	seq, data = slice.Cut(data, u16l)
 	f.Seq = uint16(slice.DecodeUint16(seq))
 	tot, data = slice.Cut(data, u16l)
