@@ -46,7 +46,6 @@ func TestSplit_Join(t *testing.T) {
 		To:      reciPub,
 		From:    sendPriv,
 		Blk:     blk1,
-		DShards: 1,
 		PShards: 0,
 		Seq:     0,
 		Tot:     1,

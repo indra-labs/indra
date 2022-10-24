@@ -19,6 +19,14 @@ func Split(ep EP, segmentSize int) (pkts [][]byte, e error) {
 	dataSegSize := segmentSize - overhead
 	segs := slice.Segment(ep.Data, dataSegSize)
 	ls := len(segs)
+	// In order to do adaptive RS encoding we need to pad out to multiples
+	// of 4 to provide 25% increments of redundancy.
+	mod := len(segs) % 4
+	if mod > 0 {
+		extra := make([][]byte, mod)
+		segs = append(segs, extra...)
+		ls += mod
+	}
 	pkts = make([][]byte, ls)
 	ep.Tot = ls
 	for i := range segs {
