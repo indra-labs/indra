@@ -40,14 +40,14 @@ func TestEncode_Decode(t *testing.T) {
 	}
 	var pkt []byte
 	params := EP{
-		To:      reciPub,
-		From:    sendPriv,
-		Blk:     blk,
-		PShards: 0,
-		Seq:     0,
-		Tot:     1,
-		Data:    payload,
-		Pad:     0,
+		To:         reciPub,
+		From:       sendPriv,
+		Blk:        blk,
+		Redundancy: 0,
+		Seq:        0,
+		Tot:        1,
+		Data:       payload,
+		Pad:        0,
 	}
 	if pkt, e = Encode(params); check(e) {
 		t.Error(e)
