@@ -7,6 +7,10 @@ import (
 	"github.com/Indra-Labs/indra/pkg/slice"
 )
 
+type rsSegment struct {
+	d, p int
+}
+
 // Split creates a series of packets including the defined Reed Solomon
 // parameters for extra parity shards.
 //
@@ -19,13 +23,10 @@ func Split(ep EP, segmentSize int) (pkts [][]byte, e error) {
 	dataSegSize := segmentSize - overhead
 	segs := slice.Segment(ep.Data, dataSegSize)
 	ls := len(segs)
-	// In order to do adaptive RS encoding we need to pad out to multiples
-	// of 4 to provide 25% increments of redundancy.
-	mod := len(segs) % 4
-	if mod > 0 {
-		extra := make([][]byte, mod)
-		segs = append(segs, extra...)
-		ls += mod
+	rsSegs := ls / 256
+	rsMod := ls & 255
+	if rsSegs > 0 {
+		_ = rsMod
 	}
 	pkts = make([][]byte, ls)
 	ep.Tot = ls
@@ -66,7 +67,7 @@ func Join(pkts Packets) (msg []byte, e error) {
 	}
 	// If none are missing and there is no parity shards we can just zip
 	// it all together.
-	if len(missing) == 0 && pkts[0].ParityShards == 0 {
+	if len(missing) == 0 && pkts[0].Redundancy == 0 {
 		var shards [][]byte
 		for i := range pkts {
 			shards = append(shards, pkts[i].Payload)
