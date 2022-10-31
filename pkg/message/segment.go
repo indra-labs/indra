@@ -5,11 +5,8 @@ import (
 	"sort"
 
 	"github.com/Indra-Labs/indra/pkg/slice"
+	"github.com/templexxx/reedsolomon"
 )
-
-type rsSegment struct {
-	d, p int
-}
 
 // Split creates a series of packets including the defined Reed Solomon
 // parameters for extra parity shards.
@@ -18,26 +15,71 @@ type rsSegment struct {
 //
 // The segmentSize is inclusive of packet overhead plus the Seen key
 // fingerprints at the end of the Packet.
-func Split(ep EP, segmentSize int) (pkts [][]byte, e error) {
+func Split(ep EP, segSize int) (pkts [][]byte, e error) {
 	overhead := ep.GetOverhead()
-	dataSegSize := segmentSize - overhead
-	segs := slice.Segment(ep.Data, dataSegSize)
-	ls := len(segs)
-	rsSegs := ls / 256
-	rsMod := ls & 255
-	if rsSegs > 0 {
-		_ = rsMod
-	}
-	pkts = make([][]byte, ls)
-	ep.Tot = ls
-	for i := range segs {
-		ep.Pad = dataSegSize - len(segs[i])
-		ep.Data = segs[i]
-		ep.Seq = i
-		if pkts[i], e = Encode(ep); check(e) {
-			return
+	segMap := NewSegments(len(ep.Data), segSize, overhead, ep.Redundancy)
+	// pad the last part
+	sp := segMap[len(segMap)-1]
+	ep.Data = append(ep.Data, slice.NoisePad(sp.SLen-sp.Last)...)
+	var s [][]byte
+	var start, end int
+	for _, sm := range segMap {
+		for curs := 0; curs < sm.DEnd-sm.DStart; curs++ {
+			start = curs * sm.SLen
+			end = start + sm.SLen
+			s = append(s, ep.Data[start:end])
 		}
-		ep.Seq++
+		for curs := 0; curs < sm.PEnd-sm.DEnd; curs++ {
+			start = curs * sm.SLen
+			end = start + sm.SLen
+			s = append(s, make([]byte, end-start))
+		}
+	}
+	if ep.Redundancy > 0 {
+		for _, sm := range segMap {
+			section := s[sm.DStart:sm.PEnd]
+			var rs *reedsolomon.RS
+			if rs, e = reedsolomon.New(sm.DEnd-sm.DStart,
+				sm.PEnd-sm.DEnd); check(e) {
+				return
+			}
+			if e = rs.Encode(section); check(e) {
+				return
+			}
+		}
+	}
+	// Now we have the data encoded, next to encode the packets from each
+	// of these segments.
+	ep.Tot = len(s)
+	for _, sm := range segMap {
+		lastEl := sm.DEnd - sm.DStart - 1
+		for curs := 0; curs < sm.DEnd-sm.DStart; curs++ {
+			if curs == lastEl {
+				ep.Pad = sm.SLen - sm.Last
+			}
+			ep.Data = s[ep.Seq]
+			var pkt []byte
+			if pkt, e = Encode(ep); check(e) {
+				return
+			}
+			pkts = append(pkts, pkt)
+			ep.Seq++
+
+		}
+		ep.Pad = 0
+		lastEl = sm.DEnd - sm.DStart - 1
+		for curs := 0; curs < sm.PEnd-sm.DEnd; curs++ {
+			if curs == lastEl {
+				ep.Pad = sm.SLen - sm.Last
+			}
+			ep.Data = s[ep.Seq]
+			var pkt []byte
+			if pkt, e = Encode(ep); check(e) {
+				return
+			}
+			pkts = append(pkts, pkt)
+			ep.Seq++
+		}
 	}
 	return
 }
@@ -56,29 +98,7 @@ func Join(pkts Packets) (msg []byte, e error) {
 		return
 	}
 	sort.Sort(pkts)
-	// determine which, if any, packets are missing, TODO: Reed Solomon FEC.
-	var missing []uint16
-	prev := pkts[0]
-	for _, i := range pkts[1:] {
-		if i.Seq-1 != prev.Seq {
-			missing = append(missing, i.Seq-1)
-		}
-		prev = i
-	}
-	// If none are missing and there is no parity shards we can just zip
-	// it all together.
-	if len(missing) == 0 && pkts[0].Redundancy == 0 {
-		var shards [][]byte
-		for i := range pkts {
-			shards = append(shards, pkts[i].Payload)
-		}
-		totalLength := slice.SumLen(shards...)
-		msg = make([]byte, 0, totalLength)
-		for i := range shards {
-			msg = append(msg, shards[i]...)
-		}
-		return
-	}
+
 	e = errors.New("not yet implemented data shard recovery")
 	return
 }
