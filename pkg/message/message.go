@@ -95,23 +95,18 @@ func Encode(ep EP) (pkt []byte, e error) {
 	slice.EncodeUint16(Seq, ep.Seq)
 	slice.EncodeUint16(Tot, ep.Tot)
 	SeenCount := []byte{byte(len(ep.Seen))}
-	// We are not supporting packets longer than 64kb as this is the largest
-	// supported by current network devices for UDP packets. Larger messages
-	// must be split. The length of 16 here also is to ensure that the
-	// actual payload starts on a 16 byte boundary to be optimal for the
-	// AES-CTR encryption, the preceding data total size is 32 bytes.
 	payloadLen := slice.NewUint16()
-	slice.EncodeUint16(payloadLen, len(ep.Data))
+	dl := len(ep.Data)
+	if ep.Pad > 0 {
+		dl -= ep.Pad
+	}
+	slice.EncodeUint16(payloadLen, dl)
 	// Encrypt the payload
 	ciph.Encipher(ep.Blk, f.Nonce, ep.Data)
 	f.Payload = ep.Data
 	var seenBytes []byte
 	for i := range f.Seen {
 		seenBytes = append(seenBytes, f.Seen[i][:]...)
-	}
-	var pad []byte
-	if ep.Pad > 0 {
-		pad = slice.NoisePad(ep.Pad)
 	}
 	pkt = slice.Concatenate(
 		f.To[:],    // 8 bytes  \
@@ -123,7 +118,6 @@ func Encode(ep EP) (pkt []byte, e error) {
 		f.Nonce[:], // 16 bytes  /
 		f.Payload,  // payload starts on 32 byte boundary
 		seenBytes,
-		pad,
 	)
 	// Sign the packet.
 	var s sig.Bytes
@@ -149,22 +143,26 @@ func Decode(pkt []byte) (f *Packet, p *pub.Key, e error) {
 		log.E.Ln(e)
 		return
 	}
+	sigStart := pktLen - sig.Len
+	// log.I.Ln("pktLen", pktLen, "sigStart", sigStart)
 	data := pkt
 	f = &Packet{}
 	f.To, data = slice.Cut(data, prl)
-	var seq, tot slice.Size16
+	var seq, tot, payloadLength slice.Size16
 	seq, data = slice.Cut(data, u16l)
 	f.Seq = uint16(slice.DecodeUint16(seq))
 	tot, data = slice.Cut(data, u16l)
 	f.Tot = uint16(slice.DecodeUint16(tot))
-	var payloadLength slice.Size16
 	payloadLength, data = slice.Cut(data, u16l)
 	f.Redundancy, data = data[0], data[1:]
 	var sc byte
 	sc, data = data[0], data[1:]
 	f.Nonce, data = slice.Cut(data, nonce.Size)
 	pl := slice.DecodeUint16(payloadLength)
+	// log.I.Ln(f.Seq, pl)
 	f.Payload, data = slice.Cut(data, pl)
+	// trim the padding
+	data = data[:len(data)-int(sc)*pub.PrintLen]
 	var sn []byte
 	f.Seen = make([]pub.Print, sc)
 	for i := 0; i < int(sc); i++ {
@@ -172,7 +170,6 @@ func Decode(pkt []byte) (f *Packet, p *pub.Key, e error) {
 		copy(f.Seen[i][:], sn)
 	}
 	// split off the signature and recover the public key
-	sigStart := pktLen - sig.Len
 	var s sig.Bytes
 	s = pkt[sigStart:]
 	if p, e = s.Recover(sha256.Single(pkt[:sigStart])); check(e) {
