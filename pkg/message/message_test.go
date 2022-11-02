@@ -60,8 +60,8 @@ func TestEncode_Decode(t *testing.T) {
 	if !sendPub.Equals(pub3) {
 		t.Error(e)
 	}
-	ciph.Encipher(blk, f.Nonce, f.Payload)
-	dHash := sha256.Single(f.Payload)
+	ciph.Encipher(blk, f.Nonce, f.Data)
+	dHash := sha256.Single(f.Data)
 	if bytes.Compare(pHash, dHash) != 0 {
 		t.Error(errors.New("encode/decode unsuccessful"))
 	}

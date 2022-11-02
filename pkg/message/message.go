@@ -36,7 +36,7 @@ type Packet struct {
 	// Nonce is the IV for the encryption on the Payload. 16 bytes.
 	Nonce nonce.IV
 	// Payload is the encrypted message.
-	Payload []byte
+	Data []byte
 	// Seen is the SHA256 truncated hashes of previous received encryption
 	// public keys to indicate they won't be reused and can be discarded.
 	// The binary encoding allows for 256 of these
@@ -44,7 +44,7 @@ type Packet struct {
 }
 
 func (p *Packet) Decipher(blk cipher.Block) *Packet {
-	ciph.Encipher(blk, p.Nonce, p.Payload)
+	ciph.Encipher(blk, p.Nonce, p.Data)
 	return p
 }
 
@@ -103,7 +103,7 @@ func Encode(ep EP) (pkt []byte, e error) {
 	slice.EncodeUint16(payloadLen, dl)
 	// Encrypt the payload
 	ciph.Encipher(ep.Blk, f.Nonce, ep.Data)
-	f.Payload = ep.Data
+	f.Data = ep.Data
 	var seenBytes []byte
 	for i := range f.Seen {
 		seenBytes = append(seenBytes, f.Seen[i][:]...)
@@ -116,7 +116,7 @@ func Encode(ep EP) (pkt []byte, e error) {
 		redundancy, // 1 byte    |
 		SeenCount,  // 1 byte    |
 		f.Nonce[:], // 16 bytes  /
-		f.Payload,  // payload starts on 32 byte boundary
+		f.Data,     // payload starts on 32 byte boundary
 		seenBytes,
 	)
 	// Sign the packet.
@@ -160,7 +160,7 @@ func Decode(pkt []byte) (f *Packet, p *pub.Key, e error) {
 	f.Nonce, data = slice.Cut(data, nonce.Size)
 	pl := slice.DecodeUint16(payloadLength)
 	// log.I.Ln(f.Seq, pl)
-	f.Payload, data = slice.Cut(data, pl)
+	f.Data, data = slice.Cut(data, pl)
 	// trim the padding
 	data = data[:len(data)-int(sc)*pub.PrintLen]
 	var sn []byte

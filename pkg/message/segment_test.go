@@ -85,7 +85,7 @@ func TestSplitJoin(t *testing.T) {
 		t.Error(errors.New("message did not decode correctly"))
 	}
 	// rHash :=
-	_, _, _ = pHash, sendPub, msg
+	// _, _, _ = pHash, sendPub, msg
 }
 
 func TestSplitJoinFEC(t *testing.T) {
