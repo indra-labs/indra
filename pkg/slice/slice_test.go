@@ -9,6 +9,8 @@ func TestSize24(t *testing.T) {
 	log.I.Ln(n)
 	u := NewUint24()
 	EncodeUint24(u, n)
-	log.I.S(u)
-	log.I.S(DecodeUint24(u))
+	u2 := DecodeUint24(u)
+	if n != u2 {
+		t.Error("failed to encode/decode")
+	}
 }

@@ -14,8 +14,8 @@ import (
 )
 
 func TestSplitJoin(t *testing.T) {
-	msgSize := 2 << 14
-	segSize := 512
+	msgSize := 2 << 19
+	segSize := 1472
 	payload := make([]byte, msgSize)
 	var e error
 	var n int
@@ -43,14 +43,14 @@ func TestSplitJoin(t *testing.T) {
 	}
 
 	params := EP{
-		To:         reciPub,
-		From:       sendPriv,
-		Blk:        blk1,
-		Redundancy: 0,
-		Seq:        0,
-		Tot:        1,
-		Data:       payload,
-		Pad:        0,
+		To:     reciPub,
+		From:   sendPriv,
+		Blk:    blk1,
+		Parity: 0,
+		Seq:    0,
+		Length: len(payload),
+		Data:   payload,
+		Pad:    0,
 	}
 	var splitted [][]byte
 	if splitted, e = Split(params, segSize); check(e) {
@@ -118,14 +118,14 @@ func TestSplitJoinFEC(t *testing.T) {
 	}
 
 	params := EP{
-		To:         reciPub,
-		From:       sendPriv,
-		Blk:        blk1,
-		Redundancy: 64,
-		Seq:        0,
-		Tot:        1,
-		Data:       payload,
-		Pad:        0,
+		To:     reciPub,
+		From:   sendPriv,
+		Blk:    blk1,
+		Parity: 64,
+		Seq:    0,
+		Length: len(payload),
+		Data:   payload,
+		Pad:    0,
 	}
 	var splitted [][]byte
 	if splitted, e = Split(params, segSize); check(e) {
@@ -190,14 +190,14 @@ func TestSplit(t *testing.T) {
 	}
 
 	params := EP{
-		To:         reciPub,
-		From:       sendPriv,
-		Blk:        blk1,
-		Redundancy: 96,
-		Seq:        0,
-		Tot:        1,
-		Data:       payload,
-		Pad:        0,
+		To:     reciPub,
+		From:   sendPriv,
+		Blk:    blk1,
+		Parity: 96,
+		Seq:    0,
+		Length: len(payload),
+		Data:   payload,
+		Pad:    0,
 	}
 
 	var splitted [][]byte
@@ -234,14 +234,14 @@ func BenchmarkSplit(b *testing.B) {
 		}
 
 		params := EP{
-			To:         reciPub,
-			From:       sendPriv,
-			Blk:        blk1,
-			Redundancy: 64,
-			Seq:        0,
-			Tot:        1,
-			Data:       payload,
-			Pad:        0,
+			To:     reciPub,
+			From:   sendPriv,
+			Blk:    blk1,
+			Parity: 64,
+			Seq:    0,
+			Length: len(payload),
+			Data:   payload,
+			Pad:    0,
 		}
 
 		var splitted [][]byte
