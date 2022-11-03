@@ -15,71 +15,69 @@ import (
 //
 // The segmentSize is inclusive of packet overhead plus the Seen key
 // fingerprints at the end of the Packet.
-func Split(ep EP, segSize int) (pkts [][]byte, e error) {
+func Split(ep EP, segSize int) (packets [][]byte, e error) {
 	overhead := ep.GetOverhead()
-	segMap := NewSegments(len(ep.Data), segSize, overhead, ep.Redundancy)
+	segMap := NewSegments(len(ep.Data), segSize, overhead, ep.Parity)
+	// log.I.Ln(len(ep.Data), segSize, overhead, ep.Parity)
+	// log.I.S(segMap)
 	// pad the last part
 	sp := segMap[len(segMap)-1]
-	ep.Data = append(ep.Data, slice.NoisePad(sp.SLen-sp.Last)...)
+	padLen := sp.SLen - sp.Last
+	ep.Data = append(ep.Data, slice.NoisePad(padLen)...)
 	var s [][]byte
 	var start, end int
 	for _, sm := range segMap {
+		// Add the data segments.
 		for curs := 0; curs < sm.DEnd-sm.DStart; curs++ {
-			start = curs * sm.SLen
+			start += sm.SLen
 			end = start + sm.SLen
 			s = append(s, ep.Data[start:end])
 		}
+		// Add the empty parity segments, if any.
 		for curs := 0; curs < sm.PEnd-sm.DEnd; curs++ {
-			start = curs * sm.SLen
-			end = start + sm.SLen
-			s = append(s, make([]byte, end-start))
+			s = append(s, make([]byte, sm.SLen))
 		}
-	}
-	if ep.Redundancy > 0 {
-		for _, sm := range segMap {
+		// If there is redundancy and parity segments were added,
+		// generate the parity codes.
+		if ep.Parity > 0 {
 			section := s[sm.DStart:sm.PEnd]
 			var rs *reedsolomon.RS
-			if rs, e = reedsolomon.New(sm.DEnd-sm.DStart,
-				sm.PEnd-sm.DEnd); check(e) {
+			dLen := sm.DEnd - sm.DStart
+			pLen := sm.PEnd - sm.DEnd
+			if rs, e = reedsolomon.New(dLen, pLen); check(e) {
 				return
 			}
 			if e = rs.Encode(section); check(e) {
 				return
 			}
 		}
-	}
-	// Now we have the data encoded, next to encode the packets from each of
-	// these segments.
-	ep.Tot = len(s)
-	for _, sm := range segMap {
-		lastEl := sm.DEnd - sm.DStart - 1
-		for curs := 0; curs < sm.DEnd-sm.DStart; curs++ {
-			if curs == lastEl {
-				ep.Pad = sm.SLen - sm.Last
-			}
-			ep.Data = s[ep.Seq]
-			var pkt []byte
-			if pkt, e = Encode(ep); check(e) {
-				return
-			}
-			pkts = append(pkts, pkt)
-			ep.Seq++
-
+		// Now we have the data encoded, next to encode the packets from
+		// each of these segments.
+		length := []int{
+			sm.DEnd - sm.DStart,
+			sm.PEnd - sm.DEnd,
 		}
-		ep.Pad = 0
-		lastEl = sm.DEnd - sm.DStart - 1
-		for curs := 0; curs < sm.PEnd-sm.DEnd; curs++ {
-			if curs == lastEl {
-				ep.Pad = sm.SLen - sm.Last
-			}
-			ep.Data = s[ep.Seq]
-			var pkt []byte
-			if pkt, e = Encode(ep); check(e) {
-				return
-			}
-			pkts = append(pkts, pkt)
-			ep.Seq++
+		lastEl := []int{
+			length[0] - 1,
+			length[1] - 1,
 		}
+		var packet []byte
+		data := ep.Data
+		for i := 0; i < 2; i++ {
+			for curs := 0; curs < length[i]; curs++ {
+				if curs == lastEl[i] {
+					ep.Pad = padLen
+				}
+				ep.Data = s[ep.Seq]
+				if packet, e = Encode(ep); check(e) {
+					return
+				}
+				packets = append(packets, packet)
+				ep.Seq++
+			}
+			ep.Pad = 0
+		}
+		ep.Data = data
 	}
 	return
 }
@@ -87,37 +85,38 @@ func Split(ep EP, segSize int) (pkts [][]byte, e error) {
 const ErrNotEnough = "too many missing, redundancy %d, lost %d, section %d"
 const ErrDupe = "found duplicate packet, no redundancy, decoding failed"
 const ErrLostNoRedundant = "no redundancy with %d lost of %d"
+const ErrMismatch = "found disagreement about common data in segment %d of %d" +
+	" in field %s"
 
-// Join a collection of Packets together.
+// JoinOld a collection of Packets together.
 //
 // Every message has a unique sender key, so once a packet is decoded, the
 // pub.Print is the key to identifying associated packets.
-func Join(pkts Packets) (msg []byte, e error) {
+func JoinOld(pkts Packets) (msg []byte, e error) {
 	switch len(pkts) {
 	case 0:
 		e = errors.New("empty packets")
 		return
 	case 1:
-		if pkts[0].Tot == 1 {
+		if pkts[0].Length == 1 {
 			msg = pkts[0].Data
 			return
 		}
 	}
 	// assemble a list based on the expected total to be, and place the
 	// packets into sequential order.
-	msgSegLen := int(pkts[0].Tot)
+	nSegs := int(pkts[0].Length)
 	payloadLen := len(pkts[0].Data)
-	listPackets := make(Packets, msgSegLen)
-	totP := int(pkts[0].Redundancy)
+	packets := make(Packets, nSegs)
+	totP := int(pkts[0].Parity)
 	// If we have no redundancy, if any are lost, fail now.
-	if len(pkts) != msgSegLen && totP == 0 {
-		e = fmt.Errorf(ErrLostNoRedundant,
-			msgSegLen-len(pkts), msgSegLen)
+	if len(pkts) != nSegs && totP == 0 {
+		e = fmt.Errorf(ErrLostNoRedundant, nSegs-len(pkts), nSegs)
 		return
 	}
 	for i := range pkts {
 		seq := pkts[i].Seq
-		if listPackets[seq] != nil {
+		if packets[seq] != nil {
 			log.I.Ln("found duplicate packet")
 			// if we have no redundancy this means we have lost one.
 			if totP == 0 {
@@ -125,27 +124,16 @@ func Join(pkts Packets) (msg []byte, e error) {
 				return
 			}
 		} else {
-			listPackets[seq] = pkts[i]
+			packets[seq] = pkts[i]
 		}
 	}
 	var segments [][]byte
 	if totP <= 0 {
-		// In theory, we have all segments, as packet decoding was
-		// evidently successful, thus all checksums passed, and the
-		// concatenation of the packets should also be successful.
-		var totalLen int
-		for i := range listPackets {
-			totalLen += len(listPackets[i].Data)
-		}
-		// Pre-allocate the space.
-		msg = make([]byte, 0, totalLen)
-		for i := range listPackets {
-			msg = append(msg, listPackets[i].Data...)
-		}
+		msg = joinPacketData(packets)
 	} else {
 		// If there is redundancy in the message, check count of lost
 		// packets.
-		sections := msgSegLen / 256
+		sections := nSegs / 256
 		var counter, start, end int
 		var nLost []int
 		// In each section, a maximum of the number equal to the parity
@@ -160,7 +148,7 @@ func Join(pkts Packets) (msg []byte, e error) {
 			nLeft := 256
 			nLost = append(nLost, 0)
 			if i == sections {
-				nLeft = msgSegLen - sections*256
+				nLeft = nSegs - sections*256
 			}
 			end += nLeft
 			nTotP := nLeft * totP / totD
@@ -173,7 +161,7 @@ func Join(pkts Packets) (msg []byte, e error) {
 			for ; counter < nLeft; counter++ {
 				cur = n + counter
 				// count how many packets were lost
-				if listPackets[cur] == nil {
+				if packets[cur] == nil {
 					nLost[i]++
 					if nLost[i] > nTotP {
 						e = fmt.Errorf(ErrNotEnough,
@@ -233,6 +221,26 @@ func Join(pkts Packets) (msg []byte, e error) {
 	return
 }
 
+func countLostAndFound() {
+
+}
+
+func joinPacketData(listPackets Packets) (msg []byte) {
+	// In theory, we have all segments, as packet decoding was
+	// evidently successful, thus all checksums passed, and the
+	// concatenation of the packets should also be successful.
+	var totalLen int
+	for i := range listPackets {
+		totalLen += len(listPackets[i].Data)
+	}
+	// Pre-allocate the space.
+	msg = make([]byte, 0, totalLen)
+	for i := range listPackets {
+		msg = append(msg, listPackets[i].Data...)
+	}
+	return
+}
+
 func reconst(pkts Packets, n, nTotD, nTotP, payloadLen int,
 	haveDP, lostD []int) (segments [][]byte, short, sPad []int, e error) {
 
@@ -263,5 +271,52 @@ func reconst(pkts Packets, n, nTotD, nTotP, payloadLen int,
 	// we should now be able to add the section to
 	// the segments
 	segments = append(segments, shards[:nTotD]...)
+	return
+}
+
+// Join a collection of Packets together.
+//
+// Every message has a unique sender key, so once a packet is decoded, the
+// pub.Print is the key to identifying associated packets. The message collector
+// must group them, they must have common addressee, message length and
+// parity settings.
+func Join(packets Packets) (msg []byte, e error) {
+	if len(packets) == 0 {
+		e = errors.New("empty packets")
+		return
+	}
+	// Check that the data that should be common to all packets is common.
+	to := packets[0].To
+	p := packets[0]
+	lp := len(packets)
+	tot, red := packets[0].Length, packets[0].Parity
+	for i, p := range packets {
+		if i == 0 {
+			continue
+		}
+		if check(to.Equals(p.To)) {
+			e = fmt.Errorf(ErrMismatch, i, lp, "to")
+			return
+		}
+		if p.Length != tot {
+			e = fmt.Errorf(ErrMismatch, i, lp, "length")
+			return
+		}
+		if p.Parity != red {
+			e = fmt.Errorf(ErrMismatch, i, lp, "parity")
+			return
+		}
+	}
+	// Construct the segment map.
+	overhead := p.GetOverhead()
+	// log.I.Ln(int(p.Length), len(p.Data)+overhead, overhead, int(p.Parity))
+	segMap := NewSegments(int(p.Length), len(p.Data)+overhead, overhead,
+		int(p.Parity))
+	log.I.S(segMap)
+
+	for _, sm := range segMap {
+
+		_ = sm
+	}
 	return
 }

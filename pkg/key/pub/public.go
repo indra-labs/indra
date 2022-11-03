@@ -1,6 +1,8 @@
 package pub
 
 import (
+	"unsafe"
+
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/sha256"
@@ -46,6 +48,18 @@ func FromBytes(b []byte) (pub *Key, e error) {
 // storage forms.
 func (pub *Key) ToBytes() (p Bytes) {
 	return (*secp256k1.PublicKey)(pub).SerializeCompressed()
+}
+
+func (pb Bytes) Equals(qb Bytes) bool {
+	// Ensure lengths are correct.
+	if len(pb) == KeyLen && len(qb) == KeyLen {
+		// Convert to fixed arrays unsafely, but now safe in fact, and
+		// we get access to the builtin comparison operator and don't
+		// dice with the immutability of strings
+		return *(*[KeyLen]byte)(unsafe.Pointer(&pb)) ==
+			*(*[KeyLen]byte)(unsafe.Pointer(&qb))
+	}
+	return false
 }
 
 func (pub *Key) ToPublicKey() *secp256k1.PublicKey {
