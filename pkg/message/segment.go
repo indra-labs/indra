@@ -297,7 +297,7 @@ func Join(packets Packets) (msg []byte, e error) {
 	sort.Sort(packets)
 	lp := len(packets)
 	p := packets[0]
-	// Construct the segment map.
+	// Construct the segments map.
 	overhead := p.GetOverhead()
 	// log.I.Ln(int(p.Length), len(p.Data), len(p.Data)+overhead, overhead,
 	// 	int(p.Parity))
@@ -390,32 +390,48 @@ func Join(packets Packets) (msg []byte, e error) {
 	}
 	// Collate the sections and fill up have/lost lists.
 	for _, sm := range segMap {
+		var segments [][]byte
 		var haveD, haveP, lost []int
 		log.I.Ln(sm)
-		var segment [][]byte
 		sLen := sm.SLen
 		for i := sm.DStart; i < sm.DEnd; i++ {
 			if listPackets[i] == nil {
 				lost = append(lost, i-sm.DStart)
-				segment = append(segment, make([]byte, sLen))
+				segments = append(segments, make([]byte, sLen))
 			} else {
 				haveD = append(haveD, i-sm.DStart-i)
-				segment = append(segment, listPackets[i].Data)
+				segments = append(segments, listPackets[i].Data)
 			}
 		}
 		for i := sm.DEnd; i < sm.PEnd; i++ {
 			if listPackets[i] == nil {
 				lost = append(lost, i-sm.DEnd)
-				segment = append(segment, make([]byte, sLen))
+				segments = append(segments, make([]byte, sLen))
 			} else {
 				haveP = append(haveD, i-sm.DEnd)
-				segment = append(segment, listPackets[i].Data)
+				segments = append(segments, listPackets[i].Data)
 			}
-
 		}
-
-		_ = haveP
+		dLen := sm.DEnd - sm.DStart
+		if len(haveD) == dLen {
+			msg = append(msg, slice.Concatenate(segments[:dLen]...)...)
+			msg = msg[:len(msg)-sm.SLen+sm.Last]
+			log.I.Ln("complete", len(msg), dLen, len(segments))
+			continue
+		}
+		pLen := sm.PEnd - sm.DEnd
+		var rs *reedsolomon.RS
+		if rs, e = reedsolomon.New(dLen, pLen); check(e) {
+			return
+		}
+		if e == rs.Reconst(segments, append(haveD, haveP...), lost) {
+			return
+		}
+		msg = append(msg, slice.Concatenate(segments[:dLen]...)...)
+		msg = msg[:len(msg)-sm.SLen+sm.Last]
+		log.I.Ln("reconst", len(msg), dLen, len(segments))
 	}
+	log.I.Ln("length", len(msg))
 	return
 }
 
