@@ -20,10 +20,10 @@ func ErrorLength(l int) error { return fmt.Errorf(errLengthStr, l, Len) }
 func New() Hash { return make(Hash, Len) }
 
 // Double runs a standard double SHA256 hash and does all the slicing for you.
-func Double(b []byte) []byte { return Single(Single(b)) }
+func Double(b []byte) Hash { return Single(Single(b)) }
 
 // Single runs a standard SHA256 hash and does all the slicing for you.
-func Single(b []byte) []byte { return FromHash(sha256.Sum256(b)) }
+func Single(b []byte) Hash { return FromHash(sha256.Sum256(b)) }
 
 // Valid checks the hash value is the correct length.
 func (h Hash) Valid() (e error) {
@@ -31,6 +31,11 @@ func (h Hash) Valid() (e error) {
 		e = ErrorLength(len(h))
 	}
 	return
+}
+
+func (h Hash) Equals(h2 Hash) bool {
+	
+	return false
 }
 
 // this is made as a string to be immutable. It can be changed with unsafe ofc.
