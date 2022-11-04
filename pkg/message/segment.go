@@ -3,7 +3,9 @@ package message
 import (
 	"errors"
 	"fmt"
+	"sort"
 
+	"github.com/Indra-Labs/indra/pkg/sha256"
 	"github.com/Indra-Labs/indra/pkg/slice"
 	"github.com/templexxx/reedsolomon"
 )
@@ -19,19 +21,23 @@ func Split(ep EP, segSize int) (packets [][]byte, e error) {
 	overhead := ep.GetOverhead()
 	segMap := NewSegments(len(ep.Data), segSize, overhead, ep.Parity)
 	// log.I.Ln(len(ep.Data), segSize, overhead, ep.Parity)
-	// log.I.S(segMap)
+	log.I.Ln(segMap)
 	// pad the last part
 	sp := segMap[len(segMap)-1]
 	padLen := sp.SLen - sp.Last
 	ep.Data = append(ep.Data, slice.NoisePad(padLen)...)
 	var s [][]byte
 	var start, end int
-	for _, sm := range segMap {
+	for i, sm := range segMap {
 		// Add the data segments.
 		for curs := 0; curs < sm.DEnd-sm.DStart; curs++ {
-			start += sm.SLen
 			end = start + sm.SLen
+			if i+1 == sm.DEnd-sm.DStart {
+				end = start + sm.Last
+			}
+			// log.I.Ln(start, end, sm)
 			s = append(s, ep.Data[start:end])
+			start += sm.SLen
 		}
 		// Add the empty parity segments, if any.
 		for curs := 0; curs < sm.PEnd-sm.DEnd; curs++ {
@@ -285,38 +291,134 @@ func Join(packets Packets) (msg []byte, e error) {
 		e = errors.New("empty packets")
 		return
 	}
-	// Check that the data that should be common to all packets is common.
-	to := packets[0].To
-	p := packets[0]
+	// log.I.Ln(len(packets))
+	// By sorting the packets we know we can iterate through them and detect
+	// missing and duplicated items by simple rules.
+	sort.Sort(packets)
 	lp := len(packets)
-	tot, red := packets[0].Length, packets[0].Parity
-	for i, p := range packets {
+	p := packets[0]
+	// Construct the segment map.
+	overhead := p.GetOverhead()
+	// log.I.Ln(int(p.Length), len(p.Data), len(p.Data)+overhead, overhead,
+	// 	int(p.Parity))
+	segMap := NewSegments(int(p.Length), len(p.Data)+overhead, overhead,
+		int(p.Parity))
+	log.I.S(segMap)
+	// check there is all pieces if there is no redundancy.
+	segCount := segMap[len(segMap)-1].PEnd
+	// log.I.Ln(segCount)
+	tot, red := p.Length, p.Parity
+	if red == 0 && lp < segCount {
+		e = fmt.Errorf(ErrLostNoRedundant, segCount-lp, segCount)
+		return
+	}
+	to := p.To
+	prevSeq := p.Seq
+	var discard []int
+	// Check that the data that should be common to all packets is common,
+	// and no sequence number is repeated.
+	for i, ps := range packets {
+		// Skip the first because we are comparing the rest to it. It is
+		// arbitrary which item is reference because all should be the
+		// same.
 		if i == 0 {
 			continue
 		}
-		if check(to.Equals(p.To)) {
+		// check that the sequence number isn't repeated.
+		if ps.Seq == prevSeq {
+			if red == 0 {
+				e = fmt.Errorf(ErrDupe)
+				return
+			}
+			// Check the data is the same, then discard the second
+			// if they match.
+			if sha256.Single(ps.Data).
+				Equals(sha256.Single(packets[prevSeq].Data)) {
+
+				discard = append(discard, int(ps.Seq))
+				// No need to go on, we will discard this one.
+				continue
+			}
+		}
+		prevSeq = ps.Seq
+		// All segments must be addressed to the same key.
+		if check(to.Equals(ps.To)) {
 			e = fmt.Errorf(ErrMismatch, i, lp, "to")
 			return
 		}
-		if p.Length != tot {
+		// All segments must specify the same total message length.
+		if ps.Length != tot {
 			e = fmt.Errorf(ErrMismatch, i, lp, "length")
 			return
 		}
-		if p.Parity != red {
+		// All messages must have the same parity settings.
+		if ps.Parity != red {
 			e = fmt.Errorf(ErrMismatch, i, lp, "parity")
 			return
 		}
 	}
-	// Construct the segment map.
-	overhead := p.GetOverhead()
-	// log.I.Ln(int(p.Length), len(p.Data)+overhead, overhead, int(p.Parity))
-	segMap := NewSegments(int(p.Length), len(p.Data)+overhead, overhead,
-		int(p.Parity))
-	log.I.S(segMap)
-
+	// Duplicates somehow found. Remove them.
+	for i := range discard {
+		// Subtracting the iterator accounts for the backwards shift of
+		// the shortened slice.
+		packets = RemovePacket(packets, discard[i]-i)
+		lp--
+	}
+	// If redundancy is zero, and we have the expected amount, we can just
+	// join them and return.
+	if red == 0 && segMap[len(segMap)-1].PEnd == len(packets) {
+		for _, sm := range segMap {
+			// log.I.Ln(sn)
+			var segment [][]byte
+			for i := sm.DStart; i < sm.DEnd; i++ {
+				segment = append(segment, packets[i].Data)
+			}
+			msg = append(msg, slice.Concatenate(segment...)...)
+			// log.I.Ln(len(msg))
+			// Slice off the padding if any.
+			msg = msg[:len(msg)-sm.SLen+sm.Last]
+			// log.I.Ln(len(msg))
+		}
+		// log.I.Ln(len(msg))
+		return
+	}
+	// Make a new list of the data segments to pin our items to, which will
+	// be bigger to the degree of segments lost.
+	listPackets := make(Packets, segCount)
+	for i := range packets {
+		listPackets[packets[i].Seq] = packets[i]
+	}
+	// Collate the sections and fill up have/lost lists.
 	for _, sm := range segMap {
+		var haveD, haveP, lost []int
+		log.I.Ln(sm)
+		var segment [][]byte
+		sLen := sm.SLen
+		for i := sm.DStart; i < sm.DEnd; i++ {
+			if listPackets[i] == nil {
+				lost = append(lost, i-sm.DStart)
+				segment = append(segment, make([]byte, sLen))
+			} else {
+				haveD = append(haveD, i-sm.DStart-i)
+				segment = append(segment, listPackets[i].Data)
+			}
+		}
+		for i := sm.DEnd; i < sm.PEnd; i++ {
+			if listPackets[i] == nil {
+				lost = append(lost, i-sm.DEnd)
+				segment = append(segment, make([]byte, sLen))
+			} else {
+				haveP = append(haveD, i-sm.DEnd)
+				segment = append(segment, listPackets[i].Data)
+			}
 
-		_ = sm
+		}
+
+		_ = haveP
 	}
 	return
+}
+
+func RemovePacket(slice Packets, s int) Packets {
+	return append(slice[:s], slice[s+1:]...)
 }

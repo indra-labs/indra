@@ -67,7 +67,6 @@ func TestSplitJoin(t *testing.T) {
 		pkts = append(pkts, pkt.Decipher(blk2))
 		keys = append(keys, key)
 	}
-	// log.I.Ln(len(pkts))
 	prev := keys[0]
 	// check all keys are the same
 	for _, k := range keys[1:] {
@@ -250,4 +249,28 @@ func BenchmarkSplit(b *testing.B) {
 		}
 		_ = splitted
 	}
+}
+
+func TestRemovePacket(t *testing.T) {
+	packets := make(Packets, 10)
+	for i := range packets {
+		packets[i] = &Packet{Seq: uint16(i)}
+	}
+	var seqs []uint16
+	for i := range packets {
+		seqs = append(seqs, packets[i].Seq)
+	}
+	log.I.Ln(seqs)
+	discard := []int{1, 5, 6}
+	log.I.Ln("discarding", discard)
+	for i := range discard {
+		// Subtracting the iterator accounts for the backwards shift of
+		// the shortened slice.
+		packets = RemovePacket(packets, discard[i]-i)
+	}
+	var seqs2 []uint16
+	for i := range packets {
+		seqs2 = append(seqs2, packets[i].Seq)
+	}
+	log.I.Ln(seqs2)
 }

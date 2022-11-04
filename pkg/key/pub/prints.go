@@ -35,7 +35,7 @@ func (p Print) Equals(q Print) (e error) {
 		same := *(*string)(unsafe.Pointer(&p)) ==
 			*(*string)(unsafe.Pointer(&q))
 		if !same {
-			e = fmt.Errorf("%s != %s", p, q)
+			e = fmt.Errorf("pubkey print %s != %s", p, q)
 		}
 	} else {
 		e = fmt.Errorf("prints not the same length, %d != %d",
