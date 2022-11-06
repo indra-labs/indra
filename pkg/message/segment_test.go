@@ -115,6 +115,13 @@ func TestSplitJoinFEC(t *testing.T) {
 		32,
 		64,
 		128,
+		160,
+		192,
+		216,
+		240,
+		248,
+		252,
+		255,
 	}
 	for i := range parity {
 
