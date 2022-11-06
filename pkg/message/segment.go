@@ -10,6 +10,8 @@ import (
 	"github.com/templexxx/reedsolomon"
 )
 
+const ErrEmptyBytes = "cannot encode empty bytes"
+
 // Split creates a series of packets including the defined Reed Solomon
 // parameters for extra parity shards.
 //
@@ -18,9 +20,13 @@ import (
 // The segmentSize is inclusive of packet overhead plus the Seen key
 // fingerprints at the end of the Packet.
 func Split(ep EP, segSize int) (packets [][]byte, e error) {
+	if ep.Data == nil || len(ep.Data) == 0 {
+		e = fmt.Errorf(ErrEmptyBytes)
+		return
+	}
 	overhead := ep.GetOverhead()
 	segMap := NewSegments(len(ep.Data), segSize, overhead, ep.Parity)
-	// log.I.Ln(len(ep.Data), segSize, overhead, ep.Parity)
+	log.I.Ln(len(ep.Data), segSize, overhead, ep.Parity)
 	log.I.Ln(segMap)
 	// pad the last part
 	sp := segMap[len(segMap)-1]
@@ -50,6 +56,7 @@ func Split(ep EP, segSize int) (packets [][]byte, e error) {
 			var rs *reedsolomon.RS
 			dLen := sm.DEnd - sm.DStart
 			pLen := sm.PEnd - sm.DEnd
+			log.I.Ln(ep.Parity, dLen, pLen)
 			if rs, e = reedsolomon.New(dLen, pLen); check(e) {
 				return
 			}
@@ -366,7 +373,7 @@ func Join(packets Packets) (msg []byte, e error) {
 	}
 	// If redundancy is zero, and we have the expected amount, we can just
 	// join them and return.
-	if red == 0 && segMap[len(segMap)-1].PEnd == len(packets) {
+	if segMap[len(segMap)-1].PEnd == len(packets) {
 		for _, sm := range segMap {
 			// log.I.Ln(sn)
 			var segment [][]byte
