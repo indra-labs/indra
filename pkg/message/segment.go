@@ -31,17 +31,21 @@ func Split(ep EP, segSize int) (packets [][]byte, e error) {
 	// pad the last part
 	sp := segMap[len(segMap)-1]
 	padLen := sp.SLen - sp.Last
+	log.I.Ln("padding", padLen, sp.Last)
 	ep.Data = append(ep.Data, slice.NoisePad(padLen)...)
+	log.I.Ln("data length", len(ep.Data))
 	var s [][]byte
 	var start, end int
 	for i, sm := range segMap {
 		// Add the data segments.
 		for curs := 0; curs < sm.DEnd-sm.DStart; curs++ {
 			end = start + sm.SLen
-			if i+1 == sm.DEnd-sm.DStart {
+			// log.I.Ln(i)
+			if i == sm.DEnd-sm.DStart {
+				log.I.Ln("last", sm.Last)
 				end = start + sm.Last
 			}
-			// log.I.Ln(start, end, sm)
+			// log.I.Ln(start, end, len(ep.Data), sm)
 			s = append(s, ep.Data[start:end])
 			start += sm.SLen
 		}
@@ -76,9 +80,9 @@ func Split(ep EP, segSize int) (packets [][]byte, e error) {
 		}
 		var packet []byte
 		data := ep.Data
-		for i := 0; i < 2; i++ {
-			for curs := 0; curs < length[i]; curs++ {
-				if curs == lastEl[i] {
+		for j := 0; j < 2; j++ {
+			for curs := 0; curs < length[j]; curs++ {
+				if curs == lastEl[j] {
 					ep.Pad = padLen
 				}
 				ep.Data = s[ep.Seq]
@@ -396,42 +400,50 @@ func Join(packets Packets) (msg []byte, e error) {
 		listPackets[packets[i].Seq] = packets[i]
 	}
 	// Collate the sections and fill up have/lost lists.
-	for _, sm := range segMap {
+	for n, sm := range segMap {
+		log.I.Ln("segment", n)
 		var segments [][]byte
 		var haveD, haveP, lost []int
+		start, parity, end := sm.DStart, sm.DEnd, sm.PEnd
 		log.I.Ln(sm)
 		sLen := sm.SLen
-		for i := sm.DStart; i < sm.DEnd; i++ {
+		for i := start; i < parity; i++ {
 			if listPackets[i] == nil {
-				lost = append(lost, i-sm.DStart)
+				lost = append(lost, i)
 				segments = append(segments, make([]byte, sLen))
 			} else {
-				haveD = append(haveD, i-sm.DStart-i)
+				haveD = append(haveD, i)
 				segments = append(segments, listPackets[i].Data)
 			}
 		}
-		for i := sm.DEnd; i < sm.PEnd; i++ {
+		for i := parity; i < end; i++ {
 			if listPackets[i] == nil {
-				lost = append(lost, i-sm.DEnd)
+				lost = append(lost, i)
 				segments = append(segments, make([]byte, sLen))
 			} else {
-				haveP = append(haveD, i-sm.DEnd)
+				haveP = append(haveP, i)
 				segments = append(segments, listPackets[i].Data)
 			}
 		}
-		dLen := sm.DEnd - sm.DStart
+		dLen := parity - start
 		if len(haveD) == dLen {
 			msg = append(msg, slice.Concatenate(segments[:dLen]...)...)
 			msg = msg[:len(msg)-sm.SLen+sm.Last]
 			log.I.Ln("complete", len(msg), dLen, len(segments))
 			continue
 		}
-		pLen := sm.PEnd - sm.DEnd
+		pLen := end - parity
 		var rs *reedsolomon.RS
+		log.I.Ln("d", dLen, "p", pLen)
 		if rs, e = reedsolomon.New(dLen, pLen); check(e) {
 			return
 		}
-		if e == rs.Reconst(segments, append(haveD, haveP...), lost) {
+		log.I.Ln("lost", lost)
+		log.I.Ln(haveD, haveP)
+		log.I.Ln(len(haveD), len(haveP))
+		if e = rs.Reconst(
+			segments, append(haveD, haveP...), lost); check(e) {
+
 			return
 		}
 		msg = append(msg, slice.Concatenate(segments[:dLen]...)...)

@@ -52,7 +52,8 @@ func (p *Packet) Decipher(blk cipher.Block) *Packet {
 	return p
 }
 
-const Overhead = pub.PrintLen + 1 + 2 + slice.Uint16Len*3 + nonce.Size + sig.Len
+const Overhead = pub.PrintLen + 1 + 2 + slice.Uint16Len*3 + nonce.Size +
+	sig.Len + 4
 
 type Packets []*Packet
 
@@ -124,7 +125,9 @@ func Encode(ep EP) (pkt []byte, e error) {
 	)
 	// Sign the packet.
 	var s sig.Bytes
-	if s, e = sig.Sign(ep.From, sha256.Single(pkt)); !check(e) {
+	hash := sha256.Single(pkt)
+	pkt = append(pkt, hash[:4]...)
+	if s, e = sig.Sign(ep.From, hash); !check(e) {
 		pkt = append(pkt, s...)
 	}
 	return
@@ -132,13 +135,13 @@ func Encode(ep EP) (pkt []byte, e error) {
 
 // Decode a packet and return the Packet with encrypted payload and signer's
 // public key.
-func Decode(data []byte) (f *Packet, p *pub.Key, e error) {
+func Decode(d []byte) (f *Packet, p *pub.Key, e error) {
 	const (
 		u16l = slice.Uint16Len
 		u32l = slice.Uint32Len
 		prl  = pub.PrintLen
 	)
-	pktLen := len(data)
+	pktLen := len(d)
 	if pktLen < Overhead {
 		// If this isn't checked the slice operations later can
 		// hit bounds errors.
@@ -150,9 +153,18 @@ func Decode(data []byte) (f *Packet, p *pub.Key, e error) {
 	// split off the signature and recover the public key
 	sigStart := pktLen - sig.Len
 	var s sig.Bytes
-	s, data = data[sigStart:], data[:sigStart]
-	if p, e = s.Recover(sha256.Single(data[:sigStart])); check(e) {
-		e = fmt.Errorf("error: '%s': packet checksum failed", e.Error())
+	var data, chek []byte
+	s, data = d[sigStart:], d[:sigStart]
+	checkStart := len(data) - 4
+	chek, data = data[checkStart:], data[:checkStart]
+	hash := sha256.Single(data)
+	if string(chek) != string(hash[:4]) {
+		e = fmt.Errorf("check failed: got '%v', expected '%v'",
+			chek, hash[:4])
+		return
+	}
+	if p, e = s.Recover(hash); check(e) {
+		return
 	}
 	// log.I.Ln("pktLen", pktLen, "sigStart", sigStart)
 	f = &Packet{}
