@@ -33,10 +33,7 @@ func (h Hash) Valid() (e error) {
 	return
 }
 
-func (h Hash) Equals(h2 Hash) bool {
-	
-	return false
-}
+func (h Hash) Equals(h2 Hash) bool { return false }
 
 // this is made as a string to be immutable. It can be changed with unsafe ofc.
 var zero = string(New())

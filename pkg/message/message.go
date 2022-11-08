@@ -43,32 +43,38 @@ type Packet struct {
 	Seen []pub.Print
 }
 
+// GetOverhead returns the packet frame overhead given the settings found in the
+// packet.
 func (p *Packet) GetOverhead() int {
 	return Overhead + len(p.Seen)*pub.PrintLen
 }
 
+// Decipher reverses the current state of encryption of the packet.
 func (p *Packet) Decipher(blk cipher.Block) *Packet {
 	ciph.Encipher(blk, p.Nonce, p.Data)
 	return p
 }
 
+// Overhead is the base overhead on a packet, use GetOverhead to add any extra
+// as found in a Packet.
 const Overhead = pub.PrintLen + 1 + 2 + slice.Uint16Len*3 + nonce.Size +
 	sig.Len + 4
 
+// Packets is a slice of pointers to packets.
 type Packets []*Packet
 
-func (p Packets) Len() int {
-	return len(p)
-}
+// sort.Interface implementation.
 
-func (p Packets) Less(i, j int) bool {
-	return p[i].Seq < p[j].Seq
-}
+func (p Packets) Len() int           { return len(p) }
+func (p Packets) Less(i, j int) bool { return p[i].Seq < p[j].Seq }
+func (p Packets) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
-func (p Packets) Swap(i, j int) {
-	p[i], p[j] = p[j], p[i]
-}
-
+// EP defines the parameters for creating a (split) packet given a set of keys,
+// cipher, and data. To, From, Blk and Data are required, Parity is optional,
+// set it to define a level of Reed Solomon redundancy on the split packets.
+// Seen should be populated to send a signal to the other side of keys that have
+// been seen at time of constructing this packet that can now be discarded as
+// they will not be used to generate a cipher again.
 type EP struct {
 	To     *pub.Key
 	From   *prv.Key
@@ -81,6 +87,8 @@ type EP struct {
 	Pad    int
 }
 
+// GetOverhead returns the amount of the message that will not be part of the
+// payload.
 func (ep EP) GetOverhead() int {
 	return Overhead + len(ep.Seen)*pub.PrintLen
 }
@@ -100,12 +108,6 @@ func Encode(ep EP) (pkt []byte, e error) {
 	slice.EncodeUint16(Seq, ep.Seq)
 	slice.EncodeUint32(Tot, ep.Length)
 	SeenCount := []byte{byte(len(ep.Seen))}
-	payloadLen := slice.NewUint16()
-	dl := len(ep.Data)
-	if ep.Pad > 0 {
-		dl -= ep.Pad
-	}
-	slice.EncodeUint16(payloadLen, dl)
 	// Encrypt the payload
 	ciph.Encipher(ep.Blk, f.Nonce, ep.Data)
 	f.Data = ep.Data
@@ -113,6 +115,7 @@ func Encode(ep EP) (pkt []byte, e error) {
 	for i := range f.Seen {
 		seenBytes = append(seenBytes, f.Seen[i][:]...)
 	}
+	// Concatenate the message pieces together into a single byte slice.
 	pkt = slice.Concatenate(
 		f.To[:],    // 6 bytes  \
 		Seq,        // 2 bytes   |

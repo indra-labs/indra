@@ -17,7 +17,6 @@ func (s Segment) String() (o string) {
 		s.DStart, s.DEnd-s.DStart, (s.DEnd-s.DStart-1)*s.SLen+s.Last,
 		s.DEnd, s.PEnd-s.DEnd, slast, s.PEnd,
 		s.SLen, s.Last)
-	log.I.Ln(s.DEnd, s.DStart, s.SLen, s.Last)
 	return
 }
 
