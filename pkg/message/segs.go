@@ -37,7 +37,6 @@ func NewSegments(payloadLen, segmentSize, overhead, redundancy int) (s Segments)
 	sectsD := 256 - redundancy
 	sectsP := redundancy
 	withR := nSegs + nSegs*sectsP/sectsD
-	log.I.Ln(withR, payloadLen*redundancy/256)
 	// If any redundancy is specified, if it rounds to zero, it must be
 	// bumped up to 1 in order to work with the rs encoder.
 	if withR == nSegs && redundancy > 0 {
@@ -45,9 +44,6 @@ func NewSegments(payloadLen, segmentSize, overhead, redundancy int) (s Segments)
 	}
 	sects := nSegs / sectsD
 	lastSect := nSegs % sectsD
-	log.I.F("payload %d, segSize %d, nSegs %d, lastSeg %d, sectsD %d, sectsP %d, withR %d, sects %d, lastSect %d",
-		payloadLen, segSize, nSegs, lastSeg, sectsD, sectsP, withR,
-		sects, lastSect)
 	var start int
 	if sects > 0 {
 		last := segSize
@@ -66,16 +62,11 @@ func NewSegments(payloadLen, segmentSize, overhead, redundancy int) (s Segments)
 	}
 	if lastSect > 0 {
 		endD := start + lastSect
-		// if there is redundancy the DEnd must be at least one less than PEnd.
+		// if there is redundancy the DEnd must be at least one less
+		// than PEnd.
 		if withR == endD && redundancy > 0 {
 			withR++
 		}
-		log.I.Ln(start,
-			endD,
-			withR,
-			segSize,
-			lastSeg,
-		)
 		s = append(s, Segment{
 			DStart: start,
 			DEnd:   endD,
