@@ -29,12 +29,13 @@ var (
 	check = log.E.Chk
 )
 
+func errPrintln(a ...interface{}) {
+	_, _ = fmt.Fprintln(os.Stderr, a...)
+}
+
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintln(
-			os.Stderr,
-			"arguments required in order to bump and push this repo",
-		)
+		log.E.Ln("arguments required in order to bump and push this repo")
 		os.Exit(1)
 	}
 	var minor, major bool
@@ -95,7 +96,6 @@ func main() {
 	}
 	var maxVersion int
 	if e = rt.ForEach(
-
 		func(pr *plumbing.Reference) (e error) {
 			s := strings.Split(pr.String(), "/")
 			prs := s[2]
@@ -121,16 +121,16 @@ func main() {
 	); check(e) {
 		return
 	}
-	// Bump to next patch version every time
-	Patch++
-	if minor {
+	switch {
+	case minor:
 		Minor++
 		Patch = 0
-	}
-	if major {
+	case major:
 		Major++
 		Minor = 0
 		Patch = 0
+	default:
+		Patch++
 	}
 	// Update SemVer
 	SemVer = fmt.Sprintf("v%d.%d.%d", Major, Minor, Patch)
@@ -229,7 +229,6 @@ func Version() string {
 }
 
 func runCmd(cmd ...string) (err error) {
-
 	c := exec.Command(cmd[0], cmd[1:]...)
 	var output []byte
 	output, err = c.CombinedOutput()

@@ -26,26 +26,20 @@ func Split(ep EP, segSize int) (packets [][]byte, e error) {
 	}
 	overhead := ep.GetOverhead()
 	segMap := NewSegments(len(ep.Data), segSize, overhead, ep.Parity)
-	log.I.Ln(len(ep.Data), segSize, overhead, ep.Parity)
-	log.I.Ln(segMap)
 	// pad the last part
 	sp := segMap[len(segMap)-1]
 	padLen := sp.SLen - sp.Last
-	log.I.Ln("padding", padLen, sp.Last)
 	ep.Data = append(ep.Data, slice.NoisePad(padLen)...)
-	log.I.Ln("data length", len(ep.Data))
 	var s [][]byte
 	var start, end int
 	for i, sm := range segMap {
 		// Add the data segments.
 		for curs := 0; curs < sm.DEnd-sm.DStart; curs++ {
 			end = start + sm.SLen
-			// log.I.Ln(i)
 			if i == sm.DEnd-sm.DStart {
 				log.I.Ln("last", sm.Last)
 				end = start + sm.Last
 			}
-			// log.I.Ln(start, end, len(ep.Data), sm)
 			s = append(s, ep.Data[start:end])
 			start += sm.SLen
 		}

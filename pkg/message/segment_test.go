@@ -174,7 +174,6 @@ func TestSplitJoinFEC(t *testing.T) {
 				}
 
 			}
-
 			var pkts Packets
 			var keys []*pub.Key
 			log.I.Ln("before decode", len(splitted))
@@ -192,18 +191,6 @@ func TestSplitJoinFEC(t *testing.T) {
 			}
 
 			log.I.Ln("after decode", len(pkts))
-
-			_ = p
-
-			// prev := keys[0]
-			// // check all keys are the same
-			// for ki, k := range keys[1:] {
-			// 	if !prev.Equals(k) {
-			// 		log.I.Ln("key not match", ki)
-			// 		t.FailNow()
-			// 	}
-			// 	prev = k
-			// }
 			var msg []byte
 			if msg, e = Join(pkts); check(e) {
 				t.FailNow()
@@ -221,7 +208,7 @@ func TestSplitJoinFEC(t *testing.T) {
 
 func TestSplit(t *testing.T) {
 	msgSize := 2 << 16
-	segSize := 4096 // + Overhead
+	segSize := 4096
 	payload := make([]byte, msgSize)
 	var e error
 	var n int
@@ -234,7 +221,6 @@ func TestSplit(t *testing.T) {
 	if sendPriv, e = prv.GenerateKey(); check(e) {
 		t.Error(e)
 	}
-	// sendPub = pub.Derive(sendPriv)
 	if reciPriv, e = prv.GenerateKey(); check(e) {
 		t.Error(e)
 	}
