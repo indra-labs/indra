@@ -91,13 +91,10 @@ func TestEncode_DecodeFail(t *testing.T) {
 	}
 	var pkt []byte
 	params := EP{
-		To:     reciPub,
-		From:   sendPriv,
-		Blk:    blk,
-		Parity: 0,
-		Seq:    0,
-		Data:   payload,
-		Pad:    0,
+		To:   reciPub,
+		From: sendPriv,
+		Blk:  blk,
+		Data: payload,
 	}
 	if pkt, e = Encode(params); check(e) {
 		t.Error(e)

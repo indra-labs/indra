@@ -7,15 +7,12 @@ import (
 	"errors"
 	mrand "math/rand"
 	"testing"
-	"time"
 
 	"github.com/Indra-Labs/indra/pkg/ciph"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/sha256"
 )
-
-func init() { mrand.Seed(time.Now().Unix()) }
 
 func TestSplitJoin(t *testing.T) {
 	msgSize := 2 << 19
@@ -50,11 +47,8 @@ func TestSplitJoin(t *testing.T) {
 		To:     reciPub,
 		From:   sendPriv,
 		Blk:    blk1,
-		Parity: 0,
-		Seq:    0,
 		Length: len(payload),
 		Data:   payload,
-		Pad:    0,
 	}
 	var splitted [][]byte
 	if splitted, e = Split(params, segSize); check(e) {
@@ -87,8 +81,6 @@ func TestSplitJoin(t *testing.T) {
 	if bytes.Compare(pHash, rHash) != 0 {
 		t.Error(errors.New("message did not decode correctly"))
 	}
-	// rHash :=
-	// _, _, _ = pHash, sendPub, msg
 }
 
 func TestSplitJoinFEC(t *testing.T) {
@@ -129,33 +121,25 @@ func TestSplitJoinFEC(t *testing.T) {
 			punctures[p], punctures[len(punctures)-p-1] =
 				punctures[len(punctures)-p-1], punctures[p]
 		}
-		log.I.Ln(punctures)
-
 		for p := range punctures {
-			log.I.Ln("parity", parity[i])
 			var splitted [][]byte
-
 			ep := EP{
 				To:     reciPub,
 				From:   sendPriv,
 				Blk:    blk1,
 				Parity: parity[i],
-				Seq:    0,
 				Length: len(payload),
 				Data:   payload,
-				Pad:    0,
 			}
 			if splitted, e = Split(ep, segSize); check(e) {
 				t.FailNow()
 			}
-
 			overhead := ep.GetOverhead()
 			segMap := NewSegments(len(ep.Data), segSize, overhead, ep.Parity)
 			for segs := range segMap {
 				start, end := segMap[segs].DStart, segMap[segs].PEnd
 				cnt := end - start
 				par := segMap[segs].DStart - segMap[segs].DEnd
-				// log.I.Ln("cnt", cnt)
 				a := make([][]byte, cnt)
 				for ss := range a {
 					a[ss] = splitted[start:end][ss]
@@ -167,8 +151,6 @@ func TestSplitJoinFEC(t *testing.T) {
 				if puncture > par {
 					puncture = par
 				}
-				log.I.F("puncturing %d elements of %d",
-					punctures[p], cnt)
 				for n := 0; n < puncture; n++ {
 					copy(a[n], make([]byte, 10))
 				}
@@ -176,28 +158,23 @@ func TestSplitJoinFEC(t *testing.T) {
 			}
 			var pkts Packets
 			var keys []*pub.Key
-			log.I.Ln("before decode", len(splitted))
 			for s := range splitted {
 				var pkt *Packet
 				var key *pub.Key
 				if pkt, key, e = Decode(splitted[s]); check(e) {
 					// we are puncturing, they some will fail to
 					// decode
-					log.I.Ln("skipping", s)
 					continue
 				}
 				pkts = append(pkts, pkt.Decipher(blk2))
 				keys = append(keys, key)
 			}
 
-			log.I.Ln("after decode", len(pkts))
 			var msg []byte
 			if msg, e = Join(pkts); check(e) {
 				t.FailNow()
 			}
 			rHash := sha256.Single(msg)
-			log.I.Ln("expected", len(payload), "got", len(msg))
-			log.I.S(pHash, rHash)
 			if bytes.Compare(pHash, rHash) != 0 {
 				t.Error(errors.New("message did not decode" +
 					" correctly"))
@@ -235,10 +212,8 @@ func TestSplit(t *testing.T) {
 		From:   sendPriv,
 		Blk:    blk1,
 		Parity: 96,
-		Seq:    0,
 		Length: len(payload),
 		Data:   payload,
-		Pad:    0,
 	}
 
 	var splitted [][]byte
@@ -264,7 +239,6 @@ func BenchmarkSplit(b *testing.B) {
 		if sendPriv, e = prv.GenerateKey(); check(e) {
 			b.Error(e)
 		}
-		// sendPub = pub.Derive(sendPriv)
 		if reciPriv, e = prv.GenerateKey(); check(e) {
 			b.Error(e)
 		}
@@ -302,9 +276,7 @@ func TestRemovePacket(t *testing.T) {
 	for i := range packets {
 		seqs = append(seqs, packets[i].Seq)
 	}
-	log.I.Ln(seqs)
 	discard := []int{1, 5, 6}
-	log.I.Ln("discarding", discard)
 	for i := range discard {
 		// Subtracting the iterator accounts for the backwards shift of
 		// the shortened slice.
@@ -314,7 +286,6 @@ func TestRemovePacket(t *testing.T) {
 	for i := range packets {
 		seqs2 = append(seqs2, packets[i].Seq)
 	}
-	log.I.Ln(seqs2)
 }
 
 func GenerateTestMessage(msgSize int) (msg []byte, hash sha256.Hash, e error) {
