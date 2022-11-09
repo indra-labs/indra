@@ -31,9 +31,12 @@ func Segment(b []byte, segmentSize int) (segs [][]byte) {
 	for begin := 0; end < lb; begin += segmentSize {
 		end = begin + segmentSize
 		if end > lb {
-			end = lb
+			d := b[begin:lb]
+			d = append(d, NoisePad(end-lb)...)
+			segs = append(segs, d)
+		} else {
+			segs = append(segs, b[begin:end])
 		}
-		segs = append(segs, b[begin:end])
 	}
 	return
 }

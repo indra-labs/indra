@@ -2,6 +2,7 @@ package sha256
 
 import (
 	"fmt"
+	"unsafe"
 
 	"github.com/minio/sha256-simd"
 )
@@ -33,7 +34,14 @@ func (h Hash) Valid() (e error) {
 	return
 }
 
-func (h Hash) Equals(h2 Hash) bool { return false }
+func (h Hash) Equals(h2 Hash) bool {
+	// Ensure lengths are correct.
+	if len(h) == Len && len(h2) == Len {
+		return *(*string)(unsafe.Pointer(&h)) ==
+			*(*string)(unsafe.Pointer(&h2))
+	}
+	return false
+}
 
 // this is made as a string to be immutable. It can be changed with unsafe ofc.
 var zero = string(New())
