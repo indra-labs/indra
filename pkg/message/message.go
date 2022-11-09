@@ -24,17 +24,12 @@ var (
 // container with parameters for Reed Solomon Forward Error Correction and
 // contains previously seen cipher keys so the correspondent can free them.
 type Packet struct {
-	// To is the fingerprint of the pubkey used in the ECDH key exchange, 12
-	// bytes long.
-	To pub.Print
 	// Seq specifies the segment number of the message, 4 bytes long.
 	Seq uint16
 	// Length is the number of segments in the batch
 	Length uint32
 	// Parity is the ratio of redundancy. In each 256 segment
 	Parity byte
-	// Nonce is the IV for the encryption on the Payload. 16 bytes.
-	Nonce nonce.IV
 	// Payload is the encrypted message.
 	Data []byte
 	// Seen is the SHA256 truncated hashes of previous received encryption
@@ -47,12 +42,6 @@ type Packet struct {
 // packet.
 func (p *Packet) GetOverhead() int {
 	return Overhead + len(p.Seen)*pub.PrintLen
-}
-
-// Decipher reverses the current state of encryption of the packet.
-func (p *Packet) Decipher(blk cipher.Block) *Packet {
-	ciph.Encipher(blk, p.Nonce, p.Data)
-	return p
 }
 
 // Overhead is the base overhead on a packet, use GetOverhead to add any extra
@@ -84,7 +73,6 @@ type EP struct {
 	Length int
 	Data   []byte
 	Seen   []pub.Print
-	Pad    int
 }
 
 // GetOverhead returns the amount of the message that will not be part of the
@@ -97,35 +85,34 @@ func (ep EP) GetOverhead() int {
 // key and the public to key, serializes the form, signs the bytes and appends
 // the signature to the end.
 func Encode(ep EP) (pkt []byte, e error) {
-	f := &Packet{
-		To:    ep.To.ToBytes().Fingerprint(),
-		Nonce: nonce.Get(),
-		Seen:  ep.Seen,
-	}
+	to := ep.To.ToBytes().Fingerprint()
+	nonc := nonce.Get()
 	parity := []byte{byte(ep.Parity)}
 	Seq := slice.NewUint16()
 	Tot := slice.NewUint32()
 	slice.EncodeUint16(Seq, ep.Seq)
 	slice.EncodeUint32(Tot, ep.Length)
 	SeenCount := []byte{byte(len(ep.Seen))}
-	// Encrypt the payload
-	ciph.Encipher(ep.Blk, f.Nonce, ep.Data)
-	f.Data = ep.Data
 	var seenBytes []byte
-	for i := range f.Seen {
-		seenBytes = append(seenBytes, f.Seen[i][:]...)
+	for i := range ep.Seen {
+		seenBytes = append(seenBytes, ep.Seen[i][:]...)
 	}
 	// Concatenate the message pieces together into a single byte slice.
 	pkt = slice.Concatenate(
-		f.To[:],    // 6 bytes  \
-		Seq,        // 2 bytes   |
-		Tot,        // 4 bytes   |
-		parity,     // 1 byte    |
-		SeenCount,  // 1 byte    |
-		f.Nonce[:], // 16 bytes  /
-		f.Data,     // payload starts on 32 byte boundary
+		// f.Nonce[:], // 16 bytes \
+		// f.To[:],    // 6 bytes   |
+		make([]byte, 22),
+		Seq,       // 2 bytes   | encrypted |
+		Tot,       // 4 bytes   |           V
+		parity,    // 1 byte    |
+		SeenCount, // 1 byte   /
+		ep.Data,   // payload starts on 32 byte boundary
 		seenBytes,
 	)
+	// Encrypt the encrypted part of the data
+	ciph.Encipher(ep.Blk, nonc, pkt)
+	// put nonce and recipient print in place.
+	copy(pkt, append(nonc, to...))
 	// Sign the packet.
 	var s sig.Bytes
 	hash := sha256.Single(pkt)
@@ -136,14 +123,15 @@ func Encode(ep EP) (pkt []byte, e error) {
 	return
 }
 
-// Decode a packet and return the Packet with encrypted payload and signer's
-// public key.
-func Decode(d []byte) (f *Packet, p *pub.Key, e error) {
-	const (
-		u16l = slice.Uint16Len
-		u32l = slice.Uint32Len
-		prl  = pub.PrintLen
-	)
+// GetKeys returns the To field of the message in order, checks the packet
+// checksum and recovers the public key signing it.
+//
+// After this, if the matching private key to the fingerprint returned is found,
+// it is combined with the public key to generate the cipher and the entire
+// packet should then be processed with ciph.Encipher (sans signature) using the
+// block cipher thus created from the shared secret, and the Decode function will
+// then decode a Packet.
+func GetKeys(d []byte) (to pub.Print, p *pub.Key, e error) {
 	pktLen := len(d)
 	if pktLen < Overhead {
 		// If this isn't checked the slice operations later can
@@ -153,14 +141,15 @@ func Decode(d []byte) (f *Packet, p *pub.Key, e error) {
 		log.E.Ln(e)
 		return
 	}
+	to = d[16:22]
 	// split off the signature and recover the public key
 	sigStart := pktLen - sig.Len
+	checkStart := sigStart - 4
 	var s sig.Bytes
-	var data, chek []byte
-	s, data = d[sigStart:], d[:sigStart]
-	checkStart := len(data) - 4
-	chek, data = data[checkStart:], data[:checkStart]
-	hash := sha256.Single(data)
+	var chek []byte
+	s = d[sigStart:]
+	chek = d[checkStart:sigStart]
+	hash := sha256.Single(d[:sigStart])
 	if string(chek) != string(hash[:4]) {
 		e = fmt.Errorf("check failed: got '%v', expected '%v'",
 			chek, hash[:4])
@@ -169,22 +158,44 @@ func Decode(d []byte) (f *Packet, p *pub.Key, e error) {
 	if p, e = s.Recover(hash); check(e) {
 		return
 	}
-	// log.I.Ln("pktLen", pktLen, "sigStart", sigStart)
+	return
+}
+
+// Decode a packet and return the Packet with encrypted payload and signer's
+// public key. This assumes GetKeys succeeded and the matching private key was
+// found in order to create a cipher.Block matching the encryption of the
+// payload.
+func Decode(d []byte, blk cipher.Block) (f *Packet, e error) {
+	pktLen := len(d)
+	if pktLen < Overhead {
+		// If this isn't checked the slice operations later can
+		// hit bounds errors.
+		e = fmt.Errorf("packet too small, min %d, got %d",
+			Overhead, pktLen)
+		log.E.Ln(e)
+		return
+	}
+	// Trim off the signature and hash, we already have the key and have
+	// validated the checksum.
+	sigStart := pktLen - sig.Len - 4
+	data := d[:sigStart]
 	f = &Packet{}
-	f.To, data = slice.Cut(data, prl)
+	nonc := data[:nonce.Size]
+	// This decrypts the rest of the packet, which is encrypted for
+	// security.
+	ciph.Encipher(blk, nonc, data)
+	// Trim off the nonce and recipient fingerprint, which is now encrypted.
+	data = data[nonce.Size+pub.PrintLen:]
 	var seq, tot slice.Size16
-	seq, data = slice.Cut(data, u16l)
+	seq, data = slice.Cut(data, slice.Uint16Len)
 	f.Seq = uint16(slice.DecodeUint16(seq))
-	tot, data = slice.Cut(data, u32l)
+	tot, data = slice.Cut(data, slice.Uint32Len)
 	f.Length = uint32(slice.DecodeUint32(tot))
 	f.Parity, data = data[0], data[1:]
 	var sc byte
 	sc, data = data[0], data[1:]
-	f.Nonce, data = slice.Cut(data, nonce.Size)
 	pl := len(data) - int(sc)
-	// log.I.Ln(f.Seq, pl)
 	f.Data, data = slice.Cut(data, pl)
-	// trim the padding
 	data = data[:len(data)-int(sc)*pub.PrintLen]
 	var sn []byte
 	f.Seen = make([]pub.Print, sc)
