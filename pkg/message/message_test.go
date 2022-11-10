@@ -2,13 +2,11 @@ package message
 
 import (
 	"bytes"
-	"crypto/cipher"
 	"crypto/rand"
 	"errors"
 	mrand "math/rand"
 	"testing"
 
-	"github.com/Indra-Labs/indra/pkg/ciph"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/sha256"
@@ -24,33 +22,25 @@ func TestEncode_Decode(t *testing.T) {
 	}
 	payload = append([]byte("payload"), payload...)
 	pHash := sha256.Single(payload)
-	var sendPriv, reciPriv *prv.Key
-	var sendPub, reciPub *pub.Key
-	if sendPriv, e = prv.GenerateKey(); check(e) {
-		t.Error(e)
-	}
-	sendPub = pub.Derive(sendPriv)
-	_ = sendPub
-	if reciPriv, e = prv.GenerateKey(); check(e) {
-		t.Error(e)
-	}
-	reciPub = pub.Derive(reciPriv)
-	var blk cipher.Block
-	if blk, e = ciph.GetBlock(sendPriv, reciPub); check(e) {
-		t.Error(e)
+	var sp, rp *prv.Key
+	var sP, rP *pub.Key
+	if sp, rp, sP, rP, e = GenerateTestKeyPairs(); check(e) {
+		t.FailNow()
 	}
 	var pkt []byte
 	params := EP{
-		To:   reciPub,
-		From: sendPriv,
-		Blk:  blk,
-		Data: payload,
+		To:     rP,
+		From:   sp,
+		Data:   payload,
+		Seq:    234,
+		Parity: 64,
+		Length: msgSize,
 	}
 	if pkt, e = Encode(params); check(e) {
 		t.Error(e)
 	}
 	var f *Packet
-	if f, e = Decode(pkt, blk); check(e) {
+	if f, e = Decode(pkt, sP, rp); check(e) {
 		t.Error(e)
 	}
 	dHash := sha256.Single(f.Data)

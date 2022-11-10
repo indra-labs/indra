@@ -2,6 +2,8 @@ package message
 
 import (
 	"fmt"
+
+	"github.com/templexxx/reedsolomon"
 )
 
 type Segment struct {
@@ -73,6 +75,37 @@ func NewSegments(payloadLen, segmentSize, overhead, redundancy int) (s Segments)
 			SLen:   segSize,
 			Last:   lastSeg,
 		})
+	}
+	return
+}
+
+func (s Segments) AddParity(segs [][]byte) (shards [][]byte, e error) {
+	var segLen int
+	for i := range s {
+		segLen += s[i].DEnd - s[i].DStart
+	}
+	if len(segs) != segLen {
+		e = fmt.Errorf("slice wrong length, got %d expected %d",
+			len(segs), segLen)
+	}
+	for i := range s {
+		var section [][]byte
+		dLen := s[i].DEnd - s[i].DStart
+		pLen := s[i].PEnd - s[i].DEnd
+		section, segs = segs[:dLen], segs[dLen:]
+		for j := 0; j < pLen; j++ {
+			section = append(section, make([]byte, s[i].SLen))
+		}
+		if pLen > 0 {
+			var rs *reedsolomon.RS
+			if rs, e = reedsolomon.New(dLen, pLen); check(e) {
+				return
+			}
+			if e = rs.Encode(section); check(e) {
+				return
+			}
+		}
+		shards = append(shards, section...)
 	}
 	return
 }

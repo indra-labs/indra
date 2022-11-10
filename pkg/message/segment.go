@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+
+	"github.com/Indra-Labs/indra/pkg/slice"
 )
 
 const ErrEmptyBytes = "cannot encode empty bytes"
@@ -20,7 +22,21 @@ func Split(ep EP, segSize int) (packets [][]byte, e error) {
 		e = fmt.Errorf(ErrEmptyBytes)
 		return
 	}
-
+	ep.Length = len(ep.Data)
+	overhead := ep.GetOverhead()
+	ss := segSize - overhead
+	segments := slice.Segment(ep.Data, ss)
+	segMap := NewSegments(ep.Length, segSize, ep.GetOverhead(), ep.Parity)
+	var p [][]byte
+	p, e = segMap.AddParity(segments)
+	for i := range p {
+		ep.Data, ep.Seq = p[i], i
+		var s []byte
+		if s, e = Encode(ep); check(e) {
+			return
+		}
+		packets = append(packets, s)
+	}
 	return
 }
 
