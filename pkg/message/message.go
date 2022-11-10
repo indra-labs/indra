@@ -101,7 +101,7 @@ func Encode(ep EP) (pkt []byte, e error) {
 		seenBytes = append(seenBytes, ep.Seen[i][:]...)
 	}
 	// Concatenate the message pieces together into a single byte slice.
-	pkt = slice.Concatenate(
+	pkt = slice.Cat(
 		// f.Nonce[:],    // 16 bytes \
 		// f.To[:],       // 6 bytes   |           ^
 		make([]byte, 22), //           |_____clear_|
@@ -152,7 +152,7 @@ func GetKeys(d []byte) (to pub.Print, from *pub.Key, e error) {
 	var chek []byte
 	s = d[sigStart:]
 	chek = d[checkStart:sigStart]
-	hash := sha256.Single(d[:sigStart])
+	hash := sha256.Single(d[:checkStart])
 	if string(chek) != string(hash[:4]) {
 		e = fmt.Errorf("check failed: got '%v', expected '%v'",
 			chek, hash[:4])

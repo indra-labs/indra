@@ -41,10 +41,10 @@ func Segment(b []byte, segmentSize int) (segs [][]byte) {
 	return
 }
 
-// Concatenate takes a slice of byte slices and packs them together in a packet.
+// Cat takes a slice of byte slices and packs them together in a packet.
 // The returned packet has its capacity pre-allocated to match what gets copied
 // into it by append.
-func Concatenate(chunks ...[]byte) (pkt []byte) {
+func Cat(chunks ...[]byte) (pkt []byte) {
 	l := SumLen(chunks...)
 	pkt = make([]byte, 0, l)
 	for i := range chunks {

@@ -39,6 +39,18 @@ func TestEncode_Decode(t *testing.T) {
 	if pkt, e = Encode(params); check(e) {
 		t.Error(e)
 	}
+	var to pub.Print
+	var from *pub.Key
+	if to, from, e = GetKeys(pkt); check(e) {
+		t.Error(e)
+	}
+	if e = pub.Derive(rp).ToBytes().Fingerprint().Equals(to); check(e) {
+		t.Error(e)
+	}
+	if e = from.ToBytes().Fingerprint().
+		Equals(pub.Derive(sp).ToBytes().Fingerprint()); check(e) {
+		t.Error(e)
+	}
 	var f *Packet
 	if f, e = Decode(pkt, sP, rp); check(e) {
 		t.Error(e)
