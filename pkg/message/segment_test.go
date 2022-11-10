@@ -1,11 +1,9 @@
 package message
 
 import (
-	"crypto/cipher"
 	"crypto/rand"
 	"testing"
 
-	"github.com/Indra-Labs/indra/pkg/ciph"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/sha256"
@@ -188,86 +186,82 @@ import (
 // }
 
 func TestSplit(t *testing.T) {
-	msgSize := 2 << 16
-	segSize := 4096
-	payload := make([]byte, msgSize)
+	msgSize := 2 << 19
+	segSize := 1472
+	parities := make([]int, 256)
+	for i := 0; i < 256; i++ {
+		parities[i] = i
+	}
 	var e error
-	var n int
-	if n, e = rand.Read(payload); check(e) && n != msgSize {
+	var payload []byte
+	var hash sha256.Hash
+	if payload, hash, e = GenerateTestMessage(msgSize); check(e) {
 		t.Error(e)
 	}
-	copy(payload[:7], "payload")
-	var sendPriv, reciPriv *prv.Key
-	var reciPub *pub.Key
-	if sendPriv, e = prv.GenerateKey(); check(e) {
+	_ = hash
+	var sp, rp *prv.Key
+	var sP, rP *pub.Key
+	_, _ = rp, sP
+	if sp, rp, sP, rP, e = GenerateTestKeyPairs(); check(e) {
 		t.Error(e)
 	}
-	if reciPriv, e = prv.GenerateKey(); check(e) {
-		t.Error(e)
-	}
-	reciPub = pub.Derive(reciPriv)
-	var blk1 cipher.Block
-	if blk1, e = ciph.GetBlock(sendPriv, reciPub); check(e) {
-		t.Error(e)
-	}
-
-	params := EP{
-		To:     reciPub,
-		From:   sendPriv,
-		Blk:    blk1,
-		Parity: 96,
-		Length: len(payload),
-		Data:   payload,
-	}
-
-	var splitted [][]byte
-	if splitted, e = Split(params, segSize); check(e) {
-		t.Error(e)
-	}
-	_ = splitted
-}
-
-func BenchmarkSplit(b *testing.B) {
-	msgSize := 2 << 16
-	segSize := 4096
-	payload := make([]byte, msgSize)
-	var e error
-	var n int
-	if n, e = rand.Read(payload); check(e) && n != msgSize {
-		b.Error(e)
-	}
-	copy(payload[:7], "payload")
-	for n := 0; n < b.N; n++ {
-		var sendPriv, reciPriv *prv.Key
-		var reciPub *pub.Key
-		if sendPriv, e = prv.GenerateKey(); check(e) {
-			b.Error(e)
-		}
-		if reciPriv, e = prv.GenerateKey(); check(e) {
-			b.Error(e)
-		}
-		reciPub = pub.Derive(reciPriv)
-		var blk1 cipher.Block
-		if blk1, e = ciph.GetBlock(sendPriv, reciPub); check(e) {
-			b.Error(e)
-		}
-
+	for i := range parities {
 		params := EP{
-			To:     reciPub,
-			From:   sendPriv,
-			Blk:    blk1,
-			Parity: 64,
-			Length: len(payload),
+			To:     rP,
+			From:   sp,
+			Parity: parities[i],
 			Data:   payload,
 		}
 
 		var splitted [][]byte
 		if splitted, e = Split(params, segSize); check(e) {
-			b.Error(e)
+			t.Error(e)
 		}
 		_ = splitted
 	}
 }
+
+// func BenchmarkSplit(b *testing.B) {
+// 	msgSize := 2 << 16
+// 	segSize := 4096
+// 	payload := make([]byte, msgSize)
+// 	var e error
+// 	var n int
+// 	if n, e = rand.Read(payload); check(e) && n != msgSize {
+// 		b.Error(e)
+// 	}
+// 	copy(payload[:7], "payload")
+// 	for n := 0; n < b.N; n++ {
+// 		var sendPriv, reciPriv *prv.Key
+// 		var reciPub *pub.Key
+// 		if sendPriv, e = prv.GenerateKey(); check(e) {
+// 			b.Error(e)
+// 		}
+// 		if reciPriv, e = prv.GenerateKey(); check(e) {
+// 			b.Error(e)
+// 		}
+// 		reciPub = pub.Derive(reciPriv)
+// 		var blk1 cipher.Block
+// 		if blk1, e = ciph.GetBlock(sendPriv, reciPub); check(e) {
+// 			b.Error(e)
+// 		}
+//
+// 		params := EP{
+// 			To:     reciPub,
+// 			From:   sendPriv,
+// 			Blk:    blk1,
+// 			Parity: 64,
+// 			Length: len(payload),
+// 			Data:   payload,
+// 		}
+//
+// 		var splitted [][]byte
+// 		if splitted, e = Split(params, segSize); check(e) {
+// 			b.Error(e)
+// 		}
+// 		_ = splitted
+// 	}
+// }
 
 func TestRemovePacket(t *testing.T) {
 	packets := make(Packets, 10)
@@ -302,7 +296,7 @@ func GenerateTestMessage(msgSize int) (msg []byte, hash sha256.Hash, e error) {
 }
 
 func GenerateTestKeyPairs() (sendPriv, reciPriv *prv.Key,
-	sendPub, reciPub *pub.Key, blk1, blk2 cipher.Block, e error) {
+	sendPub, reciPub *pub.Key, e error) {
 	if sendPriv, e = prv.GenerateKey(); check(e) {
 		return
 	}
@@ -311,11 +305,11 @@ func GenerateTestKeyPairs() (sendPriv, reciPriv *prv.Key,
 		return
 	}
 	reciPub = pub.Derive(reciPriv)
-	if blk1, e = ciph.GetBlock(sendPriv, reciPub); check(e) {
-		return
-	}
-	if blk2, e = ciph.GetBlock(reciPriv, sendPub); check(e) {
-		return
-	}
+	// if blk1, e = ciph.GetBlock(sendPriv, reciPub); check(e) {
+	// 	return
+	// }
+	// if blk2, e = ciph.GetBlock(reciPriv, sendPub); check(e) {
+	// 	return
+	// }
 	return
 }

@@ -67,7 +67,6 @@ func (p Packets) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 type EP struct {
 	To     *pub.Key
 	From   *prv.Key
-	Blk    cipher.Block
 	Parity int
 	Seq    int
 	Length int
@@ -85,6 +84,10 @@ func (ep EP) GetOverhead() int {
 // key and the public to key, serializes the form, signs the bytes and appends
 // the signature to the end.
 func Encode(ep EP) (pkt []byte, e error) {
+	var blk cipher.Block
+	if blk, e = ciph.GetBlock(ep.From, ep.To); check(e) {
+		return
+	}
 	to := ep.To.ToBytes().Fingerprint()
 	nonc := nonce.Get()
 	parity := []byte{byte(ep.Parity)}
@@ -99,18 +102,18 @@ func Encode(ep EP) (pkt []byte, e error) {
 	}
 	// Concatenate the message pieces together into a single byte slice.
 	pkt = slice.Concatenate(
-		// f.Nonce[:], // 16 bytes \
-		// f.To[:],    // 6 bytes   |
-		make([]byte, 22),
-		Seq,       // 2 bytes   | encrypted |
-		Tot,       // 4 bytes   |           V
-		parity,    // 1 byte    |
-		SeenCount, // 1 byte   /
-		ep.Data,   // payload starts on 32 byte boundary
+		// f.Nonce[:],    // 16 bytes \
+		// f.To[:],       // 6 bytes   |           ^
+		make([]byte, 22), //           |_____clear_|
+		Seq,              // 2 bytes   | encrypted |
+		Tot,              // 4 bytes   |           v
+		parity,           // 1 byte    |
+		SeenCount,        // 1 byte   /
+		ep.Data,          // payload starts on 32 byte boundary
 		seenBytes,
 	)
-	// Encrypt the encrypted part of the data
-	ciph.Encipher(ep.Blk, nonc, pkt)
+	// Encrypt the encrypted part of the data.
+	ciph.Encipher(blk, nonc, pkt)
 	// put nonce and recipient print in place.
 	copy(pkt, append(nonc, to...))
 	// Sign the packet.
@@ -131,7 +134,7 @@ func Encode(ep EP) (pkt []byte, e error) {
 // packet should then be processed with ciph.Encipher (sans signature) using the
 // block cipher thus created from the shared secret, and the Decode function will
 // then decode a Packet.
-func GetKeys(d []byte) (to pub.Print, p *pub.Key, e error) {
+func GetKeys(d []byte) (to pub.Print, from *pub.Key, e error) {
 	pktLen := len(d)
 	if pktLen < Overhead {
 		// If this isn't checked the slice operations later can
@@ -155,7 +158,7 @@ func GetKeys(d []byte) (to pub.Print, p *pub.Key, e error) {
 			chek, hash[:4])
 		return
 	}
-	if p, e = s.Recover(hash); check(e) {
+	if from, e = s.Recover(hash); check(e) {
 		return
 	}
 	return
@@ -165,7 +168,7 @@ func GetKeys(d []byte) (to pub.Print, p *pub.Key, e error) {
 // public key. This assumes GetKeys succeeded and the matching private key was
 // found in order to create a cipher.Block matching the encryption of the
 // payload.
-func Decode(d []byte, blk cipher.Block) (f *Packet, e error) {
+func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Packet, e error) {
 	pktLen := len(d)
 	if pktLen < Overhead {
 		// If this isn't checked the slice operations later can
@@ -181,6 +184,10 @@ func Decode(d []byte, blk cipher.Block) (f *Packet, e error) {
 	data := d[:sigStart]
 	f = &Packet{}
 	nonc := data[:nonce.Size]
+	var blk cipher.Block
+	if blk, e = ciph.GetBlock(to, from); check(e) {
+		return
+	}
 	// This decrypts the rest of the packet, which is encrypted for
 	// security.
 	ciph.Encipher(blk, nonc, data)
