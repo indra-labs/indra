@@ -30,7 +30,7 @@ func TestSegment(t *testing.T) {
 		t.Error(e)
 	}
 	segs := Segment(msg, segSize)
-	pkt := Concatenate(segs...)[:len(msg)]
+	pkt := Cat(segs...)[:len(msg)]
 	hash2 := sha256.Single(pkt)
 	if bytes.Compare(hash, hash2) != 0 {
 		t.Error(errors.New("message did not decode" +

@@ -89,10 +89,10 @@ func (s Segments) AddParity(segs [][]byte) (shards [][]byte, e error) {
 			len(segs), segLen)
 	}
 	for i := range s {
-		var section [][]byte
 		dLen := s[i].DEnd - s[i].DStart
 		pLen := s[i].PEnd - s[i].DEnd
-		section, segs = segs[:dLen], segs[dLen:]
+		section := make([][]byte, 0, dLen+pLen)
+		section, segs = append(section, segs[:dLen]...), segs[dLen:]
 		for j := 0; j < pLen; j++ {
 			section = append(section, make([]byte, s[i].SLen))
 		}
