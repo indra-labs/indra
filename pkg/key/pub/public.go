@@ -18,7 +18,7 @@ var (
 type (
 	// Key is a public key.
 	Key secp256k1.PublicKey
-	// Bytes is an array which can be compared with '=='.
+	// Bytes is the serialised form of a public key.
 	Bytes []byte
 )
 
