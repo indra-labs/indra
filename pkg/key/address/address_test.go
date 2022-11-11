@@ -21,7 +21,7 @@ func TestAddress(t *testing.T) {
 	if !ae.IsAddress(cloaked) {
 		t.Error("failed to recognise cloaked address")
 	}
-	flip := rand.Intn(RecipientLen)
+	flip := rand.Intn(AddressLen)
 	cloaked[flip] = ^cloaked[flip]
 	if ae.IsAddress(cloaked) {
 		t.Error("recognised incorrectly broken cloaked address")

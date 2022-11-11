@@ -7,6 +7,7 @@ import (
 	mrand "math/rand"
 	"testing"
 
+	"github.com/Indra-Labs/indra/pkg/key/address"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/sha256"
@@ -29,9 +30,9 @@ func TestSplitJoin(t *testing.T) {
 		GenerateTestKeyPairs(); check(e) {
 		t.FailNow()
 	}
-
+	addr := address.NewAddress(reciPub)
 	params := EP{
-		To:     reciPub,
+		To:     addr,
 		From:   sendPriv,
 		Length: len(payload),
 		Data:   payload,
@@ -107,10 +108,11 @@ func TestSplitJoinFEC(t *testing.T) {
 			punctures[p], punctures[len(punctures)-p-1] =
 				punctures[len(punctures)-p-1], punctures[p]
 		}
+		addr := address.NewAddress(reciPub)
 		for p := range punctures {
 			var splitted [][]byte
 			ep := EP{
-				To:     reciPub,
+				To:     addr,
 				From:   sendPriv,
 				Parity: parity[i],
 				Length: len(payload),
@@ -192,9 +194,10 @@ func TestSplit(t *testing.T) {
 	if sp, rp, sP, rP, e = GenerateTestKeyPairs(); check(e) {
 		t.Error(e)
 	}
+	addr := address.NewAddress(rP)
 	for i := range parities {
 		params := EP{
-			To:     rP,
+			To:     addr,
 			From:   sp,
 			Parity: parities[i],
 			Data:   payload,
@@ -224,9 +227,10 @@ func BenchmarkSplit(b *testing.B) {
 	if sp, rp, sP, rP, e = GenerateTestKeyPairs(); check(e) {
 		b.Error(e)
 	}
+	addr := address.NewAddress(rP)
 	for n := 0; n < b.N; n++ {
 		params := EP{
-			To:     rP,
+			To:     addr,
 			From:   sp,
 			Parity: 64,
 			Data:   payload,

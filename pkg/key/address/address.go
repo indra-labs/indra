@@ -22,14 +22,20 @@ type AddressBytes []byte
 
 const BlindLen = 3
 const HashLen = 5
-const RecipientLen = BlindLen + HashLen
+const AddressLen = BlindLen + HashLen
 
 // Address is the raw bytes of a public key received in the metadata of a
 // message.
-type Address pub.Bytes
+type Address struct {
+	*pub.Key
+	pub.Bytes
+}
 
 // NewAddress creates a recipient Address from a received public key bytes.
-func NewAddress(bytes pub.Bytes) (a Address) { return Address(bytes) }
+func NewAddress(k *pub.Key) (a *Address) {
+	a = &Address{Key: k, Bytes: k.ToBytes()}
+	return
+}
 
 // GetCloakedAddress returns a value which a receiver with the private key can
 // identify the association of a message with the peer in order to retrieve the
@@ -45,7 +51,7 @@ func (a Address) GetCloakedAddress() (r AddressBytes, e error) {
 	if n, e = rand.Read(blinder); check(e) && n != BlindLen {
 		return
 	}
-	h := sha256.Single(append(blinder, a...))
+	h := sha256.Single(append(blinder, a.Bytes...))
 	r = append(blinder, h[:HashLen]...)
 	return
 }
@@ -72,12 +78,12 @@ func NewAddressee(k *prv.Key) (a *Addressee) {
 // match the source public key so the packet address field is only recognisable
 // to the intended recipient.
 func (a *Addressee) IsAddress(r AddressBytes) bool {
-	if len(r) != RecipientLen {
+	if len(r) != AddressLen {
 		return false
 	}
-	blinder, print := r[:BlindLen], r[BlindLen:]
+	blinder, fingerprint := r[:BlindLen], r[BlindLen:]
 	hash := sha256.Single(append(blinder, a.Bytes...))[:HashLen]
-	return *(*string)(unsafe.Pointer(&print)) ==
+	return *(*string)(unsafe.Pointer(&fingerprint)) ==
 		*(*string)(unsafe.Pointer(&hash))
 
 }

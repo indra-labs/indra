@@ -5,7 +5,6 @@ import (
 
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
-	"github.com/Indra-Labs/indra/pkg/sha256"
 	log2 "github.com/cybriq/proc/pkg/log"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
@@ -66,9 +65,4 @@ func (pub *Key) ToPublicKey() *secp256k1.PublicKey {
 // Equals returns true if two public keys are the same.
 func (pub *Key) Equals(pub2 *Key) bool {
 	return pub.ToPublicKey().IsEqual(pub2.ToPublicKey())
-}
-
-// Fingerprint generates a fingerprint from a Bytes.
-func (pb Bytes) Fingerprint() (f Print) {
-	return Print(sha256.Hash(pb[:])[:PrintLen])
 }
