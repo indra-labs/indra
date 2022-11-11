@@ -6,6 +6,7 @@ import (
 
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/ciph"
+	"github.com/Indra-Labs/indra/pkg/key/address"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/key/sig"
@@ -42,8 +43,8 @@ func (p *Packet) GetOverhead() int {
 
 // Overhead is the base overhead on a packet, use GetOverhead to add any extra
 // as found in a Packet.
-const Overhead = pub.PrintLen + 1 + 2 + slice.Uint16Len*3 + nonce.Size +
-	sig.Len + 4
+const Overhead = nonce.Size + address.AddressLen + slice.Uint16Len +
+	slice.Uint32Len + 1 + 4 + sig.Len
 
 // Packets is a slice of pointers to packets.
 type Packets []*Packet
@@ -61,7 +62,7 @@ func (p Packets) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 // been seen at time of constructing this packet that can now be discarded as
 // they will not be used to generate a cipher again.
 type EP struct {
-	To     *pub.Key
+	To     *address.Address
 	From   *prv.Key
 	Parity int
 	Seq    int
@@ -80,11 +81,12 @@ func (ep EP) GetOverhead() int {
 // the signature to the end.
 func Encode(ep EP) (pkt []byte, e error) {
 	var blk cipher.Block
-	if blk, e = ciph.GetBlock(ep.From, ep.To); check(e) {
+	if blk, e = ciph.GetBlock(ep.From, ep.To.Key); check(e) {
 		return
 	}
-	to := ep.To.ToBytes().Fingerprint()
 	nonc := nonce.Get()
+	var to address.AddressBytes
+	to, e = ep.To.GetCloakedAddress()
 	parity := []byte{byte(ep.Parity)}
 	Seq := slice.NewUint16()
 	Tot := slice.NewUint32()
@@ -93,12 +95,13 @@ func Encode(ep EP) (pkt []byte, e error) {
 	// Concatenate the message pieces together into a single byte slice.
 	pkt = slice.Cat(
 		// f.Nonce[:],    // 16 bytes \
-		// f.To[:],       // 6 bytes   |           ^
-		make([]byte, 22), //           |_____clear_|
-		Seq,              // 2 bytes   | encrypted |
-		Tot,              // 4 bytes   |           v
-		parity,           // 1 byte    |
-		ep.Data,          // payload starts on 32 byte boundary
+		// f.To[:],       // 8 bytes   |
+		make([]byte,
+			nonce.Size+address.AddressLen),
+		Seq,     // 2 bytes
+		Tot,     // 4 bytes
+		parity,  // 1 byte
+		ep.Data, //
 	)
 	// Encrypt the encrypted part of the data.
 	ciph.Encipher(blk, nonc, pkt)
@@ -122,7 +125,7 @@ func Encode(ep EP) (pkt []byte, e error) {
 // packet should then be processed with ciph.Encipher (sans signature) using the
 // block cipher thus created from the shared secret, and the Decode function will
 // then decode a Packet.
-func GetKeys(d []byte) (to pub.Print, from *pub.Key, e error) {
+func GetKeys(d []byte) (to address.AddressBytes, from *pub.Key, e error) {
 	pktLen := len(d)
 	if pktLen < Overhead {
 		// If this isn't checked the slice operations later can
@@ -132,7 +135,7 @@ func GetKeys(d []byte) (to pub.Print, from *pub.Key, e error) {
 		log.E.Ln(e)
 		return
 	}
-	to = d[16:22]
+	to = d[nonce.Size : nonce.Size+address.AddressLen]
 	// split off the signature and recover the public key
 	sigStart := pktLen - sig.Len
 	checkStart := sigStart - 4
@@ -180,7 +183,7 @@ func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Packet, e error) {
 	// security.
 	ciph.Encipher(blk, nonc, data)
 	// Trim off the nonce and recipient fingerprint, which is now encrypted.
-	data = data[nonce.Size+pub.PrintLen:]
+	data = data[nonce.Size+address.AddressLen:]
 	var seq, tot slice.Size16
 	seq, data = slice.Cut(data, slice.Uint16Len)
 	f.Seq = uint16(slice.DecodeUint16(seq))
