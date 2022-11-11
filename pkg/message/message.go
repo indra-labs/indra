@@ -32,16 +32,12 @@ type Packet struct {
 	Parity byte
 	// Payload is the encrypted message.
 	Data []byte
-	// Seen is the SHA256 truncated hashes of previous received encryption
-	// public keys to indicate they won't be reused and can be discarded.
-	// The binary encoding allows for 256 of these
-	Seen []pub.Print
 }
 
 // GetOverhead returns the packet frame overhead given the settings found in the
 // packet.
 func (p *Packet) GetOverhead() int {
-	return Overhead + len(p.Seen)*pub.PrintLen
+	return Overhead
 }
 
 // Overhead is the base overhead on a packet, use GetOverhead to add any extra
@@ -71,13 +67,12 @@ type EP struct {
 	Seq    int
 	Length int
 	Data   []byte
-	Seen   []pub.Print
 }
 
 // GetOverhead returns the amount of the message that will not be part of the
 // payload.
 func (ep EP) GetOverhead() int {
-	return Overhead + len(ep.Seen)*pub.PrintLen
+	return Overhead
 }
 
 // Encode creates a Packet, encrypts the payload using the given private from
@@ -95,11 +90,6 @@ func Encode(ep EP) (pkt []byte, e error) {
 	Tot := slice.NewUint32()
 	slice.EncodeUint16(Seq, ep.Seq)
 	slice.EncodeUint32(Tot, ep.Length)
-	SeenCount := []byte{byte(len(ep.Seen))}
-	var seenBytes []byte
-	for i := range ep.Seen {
-		seenBytes = append(seenBytes, ep.Seen[i][:]...)
-	}
 	// Concatenate the message pieces together into a single byte slice.
 	pkt = slice.Cat(
 		// f.Nonce[:],    // 16 bytes \
@@ -108,9 +98,7 @@ func Encode(ep EP) (pkt []byte, e error) {
 		Seq,              // 2 bytes   | encrypted |
 		Tot,              // 4 bytes   |           v
 		parity,           // 1 byte    |
-		SeenCount,        // 1 byte   /
 		ep.Data,          // payload starts on 32 byte boundary
-		seenBytes,
 	)
 	// Encrypt the encrypted part of the data.
 	ciph.Encipher(blk, nonc, pkt)
@@ -199,16 +187,6 @@ func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Packet, e error) {
 	tot, data = slice.Cut(data, slice.Uint32Len)
 	f.Length = uint32(slice.DecodeUint32(tot))
 	f.Parity, data = data[0], data[1:]
-	var sc byte
-	sc, data = data[0], data[1:]
-	pl := len(data) - int(sc)
-	f.Data, data = slice.Cut(data, pl)
-	data = data[:len(data)-int(sc)*pub.PrintLen]
-	var sn []byte
-	f.Seen = make([]pub.Print, sc)
-	for i := 0; i < int(sc); i++ {
-		sn, data = slice.Cut(data, pub.PrintLen)
-		copy(f.Seen[i][:], sn)
-	}
+	f.Data = data
 	return
 }
