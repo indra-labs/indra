@@ -16,12 +16,12 @@ func TestAddress(t *testing.T) {
 	ae := NewAddressee(sendPriv)
 	apk := ae.Bytes
 	a := NewAddress(apk)
-	var cloaked Recipient
+	var cloaked AddressBytes
 	cloaked, e = a.GetCloakedAddress()
 	if !ae.IsAddress(cloaked) {
 		t.Error("failed to recognise cloaked address")
 	}
-	flip := rand.Intn(6)
+	flip := rand.Intn(RecipientLen)
 	cloaked[flip] = ^cloaked[flip]
 	if ae.IsAddress(cloaked) {
 		t.Error("recognised incorrectly broken cloaked address")
