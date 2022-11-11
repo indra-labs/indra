@@ -88,22 +88,29 @@ func Encode(ep EP) (pkt []byte, e error) {
 	if blk, e = ciph.GetBlock(ep.From, ep.To); check(e) {
 		return
 	}
-	nonc := nonce.Get()
 	to := ep.To.ToBytes().Fingerprint()
+	nonc := nonce.Get()
 	parity := []byte{byte(ep.Parity)}
 	Seq := slice.NewUint16()
 	Tot := slice.NewUint32()
 	slice.EncodeUint16(Seq, ep.Seq)
 	slice.EncodeUint32(Tot, ep.Length)
+	SeenCount := []byte{byte(len(ep.Seen))}
+	var seenBytes []byte
+	for i := range ep.Seen {
+		seenBytes = append(seenBytes, ep.Seen[i][:]...)
+	}
 	// Concatenate the message pieces together into a single byte slice.
 	pkt = slice.Cat(
 		// f.Nonce[:],    // 16 bytes \
-		// f.To[:],       // 7 bytes   |           ^
+		// f.To[:],       // 6 bytes   |           ^
 		make([]byte, 22), //           |_____clear_|
 		Seq,              // 2 bytes   | encrypted |
 		Tot,              // 4 bytes   |           v
-		parity,           // 1 byte   /
+		parity,           // 1 byte    |
+		SeenCount,        // 1 byte   /
 		ep.Data,          // payload starts on 32 byte boundary
+		seenBytes,
 	)
 	// Encrypt the encrypted part of the data.
 	ciph.Encipher(blk, nonc, pkt)
