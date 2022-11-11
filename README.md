@@ -5,9 +5,11 @@
 Lightning powered distributed virtual private network with Bitcoin and Lightning
 integration.
 
-## About
-
 [White Paper](doc/whitepaper.md)
+
+[Protocol Specification](doc/protocol.md)
+
+## About
 
 The ubiquitous use of encryption on the internet took some time to happen,
 there was a time when the US government defined them as munitions and
