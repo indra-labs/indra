@@ -28,7 +28,8 @@ func TestEncode_Decode(t *testing.T) {
 	if sp, rp, sP, rP, e = GenerateTestKeyPairs(); check(e) {
 		t.FailNow()
 	}
-	addr := address.NewAddress(rP)
+	_ = sP
+	addr := address.FromPubKey(rP)
 	var pkt []byte
 	params := EP{
 		To:     addr,
@@ -41,20 +42,21 @@ func TestEncode_Decode(t *testing.T) {
 	if pkt, e = Encode(params); check(e) {
 		t.Error(e)
 	}
-	// var to address.AddressBytes
-	// var from *pub.Key
-	// if to, from, e = GetKeys(pkt); check(e) {
-	// 	t.Error(e)
-	// }
-	// if e = pub.Derive(rp).ToBytes().Fingerprint().Equals(to); check(e) {
-	// 	t.Error(e)
-	// }
-	// if e = from.ToBytes().Fingerprint().
-	// 	Equals(pub.Derive(sp).ToBytes().Fingerprint()); check(e) {
-	// 	t.Error(e)
-	// }
+	var to address.Cloaked
+	var from *pub.Key
+	if to, from, e = GetKeys(pkt); check(e) {
+		t.Error(e)
+	}
+	_ = to
+	if !sP.ToBytes().Equals(from.ToBytes()) {
+		t.Error(e)
+	}
+	rk := address.NewReceiver(rp)
+	if !rk.Match(to) {
+		t.Error("cloaked key incorrect")
+	}
 	var f *Packet
-	if f, e = Decode(pkt, sP, rp); check(e) {
+	if f, e = Decode(pkt, from, rp); check(e) {
 		t.Error(e)
 	}
 	dHash := sha256.Single(f.Data)

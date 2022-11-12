@@ -3,6 +3,7 @@ package address
 import (
 	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 )
@@ -13,18 +14,19 @@ func TestAddress(t *testing.T) {
 	if sendPriv, e = prv.GenerateKey(); check(e) {
 		return
 	}
-	ae := NewAddressee(sendPriv)
-	apk := ae.Bytes
-	a := NewAddress(apk)
-	var cloaked AddressBytes
-	cloaked, e = a.GetCloakedAddress()
-	if !ae.IsAddress(cloaked) {
+	r := NewReceiver(sendPriv)
+	s := FromPubKey(r.Pub)
+	var cloaked Cloaked
+	cloaked, e = s.GetCloak()
+	if !r.Match(cloaked) {
 		t.Error("failed to recognise cloaked address")
 	}
-	flip := rand.Intn(AddressLen)
-	cloaked[flip] = ^cloaked[flip]
-	if ae.IsAddress(cloaked) {
+	rand.Seed(time.Now().Unix())
+	flip := rand.Intn(Len)
+	broken := make(Cloaked, Len)
+	copy(broken, cloaked)
+	broken[flip] = ^broken[flip]
+	if r.Match(broken) {
 		t.Error("recognised incorrectly broken cloaked address")
 	}
-
 }
