@@ -30,7 +30,7 @@ func TestSplitJoin(t *testing.T) {
 		GenerateTestKeyPairs(); check(e) {
 		t.FailNow()
 	}
-	addr := address.NewAddress(reciPub)
+	addr := address.FromPubKey(reciPub)
 	params := EP{
 		To:     addr,
 		From:   sendPriv,
@@ -108,7 +108,7 @@ func TestSplitJoinFEC(t *testing.T) {
 			punctures[p], punctures[len(punctures)-p-1] =
 				punctures[len(punctures)-p-1], punctures[p]
 		}
-		addr := address.NewAddress(reciPub)
+		addr := address.FromPubKey(reciPub)
 		for p := range punctures {
 			var splitted [][]byte
 			ep := EP{
@@ -194,7 +194,7 @@ func TestSplit(t *testing.T) {
 	if sp, rp, sP, rP, e = GenerateTestKeyPairs(); check(e) {
 		t.Error(e)
 	}
-	addr := address.NewAddress(rP)
+	addr := address.FromPubKey(rP)
 	for i := range parities {
 		params := EP{
 			To:     addr,
@@ -227,7 +227,7 @@ func BenchmarkSplit(b *testing.B) {
 	if sp, rp, sP, rP, e = GenerateTestKeyPairs(); check(e) {
 		b.Error(e)
 	}
-	addr := address.NewAddress(rP)
+	addr := address.FromPubKey(rP)
 	for n := 0; n < b.N; n++ {
 		params := EP{
 			To:     addr,
@@ -276,21 +276,14 @@ func GenerateTestMessage(msgSize int) (msg []byte, hash sha256.Hash, e error) {
 	return
 }
 
-func GenerateTestKeyPairs() (sendPriv, reciPriv *prv.Key,
-	sendPub, reciPub *pub.Key, e error) {
-	if sendPriv, e = prv.GenerateKey(); check(e) {
+func GenerateTestKeyPairs() (sp, rp *prv.Key, sP, rP *pub.Key, e error) {
+	if sp, e = prv.GenerateKey(); check(e) {
 		return
 	}
-	sendPub = pub.Derive(sendPriv)
-	if reciPriv, e = prv.GenerateKey(); check(e) {
+	sP = pub.Derive(sp)
+	if rp, e = prv.GenerateKey(); check(e) {
 		return
 	}
-	reciPub = pub.Derive(reciPriv)
-	// if blk1, e = ciph.GetBlock(sendPriv, reciPub); check(e) {
-	// 	return
-	// }
-	// if blk2, e = ciph.GetBlock(reciPriv, sendPub); check(e) {
-	// 	return
-	// }
+	rP = pub.Derive(rp)
 	return
 }

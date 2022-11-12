@@ -16,74 +16,97 @@ var (
 	check = log.E.Chk
 )
 
-// AddressBytes is the blinded hash of a public key used to conceal a message
+// Cloaked is the blinded hash of a public key used to conceal a message
 // public key from attackers.
-type AddressBytes []byte
+type Cloaked []byte
 
 const BlindLen = 3
 const HashLen = 5
-const AddressLen = BlindLen + HashLen
+const Len = BlindLen + HashLen
 
-// Address is the raw bytes of a public key received in the metadata of a
+func (c Cloaked) CopyBlinder() (blinder []byte) {
+	blinder = make([]byte, BlindLen)
+	copy(blinder, c[:BlindLen])
+	return
+}
+
+// Sender is the raw bytes of a public key received in the metadata of a
 // message.
-type Address struct {
+type Sender struct {
 	*pub.Key
 	pub.Bytes
 }
 
-// NewAddress creates a recipient Address from a received public key bytes.
-func NewAddress(k *pub.Key) (a *Address) {
-	a = &Address{Key: k, Bytes: k.ToBytes()}
+// FromPubKey creates a Sender from a received public key bytes.
+func FromPubKey(k *pub.Key) (s *Sender) {
+	s = &Sender{Key: k, Bytes: k.ToBytes()}
 	return
 }
 
-// GetCloakedAddress returns a value which a receiver with the private key can
+// FromBytes creates a Sender from a received public key bytes.
+func FromBytes(pkb pub.Bytes) (s *Sender, e error) {
+	var pk *pub.Key
+	pk, e = pub.FromBytes(pkb)
+	s = &Sender{Key: pk, Bytes: pkb}
+	return
+}
+
+// GetCloak returns a value which a receiver with the private key can
 // identify the association of a message with the peer in order to retrieve the
 // private key to generate the message cipher.
 //
 // The three byte blinding factor concatenated in front of the public key
-// generates the 5 bytes at the end of the AddressBytes code. In this way the
+// generates the 5 bytes at the end of the Cloaked code. In this way the
 // source public key it relates to is hidden to any who don't have this public
 // key, which only the parties know.
-func (a Address) GetCloakedAddress() (r AddressBytes, e error) {
+func (s Sender) GetCloak() (c Cloaked, e error) {
 	blinder := make([]byte, BlindLen)
 	var n int
 	if n, e = rand.Read(blinder); check(e) && n != BlindLen {
 		return
 	}
-	h := sha256.Single(append(blinder, a.Bytes...))
-	r = append(blinder, h[:HashLen]...)
+	c = Cloak(blinder, s.Bytes)
 	return
 }
 
-// Addressee wraps a private key with pre-generated public key used to recognise
+func Cloak(blinder []byte, key pub.Bytes) (c Cloaked) {
+	b := make([]byte, BlindLen)
+	copy(b, blinder)
+	h := sha256.Single(append(b, key...))[:HashLen]
+	c = append(b, h[:HashLen]...)
+	return
+}
+
+// Receiver wraps a private key with pre-generated public key used to recognise
 // and associate messages from a specific peer, the public key is sent in a
 // previous message inside the encrypted payload and this structure is cached to
 // identify the correct key to decrypt the message.
-type Addressee struct {
+type Receiver struct {
 	*prv.Key
+	Pub *pub.Key
 	pub.Bytes
 }
 
-// NewAddressee takes a private key and generates an Addressee for the address
+// NewReceiver takes a private key and generates an Receiver for the address
 // cache.
-func NewAddressee(k *prv.Key) (a *Addressee) {
-	a = &Addressee{Key: k}
-	pub := pub.Derive(k)
-	a.Bytes = pub.ToBytes()
+func NewReceiver(k *prv.Key) (a *Receiver) {
+	a = &Receiver{
+		Key: k,
+		Pub: pub.Derive(k),
+	}
+	a.Bytes = a.Pub.ToBytes()
 	return
 }
 
-// IsAddress uses the cached public key and the provided blinding factor to
+// Match uses the cached public key and the provided blinding factor to
 // match the source public key so the packet address field is only recognisable
 // to the intended recipient.
-func (a *Addressee) IsAddress(r AddressBytes) bool {
-	if len(r) != AddressLen {
+func (a *Receiver) Match(r Cloaked) bool {
+	if len(r) != Len {
 		return false
 	}
-	blinder, fingerprint := r[:BlindLen], r[BlindLen:]
-	hash := sha256.Single(append(blinder, a.Bytes...))[:HashLen]
-	return *(*string)(unsafe.Pointer(&fingerprint)) ==
+	hash := Cloak(r[:BlindLen], a.Bytes)
+	return *(*string)(unsafe.Pointer(&r)) ==
 		*(*string)(unsafe.Pointer(&hash))
 
 }

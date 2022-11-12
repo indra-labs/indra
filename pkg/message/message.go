@@ -43,7 +43,7 @@ func (p *Packet) GetOverhead() int {
 
 // Overhead is the base overhead on a packet, use GetOverhead to add any extra
 // as found in a Packet.
-const Overhead = nonce.Size + address.AddressLen + slice.Uint16Len +
+const Overhead = nonce.Size + address.Len + slice.Uint16Len +
 	slice.Uint32Len + 1 + 4 + sig.Len
 
 // Packets is a slice of pointers to packets.
@@ -62,7 +62,7 @@ func (p Packets) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 // been seen at time of constructing this packet that can now be discarded as
 // they will not be used to generate a cipher again.
 type EP struct {
-	To     *address.Address
+	To     *address.Sender
 	From   *prv.Key
 	Parity int
 	Seq    int
@@ -85,8 +85,8 @@ func Encode(ep EP) (pkt []byte, e error) {
 		return
 	}
 	nonc := nonce.Get()
-	var to address.AddressBytes
-	to, e = ep.To.GetCloakedAddress()
+	var to address.Cloaked
+	to, e = ep.To.GetCloak()
 	parity := []byte{byte(ep.Parity)}
 	Seq := slice.NewUint16()
 	Tot := slice.NewUint32()
@@ -97,7 +97,7 @@ func Encode(ep EP) (pkt []byte, e error) {
 		// f.Nonce[:],    // 16 bytes \
 		// f.To[:],       // 8 bytes   |
 		make([]byte,
-			nonce.Size+address.AddressLen),
+			nonce.Size+address.Len),
 		Seq,     // 2 bytes
 		Tot,     // 4 bytes
 		parity,  // 1 byte
@@ -125,7 +125,7 @@ func Encode(ep EP) (pkt []byte, e error) {
 // packet should then be processed with ciph.Encipher (sans signature) using the
 // block cipher thus created from the shared secret, and the Decode function will
 // then decode a Packet.
-func GetKeys(d []byte) (to address.AddressBytes, from *pub.Key, e error) {
+func GetKeys(d []byte) (to address.Cloaked, from *pub.Key, e error) {
 	pktLen := len(d)
 	if pktLen < Overhead {
 		// If this isn't checked the slice operations later can
@@ -135,7 +135,7 @@ func GetKeys(d []byte) (to address.AddressBytes, from *pub.Key, e error) {
 		log.E.Ln(e)
 		return
 	}
-	to = d[nonce.Size : nonce.Size+address.AddressLen]
+	to = d[nonce.Size : nonce.Size+address.Len]
 	// split off the signature and recover the public key
 	sigStart := pktLen - sig.Len
 	checkStart := sigStart - 4
@@ -183,7 +183,7 @@ func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Packet, e error) {
 	// security.
 	ciph.Encipher(blk, nonc, data)
 	// Trim off the nonce and recipient fingerprint, which is now encrypted.
-	data = data[nonce.Size+address.AddressLen:]
+	data = data[nonce.Size+address.Len:]
 	var seq, tot slice.Size16
 	seq, data = slice.Cut(data, slice.Uint16Len)
 	f.Seq = uint16(slice.DecodeUint16(seq))
