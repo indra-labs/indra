@@ -10,24 +10,37 @@ type Segment struct {
 	DStart, DEnd, PEnd, SLen, Last int
 }
 
+// This is an expanded printer for debugging
+// func (s Segment) String() (o string) {
+// 	slast := (s.PEnd-s.DEnd)*s.SLen - s.SLen + s.Last
+// 	if s.PEnd-s.DEnd == 0 {
+// 		slast = 0
+// 	}
+// 	o = fmt.Sprintf("%5d (%5d, %5d) %5d [%5d, %5d] %5d (%5d; %5d)",
+// 		s.DStart, s.DEnd-s.DStart, (s.DEnd-s.DStart-1)*s.SLen+s.Last,
+// 		s.DEnd, s.PEnd-s.DEnd, slast, s.PEnd,
+// 		s.SLen, s.Last)
+// 	return
+// }
+
+// String is a printer that produces a Go syntax formatted version of the
+// Segment.
 func (s Segment) String() (o string) {
-	slast := (s.PEnd-s.DEnd)*s.SLen - s.SLen + s.Last
-	if s.PEnd-s.DEnd == 0 {
-		slast = 0
-	}
-	o = fmt.Sprintf("%5d (%5d, %5d) %5d [%5d, %5d] %5d (%5d; %5d)",
-		s.DStart, s.DEnd-s.DStart, (s.DEnd-s.DStart-1)*s.SLen+s.Last,
-		s.DEnd, s.PEnd-s.DEnd, slast, s.PEnd,
-		s.SLen, s.Last)
+	o = fmt.Sprintf(
+		"\t\tSegment{ DStart: %d, DEnd: %d, PEnd: %d, SLen: %d, Last: %d},", s.DStart, s.DEnd, s.PEnd, s.SLen, s.Last)
 	return
 }
 
 type Segments []Segment
 
+// String is a printer that produces a Go syntax formatted version of the
+// Segments.
 func (s Segments) String() (o string) {
+	o += "\n\tSegments{"
 	for _, si := range s {
 		o += fmt.Sprintf("\n%s", si.String())
 	}
+	o += "\n\t}\n"
 	return
 }
 

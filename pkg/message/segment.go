@@ -13,7 +13,8 @@ import (
 const ErrEmptyBytes = "cannot encode empty bytes"
 
 // Split creates a series of packets including the defined Reed Solomon
-// parameters for extra parity shards.
+// parameters for extra parity shards and the return encryption public key for a
+// reply.
 //
 // The last packet that falls short of the segmentSize is padded random bytes.
 //

@@ -23,19 +23,20 @@ func TestSplitJoin(t *testing.T) {
 	if payload, pHash, e = GenerateTestMessage(msgSize); check(e) {
 		t.FailNow()
 	}
-	var sendPriv, reciPriv *prv.Key
-	var reciPub *pub.Key
-	_ = reciPriv
-	if sendPriv, reciPriv, _, reciPub, e =
-		GenerateTestKeyPairs(); check(e) {
+	var sp, rp, Rp *prv.Key
+	var sP, rP, RP *pub.Key
+	var ret pub.Bytes
+	if sp, rp, Rp, sP, rP, RP, ret, e = GenerateTestKeyPairs(); check(e) {
 		t.FailNow()
 	}
-	addr := address.FromPubKey(reciPub)
+	_, _, _, _ = sP, Rp, RP, rp
+	addr := address.FromPubKey(rP)
 	params := EP{
 		To:     addr,
-		From:   sendPriv,
+		From:   sp,
 		Length: len(payload),
 		Data:   payload,
+		Return: ret,
 	}
 	var splitted [][]byte
 	if splitted, e = Split(params, segSize); check(e) {
@@ -50,7 +51,7 @@ func TestSplitJoin(t *testing.T) {
 			log.I.Ln(i)
 			continue
 		}
-		if pkt, e = Decode(splitted[i], from, reciPriv); check(e) {
+		if pkt, e = Decode(splitted[i], from, rp); check(e) {
 			t.Error(e)
 		}
 		pkts = append(pkts, pkt)
@@ -78,13 +79,13 @@ func TestSplitJoinFEC(t *testing.T) {
 	msgSize := 2 << 18
 	segSize := 1472
 	var e error
-	var sendPriv, reciPriv *prv.Key
-	var reciPub *pub.Key
-	_ = reciPriv
-	if sendPriv, reciPriv, _, reciPub, e =
-		GenerateTestKeyPairs(); check(e) {
+	var sp, rp, Rp *prv.Key
+	var sP, rP, RP *pub.Key
+	var ret pub.Bytes
+	if sp, rp, Rp, sP, rP, RP, ret, e = GenerateTestKeyPairs(); check(e) {
 		t.FailNow()
 	}
+	_, _, _, _ = sP, Rp, RP, rp
 	var parity []int
 	for i := 1; i < 255; i *= 2 {
 		parity = append(parity, i)
@@ -108,15 +109,16 @@ func TestSplitJoinFEC(t *testing.T) {
 			punctures[p], punctures[len(punctures)-p-1] =
 				punctures[len(punctures)-p-1], punctures[p]
 		}
-		addr := address.FromPubKey(reciPub)
+		addr := address.FromPubKey(rP)
 		for p := range punctures {
 			var splitted [][]byte
 			ep := EP{
 				To:     addr,
-				From:   sendPriv,
+				From:   sp,
 				Parity: parity[i],
 				Length: len(payload),
 				Data:   payload,
+				Return: ret,
 			}
 			if splitted, e = Split(ep, segSize); check(e) {
 				t.FailNow()
@@ -154,7 +156,7 @@ func TestSplitJoinFEC(t *testing.T) {
 					continue
 				}
 				if pkt, e = Decode(splitted[s],
-					from, reciPriv); check(e) {
+					from, rp); check(e) {
 					continue
 				}
 				pkts = append(pkts, pkt)
@@ -174,43 +176,6 @@ func TestSplitJoinFEC(t *testing.T) {
 	}
 }
 
-func TestSplit(t *testing.T) {
-	msgSize := 2 << 19
-	segSize := 1472
-	parities := make([]int, 256)
-	for i := 0; i < 256; i++ {
-		parities[i] = i
-	}
-	var e error
-	var payload []byte
-	var hash sha256.Hash
-	if payload, hash, e = GenerateTestMessage(msgSize); check(e) {
-		t.Error(e)
-	}
-	_ = hash
-	var sp, rp *prv.Key
-	var sP, rP *pub.Key
-	_, _ = rp, sP
-	if sp, rp, sP, rP, e = GenerateTestKeyPairs(); check(e) {
-		t.Error(e)
-	}
-	addr := address.FromPubKey(rP)
-	for i := range parities {
-		params := EP{
-			To:     addr,
-			From:   sp,
-			Parity: parities[i],
-			Data:   payload,
-		}
-
-		var splitted [][]byte
-		if splitted, e = Split(params, segSize); check(e) {
-			t.Error(e)
-		}
-		_ = splitted
-	}
-}
-
 func BenchmarkSplit(b *testing.B) {
 	msgSize := 2 << 16
 	segSize := 1472
@@ -221,12 +186,13 @@ func BenchmarkSplit(b *testing.B) {
 		b.Error(e)
 	}
 	_ = hash
-	var sp, rp *prv.Key
-	var sP, rP *pub.Key
-	_, _ = rp, sP
-	if sp, rp, sP, rP, e = GenerateTestKeyPairs(); check(e) {
-		b.Error(e)
+	var sp, rp, Rp *prv.Key
+	var sP, rP, RP *pub.Key
+	var ret pub.Bytes
+	if sp, rp, Rp, sP, rP, RP, ret, e = GenerateTestKeyPairs(); check(e) {
+		b.FailNow()
 	}
+	_, _, _, _ = sP, Rp, RP, rp
 	addr := address.FromPubKey(rP)
 	for n := 0; n < b.N; n++ {
 		params := EP{
@@ -234,6 +200,7 @@ func BenchmarkSplit(b *testing.B) {
 			From:   sp,
 			Parity: 64,
 			Data:   payload,
+			Return: ret,
 		}
 
 		var splitted [][]byte
@@ -276,7 +243,8 @@ func GenerateTestMessage(msgSize int) (msg []byte, hash sha256.Hash, e error) {
 	return
 }
 
-func GenerateTestKeyPairs() (sp, rp *prv.Key, sP, rP *pub.Key, e error) {
+func GenerateTestKeyPairs() (sp, rp, Rp *prv.Key, sP, rP, RP *pub.Key,
+	ret pub.Bytes, e error) {
 	if sp, e = prv.GenerateKey(); check(e) {
 		return
 	}
@@ -285,5 +253,10 @@ func GenerateTestKeyPairs() (sp, rp *prv.Key, sP, rP *pub.Key, e error) {
 		return
 	}
 	rP = pub.Derive(rp)
+	if Rp, e = prv.GenerateKey(); check(e) {
+		return
+	}
+	RP = pub.Derive(Rp)
+	ret = RP.ToBytes()
 	return
 }
