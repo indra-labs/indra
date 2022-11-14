@@ -119,10 +119,11 @@ func Encode(ep EP) (pkt []byte, e error) {
 	// Sign the packet.
 	var s sig.Bytes
 	hash := sha256.Single(pkt)
-	pkt = append(pkt, hash[:4]...)
-	if s, e = sig.Sign(ep.From, hash); !check(e) {
-		pkt = append(pkt, s...)
+	if s, e = sig.Sign(ep.From, hash); check(e) {
+		return
 	}
+	pkt = append(pkt, hash[:4]...)
+	pkt = append(pkt, s...)
 	return
 }
 
