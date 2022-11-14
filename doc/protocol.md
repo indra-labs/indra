@@ -10,9 +10,12 @@ inside messages. The outer, visible part is laid out as follows:
 
 1. [**16 bytes**] Nonce - the random value used to secure the encryption key
    when combined with the message.
-2. [**6 bytes**] Address - A cloaked representation of the public key acquired
-   from the
-   correspondent from a previous message or initial handshake.
+2. [**8 bytes**] Address - A cloaked representation of the public key acquired
+   from the correspondent from a previous message or initial handshake. This 
+   uses 3 bytes of cryptographic random numbers plus the hash of the full 
+   public key concatenated at the end of the nonce value, hashed and sliced 
+   to 8 bytes length. Only the sender will be able to identify this to 
+   associate a batch of message segments together.
 3. Payload - The encrypted contents of the message, Includes a header and a
    return public key in the footer.
 	1. [**2 bytes**] Message Sequence number - the sequence position of this
@@ -22,8 +25,8 @@ inside messages. The outer, visible part is laid out as follows:
 	   ratio against 256 for added redundancy for the Reed Solomon
 	   Forward Error Correction used to avoid retransmission.
 	4. [**33 bytes**] Receiver public key - this key the sender has cached
-	   and will be able to recognise the Address header related to it to
-	   associate a batch of message segments together.
+	   and will be able to recognise the Address header matches a 
+	   cloaked version of this key for sending a reply message.
 	5. **Remainder of available from 1472 bytes**  The data
 
 4. [**4 bytes**] Checksum - truncated SHA256 hash of the rest of Payload
@@ -67,5 +70,5 @@ messages that are for coordinating information between peers.
 
 Shuffling message order also helps ensure that for longer transmissions over 256
 packets in length, that any lost packets are distributed across the message
-delivery timeline, protecting against longer bursts of disruption breaking a 
+delivery timeline, protecting against longer bursts of disruption breaking a
 single section of a message and causing transmission failure.
