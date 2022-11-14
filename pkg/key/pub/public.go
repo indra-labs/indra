@@ -1,6 +1,7 @@
 package pub
 
 import (
+	"encoding/hex"
 	"unsafe"
 
 	"github.com/Indra-Labs/indra"
@@ -49,6 +50,13 @@ func (pub *Key) ToBytes() (p Bytes) {
 	return (*secp256k1.PublicKey)(pub).SerializeCompressed()
 }
 
+const HRP = "indra"
+
+func (pub *Key) ToHex() (s string, e error) {
+	b := pub.ToBytes()
+	s = hex.EncodeToString(b)
+	return
+}
 func (pb Bytes) Equals(qb Bytes) bool {
 	// Ensure lengths are correct.
 	if len(pb) == KeyLen && len(qb) == KeyLen {
