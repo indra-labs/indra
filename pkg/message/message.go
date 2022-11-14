@@ -31,7 +31,11 @@ type Packet struct {
 	Length uint32
 	// Parity is the ratio of redundancy. In each 256 segment
 	Parity byte
-	// Payload is the encrypted message.
+	// Return is the return address to use for a reply. Even if only one
+	// segment of a segmented message is received the key can be used as a
+	// recipient encryption key half.
+	Return pub.Bytes
+	// Data is the message.
 	Data []byte
 }
 
@@ -44,7 +48,7 @@ func (p *Packet) GetOverhead() int {
 // Overhead is the base overhead on a packet, use GetOverhead to add any extra
 // as found in a Packet.
 const Overhead = nonce.Size + address.Len + slice.Uint16Len +
-	slice.Uint32Len + 1 + 4 + sig.Len
+	slice.Uint32Len + 1 + pub.KeyLen + 4 + sig.Len
 
 // Packets is a slice of pointers to packets.
 type Packets []*Packet
@@ -67,6 +71,7 @@ type EP struct {
 	Parity int
 	Seq    int
 	Length int
+	Return pub.Bytes
 	Data   []byte
 }
 
@@ -84,6 +89,9 @@ func Encode(ep EP) (pkt []byte, e error) {
 	if blk, e = ciph.GetBlock(ep.From, ep.To.Key); check(e) {
 		return
 	}
+	if ep.Return == nil || len(ep.Return) != pub.KeyLen {
+		return
+	}
 	nonc := nonce.Get()
 	var to address.Cloaked
 	to, e = ep.To.GetCloak()
@@ -98,10 +106,11 @@ func Encode(ep EP) (pkt []byte, e error) {
 		// f.To[:],       // 8 bytes   |
 		make([]byte,
 			nonce.Size+address.Len),
-		Seq,     // 2 bytes
-		Tot,     // 4 bytes
-		parity,  // 1 byte
-		ep.Data, //
+		Seq,       // 2 bytes
+		Tot,       // 4 bytes
+		parity,    // 1 byte
+		ep.Return, // 33 bytes
+		ep.Data,
 	)
 	// Encrypt the encrypted part of the data.
 	ciph.Encipher(blk, nonc, pkt)
@@ -120,11 +129,11 @@ func Encode(ep EP) (pkt []byte, e error) {
 // GetKeys returns the To field of the message in order, checks the packet
 // checksum and recovers the public key signing it.
 //
-// After this, if the matching private key to the fingerprint returned is found,
-// it is combined with the public key to generate the cipher and the entire
-// packet should then be processed with ciph.Encipher (sans signature) using the
-// block cipher thus created from the shared secret, and the Decode function will
-// then decode a Packet.
+// After this, if the matching private key to the cloaked address returned is
+// found, it is combined with the public key to generate the cipher and the
+// entire packet should then be processed with ciph.Encipher (sans signature)
+// using the block cipher thus created from the shared secret, and the Decode
+// function will then decode a Packet.
 func GetKeys(d []byte) (to address.Cloaked, from *pub.Key, e error) {
 	pktLen := len(d)
 	if pktLen < Overhead {
@@ -157,8 +166,7 @@ func GetKeys(d []byte) (to address.Cloaked, from *pub.Key, e error) {
 
 // Decode a packet and return the Packet with encrypted payload and signer's
 // public key. This assumes GetKeys succeeded and the matching private key was
-// found in order to create a cipher.Block matching the encryption of the
-// payload.
+// found.
 func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Packet, e error) {
 	pktLen := len(d)
 	if pktLen < Overhead {
@@ -190,6 +198,7 @@ func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Packet, e error) {
 	tot, data = slice.Cut(data, slice.Uint32Len)
 	f.Length = uint32(slice.DecodeUint32(tot))
 	f.Parity, data = data[0], data[1:]
+	f.Return, data = data[:pub.KeyLen], data[pub.KeyLen:]
 	f.Data = data
 	return
 }

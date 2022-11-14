@@ -23,12 +23,13 @@ func TestEncode_Decode(t *testing.T) {
 	}
 	payload = append([]byte("payload"), payload...)
 	pHash := sha256.Single(payload)
-	var sp, rp *prv.Key
-	var sP, rP *pub.Key
-	if sp, rp, sP, rP, e = GenerateTestKeyPairs(); check(e) {
+	var sp, rp, Rp *prv.Key
+	var sP, rP, RP *pub.Key
+	var ret pub.Bytes
+	if sp, rp, Rp, sP, rP, RP, ret, e = GenerateTestKeyPairs(); check(e) {
 		t.FailNow()
 	}
-	_ = sP
+	_, _, _ = sP, Rp, RP
 	addr := address.FromPubKey(rP)
 	var pkt []byte
 	params := EP{
@@ -38,6 +39,7 @@ func TestEncode_Decode(t *testing.T) {
 		Seq:    234,
 		Parity: 64,
 		Length: msgSize,
+		Return: ret,
 	}
 	if pkt, e = Encode(params); check(e) {
 		t.Error(e)
