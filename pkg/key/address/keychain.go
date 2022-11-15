@@ -2,11 +2,14 @@ package address
 
 import (
 	"fmt"
+	"net"
 	"time"
 
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 )
 
+// SendEntry tracks the received signing keys to be used for messages with a
+// given other node.
 type SendEntry struct {
 	*Sender
 	time.Time
@@ -43,7 +46,7 @@ type SendCache struct {
 
 func NewSendCache() *SendCache { return &SendCache{} }
 
-func (sc *SendCache) Add(pb pub.Bytes) (e error) {
+func (sc *SendCache) Add(pb pub.Bytes, ip net.IP) (e error) {
 	var s *Sender
 	if s, e = FromBytes(pb); check(e) {
 		return
@@ -77,6 +80,8 @@ func (sc *SendCache) Delete(k pub.Bytes) (e error) {
 	return
 }
 
+// ReceiveEntry tracks the details of a receiver key and their related IP
+// address.
 type ReceiveEntry struct {
 	*Receiver
 	time.Time
@@ -100,7 +105,7 @@ type ReceiveCache struct {
 
 func NewReceiveCache() *ReceiveCache { return &ReceiveCache{} }
 
-func (rc *ReceiveCache) Add(r *Receiver) (e error) {
+func (rc *ReceiveCache) Add(r *Receiver, ip net.IP) (e error) {
 	re := &ReceiveEntry{Receiver: r, Time: time.Now()}
 	rc.ReceiveEntries = append(rc.ReceiveEntries, re)
 	rc.Index = append(rc.Index, pub.Derive(r.Key).ToBytes())
@@ -113,6 +118,16 @@ out:
 		if k.Equals(rc.Index[i]) {
 			se = rc.ReceiveEntries[i]
 			break out
+		}
+	}
+	return
+}
+
+func (rc *ReceiveCache) FindCloaked(c Cloaked) (r *Receiver) {
+	for _, re := range rc.ReceiveEntries {
+		if re.Match(c) {
+			r = re.Receiver
+			break
 		}
 	}
 	return
