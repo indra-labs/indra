@@ -34,12 +34,11 @@ func (c Cloaked) CopyBlinder() (blinder []byte) {
 // message.
 type Sender struct {
 	*pub.Key
-	pub.Bytes
 }
 
-// FromPubKey creates a Sender from a received public key bytes.
+// FromPubKey creates a Sender from a public key.
 func FromPubKey(k *pub.Key) (s *Sender) {
-	s = &Sender{Key: k, Bytes: k.ToBytes()}
+	s = &Sender{Key: k}
 	return
 }
 
@@ -47,7 +46,7 @@ func FromPubKey(k *pub.Key) (s *Sender) {
 func FromBytes(pkb pub.Bytes) (s *Sender, e error) {
 	var pk *pub.Key
 	pk, e = pub.FromBytes(pkb)
-	s = &Sender{Key: pk, Bytes: pkb}
+	s = &Sender{Key: pk}
 	return
 }
 
@@ -65,7 +64,7 @@ func (s Sender) GetCloak() (c Cloaked, e error) {
 	if n, e = rand.Read(blinder); check(e) && n != BlindLen {
 		return
 	}
-	c = Cloak(blinder, s.Bytes)
+	c = Cloak(blinder, s.Key.ToBytes())
 	return
 }
 
