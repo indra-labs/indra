@@ -36,7 +36,7 @@ func (ie Index) Delete(index int) (io Index) {
 // will be used as addressees for the cipher half concealed by a cloaked address
 // in a message.
 //
-// Index stores the key bytes in the same sequence as the SendEntries so it can
+// Index stores the key bytes in the same sequence as the SendEntries, so it can
 // be scanned for matches and then its index used to access the related pub.Key.
 type SendCache struct {
 	SendEntries
