@@ -2,7 +2,6 @@ package address
 
 import (
 	"fmt"
-	"net"
 	"time"
 
 	"github.com/Indra-Labs/indra/pkg/key/pub"
@@ -18,7 +17,7 @@ type SendEntry struct {
 type SendEntries []*SendEntry
 
 func (se SendEntries) Delete(index int) (so SendEntries) {
-	if len(se)-1 > index {
+	if len(se) > index {
 		return append(se[:index], se[index+1:]...)
 	}
 	return se
@@ -27,7 +26,7 @@ func (se SendEntries) Delete(index int) (so SendEntries) {
 type Index []pub.Bytes
 
 func (ie Index) Delete(index int) (io Index) {
-	if len(ie)-1 > index {
+	if len(ie) > index {
 		return append(ie[:index], ie[index+1:]...)
 	}
 	return ie
@@ -46,7 +45,11 @@ type SendCache struct {
 
 func NewSendCache() *SendCache { return &SendCache{} }
 
-func (sc *SendCache) Add(pb pub.Bytes, ip net.IP) (e error) {
+func (sc *SendCache) Len() int {
+	return len(sc.SendEntries)
+}
+
+func (sc *SendCache) Add(pb pub.Bytes) (e error) {
 	var s *Sender
 	if s, e = FromBytes(pb); check(e) {
 		return
@@ -90,7 +93,7 @@ type ReceiveEntry struct {
 type ReceiveEntries []*ReceiveEntry
 
 func (re ReceiveEntries) Delete(index int) (ro ReceiveEntries) {
-	if len(re)-1 > index {
+	if len(re) > index {
 		return append(re[:index], re[index+1:]...)
 	}
 	return re
@@ -105,7 +108,11 @@ type ReceiveCache struct {
 
 func NewReceiveCache() *ReceiveCache { return &ReceiveCache{} }
 
-func (rc *ReceiveCache) Add(r *Receiver, ip net.IP) (e error) {
+func (rc *ReceiveCache) Len() int {
+	return len(rc.ReceiveEntries)
+}
+
+func (rc *ReceiveCache) Add(r *Receiver) (e error) {
 	re := &ReceiveEntry{Receiver: r, Time: time.Now()}
 	rc.ReceiveEntries = append(rc.ReceiveEntries, re)
 	rc.Index = append(rc.Index, pub.Derive(r.Key).ToBytes())
