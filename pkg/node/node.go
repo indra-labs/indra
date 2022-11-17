@@ -2,6 +2,7 @@ package node
 
 import (
 	"crypto/rand"
+	"fmt"
 	"net"
 
 	"github.com/Indra-Labs/indra"
@@ -40,75 +41,6 @@ type Node struct {
 	Out *address.ReceiveCache
 }
 
-type Nodes struct {
-	n []*Node
-}
-
-// NewNodes creates an empty Nodes
-func NewNodes() (n *Nodes) { return &Nodes{n: []*Node{}} }
-
-// Add a Node to a Nodes.
-func (n *Nodes) Add(nn *Node) *Nodes {
-	n.n = append(n.n, nn)
-	return n
-}
-
-// FindByID searches for a Node by ID.
-func (n *Nodes) FindByID(id ID) (no *Node) {
-	for _, nn := range n.n {
-		if nn.ID == id {
-			no = nn
-			break
-		}
-	}
-	return
-}
-
-// FindByIP searches for a Node by net.IP.
-func (n *Nodes) FindByIP(id net.IP) (no *Node) {
-	for _, nn := range n.n {
-		if nn.IP.String() == id.String() {
-			no = nn
-			break
-		}
-	}
-	return
-}
-
-// DeleteByID deletes a node identified by an ID.
-func (n *Nodes) DeleteByID(id ID) *Nodes {
-	for i := range n.n {
-		if n.n[i].ID == id {
-			switch {
-			case i == 0:
-				n.n = n.n[1:]
-			case i == len(n.n)-1:
-				n.n = n.n[:i]
-			default:
-				n.n = append(n.n[:i-1], n.n[i:]...)
-			}
-		}
-	}
-	return n
-}
-
-// DeleteByIP deletes a node identified by a net.IP.
-func (n *Nodes) DeleteByIP(id net.IP) *Nodes {
-	for i := range n.n {
-		if n.n[i].IP.String() == id.String() {
-			switch {
-			case i == 0:
-				n.n = n.n[1:]
-			case i == len(n.n)-1:
-				n.n = n.n[:i]
-			default:
-				n.n = append(n.n[:i-1], n.n[i:]...)
-			}
-		}
-	}
-	return n
-}
-
 // New creates a new Node. net.IP is optional if the counterparty is not in
 // direct connection.
 func New(ip net.IP) (n *Node, e error) {
@@ -121,6 +53,84 @@ func New(ip net.IP) (n *Node, e error) {
 		IP:  ip,
 		In:  address.NewSendCache(),
 		Out: address.NewReceiveCache(),
+	}
+	return
+}
+
+type Nodes struct {
+	S []*Node
+}
+
+// NewNodes creates an empty Nodes
+func NewNodes() (n *Nodes) { return &Nodes{[]*Node{}} }
+
+func (n *Nodes) Len() int {
+	return len(n.S)
+}
+
+// Add a Node to a Nodes.
+func (n *Nodes) Add(nn *Node) {
+	n.S = append(n.S, nn)
+}
+
+// FindByID searches for a Node by ID.
+func (n *Nodes) FindByID(id ID) (no *Node) {
+	for _, nn := range n.S {
+		if nn.ID == id {
+			no = nn
+			break
+		}
+	}
+	return
+}
+
+// FindByIP searches for a Node by net.IP.
+func (n *Nodes) FindByIP(id net.IP) (no *Node) {
+	for _, nn := range n.S {
+		if nn.IP.String() == id.String() {
+			no = nn
+			break
+		}
+	}
+	return
+}
+
+// DeleteByID deletes a node identified by an ID.
+func (n *Nodes) DeleteByID(id ID) (e error) {
+	e = fmt.Errorf("id %x not found", id)
+	for i := range n.S {
+		if n.S[i].ID == id {
+			switch {
+			case i == 0:
+				n.S = n.S[1:]
+			case i == len(n.S)-1:
+				n.S = n.S[:i]
+			default:
+				n.S = append(n.S[:i], n.S[i+1:]...)
+			}
+			e = nil
+			break
+		}
+	}
+	return
+}
+
+// DeleteByIP deletes a node identified by a net.IP.
+func (n *Nodes) DeleteByIP(ip net.IP) (e error) {
+	e = fmt.Errorf("node with ip %v not found", ip)
+	for i := range n.S {
+		if n.S[i].IP.String() == ip.String() {
+			switch {
+			case i == 0:
+				n.S = n.S[1:]
+			case i == len(n.S)-1:
+				n.S = n.S[:i]
+			default:
+				n.S = append(n.S[:i], n.S[i+1:]...)
+			}
+			e = nil
+			break
+		}
 	}
 	return
 }
