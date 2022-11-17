@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 )
 
@@ -12,6 +13,13 @@ import (
 type SendEntry struct {
 	*Sender
 	time.Time
+}
+
+func NewSendEntry(pub *pub.Key) *SendEntry {
+	return &SendEntry{
+		Sender: FromPubKey(pub),
+		Time:   time.Now(),
+	}
 }
 
 type SendEntries []*SendEntry
@@ -88,6 +96,13 @@ func (sc *SendCache) Delete(k pub.Bytes) (e error) {
 type ReceiveEntry struct {
 	*Receiver
 	time.Time
+}
+
+func NewReceiveEntry(priv *prv.Key) *ReceiveEntry {
+	return &ReceiveEntry{
+		Receiver: NewReceiver(priv),
+		Time:     time.Now(),
+	}
 }
 
 type ReceiveEntries []*ReceiveEntry

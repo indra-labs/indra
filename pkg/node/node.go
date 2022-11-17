@@ -6,7 +6,7 @@ import (
 	"net"
 
 	"github.com/Indra-Labs/indra"
-	"github.com/Indra-Labs/indra/pkg/key/address"
+	"github.com/Indra-Labs/indra/pkg/key/session"
 	log2 "github.com/cybriq/proc/pkg/log"
 )
 
@@ -37,8 +37,7 @@ func NewID() (id ID, e error) {
 type Node struct {
 	ID
 	net.IP
-	In  *address.SendCache
-	Out *address.ReceiveCache
+	session.Sessions
 }
 
 // New creates a new Node. net.IP is optional if the counterparty is not in
@@ -49,10 +48,9 @@ func New(ip net.IP) (n *Node, e error) {
 		return
 	}
 	n = &Node{
-		ID:  id,
-		IP:  ip,
-		In:  address.NewSendCache(),
-		Out: address.NewReceiveCache(),
+		ID:       id,
+		IP:       ip,
+		Sessions: session.Sessions{},
 	}
 	return
 }
