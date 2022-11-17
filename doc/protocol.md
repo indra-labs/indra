@@ -81,7 +81,7 @@ information relating to clients.
 
 Because clients will often be stuck behind NAT routers that do not allow inbound connection, clients establish outbound connections to both the first hop and the final return hop from connections paths they construct in onions.
 
-**Inbound Connection Proxy Service** – Because of the common problem of ISPs not providing stable, or inbound routeable connections, one of the services that Indra Labs will offer in addition to producing small embedded hardware with pre-loaded chain data and server installations, is inbound addresses that routers will be able to advertise as their reachable addresses, and the router will create an outbound connection to the inbound port.
+> **Inbound Connection Proxy Service** – Because of the common problem of ISPs not providing stable, or inbound routeable connections, one of the services that Indra Labs will offer in addition to producing small embedded hardware with pre-loaded chain data and server installations, is inbound addresses that routers will be able to advertise as their reachable addresses, and the router will create an outbound connection to the inbound port.
 
 This only applies to routers – clients will simply open persistent connections to any node they expect a return connection to come from, in addition to their outbound connections, first and last hop in the 5 hop circuit. Most high capacity home connections have inbound routing capability, and one of the router hardware offerings will enable the user to place the router on the WAN connection and have it forward other traffic to the main house router.
 
