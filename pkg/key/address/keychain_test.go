@@ -1,6 +1,7 @@
 package address
 
 import (
+	"math/rand"
 	"testing"
 
 	"github.com/Indra-Labs/indra/pkg/key/prv"
@@ -15,9 +16,7 @@ func TestReceiveCache_Add(t *testing.T) {
 		if check(e) {
 			t.Error(e)
 		}
-		if e = rc.Add(NewReceiver(prvKey)); check(e) {
-			t.Error(e)
-		}
+		rc.Add(NewReceiver(prvKey))
 	}
 	if rc.Len() != makeCount {
 		t.Error("did not find expected number of entries in cache")
@@ -32,13 +31,14 @@ func TestReceiveCache_Delete(t *testing.T) {
 		if check(e) {
 			t.Error(e)
 		}
-		if e = rc.Add(NewReceiver(prvKey)); check(e) {
-			t.Error(e)
-		}
+		rc.Add(NewReceiver(prvKey))
 	}
 	for _ = range rc.Index {
-		if e := rc.Delete(rc.ReceiveEntries[0].Bytes); check(e) {
-			t.Error(e)
+		if rc.Len() > 0 {
+			ri := rand.Intn(rc.Len())
+			if e := rc.Delete(rc.ReceiveEntries[ri].Bytes); check(e) {
+				t.Error(e)
+			}
 		}
 	}
 	if rc.Len() != 0 {
@@ -54,9 +54,7 @@ func TestReceiveCache_Find(t *testing.T) {
 		if check(e) {
 			t.Error(e)
 		}
-		if e = rc.Add(NewReceiver(prvKey)); check(e) {
-			t.Error(e)
-		}
+		rc.Add(NewReceiver(prvKey))
 	}
 	for i := range rc.Index {
 		if rc.Find(rc.Index[i]) == nil {
@@ -97,8 +95,11 @@ func TestSendCache_Delete(t *testing.T) {
 		}
 	}
 	for _ = range sc.Index {
-		if e := sc.Delete(sc.SendEntries[0].Sender.ToBytes()); check(e) {
-			t.Error(e)
+		if sc.Len() > 0 {
+			ri := rand.Intn(sc.Len())
+			if e := sc.Delete(sc.SendEntries[ri].Sender.ToBytes()); check(e) {
+				t.Error(e)
+			}
 		}
 	}
 	if sc.Len() != 0 {
