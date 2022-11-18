@@ -1,3 +1,7 @@
+// Package message provides a standard message binary serialised data format and
+// message segmentation scheme which includes address.Sender cloaked public
+// key and address.Receiver private keys for generating a shared cipher and applying
+// to messages/message segments.
 package message
 
 import (

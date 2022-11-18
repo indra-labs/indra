@@ -135,7 +135,10 @@ func main() {
 	// Update SemVer
 	SemVer = fmt.Sprintf("v%d.%d.%d", Major, Minor, Patch)
 	PathBase = tr.Filesystem.Root() + "/"
-	versionFile := `package indra
+	versionFile := `// Package indra is the root level package for Indranet, a low latency, 
+// Lightning Network monetised distributed VPN protocol designed for providing
+// strong anonymity to valuable internet traffic.
+package indra
 
 import (
 	"fmt"

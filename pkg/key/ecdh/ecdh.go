@@ -1,3 +1,6 @@
+// Package ecdh is provides a function to take a secp256k1 public and private
+// key pair to generate a shared secret that the corresponding opposite half
+// from the counterparty can use to generate the same cipher.
 package ecdh
 
 import (

@@ -1,3 +1,8 @@
+// Package session provides a mechanism for keeping track of existing sessions
+// with Indra relays.
+//
+// These sessions consist of the current state of the message encryption scheme
+// and the account of remaining data allocation on the session.
 package session
 
 import (

@@ -1,3 +1,14 @@
+// Package address manages encryption keys to be used with a specific
+// counterparty, in a list that is used by node.Node via session.Sessions in the
+// SendCache and ReceiveCache data structures.
+//
+// Receiver keys are the private keys that are advertised in messages to be used
+// in the next reply message.
+//
+// Sender keys are public keys taken from received messages Receiver keys, they
+// are received in a cloaked form to eliminate observer correlation and provide
+// a recogniser that scans the SendCache for public keys that generate the
+// matching public key in order to associate a message to a node.Node.
 package address
 
 import (

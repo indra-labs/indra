@@ -1,3 +1,6 @@
+// Package pub is a wrapper around secp256k1 library from the Decred project to
+// handle generate and serialise secp256k1 public keys, including deriving them
+// from private keys.
 package pub
 
 import (

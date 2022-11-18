@@ -1,3 +1,5 @@
+// Package prv is a wrapper around secp256k1 library from the Decred project to
+// handle generate and serialise secp256k1 private keys.
 package prv
 
 import (

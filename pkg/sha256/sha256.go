@@ -1,3 +1,6 @@
+// Package sha256 provides a simple interface for single and double SHA256
+// hashes, used with secp256k1 signatures, message digest checksums, cloaked
+// public key "addresses" and so on.
 package sha256
 
 import (
