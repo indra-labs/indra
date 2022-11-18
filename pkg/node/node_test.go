@@ -14,7 +14,7 @@ func TestNodes_Add(t *testing.T) {
 		if nn, e = New(nil); check(e) {
 			t.Error(e)
 		}
-		n.Add(nn)
+		n = n.Add(nn)
 	}
 	if n.Len() != nNodes {
 		t.Error("did not create expected number of nodes")
@@ -32,8 +32,8 @@ func TestNodes_DeleteByID(t *testing.T) {
 		}
 		n.Add(nn)
 	}
-	for i := range n.S {
-		if e = n.DeleteByID(n.S[nNodes-i-1].ID); check(e) {
+	for i := range n {
+		if n, e = n.DeleteByID(n[nNodes-i-1].ID); check(e) {
 			t.Error(e)
 		}
 	}
@@ -50,8 +50,8 @@ func TestNodes_DeleteByIP(t *testing.T) {
 		}
 		n.Add(nn)
 	}
-	for i := range n.S {
-		if e = n.DeleteByIP(n.S[nNodes-i-1].IP); check(e) {
+	for i := range n {
+		if n, e = n.DeleteByIP(n[nNodes-i-1].IP); check(e) {
 			t.Error(e)
 		}
 	}
@@ -68,10 +68,10 @@ func TestNodes_FindByID(t *testing.T) {
 		}
 		n.Add(nn)
 	}
-	for i := range n.S {
-		if n.FindByID(n.S[nNodes-i-1].ID) == nil {
+	for i := range n {
+		if n.FindByID(n[nNodes-i-1].ID) == nil {
 			t.Error(fmt.Errorf("id %v not found",
-				n.S[nNodes-i-1].ID))
+				n[nNodes-i-1].ID))
 		}
 	}
 }
@@ -87,10 +87,10 @@ func TestNodes_FindByIP(t *testing.T) {
 		}
 		n.Add(nn)
 	}
-	for i := range n.S {
-		if n.FindByIP(n.S[nNodes-i-1].IP) == nil {
+	for i := range n {
+		if n.FindByIP(n[nNodes-i-1].IP) == nil {
 			t.Error(fmt.Errorf("id %v not found",
-				n.S[nNodes-i-1].IP))
+				n[nNodes-i-1].IP))
 		}
 	}
 }

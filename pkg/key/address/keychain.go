@@ -127,7 +127,7 @@ func (rc *ReceiveCache) Len() int {
 	return len(rc.ReceiveEntries)
 }
 
-func (rc *ReceiveCache) Add(r *Receiver) (e error) {
+func (rc *ReceiveCache) Add(r *Receiver) {
 	re := &ReceiveEntry{Receiver: r, Time: time.Now()}
 	rc.ReceiveEntries = append(rc.ReceiveEntries, re)
 	rc.Index = append(rc.Index, pub.Derive(r.Key).ToBytes())
