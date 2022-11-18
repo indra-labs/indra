@@ -3,7 +3,6 @@ module github.com/Indra-Labs/indra
 go 1.19
 
 require (
-	github.com/btcsuite/btcd/btcutil v1.1.2
 	github.com/cybriq/proc v0.2.0
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0
 	github.com/minio/sha256-simd v1.0.0
