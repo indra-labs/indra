@@ -1,3 +1,4 @@
+// Package ciph manages encryption ciphers and encrypting blobs of data.
 package ciph
 
 import (

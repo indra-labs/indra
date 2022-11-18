@@ -1,3 +1,7 @@
+// Package sig provides functions to Sign hashes of messages, generating a
+// standard compact 65 byte Signature and recover the 33 byte pub.Key embedded
+// in it. This is used as a MAC for Indra packets to associate messages with
+// Indra peers' sessions.
 package sig
 
 import (

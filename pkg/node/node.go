@@ -1,3 +1,5 @@
+// Package node maintains information about peers on the network and associated
+// connection sessions.
 package node
 
 import (

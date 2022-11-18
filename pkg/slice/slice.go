@@ -1,5 +1,7 @@
 // Package slice is a collection of miscellaneous functions involving slices of
-// bytes.
+// bytes, including little-endian encoding for 16, 32 and 64-bit unsigned
+// integers used for serialisation length prefixes and system entropy based hash
+// chain padding.
 package slice
 
 import (
