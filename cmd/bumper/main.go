@@ -1,3 +1,11 @@
+// Package main is a tool for creating version information to be placed at the
+// repository root of a project.
+//
+// It provides basic build information, references the parent Git commit hash,
+// automatically increments the minor version, tags the commit with the version
+// so that it is easy for importing projects to use a Semantic Versioning
+// version code instead of depending on automatic generated codes from Go's
+// module system.
 package main
 
 import (
