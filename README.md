@@ -4,7 +4,7 @@
 
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://pkg.go.dev/github.com/Indra-Labs/indra)
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](http://unlicense.org/)
-
+[![](https://img.shields.io/badge/chat-telegram-blue)](https://t.me/indranet)
 
 Lightning powered distributed virtual private network with Bitcoin and Lightning
 integration.
