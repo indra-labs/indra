@@ -6,7 +6,7 @@ import (
 	"net"
 
 	"github.com/Indra-Labs/indra"
-	"github.com/Indra-Labs/indra/pkg/key/session"
+	"github.com/Indra-Labs/indra/pkg/session"
 	log2 "github.com/cybriq/proc/pkg/log"
 )
 
@@ -33,7 +33,7 @@ func NewID() (id ID, e error) {
 // Node is a representation of a messaging counterparty. The net.IP can be nil
 // for the case of a client node that is not in a direct open connection. For
 // this reason all nodes are assigned an ID and will normally be handled by this
-// address except when the net.IP is known via the packet sender address.
+// except when the net.IP is known via the packet sender address.
 type Node struct {
 	ID
 	net.IP
