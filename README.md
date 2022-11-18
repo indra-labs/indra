@@ -2,6 +2,10 @@
 
 # Indra
 
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://pkg.go.dev/github.com/Indra-Labs/indra)
+[![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](http://unlicense.org/)
+
+
 Lightning powered distributed virtual private network with Bitcoin and Lightning
 integration.
 
