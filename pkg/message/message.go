@@ -51,7 +51,7 @@ func (p *Packet) GetOverhead() int {
 
 // Overhead is the base overhead on a packet, use GetOverhead to add any extra
 // as found in a Packet.
-const Overhead = nonce.Size + address.Len + slice.Uint16Len +
+const Overhead = nonce.IVLen + address.Len + slice.Uint16Len +
 	slice.Uint32Len + 1 + pub.KeyLen + 4 + sig.Len
 
 // Packets is a slice of pointers to packets.
@@ -96,7 +96,7 @@ func Encode(ep EP) (pkt []byte, e error) {
 	if ep.Return == nil || len(ep.Return) != pub.KeyLen {
 		return
 	}
-	nonc := nonce.Get()
+	nonc := nonce.New()
 	var to address.Cloaked
 	to, e = ep.To.GetCloak()
 	parity := []byte{byte(ep.Parity)}
@@ -109,7 +109,7 @@ func Encode(ep EP) (pkt []byte, e error) {
 		// f.Nonce[:],    // 16 bytes \
 		// f.To[:],       // 8 bytes   |
 		make([]byte,
-			nonce.Size+address.Len),
+			nonce.IVLen+address.Len),
 		Seq,       // 2 bytes
 		Tot,       // 4 bytes
 		parity,    // 1 byte
@@ -149,7 +149,7 @@ func GetKeys(d []byte) (to address.Cloaked, from *pub.Key, e error) {
 		log.E.Ln(e)
 		return
 	}
-	to = d[nonce.Size : nonce.Size+address.Len]
+	to = d[nonce.IVLen : nonce.IVLen+address.Len]
 	// split off the signature and recover the public key
 	sigStart := pktLen - sig.Len
 	checkStart := sigStart - 4
@@ -187,7 +187,7 @@ func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Packet, e error) {
 	sigStart := pktLen - sig.Len - 4
 	data := d[:sigStart]
 	f = &Packet{}
-	nonc := data[:nonce.Size]
+	nonc := data[:nonce.IVLen]
 	var blk cipher.Block
 	if blk, e = ciph.GetBlock(to, from); check(e) {
 		return
@@ -196,7 +196,7 @@ func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Packet, e error) {
 	// security.
 	ciph.Encipher(blk, nonc, data)
 	// Trim off the nonce and recipient fingerprint, which is now encrypted.
-	data = data[nonce.Size+address.Len:]
+	data = data[nonce.IVLen+address.Len:]
 	var seq, tot slice.Size16
 	seq, data = slice.Cut(data, slice.Uint16Len)
 	f.Seq = uint16(slice.DecodeUint16(seq))

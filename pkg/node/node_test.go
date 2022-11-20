@@ -8,12 +8,9 @@ import (
 func TestNodes_Add(t *testing.T) {
 	n := NewNodes()
 	const nNodes = 10000
-	var e error
 	for i := 0; i < nNodes; i++ {
 		var nn *Node
-		if nn, e = New(nil); check(e) {
-			t.Error(e)
-		}
+		nn = New(nil)
 		n = n.Add(nn)
 	}
 	if n.Len() != nNodes {
@@ -27,9 +24,7 @@ func TestNodes_DeleteByID(t *testing.T) {
 	var e error
 	for i := 0; i < nNodes; i++ {
 		var nn *Node
-		if nn, e = New(nil); check(e) {
-			t.Error(e)
-		}
+		nn = New(nil)
 		n.Add(nn)
 	}
 	for i := range n {
@@ -45,9 +40,7 @@ func TestNodes_DeleteByIP(t *testing.T) {
 	var e error
 	for i := 0; i < nNodes; i++ {
 		var nn *Node
-		if nn, e = New(nil); check(e) {
-			t.Error(e)
-		}
+		nn = New(nil)
 		n.Add(nn)
 	}
 	for i := range n {
@@ -60,12 +53,9 @@ func TestNodes_DeleteByIP(t *testing.T) {
 func TestNodes_FindByID(t *testing.T) {
 	n := NewNodes()
 	const nNodes = 10000
-	var e error
 	for i := 0; i < nNodes; i++ {
 		var nn *Node
-		if nn, e = New(nil); check(e) {
-			t.Error(e)
-		}
+		nn = New(nil)
 		n.Add(nn)
 	}
 	for i := range n {
@@ -79,12 +69,9 @@ func TestNodes_FindByID(t *testing.T) {
 func TestNodes_FindByIP(t *testing.T) {
 	n := NewNodes()
 	const nNodes = 10000
-	var e error
 	for i := 0; i < nNodes; i++ {
 		var nn *Node
-		if nn, e = New(nil); check(e) {
-			t.Error(e)
-		}
+		nn = New(nil)
 		n.Add(nn)
 	}
 	for i := range n {

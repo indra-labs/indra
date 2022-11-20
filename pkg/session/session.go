@@ -6,10 +6,9 @@
 package session
 
 import (
-	"crypto/rand"
-
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/key/address"
+	"github.com/Indra-Labs/indra/pkg/nonce"
 	log2 "github.com/cybriq/proc/pkg/log"
 )
 
@@ -18,22 +17,11 @@ var (
 	check = log.E.Chk
 )
 
-const TokenLen = 8
-
-type Token [TokenLen]byte
-
-func NewToken() (t Token, e error) {
-	var c int
-	if c, e = rand.Read(t[:]); check(e) && c != TokenLen {
-	}
-	return
-}
-
 // A Session keeps track of a connection session. It specifically maintains the
 // account of available bandwidth allocation before it needs to be recharged
 // with new credit, and the current state of the encryption.
 type Session struct {
-	Token
+	nonce.ID
 	Remaining    uint64
 	SendEntry    *address.SendEntry
 	ReceiveEntry *address.ReceiveEntry
@@ -58,9 +46,9 @@ func (s Sessions) Delete(se *Session) Sessions {
 	return s
 }
 
-func (s Sessions) Find(t Token) (se *Session) {
+func (s Sessions) Find(t nonce.ID) (se *Session) {
 	for i := range s {
-		if s[i].Token == t {
+		if s[i].ID == t {
 			se = s[i]
 		}
 	}
@@ -71,14 +59,9 @@ func (s Sessions) Find(t Token) (se *Session) {
 //
 // Purchasing a session the seller returns a token, based on a requested data
 // allocation,
-func New(rem uint64, se *address.SendEntry,
-	re *address.ReceiveEntry) (s *Session, e error) {
-	var t Token
-	if t, e = NewToken(); check(e) {
-		return
-	}
+func New(rem uint64, se *address.SendEntry, re *address.ReceiveEntry) (s *Session) {
 	s = &Session{
-		Token:        t,
+		ID:           nonce.NewID(),
 		Remaining:    rem,
 		SendEntry:    se,
 		ReceiveEntry: re,
