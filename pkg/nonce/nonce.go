@@ -16,13 +16,13 @@ var (
 	check = log.E.Chk
 )
 
-const Size = aes.BlockSize
+const IVLen = aes.BlockSize
 
 type IV []byte
 
-// Get reads a nonce from a cryptographically secure random number source
-func Get() (n IV) {
-	n = make(IV, Size)
+// New reads a nonce from a cryptographically secure random number source
+func New() (n IV) {
+	n = make(IV, IVLen)
 	if _, e := rand.Read(n[:]); check(e) {
 	}
 	return
