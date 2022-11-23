@@ -4,6 +4,7 @@ package onion
 
 import (
 	"github.com/Indra-Labs/indra/pkg/node"
+	"github.com/Indra-Labs/indra/pkg/nonce"
 )
 
 // A Return is a return path for a hop. These are optional to a Circuit and used
@@ -26,9 +27,15 @@ type Returns []*Return
 // of longer and shorter Circuits and embedded in multi-path routes where
 // packets are split laterally and delivered in parallel.
 type Circuit struct {
+	ID    nonce.ID
 	Hops  node.Nodes
 	Exit  int
 	Trace Returns
 }
 
 type Circuits []*Circuit
+
+func New(id nonce.ID, hops node.Nodes, exit int, trace Returns) (c *Circuit) {
+	c = &Circuit{id, hops, exit, trace}
+	return
+}

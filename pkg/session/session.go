@@ -8,6 +8,7 @@ package session
 import (
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/key/address"
+	"github.com/Indra-Labs/indra/pkg/key/signer"
 	"github.com/Indra-Labs/indra/pkg/nonce"
 	log2 "github.com/cybriq/proc/pkg/log"
 )
@@ -25,6 +26,7 @@ type Session struct {
 	Remaining    uint64
 	SendEntry    *address.SendEntry
 	ReceiveEntry *address.ReceiveEntry
+	KeyRoller    *signer.KeySet
 }
 
 type Sessions []*Session
@@ -59,12 +61,14 @@ func (s Sessions) Find(t nonce.ID) (se *Session) {
 //
 // Purchasing a session the seller returns a token, based on a requested data
 // allocation,
-func New(rem uint64, se *address.SendEntry, re *address.ReceiveEntry) (s *Session) {
+func New(id nonce.ID, rem uint64, se *address.SendEntry, re *address.ReceiveEntry,
+	kr *signer.KeySet) (s *Session) {
 	s = &Session{
-		ID:           nonce.NewID(),
+		ID:           id,
 		Remaining:    rem,
 		SendEntry:    se,
 		ReceiveEntry: re,
+		KeyRoller:    kr,
 	}
 	return
 }
