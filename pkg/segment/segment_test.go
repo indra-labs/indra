@@ -2,7 +2,6 @@ package segment
 
 import (
 	"bytes"
-	"crypto/rand"
 	"errors"
 	mrand "math/rand"
 	"testing"
@@ -12,6 +11,7 @@ import (
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/packet"
 	"github.com/Indra-Labs/indra/pkg/sha256"
+	"github.com/Indra-Labs/indra/pkg/testutils"
 )
 
 func TestSplitJoin(t *testing.T) {
@@ -21,12 +21,12 @@ func TestSplitJoin(t *testing.T) {
 	var payload []byte
 	var pHash sha256.Hash
 
-	if payload, pHash, e = GenerateTestMessage(msgSize); check(e) {
+	if payload, pHash, e = testutils.GenerateTestMessage(msgSize); check(e) {
 		t.FailNow()
 	}
 	var sp, rp, Rp *prv.Key
 	var sP, rP, RP *pub.Key
-	if sp, rp, sP, rP, e = GenerateTestKeyPairs(); check(e) {
+	if sp, rp, sP, rP, e = testutils.GenerateTestKeyPairs(); check(e) {
 		t.FailNow()
 	}
 	_, _, _, _ = sP, Rp, RP, rp
@@ -80,7 +80,7 @@ func TestSplitJoinFEC(t *testing.T) {
 	var e error
 	var sp, rp, Rp *prv.Key
 	var sP, rP, RP *pub.Key
-	if sp, rp, sP, rP, e = GenerateTestKeyPairs(); check(e) {
+	if sp, rp, sP, rP, e = testutils.GenerateTestKeyPairs(); check(e) {
 		t.FailNow()
 	}
 	_, _, _, _ = sP, Rp, RP, rp
@@ -92,7 +92,7 @@ func TestSplitJoinFEC(t *testing.T) {
 		var payload []byte
 		var pHash sha256.Hash
 
-		if payload, pHash, e = GenerateTestMessage(msgSize); check(e) {
+		if payload, pHash, e = testutils.GenerateTestMessage(msgSize); check(e) {
 			t.FailNow()
 		}
 		var punctures []int
@@ -179,13 +179,13 @@ func BenchmarkSplit(b *testing.B) {
 	var e error
 	var payload []byte
 	var hash sha256.Hash
-	if payload, hash, e = GenerateTestMessage(msgSize); check(e) {
+	if payload, hash, e = testutils.GenerateTestMessage(msgSize); check(e) {
 		b.Error(e)
 	}
 	_ = hash
 	var sp, rp, Rp *prv.Key
 	var sP, rP *pub.Key
-	if sp, rp, sP, rP, e = GenerateTestKeyPairs(); check(e) {
+	if sp, rp, sP, rP, e = testutils.GenerateTestKeyPairs(); check(e) {
 		b.FailNow()
 	}
 	_, _, _ = sP, Rp, rp
@@ -225,27 +225,4 @@ func TestRemovePacket(t *testing.T) {
 	for i := range packets {
 		seqs2 = append(seqs2, packets[i].Seq)
 	}
-}
-
-func GenerateTestMessage(msgSize int) (msg []byte, hash sha256.Hash, e error) {
-	msg = make([]byte, msgSize)
-	var n int
-	if n, e = rand.Read(msg); check(e) && n != msgSize {
-		return
-	}
-	copy(msg, "payload")
-	hash = sha256.Single(msg)
-	return
-}
-
-func GenerateTestKeyPairs() (sp, rp *prv.Key, sP, rP *pub.Key, e error) {
-	if sp, e = prv.GenerateKey(); check(e) {
-		return
-	}
-	sP = pub.Derive(sp)
-	if rp, e = prv.GenerateKey(); check(e) {
-		return
-	}
-	rP = pub.Derive(rp)
-	return
 }
