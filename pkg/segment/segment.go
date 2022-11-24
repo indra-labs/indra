@@ -1,13 +1,21 @@
-package message
+package segment
 
 import (
 	"errors"
 	"fmt"
 	"sort"
 
+	"github.com/Indra-Labs/indra"
+	"github.com/Indra-Labs/indra/pkg/packet"
 	"github.com/Indra-Labs/indra/pkg/sha256"
 	"github.com/Indra-Labs/indra/pkg/slice"
+	log2 "github.com/cybriq/proc/pkg/log"
 	"github.com/templexxx/reedsolomon"
+)
+
+var (
+	log   = log2.GetLogger(indra.PathBase)
+	check = log.E.Chk
 )
 
 const ErrEmptyBytes = "cannot encode empty bytes"
@@ -20,7 +28,7 @@ const ErrEmptyBytes = "cannot encode empty bytes"
 //
 // The segmentSize is inclusive of packet overhead plus the Seen key
 // fingerprints at the end of the Packet.
-func Split(ep EP, segSize int) (packets [][]byte, e error) {
+func Split(ep packet.EP, segSize int) (packets [][]byte, e error) {
 	if ep.Data == nil || len(ep.Data) == 0 {
 		e = fmt.Errorf(ErrEmptyBytes)
 		return
@@ -35,7 +43,7 @@ func Split(ep EP, segSize int) (packets [][]byte, e error) {
 	for i := range p {
 		ep.Data, ep.Seq = p[i], i
 		var s []byte
-		if s, e = Encode(ep); check(e) {
+		if s, e = packet.Encode(ep); check(e) {
 			return
 		}
 		packets = append(packets, s)
@@ -51,7 +59,7 @@ const ErrNotEnough = "too many lost to recover in section %d, have %d, need " +
 	"%d minimum"
 
 // Join a collection of Packets together.
-func Join(packets Packets) (msg []byte, e error) {
+func Join(packets packet.Packets) (msg []byte, e error) {
 	if len(packets) == 0 {
 		e = errors.New("empty packets")
 		return
@@ -130,7 +138,7 @@ func Join(packets Packets) (msg []byte, e error) {
 		}
 		return
 	}
-	pkts := make(Packets, segCount)
+	pkts := make(packet.Packets, segCount)
 	// Collate to correctly ordered, so gaps are easy to find
 	for i := range packets {
 		pkts[packets[i].Seq] = packets[i]
@@ -204,6 +212,6 @@ func join(msg []byte, segments [][]byte, sLen, last int) (b []byte) {
 	return
 }
 
-func RemovePacket(slice Packets, s int) Packets {
+func RemovePacket(slice packet.Packets, s int) packet.Packets {
 	return append(slice[:s], slice[s+1:]...)
 }

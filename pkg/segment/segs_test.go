@@ -1,8 +1,10 @@
-package message
+package segment
 
 import (
 	"fmt"
 	"testing"
+
+	"github.com/Indra-Labs/indra/pkg/packet"
 )
 
 var Expected = []string{
@@ -40,7 +42,7 @@ var Expected = []string{
 func TestNewSegments(t *testing.T) {
 	msgSize := 2<<17 + 111
 	segSize := 256
-	s := NewSegments(msgSize, segSize, Overhead, 64)
+	s := NewSegments(msgSize, segSize, packet.Overhead, 64)
 	o := fmt.Sprint(s)
 	if o != Expected[0] {
 		t.Errorf(
@@ -49,14 +51,14 @@ func TestNewSegments(t *testing.T) {
 	}
 	msgSize = 2 << 18
 	segSize = 4096
-	s = NewSegments(msgSize, segSize, Overhead, 0)
+	s = NewSegments(msgSize, segSize, packet.Overhead, 0)
 	o = fmt.Sprint(s)
 	if o != Expected[1] {
 		t.Errorf(
 			"Failed to correctly generate.\ngot:\n%s\nexpected:\n%s",
 			o, Expected[0])
 	}
-	s = NewSegments(msgSize, segSize, Overhead, 128)
+	s = NewSegments(msgSize, segSize, packet.Overhead, 128)
 	o = fmt.Sprint(s)
 	if o != Expected[2] {
 		t.Errorf(
@@ -65,7 +67,7 @@ func TestNewSegments(t *testing.T) {
 	}
 	msgSize = 2 << 17
 	segSize = 4096
-	s = NewSegments(msgSize, segSize, Overhead, 0)
+	s = NewSegments(msgSize, segSize, packet.Overhead, 0)
 	o = fmt.Sprint(s)
 	if o != Expected[3] {
 		t.Errorf(

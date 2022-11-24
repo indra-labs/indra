@@ -1,4 +1,4 @@
-package message
+package segment
 
 import (
 	"fmt"
