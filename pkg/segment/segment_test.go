@@ -10,6 +10,7 @@ import (
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/packet"
+	"github.com/Indra-Labs/indra/pkg/segcalc"
 	"github.com/Indra-Labs/indra/pkg/sha256"
 	"github.com/Indra-Labs/indra/pkg/testutils"
 )
@@ -121,7 +122,7 @@ func TestSplitJoinFEC(t *testing.T) {
 				t.FailNow()
 			}
 			overhead := ep.GetOverhead()
-			segMap := NewSegments(len(ep.Data), segSize, overhead, ep.Parity)
+			segMap := segcalc.NewSegments(len(ep.Data), segSize, overhead, ep.Parity)
 			for segs := range segMap {
 				start, end := segMap[segs].DStart, segMap[segs].PEnd
 				cnt := end - start
