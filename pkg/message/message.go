@@ -52,7 +52,7 @@ func (p *Packet) GetOverhead() int {
 // Overhead is the base overhead on a packet, use GetOverhead to add any extra
 // as found in a Packet.
 const Overhead = nonce.IVLen + address.Len + slice.Uint16Len +
-	slice.Uint32Len + 1 + pub.KeyLen + 4 + sig.Len
+	slice.Uint32Len + 1 + 4 + sig.Len
 
 // Packets is a slice of pointers to packets.
 type Packets []*Packet
@@ -75,7 +75,6 @@ type EP struct {
 	Parity int
 	Seq    int
 	Length int
-	Return pub.Bytes
 	Data   []byte
 }
 
@@ -93,9 +92,6 @@ func Encode(ep EP) (pkt []byte, e error) {
 	if blk, e = ciph.GetBlock(ep.From, ep.To.Key); check(e) {
 		return
 	}
-	if ep.Return == nil || len(ep.Return) != pub.KeyLen {
-		return
-	}
 	nonc := nonce.New()
 	var to address.Cloaked
 	to, e = ep.To.GetCloak()
@@ -110,10 +106,9 @@ func Encode(ep EP) (pkt []byte, e error) {
 		// f.To[:],       // 8 bytes   |
 		make([]byte,
 			nonce.IVLen+address.Len),
-		Seq,       // 2 bytes
-		Tot,       // 4 bytes
-		parity,    // 1 byte
-		ep.Return, // 33 bytes
+		Seq,    // 2 bytes
+		Tot,    // 4 bytes
+		parity, // 1 byte
 		ep.Data,
 	)
 	// Encrypt the encrypted part of the data.
@@ -203,7 +198,6 @@ func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Packet, e error) {
 	tot, data = slice.Cut(data, slice.Uint32Len)
 	f.Length = uint32(slice.DecodeUint32(tot))
 	f.Parity, data = data[0], data[1:]
-	f.Return, data = data[:pub.KeyLen], data[pub.KeyLen:]
 	f.Data = data
 	return
 }
