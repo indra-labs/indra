@@ -15,8 +15,9 @@ This will be a top down view of the processes and the data that they manipulate 
 	- Purchases are always done via onion proxies:
 		- send message with onion for payment request wrapped in onions, and a total fee which includes the fees for each hop, plus a noise factor
 		- node accepts payment, deducts its fee, forwards request to next in the onion, pays the fee
-		- after 3 hops the seller is reached, who takes their payment
 		- each hop has a return routing session open waiting for the return path, passing composite cipher encrypted token data back to buyer
+		- node returns proof of payment back through open return channels. Composite cipher plus first hop back IP address is required.
+		- after 3 hops the seller is reached, who takes their payment
 	- Onion structure for payment routing
 		- Outer layer encrypted to first hop, contains return session cipher which will be used by next hop on the return trip
 		- Fee specification, matching what relay advertises for its purchase fees
