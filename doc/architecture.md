@@ -2,14 +2,12 @@
 
 This will be a top down view of the processes and the data that they manipulate in order to perform the tasks required to implement the protocol.
 
-## Birds Eye View of Logic Flow
-
-Relays
+## Relays
 
 - find the network using DNS seeding
 - share addresses of routers in the p2p network with each other
 
-Clients
+##  Clients
 
 - find the network using DNS seeding
 - also share addresses of routers with routers, but send them in order of reliability, creating a collaborative ranking consensus of most popular to least popular
@@ -35,3 +33,4 @@ Clients
 - Messages are broken into standard network packet size of 1472 bytes with the payloads being split in some cases. The address, or 'to' cipher of the packet header identifies the session via a cloaking mechanism that uses secure random bytes hashed with the public key for receiving messages on this session, eliminating possible correlation.
 - The return address key is provided within the encrypted payload for point to point messages with call/return messaging patterns such as ping/pong and question/answer queries.
 - Every split 1472 byte long packet is encrypted with a shared secret generated from the cloaked 'to' key and uses two private keys, which the second is summed repeatedly for each subsequent packet before being used to sign it and provide the public part for the receiver to acquire the cipher. This further ensures that there is no common pattern to the data as no data relating to the difference between the ciphers is generated while allowing more efficient derivation of secret keys to be used to generate the signatures that hold the public key the receiver needs to decrypt, in combination with the private key corresponding to the cloaked public key.
+- To improve accessibility of the system and avoid relay runners needing to run nodes on remote VPS, Indra Labs will offer a low cost point of presence service, probably around $5/month for a typical home connection speed (up to 100mbit) which allows relay runners to have their system physically accessible. In addition, by using Neutrino as the Bitcoin node in combination with this there will be the possibility of a lot more users running routers from their home connections, further increasing the size and anonymity of the network.
