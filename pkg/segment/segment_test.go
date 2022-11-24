@@ -1,4 +1,4 @@
-package message
+package segment
 
 import (
 	"bytes"
@@ -10,6 +10,7 @@ import (
 	"github.com/Indra-Labs/indra/pkg/key/address"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
+	"github.com/Indra-Labs/indra/pkg/packet"
 	"github.com/Indra-Labs/indra/pkg/sha256"
 )
 
@@ -30,7 +31,7 @@ func TestSplitJoin(t *testing.T) {
 	}
 	_, _, _, _ = sP, Rp, RP, rp
 	addr := address.FromPubKey(rP)
-	params := EP{
+	params := packet.EP{
 		To:     addr,
 		From:   sp,
 		Length: len(payload),
@@ -40,16 +41,16 @@ func TestSplitJoin(t *testing.T) {
 	if splitted, e = Split(params, segSize); check(e) {
 		t.Error(e)
 	}
-	var pkts Packets
+	var pkts packet.Packets
 	var keys []*pub.Key
 	for i := range splitted {
-		var pkt *Packet
+		var pkt *packet.Packet
 		var from *pub.Key
-		if _, from, e = GetKeys(splitted[i]); check(e) {
+		if _, from, e = packet.GetKeys(splitted[i]); check(e) {
 			log.I.Ln(i)
 			continue
 		}
-		if pkt, e = Decode(splitted[i], from, rp); check(e) {
+		if pkt, e = packet.Decode(splitted[i], from, rp); check(e) {
 			t.Error(e)
 		}
 		pkts = append(pkts, pkt)
@@ -109,7 +110,7 @@ func TestSplitJoinFEC(t *testing.T) {
 		addr := address.FromPubKey(rP)
 		for p := range punctures {
 			var splitted [][]byte
-			ep := EP{
+			ep := packet.EP{
 				To:     addr,
 				From:   sp,
 				Parity: parity[i],
@@ -141,17 +142,17 @@ func TestSplitJoinFEC(t *testing.T) {
 				}
 
 			}
-			var pkts Packets
+			var pkts packet.Packets
 			var keys []*pub.Key
 			for s := range splitted {
-				var pkt *Packet
+				var pkt *packet.Packet
 				var from *pub.Key
-				if _, from, e = GetKeys(splitted[s]); e != nil {
+				if _, from, e = packet.GetKeys(splitted[s]); e != nil {
 					// we are puncturing, they some will
 					// fail to decode
 					continue
 				}
-				if pkt, e = Decode(splitted[s],
+				if pkt, e = packet.Decode(splitted[s],
 					from, rp); check(e) {
 					continue
 				}
@@ -190,7 +191,7 @@ func BenchmarkSplit(b *testing.B) {
 	_, _, _ = sP, Rp, rp
 	addr := address.FromPubKey(rP)
 	for n := 0; n < b.N; n++ {
-		params := EP{
+		params := packet.EP{
 			To:     addr,
 			From:   sp,
 			Parity: 64,
@@ -206,9 +207,9 @@ func BenchmarkSplit(b *testing.B) {
 }
 
 func TestRemovePacket(t *testing.T) {
-	packets := make(Packets, 10)
+	packets := make(packet.Packets, 10)
 	for i := range packets {
-		packets[i] = &Packet{Seq: uint16(i)}
+		packets[i] = &packet.Packet{Seq: uint16(i)}
 	}
 	var seqs []uint16
 	for i := range packets {
