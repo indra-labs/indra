@@ -15,7 +15,7 @@ This will be a top down view of the processes and the data that they manipulate 
 	- Purchases are always done via onion proxies:
 		- send message with onion for payment request wrapped in onions, and a total fee which includes the fees for each hop, plus a noise factor
 		- node accepts payment, deducts its fee, forwards request to next in the onion, pays the fee
-		- each hop has a return routing session open waiting for the return path, passing composite cipher encrypted token data back to buyer. Proof of purchase is previous step's invoice plus preimage, each hop returns its proof of purchase. Any node that fails to return successful payment is dropped to the bottom of priority list for future purchases and will not be used again probably.
+		- each layer of the payment onion includes a confirmation/return onion, each with a composite cipher and encrypted header for unwrapping by the intervening hops. As with the packet routing, out-and-back for path diagnostics would reveal node position in the chain if the return path is the reverse of the forward path.
 		- node returns proof of payment back through open return channels. Composite cipher plus first hop back IP address is required.
 		- after 3 hops the seller is reached, who takes their payment
 	- Onion structure for payment routing
