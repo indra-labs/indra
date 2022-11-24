@@ -1,4 +1,4 @@
-package segment
+package segcalc
 
 import (
 	"fmt"

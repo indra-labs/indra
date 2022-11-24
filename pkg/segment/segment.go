@@ -7,6 +7,7 @@ import (
 
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/packet"
+	"github.com/Indra-Labs/indra/pkg/segcalc"
 	"github.com/Indra-Labs/indra/pkg/sha256"
 	"github.com/Indra-Labs/indra/pkg/slice"
 	log2 "github.com/cybriq/proc/pkg/log"
@@ -37,7 +38,7 @@ func Split(ep packet.EP, segSize int) (packets [][]byte, e error) {
 	overhead := ep.GetOverhead()
 	ss := segSize - overhead
 	segments := slice.Segment(ep.Data, ss)
-	segMap := NewSegments(ep.Length, segSize, ep.GetOverhead(), ep.Parity)
+	segMap := segcalc.NewSegments(ep.Length, segSize, ep.GetOverhead(), ep.Parity)
 	var p [][]byte
 	p, e = segMap.AddParity(segments)
 	for i := range p {
@@ -71,7 +72,7 @@ func Join(packets packet.Packets) (msg []byte, e error) {
 	p := packets[0]
 	// Construct the segments map.
 	overhead := p.GetOverhead()
-	segMap := NewSegments(int(p.Length), len(p.Data)+overhead, overhead,
+	segMap := segcalc.NewSegments(int(p.Length), len(p.Data)+overhead, overhead,
 		int(p.Parity))
 	segCount := segMap[len(segMap)-1].PEnd
 	tot, red := p.Length, p.Parity
