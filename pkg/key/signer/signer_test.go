@@ -4,9 +4,9 @@ import (
 	"crypto/rand"
 	"testing"
 
+	"github.com/Indra-Labs/indra/pkg/blake3"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/key/sig"
-	"github.com/Indra-Labs/indra/pkg/sha256"
 )
 
 // this just really demonstrates how the keys generated are not linkable.
@@ -55,14 +55,14 @@ func BenchmarkKeySet_Next_Derive(b *testing.B) {
 	}
 }
 
-func GenerateTestMessage(msgSize int) (msg []byte, hash sha256.Hash, e error) {
+func GenerateTestMessage(msgSize int) (msg []byte, hash blake3.Hash, e error) {
 	msg = make([]byte, msgSize)
 	var n int
 	if n, e = rand.Read(msg); check(e) && n != msgSize {
 		return
 	}
 	copy(msg, "payload")
-	hash = sha256.Single(msg)
+	hash = blake3.Single(msg)
 	return
 }
 
@@ -76,7 +76,7 @@ func BenchmarkKeySet_Next_Sign(b *testing.B) {
 	msg, _, e = GenerateTestMessage(msgLen)
 	for n := 0; n < b.N; n++ {
 		k := ks.Next()
-		hash := sha256.Single(msg)
+		hash := blake3.Single(msg)
 		if _, e = sig.Sign(k, hash); check(e) {
 			b.Error("failed to sign")
 		}

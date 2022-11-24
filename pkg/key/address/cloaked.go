@@ -16,9 +16,9 @@ import (
 	"unsafe"
 
 	"github.com/Indra-Labs/indra"
+	"github.com/Indra-Labs/indra/pkg/blake3"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
-	"github.com/Indra-Labs/indra/pkg/sha256"
 	log2 "github.com/cybriq/proc/pkg/log"
 )
 
@@ -82,7 +82,7 @@ func (s Sender) GetCloak() (c Cloaked, e error) {
 func Cloak(blinder []byte, key pub.Bytes) (c Cloaked) {
 	b := make([]byte, BlindLen)
 	copy(b, blinder)
-	h := sha256.Single(append(b, key...))[:HashLen]
+	h := blake3.Single(append(b, key...))[:HashLen]
 	c = append(b, h[:HashLen]...)
 	return
 }

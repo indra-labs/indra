@@ -1,13 +1,13 @@
-// Package sha256 provides a simple interface for single and double SHA256
+// Package blake3 provides a simple interface for single and double SHA256
 // hashes, used with secp256k1 signatures, message digest checksums, cloaked
 // public key "addresses" and so on.
-package sha256
+package blake3
 
 import (
 	"fmt"
 	"unsafe"
 
-	"github.com/minio/sha256-simd"
+	"github.com/zeebo/blake3"
 )
 
 const (
@@ -27,7 +27,7 @@ func New() Hash { return make(Hash, Len) }
 func Double(b []byte) Hash { return Single(Single(b)) }
 
 // Single runs a standard SHA256 hash and does all the slicing for you.
-func Single(b []byte) Hash { return FromHash(sha256.Sum256(b)) }
+func Single(b []byte) Hash { return FromHash(blake3.Sum256(b)) }
 
 // Valid checks the hash value is the correct length.
 func (h Hash) Valid() (e error) {

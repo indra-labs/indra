@@ -3,14 +3,14 @@ package nonce
 import (
 	"crypto/rand"
 
-	"github.com/Indra-Labs/indra/pkg/sha256"
+	"github.com/Indra-Labs/indra/pkg/blake3"
 )
 
 const IDLen = 8
 
 type ID [IDLen]byte
 
-var seed [sha256.Len]byte
+var seed [blake3.Len]byte
 var counter uint16
 
 func reseed() {
@@ -27,7 +27,7 @@ func NewID() (t ID) {
 		reseed()
 	}
 	copy(t[:], seed[:IDLen])
-	s := sha256.Single(seed[:])
+	s := blake3.Single(seed[:])
 	copy(seed[:], s)
 	return
 }

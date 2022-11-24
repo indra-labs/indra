@@ -9,13 +9,14 @@ import (
 	"fmt"
 
 	"github.com/Indra-Labs/indra"
+	"github.com/Indra-Labs/indra/pkg/blake3"
 	"github.com/Indra-Labs/indra/pkg/ciph"
 	"github.com/Indra-Labs/indra/pkg/key/address"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/key/sig"
+	"github.com/Indra-Labs/indra/pkg/key/signer"
 	"github.com/Indra-Labs/indra/pkg/nonce"
-	"github.com/Indra-Labs/indra/pkg/sha256"
 	"github.com/Indra-Labs/indra/pkg/slice"
 	log2 "github.com/cybriq/proc/pkg/log"
 )
@@ -71,7 +72,7 @@ func (p Packets) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 // they will not be used to generate a cipher again.
 type EP struct {
 	To     *address.Sender
-	From   *prv.Key
+	From   *signer.KeySet
 	Parity int
 	Seq    int
 	Length int
@@ -89,7 +90,7 @@ func (ep EP) GetOverhead() int {
 // the signature to the end.
 func Encode(ep EP) (pkt []byte, e error) {
 	var blk cipher.Block
-	if blk, e = ciph.GetBlock(ep.From, ep.To.Key); check(e) {
+	if blk, e = ciph.GetBlock(ep.From.Next(), ep.To.Key); check(e) {
 		return
 	}
 	nonc := nonce.New()
@@ -117,8 +118,8 @@ func Encode(ep EP) (pkt []byte, e error) {
 	copy(pkt, append(nonc, to...))
 	// Sign the packet.
 	var s sig.Bytes
-	hash := sha256.Single(pkt)
-	if s, e = sig.Sign(ep.From, hash); check(e) {
+	hash := blake3.Single(pkt)
+	if s, e = sig.Sign(ep.From.Current(), hash); check(e) {
 		return
 	}
 	pkt = append(pkt, hash[:4]...)
@@ -152,7 +153,7 @@ func GetKeys(d []byte) (to address.Cloaked, from *pub.Key, e error) {
 	var chek []byte
 	s = d[sigStart:]
 	chek = d[checkStart:sigStart]
-	hash := sha256.Single(d[:checkStart])
+	hash := blake3.Single(d[:checkStart])
 	if string(chek) != string(hash[:4]) {
 		e = fmt.Errorf("check failed: got '%v', expected '%v'",
 			chek, hash[:4])

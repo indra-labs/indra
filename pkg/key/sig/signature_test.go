@@ -6,9 +6,9 @@ import (
 	mrand "math/rand"
 	"testing"
 
+	"github.com/Indra-Labs/indra/pkg/blake3"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
-	"github.com/Indra-Labs/indra/pkg/sha256"
 )
 
 func TestSignRecover(t *testing.T) {
@@ -26,7 +26,7 @@ func TestSignRecover(t *testing.T) {
 	}
 	pub1 = pub.Derive(prv1)
 	var s Bytes
-	hash := sha256.Single(payload)
+	hash := blake3.Single(payload)
 	if s, e = Sign(prv1, hash); check(e) {
 		t.Error(e)
 	}
@@ -53,12 +53,12 @@ func TestSignRecoverFail(t *testing.T) {
 	}
 	pub1 = pub.Derive(prv1)
 	var s Bytes
-	hash := sha256.Single(payload)
+	hash := blake3.Single(payload)
 	if s, e = Sign(prv1, hash); check(e) {
 		t.Error(e)
 	}
 	copy(payload, make([]byte, 10))
-	hash2 := sha256.Single(payload)
+	hash2 := blake3.Single(payload)
 	if rec1, e = s.Recover(hash2); check(e) {
 		t.Error(e)
 	}

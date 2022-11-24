@@ -32,6 +32,12 @@ func New() (first *prv.Key, ks *KeySet, e error) {
 	return
 }
 
+// Current returns the current existing Base key.
+func (ks *KeySet) Current() (n *prv.Key) {
+	n = ks.Base
+	return
+}
+
 // Next adds Increment to Base, assigns the new value to the Base and returns
 // the new value.
 func (ks *KeySet) Next() (n *prv.Key) {

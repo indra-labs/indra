@@ -8,9 +8,9 @@ import (
 	"fmt"
 
 	"github.com/Indra-Labs/indra"
+	"github.com/Indra-Labs/indra/pkg/blake3"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
-	"github.com/Indra-Labs/indra/pkg/sha256"
 	log2 "github.com/cybriq/proc/pkg/log"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
@@ -49,7 +49,7 @@ func (sig Bytes) IsValid() (e error) {
 func FromBytes(sig Bytes) (e error) { return sig.IsValid() }
 
 // Sign produces an ECDSA BIP62 compact signature.
-func Sign(prv *prv.Key, hash sha256.Hash) (sig Bytes, e error) {
+func Sign(prv *prv.Key, hash blake3.Hash) (sig Bytes, e error) {
 	if check(hash.Valid()) {
 		return
 	}
@@ -59,7 +59,7 @@ func Sign(prv *prv.Key, hash sha256.Hash) (sig Bytes, e error) {
 
 // Recover the public key corresponding to the signing private key used to
 // create a signature on the hash of a message.
-func (sig Bytes) Recover(hash sha256.Hash) (p *pub.Key, e error) {
+func (sig Bytes) Recover(hash blake3.Hash) (p *pub.Key, e error) {
 	var pk *secp256k1.PublicKey
 	// We are only using compressed keys, so we can ignore the compressed
 	// bool.

@@ -6,12 +6,13 @@ import (
 	mrand "math/rand"
 	"testing"
 
+	"github.com/Indra-Labs/indra/pkg/blake3"
 	"github.com/Indra-Labs/indra/pkg/key/address"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
+	"github.com/Indra-Labs/indra/pkg/key/signer"
 	"github.com/Indra-Labs/indra/pkg/packet"
 	"github.com/Indra-Labs/indra/pkg/segcalc"
-	"github.com/Indra-Labs/indra/pkg/sha256"
 	"github.com/Indra-Labs/indra/pkg/testutils"
 )
 
@@ -20,21 +21,23 @@ func TestSplitJoin(t *testing.T) {
 	segSize := 1472
 	var e error
 	var payload []byte
-	var pHash sha256.Hash
+	var pHash blake3.Hash
 
 	if payload, pHash, e = testutils.GenerateTestMessage(msgSize); check(e) {
 		t.FailNow()
 	}
-	var sp, rp, Rp *prv.Key
-	var sP, rP, RP *pub.Key
-	if sp, rp, sP, rP, e = testutils.GenerateTestKeyPairs(); check(e) {
+	var rp, Rp *prv.Key
+	var rP, RP *pub.Key
+	if rp, rP, e = testutils.GenerateTestKeyPairs(); check(e) {
 		t.FailNow()
 	}
-	_, _, _, _ = sP, Rp, RP, rp
+	_, _, _ = Rp, RP, rp
 	addr := address.FromPubKey(rP)
+	var ks *signer.KeySet
+	_, ks, e = signer.New()
 	params := packet.EP{
 		To:     addr,
-		From:   sp,
+		From:   ks,
 		Length: len(payload),
 		Data:   payload,
 	}
@@ -43,7 +46,6 @@ func TestSplitJoin(t *testing.T) {
 		t.Error(e)
 	}
 	var pkts packet.Packets
-	var keys []*pub.Key
 	for i := range splitted {
 		var pkt *packet.Packet
 		var from *pub.Key
@@ -55,21 +57,12 @@ func TestSplitJoin(t *testing.T) {
 			t.Error(e)
 		}
 		pkts = append(pkts, pkt)
-		keys = append(keys, from)
-	}
-	prev := keys[0]
-	// check all keys are the same
-	for _, k := range keys[1:] {
-		if !prev.Equals(k) {
-			t.Error(e)
-		}
-		prev = k
 	}
 	var msg []byte
 	if msg, e = Join(pkts); check(e) {
 		t.Error(e)
 	}
-	rHash := sha256.Single(msg)
+	rHash := blake3.Single(msg)
 	if bytes.Compare(pHash, rHash) != 0 {
 		t.Error(errors.New("message did not decode correctly"))
 	}
@@ -79,19 +72,18 @@ func TestSplitJoinFEC(t *testing.T) {
 	msgSize := 2 << 18
 	segSize := 1472
 	var e error
-	var sp, rp, Rp *prv.Key
-	var sP, rP, RP *pub.Key
-	if sp, rp, sP, rP, e = testutils.GenerateTestKeyPairs(); check(e) {
+	var rp *prv.Key
+	var rP *pub.Key
+	if rp, rP, e = testutils.GenerateTestKeyPairs(); check(e) {
 		t.FailNow()
 	}
-	_, _, _, _ = sP, Rp, RP, rp
 	var parity []int
 	for i := 1; i < 255; i *= 2 {
 		parity = append(parity, i)
 	}
 	for i := range parity {
 		var payload []byte
-		var pHash sha256.Hash
+		var pHash blake3.Hash
 
 		if payload, pHash, e = testutils.GenerateTestMessage(msgSize); check(e) {
 			t.FailNow()
@@ -109,11 +101,13 @@ func TestSplitJoinFEC(t *testing.T) {
 				punctures[len(punctures)-p-1], punctures[p]
 		}
 		addr := address.FromPubKey(rP)
+		var ks *signer.KeySet
+		_, ks, e = signer.New()
 		for p := range punctures {
 			var splitted [][]byte
 			ep := packet.EP{
 				To:     addr,
-				From:   sp,
+				From:   ks,
 				Parity: parity[i],
 				Length: len(payload),
 				Data:   payload,
@@ -165,7 +159,7 @@ func TestSplitJoinFEC(t *testing.T) {
 			if msg, e = Join(pkts); check(e) {
 				t.FailNow()
 			}
-			rHash := sha256.Single(msg)
+			rHash := blake3.Single(msg)
 			if bytes.Compare(pHash, rHash) != 0 {
 				t.Error(errors.New("message did not decode" +
 					" correctly"))
@@ -174,37 +168,66 @@ func TestSplitJoinFEC(t *testing.T) {
 	}
 }
 
-func BenchmarkSplit(b *testing.B) {
-	msgSize := 2 << 16
+func BenchmarkSplit2kb(b *testing.B) {
+	msgSize := 1 << 11
+	bench(msgSize, b)
+}
+
+func BenchmarkSplit4kb(b *testing.B) {
+	msgSize := 1 << 12
+	bench(msgSize, b)
+}
+
+func BenchmarkSplit8kb(b *testing.B) {
+	msgSize := 1 << 13
+	bench(msgSize, b)
+}
+
+func BenchmarkSplit16kb(b *testing.B) {
+	msgSize := 1 << 14
+	bench(msgSize, b)
+}
+
+func BenchmarkSplit32kb(b *testing.B) {
+	msgSize := 1 << 15
+	bench(msgSize, b)
+}
+
+func BenchmarkSplit64kb(b *testing.B) {
+	msgSize := 1 << 16
+	bench(msgSize, b)
+}
+
+func bench(msgSize int, b *testing.B) {
 	segSize := 1472
 	var e error
 	var payload []byte
-	var hash sha256.Hash
+	var hash blake3.Hash
 	if payload, hash, e = testutils.GenerateTestMessage(msgSize); check(e) {
 		b.Error(e)
 	}
 	_ = hash
-	var sp, rp, Rp *prv.Key
-	var sP, rP *pub.Key
-	if sp, rp, sP, rP, e = testutils.GenerateTestKeyPairs(); check(e) {
+	var rP *pub.Key
+	if _, rP, e = testutils.GenerateTestKeyPairs(); check(e) {
 		b.FailNow()
 	}
-	_, _, _ = sP, Rp, rp
-	addr := address.FromPubKey(rP)
+	var ks *signer.KeySet
+	_, ks, e = signer.New()
+	var splitted [][]byte
 	for n := 0; n < b.N; n++ {
+		addr := address.FromPubKey(rP)
 		params := packet.EP{
 			To:     addr,
-			From:   sp,
+			From:   ks,
 			Parity: 64,
 			Data:   payload,
 		}
 
-		var splitted [][]byte
 		if splitted, e = Split(params, segSize); check(e) {
 			b.Error(e)
 		}
-		_ = splitted
 	}
+	_ = splitted
 }
 
 func TestRemovePacket(t *testing.T) {

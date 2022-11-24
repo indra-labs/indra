@@ -6,9 +6,9 @@ import (
 	"sort"
 
 	"github.com/Indra-Labs/indra"
+	"github.com/Indra-Labs/indra/pkg/blake3"
 	"github.com/Indra-Labs/indra/pkg/packet"
 	"github.com/Indra-Labs/indra/pkg/segcalc"
-	"github.com/Indra-Labs/indra/pkg/sha256"
 	"github.com/Indra-Labs/indra/pkg/slice"
 	log2 "github.com/cybriq/proc/pkg/log"
 	"github.com/templexxx/reedsolomon"
@@ -95,8 +95,8 @@ func Join(packets packet.Packets) (msg []byte, e error) {
 			}
 			// Check the data is the same, then discard the second
 			// if they match.
-			if sha256.Single(ps.Data).
-				Equals(sha256.Single(packets[prevSeq].Data)) {
+			if blake3.Single(ps.Data).
+				Equals(blake3.Single(packets[prevSeq].Data)) {
 
 				discard = append(discard, int(ps.Seq))
 				// No need to go on, we will discard this one.

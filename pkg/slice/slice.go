@@ -9,7 +9,7 @@ import (
 	"encoding/binary"
 
 	"github.com/Indra-Labs/indra"
-	"github.com/Indra-Labs/indra/pkg/sha256"
+	"github.com/Indra-Labs/indra/pkg/blake3"
 	log2 "github.com/cybriq/proc/pkg/log"
 )
 
@@ -102,20 +102,20 @@ func NewUint24() Size24 { return make(Size24, Uint24Len) }
 func NewUint16() Size16 { return make(Size16, Uint16Len) }
 
 func NoisePad(l int) (noise []byte) {
-	seed := make([]byte, sha256.Len)
+	seed := make([]byte, blake3.Len)
 	noise = make([]byte, l)
 	var e error
 	var n int
-	if n, e = rand.Read(seed[:]); check(e) && n != sha256.Len {
+	if n, e = rand.Read(seed[:]); check(e) && n != blake3.Len {
 		return
 	}
 	var end, cursor int
 	for cursor < l {
-		end = cursor + sha256.Len
+		end = cursor + blake3.Len
 		if end > l {
 			end = l
 		}
-		seed = sha256.Single(seed)
+		seed = blake3.Single(seed)
 		copy(noise[cursor:end], seed)
 		cursor = end
 	}
