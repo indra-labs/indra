@@ -175,8 +175,8 @@ func TestSplitJoinFEC(t *testing.T) {
 }
 
 func BenchmarkSplit(b *testing.B) {
-	msgSize := 2 << 16
-	segSize := 1472
+	msgSize := 1 << 16
+	segSize := 1382
 	var e error
 	var payload []byte
 	var hash sha256.Hash
