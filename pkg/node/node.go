@@ -9,6 +9,7 @@ import (
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/nonce"
 	"github.com/Indra-Labs/indra/pkg/session"
+	"github.com/Indra-Labs/indra/pkg/transport"
 	log2 "github.com/cybriq/proc/pkg/log"
 )
 
@@ -25,6 +26,7 @@ type Node struct {
 	nonce.ID
 	net.IP
 	session.Sessions
+	transport.Dispatcher
 }
 
 // New creates a new Node. net.IP is optional if the counterparty is not in
