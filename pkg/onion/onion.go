@@ -7,9 +7,11 @@ import (
 	"github.com/Indra-Labs/indra/pkg/nonce"
 )
 
-// A Return is a return path for a hop. These are optional to a Circuit and used
-// when a path times out in order to diagnose which hop is failing.
+// A Return is a return path for a hop. These are used for the periodic path
+// diagnostics as well as triggered to be added to an onion when a Circuit times
+// out. The node.Node will be one from the Hops field of the Circuit.
 type Return struct {
+	*node.Node
 	Hops [3]*node.Node
 }
 
