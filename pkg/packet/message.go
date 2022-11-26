@@ -160,7 +160,6 @@ func GetKeys(d []byte) (to address.Cloaked, from *pub.Key, e error) {
 	if string(chek) != string(checkHash[:4]) {
 		e = fmt.Errorf("check failed: got '%v', expected '%v'",
 			chek, checkHash[:4])
-		log.I.Ln(e)
 		return
 	}
 	hash := sha256.Single(d[SigEnd:])

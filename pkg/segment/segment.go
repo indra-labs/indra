@@ -26,9 +26,6 @@ const ErrEmptyBytes = "cannot encode empty bytes"
 // reply.
 //
 // The last packet that falls short of the segmentSize is padded random bytes.
-//
-// The segmentSize is inclusive of packet overhead plus the Seen key
-// fingerprints at the end of the Packet.
 func Split(ep packet.EP, segSize int) (packets [][]byte, e error) {
 	if ep.Data == nil || len(ep.Data) == 0 {
 		e = fmt.Errorf(ErrEmptyBytes)
@@ -75,7 +72,7 @@ func Join(packets packet.Packets) (msg []byte, e error) {
 	segMap := segcalc.NewSegments(int(p.Length), len(p.Data)+overhead, overhead,
 		int(p.Parity))
 	segCount := segMap[len(segMap)-1].PEnd
-	tot, red := p.Length, p.Parity
+	length, red := p.Length, p.Parity
 	prevSeq := p.Seq
 	var discard []int
 	// Check that the data that should be common to all packets is common,
@@ -106,13 +103,14 @@ func Join(packets packet.Packets) (msg []byte, e error) {
 		prevSeq = ps.Seq
 		// All messages must have the same parity settings.
 		if ps.Parity != red {
-			e = fmt.Errorf(ErrMismatch, i, lp, "parity", ps.Parity, red)
+			e = fmt.Errorf(ErrMismatch, i, lp, "parity",
+				ps.Parity, red)
 			return
 		}
 		// All segments must specify the same total message length.
-		if ps.Length != tot {
-			e = fmt.Errorf(ErrMismatch, i, lp, "length", ps.Length,
-				tot)
+		if ps.Length != length {
+			e = fmt.Errorf(ErrMismatch, i, lp, "length",
+				ps.Length, length)
 			return
 		}
 	}
@@ -128,7 +126,7 @@ func Join(packets packet.Packets) (msg []byte, e error) {
 		e = fmt.Errorf(ErrLostNoRedundant, segCount-lp, segCount)
 		return
 	}
-	msg = make([]byte, 0, tot)
+	msg = make([]byte, 0, length)
 	// If all segments were received we can just concatenate the data shards
 	if segCount == lp {
 		for _, sm := range segMap {
