@@ -90,10 +90,9 @@ func TestSplitJoinFEC(t *testing.T) {
 				var pkt *packet.Packet
 				var from *pub.Key
 				if _, from, e = packet.GetKeys(
-					splitted[s]); check(e) {
+					splitted[s]); e != nil {
 					// we are puncturing, they some will
 					// fail to decode
-					log.I.Ln(i)
 					continue
 				}
 				if pkt, e = packet.Decode(splitted[s],
