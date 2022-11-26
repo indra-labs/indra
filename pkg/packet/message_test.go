@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/rand"
 	"errors"
-	mrand "math/rand"
 	"testing"
 
 	"github.com/Indra-Labs/indra/pkg/key/address"
@@ -15,7 +14,7 @@ import (
 )
 
 func TestEncode_Decode(t *testing.T) {
-	msgSize := mrand.Intn(3072) + 1024
+	msgSize := 1382
 	payload := make([]byte, msgSize)
 	var e error
 	var n int
@@ -32,6 +31,7 @@ func TestEncode_Decode(t *testing.T) {
 	_ = sP
 	addr := address.FromPubKey(rP)
 	var pkt []byte
+	log.I.S(payload)
 	params := EP{
 		To:     addr,
 		From:   sp,
@@ -60,9 +60,9 @@ func TestEncode_Decode(t *testing.T) {
 	if f, e = Decode(pkt, from, rp); check(e) {
 		t.Error(e)
 	}
+	log.I.S(f.Data)
 	dHash := sha256.Single(f.Data)
 	if bytes.Compare(pHash, dHash) != 0 {
 		t.Error(errors.New("encode/decode unsuccessful"))
 	}
-
 }
