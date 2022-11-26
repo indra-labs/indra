@@ -28,10 +28,8 @@ func TestEncode_Decode(t *testing.T) {
 	if sp, rp, sP, rP, e = testutils.GenerateTestKeyPairs(); check(e) {
 		t.FailNow()
 	}
-	_ = sP
 	addr := address.FromPubKey(rP)
 	var pkt []byte
-	log.I.S(payload)
 	params := EP{
 		To:     addr,
 		From:   sp,
@@ -48,7 +46,6 @@ func TestEncode_Decode(t *testing.T) {
 	if to, from, e = GetKeys(pkt); check(e) {
 		t.Error(e)
 	}
-	_ = to
 	if !sP.ToBytes().Equals(from.ToBytes()) {
 		t.Error(e)
 	}
@@ -60,7 +57,6 @@ func TestEncode_Decode(t *testing.T) {
 	if f, e = Decode(pkt, from, rp); check(e) {
 		t.Error(e)
 	}
-	log.I.S(f.Data)
 	dHash := sha256.Single(f.Data)
 	if bytes.Compare(pHash, dHash) != 0 {
 		t.Error(errors.New("encode/decode unsuccessful"))
