@@ -1,13 +1,15 @@
 package transport
 
-type Message []byte
+import (
+	"github.com/Indra-Labs/indra/pkg/ifc"
+)
 
-type Dispatcher chan Message
+type Dispatcher chan ifc.Message
 
-func (d Dispatcher) Send(b []byte) {
+func (d Dispatcher) Send(b ifc.Message) {
 	d <- b
 }
 
-func (d Dispatcher) Receive() <-chan Message {
+func (d Dispatcher) Receive() <-chan ifc.Message {
 	return d
 }
