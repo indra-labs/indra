@@ -84,6 +84,13 @@ func (ep EP) GetOverhead() int {
 	return Overhead
 }
 
+const (
+	NonceEnd   = nonce.IVLen
+	AddressEnd = NonceEnd + address.Len
+	CheckEnd   = AddressEnd + 4
+	SigEnd     = CheckEnd + sig.Len
+)
+
 // Encode creates a Packet, encrypts the payload using the given private from
 // key and the public to key, serializes the form, signs the bytes and appends
 // the signature to the end.
@@ -104,8 +111,7 @@ func Encode(ep EP) (pkt []byte, e error) {
 	pkt = slice.Cat(
 		// f.Nonce[:],    // 16 bytes \
 		// f.To[:],       // 8 bytes   |
-		make([]byte,
-			nonce.IVLen+address.Len),
+		make([]byte, SigEnd),
 		Seq,    // 2 bytes
 		Tot,    // 4 bytes
 		parity, // 1 byte
@@ -113,16 +119,17 @@ func Encode(ep EP) (pkt []byte, e error) {
 	)
 	// Encrypt the encrypted part of the data.
 	ciph.Encipher(blk, nonc, pkt)
-	// put nonce and recipient print in place.
-	copy(pkt, append(nonc, to...))
 	// Sign the packet.
 	var s sig.Bytes
-	hash := sha256.Single(pkt)
+	hash := sha256.Single(pkt[SigEnd:])
 	if s, e = sig.Sign(ep.From, hash); check(e) {
 		return
 	}
-	pkt = append(pkt, hash[:4]...)
-	pkt = append(pkt, s...)
+	// Copy nonce, address, check and signature over top of the header.
+	copy(pkt[:NonceEnd], nonc)
+	copy(pkt[NonceEnd:AddressEnd], to)
+	copy(pkt[AddressEnd:CheckEnd], hash[:4])
+	copy(pkt[CheckEnd:SigEnd], s)
 	return
 }
 
@@ -146,13 +153,11 @@ func GetKeys(d []byte) (to address.Cloaked, from *pub.Key, e error) {
 	}
 	to = d[nonce.IVLen : nonce.IVLen+address.Len]
 	// split off the signature and recover the public key
-	sigStart := pktLen - sig.Len
-	checkStart := sigStart - 4
 	var s sig.Bytes
 	var chek []byte
-	s = d[sigStart:]
-	chek = d[checkStart:sigStart]
-	hash := sha256.Single(d[:checkStart])
+	s = d[CheckEnd:SigEnd]
+	chek = d[AddressEnd:CheckEnd]
+	hash := sha256.Single(d[SigEnd:])
 	if string(chek) != string(hash[:4]) {
 		e = fmt.Errorf("check failed: got '%v', expected '%v'",
 			chek, hash[:4])
@@ -179,19 +184,20 @@ func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Packet, e error) {
 	}
 	// Trim off the signature and hash, we already have the key and have
 	// validated the checksum.
-	sigStart := pktLen - sig.Len - 4
-	data := d[:sigStart]
+
 	f = &Packet{}
-	nonc := data[:nonce.IVLen]
+	// copy the nonce
+	nonc := make(nonce.IV, nonce.IVLen)
+	copy(nonc, d)
 	var blk cipher.Block
 	if blk, e = ciph.GetBlock(to, from); check(e) {
 		return
 	}
 	// This decrypts the rest of the packet, which is encrypted for
 	// security.
-	ciph.Encipher(blk, nonc, data)
+	ciph.Encipher(blk, nonc, d)
 	// Trim off the nonce and recipient fingerprint, which is now encrypted.
-	data = data[nonce.IVLen+address.Len:]
+	data := d[SigEnd:]
 	var seq, tot slice.Size16
 	seq, data = slice.Cut(data, slice.Uint16Len)
 	f.Seq = uint16(slice.DecodeUint16(seq))
