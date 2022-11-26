@@ -35,10 +35,6 @@ type Packet struct {
 	Length uint32
 	// Parity is the ratio of redundancy. In each 256 segment
 	Parity byte
-	// Return is the return address to use for a reply. Even if only one
-	// segment of a segmented message is received the key can be used as a
-	// recipient encryption key half.
-	Return pub.Bytes
 	// Data is the message.
 	Data []byte
 }
@@ -51,8 +47,8 @@ func (p *Packet) GetOverhead() int {
 
 // Overhead is the base overhead on a packet, use GetOverhead to add any extra
 // as found in a Packet.
-const Overhead = nonce.IVLen + address.Len + slice.Uint16Len +
-	slice.Uint32Len + 1 + 4 + sig.Len
+const Overhead = slice.Uint16Len +
+	slice.Uint32Len + 1 + SigEnd
 
 // Packets is a slice of pointers to packets.
 type Packets []*Packet
@@ -85,10 +81,10 @@ func (ep EP) GetOverhead() int {
 }
 
 const (
-	NonceEnd   = nonce.IVLen
+	CheckEnd   = 4
+	NonceEnd   = CheckEnd + nonce.IVLen
 	AddressEnd = NonceEnd + address.Len
-	CheckEnd   = AddressEnd + 4
-	SigEnd     = CheckEnd + sig.Len
+	SigEnd     = AddressEnd + sig.Len
 )
 
 // Encode creates a Packet, encrypts the payload using the given private from
@@ -104,21 +100,21 @@ func Encode(ep EP) (pkt []byte, e error) {
 	to, e = ep.To.GetCloak()
 	parity := []byte{byte(ep.Parity)}
 	Seq := slice.NewUint16()
-	Tot := slice.NewUint32()
 	slice.EncodeUint16(Seq, ep.Seq)
-	slice.EncodeUint32(Tot, ep.Length)
+	Length := slice.NewUint32()
+	slice.EncodeUint32(Length, ep.Length)
 	// Concatenate the message pieces together into a single byte slice.
 	pkt = slice.Cat(
 		// f.Nonce[:],    // 16 bytes \
 		// f.To[:],       // 8 bytes   |
 		make([]byte, SigEnd),
 		Seq,    // 2 bytes
-		Tot,    // 4 bytes
+		Length, // 4 bytes
 		parity, // 1 byte
 		ep.Data,
 	)
 	// Encrypt the encrypted part of the data.
-	ciph.Encipher(blk, nonc, pkt)
+	ciph.Encipher(blk, nonc, pkt[SigEnd:])
 	// Sign the packet.
 	var s sig.Bytes
 	hash := sha256.Single(pkt[SigEnd:])
@@ -126,10 +122,13 @@ func Encode(ep EP) (pkt []byte, e error) {
 		return
 	}
 	// Copy nonce, address, check and signature over top of the header.
-	copy(pkt[:NonceEnd], nonc)
+	copy(pkt[CheckEnd:NonceEnd], nonc)
 	copy(pkt[NonceEnd:AddressEnd], to)
-	copy(pkt[AddressEnd:CheckEnd], hash[:4])
-	copy(pkt[CheckEnd:SigEnd], s)
+	copy(pkt[AddressEnd:SigEnd], s)
+	// last bot not least, the packet check header, which protects the
+	// entire packet.
+	checkBytes := sha256.Single(pkt[CheckEnd:])[:CheckEnd]
+	copy(pkt[:CheckEnd], checkBytes)
 	return
 }
 
@@ -151,18 +150,20 @@ func GetKeys(d []byte) (to address.Cloaked, from *pub.Key, e error) {
 		log.E.Ln(e)
 		return
 	}
-	to = d[nonce.IVLen : nonce.IVLen+address.Len]
+	to = d[NonceEnd:AddressEnd]
 	// split off the signature and recover the public key
 	var s sig.Bytes
 	var chek []byte
-	s = d[CheckEnd:SigEnd]
-	chek = d[AddressEnd:CheckEnd]
-	hash := sha256.Single(d[SigEnd:])
-	if string(chek) != string(hash[:4]) {
+	chek = d[:CheckEnd]
+	s = d[AddressEnd:SigEnd]
+	checkHash := sha256.Single(d[CheckEnd:])[:4]
+	if string(chek) != string(checkHash[:4]) {
 		e = fmt.Errorf("check failed: got '%v', expected '%v'",
-			chek, hash[:4])
+			chek, checkHash[:4])
+		log.I.Ln(e)
 		return
 	}
+	hash := sha256.Single(d[SigEnd:])
 	if from, e = s.Recover(hash); check(e) {
 		return
 	}
@@ -188,21 +189,22 @@ func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Packet, e error) {
 	f = &Packet{}
 	// copy the nonce
 	nonc := make(nonce.IV, nonce.IVLen)
-	copy(nonc, d)
+	copy(nonc, d[CheckEnd:NonceEnd])
 	var blk cipher.Block
 	if blk, e = ciph.GetBlock(to, from); check(e) {
 		return
 	}
 	// This decrypts the rest of the packet, which is encrypted for
 	// security.
-	ciph.Encipher(blk, nonc, d)
+	ciph.Encipher(blk, nonc, d[SigEnd:])
 	// Trim off the nonce and recipient fingerprint, which is now encrypted.
 	data := d[SigEnd:]
-	var seq, tot slice.Size16
+	var seq slice.Size16
+	var length slice.Size32
 	seq, data = slice.Cut(data, slice.Uint16Len)
 	f.Seq = uint16(slice.DecodeUint16(seq))
-	tot, data = slice.Cut(data, slice.Uint32Len)
-	f.Length = uint32(slice.DecodeUint32(tot))
+	length, data = slice.Cut(data, slice.Uint32Len)
+	f.Length = uint32(slice.DecodeUint32(length))
 	f.Parity, data = data[0], data[1:]
 	f.Data = data
 	return

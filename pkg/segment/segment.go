@@ -55,7 +55,7 @@ func Split(ep packet.EP, segSize int) (packets [][]byte, e error) {
 const ErrDupe = "found duplicate packet, no redundancy, decoding failed"
 const ErrLostNoRedundant = "no redundancy with %d lost of %d"
 const ErrMismatch = "found disagreement about common data in segment %d of %d" +
-	" in field %s"
+	" in field %s value: got %v expected %v"
 const ErrNotEnough = "too many lost to recover in section %d, have %d, need " +
 	"%d minimum"
 
@@ -104,14 +104,15 @@ func Join(packets packet.Packets) (msg []byte, e error) {
 			}
 		}
 		prevSeq = ps.Seq
-		// All segments must specify the same total message length.
-		if ps.Length != tot {
-			e = fmt.Errorf(ErrMismatch, i, lp, "length")
-			return
-		}
 		// All messages must have the same parity settings.
 		if ps.Parity != red {
-			e = fmt.Errorf(ErrMismatch, i, lp, "parity")
+			e = fmt.Errorf(ErrMismatch, i, lp, "parity", ps.Parity, red)
+			return
+		}
+		// All segments must specify the same total message length.
+		if ps.Length != tot {
+			e = fmt.Errorf(ErrMismatch, i, lp, "length", ps.Length,
+				tot)
 			return
 		}
 	}
