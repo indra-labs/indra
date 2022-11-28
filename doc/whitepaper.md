@@ -88,7 +88,7 @@ package of data, nor the notion of an interacting midpoint in the loop, with the
 path going back to the sender.
 
 As distinct from this `lightning-onion` protocol, we use ed25519 for signatures
-and curve25519 for the ECDH key exchange, and encrypt traffic with AES-GCM. Rolling over the cipher is done via hash chains on sequential packets, which constitute the unit of transmission. As noted later, this is 8 Kb, a moderate size but not too small to accommodate a substantial message with no return packets embedded.
+and curve25519 for the ECDH key exchange, and encrypt traffic with AES-CTR. Rolling over the cipher is done via summing of a second secret to reduce generation time for each packet, which constitute the unit of transmission. As noted later, this is 8 Kb, a moderate size but not too small to accommodate a substantial message with no return packets embedded.
 
 
 ### Session Tokens
