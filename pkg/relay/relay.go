@@ -4,8 +4,10 @@ import (
 	"net"
 
 	"github.com/Indra-Labs/indra"
+	"github.com/Indra-Labs/indra/pkg/ifc"
+	"github.com/Indra-Labs/indra/pkg/key/prv"
+	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/node"
-	"github.com/Indra-Labs/indra/pkg/transport"
 	log2 "github.com/cybriq/proc/pkg/log"
 	"github.com/cybriq/qu"
 )
@@ -16,17 +18,19 @@ var (
 )
 
 type Relay struct {
+	prv.Key
+	PubKey pub.Key
 	*node.Node
 	node.Nodes
-	transport.Dispatcher
+	ifc.Transport
 	qu.C
 }
 
-func New(ip net.IP) (r *Relay) {
+func New(ip net.IP, tpt ifc.Transport) (r *Relay) {
 	r = &Relay{Node: node.New(ip),
-		Nodes:      node.NewNodes(),
-		Dispatcher: make(transport.Dispatcher),
-		C:          qu.T()}
+		Nodes:     node.NewNodes(),
+		Transport: tpt,
+		C:         qu.T()}
 	return
 }
 
@@ -37,8 +41,9 @@ out:
 		case <-c.C.Wait():
 			c.Cleanup()
 			break out
-		case <-c.Node.Receive():
+		case msg := <-c.Node.Receive():
 			// process received message
+			_ = msg
 		}
 	}
 }
