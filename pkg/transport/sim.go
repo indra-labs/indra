@@ -13,3 +13,7 @@ func (d Sim) Send(b ifc.Message) {
 func (d Sim) Receive() <-chan ifc.Message {
 	return d
 }
+
+func NewSim(bufs int) Dispatcher {
+	return make(Dispatcher, bufs)
+}

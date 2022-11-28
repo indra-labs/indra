@@ -7,9 +7,10 @@ import (
 	"net"
 
 	"github.com/Indra-Labs/indra"
+	"github.com/Indra-Labs/indra/pkg/ifc"
+	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/nonce"
 	"github.com/Indra-Labs/indra/pkg/session"
-	"github.com/Indra-Labs/indra/pkg/transport"
 	log2 "github.com/cybriq/proc/pkg/log"
 )
 
@@ -25,17 +26,20 @@ var (
 type Node struct {
 	nonce.ID
 	net.IP
+	pub.Key
 	session.Sessions
-	transport.Dispatcher
+	ifc.Transport
 }
 
 // New creates a new Node. net.IP is optional if the counterparty is not in
 // direct connection.
-func New(ip net.IP) (n *Node) {
+func New(ip net.IP, tpt ifc.Transport) (n *Node, id nonce.ID) {
+	id = nonce.NewID()
 	n = &Node{
-		ID:       nonce.NewID(),
-		IP:       ip,
-		Sessions: session.Sessions{},
+		ID:        id,
+		IP:        ip,
+		Sessions:  session.Sessions{},
+		Transport: tpt,
 	}
 	return
 }
