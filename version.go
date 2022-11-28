@@ -13,11 +13,11 @@ var (
 	// GitRef is the gitref, as in refs/heads/branchname.
 	GitRef = "refs/heads/main"
 	// ParentGitCommit is the commit hash of the parent HEAD.
-	ParentGitCommit = "fc34525548a9207b1be29063b8850b51914a24a9"
+	ParentGitCommit = "a1f025295fa1f65b6864f17b40619e1a5e9e0b10"
 	// BuildTime stores the time when the current binary was built.
-	BuildTime = "2022-11-28T15:24:25+01:00"
+	BuildTime = "2022-11-28T15:25:37+01:00"
 	// SemVer lists the (latest) git tag on the build.
-	SemVer = "v0.0.131"
+	SemVer = "v0.0.132"
 	// PathBase is the path base returned from runtime caller.
 	PathBase = "/home/loki/src/github.com/Indra-Labs/indra/"
 	// Major is the major number from the tag.
@@ -25,7 +25,7 @@ var (
 	// Minor is the minor number from the tag.
 	Minor = 0
 	// Patch is the patch version number from the tag.
-	Patch = 131
+	Patch = 132
 )
 
 // Version returns a pretty printed version information string.
