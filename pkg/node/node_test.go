@@ -3,6 +3,8 @@ package node
 import (
 	"fmt"
 	"testing"
+
+	"github.com/Indra-Labs/indra/pkg/transport"
 )
 
 func TestNodes_Add(t *testing.T) {
@@ -10,7 +12,7 @@ func TestNodes_Add(t *testing.T) {
 	const nNodes = 10000
 	for i := 0; i < nNodes; i++ {
 		var nn *Node
-		nn = New(nil)
+		nn, _ = New(nil, transport.NewSim(0))
 		n = n.Add(nn)
 	}
 	if n.Len() != nNodes {
@@ -24,7 +26,7 @@ func TestNodes_DeleteByID(t *testing.T) {
 	var e error
 	for i := 0; i < nNodes; i++ {
 		var nn *Node
-		nn = New(nil)
+		nn, _ = New(nil, transport.NewSim(0))
 		n.Add(nn)
 	}
 	for i := range n {
@@ -40,7 +42,7 @@ func TestNodes_DeleteByIP(t *testing.T) {
 	var e error
 	for i := 0; i < nNodes; i++ {
 		var nn *Node
-		nn = New(nil)
+		nn, _ = New(nil, transport.NewSim(0))
 		n.Add(nn)
 	}
 	for i := range n {
@@ -55,7 +57,7 @@ func TestNodes_FindByID(t *testing.T) {
 	const nNodes = 10000
 	for i := 0; i < nNodes; i++ {
 		var nn *Node
-		nn = New(nil)
+		nn, _ = New(nil, transport.NewSim(0))
 		n.Add(nn)
 	}
 	for i := range n {
@@ -71,7 +73,7 @@ func TestNodes_FindByIP(t *testing.T) {
 	const nNodes = 10000
 	for i := 0; i < nNodes; i++ {
 		var nn *Node
-		nn = New(nil)
+		nn, _ = New(nil, transport.NewSim(0))
 		n.Add(nn)
 	}
 	for i := range n {
