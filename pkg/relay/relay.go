@@ -27,7 +27,8 @@ type Relay struct {
 }
 
 func New(ip net.IP, tpt ifc.Transport) (r *Relay) {
-	r = &Relay{Node: node.New(ip),
+	n, _ := node.New(ip, tpt)
+	r = &Relay{Node: n,
 		Nodes:     node.NewNodes(),
 		Transport: tpt,
 		C:         qu.T()}
