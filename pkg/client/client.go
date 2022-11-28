@@ -62,8 +62,10 @@ func (c *Client) Shutdown() {
 }
 
 const CircuitLen = 5
+const CircuitExit = 2
+const ReturnLen = 3
 
-func (c *Client) GenerateCircuit() (ci *onion.Circuit, e error) {
+func (c *Client) GeneratePath(length, exit int) (ci *onion.Circuit, e error) {
 	if len(c.Nodes) < 5 {
 		e = fmt.Errorf("insufficient nodes to form a circuit, "+
 			"5 required, %d available", len(c.Nodes))
@@ -84,8 +86,16 @@ func (c *Client) GenerateCircuit() (ci *onion.Circuit, e error) {
 	rand.Shuffle(nodesLen, func(i, j int) { s[i], s[j] = s[j], s[i] })
 	ci = &onion.Circuit{
 		ID:   nonce.ID{},
-		Hops: s[:CircuitLen],
-		Exit: 2,
+		Hops: s[:length],
+		Exit: exit,
 	}
 	return
+}
+
+func (c *Client) GenerateCircuit() (ci *onion.Circuit, e error) {
+	return c.GeneratePath(CircuitLen, CircuitExit)
+}
+
+func (c *Client) GenerateReturn() (ci *onion.Circuit, e error) {
+	return c.GeneratePath(ReturnLen, CircuitExit)
 }
