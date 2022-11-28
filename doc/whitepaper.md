@@ -1,4 +1,4 @@
-![Indra Routing Protocol Logo](logo.svg)
+![webdroplets](/home/loki/src/github.com/Indra-Labs/indra/doc/webdropletssmall.png)
 
 # Indra Routing Protocol White Paper
 
