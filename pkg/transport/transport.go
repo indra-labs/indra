@@ -13,3 +13,7 @@ func (d Dispatcher) Send(b ifc.Message) {
 func (d Dispatcher) Receive() <-chan ifc.Message {
 	return d
 }
+
+func NewDispatcher(bufs int) Dispatcher {
+	return make(Dispatcher, bufs)
+}

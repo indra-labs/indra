@@ -1,4 +1,4 @@
-![Indra Routing Protocol Logo](doc/logo.svg)
+![Indra Routing Protocol Logo](doc/webdropletssmall.png)
 
 # Indra
 
