@@ -10,7 +10,6 @@ import (
 	"github.com/Indra-Labs/indra/pkg/ifc"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/nonce"
-	"github.com/Indra-Labs/indra/pkg/session"
 	log2 "github.com/cybriq/proc/pkg/log"
 )
 
@@ -26,8 +25,7 @@ var (
 type Node struct {
 	nonce.ID
 	net.IP
-	pub.Key
-	session.Sessions
+	*pub.Key
 	ifc.Transport
 }
 
@@ -38,7 +36,6 @@ func New(ip net.IP, tpt ifc.Transport) (n *Node, id nonce.ID) {
 	n = &Node{
 		ID:        id,
 		IP:        ip,
-		Sessions:  session.Sessions{},
 		Transport: tpt,
 	}
 	return

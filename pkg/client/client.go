@@ -9,6 +9,7 @@ import (
 
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/ifc"
+	"github.com/Indra-Labs/indra/pkg/key/address"
 	"github.com/Indra-Labs/indra/pkg/node"
 	"github.com/Indra-Labs/indra/pkg/nonce"
 	"github.com/Indra-Labs/indra/pkg/onion"
@@ -25,17 +26,22 @@ type Client struct {
 	net.IP
 	*node.Node
 	node.Nodes
+	*address.SendCache
+	*address.ReceiveCache
 	onion.Circuits
+	Sessions
 	ifc.Transport
 	qu.C
 }
 
-func New(tpt ifc.Transport) (c *Client) {
+func New(tpt ifc.Transport, nodes node.Nodes) (c *Client) {
 	n, _ := node.New(nil, tpt)
-	c = &Client{Node: n,
-		Nodes:     node.NewNodes(),
+	c = &Client{
+		Node:      n,
+		Nodes:     nodes,
 		Transport: tpt,
-		C:         qu.T()}
+		C:         qu.T(),
+	}
 	return
 }
 
@@ -66,8 +72,8 @@ const CircuitExit = 2
 const ReturnLen = 3
 
 func (c *Client) GeneratePath(length, exit int) (ci *onion.Circuit, e error) {
-	if len(c.Nodes) < 5 {
-		e = fmt.Errorf("insufficient nodes to form a circuit, "+
+	if len(c.Sessions) < 5 {
+		e = fmt.Errorf("insufficient Sessions to form a circuit, "+
 			"5 required, %d available", len(c.Nodes))
 		return
 	}
@@ -89,6 +95,7 @@ func (c *Client) GeneratePath(length, exit int) (ci *onion.Circuit, e error) {
 		Hops: s[:length],
 		Exit: exit,
 	}
+	c.Circuits = c.Circuits.Add(ci)
 	return
 }
 
