@@ -4,6 +4,7 @@ package ciph
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"fmt"
 
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/key/ecdh"
@@ -33,4 +34,24 @@ func Encipher(blk cipher.Block, n nonce.IV, b []byte) {
 	if blk != nil {
 		cipher.NewCTR(blk, n).XORKeyStream(b, b)
 	}
+}
+
+const SecretLength = 32
+
+func CombineCiphers(secrets [][]byte) (combined []byte, e error) {
+	// All ciphers must be the same length, 32 bytes for AES-CTR 256
+	for i := range secrets {
+		if len(secrets[i]) != SecretLength {
+			e = fmt.Errorf("unable to combine ciphers, cipher %d is"+
+				" length %d, expected %d",
+				i, len(secrets[i]), SecretLength)
+		}
+	}
+	combined = make([]byte, SecretLength)
+	for i := range combined {
+		for j := range secrets {
+			combined[i] ^= secrets[j][i]
+		}
+	}
+	return
 }

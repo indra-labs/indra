@@ -1,21 +1,9 @@
-// Package session provides a mechanism for keeping track of existing sessions
-// with Indra relays.
-//
-// These sessions consist of the current state of the message encryption scheme
-// and the account of remaining data allocation on the session.
-package session
+package client
 
 import (
-	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/key/address"
 	"github.com/Indra-Labs/indra/pkg/key/signer"
 	"github.com/Indra-Labs/indra/pkg/nonce"
-	log2 "github.com/cybriq/proc/pkg/log"
-)
-
-var (
-	log   = log2.GetLogger(indra.PathBase)
-	check = log.E.Chk
 )
 
 // A Session keeps track of a connection session. It specifically maintains the
@@ -57,12 +45,13 @@ func (s Sessions) Find(t nonce.ID) (se *Session) {
 	return
 }
 
-// New creates a new Session.
+// NewSession creates a new Session.
 //
 // Purchasing a session the seller returns a token, based on a requested data
 // allocation,
-func New(id nonce.ID, rem uint64, se *address.SendEntry, re *address.ReceiveEntry,
-	kr *signer.KeySet) (s *Session) {
+func NewSession(id nonce.ID, rem uint64, se *address.SendEntry,
+	re *address.ReceiveEntry, kr *signer.KeySet) (s *Session) {
+
 	s = &Session{
 		ID:           id,
 		Remaining:    rem,

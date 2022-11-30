@@ -26,6 +26,18 @@ type Circuit struct {
 	Exit int
 }
 
+func (c *Circuit) GenerateOnion(exit []byte, messages [][]byte) (msg []byte,
+	e error) {
+
+	if len(messages) != len(c.Hops) {
+		e = fmt.Errorf("mismatch of message count, %d messages, %d hops",
+			len(messages), len(c.Hops))
+		return
+	}
+
+	return
+}
+
 type Circuits []*Circuit
 
 func New(id nonce.ID, hops node.Nodes, exit int) (c *Circuit) {

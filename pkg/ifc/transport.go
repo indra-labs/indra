@@ -6,3 +6,6 @@ type Transport interface {
 }
 
 type Message []byte
+
+func ToMessage(b []byte) (msg Message) { return b }
+func (msg Message) ToBytes() []byte    { return msg }
