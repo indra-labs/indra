@@ -26,8 +26,8 @@ type Relay struct {
 	qu.C
 }
 
-func New(ip net.IP, tpt ifc.Transport) (r *Relay) {
-	n, _ := node.New(ip, tpt)
+func New(ip net.IP, pubKey *pub.Key, tpt ifc.Transport) (r *Relay) {
+	n, _ := node.New(ip, pubKey, tpt)
 	r = &Relay{Node: n,
 		Nodes:     node.NewNodes(),
 		Transport: tpt,
