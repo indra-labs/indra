@@ -10,6 +10,8 @@ import (
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/ifc"
 	"github.com/Indra-Labs/indra/pkg/key/address"
+	"github.com/Indra-Labs/indra/pkg/key/prv"
+	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/node"
 	"github.com/Indra-Labs/indra/pkg/nonce"
 	"github.com/Indra-Labs/indra/pkg/onion"
@@ -24,6 +26,8 @@ var (
 
 type Client struct {
 	net.IP
+	Prv *prv.Key
+	Pub *pub.Key
 	*node.Node
 	node.Nodes
 	*address.SendCache
@@ -34,8 +38,14 @@ type Client struct {
 	qu.C
 }
 
-func New(tpt ifc.Transport, nodes node.Nodes) (c *Client) {
-	n, _ := node.New(nil, tpt)
+func New(tpt ifc.Transport, nodes node.Nodes) (c *Client, e error) {
+	var p *prv.Key
+	if p, e = prv.GenerateKey(); check(e) {
+		return
+	}
+	pubKey := pub.Derive(p)
+	var n *node.Node
+	n, _ = node.New(nil, pubKey, tpt)
 	c = &Client{
 		Node:      n,
 		Nodes:     nodes,
@@ -74,7 +84,7 @@ const ReturnLen = 3
 func (c *Client) GeneratePath(length, exit int) (ci *onion.Circuit, e error) {
 	if len(c.Sessions) < 5 {
 		e = fmt.Errorf("insufficient Sessions to form a circuit, "+
-			"5 required, %d available", len(c.Nodes))
+			"5 required, %d available", len(c.Sessions))
 		return
 	}
 	nodesLen := len(c.Nodes)
