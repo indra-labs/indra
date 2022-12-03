@@ -206,5 +206,6 @@ func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Packet, e error) {
 	f.Length = uint32(slice.DecodeUint32(length))
 	f.Parity, data = data[0], data[1:]
 	f.Data = data
+	log.I.Ln("decode length", len(data), "length prefix", f.Length)
 	return
 }

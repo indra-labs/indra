@@ -101,7 +101,7 @@ func (c *Client) GeneratePath(length, exit int) (ci *onion.Circuit, e error) {
 	rand.Seed(int64(binary.LittleEndian.Uint64(randBytes)))
 	rand.Shuffle(nodesLen, func(i, j int) { s[i], s[j] = s[j], s[i] })
 	ci = &onion.Circuit{
-		ID:   nonce.ID{},
+		ID:   nonce.NewID(),
 		Hops: s[:length],
 		Exit: exit,
 	}
