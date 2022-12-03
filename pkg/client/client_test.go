@@ -81,6 +81,9 @@ func TestClient_GenerateCircuit(t *testing.T) {
 	// Create the onion
 	var lastMsg ifc.Message
 	lastMsg, _, e = testutils.GenerateTestMessage(32)
+	original := make([]byte, 32)
+	copy(original, lastMsg)
+	// log.I.S(lastMsg)
 	// log.I.Ln(len(ci.Hops))
 	for i := range ci.Hops {
 		// progress through the hops in reverse
@@ -106,14 +109,14 @@ func TestClient_GenerateCircuit(t *testing.T) {
 			t.FailNow()
 		}
 		_, _ = to, from
-		log.I.S("lastMsg", lastMsg)
+		// log.I.S("lastMsg", lastMsg)
 	}
 	// now unwrap the message
 	for c := 0; c < ReturnLen; c++ {
 
 		var to address.Cloaked
 		var from *pub.Key
-		log.I.S("unwrapping", c, lastMsg)
+		// log.I.S("unwrapping", c, lastMsg)
 		if to, from, e = packet.GetKeys(lastMsg); check(e) {
 			t.Error(e)
 			t.FailNow()
@@ -124,13 +127,17 @@ func TestClient_GenerateCircuit(t *testing.T) {
 		for i := range rcvrs {
 			if rcvrs[i].Match(to) {
 				match = rcvrs[i]
-				log.I.S(rcvrs[i].Pub)
+				// log.I.S(rcvrs[i].Pub)
 				hop := rcvrs[i].Pub
 				cct := cl.Circuits[0].Hops
 				for j := range cct {
 					if cct[j].Key.Equals(hop) {
-						log.I.Ln("found hop", j)
-						log.I.Ln(cct[j].IP)
+						// log.I.Ln("found hop", j)
+						// log.I.Ln(cct[j].IP)
+						if j != c {
+							t.Error("did not find expected hop")
+							t.FailNow()
+						}
 						break
 					}
 				}
@@ -143,13 +150,18 @@ func TestClient_GenerateCircuit(t *testing.T) {
 		}
 		var f *packet.Packet
 		if f, e = packet.Decode(lastMsg, from, match.Key); check(e) {
-			log.I.S()
 			t.Error(e)
 			t.FailNow()
 		}
 		rm := wire.Deserialize(f.Data)
-		log.I.Ln(rm.IP)
+		// log.I.Ln(rm.IP)
+		// log.I.S(rm.Message)
 		// log.I.Ln(lastMsg[0], net.IP(lastMsg[1:5]))
 		lastMsg = rm.Message
 	}
+	if string(original) != string(lastMsg) {
+		t.Error("failed to recover original message")
+		t.FailNow()
+	}
+	// log.I.S(lastMsg)
 }
