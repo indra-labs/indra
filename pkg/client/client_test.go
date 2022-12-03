@@ -153,7 +153,16 @@ func TestClient_GenerateCircuit(t *testing.T) {
 			t.Error(e)
 			t.FailNow()
 		}
-		rm := wire.Deserialize(f.Data)
+		var rm *wire.ReturnMessage
+		var msg interface{}
+		if msg, e = wire.Deserialize(f.Data); check(e) {
+			t.Error(e)
+			t.FailNow()
+		}
+		if rm, e = wire.ToReturnMessage(msg); check(e) {
+			t.Error(e)
+			t.FailNow()
+		}
 		// log.I.Ln(rm.IP)
 		// log.I.S(rm.Message)
 		// log.I.Ln(lastMsg[0], net.IP(lastMsg[1:5]))

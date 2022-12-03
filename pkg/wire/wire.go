@@ -1,10 +1,52 @@
 package wire
 
 import (
+	"fmt"
 	"net"
+	"reflect"
 
 	"github.com/Indra-Labs/indra/pkg/ifc"
 )
+
+type MessageMagic byte
+
+type Message interface{}
+
+const (
+	ReturnMessageMagic MessageMagic = iota
+	RelayMessageMagic
+	ExitMessage
+)
+
+func Serialize(message interface{}) (b ifc.Message, e error) {
+	switch m := message.(type) {
+	case ReturnMessage:
+		b = m.Serialize()
+	default:
+		e = fmt.Errorf("unknown type %v", reflect.TypeOf(m))
+	}
+	return
+}
+
+func Deserialize(b ifc.Message) (out Message, e error) {
+	msgMagic := MessageMagic(b[0])
+	switch msgMagic {
+	case ReturnMessageMagic:
+		out, e = DeserializeReturnMessage(b)
+	}
+	return
+}
+
+func ToReturnMessage(msg Message) (rm *ReturnMessage, e error) {
+	switch r := msg.(type) {
+	case *ReturnMessage:
+		rm = r
+	default:
+		e = fmt.Errorf("incorrect type returned %v expected %v",
+			reflect.TypeOf(r), reflect.TypeOf(&ReturnMessage{}))
+	}
+	return
+}
 
 type RelayMsg struct {
 }
@@ -37,19 +79,20 @@ type ReturnMessage struct {
 
 func (rm *ReturnMessage) Serialize() (o ifc.Message) {
 	ipLen := len(rm.IP)
-	totalLen := 1 + ipLen + len(rm.Message)
+	totalLen := 1 + ipLen + len(rm.Message) + 1
 	o = make(ifc.Message, totalLen)
-	o[0] = byte(ipLen)
-	copy(o[1:ipLen+1], rm.IP)
-	copy(o[ipLen+1:], rm.Message)
+	o[0] = byte(ReturnMessageMagic)
+	o[1] = byte(ipLen)
+	copy(o[2:ipLen+2], rm.IP)
+	copy(o[ipLen+2:], rm.Message)
 	return
 }
 
-func Deserialize(msg ifc.Message) (rm *ReturnMessage) {
-	ipLen := int(msg[0])
+func DeserializeReturnMessage(msg ifc.Message) (rm *ReturnMessage, e error) {
+	ipLen := int(msg[1])
 	rm = &ReturnMessage{
-		IP:      net.IP(msg[1 : 1+ipLen]),
-		Message: msg[1+ipLen:],
+		IP:      net.IP(msg[2 : 2+ipLen]),
+		Message: msg[2+ipLen:],
 	}
 	return
 }
