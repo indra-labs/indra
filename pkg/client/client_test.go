@@ -28,6 +28,7 @@ func TestClient_GenerateCircuit(t *testing.T) {
 	nNodes := 10
 	// Generate node private keys, session keys and keysets
 	var prvs []*prv.Key
+	var rcvrs []*address.Receiver
 	var sessKeys []*prv.Key
 	var keysets []*signer.KeySet
 	for i := 0; i < nNodes; i++ {
@@ -37,6 +38,7 @@ func TestClient_GenerateCircuit(t *testing.T) {
 			t.FailNow()
 		}
 		prvs = append(prvs, p)
+		rcvrs = append(rcvrs, address.NewReceiver(p))
 		var s *prv.Key
 		var ks *signer.KeySet
 		if s, ks, e = signer.New(); check(e) {
@@ -72,13 +74,14 @@ func TestClient_GenerateCircuit(t *testing.T) {
 		cl.Sessions = cl.Sessions.Add(sess)
 	}
 	var ci *onion.Circuit
-	if ci, e = cl.GenerateCircuit(); check(e) {
+	if ci, e = cl.GenerateReturn(); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
 	// Create the onion
 	var lastMsg ifc.Message
 	lastMsg, _, e = testutils.GenerateTestMessage(32)
+	// log.I.Ln(len(ci.Hops))
 	for i := range ci.Hops {
 		// progress through the hops in reverse
 		rm := &wire.ReturnMessage{
@@ -87,7 +90,8 @@ func TestClient_GenerateCircuit(t *testing.T) {
 		}
 		rmm := rm.Serialize()
 		ep := packet.EP{
-			To:     address.FromPubKey(ci.Hops[i].Key),
+			To: address.
+				FromPubKey(ci.Hops[len(ci.Hops)-i-1].Key),
 			From:   cl.Sessions[i].KeyRoller.Next(),
 			Parity: 0,
 			Seq:    0,
@@ -95,7 +99,57 @@ func TestClient_GenerateCircuit(t *testing.T) {
 			Data:   rmm,
 		}
 		lastMsg, e = packet.Encode(ep)
+		var to address.Cloaked
+		var from *pub.Key
+		if to, from, e = packet.GetKeys(lastMsg); check(e) {
+			t.Error(e)
+			t.FailNow()
+		}
+		_, _ = to, from
+		log.I.S("lastMsg", lastMsg)
 	}
 	// now unwrap the message
+	for c := 0; c < ReturnLen; c++ {
 
+		var to address.Cloaked
+		var from *pub.Key
+		log.I.S("unwrapping", c, lastMsg)
+		if to, from, e = packet.GetKeys(lastMsg); check(e) {
+			t.Error(e)
+			t.FailNow()
+		}
+
+		// log.I.S(to, from)
+		var match *address.Receiver
+		for i := range rcvrs {
+			if rcvrs[i].Match(to) {
+				match = rcvrs[i]
+				log.I.S(rcvrs[i].Pub)
+				hop := rcvrs[i].Pub
+				cct := cl.Circuits[0].Hops
+				for j := range cct {
+					if cct[j].Key.Equals(hop) {
+						log.I.Ln("found hop", j)
+						log.I.Ln(cct[j].IP)
+						break
+					}
+				}
+				break
+			}
+		}
+		if match == nil {
+			log.I.Ln("did not find matching address.Receiver")
+			t.FailNow()
+		}
+		var f *packet.Packet
+		if f, e = packet.Decode(lastMsg, from, match.Key); check(e) {
+			log.I.S()
+			t.Error(e)
+			t.FailNow()
+		}
+		rm := wire.Deserialize(f.Data)
+		log.I.Ln(rm.IP)
+		// log.I.Ln(lastMsg[0], net.IP(lastMsg[1:5]))
+		lastMsg = rm.Message
+	}
 }
