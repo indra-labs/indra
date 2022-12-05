@@ -1,6 +1,6 @@
 ![webdroplets](logo.png)
 
-# Indra Routing Protocol White Paper
+# Indranet Protocol White Paper
 
 Onion routed distributed virtual private network protocol with
 anonymised payments to create scaling incentives.
