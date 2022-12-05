@@ -26,14 +26,14 @@ type Circuit struct {
 	Exit int
 }
 
-func (c *Circuit) GenerateOnion(exit []byte, messages [][]byte) (msg []byte,
-	e error) {
-
-	if len(messages) != len(c.Hops) {
-		e = fmt.Errorf("mismatch of message count, %d messages, %d hops",
-			len(messages), len(c.Hops))
-		return
-	}
+// EncodeOnion uses a Circuit to create an onion message. An onion message
+// consists of a series of layers containing the IP address to forward the
+// attached payload and at the Exit hop there is an arbitrary blob of data.
+//
+// When there is additional hops after the Exit, these hops are interpreted to
+// mean to expect a response to pass from the Exit hop and these layers contain
+// a compound cipher for the remainder of the path.
+func (c *Circuit) EncodeOnion(message []byte) (msg []byte, e error) {
 
 	return
 }
