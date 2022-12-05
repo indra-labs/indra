@@ -1,4 +1,4 @@
-![webdroplets](webdropletssmall.png)
+![webdroplets](logo.png)
 
 # Indra Routing Protocol White Paper
 
