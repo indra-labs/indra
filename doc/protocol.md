@@ -94,48 +94,49 @@ Onion messages are constructed in reverse order as shown, and in reverse order i
 
 ### Onion Path Diagnostic Message
 
-| Section          |
-| ---------------- |
-| **Hop 1 Header** |
-| Hop 1 IP address |
-| - Hop 1 Return 1 Header   |
-| - Hop 1 Return 1 IP address |
-| - Hop 1  Return 2 Header |
-| - Hop 1 Return 2 IP address |
-| - Client IP address |
-| - Client Hop 1 nonce identifier |
-| **Hop 2 Header** |
-| Hop 2 IP address |
-| - Hop 2 Return 1 Header   |
-| - Hop 2 Return 1 IP address |
-| - Hop 2  Return 2 Header |
-| - Hop 2 Return 2 IP address |
-| - Client IP address |
-| - Client Hop 2 nonce identifier |
-| **Hop 3 Header** |
-| Hop 3 IP address |
-| - Hop 3 Return 1 Header   |
-| - Hop 3 Return 1 IP address |
-| - Hop 3  Return 2 Header |
-| - Hop 3 Return 2 IP address |
-| - Client IP address |
-| - Client Hop 3 nonce identifier |
-| **Hop 4 Header** |
-| Hop 4 IP address |
-| - Hop 4 Return 1 Header   |
-| - Hop 4 Return 1 IP address |
-| - Hop 4  Return 2 Header |
-| - Hop 4 Return 2 IP address |
-| - Client IP address |
-| - Client Hop 4 nonce identifier |
-| **Hop 5 Header** |
-| Hop 5 IP address |
-| - Hop 5 Return 1 Header   |
-| - Hop 5 Return 1 IP address |
-| - Hop 5  Return 2 Header |
-| - Hop 5 Return 2 IP address |
-| - Client IP address |
-| - Client Hop 5 nonce identifier |
+|           |           |  |  |  |  |  |  |
+| ---------------- | ---------------- |  |  |  |  |  |  |
+| **Hop 1 Header** |  |  |  |  |  |  |  |
+| Hop 1 IP address |  |  |  |  |  |  |  |
+|    | - Hop 1 Return 1 Header |  |  |  |  |  |  |
+|  | - Hop 1 Return 1 IP address |  |  |  |  |  |  |
+|  |  | - Hop 1  Return 2 Header |  |  |  |  |  |
+|  |  | - Hop 1 Return 2 IP address |  |  |  |  |  |
+|  |  |  | - Client IP address |  |  |  |  |
+|  |  |  | - Client Hop 1 nonce identifier |  |  |  |  |
+|  | **Hop 2 Header** |  |  |  |  |  |  |
+|  | Hop 2 IP address |  |  |  |  |  |  |
+|  |        | - Hop 2 Return 1 Header |  |  |  |  |  |
+|  |  | - Hop 2 Return 1 IP address |  |  |  |  |  |
+|  |  |  | - Hop 2  Return 2 Header |  |  |  |  |
+|  |  |  | - Hop 2 Return 2 IP address |  |  |  |  |
+|  |  |  |  | - Client IP address |  |  |  |
+|  |  |  |  | - Client Hop 2 nonce identifier |  |  |  |
+|  |  | **Hop 3 Header** |  |  |  |  |  |
+|  |  | Hop 3 IP address |  |  |  |  |  |
+|  |    |  | - Hop 3 Return 1 Header |  |  |  |  |
+|  |  |  | - Hop 3 Return 1 IP address |  |  |  |  |
+|  |  |  |  | - Hop 3  Return 2 Header |  |  |  |
+|  |  |  |  | - Hop 3 Return 2 IP address |  |  |  |
+|  |  |  |  |  | - Client IP address |  |  |
+|  |  |  |  |  | - Client Hop 3 nonce identifier |  |  |
+|  |  |  | **Hop 4 Header** |  |  |  |  |
+|  |  |  | Hop 4 IP address |  |  |  |  |
+|  |    |    | - Hop 4 Return 1 Header |    |    |    |    |
+|  |  |  | - Hop 4 Return 1 IP address |  |  |  |  |
+|  |  |  |  | - Hop 4  Return 2 Header |  |  |  |
+|  |  |  |  | - Hop 4 Return 2 IP address |  |  |  |
+|  |  |  |  |  | - Client IP address |  |  |
+|  |  |  |  |  | - Client Hop 4 nonce identifier |  |  |
+|  |  |  |  | **Hop 5 Header** |  |  |  |
+|  |  |  |  | Hop 5 IP address |  |  |  |
+|  |    |    |    |    | - Hop 5 Return 1 Header |  |  |
+|  |  |  |  |  | - Hop 5 Return 1 IP address |  |  |
+|  |  |  |  |  |  | - Hop 5  Return 2 Header |  |
+|  |  |  |  |  |  | - Hop 5 Return 2 IP address |  |
+|  |  |  |  |  |  |  | - Client IP address |
+|  |  |  |  |  |  |  | - Client Hop 5 nonce identifier |
+
 ### Onion Messages for Exit Traffic
 
 | Section                       | Content                                                      |
