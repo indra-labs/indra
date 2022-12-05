@@ -138,18 +138,20 @@ Onion messages are constructed in reverse order as shown, and in reverse order i
 | - Client Hop 5 nonce identifier |
 ### Onion Messages for Exit Traffic
 
-| Section                        | Content                                                      |
-| ------------------------------ | ------------------------------------------------------------ |
-| **Hop 1 Header**               |                                                              |
-| Hop 1 IP address               |                                                              |
-| **Hop 2 Header**               |                                                              |
-| Hop 2 IP address               |                                                              |
-| **Exit Header**                |                                                              |
-| Exit Protocol type             | 3 byte identifier designating exit protocol type             |
-| Exit IP address                | IPv4 or IPv6 address bytes - can be zero length for Bitcoin or Lightning messages to the exit's servers |
-| Exit Reply Compound Cipher     | This is the XOR of the three ciphers generated for Hop 1, 2 and the client's message |
-| - Return Hop Reply Nonce       | Message to be sent back for reply from Exit message will be tagged with this identifier |
-| - Return Hop 1 Compound Cipher | This is the XOR of the three ciphers generated for Hop 2 and the client's message |
-| - Return Hop 2 Reply Nonce     |                                                              |
-| - Return Hop 2 Compound Cipher | This is the XOR of the two ciphers generated for the client's message |
-| - **Exit Payload**             | Message to relay to the Exit point                           |
+| Section                       | Content                                                      |
+| ----------------------------- | ------------------------------------------------------------ |
+| **Hop 1 Header**              |                                                              |
+| Hop 1 IP address              |                                                              |
+| **Hop 2 Header**              |                                                              |
+| Hop 2 IP address              |                                                              |
+| **Exit Header**               |                                                              |
+| Exit Protocol type            | 3 byte identifier designating exit protocol type             |
+| Exit IP address               | IPv4 or IPv6 address bytes - can be zero length for Bitcoin or Lightning messages to the exit's servers |
+| Exit Reply Compound Cipher    | This is the XOR of the three ciphers generated for Hop 1, 2 and the client's message. This is used to encrypt the reply, and unwraps layers of the encryption. |
+| - **Return Hop 1 Public Key** | This is the public key to use in the message header returned to hop 1. The compound cipher is partly derived from this. It serves as both half of the encryption to use for the message, and additionally is unique to identify the session it relates to. |
+| - Return Hop 1 IP address     |                                                              |
+| - **Return Hop 2 Public Key** | This is the public key to use in the message header returned to hop 2. This uses Return Hop 2 and Client ciphers combined. The remainder up to the payload is forwarded to hop 2. The exit cannot read this. |
+| - Return Hop 2 IP address     |                                                              |
+| - **Client Public Key**       | This is encrypted with a cipher that is associated with this public key. The Return Hop 2 cannot read this. |
+| - Client IP address           |                                                              |
+| - **Exit Payload**            | Message to relay to the Exit point                           |
