@@ -67,7 +67,7 @@ type ExitMsg struct {
 // dead relays can be eliminated by the ones that are known and responding.
 //
 // In a standard path diagnostic onion, one of these contains another, which
-// contains another message, the last one informing the node of the node that
+// contains another message, the last one informing the client of the node that
 // succeeded in the path trace.
 //
 // The last layer of the onion contains the public key of the hop this

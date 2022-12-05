@@ -195,9 +195,8 @@ func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Packet, e error) {
 	}
 	// This decrypts the rest of the packet, which is encrypted for
 	// security.
-	ciph.Encipher(blk, nonc, d[SigEnd:])
-	// Trim off the nonce and recipient fingerprint, which is now encrypted.
 	data := d[SigEnd:]
+	ciph.Encipher(blk, nonc, data)
 	var seq slice.Size16
 	var length slice.Size32
 	seq, data = slice.Cut(data, slice.Uint16Len)
