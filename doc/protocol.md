@@ -87,3 +87,69 @@ This only applies to routers – clients will simply open persistent connections
 
 In initial development, the client/router model will be implemented using in-process channels, and when network capability is implemented, it will use these channels to pass messages between the client threads and the network dispatch threads.
 
+## Onion Message Format
+
+Onion messages are constructed in reverse order as shown, and in reverse order in each section. That is, the last messages are constructed first, wrapped in the cipher indicated by the Header, then onwards until the first hop header and remainder is encrypted.
+
+
+### Onion Path Diagnostic Message
+
+| Section          |
+| ---------------- |
+| **Hop 1 Header** |
+| Hop 1 IP address |
+| - Hop 1 Return 1 Header   |
+| - Hop 1 Return 1 IP address |
+| - Hop 1  Return 2 Header |
+| - Hop 1 Return 2 IP address |
+| - Client IP address |
+| - Client Hop 1 nonce identifier |
+| **Hop 2 Header** |
+| Hop 2 IP address |
+| - Hop 2 Return 1 Header   |
+| - Hop 2 Return 1 IP address |
+| - Hop 2  Return 2 Header |
+| - Hop 2 Return 2 IP address |
+| - Client IP address |
+| - Client Hop 2 nonce identifier |
+| **Hop 3 Header** |
+| Hop 3 IP address |
+| - Hop 3 Return 1 Header   |
+| - Hop 3 Return 1 IP address |
+| - Hop 3  Return 2 Header |
+| - Hop 3 Return 2 IP address |
+| - Client IP address |
+| - Client Hop 3 nonce identifier |
+| **Hop 4 Header** |
+| Hop 4 IP address |
+| - Hop 4 Return 1 Header   |
+| - Hop 4 Return 1 IP address |
+| - Hop 4  Return 2 Header |
+| - Hop 4 Return 2 IP address |
+| - Client IP address |
+| - Client Hop 4 nonce identifier |
+| **Hop 5 Header** |
+| Hop 5 IP address |
+| - Hop 5 Return 1 Header   |
+| - Hop 5 Return 1 IP address |
+| - Hop 5  Return 2 Header |
+| - Hop 5 Return 2 IP address |
+| - Client IP address |
+| - Client Hop 5 nonce identifier |
+### Onion Messages for Exit Traffic
+
+| Section                        | Content                                                      |
+| ------------------------------ | ------------------------------------------------------------ |
+| **Hop 1 Header**               |                                                              |
+| Hop 1 IP address               |                                                              |
+| **Hop 2 Header**               |                                                              |
+| Hop 2 IP address               |                                                              |
+| **Exit Header**                |                                                              |
+| Exit Protocol type             | 3 byte identifier designating exit protocol type             |
+| Exit IP address                | IPv4 or IPv6 address bytes - can be zero length for Bitcoin or Lightning messages to the exit's servers |
+| Exit Reply Compound Cipher     | This is the XOR of the three ciphers generated for Hop 1, 2 and the client's message |
+| - Return Hop Reply Nonce       | Message to be sent back for reply from Exit message will be tagged with this identifier |
+| - Return Hop 1 Compound Cipher | This is the XOR of the three ciphers generated for Hop 2 and the client's message |
+| - Return Hop 2 Reply Nonce     |                                                              |
+| - Return Hop 2 Compound Cipher | This is the XOR of the two ciphers generated for the client's message |
+| - **Exit Payload**             | Message to relay to the Exit point                           |
