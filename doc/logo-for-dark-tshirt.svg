@@ -2,13 +2,13 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   width="83mm"
-   height="83mm"
-   viewBox="0 0 83.000002 82.999998"
+   width="124.73923mm"
+   height="103.76368mm"
+   viewBox="0 0 124.73924 103.76368"
    version="1.1"
    id="svg5"
    inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
-   sodipodi:docname="logo-for-dark-ground.svg"
+   sodipodi:docname="logo-for-dark-tshirt.svg"
    inkscape:export-filename="/home/loki/src/github.com/Indra-Labs/indra/doc/logo-for-dark-ground.png"
    inkscape:export-xdpi="332.32001"
    inkscape:export-ydpi="332.32001"
@@ -18,7 +18,7 @@
    xmlns:svg="http://www.w3.org/2000/svg">
   <sodipodi:namedview
      id="namedview7"
-     pagecolor="#ffffff"
+     pagecolor="#000000"
      bordercolor="#000000"
      borderopacity="0.25"
      inkscape:pageshadow="2"
@@ -33,8 +33,8 @@
      height="78.26655mm"
      width="53.00204mm"
      inkscape:zoom="1.495"
-     inkscape:cx="21.73913"
-     inkscape:cy="213.71237"
+     inkscape:cx="100.6689"
+     inkscape:cy="213.04348"
      inkscape:window-width="2560"
      inkscape:window-height="1382"
      inkscape:window-x="1920"
@@ -45,10 +45,10 @@
      id="defs2">
     <inkscape:perspective
        sodipodi:type="inkscape:persp3d"
-       inkscape:vp_x="0 : 43.866722 : 1"
+       inkscape:vp_x="0 : 64.630403 : 1"
        inkscape:vp_y="0 : 1000 : 0"
-       inkscape:vp_z="78.266554 : 43.866721 : 1"
-       inkscape:persp3d-origin="39.133277 : 30.822301 : 1"
+       inkscape:vp_z="78.266556 : 64.630402 : 1"
+       inkscape:persp3d-origin="39.133278 : 51.585982 : 1"
        id="perspective1042" />
     <marker
        style="overflow:visible"
@@ -83,7 +83,7 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-65.908931,-68.757581)">
+     transform="translate(-45.039316,-68.904776)">
     <g
        id="g8657"
        transform="matrix(1,0,0,0.95562019,0,6.2009447)">
@@ -270,6 +270,18 @@
              d="m 110.14815,129.99038 1.96183,5.35045 5.40873,0.89697 -1.96179,-5.35009 z" />
         </g>
       </g>
+      <text
+         xml:space="preserve"
+         style="font-size:25.9831px;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono';fill:#000000;fill-opacity:0.33;stroke-width:2.41929;stroke-linecap:round;stroke-linejoin:round"
+         x="45.033955"
+         y="170.28909"
+         id="text53474"
+         transform="scale(0.97755829,1.0229569)"><tspan
+           sodipodi:role="line"
+           id="tspan53472"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Noto Sans';-inkscape-font-specification:'Noto Sans';fill:#ffffff;fill-opacity:1;stroke-width:2.41929"
+           x="45.033955"
+           y="170.28909">INDRANET</tspan></text>
     </g>
   </g>
 </svg>
