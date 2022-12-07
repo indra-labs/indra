@@ -114,7 +114,7 @@ This scheme helps guarantee that once messages are encrypted, even if an attacke
 
 In Indranet there are two primary types of messages, one having a hexagonal shape, the other being diamond shaped. Here is a visual representation with a legend indicating message types in each:
 
-![](/home/loki/src/github.com/Indra-Labs/indra/doc/onions.svg)
+![](onions.svg)
 
 ### Proxy
 
