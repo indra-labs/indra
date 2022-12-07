@@ -73,7 +73,7 @@ benefit from the security of route obfuscation. Indra aims to provide what Tor
 has definitely now failed to achieve for a large majority of internet users:
 location privacy.
 
-Indranet does not aim to compete with Tor for the use case of tunneling out to clear-net websites and services, the focus is on obscuring the source of traffic within decentralised, peer to peer protocols like Bitcoin, Lightning Network, Bittorrent, IPFS, and other similar, decentralised protocols.
+Indranet does not aim to compete with Tor for the use case of tunneling out to clear-net websites and services: the focus is on obscuring the source of traffic within decentralised, peer to peer protocols like Bitcoin, Lightning Network, Bittorrent, IPFS, and other similar, decentralised protocols.
 
 ## General Principles of Indranet Protocol
 
@@ -121,7 +121,7 @@ In Indranet there are two primary types of messages, one having a hexagonal shap
 **Proxy** messages are the standard for messages where the **client** is sending messages through a proxy, called the **exit**. Each of the colours shown in the diagram represents the message type. 
 
 - **Forward** messages are purely constructed by the **client**. They are to be carried forwards to a specified IP address, which will be the next hop in the path, or an **exit**.
-- **Return** messages require some work by the relay, an IP address, a cloaked public key, and a provided private key, the payload is separately encrypted, only known to the **client**. Their payloads are also **return** messages, except the one that arrives with the **client**.
+- **Return** messages require some work by the relay, an IP address, a cloaked public key, and a cipher, generated in three layers, the payload is separately encrypted, only known to the **client**. Their payloads are also **return** messages, except the one that arrives with the **client**.
 - **Exit** messages are a special type of message. The payload inside them is forwarded to an outside server, such as a Bitcoin or Lightning Network node, and when a reply is received, encrypted to a provided cipher, and is the payload in the reply, to be passed back via **return** messages.
 
 ### Ping
@@ -139,5 +139,35 @@ This increases the size of the anonymity set for these types of messages, and ca
 In the diagram above, we distinguish the **client** with blue, but to the nodes before them in the circuit, they appear the same as the one sending, so, **forward** relays see a forward message to **client** and **exit**, and **return** relays see return, and **return** hops see **exit** as return.
 
 All messages look the same as packets in transit, and have no common data between them to establish relationships other than timing. For this reason, the network dispatcher shuffles packets as it sends them out as well.
+
+## Client Path Generation Configuration
+
+A flexible configuration system for selecting paths and exit points is required to cover several different types of use case of obfuscated traffic paths.
+
+- Geo-location based exit and route hop selection:
+	- Users may need to avoid using exits within their own or some specified outside jurisdiction.
+	- Users may specifically want their exits to emerge in a specified geographical region.
+	- Users may want to specify, or avoid selecting intermediate paths in a list of specified geographical regions.
+- Selection of specific routers for exits for a given protocol:
+	- Using a user's own servers, this can be generalised to allow remote access to a server controlled by the user.
+	- A company may provide specific services that users can access at a given set of addresses, whether IP based or domain based.
+
+## Rendezvous Routing for Hidden Services
+
+In much the same way as for emerging directly at a selected router, rendezvous allows relay operators to provide services without revealing their location to the network. This functionality is fairly simple, it is a type of exit that requires the use of a specified public key used by the hidden service operator to negotiate routes to the rendezvous points, the router at the rendezvous essentially takes the packet received at the end point and instead of directly forwarding to another address, sends it in **return** messages to the hidden service's outbound rendezvous path.
+
+This functionality is slated for later implementation after direct, at-router and forwarded connections are implemented, as it requires the design of a protocol for the hidden service to request relaying and wait for **return** messages as they arrive.
+
+## Protocol Agnostic Transport
+
+Indranet does not assume the type of traffic used by a given service. It simply relays messages. Indranet uses a specially designed protocol including a retransmit operation, acknowledgements, and the like, that operate over UDP, providing reliability with a combination of retransmit requests and proactive Forward Error Correction.
+
+Thus, Indranet has both TCP and UDP listeners for clients and services, though it relays everything via UDP. The Socks5 proxy protocol scheme will also understand Indranet specific hidden service public key/address domains.
+
+## Protocol Savvy Transport
+
+In addition to providing standard TCP Socks5 based proxying and UDP proxying, Indranet will have a connection proxy protocol that exposes configuration for path finding according to the requests of the client. This will allow client-side control of connection parameters as mentioned in Client Path Generation Configuration at the application level.
+
+This functionality will be built after Socks5 and UDP transports are built.
 
 ##### End
