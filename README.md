@@ -1,13 +1,12 @@
 ![Indra Routing Protocol Logo](doc/logo.png)
 
-# Indra
+# Indranet
 
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://pkg.go.dev/github.com/Indra-Labs/indra)
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](http://unlicense.org/)
 [![](https://img.shields.io/badge/chat-telegram-blue)](https://t.me/indranet)
 
-Lightning powered distributed virtual private network with Bitcoin and Lightning
-integration.
+Lightning powered distributed virtual private network for anonymising traffic on decentralised protocol networks.
 
 [White Paper](doc/whitepaper.md)
 
@@ -22,60 +21,26 @@ First Amendment, by literally printing the source code on paper and then
 posting it, it became recognised that code, and encryption, are protected
 speech.
 
-With ubiquitous 128 bit AES encryption now in use by default, the content of
-messages is secure. However, the volume and endpoints of signals are still
+With ubiquitous 128 and 256 bit AES encryption now in use by default, the content of
+messages is secure. However, the volume of messages and endpoints of signals are still
 useful intelligence data, enabling state level actors to attack internet
 users and violate their privacy and threaten their safety.
 
 Protecting against this high level attack the main network currently doing
 this work is the [Tor network](https://torproject.org). However, this system
-has many flaws, and in recent times its centralised node registry has come
+has many flaws, and in recent times its centralised relay registry has come
 under sustained attack by DDoS (distributed denial of service) attacks.
 
-One of the big problems that I saw with this network is its weak network
+One of the big problems that with this network is its weak network
 effect. There is no incentive for anyone to run nodes on the network, and
 worse, the most common use case is tunneling back out of the network to
 anonymize location, is largely abused and led to a lot of automated block
 systems arising on many internet services to prevent this abuse.
 
-The use case that Indranet is first targeted at is protecting location
-origin data for Bitcoin transactions and Lightning Network channels. The
-increasing value of the currency makes it potentially profitable for the
-harvesting of geolocation data associated with targets in order to
-physically attack them and take their bitcoins. There has been more than a
-few such incidents already, and this is likely to trend upwards and make the
-Tor network an ongoing target to stop these transactions from working and/or
-unmask their locations and enable further escalation.
+Indranet does not set itself up to be a direct competitor for the Tor network. In its first few years of operation it will not have any mechanism for tunneling out of the network, and if it ever does, this will be user-contributed functionality, and not encouraged since any node providing exit becomes a target for retaliation when used to abuse such external systems.
 
-Lightning, in particular, currently half of the network capacity is routed
-through nodes running on Google Cloud and Amazon Web Services, forming a
-very large soft point for governments to harm the routing capacity of the
-network, impeding adoption, and potentially making a way for users to be
-robbed by state sized actors like the CIA, FSB, MI6 and similar
-organisations with zero accountability.
+Indranet's purpose is to form an interconnect layer for decentralised network protocols. It requires Lightning Network, as a primary requirement, to enable the payment for bandwidth, and thus it also requires connectivity to the Bitcoin network. Thus, all nodes, both relays and clients, will provide exit traffic for these two protocols, especially Bitcoin, which has a very low bandwidth requirement for simple transaction publishing.
 
-Thus, Indranet's main task is in fact creating a network of hidden services
-that are used by Bitcoin and Lightning node operators to perform
-transactions that will not be detectable or locatable by even large scale
-actors.
+Users will potentially be able to set up arbitrary exit services, but the core project will only target connectivity with decentralised peer to peer services. Secondarily, it will be possible for users to set up private, non advertised exit services, protected via certificate authentication, such as SSH and other remote access systems. This will serve to displace the use cases for Tor with SSH and web services.
 
-Thus, it is essential that routers on Indranet get paid for their work, in
-order to maintain their connection and equipment costs.
-
-Clients purchase session keys via a circuit of proxies using onion encoded packets
-and lightning payments which can then be used to spend bytes from their sessions in
-arbitrary, source routed paths exiting to protocols which are also deducted
-from the session bandwidth allocation.
-
-In this way, nodes are unable to correlate between payments through LN and
-the spending of their vouchers, allowing routers to be paid, and thus
-incentive to increase routing capacity through the ability to then pay for
-the infrastructure running the network.
-
-Indranet will use a programmable, client side onion construction
-scheme that will be designed to be configurable and programmable such that
-the uniform three hop pattern can be extended to include parallel multipath and
-dancing paths and make tradeoffs for latency, reliability and obfuscation
-for other purposes. In addition, it forms a universal routing layer that
-enables users to get around the currently complex and sometimes impossible
-restrictions on inbound traffic caused by IPv4 and Network Address Translation.
+Later, rendezvous access protocols will be added and enable the creation of arbitrary hidden service addresses such as web applications.

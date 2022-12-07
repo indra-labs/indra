@@ -13,7 +13,6 @@ import (
 	"github.com/Indra-Labs/indra/pkg/key/signer"
 	"github.com/Indra-Labs/indra/pkg/node"
 	"github.com/Indra-Labs/indra/pkg/nonce"
-	"github.com/Indra-Labs/indra/pkg/onion"
 	"github.com/Indra-Labs/indra/pkg/packet"
 	"github.com/Indra-Labs/indra/pkg/testutils"
 	"github.com/Indra-Labs/indra/pkg/transport"
@@ -73,7 +72,7 @@ func TestClient_GenerateCircuit(t *testing.T) {
 			keysets[i])
 		cl.Sessions = cl.Sessions.Add(sess)
 	}
-	var ci *onion.Circuit
+	var ci *Circuit
 	if ci, e = cl.GenerateReturn(); check(e) {
 		t.Error(e)
 		t.FailNow()

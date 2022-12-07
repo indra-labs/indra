@@ -1,6 +1,4 @@
-// Package onion provides a set of functions to manage creating onion layered
-// encryption for use with multi-hop Circuit protocol.
-package onion
+package client
 
 import (
 	"fmt"
@@ -40,7 +38,7 @@ func (c *Circuit) EncodeOnion(message []byte) (msg []byte, e error) {
 
 type Circuits []*Circuit
 
-func New(id nonce.ID, hops node.Nodes, exit int) (c *Circuit) {
+func NewCircuit(id nonce.ID, hops node.Nodes, exit int) (c *Circuit) {
 	c = &Circuit{id, hops, exit}
 	return
 }
