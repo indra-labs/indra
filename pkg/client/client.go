@@ -14,7 +14,6 @@ import (
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/node"
 	"github.com/Indra-Labs/indra/pkg/nonce"
-	"github.com/Indra-Labs/indra/pkg/onion"
 	log2 "github.com/cybriq/proc/pkg/log"
 	"github.com/cybriq/qu"
 )
@@ -32,7 +31,7 @@ type Client struct {
 	node.Nodes
 	*address.SendCache
 	*address.ReceiveCache
-	onion.Circuits
+	Circuits
 	Sessions
 	ifc.Transport
 	qu.C
@@ -81,7 +80,7 @@ const CircuitLen = 5
 const CircuitExit = 2
 const ReturnLen = 3
 
-func (c *Client) GeneratePath(length, exit int) (ci *onion.Circuit, e error) {
+func (c *Client) GeneratePath(length, exit int) (ci *Circuit, e error) {
 	if len(c.Sessions) < 5 {
 		e = fmt.Errorf("insufficient Sessions to form a circuit, "+
 			"5 required, %d available", len(c.Sessions))
@@ -100,7 +99,7 @@ func (c *Client) GeneratePath(length, exit int) (ci *onion.Circuit, e error) {
 	}
 	rand.Seed(int64(binary.LittleEndian.Uint64(randBytes)))
 	rand.Shuffle(nodesLen, func(i, j int) { s[i], s[j] = s[j], s[i] })
-	ci = &onion.Circuit{
+	ci = &Circuit{
 		ID:   nonce.NewID(),
 		Hops: s[:length],
 		Exit: exit,
@@ -109,10 +108,10 @@ func (c *Client) GeneratePath(length, exit int) (ci *onion.Circuit, e error) {
 	return
 }
 
-func (c *Client) GenerateCircuit() (ci *onion.Circuit, e error) {
+func (c *Client) GenerateCircuit() (ci *Circuit, e error) {
 	return c.GeneratePath(CircuitLen, CircuitExit)
 }
 
-func (c *Client) GenerateReturn() (ci *onion.Circuit, e error) {
+func (c *Client) GenerateReturn() (ci *Circuit, e error) {
 	return c.GeneratePath(ReturnLen, CircuitExit)
 }
