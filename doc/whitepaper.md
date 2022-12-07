@@ -121,7 +121,7 @@ In Indranet there are two primary types of messages, one having a hexagonal shap
 **Proxy** messages are the standard for messages where the **client** is sending messages through a proxy, called the **exit**. Each of the colours shown in the diagram represents the message type. 
 
 - **Forward** messages are purely constructed by the **client**. They are to be carried forwards to a specified IP address, which will be the next hop in the path, or an **exit**.
-- **Return** messages require some work by the relay, an IP address, a cloaked public key, and a provided private key, the payload is separately encrypted, only known to the **client**.
+- **Return** messages require some work by the relay, an IP address, a cloaked public key, and a provided private key, the payload is separately encrypted, only known to the **client**. Their payloads are also **return** messages, except the one that arrives with the **client**.
 - **Exit** messages are a special type of message. The payload inside them is forwarded to an outside server, such as a Bitcoin or Lightning Network node, and when a reply is received, encrypted to a provided cipher, and is the payload in the reply, to be passed back via **return** messages.
 
 ### Ping
@@ -136,6 +136,8 @@ Unlike Tor and other anonymising protocols, every client has the capacity to act
 
 This increases the size of the anonymity set for these types of messages, and can include more exit protocols if the user is using them, such as IPFS and other decentralised protocols. It also makes it relatively simple for users to create small, low volume channels for Lightning Network, enabling direct, self-custodial LN payments.
 
-In the diagram above, we distinguish the **client** with blue, but to the nodes before them in the circuit, they appear the same as the one sending, so, **forward** relays see a forward message to **client**, and **return** relays see return.
+In the diagram above, we distinguish the **client** with blue, but to the nodes before them in the circuit, they appear the same as the one sending, so, **forward** relays see a forward message to **client** and **exit**, and **return** relays see return, and **return** hops see **exit** as return.
+
+All messages look the same as packets in transit, and have no common data between them to establish relationships other than timing. For this reason, the network dispatcher shuffles packets as it sends them out as well.
 
 ##### End
