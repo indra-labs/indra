@@ -1,11 +1,9 @@
-![webdroplets](logo.png)
-
 # Indranet Protocol White Paper
 
-Onion routed distributed virtual private network protocol with
-anonymised payments to create scaling incentives.
+![logo](logo.png)
 
-[David Vennik](mailto:david@cybriq.systems) September - December 2022
+#### Onion routed distributed virtual private network protocol with anonymised payments to create scaling incentives.
+> [David Vennik](mailto:david@cybriq.systems) September - December 2022
 
 ## Abstract
 
@@ -121,7 +119,7 @@ In Indranet there are two primary types of messages, one having a hexagonal shap
 **Proxy** messages are the standard for messages where the **client** is sending messages through a proxy, called the **exit**. Each of the colours shown in the diagram represents the message type. 
 
 - **Forward** messages are purely constructed by the **client**. They are to be carried forwards to a specified IP address, which will be the next hop in the path, or an **exit**.
-- **Return** messages require some work by the relay, an IP address, a cloaked public key, and a cipher, generated in three layers, the payload is separately encrypted, only known to the **client**. Their payloads are also **return** messages, except the one that arrives with the **client**.
+- **Return** messages consist of a set of layered headers, the first being hop 4, with hop 5 encrypted with hop four's cipher, and inside hop 4 (after), the client's ciphered message, encrypted with hop four's cipher. A composite cipher is provided after this, which is the XOR of 4, 5 and client ciphers, and when the exit receives its reply it uses this key to encrypt, and as the layers are unwrapped in the 4th, 5th and return to the client, the encryption is reversed. An important distinction that makes return onions recognizable is they use a public key (33 bytes) instead of a signature in the header. The authentication in the message will be provided by the protocol that created the underlying message, each node simply ensures the message has integrity protection and forward error correction.
 - **Exit** messages are a special type of message. The payload inside them is forwarded to an outside server, such as a Bitcoin or Lightning Network node, and when a reply is received, encrypted to a provided cipher, and is the payload in the reply, to be passed back via **return** messages.
 
 ### Ping
@@ -139,6 +137,20 @@ This increases the size of the anonymity set for these types of messages, and ca
 In the diagram above, we distinguish the **client** with blue, but to the nodes before them in the circuit, they appear the same as the one sending, so, **forward** relays see a forward message to **client** and **exit**, and **return** relays see return, and **return** hops see **exit** as return.
 
 All messages look the same as packets in transit, and have no common data between them to establish relationships other than timing. For this reason, the network dispatcher shuffles packets as it sends them out as well.
+
+## Relay to Relay Traffic
+
+Messages are segmented into 1382 byte segments and reassembled by relays when they receive them. The relays return an acknowledgement being a signature on the hash of the packet data (which includes the checksum prefix), and these are dispatched in a stream after shuffling by the sending relay, as well as interleaving messages passing to the common next hop when this happens. 
+
+The relay receives the batch of packets, and when it receives enough pieces to reassemble it, according to the error correction data in the packets, and succeeds, reads the message instructions and does as is requested, either a **forward** or **return** message, the difference being described previously. 
+
+### Relay to Relay Encryption
+
+In order to further secure traffic, relays in their chatter with each other provide private relay-to-relay keys to use for message encryption, which are rolled over at least once a day. 
+
+### Dynamic error correction adjustment for Retransmit Avoidance
+
+Based on the conditions of the paths between two relays, by the ratio of packet loss the nodes adjust the error correction to use in order to maintain a margin above the current loss rate, built using a moving average of successful deliveries versus failed.
 
 ## Client Path Generation Configuration
 
@@ -170,4 +182,6 @@ In addition to providing standard TCP Socks5 based proxying and UDP proxying, In
 
 This functionality will be built after Socks5 and UDP transports are built.
 
-##### End
+-----
+
+# Fin
