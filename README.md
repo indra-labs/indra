@@ -44,5 +44,3 @@ Indranet's purpose is to form an interconnect layer for decentralised network pr
 Users will potentially be able to set up arbitrary exit services, but the core project will only target connectivity with decentralised peer to peer services. Secondarily, it will be possible for users to set up private, non advertised exit services, protected via certificate authentication, such as SSH and other remote access systems. This will serve to displace the use cases for Tor with SSH and web services.
 
 Later, rendezvous access protocols will be added and enable the creation of arbitrary hidden service addresses such as web applications.
-
-# fin
