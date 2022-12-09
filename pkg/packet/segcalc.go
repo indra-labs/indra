@@ -1,16 +1,9 @@
-package segcalc
+package packet
 
 import (
 	"fmt"
 
-	"github.com/Indra-Labs/indra"
-	log2 "github.com/cybriq/proc/pkg/log"
 	"github.com/templexxx/reedsolomon"
-)
-
-var (
-	log   = log2.GetLogger(indra.PathBase)
-	check = log.E.Chk
 )
 
 type Segment struct {
