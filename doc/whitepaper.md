@@ -196,7 +196,7 @@ A flexible configuration system for selecting paths and exit points is required 
 
 In much the same way as for emerging directly at a selected router, rendezvous allows relay operators to provide services without revealing their location to the network. This functionality is fairly simple, it is a type of exit that requires the use of a specified public key used by the hidden service operator to negotiate routes to the rendezvous points, the router at the rendezvous essentially takes the packet received at the end point and instead of directly forwarding to another address, sends it in **return** messages to the hidden service's outbound rendezvous path.
 
-This functionality is slated for later implementation after direct, at-router and forwarded connections are implemented, as it requires the design of a protocol for the hidden service to request relaying and wait for **return** messages as they arrive.
+This functionality is slated for later implementation after direct, at-router and forwarded connections are implemented, as it requires the design of a protocol for the hidden service to request relaying and wait for **return** messages as they arrive. This is a relatively complex addition to the protocol, but it is important to add it later as this enables both forward **and** backward privacy, whereas the main purpose of the protocol is focused on providing forward privacy, and the exit services are advertised by nodes associated with an address.
 
 ## Protocol Agnostic Transport
 
@@ -209,6 +209,12 @@ Thus, Indranet has both TCP and UDP listeners for clients and services, though i
 In addition to providing standard TCP Socks5 based proxying and UDP proxying, Indranet will have a connection proxy protocol that exposes configuration for path finding according to the requests of the client. This will allow client-side control of connection parameters as mentioned in Client Path Generation Configuration at the application level.
 
 This functionality will be built after Socks5 and UDP transports are built.
+
+## Private Relay Services
+
+To enable users to use Indranet as a transport for accessing private servers, deployments using the `Neutrino` SPV bitcoin node and `lnd` can configure a public key certificate that they can use with a private key, in a similar way to SSH certificate encryption, to enable routing from any client to their specified node identified with its IP address, where there is a relay running at that IP address with the public key registered as enabling access to forward connections to a defined loopback address where the hidden service is running.
+
+This will enable SSH, FTP, and similar services for users to be accessed via Indra, while preventing third parties from identifying the origin of access to the server. This will also enable things like remote desktop access, but it does not include rendezvous routing.
 
 -----
 
