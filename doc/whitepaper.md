@@ -150,9 +150,15 @@ Then the client sends a payment request message to the first hop for the amount 
 
 ### Zero Fee Relaying
 
-It's important to specify here also, that nodes do relay packets without associated sessions, but the processing is deprioritised. Relays have two buckets for traffic, one for paid and one for free. The free bucket contents are expired oldest first when the capacity is exceeded, and it is emptied in a ratio of something like 1 to 100 versus the paid bucket.
+It's important to specify here also, that nodes do relay packets without associated sessions, but the processing is deprioritised. Relays have two buckets for traffic, one for paid and one for free. The free bucket contents are expired oldest first when the capacity is exceeded, and it is emptied in a ratio of something like 1 to 100 versus the paid bucket. This scheme is more or less the same as used in Bitcoin for free relaying, and abuse of it leads to the IP address being blacklisted for a time.
 
 Thus, this is used for the forward only onion for providing a return cipher, as well as the two hops of return messages that carry a purchased session key pair back to the client. In other words, initial payments to establish accounts with relays can take several seconds, and in the bootstrap phase clients will carry out a number of purchase processes in parallel, and once sufficient sessions are acquired (4), subsequent purchases can be performed over partially paid forward and return paths. Once a node has 10 sessions acquired, it can buy new ones with only the new candidate relay subjecting the purchase to the free tier bucket.
+
+In order to mitigate attempts to flood this bucket with nonsense messages, when it fills up, it can eliminate free tier messages with the highest frequencies that do not come from other relays. These will be clients, or malicious relay nodes attempting to DoS the free tier bucket. Relays running correctly will not send out excessive amounts of free tier traffic in accordance with their scheduling. The bucket will be cleaned of any messages originating from the same IP address and leave only the newest from the IP.
+
+There is no reason for free tier messages to have more than one originating from not another relay, as they simply won't be processed, and fall off the end of the queue. So, the periodic flushing of the free tier bucket will clear out any message from the same IP address as newer messages until the bucket reaches its low water mark.
+
+IP addresses that appear at too high a frequency in the purge will increase ban score and once it passes a threshold the relay will simply drop any packet arriving from this IP until the ban lifts. This will not impact honest clients and ensures that their bootstrapping traffic achieves an initial session pool required to always be in the paid bucket.
 
 ## Relay to Relay Traffic
 
