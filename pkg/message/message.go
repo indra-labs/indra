@@ -1,4 +1,4 @@
-// Package packet provides a standard message binary serialised data format and
+// Package message provides a standard message binary serialised data format and
 // message segmentation scheme which includes address.Sender cloaked public
 // key and address.Receiver private keys for generating a shared cipher and applying
 // to messages/message segments.
@@ -135,9 +135,8 @@ func Encode(ep EP) (pkt []byte, e error) {
 //
 // After this, if the matching private key to the cloaked address returned is
 // found, it is combined with the public key to generate the cipher and the
-// entire packet should then be processed with ciph.Encipher (sans signature)
-// using the block cipher thus created from the shared secret, and the Decode
-// function will then decode a Message.
+// entire packet should then be decrypted, and the Decode function will then
+// decode a Message.
 func GetKeys(d []byte) (to address.Cloaked, from *pub.Key, e error) {
 	pktLen := len(d)
 	if pktLen < Overhead {
