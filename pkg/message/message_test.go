@@ -31,6 +31,7 @@ func TestEncode_Decode(t *testing.T) {
 	addr := address.FromPubKey(rP)
 	var pkt []byte
 	params := EP{
+		Type:   ForwardMessage,
 		To:     addr,
 		From:   sp,
 		Data:   payload,

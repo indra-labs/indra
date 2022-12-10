@@ -13,7 +13,6 @@ import (
 	"github.com/Indra-Labs/indra/pkg/key/address"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
-	"github.com/Indra-Labs/indra/pkg/key/sig"
 	"github.com/Indra-Labs/indra/pkg/nonce"
 	"github.com/Indra-Labs/indra/pkg/sha256"
 	"github.com/Indra-Labs/indra/pkg/slice"
@@ -29,6 +28,9 @@ var (
 // container with parameters for Reed Solomon Forward Error Correction and
 // contains previously seen cipher keys so the correspondent can free them.
 type Message struct {
+	// Type is the type of message, Forward or Return, and for future
+	// expansion can also carry a code to specify a different cipher mode.
+	Type byte
 	// Seq specifies the segment number of the message, 4 bytes long.
 	Seq uint16
 	// Length is the number of segments in the batch
@@ -48,7 +50,7 @@ func (p *Message) GetOverhead() int {
 // Overhead is the base overhead on a packet, use GetOverhead to add any extra
 // as found in a Message.
 const Overhead = slice.Uint16Len +
-	slice.Uint32Len + 1 + SigEnd
+	slice.Uint32Len + 1 + KeyEnd
 
 // Packets is a slice of pointers to packets.
 type Packets []*Message
@@ -66,6 +68,7 @@ func (p Packets) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 // been seen at time of constructing this packet that can now be discarded as
 // they will not be used to generate a cipher again.
 type EP struct {
+	Type   byte
 	To     *address.Sender
 	From   *prv.Key
 	Length int
@@ -80,9 +83,13 @@ func (ep EP) GetOverhead() int {
 
 const (
 	CheckEnd   = 4
-	NonceEnd   = CheckEnd + nonce.IVLen
+	TypeEnd    = CheckEnd + 1
+	NonceEnd   = TypeEnd + nonce.IVLen
 	AddressEnd = NonceEnd + address.Len
-	SigEnd     = AddressEnd + sig.Len
+	KeyEnd     = AddressEnd + pub.KeyLen
+
+	ForwardMessage byte = iota
+	ReturnMessage
 )
 
 // Encode creates a Message, encrypts the payload using the given private from
@@ -102,22 +109,20 @@ func Encode(ep EP) (pkt []byte, e error) {
 	pkt = slice.Cat(
 		// f.Nonce[:],    // 16 bytes \
 		// f.To[:],       // 8 bytes   |
-		make([]byte, SigEnd),
+		make([]byte, KeyEnd),
 		Length, // 4 bytes
 		ep.Data,
 	)
 	// Encrypt the encrypted part of the data.
-	ciph.Encipher(blk, nonc, pkt[SigEnd:])
+	ciph.Encipher(blk, nonc, pkt[KeyEnd:])
 	// Sign the packet.
-	var s sig.Bytes
-	hash := sha256.Single(pkt[SigEnd:])
-	if s, e = sig.Sign(ep.From, hash); check(e) {
-		return
-	}
+	var pubKey pub.Bytes
+	pubKey = pub.Derive(ep.From).ToBytes()
+	pkt[CheckEnd] = ep.Type
 	// Copy nonce, address, check and signature over top of the header.
-	copy(pkt[CheckEnd:NonceEnd], nonc)
+	copy(pkt[TypeEnd:NonceEnd], nonc)
 	copy(pkt[NonceEnd:AddressEnd], to)
-	copy(pkt[AddressEnd:SigEnd], s)
+	copy(pkt[AddressEnd:KeyEnd], pubKey)
 	// last bot not least, the packet check header, which protects the
 	// entire packet.
 	checkBytes := sha256.Single(pkt[CheckEnd:])[:CheckEnd]
@@ -145,18 +150,15 @@ func GetKeys(d []byte) (to address.Cloaked, from *pub.Key, e error) {
 	}
 	to = d[NonceEnd:AddressEnd]
 	// split off the signature and recover the public key
-	var s sig.Bytes
 	var chek []byte
 	chek = d[:CheckEnd]
-	s = d[AddressEnd:SigEnd]
 	checkHash := sha256.Single(d[CheckEnd:])[:4]
 	if string(chek) != string(checkHash[:4]) {
 		e = fmt.Errorf("check failed: got '%v', expected '%v'",
 			chek, checkHash[:4])
 		return
 	}
-	hash := sha256.Single(d[SigEnd:])
-	if from, e = s.Recover(hash); check(e) {
+	if from, e = pub.FromBytes(d[AddressEnd:KeyEnd]); check(e) {
 		return
 	}
 	return
@@ -178,17 +180,17 @@ func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Message, e error) {
 	// Trim off the signature and hash, we already have the key and have
 	// validated the checksum.
 
-	f = &Message{}
+	f = &Message{Type: d[CheckEnd]}
 	// copy the nonce
 	nonc := make(nonce.IV, nonce.IVLen)
-	copy(nonc, d[CheckEnd:NonceEnd])
+	copy(nonc, d[TypeEnd:NonceEnd])
 	var blk cipher.Block
 	if blk, e = ciph.GetBlock(to, from); check(e) {
 		return
 	}
 	// This decrypts the rest of the packet, which is encrypted for
 	// security.
-	data := d[SigEnd:]
+	data := d[KeyEnd:]
 	ciph.Encipher(blk, nonc, data)
 	var length slice.Size32
 	length, data = slice.Cut(data, slice.Uint32Len)
