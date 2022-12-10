@@ -46,7 +46,7 @@ func TestSplitJoin(t *testing.T) {
 	for i := range splitted {
 		var pkt *Packet
 		var from *pub.Key
-		if _, from, e = GetKeys(splitted[i]); check(e) {
+		if from, e = GetKeys(splitted[i]); check(e) {
 			log.I.Ln(i)
 			continue
 		}
@@ -202,7 +202,7 @@ func TestSplitJoinFEC(t *testing.T) {
 			for s := range splitted {
 				var pkt *Packet
 				var from *pub.Key
-				if _, from, e = GetKeys(
+				if from, e = GetKeys(
 					splitted[s]); e != nil {
 					// we are puncturing, they some will
 					// fail to decode
