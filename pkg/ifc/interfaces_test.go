@@ -17,7 +17,7 @@ func TestMessage_ToU64Slice(t *testing.T) {
 	log.I.S(msg1)
 	uMsg1 := msg1.ToU64Slice()
 	umsg1 := uMsg1.ToMessage()
-	log.I.S(umsg1)
+	_ = umsg1
 }
 
 func TestU64Slice_XOR(t *testing.T) {
