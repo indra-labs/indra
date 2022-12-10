@@ -11,9 +11,9 @@ import (
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/key/signer"
+	"github.com/Indra-Labs/indra/pkg/message"
 	"github.com/Indra-Labs/indra/pkg/node"
 	"github.com/Indra-Labs/indra/pkg/nonce"
-	"github.com/Indra-Labs/indra/pkg/packet"
 	"github.com/Indra-Labs/indra/pkg/testutils"
 	"github.com/Indra-Labs/indra/pkg/transport"
 	"github.com/Indra-Labs/indra/pkg/wire"
@@ -91,19 +91,17 @@ func TestClient_GenerateCircuit(t *testing.T) {
 			Message: lastMsg,
 		}
 		rmm := rm.Serialize()
-		ep := packet.EP{
+		ep := message.EP{
 			To: address.
 				FromPubKey(ci.Hops[len(ci.Hops)-i-1].Key),
 			From:   cl.Sessions[i].KeyRoller.Next(),
-			Parity: 0,
-			Seq:    0,
 			Length: len(rmm),
 			Data:   rmm,
 		}
-		lastMsg, e = packet.Encode(ep)
+		lastMsg, e = message.Encode(ep)
 		var to address.Cloaked
 		var from *pub.Key
-		if to, from, e = packet.GetKeys(lastMsg); check(e) {
+		if to, from, e = message.GetKeys(lastMsg); check(e) {
 			t.Error(e)
 			t.FailNow()
 		}
@@ -116,7 +114,7 @@ func TestClient_GenerateCircuit(t *testing.T) {
 		var to address.Cloaked
 		var from *pub.Key
 		// log.I.S("unwrapping", c, lastMsg)
-		if to, from, e = packet.GetKeys(lastMsg); check(e) {
+		if to, from, e = message.GetKeys(lastMsg); check(e) {
 			t.Error(e)
 			t.FailNow()
 		}
@@ -147,8 +145,10 @@ func TestClient_GenerateCircuit(t *testing.T) {
 			log.I.Ln("did not find matching address.Receiver")
 			t.FailNow()
 		}
-		var f *packet.Packet
-		if f, e = packet.Decode(lastMsg, from, match.Key); check(e) {
+		var f *message.Message
+		if f, e = message.Decode(lastMsg, from,
+			match.Key); check(e) {
+
 			t.Error(e)
 			t.FailNow()
 		}

@@ -41,17 +41,12 @@ func TestEncode_Decode(t *testing.T) {
 	if pkt, e = Encode(params); check(e) {
 		t.Error(e)
 	}
-	var to address.Cloaked
 	var from *pub.Key
-	if to, from, e = GetKeys(pkt); check(e) {
+	if from, e = GetKeys(pkt); check(e) {
 		t.Error(e)
 	}
 	if !sP.ToBytes().Equals(from.ToBytes()) {
 		t.Error(e)
-	}
-	rk := address.NewReceiver(rp)
-	if !rk.Match(to) {
-		t.Error("cloaked key incorrect")
 	}
 	var f *Packet
 	if f, e = Decode(pkt, from, rp); check(e) {

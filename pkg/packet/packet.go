@@ -81,11 +81,10 @@ func (ep EP) GetOverhead() int {
 }
 
 const (
-	CheckEnd   = 4
-	TypeEnd    = CheckEnd + 1
-	NonceEnd   = TypeEnd + nonce.IVLen
-	AddressEnd = NonceEnd + address.Len
-	SigEnd     = AddressEnd + sig.Len
+	CheckEnd = 4
+	TypeEnd  = CheckEnd + 1
+	NonceEnd = TypeEnd + nonce.IVLen
+	SigEnd   = NonceEnd + sig.Len
 )
 
 // Encode creates a Packet, encrypts the payload using the given private from
@@ -97,8 +96,8 @@ func Encode(ep EP) (pkt []byte, e error) {
 		return
 	}
 	nonc := nonce.New()
-	var to address.Cloaked
-	to, e = ep.To.GetCloak()
+	// var to address.Cloaked
+	// to, e = ep.To.GetCloak()
 	parity := []byte{byte(ep.Parity)}
 	Seq := slice.NewUint16()
 	slice.EncodeUint16(Seq, ep.Seq)
@@ -124,8 +123,7 @@ func Encode(ep EP) (pkt []byte, e error) {
 	}
 	// Copy nonce, address, check and signature over top of the header.
 	copy(pkt[TypeEnd:NonceEnd], nonc)
-	copy(pkt[NonceEnd:AddressEnd], to)
-	copy(pkt[AddressEnd:SigEnd], s)
+	copy(pkt[NonceEnd:SigEnd], s)
 	// last bot not least, the packet check header, which protects the
 	// entire packet.
 	checkBytes := sha256.Single(pkt[CheckEnd:])[:CheckEnd]
@@ -141,7 +139,7 @@ func Encode(ep EP) (pkt []byte, e error) {
 // entire packet should then be processed with ciph.Encipher (sans signature)
 // using the block cipher thus created from the shared secret, and the Decode
 // function will then decode a Packet.
-func GetKeys(d []byte) (to address.Cloaked, from *pub.Key, e error) {
+func GetKeys(d []byte) (from *pub.Key, e error) {
 	pktLen := len(d)
 	if pktLen < Overhead {
 		// If this isn't checked the slice operations later can
@@ -151,12 +149,11 @@ func GetKeys(d []byte) (to address.Cloaked, from *pub.Key, e error) {
 		log.E.Ln(e)
 		return
 	}
-	to = d[NonceEnd:AddressEnd]
 	// split off the signature and recover the public key
 	var s sig.Bytes
 	var chek []byte
 	chek = d[:CheckEnd]
-	s = d[AddressEnd:SigEnd]
+	s = d[NonceEnd:SigEnd]
 	checkHash := sha256.Single(d[CheckEnd:])[:4]
 	if string(chek) != string(checkHash[:4]) {
 		e = fmt.Errorf("check failed: got '%v', expected '%v'",
