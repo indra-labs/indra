@@ -82,7 +82,8 @@ func (ep EP) GetOverhead() int {
 
 const (
 	CheckEnd   = 4
-	NonceEnd   = CheckEnd + nonce.IVLen
+	TypeEnd    = CheckEnd + 1
+	NonceEnd   = TypeEnd + nonce.IVLen
 	AddressEnd = NonceEnd + address.Len
 	SigEnd     = AddressEnd + sig.Len
 )
@@ -122,7 +123,7 @@ func Encode(ep EP) (pkt []byte, e error) {
 		return
 	}
 	// Copy nonce, address, check and signature over top of the header.
-	copy(pkt[CheckEnd:NonceEnd], nonc)
+	copy(pkt[TypeEnd:NonceEnd], nonc)
 	copy(pkt[NonceEnd:AddressEnd], to)
 	copy(pkt[AddressEnd:SigEnd], s)
 	// last bot not least, the packet check header, which protects the
@@ -188,7 +189,7 @@ func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Packet, e error) {
 	f = &Packet{}
 	// copy the nonce
 	nonc := make(nonce.IV, nonce.IVLen)
-	copy(nonc, d[CheckEnd:NonceEnd])
+	copy(nonc, d[TypeEnd:NonceEnd])
 	var blk cipher.Block
 	if blk, e = ciph.GetBlock(to, from); check(e) {
 		return
@@ -205,6 +206,5 @@ func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Packet, e error) {
 	f.Length = uint32(slice.DecodeUint32(length))
 	f.Parity, data = data[0], data[1:]
 	f.Data = data
-	// log.I.Ln("decode length", len(data), "length prefix", f.Length)
 	return
 }
