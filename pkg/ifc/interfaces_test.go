@@ -3,6 +3,7 @@ package ifc
 import (
 	"testing"
 
+	"github.com/Indra-Labs/indra/pkg/sha256"
 	"github.com/Indra-Labs/indra/pkg/testutils"
 )
 
@@ -26,7 +27,7 @@ func TestU64Slice_XOR(t *testing.T) {
 		t.Error(e)
 		t.FailNow()
 	}
-	log.I.S(msg1)
+	hash1 := sha256.Single(msg1)
 	uMsg1 := msg1.ToU64Slice()
 	var msg2 Message
 	if msg2, _, e = testutils.GenerateTestMessage(33); check(e) {
@@ -46,5 +47,9 @@ func TestU64Slice_XOR(t *testing.T) {
 	uMsg1.XOR(uMsg3)
 	uMsg1.XOR(uMsg2)
 	uMsg1.XOR(uMsg3)
-	log.I.S(uMsg1.ToMessage())
+	hash2 := sha256.Single(uMsg1.ToMessage())
+	if !hash1.Equals(hash2) {
+		t.Error("XOR failed")
+		t.FailNow()
+	}
 }

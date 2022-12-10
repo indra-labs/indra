@@ -22,8 +22,19 @@ type Message []byte
 
 func ToMessage(b []byte) (msg Message) { return b }
 func (m Message) ToBytes() []byte      { return m }
+func (m Message) Copy() (o Message) {
+	o = make(Message, len(m))
+	copy(o, m)
+	return
+}
 
 type U64Slice []uint64
+
+func (u U64Slice) Copy() (o U64Slice) {
+	o = make(U64Slice, len(u))
+	copy(o, u)
+	return
+}
 
 // ToU64Slice converts the message with zero allocations if the slice capacity
 // was already 8 plus the modulus of the length and 8, otherwise this function
@@ -53,13 +64,8 @@ func (m Message) ToU64Slice() (u U64Slice) {
 	header := (*reflect.SliceHeader)(unsafe.Pointer(&u))
 	// then we point its memory location to the extended byte slice data
 	header.Data = (*reflect.SliceHeader)(unsafe.Pointer(&m)).Data
-	// lastly, change the element length
+	// Update the element length and capacity
 	header.Len = uLen
-	// vh := reflect.ValueOf(header)
-	// vh.SetLen(len(m) / 8)
-	// This safely pins the total capacity to the length, regardless of what
-	// it was before. Simply setting the value could cause the GC confusion.
-	// vh.SetCap(header.Len)
 	header.Cap = uLen
 	// store the original byte length
 	u = append(u, mLen)
@@ -79,7 +85,6 @@ func (u U64Slice) XOR(v U64Slice) {
 }
 
 func (u U64Slice) ToMessage() (m Message) {
-	// log.I.S(u)
 	// length is encoded into the last element
 	mLen := int(u[len(u)-1])
 	m = make(Message, 0, 0)
@@ -93,11 +98,6 @@ func (u U64Slice) ToMessage() (m Message) {
 	header.Data = (*reflect.SliceHeader)(unsafe.Pointer(&u)).Data
 	// lastly, change the element length
 	header.Len = mLen
-	// vh := reflect.ValueOf(header)
-	// vh.SetLen(len(m) / 8)
-	// This safely pins the total capacity to the length, regardless of what
-	// it was before. Simply setting the value could cause the GC confusion.
-	// vh.SetCap(header.Len)
 	header.Cap = mLen
 	return m
 }
