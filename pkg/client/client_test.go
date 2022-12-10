@@ -86,7 +86,7 @@ func TestClient_GenerateCircuit(t *testing.T) {
 	// log.I.Ln(len(ci.Hops))
 	for i := range ci.Hops {
 		// progress through the hops in reverse
-		rm := &wire.ReturnMessage{
+		rm := &wire.Forward{
 			IP:      ci.Hops[len(ci.Hops)-i-1].IP,
 			Message: lastMsg,
 		}
@@ -152,7 +152,7 @@ func TestClient_GenerateCircuit(t *testing.T) {
 			t.Error(e)
 			t.FailNow()
 		}
-		var rm *wire.ReturnMessage
+		var rm *wire.Forward
 		var msg interface{}
 		if msg, e = wire.Deserialize(f.Data); check(e) {
 			t.Error(e)
