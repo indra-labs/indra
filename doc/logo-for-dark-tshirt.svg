@@ -36,9 +36,9 @@
      inkscape:cx="100.6689"
      inkscape:cy="213.04348"
      inkscape:window-width="2560"
-     inkscape:window-height="1382"
+     inkscape:window-height="1414"
      inkscape:window-x="1920"
-     inkscape:window-y="32"
+     inkscape:window-y="0"
      inkscape:window-maximized="1"
      inkscape:current-layer="g8657" />
   <defs
@@ -272,14 +272,14 @@
       </g>
       <text
          xml:space="preserve"
-         style="font-size:25.9831px;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono';fill:#000000;fill-opacity:0.33;stroke-width:2.41929;stroke-linecap:round;stroke-linejoin:round"
+         style="font-size:25.9831px;font-family:'Noto Sans';-inkscape-font-specification:'Ubuntu Mono';fill:#ffffff;fill-opacity:1;stroke-width:1.08944911;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none"
          x="45.033955"
          y="170.28909"
          id="text53474"
          transform="scale(0.97755829,1.0229569)"><tspan
            sodipodi:role="line"
            id="tspan53472"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Noto Sans';-inkscape-font-specification:'Noto Sans';fill:#ffffff;fill-opacity:1;stroke-width:2.41929"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Noto Sans';-inkscape-font-specification:'Noto Sans';fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:1.08944911;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
            x="45.033955"
            y="170.28909">INDRANET</tspan></text>
     </g>
