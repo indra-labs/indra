@@ -8,31 +8,30 @@ import (
 var Expected = []string{
 	`
 	Segments{
-		Segment{ DStart: 0, DEnd: 192, PEnd: 256, SLen: 163, Last: 163},
-		Segment{ DStart: 256, DEnd: 448, PEnd: 512, SLen: 163, Last: 163},
-		Segment{ DStart: 512, DEnd: 704, PEnd: 768, SLen: 163, Last: 163},
-		Segment{ DStart: 768, DEnd: 960, PEnd: 1024, SLen: 163, Last: 163},
-		Segment{ DStart: 1024, DEnd: 1216, PEnd: 1280, SLen: 163, Last: 163},
-		Segment{ DStart: 1280, DEnd: 1472, PEnd: 1536, SLen: 163, Last: 163},
-		Segment{ DStart: 1536, DEnd: 1728, PEnd: 1792, SLen: 163, Last: 163},
-		Segment{ DStart: 1792, DEnd: 1984, PEnd: 2048, SLen: 163, Last: 163},
-		Segment{ DStart: 2048, DEnd: 2121, PEnd: 2145, SLen: 163, Last: 151},
+		Segment{ DStart: 0, DEnd: 192, PEnd: 256, SLen: 195, Last: 195},
+		Segment{ DStart: 256, DEnd: 448, PEnd: 512, SLen: 195, Last: 195},
+		Segment{ DStart: 512, DEnd: 704, PEnd: 768, SLen: 195, Last: 195},
+		Segment{ DStart: 768, DEnd: 960, PEnd: 1024, SLen: 195, Last: 195},
+		Segment{ DStart: 1024, DEnd: 1216, PEnd: 1280, SLen: 195, Last: 195},
+		Segment{ DStart: 1280, DEnd: 1472, PEnd: 1536, SLen: 195, Last: 195},
+		Segment{ DStart: 1536, DEnd: 1728, PEnd: 1792, SLen: 195, Last: 195},
+		Segment{ DStart: 1792, DEnd: 1793, PEnd: 1794, SLen: 195, Last: 175},
 	}
 `,
 	`
 	Segments{
-		Segment{ DStart: 0, DEnd: 131, PEnd: 131, SLen: 4003, Last: 3898},
+		Segment{ DStart: 0, DEnd: 130, PEnd: 130, SLen: 4035, Last: 3773},
 	}
 `,
 	`
 	Segments{
-		Segment{ DStart: 0, DEnd: 128, PEnd: 256, SLen: 4003, Last: 4003},
-		Segment{ DStart: 256, DEnd: 259, PEnd: 262, SLen: 4003, Last: 3898},
+		Segment{ DStart: 0, DEnd: 128, PEnd: 256, SLen: 4035, Last: 4035},
+		Segment{ DStart: 256, DEnd: 258, PEnd: 260, SLen: 4035, Last: 3773},
 	}
 `,
 	`
 	Segments{
-		Segment{ DStart: 0, DEnd: 66, PEnd: 66, SLen: 4003, Last: 1949},
+		Segment{ DStart: 0, DEnd: 65, PEnd: 65, SLen: 4035, Last: 3904},
 	}
 `,
 }

@@ -13,7 +13,6 @@ import (
 	"github.com/Indra-Labs/indra/pkg/key/address"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
-	"github.com/Indra-Labs/indra/pkg/key/sig"
 	"github.com/Indra-Labs/indra/pkg/nonce"
 	"github.com/Indra-Labs/indra/pkg/sha256"
 	"github.com/Indra-Labs/indra/pkg/slice"
@@ -48,7 +47,7 @@ func (p *Packet) GetOverhead() int {
 // Overhead is the base overhead on a packet, use GetOverhead to add any extra
 // as found in a Packet.
 const Overhead = slice.Uint16Len +
-	slice.Uint32Len + 1 + SigEnd
+	slice.Uint32Len + 1 + KeyEnd
 
 // Packets is a slice of pointers to packets.
 type Packets []*Packet
@@ -84,7 +83,7 @@ const (
 	CheckEnd = 4
 	TypeEnd  = CheckEnd + 1
 	NonceEnd = TypeEnd + nonce.IVLen
-	SigEnd   = NonceEnd + sig.Len
+	KeyEnd   = NonceEnd + pub.KeyLen
 )
 
 // Encode creates a Packet, encrypts the payload using the given private from
@@ -107,23 +106,25 @@ func Encode(ep EP) (pkt []byte, e error) {
 	pkt = slice.Cat(
 		// f.Nonce[:],    // 16 bytes \
 		// f.To[:],       // 8 bytes   |
-		make([]byte, SigEnd),
+		make([]byte, KeyEnd),
 		Seq,    // 2 bytes
 		Length, // 4 bytes
 		parity, // 1 byte
 		ep.Data,
 	)
 	// Encrypt the encrypted part of the data.
-	ciph.Encipher(blk, nonc, pkt[SigEnd:])
-	// Sign the packet.
-	var s sig.Bytes
-	hash := sha256.Single(pkt[SigEnd:])
-	if s, e = sig.Sign(ep.From, hash); check(e) {
-		return
-	}
+	ciph.Encipher(blk, nonc, pkt[KeyEnd:])
+	// Append pubkey used for encryption key derivation.
+	k := pub.Derive(ep.From).ToBytes()
+	// // Sign the packet.
+	// var s sig.Bytes
+	// hash := sha256.Single(pkt[KeyEnd:])
+	// if s, e = sig.Sign(ep.From, hash); check(e) {
+	// 	return
+	// }
 	// Copy nonce, address, check and signature over top of the header.
 	copy(pkt[TypeEnd:NonceEnd], nonc)
-	copy(pkt[NonceEnd:SigEnd], s)
+	copy(pkt[NonceEnd:KeyEnd], k)
 	// last bot not least, the packet check header, which protects the
 	// entire packet.
 	checkBytes := sha256.Single(pkt[CheckEnd:])[:CheckEnd]
@@ -136,9 +137,8 @@ func Encode(ep EP) (pkt []byte, e error) {
 //
 // After this, if the matching private key to the cloaked address returned is
 // found, it is combined with the public key to generate the cipher and the
-// entire packet should then be processed with ciph.Encipher (sans signature)
-// using the block cipher thus created from the shared secret, and the Decode
-// function will then decode a Packet.
+// entire packet should then be decrypted, and the Decode function will then
+// decode a Message.
 func GetKeys(d []byte) (from *pub.Key, e error) {
 	pktLen := len(d)
 	if pktLen < Overhead {
@@ -150,18 +150,21 @@ func GetKeys(d []byte) (from *pub.Key, e error) {
 		return
 	}
 	// split off the signature and recover the public key
-	var s sig.Bytes
+	var k pub.Bytes
 	var chek []byte
 	chek = d[:CheckEnd]
-	s = d[NonceEnd:SigEnd]
+	k = d[NonceEnd:KeyEnd]
 	checkHash := sha256.Single(d[CheckEnd:])[:4]
 	if string(chek) != string(checkHash[:4]) {
 		e = fmt.Errorf("check failed: got '%v', expected '%v'",
 			chek, checkHash[:4])
 		return
 	}
-	hash := sha256.Single(d[SigEnd:])
-	if from, e = s.Recover(hash); check(e) {
+	// hash := sha256.Single(d[KeyEnd:])
+	// if from, e = k.Recover(hash); check(e) {
+	// 	return
+	// }
+	if from, e = pub.FromBytes(k); check(e) {
 		return
 	}
 	return
@@ -193,7 +196,7 @@ func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Packet, e error) {
 	}
 	// This decrypts the rest of the packet, which is encrypted for
 	// security.
-	data := d[SigEnd:]
+	data := d[KeyEnd:]
 	ciph.Encipher(blk, nonc, data)
 	var seq slice.Size16
 	var length slice.Size32
