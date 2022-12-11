@@ -72,7 +72,7 @@ func BenchmarkKeySet_Next_Sign(b *testing.B) {
 		b.FailNow()
 	}
 	var msg []byte
-	const msgLen = 1472 - 4 - sig.Len
+	const msgLen = 1382 - 4 - sig.Len
 	msg, _, e = GenerateTestMessage(msgLen)
 	for n := 0; n < b.N; n++ {
 		k := ks.Next()

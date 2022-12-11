@@ -23,8 +23,8 @@ func TestAddress(t *testing.T) {
 	}
 	rand.Seed(time.Now().Unix())
 	flip := rand.Intn(Len)
-	broken := make(Cloaked, Len)
-	copy(broken, cloaked)
+	var broken Cloaked
+	copy(broken[:], cloaked[:])
 	broken[flip] = ^broken[flip]
 	if r.Match(broken) {
 		t.Error("recognised incorrectly broken cloaked address")

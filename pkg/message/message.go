@@ -97,7 +97,7 @@ const (
 // the signature to the end.
 func Encode(ep EP) (pkt []byte, e error) {
 	var blk cipher.Block
-	if blk, e = ciph.GetBlock(ep.From, ep.To.Key); check(e) {
+	if blk = ciph.GetBlock(ep.From, ep.To.Key); check(e) {
 		return
 	}
 	nonc := nonce.New()
@@ -120,13 +120,13 @@ func Encode(ep EP) (pkt []byte, e error) {
 	pubKey = pub.Derive(ep.From).ToBytes()
 	pkt[CheckEnd] = ep.Type
 	// Copy nonce, address, check and signature over top of the header.
-	copy(pkt[TypeEnd:NonceEnd], nonc)
-	copy(pkt[NonceEnd:AddressEnd], to)
-	copy(pkt[AddressEnd:KeyEnd], pubKey)
+	copy(pkt[TypeEnd:NonceEnd], nonc[:])
+	copy(pkt[NonceEnd:AddressEnd], to[:])
+	copy(pkt[AddressEnd:KeyEnd], pubKey[:])
 	// last bot not least, the packet check header, which protects the
 	// entire packet.
-	checkBytes := sha256.Single(pkt[CheckEnd:])[:CheckEnd]
-	copy(pkt[:CheckEnd], checkBytes)
+	checkBytes := sha256.Single(pkt[CheckEnd:])
+	copy(pkt[:CheckEnd], checkBytes[:CheckEnd])
 	return
 }
 
@@ -147,11 +147,11 @@ func GetKeys(d []byte) (to address.Cloaked, from *pub.Key, e error) {
 		log.E.Ln(e)
 		return
 	}
-	to = d[NonceEnd:AddressEnd]
+	copy(to[:], d[NonceEnd:AddressEnd])
 	// split off the signature and recover the public key
 	var chek []byte
 	chek = d[:CheckEnd]
-	checkHash := sha256.Single(d[CheckEnd:])[:4]
+	checkHash := sha256.Single(d[CheckEnd:])
 	if string(chek) != string(checkHash[:4]) {
 		e = fmt.Errorf("check failed: got '%v', expected '%v'",
 			chek, checkHash[:4])
@@ -181,10 +181,10 @@ func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Message, e error) {
 
 	f = &Message{Type: d[CheckEnd]}
 	// copy the nonce
-	nonc := make(nonce.IV, nonce.IVLen)
-	copy(nonc, d[TypeEnd:NonceEnd])
+	var nonc nonce.IV
+	copy(nonc[:], d[TypeEnd:NonceEnd])
 	var blk cipher.Block
-	if blk, e = ciph.GetBlock(to, from); check(e) {
+	if blk = ciph.GetBlock(to, from); check(e) {
 		return
 	}
 	// This decrypts the rest of the packet, which is encrypted for

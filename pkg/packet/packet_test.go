@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"crypto/rand"
 	"errors"
 	"testing"
@@ -53,7 +52,7 @@ func TestEncode_Decode(t *testing.T) {
 		t.Error(e)
 	}
 	dHash := sha256.Single(f.Data)
-	if bytes.Compare(pHash, dHash) != 0 {
+	if pHash != dHash {
 		t.Error(errors.New("encode/decode unsuccessful"))
 	}
 }

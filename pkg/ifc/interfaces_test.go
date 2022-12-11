@@ -1,6 +1,7 @@
 package ifc
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/Indra-Labs/indra/pkg/sha256"
@@ -14,10 +15,12 @@ func TestMessage_ToU64Slice(t *testing.T) {
 		t.Error(e)
 		t.FailNow()
 	}
-	log.I.S(msg1)
 	uMsg1 := msg1.ToU64Slice()
 	umsg1 := uMsg1.ToMessage()
-	_ = umsg1
+	if bytes.Compare(msg1, umsg1) != 0 {
+		t.Error("conversion to U64Slice and back to []byte failed")
+		t.FailNow()
+	}
 }
 
 func TestU64Slice_XOR(t *testing.T) {
@@ -48,7 +51,7 @@ func TestU64Slice_XOR(t *testing.T) {
 	uMsg1.XOR(uMsg2)
 	uMsg1.XOR(uMsg3)
 	hash2 := sha256.Single(uMsg1.ToMessage())
-	if !hash1.Equals(hash2) {
+	if hash1 != hash2 {
 		t.Error("XOR failed")
 		t.FailNow()
 	}

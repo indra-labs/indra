@@ -4,52 +4,39 @@
 package sha256
 
 import (
-	"fmt"
-	"unsafe"
-
+	"github.com/Indra-Labs/indra"
+	log2 "github.com/cybriq/proc/pkg/log"
 	"github.com/minio/sha256-simd"
 )
 
 const (
-	Len          = 32
-	errLengthStr = "invalid hash length of %d bytes, must be %d"
+	Len = 32
 )
 
-// Hash is just a byte type with a nice length validation and zeroing function.
-type Hash []byte
+var (
+	log   = log2.GetLogger(indra.PathBase)
+	check = log.E.Chk
+)
 
-func ErrorLength(l int) error { return fmt.Errorf(errLengthStr, l, Len) }
+// Hash is just a 256-bit hash.
+type Hash [32]byte
 
 // New creates a correctly sized slice for a Hash.
-func New() Hash { return make(Hash, Len) }
+func New() Hash { return Hash{} }
 
 // Double runs a standard double SHA256 hash and does all the slicing for you.
-func Double(b []byte) Hash { return Single(Single(b)) }
+func Double(b []byte) Hash {
+	h := Single(b)
+	return Single(h[:])
+}
 
 // Single runs a standard SHA256 hash and does all the slicing for you.
-func Single(b []byte) Hash { return FromHash(sha256.Sum256(b)) }
+func Single(b []byte) Hash { return sha256.Sum256(b) }
 
-// Valid checks the hash value is the correct length.
-func (h Hash) Valid() (e error) {
-	if len(h) != Len {
-		e = ErrorLength(len(h))
-	}
-	return
-}
+func zero() []byte { return make([]byte, Len) }
 
-func (h Hash) Equals(h2 Hash) bool {
-	// Ensure lengths are correct.
-	if len(h) == Len && len(h2) == Len {
-		return *(*string)(unsafe.Pointer(&h)) ==
-			*(*string)(unsafe.Pointer(&h2))
-	}
-	return false
-}
-
-// this is made as a string to be immutable. It can be changed with unsafe ofc.
-var zero = string(New())
+// Zero copies a cleanly initialised empty slice over top of the provided Hash.
+func Zero(h Hash) { copy(h[:], zero()) }
 
 // Zero out the values in the hash. Hashes can be used as secrets.
-func (h Hash) Zero() { copy(h, zero) }
-
-func FromHash(b [32]byte) []byte { return b[:] }
+func (h Hash) Zero() { Zero(h) }

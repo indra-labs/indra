@@ -13,7 +13,6 @@ package address
 
 import (
 	"crypto/rand"
-	"unsafe"
 
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
@@ -27,10 +26,6 @@ var (
 	check = log.E.Chk
 )
 
-// Cloaked is the blinded hash of a public key used to conceal a message
-// public key from attackers.
-type Cloaked []byte
-
 const BlindLen = 3
 const HashLen = 5
 const Len = BlindLen + HashLen
@@ -40,6 +35,13 @@ func (c Cloaked) CopyBlinder() (blinder []byte) {
 	copy(blinder, c[:BlindLen])
 	return
 }
+
+// Cloaked is the blinded hash of a public key used to conceal a message
+// public key from attackers.
+type Cloaked [Len]byte
+
+type Blinder [BlindLen]byte
+type Hash [HashLen]byte
 
 // Sender is the raw bytes of a public key received in the metadata of a
 // message.
@@ -56,7 +58,7 @@ func FromPubKey(k *pub.Key) (s *Sender) {
 // FromBytes creates a Sender from a received public key bytes.
 func FromBytes(pkb pub.Bytes) (s *Sender, e error) {
 	var pk *pub.Key
-	pk, e = pub.FromBytes(pkb)
+	pk, e = pub.FromBytes(pkb[:])
 	s = &Sender{Key: pk}
 	return
 }
@@ -70,20 +72,19 @@ func FromBytes(pkb pub.Bytes) (s *Sender, e error) {
 // source public key it relates to is hidden to any who don't have this public
 // key, which only the parties know.
 func (s Sender) GetCloak() (c Cloaked, e error) {
-	blinder := make([]byte, BlindLen)
+	var blinder Blinder
 	var n int
-	if n, e = rand.Read(blinder); check(e) && n != BlindLen {
+	if n, e = rand.Read(blinder[:]); check(e) && n != BlindLen {
 		return
 	}
 	c = Cloak(blinder, s.Key.ToBytes())
 	return
 }
 
-func Cloak(blinder []byte, key pub.Bytes) (c Cloaked) {
-	b := make([]byte, BlindLen)
-	copy(b, blinder)
-	h := sha256.Single(append(b, key...))[:HashLen]
-	c = append(b, h[:HashLen]...)
+func Cloak(b Blinder, key pub.Bytes) (c Cloaked) {
+	h := sha256.Single(append(b[:], key[:]...))
+	copy(c[:BlindLen], b[:BlindLen])
+	copy(c[HashLen:], h[:HashLen])
 	return
 }
 
@@ -112,11 +113,8 @@ func NewReceiver(k *prv.Key) (a *Receiver) {
 // match the source public key so the packet address field is only recognisable
 // to the intended recipient.
 func (a *Receiver) Match(r Cloaked) bool {
-	if len(r) != Len {
-		return false
-	}
-	hash := Cloak(r[:BlindLen], a.Bytes)
-	return *(*string)(unsafe.Pointer(&r)) ==
-		*(*string)(unsafe.Pointer(&hash))
-
+	var b Blinder
+	copy(b[:], r[:BlindLen])
+	hash := Cloak(b, a.Bytes)
+	return r == hash
 }

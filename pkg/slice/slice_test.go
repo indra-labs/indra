@@ -1,7 +1,6 @@
 package slice
 
 import (
-	"bytes"
 	"crypto/rand"
 	"errors"
 	"testing"
@@ -21,7 +20,7 @@ func TestSize24(t *testing.T) {
 
 func TestSegment(t *testing.T) {
 	msgSize := 2 << 17
-	segSize := 1472
+	segSize := 1382
 	var msg []byte
 	var hash sha256.Hash
 	var e error
@@ -31,7 +30,7 @@ func TestSegment(t *testing.T) {
 	segs := Segment(msg, segSize)
 	pkt := Cat(segs...)[:len(msg)]
 	hash2 := sha256.Single(pkt)
-	if bytes.Compare(hash, hash2) != 0 {
+	if hash != hash2 {
 		t.Error(errors.New("message did not decode" +
 			" correctly"))
 	}
