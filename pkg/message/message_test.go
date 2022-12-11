@@ -29,14 +29,8 @@ func TestEncode_Decode(t *testing.T) {
 	}
 	addr := address.FromPubKey(rP)
 	var pkt []byte
-	params := EP{
-		Type:   ForwardMessage,
-		To:     addr,
-		From:   sp,
-		Data:   payload,
-		Length: msgSize,
-	}
-	if pkt, e = Encode(params); check(e) {
+
+	if pkt, e = Encode(addr, sp, payload); check(e) {
 		t.Error(e)
 	}
 	var to address.Cloaked
