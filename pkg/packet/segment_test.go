@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"errors"
 	"math/rand"
 	"testing"
@@ -15,7 +14,7 @@ import (
 
 func TestSplitJoin(t *testing.T) {
 	msgSize := 2 << 19
-	segSize := 1472
+	segSize := 1382
 	var e error
 	var payload []byte
 	var pHash sha256.Hash
@@ -69,7 +68,7 @@ func TestSplitJoin(t *testing.T) {
 		t.Error(e)
 	}
 	rHash := sha256.Single(msg)
-	if bytes.Compare(pHash, rHash) != 0 {
+	if pHash != rHash {
 		t.Error(errors.New("message did not decode correctly"))
 	}
 }
@@ -228,7 +227,7 @@ func TestSplitJoinFEC(t *testing.T) {
 				t.FailNow()
 			}
 			rHash := sha256.Single(msg)
-			if bytes.Compare(pHash, rHash) != 0 {
+			if pHash != rHash {
 				t.Error(errors.New("message did not decode" +
 					" correctly"))
 			}

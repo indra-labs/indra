@@ -18,11 +18,10 @@ var (
 
 const IVLen = aes.BlockSize
 
-type IV []byte
+type IV [IVLen]byte
 
 // New reads a nonce from a cryptographically secure random number source
 func New() (n IV) {
-	n = make(IV, IVLen)
 	if _, e := rand.Read(n[:]); check(e) {
 	}
 	return

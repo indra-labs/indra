@@ -29,9 +29,9 @@ const Len = 65
 // Bytes is an ECDSA BIP62 formatted compact signature which allows the recovery
 // of the public key from the signature. This allows messages to avoid adding
 // extra bytes to also specify the public key of the signer.
-type Bytes []byte
+type Bytes [Len]byte
 
-func New() Bytes { return make(Bytes, Len) }
+func New() Bytes { return Bytes{} }
 
 // IsValid checks that the signature is the correct length. This avoids needing
 // to copy into a static array. Static arrays save on this code because they
@@ -50,10 +50,8 @@ func FromBytes(sig Bytes) (e error) { return sig.IsValid() }
 
 // Sign produces an ECDSA BIP62 compact signature.
 func Sign(prv *prv.Key, hash sha256.Hash) (sig Bytes, e error) {
-	if check(hash.Valid()) {
-		return
-	}
-	sig = ecdsa.SignCompact((*secp256k1.PrivateKey)(prv), hash, true)
+	copy(sig[:],
+		ecdsa.SignCompact((*secp256k1.PrivateKey)(prv), hash[:], true))
 	return
 }
 
@@ -63,7 +61,7 @@ func (sig Bytes) Recover(hash sha256.Hash) (p *pub.Key, e error) {
 	var pk *secp256k1.PublicKey
 	// We are only using compressed keys, so we can ignore the compressed
 	// bool.
-	if pk, _, e = ecdsa.RecoverCompact(sig, hash); !check(e) {
+	if pk, _, e = ecdsa.RecoverCompact(sig[:], hash[:]); !check(e) {
 		p = (*pub.Key)(pk)
 	}
 	return

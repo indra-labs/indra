@@ -19,7 +19,7 @@ const (
 
 // Key is a private key.
 type Key secp256k1.PrivateKey
-type Bytes []byte
+type Bytes [KeyLen]byte
 
 // GenerateKey a private key.
 func GenerateKey() (prv *Key, e error) {
@@ -32,7 +32,7 @@ func GenerateKey() (prv *Key, e error) {
 
 // PrivkeyFromBytes converts a byte slice into a private key.
 func PrivkeyFromBytes(b Bytes) *Key {
-	return (*Key)(secp256k1.PrivKeyFromBytes(b))
+	return (*Key)(secp256k1.PrivKeyFromBytes(b[:]))
 }
 
 // Zero out a private key to prevent key scraping from memory.
@@ -40,11 +40,13 @@ func (prv *Key) Zero() { (*secp256k1.PrivateKey)(prv).Zero() }
 
 // ToBytes returns the Bytes serialized form.
 func (prv *Key) ToBytes() (b Bytes) {
-	return (*secp256k1.PrivateKey)(prv).Serialize()[:KeyLen]
+	br := (*secp256k1.PrivateKey)(prv).Serialize()
+	copy(b[:], br[:KeyLen])
+	return
 }
 
 // this is made as a string to be immutable. It can be changed with unsafe ofc.
 var zero = string(make([]byte, KeyLen))
 
 // Zero zeroes out a private key in serial form.
-func (pb Bytes) Zero() { copy(pb, zero[:]) }
+func (pb Bytes) Zero() { copy(pb[:], zero[:]) }

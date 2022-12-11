@@ -5,7 +5,6 @@ package pub
 
 import (
 	"encoding/hex"
-	"unsafe"
 
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
@@ -18,17 +17,17 @@ var (
 	check = log.E.Chk
 )
 
-type (
-	// Key is a public key.
-	Key secp256k1.PublicKey
-	// Bytes is the serialised form of a public key.
-	Bytes []byte
-)
-
 const (
 	// KeyLen is the length of the serialized key. It is an ECDSA compressed
 	// key.
 	KeyLen = secp256k1.PubKeyBytesLenCompressed
+)
+
+type (
+	// Key is a public key.
+	Key secp256k1.PublicKey
+	// Bytes is the serialised form of a public key.
+	Bytes [KeyLen]byte
 )
 
 // Derive generates a public key from the prv.Key.
@@ -50,24 +49,17 @@ func FromBytes(b []byte) (pub *Key, e error) {
 // ToBytes returns the compressed 33 byte form of the pubkey as used in wire and
 // storage forms.
 func (pub *Key) ToBytes() (p Bytes) {
-	return (*secp256k1.PublicKey)(pub).SerializeCompressed()
+	copy(p[:], (*secp256k1.PublicKey)(pub).SerializeCompressed())
+	return
 }
-
-const HRP = "indra"
 
 func (pub *Key) ToHex() (s string, e error) {
 	b := pub.ToBytes()
-	s = hex.EncodeToString(b)
+	s = hex.EncodeToString(b[:])
 	return
 }
-func (pb Bytes) Equals(qb Bytes) bool {
-	// Ensure lengths are correct.
-	if len(pb) == KeyLen && len(qb) == KeyLen {
-		return *(*string)(unsafe.Pointer(&pb)) ==
-			*(*string)(unsafe.Pointer(&qb))
-	}
-	return false
-}
+
+func (pb Bytes) Equals(qb Bytes) bool { return pb == qb }
 
 func (pub *Key) ToPublicKey() *secp256k1.PublicKey {
 	return (*secp256k1.PublicKey)(pub)
