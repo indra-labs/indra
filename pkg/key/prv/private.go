@@ -42,11 +42,15 @@ func (prv *Key) Zero() { (*secp256k1.PrivateKey)(prv).Zero() }
 func (prv *Key) ToBytes() (b Bytes) {
 	br := (*secp256k1.PrivateKey)(prv).Serialize()
 	copy(b[:], br[:KeyLen])
+	// zero the original
+	copy(br, zero())
 	return
 }
 
-// this is made as a string to be immutable. It can be changed with unsafe ofc.
-var zero = string(make([]byte, KeyLen))
+func zero() []byte {
+	z := Bytes{}
+	return z[:]
+}
 
 // Zero zeroes out a private key in serial form.
-func (pb Bytes) Zero() { copy(pb[:], zero[:]) }
+func (pb Bytes) Zero() { copy(pb[:], zero()) }

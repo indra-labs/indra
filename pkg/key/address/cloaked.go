@@ -30,9 +30,8 @@ const BlindLen = 3
 const HashLen = 5
 const Len = BlindLen + HashLen
 
-func (c Cloaked) CopyBlinder() (blinder []byte) {
-	blinder = make([]byte, BlindLen)
-	copy(blinder, c[:BlindLen])
+func (c Cloaked) CopyBlinder() (blinder Blinder) {
+	copy(blinder[:], c[:BlindLen])
 	return
 }
 
