@@ -46,7 +46,7 @@ func Serialize(message interface{}) (b ifc.Message, e error) {
 	case Purchase:
 
 	case Session:
-		
+
 	default:
 		e = fmt.Errorf("unknown type %v", reflect.TypeOf(m))
 	}
