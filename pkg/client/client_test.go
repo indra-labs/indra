@@ -90,7 +90,7 @@ func TestClient_GenerateCircuit(t *testing.T) {
 			IP:      ci.Hops[len(ci.Hops)-i-1].IP,
 			Message: lastMsg,
 		}
-		rmm := rm.Serialize()
+		rmm := rm.Encode()
 		ep := message.EP{
 			To: address.
 				FromPubKey(ci.Hops[len(ci.Hops)-i-1].Key),
@@ -158,7 +158,7 @@ func TestClient_GenerateCircuit(t *testing.T) {
 			t.Error(e)
 			t.FailNow()
 		}
-		if rm, e = wire.ToReturnMessage(msg); check(e) {
+		if rm, e = wire.ToForward(msg); check(e) {
 			t.Error(e)
 			t.FailNow()
 		}
