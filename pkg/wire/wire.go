@@ -1,11 +1,11 @@
 package wire
 
 import (
-	"crypto/cipher"
 	"net"
 
 	"github.com/Indra-Labs/indra/pkg/ifc"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
+	"github.com/Indra-Labs/indra/pkg/message"
 	"github.com/Indra-Labs/indra/pkg/nonce"
 )
 
@@ -14,10 +14,6 @@ import (
 const MagicLen = 3
 
 type MessageMagic string
-
-func GetMagic(s string) (mm MessageMagic) {
-	return MessageMagic(s[:MagicLen])
-}
 
 type Message interface {
 	Encode() (o ifc.Message)
@@ -34,17 +30,18 @@ var (
 
 // Forward is just an IP address and a wrapper for another message.
 type Forward struct {
-	cipher.Block
+	*message.Addresses
 	net.IP
 	Message
 }
 
-func (rm *Forward) Encode() (o ifc.Message) {
-	ipLen := len(rm.IP)
-	msg := rm.Message.Encode()
+func (fw *Forward) Encode() (o ifc.Message) {
+	ipLen := len(fw.IP)
+	msg := fw.Message.Encode()
+	msg, _ = message.Encode(fw.To, fw.From, msg)
 	fwd := make([]byte, ipLen+1)
 	fwd[0] = byte(ipLen)
-	copy(fwd[1:], rm.IP)
+	copy(fwd[1:], fw.IP)
 	o = append(append(ifc.Message(ForwardMagic), fwd...), msg...)
 	return
 
@@ -57,7 +54,7 @@ func DecodeForward(msg ifc.Message) (rm *Forward, e error) {
 // Exit messages are the layer of a message after two Forward packets that
 // provides an exit address and
 type Exit struct {
-	cipher.Block
+	*message.Addresses
 	// Port identifies the type of service as well as being the port used
 	// by the service to be relayed to. Notice there is no IP address, this
 	// is because Indranet only forwards to exits of decentralised services
@@ -74,7 +71,9 @@ type Exit struct {
 	Message
 }
 
-func (rm *Exit) Encode() (o ifc.Message) {
+func (ex *Exit) Encode() (o ifc.Message) {
+	msg := ex.Message.Encode()
+	msg, _ = message.Encode(ex.To, ex.From, msg)
 	return
 }
 
@@ -87,14 +86,16 @@ func DecodeExit(msg ifc.Message) (rm *Exit, e error) {
 // encrypting the first 16 bytes of the header and if one of the magic bytes is
 // not found
 type Return struct {
-	cipher.Block
+	*message.Addresses
 	nonce.ID
 	// IP is the address of the next relay in the return leg of a circuit.
 	net.IP
 	Message
 }
 
-func (rm *Return) Encode() (o ifc.Message) {
+func (rt *Return) Encode() (o ifc.Message) {
+	msg := rt.Message.Encode()
+	msg, _ = message.Encode(rt.To, rt.From, msg)
 	return
 }
 
@@ -107,13 +108,15 @@ func DecodeReturn(msg ifc.Message) (rm *Return, e error) {
 // of Forward messages, ensuring that the node cannot discover where this comes
 // from but allows a Return public key to be provided for a Purchase.
 type Cipher struct {
-	cipher.Block
+	*message.Addresses
 	nonce.ID
 	Key pub.Bytes
 	Forward
 }
 
-func (rm *Cipher) Encode() (o ifc.Message) {
+func (ci *Cipher) Encode() (o ifc.Message) {
+	msg := ci.Forward.Encode()
+	msg, _ = message.Encode(ci.To, ci.From, msg)
 	return
 }
 
@@ -130,13 +133,15 @@ func DecodeCipher(msg ifc.Message) (rm *Cipher, e error) {
 // forwards through two hops to the router that will issue the Session, plus two
 // more Return layers for carrying the Session back to the client.
 type Purchase struct {
-	cipher.Block
+	*message.Addresses
 	Bytes   int
 	Receipt ifc.Message
 	Return
 }
 
-func (rm *Purchase) Encode() (o ifc.Message) {
+func (pr *Purchase) Encode() (o ifc.Message) {
+	msg := pr.Return.Encode()
+	msg, _ = message.Encode(pr.To, pr.From, msg)
 	return
 }
 
@@ -151,16 +156,28 @@ func DecodePurchase(msg ifc.Message) (rm *Purchase, e error) {
 // relay that issues a Session, ensuring that the Exit cannot see the inner
 // layers of the Return messages.
 type Session struct {
-	cipher.Block
+	*message.Addresses
 	ForwardKey pub.Bytes
 	ReturnKey  pub.Bytes
 	Return
 }
 
-func (rm *Session) Encode() (o ifc.Message) {
+func (se *Session) Encode() (o ifc.Message) {
+	msg := se.Return.Encode()
+	msg, _ = message.Encode(se.To, se.From, msg)
 	return
 }
 
 func DecodeSession(msg ifc.Message) (rm *Session, e error) {
+	return
+}
+
+type Raw struct {
+	*message.Addresses
+	Bytes []byte
+}
+
+func (r Raw) Encode() (o ifc.Message) {
+	o, _ = message.Encode(r.To, r.From, r.Bytes)
 	return
 }

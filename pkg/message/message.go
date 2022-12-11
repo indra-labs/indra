@@ -28,9 +28,6 @@ var (
 // container with parameters for Reed Solomon Forward Error Correction and
 // contains previously seen cipher keys so the correspondent can free them.
 type Message struct {
-	// Type is the type of message, Forward or Return, and for future
-	// expansion can also carry a code to specify a different cipher mode.
-	Type byte
 	// Seq specifies the segment number of the message, 4 bytes long.
 	Seq uint16
 	// Length is the number of segments in the batch
@@ -52,75 +49,52 @@ func (p *Message) GetOverhead() int {
 const Overhead = slice.Uint16Len +
 	slice.Uint32Len + 1 + KeyEnd
 
-// Packets is a slice of pointers to packets.
-type Packets []*Message
-
-// sort.Interface implementation.
-
-func (p Packets) Len() int           { return len(p) }
-func (p Packets) Less(i, j int) bool { return p[i].Seq < p[j].Seq }
-func (p Packets) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
-
-// EP defines the parameters for creating a (split) packet given a set of keys,
-// cipher, and data. To, From, Blk and Data are required, Parity is optional,
-// set it to define a level of Reed Solomon redundancy on the split packets.
-// Seen should be populated to send a signal to the other side of keys that have
-// been seen at time of constructing this packet that can now be discarded as
-// they will not be used to generate a cipher again.
-type EP struct {
-	Type   byte
-	To     *address.Sender
-	From   *prv.Key
-	Length int
-	Data   []byte
+type Addresses struct {
+	To   *address.Sender
+	From *prv.Key
 }
 
-// GetOverhead returns the amount of the message that will not be part of the
-// payload.
-func (ep EP) GetOverhead() int {
-	return Overhead
+func Address(To *address.Sender, From *prv.Key) *Addresses {
+	return &Addresses{To: To, From: From}
 }
 
 const (
 	CheckEnd   = 4
-	TypeEnd    = CheckEnd + 1
-	NonceEnd   = TypeEnd + nonce.IVLen
+	NonceEnd   = CheckEnd + nonce.IVLen
 	AddressEnd = NonceEnd + address.Len
 	KeyEnd     = AddressEnd + pub.KeyLen
-
-	ForwardMessage byte = iota
-	ReturnMessage
 )
 
 // Encode creates a Message, encrypts the payload using the given private from
 // key and the public to key, serializes the form, signs the bytes and appends
 // the signature to the end.
-func Encode(ep EP) (pkt []byte, e error) {
+func Encode(To *address.Sender, From *prv.Key, d []byte) (pkt []byte,
+	e error) {
+
 	var blk cipher.Block
-	if blk = ciph.GetBlock(ep.From, ep.To.Key); check(e) {
+	if blk = ciph.GetBlock(From, To.Key); check(e) {
 		return
 	}
 	nonc := nonce.New()
 	var to address.Cloaked
-	to, e = ep.To.GetCloak()
+	to, e = To.GetCloak()
 	Length := slice.NewUint32()
-	slice.EncodeUint32(Length, ep.Length)
+	slice.EncodeUint32(Length, len(d))
 	// Concatenate the message pieces together into a single byte slice.
 	pkt = slice.Cat(
 		// f.Nonce[:],    // 16 bytes \
 		// f.To[:],       // 8 bytes   |
 		make([]byte, KeyEnd),
 		Length, // 4 bytes
-		ep.Data,
+		d,
 	)
 	// Encrypt the encrypted part of the data.
 	ciph.Encipher(blk, nonc, pkt[KeyEnd:])
 	// Sign the packet.
 	var pubKey pub.Bytes
-	pubKey = pub.Derive(ep.From).ToBytes()
-	pkt[CheckEnd] = ep.Type
+	pubKey = pub.Derive(From).ToBytes()
 	// Copy nonce, address, check and signature over top of the header.
-	copy(pkt[TypeEnd:NonceEnd], nonc[:])
+	copy(pkt[CheckEnd:NonceEnd], nonc[:])
 	copy(pkt[NonceEnd:AddressEnd], to[:])
 	copy(pkt[AddressEnd:KeyEnd], pubKey[:])
 	// last bot not least, the packet check header, which protects the
@@ -179,10 +153,10 @@ func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Message, e error) {
 	// Trim off the signature and hash, we already have the key and have
 	// validated the checksum.
 
-	f = &Message{Type: d[CheckEnd]}
+	f = &Message{}
 	// copy the nonce
 	var nonc nonce.IV
-	copy(nonc[:], d[TypeEnd:NonceEnd])
+	copy(nonc[:], d[CheckEnd:NonceEnd])
 	var blk cipher.Block
 	if blk = ciph.GetBlock(to, from); check(e) {
 		return
