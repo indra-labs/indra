@@ -49,7 +49,8 @@ func FromBytes(b []byte) (pub *Key, e error) {
 // ToBytes returns the compressed 33 byte form of the pubkey as used in wire and
 // storage forms.
 func (pub *Key) ToBytes() (p Bytes) {
-	copy(p[:], (*secp256k1.PublicKey)(pub).SerializeCompressed())
+	b := (*secp256k1.PublicKey)(pub).SerializeCompressed()
+	copy(p[:], b)
 	return
 }
 

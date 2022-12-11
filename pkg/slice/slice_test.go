@@ -1,11 +1,11 @@
 package slice
 
 import (
-	"crypto/rand"
 	"errors"
 	"testing"
 
 	"github.com/Indra-Labs/indra/pkg/sha256"
+	"github.com/Indra-Labs/indra/pkg/testutils"
 )
 
 func TestSize24(t *testing.T) {
@@ -24,7 +24,7 @@ func TestSegment(t *testing.T) {
 	var msg []byte
 	var hash sha256.Hash
 	var e error
-	if msg, hash, e = GenerateTestMessage(msgSize); check(e) {
+	if msg, hash, e = testutils.GenerateTestMessage(msgSize); check(e) {
 		t.Error(e)
 	}
 	segs := Segment(msg, segSize)
@@ -35,15 +35,4 @@ func TestSegment(t *testing.T) {
 			" correctly"))
 	}
 
-}
-
-func GenerateTestMessage(msgSize int) (msg []byte, hash sha256.Hash, e error) {
-	msg = make([]byte, msgSize)
-	var n int
-	if n, e = rand.Read(msg); check(e) && n != msgSize {
-		return
-	}
-	copy(msg, "payload")
-	hash = sha256.Single(msg)
-	return
 }
