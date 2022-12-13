@@ -17,7 +17,7 @@ func TestAddress(t *testing.T) {
 	r := NewReceiver(sendPriv)
 	s := FromPubKey(r.Pub)
 	var cloaked Cloaked
-	cloaked, e = s.GetCloak()
+	cloaked = s.GetCloak()
 	if !r.Match(cloaked) {
 		t.Error("failed to recognise cloaked address")
 	}

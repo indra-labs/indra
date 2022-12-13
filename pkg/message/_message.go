@@ -38,17 +38,6 @@ type Message struct {
 	Data []byte
 }
 
-// GetOverhead returns the packet frame overhead given the settings found in the
-// packet.
-func (p *Message) GetOverhead() int {
-	return Overhead
-}
-
-// Overhead is the base overhead on a packet, use GetOverhead to add any extra
-// as found in a Message.
-const Overhead = slice.Uint16Len +
-	slice.Uint32Len + 1 + KeyEnd
-
 type Addresses struct {
 	To   *address.Sender
 	From *prv.Key
@@ -77,7 +66,7 @@ func Encode(To *address.Sender, From *prv.Key, d []byte) (pkt []byte,
 	}
 	nonc := nonce.New()
 	var to address.Cloaked
-	to, e = To.GetCloak()
+	to = To.GetCloak()
 	Length := slice.NewUint32()
 	slice.EncodeUint32(Length, len(d))
 	// Concatenate the message pieces together into a single byte slice.
@@ -105,7 +94,7 @@ func Encode(To *address.Sender, From *prv.Key, d []byte) (pkt []byte,
 }
 
 // GetKeys returns the To field of the message in order, checks the packet
-// checksum and recovers the public key signing it.
+// checksum and recovers the public key.
 //
 // After this, if the matching private key to the cloaked address returned is
 // found, it is combined with the public key to generate the cipher and the

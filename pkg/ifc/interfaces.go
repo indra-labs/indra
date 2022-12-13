@@ -5,6 +5,7 @@ import (
 	"unsafe"
 
 	"github.com/Indra-Labs/indra"
+	"github.com/Indra-Labs/indra/pkg/slice"
 	log2 "github.com/cybriq/proc/pkg/log"
 )
 
@@ -14,18 +15,17 @@ var (
 )
 
 type Transport interface {
-	Send(b Message)
-	Receive() <-chan Message
+	Send(b Bytes)
+	Receive() <-chan Bytes
 }
 
-type Message []byte
+type Bytes []byte
 
-func ToMessage(b []byte) (msg Message) { return b }
-func (m Message) ToBytes() []byte      { return m }
-func (m Message) Copy() (o Message) {
-	o = make(Message, len(m))
-	copy(o, m)
-	return
+func ToBytes(b []byte) (msg Bytes) { return b }
+func (m Bytes) ToBytes() []byte    { return m }
+func (m Bytes) Len() int           { return len(m) }
+func (m Bytes) Copy(start, end *slice.Cursor, bytes Bytes) {
+	copy(m[*start:*end], bytes[:*end-*start])
 }
 
 type U64Slice []uint64
@@ -42,7 +42,7 @@ func (u U64Slice) Copy() (o U64Slice) {
 // intended to be used with short byte slices like cipher nonces and hashes, so
 // it usually won't trigger allocations off stack and very often won't trigger
 // a copy on stack, saving a lot of time in a short, oft repeated operations.
-func (m Message) ToU64Slice() (u U64Slice) {
+func (m Bytes) ToU64Slice() (u U64Slice) {
 	mLen := uint64(len(m))
 	uLen := int(mLen / 8)
 	mMod := mLen % 8
@@ -84,10 +84,10 @@ func (u U64Slice) XOR(v U64Slice) {
 	}
 }
 
-func (u U64Slice) ToMessage() (m Message) {
+func (u U64Slice) ToMessage() (m Bytes) {
 	// length is encoded into the last element
 	mLen := int(u[len(u)-1])
-	m = make(Message, 0, 0)
+	m = make(Bytes, 0, 0)
 	// With the slice now long enough to be safely converted to []uint64
 	// plus an extra uint64 to store the original length we can coerce the
 	// type using unsafe.

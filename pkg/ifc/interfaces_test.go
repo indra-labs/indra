@@ -10,7 +10,7 @@ import (
 
 func TestMessage_ToU64Slice(t *testing.T) {
 	var e error
-	var msg1 Message
+	var msg1 Bytes
 	if msg1, _, e = testutils.GenerateTestMessage(33); check(e) {
 		t.Error(e)
 		t.FailNow()
@@ -25,21 +25,21 @@ func TestMessage_ToU64Slice(t *testing.T) {
 
 func TestU64Slice_XOR(t *testing.T) {
 	var e error
-	var msg1 Message
+	var msg1 Bytes
 	if msg1, _, e = testutils.GenerateTestMessage(33); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
 	hash1 := sha256.Single(msg1)
 	uMsg1 := msg1.ToU64Slice()
-	var msg2 Message
+	var msg2 Bytes
 	if msg2, _, e = testutils.GenerateTestMessage(33); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
 	// log.I.S(msg2)
 	uMsg2 := msg2.ToU64Slice()
-	var msg3 Message
+	var msg3 Bytes
 	if msg3, _, e = testutils.GenerateTestMessage(33); check(e) {
 		t.Error(e)
 		t.FailNow()
@@ -55,4 +55,16 @@ func TestU64Slice_XOR(t *testing.T) {
 		t.Error("XOR failed")
 		t.FailNow()
 	}
+}
+
+func TestBytes_Copy(t *testing.T) {
+	var e error
+	var msg Bytes
+	if msg, _, e = testutils.GenerateTestMessage(33); check(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	buf := make(Bytes, 65)
+	buf.Copy(10, 20, msg)
+	log.I.S(msg, buf)
 }
