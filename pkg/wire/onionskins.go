@@ -6,7 +6,6 @@ import (
 
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/ciph"
-	"github.com/Indra-Labs/indra/pkg/ifc"
 	"github.com/Indra-Labs/indra/pkg/key/address"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
@@ -26,20 +25,20 @@ var (
 const MagicLen = 3
 
 type Onion interface {
-	Encode(o ifc.Bytes, c *slice.Cursor)
+	Encode(o slice.Bytes, c *slice.Cursor)
 	Len() int
 }
 
 var (
-	ForwardMagic         = ifc.Bytes("fwd")
-	ExitMagic            = ifc.Bytes("exi")
-	ReturnMagic          = ifc.Bytes("rtn")
-	CipherMagic          = ifc.Bytes("cif")
-	PurchaseMagic        = ifc.Bytes("prc")
-	SessionMagic         = ifc.Bytes("ses")
-	AcknowledgementMagic = ifc.Bytes("ack")
-	ResponseMagic        = ifc.Bytes("res")
-	TokenMagic           = ifc.Bytes("tok")
+	ForwardMagic         = slice.Bytes("fwd")
+	ExitMagic            = slice.Bytes("exi")
+	ReturnMagic          = slice.Bytes("rtn")
+	CipherMagic          = slice.Bytes("cif")
+	PurchaseMagic        = slice.Bytes("prc")
+	SessionMagic         = slice.Bytes("ses")
+	AcknowledgementMagic = slice.Bytes("ack")
+	ResponseMagic        = slice.Bytes("res")
+	TokenMagic           = slice.Bytes("tok")
 )
 
 // Message is the generic top level wrapper for an Onion. All following messages
@@ -48,7 +47,7 @@ type Message struct {
 	To   *address.Sender
 	From *prv.Key
 	// The following field is only populated in the outermost layer.
-	ifc.Bytes
+	slice.Bytes
 	Onion
 }
 
@@ -86,7 +85,7 @@ type Message struct {
 // the layers for their length values.
 func NewOnion(msg *Message) (o Onion, c *slice.Cursor) {
 	c = new(slice.Cursor)
-	msg.Bytes = make(ifc.Bytes, msg.Len())
+	msg.Bytes = make(slice.Bytes, msg.Len())
 	return msg, c
 }
 
@@ -94,7 +93,7 @@ const OnionHeaderLen = 4 + nonce.IVLen + address.Len + pub.KeyLen
 
 func (on *Message) Len() int { return MagicLen + OnionHeaderLen + on.Onion.Len() }
 
-func (on *Message) Encode(o ifc.Bytes, c *slice.Cursor) {
+func (on *Message) Encode(o slice.Bytes, c *slice.Cursor) {
 	// The first level message contains the Bytes, but the inner layers do
 	// not. The inner layers will be passed this buffer, but the first needs
 	// to have it copied from its original location.
@@ -106,10 +105,10 @@ func (on *Message) Encode(o ifc.Bytes, c *slice.Cursor) {
 	checkEnd := checkStart + 4
 	// Generate a new nonce and copy it in.
 	n := nonce.New()
-	o.Copy(c.Inc(4), c.Inc(nonce.IVLen), n[:])
+	copy(o[c.Inc(4):c.Inc(nonce.IVLen)], n[:])
 	// Derive the cloaked key and copy it in.
 	to := on.To.GetCloak()
-	o.Copy(c, c.Inc(address.Len), to[:])
+	copy(o[*c:c.Inc(address.Len)], to[:])
 	// Call the tree of onions to perform their encoding.
 	on.Onion.Encode(o, c)
 	// Then we can encrypt the message segment
@@ -136,10 +135,10 @@ type Forward struct {
 
 func (fw *Forward) Len() int { return MagicLen + len(fw.IP) + 1 + fw.Onion.Len() }
 
-func (fw *Forward) Encode(o ifc.Bytes, c *slice.Cursor) {
-	o.Copy(c, c.Inc(MagicLen), ForwardMagic)
+func (fw *Forward) Encode(o slice.Bytes, c *slice.Cursor) {
+	copy(o[*c:c.Inc(MagicLen)], ForwardMagic)
 	o[*c] = byte(len(fw.IP))
-	o.Copy(c.Inc(1), c.Inc(len(fw.IP)), ifc.Bytes(fw.IP))
+	copy(o[c.Inc(1):c.Inc(len(fw.IP))], fw.IP)
 	fw.Onion.Encode(o, c)
 }
 
@@ -158,7 +157,7 @@ type Exit struct {
 	// given order over the reply message from the service.
 	Cipher [3]sha256.Hash
 	// Bytes are the message to be passed to the exit service.
-	ifc.Bytes
+	slice.Bytes
 	// Return is the encoded message with the three hops using the Return
 	// keys for the relevant relays, encrypted progressively. Note that this
 	// message uses a different Cipher than the one above
@@ -170,18 +169,18 @@ func (ex *Exit) Len() int {
 		ex.Return.Len()
 }
 
-func (ex *Exit) Encode(o ifc.Bytes, c *slice.Cursor) {
-	o.Copy(c, c.Inc(MagicLen), ExitMagic)
+func (ex *Exit) Encode(o slice.Bytes, c *slice.Cursor) {
+	copy(o[*c:c.Inc(MagicLen)], ExitMagic)
 	port := slice.NewUint16()
 	slice.EncodeUint16(port, int(ex.Port))
-	o.Copy(c, c.Inc(slice.Uint16Len), port)
-	o.Copy(c, c.Inc(sha256.Len), ex.Cipher[0][:])
-	o.Copy(c, c.Inc(sha256.Len), ex.Cipher[1][:])
-	o.Copy(c, c.Inc(sha256.Len), ex.Cipher[1][:])
+	copy(o[*c:c.Inc(slice.Uint16Len)], port)
+	copy(o[*c:c.Inc(sha256.Len)], ex.Cipher[0][:])
+	copy(o[*c:c.Inc(sha256.Len)], ex.Cipher[1][:])
+	copy(o[*c:c.Inc(sha256.Len)], ex.Cipher[1][:])
 	bytesLen := slice.NewUint32()
 	slice.EncodeUint32(bytesLen, len(ex.Bytes))
-	o.Copy(c, c.Inc(slice.Uint32Len), bytesLen)
-	o.Copy(c, c.Inc(len(ex.Bytes)), ex.Bytes)
+	copy(o[*c:c.Inc(slice.Uint32Len)], bytesLen)
+	copy(o[*c:c.Inc(len(ex.Bytes))], ex.Bytes)
 	ex.Return.Encode(o, c)
 
 }
@@ -198,10 +197,10 @@ type Return struct {
 
 func (rt *Return) Len() int { return MagicLen + len(rt.IP) + 1 + rt.Onion.Len() }
 
-func (rt *Return) Encode(o ifc.Bytes, c *slice.Cursor) {
-	o.Copy(c, c.Inc(MagicLen), ReturnMagic)
+func (rt *Return) Encode(o slice.Bytes, c *slice.Cursor) {
+	copy(o[*c:c.Inc(MagicLen)], ReturnMagic)
 	o[*c] = byte(len(rt.IP))
-	o.Copy(c.Inc(1), c.Inc(len(rt.IP)), ifc.Bytes(rt.IP))
+	copy(o[c.Inc(1):c.Inc(len(rt.IP))], rt.IP)
 	rt.Onion.Encode(o, c)
 }
 
@@ -217,10 +216,10 @@ type Cipher struct {
 
 func (ci *Cipher) Len() int { return MagicLen + pub.KeyLen + ci.Forward.Len() }
 
-func (ci *Cipher) Encode(o ifc.Bytes, c *slice.Cursor) {
-	o.Copy(c, c.Inc(nonce.IDLen), ci.ID[:])
-	o.Copy(c, c.Inc(MagicLen), CipherMagic)
-	o.Copy(c.Inc(1), c.Inc(sha256.Len), ci.Key[:])
+func (ci *Cipher) Encode(o slice.Bytes, c *slice.Cursor) {
+	copy(o[*c:c.Inc(nonce.IDLen)], ci.ID[:])
+	copy(o[*c:c.Inc(MagicLen)], CipherMagic)
+	copy(o[c.Inc(1):c.Inc(sha256.Len)], ci.Key[:])
 	ci.Forward.Encode(o, c)
 }
 
@@ -243,11 +242,11 @@ func (pr *Purchase) Len() int {
 	return MagicLen + slice.Uint64Len + pr.Return.Len()
 }
 
-func (pr *Purchase) Encode(o ifc.Bytes, c *slice.Cursor) {
-	o.Copy(c, c.Inc(MagicLen), PurchaseMagic)
+func (pr *Purchase) Encode(o slice.Bytes, c *slice.Cursor) {
+	copy(o[*c:c.Inc(MagicLen)], PurchaseMagic)
 	value := slice.NewUint64()
 	slice.EncodeUint64(value, pr.Value)
-	o.Copy(c, c.Inc(slice.Uint64Len), value)
+	copy(o[*c:c.Inc(slice.Uint64Len)], value)
 	pr.Return.Encode(o, c)
 }
 
@@ -263,10 +262,10 @@ type Session struct {
 	Return
 }
 
-func (se *Session) Encode(o ifc.Bytes, c *slice.Cursor) {
-	o.Copy(c, c.Inc(MagicLen), SessionMagic)
-	o.Copy(c, c.Inc(pub.KeyLen), se.ForwardKey[:])
-	o.Copy(c, c.Inc(pub.KeyLen), se.ReturnKey[:])
+func (se *Session) Encode(o slice.Bytes, c *slice.Cursor) {
+	copy(o[*c:c.Inc(MagicLen)], SessionMagic)
+	copy(o[*c:c.Inc(pub.KeyLen)], se.ForwardKey[:])
+	copy(o[*c:c.Inc(pub.KeyLen)], se.ReturnKey[:])
 	se.Return.Encode(o, c)
 }
 
@@ -278,28 +277,28 @@ type Acknowledgement struct {
 
 func (ak *Acknowledgement) Len() int { return MagicLen + nonce.IDLen }
 
-func (ak *Acknowledgement) Encode(o ifc.Bytes, c *slice.Cursor) {
-	o.Copy(c, c.Inc(MagicLen), AcknowledgementMagic)
-	o.Copy(c, c.Inc(pub.KeyLen), ak.ID[:])
+func (ak *Acknowledgement) Encode(o slice.Bytes, c *slice.Cursor) {
+	copy(o[*c:c.Inc(MagicLen)], AcknowledgementMagic)
+	copy(o[*c:c.Inc(pub.KeyLen)], ak.ID[:])
 }
 
-type Response ifc.Bytes
+type Response slice.Bytes
 
 func (rs Response) Len() int { return MagicLen + len(rs) + 4 }
 
-func (rs Response) Encode(o ifc.Bytes, c *slice.Cursor) {
-	o.Copy(c, c.Inc(MagicLen), ResponseMagic)
+func (rs Response) Encode(o slice.Bytes, c *slice.Cursor) {
+	copy(o[*c:c.Inc(MagicLen)], ResponseMagic)
 	bytesLen := slice.NewUint32()
 	slice.EncodeUint32(bytesLen, len(rs))
-	o.Copy(c, c.Inc(slice.Uint32Len), bytesLen)
-	o.Copy(c, c.Inc(len(rs)), ifc.Bytes(rs))
+	copy(o[*c:c.Inc(slice.Uint32Len)], bytesLen)
+	copy(o[*c:c.Inc(len(rs))], rs)
 }
 
 type Token sha256.Hash
 
 func (tk Token) Len() int { return MagicLen + sha256.Len }
 
-func (tk Token) Encode(o ifc.Bytes, c *slice.Cursor) {
-	o.Copy(c, c.Inc(MagicLen), TokenMagic)
-	o.Copy(c, c.Inc(sha256.Len), tk[:])
+func (tk Token) Encode(o slice.Bytes, c *slice.Cursor) {
+	copy(o[*c:c.Inc(MagicLen)], TokenMagic)
+	copy(o[*c:c.Inc(sha256.Len)], tk[:])
 }

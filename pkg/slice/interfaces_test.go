@@ -1,4 +1,4 @@
-package ifc
+package slice
 
 import (
 	"bytes"
@@ -55,16 +55,4 @@ func TestU64Slice_XOR(t *testing.T) {
 		t.Error("XOR failed")
 		t.FailNow()
 	}
-}
-
-func TestBytes_Copy(t *testing.T) {
-	var e error
-	var msg Bytes
-	if msg, _, e = testutils.GenerateTestMessage(33); check(e) {
-		t.Error(e)
-		t.FailNow()
-	}
-	buf := make(Bytes, 65)
-	buf.Copy(10, 20, msg)
-	log.I.S(msg, buf)
 }

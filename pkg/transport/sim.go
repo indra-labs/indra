@@ -1,16 +1,16 @@
 package transport
 
 import (
-	"github.com/Indra-Labs/indra/pkg/ifc"
+	"github.com/Indra-Labs/indra/pkg/slice"
 )
 
-type Sim chan ifc.Bytes
+type Sim chan slice.Bytes
 
-func (d Sim) Send(b ifc.Bytes) {
+func (d Sim) Send(b slice.Bytes) {
 	d <- b
 }
 
-func (d Sim) Receive() <-chan ifc.Bytes {
+func (d Sim) Receive() <-chan slice.Bytes {
 	return d
 }
 
