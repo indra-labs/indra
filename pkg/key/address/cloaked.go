@@ -70,11 +70,12 @@ func FromBytes(pkb pub.Bytes) (s *Sender, e error) {
 // generates the 5 bytes at the end of the Cloaked code. In this way the
 // source public key it relates to is hidden to any who don't have this public
 // key, which only the parties know.
-func (s Sender) GetCloak() (c Cloaked, e error) {
+func (s Sender) GetCloak() (c Cloaked) {
 	var blinder Blinder
 	var n int
+	var e error
 	if n, e = rand.Read(blinder[:]); check(e) && n != BlindLen {
-		return
+		panic("no entropy")
 	}
 	c = Cloak(blinder, s.Key.ToBytes())
 	return
@@ -83,7 +84,7 @@ func (s Sender) GetCloak() (c Cloaked, e error) {
 func Cloak(b Blinder, key pub.Bytes) (c Cloaked) {
 	h := sha256.Single(append(b[:], key[:]...))
 	copy(c[:BlindLen], b[:BlindLen])
-	copy(c[HashLen:], h[:HashLen])
+	copy(c[BlindLen:BlindLen+HashLen], h[:HashLen])
 	return
 }
 

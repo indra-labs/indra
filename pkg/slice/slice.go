@@ -9,6 +9,7 @@ import (
 	"encoding/binary"
 
 	"github.com/Indra-Labs/indra"
+	"github.com/Indra-Labs/indra/pkg/ifc"
 	"github.com/Indra-Labs/indra/pkg/sha256"
 	log2 "github.com/cybriq/proc/pkg/log"
 )
@@ -55,10 +56,19 @@ func Cat(chunks ...[]byte) (pkt []byte) {
 	return
 }
 
+var put64 = binary.LittleEndian.PutUint64
+var get64 = binary.LittleEndian.Uint64
 var put32 = binary.LittleEndian.PutUint32
 var get32 = binary.LittleEndian.Uint32
 var put16 = binary.LittleEndian.PutUint16
 var get16 = binary.LittleEndian.Uint16
+
+// DecodeUint64 returns an int containing the little endian encoded 64-bit value
+// stored in a 4 byte long slice
+func DecodeUint64(b []byte) uint64 { return get64(b) }
+
+// EncodeUint64 puts an int into a uint32 and then into 8 byte long slice.
+func EncodeUint64(b []byte, n uint64) { put64(b, n) }
 
 // DecodeUint32 returns an int containing the little endian encoded 32bit value
 // stored in a 4 byte long slice
@@ -89,17 +99,15 @@ func DecodeUint16(b []byte) int { return int(get16(b)) }
 // EncodeUint16 puts an int into a uint32 and then into 2 byte long slice.
 func EncodeUint16(b []byte, n int) { put16(b, uint16(n)) }
 
+const Uint64Len = 8
 const Uint32Len = 4
 const Uint24Len = 3
 const Uint16Len = 2
 
-type Size32 []byte
-type Size24 []byte
-type Size16 []byte
-
-func NewUint32() Size32 { return make(Size32, Uint32Len) }
-func NewUint24() Size24 { return make(Size24, Uint24Len) }
-func NewUint16() Size16 { return make(Size16, Uint16Len) }
+func NewUint64() ifc.Bytes { return make(ifc.Bytes, Uint64Len) }
+func NewUint32() ifc.Bytes { return make(ifc.Bytes, Uint32Len) }
+func NewUint24() ifc.Bytes { return make(ifc.Bytes, Uint24Len) }
+func NewUint16() ifc.Bytes { return make(ifc.Bytes, Uint16Len) }
 
 func NoisePad(l int) (noise []byte) {
 	var seed sha256.Hash
@@ -120,4 +128,11 @@ func NoisePad(l int) (noise []byte) {
 		cursor = end
 	}
 	return
+}
+
+type Cursor int
+
+func (c *Cursor) Inc(v int) *Cursor {
+	*c += Cursor(v)
+	return c
 }

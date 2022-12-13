@@ -4,13 +4,13 @@ import (
 	"github.com/Indra-Labs/indra/pkg/ifc"
 )
 
-type Sim chan ifc.Message
+type Sim chan ifc.Bytes
 
-func (d Sim) Send(b ifc.Message) {
+func (d Sim) Send(b ifc.Bytes) {
 	d <- b
 }
 
-func (d Sim) Receive() <-chan ifc.Message {
+func (d Sim) Receive() <-chan ifc.Bytes {
 	return d
 }
 
