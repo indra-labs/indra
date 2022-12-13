@@ -198,8 +198,8 @@ func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Packet, e error) {
 	// security.
 	data := d[KeyEnd:]
 	ciph.Encipher(blk, nonc, data)
-	var seq slice.Size16
-	var length slice.Size32
+	seq := slice.NewUint16()
+	length := slice.NewUint32()
 	seq, data = slice.Cut(data, slice.Uint16Len)
 	f.Seq = uint16(slice.DecodeUint16(seq))
 	length, data = slice.Cut(data, slice.Uint32Len)
