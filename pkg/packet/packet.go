@@ -46,8 +46,7 @@ func (p *Packet) GetOverhead() int {
 
 // Overhead is the base overhead on a packet, use GetOverhead to add any extra
 // as found in a Packet.
-const Overhead = slice.Uint16Len +
-	slice.Uint32Len + 1 + KeyEnd
+const Overhead = 4 + nonce.IVLen + pub.KeyLen
 
 // Packets is a slice of pointers to packets.
 type Packets []*Packet
@@ -64,6 +63,10 @@ func (p Packets) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 // Seen should be populated to send a signal to the other side of keys that have
 // been seen at time of constructing this packet that can now be discarded as
 // they will not be used to generate a cipher again.
+//
+// This library is for creating segmented, FEC redundancy protected network
+// packets, and the To sender key should be the publicly advertised public key
+// of a relay.
 type EP struct {
 	To     *address.Sender
 	From   *prv.Key
@@ -79,13 +82,6 @@ func (ep EP) GetOverhead() int {
 	return Overhead
 }
 
-const (
-	CheckEnd = 4
-	TypeEnd  = CheckEnd + 1
-	NonceEnd = TypeEnd + nonce.IVLen
-	KeyEnd   = NonceEnd + pub.KeyLen
-)
-
 // Encode creates a Packet, encrypts the payload using the given private from
 // key and the public to key, serializes the form, signs the bytes and appends
 // the signature to the end.
@@ -95,40 +91,27 @@ func Encode(ep EP) (pkt []byte, e error) {
 		return
 	}
 	nonc := nonce.New()
-	// var to address.Cloaked
-	// to, e = ep.To.GetCloak()
-	parity := []byte{byte(ep.Parity)}
 	Seq := slice.NewUint16()
 	slice.EncodeUint16(Seq, ep.Seq)
 	Length := slice.NewUint32()
 	slice.EncodeUint32(Length, ep.Length)
-	// Concatenate the message pieces together into a single byte slice.
-	pkt = slice.Cat(
-		// f.Nonce[:],    // 16 bytes \
-		// f.To[:],       // 8 bytes   |
-		make([]byte, KeyEnd),
-		Seq,    // 2 bytes
-		Length, // 4 bytes
-		parity, // 1 byte
-		ep.Data,
-	)
-	// Encrypt the encrypted part of the data.
-	ciph.Encipher(blk, nonc, pkt[KeyEnd:])
+	pkt = make([]byte, slice.SumLen(Seq, Length, ep.Data)+1+Overhead)
 	// Append pubkey used for encryption key derivation.
 	k := pub.Derive(ep.From).ToBytes()
-	// // Sign the packet.
-	// var s sig.Bytes
-	// hash := sha256.Single(pkt[KeyEnd:])
-	// if s, e = sig.Sign(ep.From, hash); check(e) {
-	// 	return
-	// }
-	// Copy nonce, address, check and signature over top of the header.
-	copy(pkt[TypeEnd:NonceEnd], nonc[:])
-	copy(pkt[NonceEnd:KeyEnd], k[:])
-	// last bot not least, the packet check header, which protects the
+	// Copy nonce, address and key over top of the header.
+	c := new(slice.Cursor)
+	copy(pkt[c.Inc(4):c.Inc(nonce.IVLen)], nonc[:])
+	copy(pkt[*c:c.Inc(pub.KeyLen)], k[:])
+	copy(pkt[*c:c.Inc(slice.Uint16Len)], Seq)
+	copy(pkt[*c:c.Inc(slice.Uint32Len)], Length)
+	pkt[*c] = byte(ep.Parity)
+	copy(pkt[c.Inc(1):], ep.Data)
+	// Encrypt the encrypted part of the data.
+	ciph.Encipher(blk, nonc, pkt[Overhead:])
+	// last but not least, the packet check header, which protects the
 	// entire packet.
-	checkBytes := sha256.Single(pkt[CheckEnd:])
-	copy(pkt[:CheckEnd], checkBytes[:CheckEnd])
+	checkBytes := sha256.Single(pkt[4:])
+	copy(pkt[:4], checkBytes[:4])
 	return
 }
 
@@ -152,18 +135,15 @@ func GetKeys(d []byte) (from *pub.Key, e error) {
 	// split off the signature and recover the public key
 	var k pub.Bytes
 	var chek []byte
-	chek = d[:CheckEnd]
-	copy(k[:], d[NonceEnd:KeyEnd])
-	checkHash := sha256.Single(d[CheckEnd:])
+	c := new(slice.Cursor)
+	chek = d[:c.Inc(4)]
+	copy(k[:], d[c.Inc(nonce.IVLen):c.Inc(pub.KeyLen)])
+	checkHash := sha256.Single(d[4:])
 	if string(chek) != string(checkHash[:4]) {
 		e = fmt.Errorf("check failed: got '%v', expected '%v'",
 			chek, checkHash[:4])
 		return
 	}
-	// hash := sha256.Single(d[KeyEnd:])
-	// if from, e = k.Recover(hash); check(e) {
-	// 	return
-	// }
 	if from, e = pub.FromBytes(k[:]); check(e) {
 		return
 	}
@@ -183,20 +163,18 @@ func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Packet, e error) {
 		log.E.Ln(e)
 		return
 	}
-	// Trim off the signature and hash, we already have the key and have
-	// validated the checksum.
-
 	f = &Packet{}
 	// copy the nonce
 	var nonc nonce.IV
-	copy(nonc[:], d[TypeEnd:NonceEnd])
+	c := new(slice.Cursor)
+	copy(nonc[:], d[c.Inc(4):c.Inc(nonce.IVLen)])
 	var blk cipher.Block
 	if blk = ciph.GetBlock(to, from); check(e) {
 		return
 	}
 	// This decrypts the rest of the packet, which is encrypted for
 	// security.
-	data := d[KeyEnd:]
+	data := d[c.Inc(pub.KeyLen):]
 	ciph.Encipher(blk, nonc, data)
 	seq := slice.NewUint16()
 	length := slice.NewUint32()
