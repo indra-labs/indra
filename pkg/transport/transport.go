@@ -1,16 +1,16 @@
 package transport
 
 import (
-	"github.com/Indra-Labs/indra/pkg/ifc"
+	"github.com/Indra-Labs/indra/pkg/slice"
 )
 
-type Dispatcher chan ifc.Bytes
+type Dispatcher chan slice.Bytes
 
-func (d Dispatcher) Send(b ifc.Bytes) {
+func (d Dispatcher) Send(b slice.Bytes) {
 	d <- b
 }
 
-func (d Dispatcher) Receive() <-chan ifc.Bytes {
+func (d Dispatcher) Receive() <-chan slice.Bytes {
 	return d
 }
 
