@@ -61,7 +61,29 @@ func (o OnionSkins) Token(tok sha256.Hash) OnionSkins {
 
 func (o OnionSkins) Assemble() (on Onion) {
 	for i := range o {
-		_ = i
+		oc := o[len(o)-i-1]
+		switch oc.(type) {
+		case *Message:
+
+		case *Forward:
+
+		case *Exit:
+
+		case *Return:
+
+		case *Cipher:
+
+		case *Purchase:
+
+		case *Session:
+
+		case *Acknowledgement:
+
+		case *Response:
+
+		case *Token:
+
+		}
 	}
 	return
 }

@@ -51,6 +51,8 @@ type Message struct {
 	Onion
 }
 
+var _ Onion = &Message{}
+
 const OnionHeaderLen = 4 + nonce.IVLen + address.Len + pub.KeyLen
 
 func (on *Message) Len() int { return MagicLen + OnionHeaderLen + on.Onion.Len() }
