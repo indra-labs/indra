@@ -24,8 +24,8 @@ func (o OnionSkins) Exit(port uint16, ciphers [3]sha256.Hash,
 
 	return append(o, &Exit{Port: port, Cipher: ciphers, Bytes: payload})
 }
-func (o OnionSkins) Return(ip net.IP, fwd, rtn pub.Key) OnionSkins {
-	return append(o, &Return{IP: ip, Forward: fwd, Return: rtn})
+func (o OnionSkins) Return(ip net.IP, rtn pub.Key) OnionSkins {
+	return append(o, &Return{IP: ip, Key: rtn})
 }
 func (o OnionSkins) Cipher(id nonce.ID, key pub.Key) OnionSkins {
 	return append(o, &Cipher{ID: id, Key: key.ToBytes()})
