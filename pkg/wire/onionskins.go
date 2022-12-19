@@ -51,44 +51,6 @@ type Message struct {
 	Onion
 }
 
-// NewOnion creates a new Onion. It accepts a recursively structured message
-// layering definition which all parts know their length, and it stores a buffer.
-//
-// Note that this is only required at the top level, following messages inside
-// the passed message do not need initialisation as there is only one buffer
-// needed for the entire message, though each layer is started by a Message.
-//
-// Example usage:
-/*
-
-	o := NewOnion(&Message{
-		To: to,
-		From: from,
-		Onion: &Message{
-			To: to,
-			From: from,
-			Onion: &Forward{
-					IP: 10.0.0.1,
-					// ...
-				}
-			}
-
-*/
-// Of course normally onions would not be decoratively structured like this,
-// except Cipher and "ping" messages which have a fixed layer structure.
-//
-// Note that the cursor is created here as it can't be easily embedded through
-// layers of messages wrapped in each other, so this function must be called,
-// and then Encode method can be called separately with nil for the bytes and
-// this returned cursor variable. The Bytes don't need to be passed in as the
-// top level created by this constructor generates one after interrogating all
-// the layers for their length values.
-func NewOnion(msg *Message) (o Onion, c *slice.Cursor) {
-	c = new(slice.Cursor)
-	msg.Bytes = make(slice.Bytes, msg.Len())
-	return msg, c
-}
-
 const OnionHeaderLen = 4 + nonce.IVLen + address.Len + pub.KeyLen
 
 func (on *Message) Len() int { return MagicLen + OnionHeaderLen + on.Onion.Len() }
@@ -161,7 +123,7 @@ type Exit struct {
 	// Return is the encoded message with the three hops using the Return
 	// keys for the relevant relays, encrypted progressively. Note that this
 	// message uses a different Cipher than the one above
-	Return
+	Return Onion
 }
 
 func (ex *Exit) Len() int {
@@ -192,6 +154,7 @@ func (ex *Exit) Encode(o slice.Bytes, c *slice.Cursor) {
 type Return struct {
 	// IP is the address of the next relay in the return leg of a circuit.
 	net.IP
+	Forward, Return pub.Key
 	Onion
 }
 
@@ -210,8 +173,8 @@ func (rt *Return) Encode(o slice.Bytes, c *slice.Cursor) {
 // Purchase.
 type Cipher struct {
 	nonce.ID
-	Key pub.Bytes
-	Forward
+	Key     pub.Bytes
+	Forward Onion
 }
 
 func (ci *Cipher) Len() int { return MagicLen + pub.KeyLen + ci.Forward.Len() }
@@ -234,8 +197,8 @@ func (ci *Cipher) Encode(o slice.Bytes, c *slice.Cursor) {
 //
 // Purchases have an ID created by the client.
 type Purchase struct {
-	Value uint64
-	Return
+	Value  uint64
+	Return Onion
 }
 
 func (pr *Purchase) Len() int {
@@ -270,7 +233,7 @@ func (se *Session) Encode(o slice.Bytes, c *slice.Cursor) {
 }
 
 // Acknowledgement messages just contain a nonce ID, these are used to terminate
-// ping and Cipher onion messages which confirms relaying was successful.
+// ping and Cipher onion messages that confirm relaying was successful.
 type Acknowledgement struct {
 	nonce.ID
 }
