@@ -62,7 +62,9 @@ var _ Onion = &Message{}
 
 func (on *Message) Inner() Onion   { return on.Onion }
 func (on *Message) Insert(o Onion) { on.Onion = o }
-func (on *Message) Len() int       { return MagicLen + OnionHeaderLen + on.Onion.Len() }
+func (on *Message) Len() int {
+	return MagicLen + OnionHeaderLen + on.Onion.Len()
+}
 
 func (on *Message) Encode(o slice.Bytes, c *slice.Cursor) {
 	// The first level message contains the Bytes, but the inner layers do
@@ -108,7 +110,9 @@ var _ Onion = &Forward{}
 
 func (fw *Forward) Inner() Onion   { return fw.Onion }
 func (fw *Forward) Insert(o Onion) { fw.Onion = o }
-func (fw *Forward) Len() int       { return MagicLen + len(fw.IP) + 1 + fw.Onion.Len() }
+func (fw *Forward) Len() int {
+	return MagicLen + len(fw.IP) + 1 + fw.Onion.Len()
+}
 
 func (fw *Forward) Encode(o slice.Bytes, c *slice.Cursor) {
 	copy(o[*c:c.Inc(MagicLen)], ForwardMagic)
@@ -205,7 +209,9 @@ var _ Onion = &Cipher{}
 
 func (ci *Cipher) Inner() Onion   { return ci.Onion }
 func (ci *Cipher) Insert(o Onion) { ci.Onion = o }
-func (ci *Cipher) Len() int       { return MagicLen + pub.KeyLen + ci.Onion.Len() }
+func (ci *Cipher) Len() int {
+	return MagicLen + pub.KeyLen + ci.Onion.Len()
+}
 
 func (ci *Cipher) Encode(o slice.Bytes, c *slice.Cursor) {
 	copy(o[*c:c.Inc(nonce.IDLen)], ci.ID[:])

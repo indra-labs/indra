@@ -25,19 +25,20 @@ var (
 type Node struct {
 	nonce.ID
 	net.IP
-	*pub.Key
+	Forward, Return *pub.Key
 	ifc.Transport
 }
 
 // New creates a new Node. net.IP is optional if the counterparty is not in
 // direct connection.
-func New(ip net.IP, pk *pub.Key, tpt ifc.Transport) (n *Node, id nonce.ID) {
+func New(ip net.IP, fwd, rtn *pub.Key, tpt ifc.Transport) (n *Node, id nonce.ID) {
 	id = nonce.NewID()
 	n = &Node{
 		ID:        id,
 		IP:        ip,
 		Transport: tpt,
-		Key:       pk,
+		Forward:   fwd,
+		Return:    rtn,
 	}
 	return
 }
