@@ -20,14 +20,9 @@ var (
 	check = log.E.Chk
 )
 
-// MagicLen is 3 to make it nearly impossible that the wrong cipher will yield a
+// MagicLen is 3 to make it infeasible that the wrong cipher will yield a
 // valid Magic string as listed below.
 const MagicLen = 3
-
-type Onion interface {
-	Encode(o slice.Bytes, c *slice.Cursor)
-	Len() int
-}
 
 var (
 	ForwardMagic         = slice.Bytes("fwd")
@@ -41,8 +36,18 @@ var (
 	TokenMagic           = slice.Bytes("tok")
 )
 
+// Onion is an interface for the layers of messages each encrypted inside a
+// Message, which provides the cipher for the inner layers inside it.
+type Onion interface {
+	Encode(o slice.Bytes, c *slice.Cursor)
+	Len() int
+	Inner() Onion
+	Insert(on Onion)
+}
+
 // Message is the generic top level wrapper for an Onion. All following messages
-// are wrapped inside this.
+// are wrapped inside this. This type provides the encryption for each layer,
+// and a header which a relay uses to determine what cipher to use.
 type Message struct {
 	To   *address.Sender
 	From *prv.Key
@@ -51,11 +56,13 @@ type Message struct {
 	Onion
 }
 
-var _ Onion = &Message{}
-
 const OnionHeaderLen = 4 + nonce.IVLen + address.Len + pub.KeyLen
 
-func (on *Message) Len() int { return MagicLen + OnionHeaderLen + on.Onion.Len() }
+var _ Onion = &Message{}
+
+func (on *Message) Inner() Onion   { return on.Onion }
+func (on *Message) Insert(o Onion) { on.Onion = o }
+func (on *Message) Len() int       { return MagicLen + OnionHeaderLen + on.Onion.Len() }
 
 func (on *Message) Encode(o slice.Bytes, c *slice.Cursor) {
 	// The first level message contains the Bytes, but the inner layers do
@@ -97,7 +104,11 @@ type Forward struct {
 	Onion
 }
 
-func (fw *Forward) Len() int { return MagicLen + len(fw.IP) + 1 + fw.Onion.Len() }
+var _ Onion = &Forward{}
+
+func (fw *Forward) Inner() Onion   { return fw.Onion }
+func (fw *Forward) Insert(o Onion) { fw.Onion = o }
+func (fw *Forward) Len() int       { return MagicLen + len(fw.IP) + 1 + fw.Onion.Len() }
 
 func (fw *Forward) Encode(o slice.Bytes, c *slice.Cursor) {
 	copy(o[*c:c.Inc(MagicLen)], ForwardMagic)
@@ -122,15 +133,16 @@ type Exit struct {
 	Cipher [3]sha256.Hash
 	// Bytes are the message to be passed to the exit service.
 	slice.Bytes
-	// Return is the encoded message with the three hops using the Return
-	// keys for the relevant relays, encrypted progressively. Note that this
-	// message uses a different Cipher than the one above
-	Return Onion
+	Onion
 }
 
+var _ Onion = &Exit{}
+
+func (ex *Exit) Inner() Onion   { return ex.Onion }
+func (ex *Exit) Insert(o Onion) { ex.Onion = o }
 func (ex *Exit) Len() int {
 	return MagicLen + slice.Uint16Len + 3*sha256.Len + ex.Bytes.Len() +
-		ex.Return.Len()
+		ex.Onion.Len()
 }
 
 func (ex *Exit) Encode(o slice.Bytes, c *slice.Cursor) {
@@ -145,7 +157,7 @@ func (ex *Exit) Encode(o slice.Bytes, c *slice.Cursor) {
 	slice.EncodeUint32(bytesLen, len(ex.Bytes))
 	copy(o[*c:c.Inc(slice.Uint32Len)], bytesLen)
 	copy(o[*c:c.Inc(len(ex.Bytes))], ex.Bytes)
-	ex.Return.Encode(o, c)
+	ex.Onion.Encode(o, c)
 
 }
 
@@ -156,11 +168,21 @@ func (ex *Exit) Encode(o slice.Bytes, c *slice.Cursor) {
 type Return struct {
 	// IP is the address of the next relay in the return leg of a circuit.
 	net.IP
-	Forward, Return pub.Key
+	// The Key here should be the Return key matching the IP of the relay.
+	// The header provided in a previous Exit message uses the Forward key
+	// so that the Exit node cannot decrypt the header and discover the
+	// return path.
+	pub.Key
 	Onion
 }
 
-func (rt *Return) Len() int { return MagicLen + len(rt.IP) + 1 + rt.Onion.Len() }
+var _ Onion = &Return{}
+
+func (rt *Return) Inner() Onion   { return rt.Onion }
+func (rt *Return) Insert(o Onion) { rt.Onion = o }
+func (rt *Return) Len() int {
+	return MagicLen + len(rt.IP) + 1 + rt.Onion.Len()
+}
 
 func (rt *Return) Encode(o slice.Bytes, c *slice.Cursor) {
 	copy(o[*c:c.Inc(MagicLen)], ReturnMagic)
@@ -175,17 +197,21 @@ func (rt *Return) Encode(o slice.Bytes, c *slice.Cursor) {
 // Purchase.
 type Cipher struct {
 	nonce.ID
-	Key     pub.Bytes
-	Forward Onion
+	Key pub.Bytes
+	Onion
 }
 
-func (ci *Cipher) Len() int { return MagicLen + pub.KeyLen + ci.Forward.Len() }
+var _ Onion = &Cipher{}
+
+func (ci *Cipher) Inner() Onion   { return ci.Onion }
+func (ci *Cipher) Insert(o Onion) { ci.Onion = o }
+func (ci *Cipher) Len() int       { return MagicLen + pub.KeyLen + ci.Onion.Len() }
 
 func (ci *Cipher) Encode(o slice.Bytes, c *slice.Cursor) {
 	copy(o[*c:c.Inc(nonce.IDLen)], ci.ID[:])
 	copy(o[*c:c.Inc(MagicLen)], CipherMagic)
 	copy(o[c.Inc(1):c.Inc(sha256.Len)], ci.Key[:])
-	ci.Forward.Encode(o, c)
+	ci.Onion.Encode(o, c)
 }
 
 // Purchase is a message that is sent after first forwarding a Lighting payment
@@ -199,12 +225,16 @@ func (ci *Cipher) Encode(o slice.Bytes, c *slice.Cursor) {
 //
 // Purchases have an ID created by the client.
 type Purchase struct {
-	Value  uint64
-	Return Onion
+	Value uint64
+	Onion
 }
 
+var _ Onion = &Purchase{}
+
+func (pr *Purchase) Inner() Onion   { return pr.Onion }
+func (pr *Purchase) Insert(o Onion) { pr.Onion = o }
 func (pr *Purchase) Len() int {
-	return MagicLen + slice.Uint64Len + pr.Return.Len()
+	return MagicLen + slice.Uint64Len + pr.Onion.Len()
 }
 
 func (pr *Purchase) Encode(o slice.Bytes, c *slice.Cursor) {
@@ -212,7 +242,7 @@ func (pr *Purchase) Encode(o slice.Bytes, c *slice.Cursor) {
 	value := slice.NewUint64()
 	slice.EncodeUint64(value, pr.Value)
 	copy(o[*c:c.Inc(slice.Uint64Len)], value)
-	pr.Return.Encode(o, c)
+	pr.Onion.Encode(o, c)
 }
 
 // Session is a message containing two public keys which identify to a relay the
@@ -224,15 +254,27 @@ func (pr *Purchase) Encode(o slice.Bytes, c *slice.Cursor) {
 type Session struct {
 	ForwardKey pub.Bytes
 	ReturnKey  pub.Bytes
-	Return
+	Onion
+}
+
+var _ Onion = &Session{}
+
+func (se *Session) Inner() Onion   { return se.Onion }
+func (se *Session) Insert(o Onion) { se.Onion = o }
+func (se *Session) Len() int {
+	return MagicLen + pub.KeyLen*2 + se.Onion.Len()
 }
 
 func (se *Session) Encode(o slice.Bytes, c *slice.Cursor) {
 	copy(o[*c:c.Inc(MagicLen)], SessionMagic)
 	copy(o[*c:c.Inc(pub.KeyLen)], se.ForwardKey[:])
 	copy(o[*c:c.Inc(pub.KeyLen)], se.ReturnKey[:])
-	se.Return.Encode(o, c)
+	se.Onion.Encode(o, c)
 }
+
+// The remaining methods are terminals, all constructed Onion structures
+// should have one of these as the last element otherwise the second last call
+// to Encode will panic with a nil.
 
 // Acknowledgement messages just contain a nonce ID, these are used to terminate
 // ping and Cipher onion messages that confirm relaying was successful.
@@ -240,16 +282,25 @@ type Acknowledgement struct {
 	nonce.ID
 }
 
-func (ak *Acknowledgement) Len() int { return MagicLen + nonce.IDLen }
+var _ Onion = &Acknowledgement{}
+
+func (ak *Acknowledgement) Inner() Onion   { return nil }
+func (ak *Acknowledgement) Insert(_ Onion) {}
+func (ak *Acknowledgement) Len() int       { return MagicLen + nonce.IDLen }
 
 func (ak *Acknowledgement) Encode(o slice.Bytes, c *slice.Cursor) {
 	copy(o[*c:c.Inc(MagicLen)], AcknowledgementMagic)
 	copy(o[*c:c.Inc(pub.KeyLen)], ak.ID[:])
 }
 
+// Response messages are what are carried back via Return messages from an Exit.
 type Response slice.Bytes
 
-func (rs Response) Len() int { return MagicLen + len(rs) + 4 }
+var _ Onion = Response{}
+
+func (rs Response) Inner() Onion   { return nil }
+func (rs Response) Insert(_ Onion) {}
+func (rs Response) Len() int       { return MagicLen + len(rs) + 4 }
 
 func (rs Response) Encode(o slice.Bytes, c *slice.Cursor) {
 	copy(o[*c:c.Inc(MagicLen)], ResponseMagic)
@@ -259,9 +310,14 @@ func (rs Response) Encode(o slice.Bytes, c *slice.Cursor) {
 	copy(o[*c:c.Inc(len(rs))], rs)
 }
 
+// A Token is a 32 byte value. TODO: not sure we need this?
 type Token sha256.Hash
 
-func (tk Token) Len() int { return MagicLen + sha256.Len }
+var _ Onion = Token{}
+
+func (tk Token) Inner() Onion   { return nil }
+func (tk Token) Insert(_ Onion) {}
+func (tk Token) Len() int       { return MagicLen + sha256.Len }
 
 func (tk Token) Encode(o slice.Bytes, c *slice.Cursor) {
 	copy(o[*c:c.Inc(MagicLen)], TokenMagic)
