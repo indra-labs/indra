@@ -12,7 +12,7 @@ func TestNodes_Add(t *testing.T) {
 	const nNodes = 10000
 	for i := 0; i < nNodes; i++ {
 		var nn *Node
-		nn, _ = New(nil, nil, transport.NewSim(0))
+		nn, _ = New(nil, nil, nil, transport.NewSim(0))
 		n = n.Add(nn)
 	}
 	if n.Len() != nNodes {
@@ -26,7 +26,7 @@ func TestNodes_DeleteByID(t *testing.T) {
 	var e error
 	for i := 0; i < nNodes; i++ {
 		var nn *Node
-		nn, _ = New(nil, nil, transport.NewSim(0))
+		nn, _ = New(nil, nil, nil, transport.NewSim(0))
 		n.Add(nn)
 	}
 	for i := range n {
@@ -42,7 +42,7 @@ func TestNodes_DeleteByIP(t *testing.T) {
 	var e error
 	for i := 0; i < nNodes; i++ {
 		var nn *Node
-		nn, _ = New(nil, nil, transport.NewSim(0))
+		nn, _ = New(nil, nil, nil, transport.NewSim(0))
 		n.Add(nn)
 	}
 	for i := range n {
@@ -57,7 +57,7 @@ func TestNodes_FindByID(t *testing.T) {
 	const nNodes = 10000
 	for i := 0; i < nNodes; i++ {
 		var nn *Node
-		nn, _ = New(nil, nil, transport.NewSim(0))
+		nn, _ = New(nil, nil, nil, transport.NewSim(0))
 		n.Add(nn)
 	}
 	for i := range n {
@@ -73,7 +73,7 @@ func TestNodes_FindByIP(t *testing.T) {
 	const nNodes = 10000
 	for i := 0; i < nNodes; i++ {
 		var nn *Node
-		nn, _ = New(nil, nil, transport.NewSim(0))
+		nn, _ = New(nil, nil, nil, transport.NewSim(0))
 		n.Add(nn)
 	}
 	for i := range n {

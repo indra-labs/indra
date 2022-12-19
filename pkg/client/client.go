@@ -44,7 +44,7 @@ func New(tpt ifc.Transport, nodes node.Nodes) (c *Client, e error) {
 	}
 	pubKey := pub.Derive(p)
 	var n *node.Node
-	n, _ = node.New(nil, pubKey, tpt)
+	n, _ = node.New(nil, pubKey, nil, tpt)
 	c = &Client{
 		Node:      n,
 		Nodes:     nodes,
