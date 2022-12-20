@@ -7,6 +7,7 @@ package packet
 import (
 	"crypto/cipher"
 	"fmt"
+	"time"
 
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/ciph"
@@ -34,6 +35,9 @@ type Packet struct {
 	Length uint32
 	// Parity is the ratio of redundancy. In each 256 segment
 	Parity byte
+	// Deadline is a time after which the message should be received and
+	// dispatched.
+	Deadline time.Time
 	// Data is the message.
 	Data []byte
 }
@@ -67,13 +71,19 @@ func (p Packets) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 // This library is for creating segmented, FEC redundancy protected network
 // packets, and the To sender key should be the publicly advertised public key
 // of a relay.
+//
+// Deadline is a special field that gives a timeout period after which an
+// incomplete message can be considered expired and flushed from the cache. It
+// is 32 bits in size as precision to the second is sufficient, and low latency
+// messages will potentially beat the deadline at one second.
 type EP struct {
-	To     *address.Sender
-	From   *prv.Key
-	Parity int
-	Seq    int
-	Length int
-	Data   []byte
+	To       *address.Sender
+	From     *prv.Key
+	Parity   int
+	Seq      int
+	Length   int
+	Deadline time.Time
+	Data     []byte
 }
 
 // GetOverhead returns the amount of the message that will not be part of the
@@ -95,7 +105,9 @@ func Encode(ep EP) (pkt []byte, e error) {
 	slice.EncodeUint16(Seq, ep.Seq)
 	Length := slice.NewUint32()
 	slice.EncodeUint32(Length, ep.Length)
-	pkt = make([]byte, slice.SumLen(Seq, Length, ep.Data)+1+Overhead)
+	Deadline := slice.NewUint64()
+	slice.EncodeUint64(Deadline, uint64(ep.Deadline.Unix()))
+	pkt = make([]byte, slice.SumLen(Seq, Length, Deadline, ep.Data)+1+Overhead)
 	// Append pubkey used for encryption key derivation.
 	k := pub.Derive(ep.From).ToBytes()
 	// Copy nonce, address and key over top of the header.
@@ -104,6 +116,7 @@ func Encode(ep EP) (pkt []byte, e error) {
 	copy(pkt[*c:c.Inc(pub.KeyLen)], k[:])
 	copy(pkt[*c:c.Inc(slice.Uint16Len)], Seq)
 	copy(pkt[*c:c.Inc(slice.Uint32Len)], Length)
+	copy(pkt[*c:c.Inc(slice.Uint64Len)], Deadline)
 	pkt[*c] = byte(ep.Parity)
 	copy(pkt[c.Inc(1):], ep.Data)
 	// Encrypt the encrypted part of the data.
@@ -178,10 +191,13 @@ func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Packet, e error) {
 	ciph.Encipher(blk, nonc, data)
 	seq := slice.NewUint16()
 	length := slice.NewUint32()
+	deadline := slice.NewUint32()
 	seq, data = slice.Cut(data, slice.Uint16Len)
 	f.Seq = uint16(slice.DecodeUint16(seq))
 	length, data = slice.Cut(data, slice.Uint32Len)
 	f.Length = uint32(slice.DecodeUint32(length))
+	deadline, data = slice.Cut(data, slice.Uint64Len)
+	f.Deadline = time.Unix(int64(slice.DecodeUint64(deadline)), 0)
 	f.Parity, data = data[0], data[1:]
 	f.Data = data
 	return
