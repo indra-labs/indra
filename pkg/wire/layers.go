@@ -27,18 +27,18 @@ func (o OnionSkins) Exit(port uint16, ciphers [3]sha256.Hash,
 
 	return append(o, &Exit{Port: port, Cipher: ciphers, Bytes: payload})
 }
-func (o OnionSkins) Return(ip net.IP, rtn pub.Key) OnionSkins {
+func (o OnionSkins) Return(ip net.IP, rtn *pub.Key) OnionSkins {
 	return append(o, &Return{IP: ip, Key: rtn})
 }
-func (o OnionSkins) Cipher(id nonce.ID, key pub.Key) OnionSkins {
-	return append(o, &Cipher{ID: id, Key: key.ToBytes()})
+func (o OnionSkins) Cipher(hdr, pld *prv.Key) OnionSkins {
+	return append(o, &Cipher{Header: hdr, Payload: pld})
 }
-func (o OnionSkins) Purchase(value uint64) OnionSkins {
-	return append(o, &Purchase{Value: value})
+func (o OnionSkins) Purchase(value uint64, ciphers [3]sha256.Hash) OnionSkins {
+	return append(o, &Purchase{Value: value, Ciphers: ciphers})
 }
-func (o OnionSkins) Session(fwd, rtn pub.Key) OnionSkins {
+func (o OnionSkins) Session(fwd, rtn *pub.Key) OnionSkins {
 	return append(o, &Session{
-		ForwardKey: fwd.ToBytes(), ReturnKey: rtn.ToBytes(),
+		HeaderKey: fwd, PayloadKey: rtn,
 	})
 }
 func (o OnionSkins) Response(res slice.Bytes) OnionSkins {

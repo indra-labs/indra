@@ -213,7 +213,7 @@ type Return struct {
 	// The header provided in a previous Exit message uses the Forward key
 	// so that the Exit node cannot decrypt the header and discover the
 	// return path.
-	pub.Key
+	*pub.Key
 	Onion
 }
 
@@ -234,11 +234,10 @@ func (rt *Return) Encode(o slice.Bytes, c *slice.Cursor) {
 
 // Cipher delivers a public key to be used in association with a Return
 // specifically in the situation of a node bootstrapping that doesn't have
-// sessions yet. The ID allows the client to associate the Cipher to the
-// Purchase.
+// sessions yet. The Forward key will appear in the pre-formed header, but the
+// cipher provided to the seller will correspond with
 type Cipher struct {
-	nonce.ID
-	Key pub.Bytes
+	Header, Payload *prv.Key
 	Onion
 }
 
@@ -251,24 +250,30 @@ func (ci *Cipher) Len() int {
 }
 
 func (ci *Cipher) Encode(o slice.Bytes, c *slice.Cursor) {
-	copy(o[*c:c.Inc(nonce.IDLen)], ci.ID[:])
 	copy(o[*c:c.Inc(MagicLen)], CipherMagic)
-	copy(o[c.Inc(1):c.Inc(sha256.Len)], ci.Key[:])
+	hdr, pld := ci.Header.ToBytes(), ci.Payload.ToBytes()
+	copy(o[c.Inc(1):c.Inc(prv.KeyLen)], hdr[:])
+	copy(o[c.Inc(1):c.Inc(prv.KeyLen)], pld[:])
 	ci.Onion.Encode(o, c)
 }
 
 // Purchase is a message that is sent after first forwarding a Lighting payment
 // of an amount corresponding to the number of bytes requested based on the
-// price advertised for Exit traffic by a relay. The Receipt is the confirmation
-// after requesting an Invoice for the amount and then paying it.
+// price advertised for Exit traffic by a relay.
 //
-// This message contains a Return message, which enables payments to proxy
-// forwards through two hops to the router that will issue the Session, plus two
-// more Return layers for carrying the Session back to the client.
-//
-// Purchases have an ID created by the client.
+// The Return bytes contain the message header that is prepended to a Session
+// message which contains the pair of keys associated with the Session that is
+// purchased.
 type Purchase struct {
 	Value uint64
+	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
+	// given order over the reply message from the service.
+	Ciphers [3]sha256.Hash
+	// Return is the pre-formed header which uses different private keys to
+	// the ones used to create the Ciphers above, meaning the seller can
+	// encrypt the payload to be correctly decrypted by the Return hops, but
+	// cannot decrypt the header, which would reveal the return path.
+	Return slice.Bytes
 	Onion
 }
 
@@ -277,7 +282,7 @@ var _ Onion = &Purchase{}
 func (pr *Purchase) Inner() Onion   { return pr.Onion }
 func (pr *Purchase) Insert(o Onion) { pr.Onion = o }
 func (pr *Purchase) Len() int {
-	return MagicLen + slice.Uint64Len + pr.Onion.Len()
+	return MagicLen + slice.Uint64Len + len(pr.Return) + pr.Onion.Len()
 }
 
 func (pr *Purchase) Encode(o slice.Bytes, c *slice.Cursor) {
@@ -285,18 +290,28 @@ func (pr *Purchase) Encode(o slice.Bytes, c *slice.Cursor) {
 	value := slice.NewUint64()
 	slice.EncodeUint64(value, pr.Value)
 	copy(o[*c:c.Inc(slice.Uint64Len)], value)
+	copy(o[*c:c.Inc(sha256.Len)], pr.Ciphers[0][:])
+	copy(o[*c:c.Inc(sha256.Len)], pr.Ciphers[1][:])
+	copy(o[*c:c.Inc(sha256.Len)], pr.Ciphers[1][:])
+	copy(o[*c:c.Inc(len(pr.Return))], pr.Return)
 	pr.Onion.Encode(o, c)
 }
 
-// Session is a message containing two public keys which identify to a relay the
-// session to account bytes on, this is wrapped in two Return message layers by
-// the seller. Forward keys are used for encryption in Forward and Exit
-// messages, and Return keys are separate and are only known to the client and
-// relay that issues a Session, ensuring that the Exit cannot see the inner
-// layers of the Return messages.
+// Session is a message containing two public keys which identify to a relay how
+// to decrypt the header in a Return message, using the HeaderKey, and the
+// payload, which uses the PayloadKey. There is two keys in order to prevent the
+// Exit node from being able to decrypt the header, but enable it to encrypt the
+// payload, and Return relay hops have these key pairs and identify the
+// HeaderKey and then know they can unwrap their layer of the payload using the
+// PayloadKey.
+//
+// Clients use the HeaderKey, cloaked, in their messages for the seller relay,
+// in the header, and use the PayloadKey as the public key half with ECDH and
+// their generated private key which produces the public key that is placed in
+// the header.
 type Session struct {
-	ForwardKey pub.Bytes
-	ReturnKey  pub.Bytes
+	HeaderKey  *pub.Key
+	PayloadKey *pub.Key
 	Onion
 }
 
@@ -309,9 +324,10 @@ func (se *Session) Len() int {
 }
 
 func (se *Session) Encode(o slice.Bytes, c *slice.Cursor) {
+	fwd, rtn := se.HeaderKey.ToBytes(), se.PayloadKey.ToBytes()
 	copy(o[*c:c.Inc(MagicLen)], SessionMagic)
-	copy(o[*c:c.Inc(pub.KeyLen)], se.ForwardKey[:])
-	copy(o[*c:c.Inc(pub.KeyLen)], se.ReturnKey[:])
+	copy(o[*c:c.Inc(pub.KeyLen)], fwd[:])
+	copy(o[*c:c.Inc(pub.KeyLen)], rtn[:])
 	se.Onion.Encode(o, c)
 }
 
