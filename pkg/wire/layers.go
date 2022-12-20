@@ -16,8 +16,8 @@ type OnionSkins []Onion
 func (o OnionSkins) Message(to *address.Sender, from *prv.Key) OnionSkins {
 	return append(o, &Message{To: to, From: from})
 }
-func (o OnionSkins) Confirmation(ciph sha256.Hash, id nonce.ID) OnionSkins {
-	return append(o, &Confirmation{Cipher: ciph, ID: id})
+func (o OnionSkins) Confirmation(id nonce.ID) OnionSkins {
+	return append(o, &Confirmation{ID: id})
 }
 func (o OnionSkins) Forward(ip net.IP) OnionSkins {
 	return append(o, &Forward{IP: ip})

@@ -1,7 +1,6 @@
 package wire
 
 import (
-	"crypto/aes"
 	"crypto/cipher"
 	"net"
 
@@ -114,7 +113,6 @@ func (on *Message) Encode(o slice.Bytes, c *slice.Cursor) {
 // randomly selected, so they will generally be a much smaller subset versus the
 // current full set of Session s currently open.
 type Confirmation struct {
-	Cipher sha256.Hash
 	nonce.ID
 }
 
@@ -128,13 +126,8 @@ func (cf *Confirmation) Len() int {
 
 func (cf *Confirmation) Encode(o slice.Bytes, c *slice.Cursor) {
 	copy(o[*c:c.Inc(MagicLen)], ConfirmationMagic)
-	// Generate block cipher from confirmation Cipher.
-	block, _ := aes.NewCipher(cf.Cipher[:])
-	start, end := *c, c.Inc(nonce.IDLen)
 	// Copy in the ID.
-	copy(o[start:end], cf.ID[:])
-	// Encrypt the ID to the cipher.
-	ciph.Encipher(block, nonce.New(), o[start:end])
+	copy(o[*c:c.Inc(nonce.IDLen)], cf.ID[:])
 }
 
 // Forward is just an IP address and a wrapper for another message.
@@ -324,10 +317,10 @@ func (se *Session) Len() int {
 }
 
 func (se *Session) Encode(o slice.Bytes, c *slice.Cursor) {
-	fwd, rtn := se.HeaderKey.ToBytes(), se.PayloadKey.ToBytes()
+	hdr, pld := se.HeaderKey.ToBytes(), se.PayloadKey.ToBytes()
 	copy(o[*c:c.Inc(MagicLen)], SessionMagic)
-	copy(o[*c:c.Inc(pub.KeyLen)], fwd[:])
-	copy(o[*c:c.Inc(pub.KeyLen)], rtn[:])
+	copy(o[*c:c.Inc(pub.KeyLen)], hdr[:])
+	copy(o[*c:c.Inc(pub.KeyLen)], pld[:])
 	se.Onion.Encode(o, c)
 }
 

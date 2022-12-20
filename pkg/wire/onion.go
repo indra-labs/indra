@@ -19,17 +19,18 @@ import (
 // an increment of their liveness score. By using this scheme, when nodes are
 // offline their scores will fall to zero after a time whereas live nodes will
 // have steadily increasing scores from successful pings.
-func Ping(ciph sha256.Hash, id nonce.ID, nodes [3]node.Node,
+func Ping(id nonce.ID, client node.Node, hop [3]node.Node,
 	set signer.KeySet) Onion {
 
 	return OnionSkins{}.
-		Message(address.FromPubKey(nodes[0].Forward), set.Next()).
-		Forward(nodes[0].IP).
-		Message(address.FromPubKey(nodes[1].Forward), set.Next()).
-		Forward(nodes[1].IP).
-		Message(address.FromPubKey(nodes[2].Forward), set.Next()).
-		Forward(nodes[2].IP).
-		Confirmation(ciph, id).
+		Message(address.FromPubKey(hop[0].HeaderKey), set.Next()).
+		Forward(hop[1].IP).
+		Message(address.FromPubKey(hop[1].HeaderKey), set.Next()).
+		Forward(hop[2].IP).
+		Message(address.FromPubKey(hop[2].HeaderKey), set.Next()).
+		Forward(client.IP).
+		Message(address.FromPubKey(client.HeaderKey), set.Next()).
+		Confirmation(id).
 		Assemble()
 }
 
@@ -46,20 +47,26 @@ func Ping(ciph sha256.Hash, id nonce.ID, nodes [3]node.Node,
 // This message's last layer is a Confirmation, which allows the client to know
 // that the key was successfully delivered to the Return relays that will be
 // used in the Purchase.
-func SendReturn(id nonce.ID, ciph sha256.Hash, hdr, pld *prv.Key,
-	nodes [5]node.Node, set signer.KeySet) Onion {
+//
+// The first hop (0) is the destination of the first layer, 1 is second, 2 is
+// the return relay, 3 is the first return, 4 is the second return, and client
+// is the client.
+func SendReturn(idCipher sha256.Hash, id nonce.ID, hdr, pld *prv.Key,
+	client node.Node, hop [5]node.Node, set signer.KeySet) Onion {
 
 	return OnionSkins{}.
-		Message(address.FromPubKey(nodes[0].Forward), set.Next()).
-		Forward(nodes[0].IP).
-		Message(address.FromPubKey(nodes[1].Forward), set.Next()).
-		Forward(nodes[1].IP).
-		Message(address.FromPubKey(nodes[2].Forward), set.Next()).
+		Message(address.FromPubKey(hop[0].HeaderKey), set.Next()).
+		Forward(hop[1].IP).
+		Message(address.FromPubKey(hop[1].HeaderKey), set.Next()).
+		Forward(hop[2].IP).
+		Message(address.FromPubKey(hop[2].HeaderKey), set.Next()).
 		Cipher(hdr, pld).
-		Message(address.FromPubKey(nodes[3].Forward), set.Next()).
-		Forward(nodes[1].IP).
-		Message(address.FromPubKey(nodes[4].Forward), set.Next()).
-		Forward(nodes[2].IP).
-		Confirmation(ciph, id).
+		Forward(hop[3].IP).
+		Message(address.FromPubKey(hop[3].HeaderKey), set.Next()).
+		Forward(hop[4].IP).
+		Message(address.FromPubKey(hop[4].HeaderKey), set.Next()).
+		Forward(client.IP).
+		Message(address.FromPubKey(client.HeaderKey), set.Next()).
+		Confirmation(id).
 		Assemble()
 }

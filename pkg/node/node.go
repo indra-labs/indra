@@ -25,7 +25,7 @@ var (
 type Node struct {
 	nonce.ID
 	net.IP
-	Forward, Return *pub.Key
+	HeaderKey, PayloadKey *pub.Key
 	ifc.Transport
 }
 
@@ -34,11 +34,11 @@ type Node struct {
 func New(ip net.IP, fwd, rtn *pub.Key, tpt ifc.Transport) (n *Node, id nonce.ID) {
 	id = nonce.NewID()
 	n = &Node{
-		ID:        id,
-		IP:        ip,
-		Transport: tpt,
-		Forward:   fwd,
-		Return:    rtn,
+		ID:         id,
+		IP:         ip,
+		Transport:  tpt,
+		HeaderKey:  fwd,
+		PayloadKey: rtn,
 	}
 	return
 }

@@ -11,10 +11,9 @@ import (
 // with new credit, and the current state of the encryption.
 type Session struct {
 	nonce.ID
-	Remaining       uint64
-	Forward, Return *address.SendEntry
-	ReceiveEntry    *address.ReceiveEntry
-	KeyRoller       *signer.KeySet
+	Remaining             uint64
+	HeaderKey, PayloadKey *address.SendEntry
+	*signer.KeySet
 }
 
 type Sessions []*Session
@@ -49,15 +48,15 @@ func (s Sessions) Find(t nonce.ID) (se *Session) {
 //
 // Purchasing a session the seller returns a token, based on a requested data
 // allocation,
-func NewSession(id nonce.ID, rem uint64, fwd, rtn *address.SendEntry,
-	re *address.ReceiveEntry, kr *signer.KeySet) (s *Session) {
+func NewSession(id nonce.ID, rem uint64, hdr, pld *address.SendEntry,
+	kr *signer.KeySet) (s *Session) {
 
 	s = &Session{
-		ID:           id,
-		Remaining:    rem,
-		Forward:      fwd,
-		ReceiveEntry: re,
-		KeyRoller:    kr,
+		ID:         id,
+		Remaining:  rem,
+		HeaderKey:  hdr,
+		PayloadKey: pld,
+		KeySet:     kr,
 	}
 	return
 }
@@ -77,12 +76,4 @@ func (s *Session) SubtractBytes(b uint64) bool {
 	}
 	s.Remaining -= b
 	return true
-}
-
-func (s *Session) SetSendEntry(se *address.SendEntry) {
-	s.Forward = se
-}
-
-func (s *Session) SetReceiveEntry(re *address.ReceiveEntry) {
-	s.ReceiveEntry = re
 }
