@@ -1,10 +1,6 @@
 package client
 
 import (
-	crand "crypto/rand"
-	"encoding/binary"
-	"fmt"
-	"math/rand"
 	"net"
 
 	"github.com/Indra-Labs/indra"
@@ -13,7 +9,6 @@ import (
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/node"
-	"github.com/Indra-Labs/indra/pkg/nonce"
 	log2 "github.com/cybriq/proc/pkg/log"
 	"github.com/cybriq/qu"
 )
@@ -74,44 +69,4 @@ func (c *Client) Cleanup() {
 
 func (c *Client) Shutdown() {
 	c.C.Q()
-}
-
-const CircuitLen = 5
-const CircuitExit = 2
-const ReturnLen = 3
-
-func (c *Client) GeneratePath(length, exit int) (ci *Circuit, e error) {
-	if len(c.Sessions) < 5 {
-		e = fmt.Errorf("insufficient Sessions to form a circuit, "+
-			"5 required, %d available", len(c.Sessions))
-		return
-	}
-	nodesLen := len(c.Nodes)
-	s := make(node.Nodes, nodesLen)
-	for i := range s {
-		s[i] = c.Nodes[i]
-	}
-	randBytes := make([]byte, 8)
-	// use crypto/rand to seed PRNG to avoid possible timing attacks.
-	var n int
-	if n, e = crand.Read(randBytes); check(e) && n != 8 {
-		return
-	}
-	rand.Seed(int64(binary.LittleEndian.Uint64(randBytes)))
-	rand.Shuffle(nodesLen, func(i, j int) { s[i], s[j] = s[j], s[i] })
-	ci = &Circuit{
-		ID:   nonce.NewID(),
-		Hops: s[:length],
-		Exit: exit,
-	}
-	c.Circuits = c.Circuits.Add(ci)
-	return
-}
-
-func (c *Client) GenerateCircuit() (ci *Circuit, e error) {
-	return c.GeneratePath(CircuitLen, CircuitExit)
-}
-
-func (c *Client) GenerateReturn() (ci *Circuit, e error) {
-	return c.GeneratePath(ReturnLen, CircuitExit)
 }
