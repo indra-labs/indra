@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/Indra-Labs/indra/pkg/key/address"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
@@ -30,12 +31,13 @@ func TestEncode_Decode(t *testing.T) {
 	addr := address.FromPubKey(rP)
 	var pkt []byte
 	params := EP{
-		To:     addr,
-		From:   sp,
-		Data:   payload,
-		Seq:    234,
-		Parity: 64,
-		Length: msgSize,
+		To:       addr,
+		From:     sp,
+		Data:     payload,
+		Seq:      234,
+		Parity:   64,
+		Deadline: time.Now().Add(time.Minute),
+		Length:   msgSize,
 	}
 	if pkt, e = Encode(params); check(e) {
 		t.Error(e)
