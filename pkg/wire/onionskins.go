@@ -1,6 +1,7 @@
 package wire
 
 import (
+	"crypto/aes"
 	"crypto/cipher"
 	"net"
 
@@ -25,15 +26,15 @@ var (
 const MagicLen = 3
 
 var (
-	ForwardMagic         = slice.Bytes("fwd")
-	ExitMagic            = slice.Bytes("exi")
-	ReturnMagic          = slice.Bytes("rtn")
-	CipherMagic          = slice.Bytes("cif")
-	PurchaseMagic        = slice.Bytes("prc")
-	SessionMagic         = slice.Bytes("ses")
-	AcknowledgementMagic = slice.Bytes("ack")
-	ResponseMagic        = slice.Bytes("res")
-	TokenMagic           = slice.Bytes("tok")
+	ConfirmationMagic = slice.Bytes("cnf")
+	ForwardMagic      = slice.Bytes("fwd")
+	ExitMagic         = slice.Bytes("exi")
+	ReturnMagic       = slice.Bytes("rtn")
+	CipherMagic       = slice.Bytes("cif")
+	PurchaseMagic     = slice.Bytes("prc")
+	SessionMagic      = slice.Bytes("ses")
+	ResponseMagic     = slice.Bytes("res")
+	TokenMagic        = slice.Bytes("tok")
 )
 
 // Onion is an interface for the layers of messages each encrypted inside a
@@ -98,6 +99,42 @@ func (on *Message) Encode(o slice.Bytes, c *slice.Cursor) {
 	// wrapped messages inside each message afterwards.
 	hash := sha256.Single(o[checkEnd:])
 	copy(o[checkStart:checkEnd], hash[:4])
+}
+
+// Confirmation is an encryption layer for messages returned to the client on
+// the inside of an onion, for Ping and Cipher messages, providing a
+// confirmation of the transit of the onion through its encoded route.
+//
+// It is encrypted because otherwise internal identifiers could be leaked and
+// potentially reveal something about the entropy of a client/relay.
+//
+// In order to speed up recognition, the key of the table of pending Ping and
+// Cipher messages will include the last hop that will deliver this layer of the
+// onion - there can be more than one up in the air at a time, but they are
+// randomly selected, so they will generally be a much smaller subset versus the
+// current full set of Session s currently open.
+type Confirmation struct {
+	Cipher sha256.Hash
+	nonce.ID
+}
+
+var _ Onion = &Confirmation{}
+
+func (cf *Confirmation) Inner() Onion   { return nil }
+func (cf *Confirmation) Insert(o Onion) {}
+func (cf *Confirmation) Len() int {
+	return MagicLen + nonce.IDLen
+}
+
+func (cf *Confirmation) Encode(o slice.Bytes, c *slice.Cursor) {
+	copy(o[*c:c.Inc(MagicLen)], ConfirmationMagic)
+	// Generate block cipher from confirmation Cipher.
+	block, _ := aes.NewCipher(cf.Cipher[:])
+	start, end := *c, c.Inc(nonce.IDLen)
+	// Copy in the ID.
+	copy(o[start:end], cf.ID[:])
+	// Encrypt the ID to the cipher.
+	ciph.Encipher(block, nonce.New(), o[start:end])
 }
 
 // Forward is just an IP address and a wrapper for another message.
@@ -278,26 +315,9 @@ func (se *Session) Encode(o slice.Bytes, c *slice.Cursor) {
 	se.Onion.Encode(o, c)
 }
 
-// The remaining methods are terminals, all constructed Onion structures
+// The remaining types are terminals, all constructed Onion structures
 // should have one of these as the last element otherwise the second last call
 // to Encode will panic with a nil.
-
-// Acknowledgement messages just contain a nonce ID, these are used to terminate
-// ping and Cipher onion messages that confirm relaying was successful.
-type Acknowledgement struct {
-	nonce.ID
-}
-
-var _ Onion = &Acknowledgement{}
-
-func (ak *Acknowledgement) Inner() Onion   { return nil }
-func (ak *Acknowledgement) Insert(_ Onion) {}
-func (ak *Acknowledgement) Len() int       { return MagicLen + nonce.IDLen }
-
-func (ak *Acknowledgement) Encode(o slice.Bytes, c *slice.Cursor) {
-	copy(o[*c:c.Inc(MagicLen)], AcknowledgementMagic)
-	copy(o[*c:c.Inc(pub.KeyLen)], ak.ID[:])
-}
 
 // Response messages are what are carried back via Return messages from an Exit.
 type Response slice.Bytes
@@ -316,7 +336,7 @@ func (rs Response) Encode(o slice.Bytes, c *slice.Cursor) {
 	copy(o[*c:c.Inc(len(rs))], rs)
 }
 
-// A Token is a 32 byte value. TODO: not sure we need this?
+// A Token is a 32 byte value.
 type Token sha256.Hash
 
 var _ Onion = Token{}

@@ -16,6 +16,9 @@ type OnionSkins []Onion
 func (o OnionSkins) Message(to *address.Sender, from *prv.Key) OnionSkins {
 	return append(o, &Message{To: to, From: from})
 }
+func (o OnionSkins) Confirmation(ciph sha256.Hash, id nonce.ID) OnionSkins {
+	return append(o, &Confirmation{Cipher: ciph, ID: id})
+}
 func (o OnionSkins) Forward(ip net.IP) OnionSkins {
 	return append(o, &Forward{IP: ip})
 }
@@ -37,9 +40,6 @@ func (o OnionSkins) Session(fwd, rtn pub.Key) OnionSkins {
 	return append(o, &Session{
 		ForwardKey: fwd.ToBytes(), ReturnKey: rtn.ToBytes(),
 	})
-}
-func (o OnionSkins) Acknowledgement(id nonce.ID) OnionSkins {
-	return append(o, &Acknowledgement{ID: id})
 }
 func (o OnionSkins) Response(res slice.Bytes) OnionSkins {
 	return append(o, Response(res))
