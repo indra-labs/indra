@@ -6,6 +6,7 @@ import (
 
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
+	"github.com/Indra-Labs/indra/pkg/nonce"
 )
 
 // SendEntry tracks the received signing keys to be used for messages with a
@@ -91,15 +92,16 @@ func (sc *SendCache) Delete(k pub.Bytes) (e error) {
 	return
 }
 
-// ReceiveEntry tracks the details of a receiver key and their related IP
-// address.
+// ReceiveEntry tracks the details of a receiver key and their ID.
 type ReceiveEntry struct {
+	nonce.ID
 	*Receiver
 	time.Time
 }
 
 func NewReceiveEntry(priv *prv.Key) *ReceiveEntry {
 	return &ReceiveEntry{
+		ID:       nonce.NewID(),
 		Receiver: NewReceiver(priv),
 		Time:     time.Now(),
 	}
@@ -128,7 +130,7 @@ func (rc *ReceiveCache) Len() int {
 }
 
 func (rc *ReceiveCache) Add(r *Receiver) {
-	re := &ReceiveEntry{Receiver: r, Time: time.Now()}
+	re := NewReceiveEntry(r.Key)
 	rc.ReceiveEntries = append(rc.ReceiveEntries, re)
 	rc.Index = append(rc.Index, pub.Derive(r.Key).ToBytes())
 	return

@@ -68,7 +68,7 @@ package client
 // 	// log.I.Ln(len(ci.Hops))
 // 	for i := range ci.Hops {
 // 		// progress through the hops in reverse
-// 		rm := &wire.Forward{
+// 		rm := &wire.HeaderKey{
 // 			IP:      ci.Hops[len(ci.Hops)-i-1].IP,
 // 			Message: lastMsg,
 // 		}
@@ -76,7 +76,7 @@ package client
 // 		ep := message.EP{
 // 			To: address.
 // 				FromPubKey(ci.Hops[len(ci.Hops)-i-1].Key),
-// 			From:   cl.Sessions[i].KeyRoller.Next(),
+// 			From:   cl.Sessions[i].KeySet.Next(),
 // 			Length: len(rmm),
 // 			Data:   rmm,
 // 		}
@@ -134,7 +134,7 @@ package client
 // 			t.Error(e)
 // 			t.FailNow()
 // 		}
-// 		var rm *wire.Forward
+// 		var rm *wire.HeaderKey
 // 		var msg wire.Message
 // 		if msg, e = wire.Deserialize(f.Data); check(e) {
 // 			t.Error(e)
