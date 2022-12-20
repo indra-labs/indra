@@ -7,6 +7,7 @@ import (
 	"github.com/Indra-Labs/indra/pkg/node"
 	"github.com/Indra-Labs/indra/pkg/nonce"
 	"github.com/Indra-Labs/indra/pkg/sha256"
+	"github.com/Indra-Labs/indra/pkg/slice"
 )
 
 // Ping is a message which checks the liveness of relays by ensuring they are
@@ -47,11 +48,7 @@ func Ping(id nonce.ID, client node.Node, hop [3]node.Node,
 // This message's last layer is a Confirmation, which allows the client to know
 // that the key was successfully delivered to the Return relays that will be
 // used in the Purchase.
-//
-// The first hop (0) is the destination of the first layer, 1 is second, 2 is
-// the return relay, 3 is the first return, 4 is the second return, and client
-// is the client.
-func SendReturn(idCipher sha256.Hash, id nonce.ID, hdr, pld *prv.Key,
+func SendReturn(id nonce.ID, hdr, pld *prv.Key,
 	client node.Node, hop [5]node.Node, set signer.KeySet) Onion {
 
 	return OnionSkins{}.
@@ -68,5 +65,34 @@ func SendReturn(idCipher sha256.Hash, id nonce.ID, hdr, pld *prv.Key,
 		Forward(client.IP).
 		Message(address.FromPubKey(client.HeaderKey), set.Next()).
 		Confirmation(id).
+		Assemble()
+}
+
+// SendExit constructs a message containing an arbitrary payload to a node (3rd
+// hop) with a set of 3 ciphers derived from the hidden PayloadKey of the return
+// hops that are layered progressively after the Exit message.
+//
+// The Exit node forwards the packet it receives to the local port specified in
+// the Exit message, and then uses the ciphers to encrypt the return with the
+// three ciphers provided, which don't enable it to decrypt the header, only to
+// encrypt the payload.
+//
+// TODO: we can create the ciphers based on hop 3, 4 and client Nodes.
+func SendExit(payload slice.Bytes, port uint16, ciphers [3]sha256.Hash,
+	client node.Node, hop [5]node.Node, set signer.KeySet) Onion {
+
+	return OnionSkins{}.
+		Message(address.FromPubKey(hop[0].HeaderKey), set.Next()).
+		Forward(hop[1].IP).
+		Message(address.FromPubKey(hop[1].HeaderKey), set.Next()).
+		Forward(hop[2].IP).
+		Message(address.FromPubKey(hop[2].HeaderKey), set.Next()).
+		Exit(port, ciphers, payload).
+		Return(hop[3].IP).
+		Message(address.FromPubKey(hop[3].PayloadKey), set.Next()).
+		Return(hop[4].IP).
+		Message(address.FromPubKey(hop[4].PayloadKey), set.Next()).
+		Return(client.IP).
+		Message(address.FromPubKey(client.PayloadKey), set.Next()).
 		Assemble()
 }

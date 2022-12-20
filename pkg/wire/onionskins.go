@@ -151,6 +151,31 @@ func (fw *Forward) Encode(o slice.Bytes, c *slice.Cursor) {
 	fw.Onion.Encode(o, c)
 }
 
+// Return messages are distinct from Forward messages in that the header
+// encryption uses a different secret than the payload. The magic bytes signal
+// this to the relay that receives this, which then looks up the Return key
+// matching the To address in the message header.
+type Return struct {
+	// IP is the address of the next relay in the return leg of a circuit.
+	net.IP
+	Onion
+}
+
+var _ Onion = &Return{}
+
+func (rt *Return) Inner() Onion   { return rt.Onion }
+func (rt *Return) Insert(o Onion) { rt.Onion = o }
+func (rt *Return) Len() int {
+	return MagicLen + len(rt.IP) + 1 + rt.Onion.Len()
+}
+
+func (rt *Return) Encode(o slice.Bytes, c *slice.Cursor) {
+	copy(o[*c:c.Inc(MagicLen)], ReturnMagic)
+	o[*c] = byte(len(rt.IP))
+	copy(o[c.Inc(1):c.Inc(len(rt.IP))], rt.IP)
+	rt.Onion.Encode(o, c)
+}
+
 // Exit messages are the layer of a message after two Forward packets that
 // provides an exit address and
 type Exit struct {
@@ -193,36 +218,6 @@ func (ex *Exit) Encode(o slice.Bytes, c *slice.Cursor) {
 	copy(o[*c:c.Inc(len(ex.Bytes))], ex.Bytes)
 	ex.Onion.Encode(o, c)
 
-}
-
-// Return messages are distinct from Forward messages in that the header
-// encryption uses a different secret than the payload. The magic bytes signal
-// this to the relay that receives this, which then looks up the Return key
-// matching the To address in the message header.
-type Return struct {
-	// IP is the address of the next relay in the return leg of a circuit.
-	net.IP
-	// The Key here should be the Return key matching the IP of the relay.
-	// The header provided in a previous Exit message uses the Forward key
-	// so that the Exit node cannot decrypt the header and discover the
-	// return path.
-	*pub.Key
-	Onion
-}
-
-var _ Onion = &Return{}
-
-func (rt *Return) Inner() Onion   { return rt.Onion }
-func (rt *Return) Insert(o Onion) { rt.Onion = o }
-func (rt *Return) Len() int {
-	return MagicLen + len(rt.IP) + 1 + rt.Onion.Len()
-}
-
-func (rt *Return) Encode(o slice.Bytes, c *slice.Cursor) {
-	copy(o[*c:c.Inc(MagicLen)], ReturnMagic)
-	o[*c] = byte(len(rt.IP))
-	copy(o[c.Inc(1):c.Inc(len(rt.IP))], rt.IP)
-	rt.Onion.Encode(o, c)
 }
 
 // Cipher delivers a public key to be used in association with a Return
