@@ -1,13 +1,16 @@
 package main
 
 import (
+	"os"
+
+	"github.com/Indra-Labs/indra"
 	"github.com/cybriq/proc/pkg/app"
 	"github.com/cybriq/proc/pkg/cmds"
+	log2 "github.com/cybriq/proc/pkg/log"
 	"github.com/cybriq/proc/pkg/opts/config"
 	"github.com/cybriq/proc/pkg/opts/meta"
 	"github.com/cybriq/proc/pkg/opts/toggle"
 	"github.com/davecgh/go-spew/spew"
-	"os"
 )
 
 const lorem = `
@@ -18,12 +21,21 @@ Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
 fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in 
 culpa qui officia deserunt mollit anim id est laborum.`
 
+var (
+	log   = log2.GetLogger(indra.PathBase)
+	check = log.E.Chk
+)
+
 func main() {
 
 	command := &cmds.Command{
 		Name:          "ind",
 		Description:   "The indra network daemon.",
 		Documentation: lorem,
+		Entrypoint: func(c *cmds.Command, args []string) error {
+			log.I.Ln("running node")
+			return nil
+		},
 		Configs: config.Opts{
 			"AutoPorts": toggle.New(meta.Data{
 				Label:         "Automatic Ports",
@@ -44,22 +56,24 @@ func main() {
 
 	cmds.GetConfigBase(command.Configs, command.Name, false)
 
-	cmds.Init(command, os.Args)
+	var err error
+	if command, err = cmds.Init(command, os.Args); check(err) {
+		return
+	}
 
 	var application *app.App
-	var err error
 
-	spew.Dump(command)
+	log.I.S(command)
 
 	if application, err = app.New(command, os.Args); err != nil {
 		spew.Dump(err)
 		os.Exit(1)
 	}
 
-	spew.Dump(application)
+	log.I.S(application)
 
-	if err = application.Launch(); err != nil {
-		spew.Dump(err)
-		os.Exit(1)
-	}
+	// if err = application.Launch(); err != nil {
+	// 	spew.Dump(err)
+	// 	os.Exit(1)
+	// }
 }
