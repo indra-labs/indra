@@ -13,7 +13,7 @@ import (
 
 type OnionSkins []Onion
 
-func (o OnionSkins) Message(to *address.Sender, from *prv.Key) OnionSkins {
+func (o OnionSkins) Header(to *address.Sender, from *prv.Key) OnionSkins {
 	return append(o, &Message{To: to, From: from})
 }
 func (o OnionSkins) Confirmation(id nonce.ID) OnionSkins {
@@ -33,8 +33,8 @@ func (o OnionSkins) Return(ip net.IP) OnionSkins {
 func (o OnionSkins) Cipher(hdr, pld *prv.Key) OnionSkins {
 	return append(o, &Cipher{Header: hdr, Payload: pld})
 }
-func (o OnionSkins) Purchase(value uint64, ciphers [3]sha256.Hash) OnionSkins {
-	return append(o, &Purchase{Value: value, Ciphers: ciphers})
+func (o OnionSkins) Purchase(nBytes uint64, ciphers [3]sha256.Hash) OnionSkins {
+	return append(o, &Purchase{NBytes: nBytes, Ciphers: ciphers})
 }
 func (o OnionSkins) Session(fwd, rtn *pub.Key) OnionSkins {
 	return append(o, &Session{

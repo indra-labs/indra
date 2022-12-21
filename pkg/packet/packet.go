@@ -134,7 +134,7 @@ func Encode(ep EP) (pkt []byte, e error) {
 // After this, if the matching private key to the cloaked address returned is
 // found, it is combined with the public key to generate the cipher and the
 // entire packet should then be decrypted, and the Decode function will then
-// decode a Message.
+// decode a Header.
 func GetKeys(d []byte) (from *pub.Key, e error) {
 	pktLen := len(d)
 	if pktLen < Overhead {

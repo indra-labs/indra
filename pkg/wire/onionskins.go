@@ -82,8 +82,12 @@ func (on *Message) Encode(o slice.Bytes, c *slice.Cursor) {
 	// Derive the cloaked key and copy it in.
 	to := on.To.GetCloak()
 	copy(o[*c:c.Inc(address.Len)], to[:])
+	// Derive the public key from the From key and copy in.
+	pubKey := pub.Derive(on.From).ToBytes()
+	copy(o[*c:c.Inc(pub.KeyLen)], pubKey[:])
 	// Call the tree of onions to perform their encoding.
 	on.Onion.Encode(o, c)
+
 	// Then we can encrypt the message segment
 	var e error
 	var blk cipher.Block
@@ -92,8 +96,8 @@ func (on *Message) Encode(o slice.Bytes, c *slice.Cursor) {
 	}
 	ciph.Encipher(blk, n, o[checkEnd:])
 	// Get the hash of the message and truncate it to the checksum at the
-	// start of the message. Every layer of the onion has a Message and an
-	// onion inside it, the Message takes care of the encryption. This saves
+	// start of the message. Every layer of the onion has a Header and an
+	// onion inside it, the Header takes care of the encryption. This saves
 	// on complications as every layer is header first, message after, with
 	// wrapped messages inside each message afterwards.
 	hash := sha256.Single(o[checkEnd:])
@@ -253,15 +257,10 @@ func (ci *Cipher) Encode(o slice.Bytes, c *slice.Cursor) {
 // message which contains the pair of keys associated with the Session that is
 // purchased.
 type Purchase struct {
-	Value uint64
+	NBytes uint64
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
 	Ciphers [3]sha256.Hash
-	// Return is the pre-formed header which uses different private keys to
-	// the ones used to create the Ciphers above, meaning the seller can
-	// encrypt the payload to be correctly decrypted by the Return hops, but
-	// cannot decrypt the header, which would reveal the return path.
-	Return slice.Bytes
 	Onion
 }
 
@@ -270,18 +269,13 @@ var _ Onion = &Purchase{}
 func (pr *Purchase) Inner() Onion   { return pr.Onion }
 func (pr *Purchase) Insert(o Onion) { pr.Onion = o }
 func (pr *Purchase) Len() int {
-	return MagicLen + slice.Uint64Len + len(pr.Return) + pr.Onion.Len()
+	return MagicLen + slice.Uint64Len + pr.Onion.Len()
 }
 
 func (pr *Purchase) Encode(o slice.Bytes, c *slice.Cursor) {
 	copy(o[*c:c.Inc(MagicLen)], PurchaseMagic)
 	value := slice.NewUint64()
-	slice.EncodeUint64(value, pr.Value)
-	copy(o[*c:c.Inc(slice.Uint64Len)], value)
-	copy(o[*c:c.Inc(sha256.Len)], pr.Ciphers[0][:])
-	copy(o[*c:c.Inc(sha256.Len)], pr.Ciphers[1][:])
-	copy(o[*c:c.Inc(sha256.Len)], pr.Ciphers[1][:])
-	copy(o[*c:c.Inc(len(pr.Return))], pr.Return)
+	slice.EncodeUint64(value, pr.NBytes)
 	pr.Onion.Encode(o, c)
 }
 
