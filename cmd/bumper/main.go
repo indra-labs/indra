@@ -142,7 +142,6 @@ func main() {
 	splitted := strings.Split(out, "\n")
 	var isBranch bool
 	for i := range splitted {
-		branch = splitted[i][2:]
 		if len(splitted[i]) < 2 {
 			continue
 		}
@@ -249,6 +248,7 @@ func Version() string {
 	if e = runCmd("git", "commit", "-m"+commitString); check(e) {
 		os.Exit(1)
 	}
+	panic(tag)
 	if tag {
 		if e = runCmd("git", "tag", SemVer); check(e) {
 			os.Exit(1)
