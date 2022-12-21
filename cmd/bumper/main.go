@@ -129,17 +129,6 @@ func main() {
 	); check(e) {
 		return
 	}
-	switch {
-	case minor:
-		Minor++
-		Patch = 0
-	case major:
-		Major++
-		Minor = 0
-		Patch = 0
-	default:
-		Patch++
-	}
 	startArgs := 1
 	br := strings.Split(GitRef, "/")
 	branch := br[len(br)-1]
@@ -168,11 +157,21 @@ func main() {
 	}
 	tag := true
 	if branch == "main" {
-		// Update SemVer
-		SemVer = fmt.Sprintf("v%d.%d.%d", Major, Minor, Patch)
+		switch {
+		case minor:
+			Minor++
+			Patch = 0
+		case major:
+			Major++
+			Minor = 0
+			Patch = 0
+		default:
+			Patch++
+		}
 	} else {
 		tag = false
 	}
+	SemVer = fmt.Sprintf("v%d.%d.%d", Major, Minor, Patch)
 	PathBase = tr.Filesystem.Root() + "/"
 	versionFile := `// Package indra is the root level package for Indranet, a low latency, 
 // Lightning Network monetised distributed VPN protocol designed for providing
