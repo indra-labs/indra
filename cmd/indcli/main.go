@@ -1,4 +1,4 @@
-package indcli
+package main
 
 func main() {
 
