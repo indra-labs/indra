@@ -1,0 +1,48 @@
+# A sample systemd service file for ind running with a lnd service.
+
+[Unit]
+Description=Indra Network Daemon
+
+# Make sure ind starts after lnd is ready
+Requires=lnd.service
+After=lnd.service
+
+[Service]
+ExecStart=/usr/local/bin/ind
+ExecStop=/usr/local/bin/indcli stop
+
+# Replace these with the user:group that will run lnd
+User=bitcoin
+Group=bitcoin
+
+# Try restarting lnd if it stops due to a failure
+Restart=on-failure
+RestartSec=60
+
+# Type=notify is required for lnd to notify systemd when it is ready
+Type=notify
+
+# An extended timeout period is needed to allow for time intensive operations during startup. We also extend the
+# stop timeout to ensure graceful shutdowns.
+TimeoutStartSec=10
+TimeoutStopSec=30
+
+# Hardening Measures
+####################
+
+# Mount /usr, /boot/ and /etc read-only for the process.
+ProtectSystem=full
+
+# Disallow the process and all of its children to gain
+# new privileges through execute().
+NoNewPrivileges=true
+
+# Use a new /dev namespace only populated with API pseudo devices
+# such as /dev/null, /dev/zero and /dev/random.
+PrivateDevices=true
+
+# Deny the creation of writable and executable memory mappings.
+MemoryDenyWriteExecute=true
+
+[Install]
+WantedBy=multi-user.target
