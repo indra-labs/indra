@@ -238,6 +238,7 @@ func Version() string {
 	if isBranch {
 		startArgs++
 	}
+	log.I.Ln(branch)
 	if e = runCmd("git", "add", "."); check(e) {
 		os.Exit(1)
 	}
