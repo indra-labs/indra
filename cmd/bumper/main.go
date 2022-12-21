@@ -212,7 +212,8 @@ func Version() string {
 		"\tMinor:", Minor, "\n",
 		"\tPatch:", Patch, "\n",
 	)
-	branch := os.Args[1]
+	br := strings.Split(GitRef, "/")
+	branch := br[len(br)-1]
 	if major || minor {
 		branch = os.Args[2]
 	}
