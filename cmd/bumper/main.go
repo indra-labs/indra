@@ -79,13 +79,13 @@ func main() {
 				URL = strings.ReplaceAll(rsss[0], ":", "/")
 				break
 			}
-			rss = strings.Split(rs, "https://")
-			if len(rss) > 1 {
-				rsss := strings.Split(rss[1], ".git")
-				URL = rsss[0]
-				break
-			}
-
+			// This command must be used with ssh addresses only.
+			// rss = strings.Split(rs, "https://")
+			// if len(rss) > 1 {
+			// 	rsss := strings.Split(rss[1], ".git")
+			// 	URL = rsss[0]
+			// 	break
+			// }
 		}
 	}
 	var tr *git.Worktree
@@ -129,18 +129,50 @@ func main() {
 	); check(e) {
 		return
 	}
-	switch {
-	case minor:
-		Minor++
-		Patch = 0
-	case major:
-		Major++
-		Minor = 0
-		Patch = 0
-	default:
-		Patch++
+	br := strings.Split(GitRef, "/")
+	branch := br[len(br)-1]
+	startArgs := 1
+	branchParam := os.Args[1]
+	if major || minor {
+		branchParam = os.Args[2]
 	}
-	// Update SemVer
+	var out string
+	if out, e = runCmdWithOutput("git", "branch"); check(e) {
+		os.Exit(1)
+	}
+	splitted := strings.Split(out, "\n")
+	var isBranch bool
+	for i := range splitted {
+		if len(splitted[i]) < 2 {
+			continue
+		}
+		if splitted[i][2:] == branchParam {
+			isBranch = true
+			break
+		}
+	}
+	if isBranch {
+		branch = branchParam
+	}
+	if isBranch {
+		startArgs++
+	}
+	tag := true
+	if branch != "main" {
+		tag = false
+	} else {
+		switch {
+		case minor:
+			Minor++
+			Patch = 0
+		case major:
+			Major++
+			Minor = 0
+			Patch = 0
+		default:
+			Patch++
+		}
+	}
 	SemVer = fmt.Sprintf("v%d.%d.%d", Major, Minor, Patch)
 	PathBase = tr.Filesystem.Root() + "/"
 	versionFile := `// Package indra is the root level package for Indranet, a low latency, 
@@ -215,16 +247,16 @@ func Version() string {
 	if e = runCmd("git", "add", "."); check(e) {
 		os.Exit(1)
 	}
-	commitString := strings.Join(os.Args[1:], " ")
+	commitString := strings.Join(os.Args[startArgs:], " ")
 	commitString = strings.ReplaceAll(commitString, " -- ", "\n\n")
 	if e = runCmd("git", "commit", "-m"+commitString); check(e) {
 		os.Exit(1)
 	}
-	if e = runCmd("git", "tag", SemVer); check(e) {
-		os.Exit(1)
+	if tag {
+		if e = runCmd("git", "tag", SemVer); check(e) {
+			os.Exit(1)
+		}
 	}
-	gr := strings.Split(GitRef, "/")
-	branch := gr[2]
 	if e = runCmd("git", "push", "origin", branch); check(e) {
 		os.Exit(1)
 	}
@@ -246,5 +278,16 @@ func runCmd(cmd ...string) (err error) {
 	if err == nil && string(output) != "" {
 		errPrintln(string(output))
 	}
+	return
+}
+
+func runCmdWithOutput(cmd ...string) (out string, err error) {
+	c := exec.Command(cmd[0], cmd[1:]...)
+	var output []byte
+	output, err = c.CombinedOutput()
+	if err == nil && string(output) != "" {
+		errPrintln(string(output))
+	}
+	out = string(output)
 	return
 }
