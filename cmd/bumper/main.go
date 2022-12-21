@@ -227,6 +227,7 @@ func Version() string {
 		if len(splitted[i]) < 2 {
 			continue
 		}
+		log.I.Ln(branch)
 		if splitted[i][2:] == branch {
 			log.I.S(splitted[i][2:])
 			isBranch = true
