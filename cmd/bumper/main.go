@@ -129,11 +129,12 @@ func main() {
 	); check(e) {
 		return
 	}
-	startArgs := 1
 	br := strings.Split(GitRef, "/")
 	branch := br[len(br)-1]
+	startArgs := 1
+	branchParam := os.Args[1]
 	if major || minor {
-		branch = os.Args[2]
+		branchParam = os.Args[2]
 	}
 	var out string
 	if out, e = runCmdWithOutput("git", "branch"); check(e) {
@@ -145,17 +146,22 @@ func main() {
 		if len(splitted[i]) < 2 {
 			continue
 		}
-		if splitted[i][2:] == branch {
+		if splitted[i][2:] == branchParam {
 			isBranch = true
-			branch = splitted[i][2:]
 			break
 		}
+	}
+	log.I.S(isBranch, branch)
+	if isBranch {
+		branch = branchParam
 	}
 	if isBranch {
 		startArgs++
 	}
 	tag := true
-	if branch == "main" {
+	if branch != "main" {
+		tag = false
+	} else {
 		switch {
 		case minor:
 			Minor++
@@ -167,8 +173,6 @@ func main() {
 		default:
 			Patch++
 		}
-	} else {
-		tag = false
 	}
 	SemVer = fmt.Sprintf("v%d.%d.%d", Major, Minor, Patch)
 	PathBase = tr.Filesystem.Root() + "/"
