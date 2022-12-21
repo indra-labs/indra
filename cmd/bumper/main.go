@@ -151,10 +151,11 @@ func main() {
 			break
 		}
 	}
-	log.I.S(isBranch, branch)
+	log.I.S(isBranch, branch, branchParam)
 	if isBranch {
 		branch = branchParam
 	}
+	log.I.S(branch)
 	if isBranch {
 		startArgs++
 	}
