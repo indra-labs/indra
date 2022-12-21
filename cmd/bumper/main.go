@@ -79,13 +79,13 @@ func main() {
 				URL = strings.ReplaceAll(rsss[0], ":", "/")
 				break
 			}
-			rss = strings.Split(rs, "https://")
-			if len(rss) > 1 {
-				rsss := strings.Split(rss[1], ".git")
-				URL = rsss[0]
-				break
-			}
-
+			// This command must be used with ssh addresses only.
+			// rss = strings.Split(rs, "https://")
+			// if len(rss) > 1 {
+			// 	rsss := strings.Split(rss[1], ".git")
+			// 	URL = rsss[0]
+			// 	break
+			// }
 		}
 	}
 	var tr *git.Worktree
@@ -212,10 +212,35 @@ func Version() string {
 		"\tMinor:", Minor, "\n",
 		"\tPatch:", Patch, "\n",
 	)
+	branch := os.Args[1]
+	if major || minor {
+		branch = os.Args[2]
+	}
+	var out string
+	if out, e = runCmdWithOutput("git", "branch"); check(e) {
+		os.Exit(1)
+	}
+	splitted := strings.Split(out, "\n")
+	log.I.S(splitted)
+	var isBranch bool
+	for i := range splitted {
+		if len(splitted[i]) < 2 {
+			continue
+		}
+		if splitted[i][2:] == branch {
+			isBranch = true
+			branch = splitted[i][2:]
+			break
+		}
+	}
+	startArgs := 1
+	if isBranch {
+		startArgs++
+	}
 	if e = runCmd("git", "add", "."); check(e) {
 		os.Exit(1)
 	}
-	commitString := strings.Join(os.Args[1:], " ")
+	commitString := strings.Join(os.Args[startArgs:], " ")
 	commitString = strings.ReplaceAll(commitString, " -- ", "\n\n")
 	if e = runCmd("git", "commit", "-m"+commitString); check(e) {
 		os.Exit(1)
@@ -223,8 +248,6 @@ func Version() string {
 	if e = runCmd("git", "tag", SemVer); check(e) {
 		os.Exit(1)
 	}
-	gr := strings.Split(GitRef, "/")
-	branch := gr[2]
 	if e = runCmd("git", "push", "origin", branch); check(e) {
 		os.Exit(1)
 	}
@@ -246,5 +269,16 @@ func runCmd(cmd ...string) (err error) {
 	if err == nil && string(output) != "" {
 		errPrintln(string(output))
 	}
+	return
+}
+
+func runCmdWithOutput(cmd ...string) (out string, err error) {
+	c := exec.Command(cmd[0], cmd[1:]...)
+	var output []byte
+	output, err = c.CombinedOutput()
+	if err == nil && string(output) != "" {
+		errPrintln(string(output))
+	}
+	out = string(output)
 	return
 }
