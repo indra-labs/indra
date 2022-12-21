@@ -248,6 +248,7 @@ func Version() string {
 	if e = runCmd("git", "tag", SemVer); check(e) {
 		os.Exit(1)
 	}
+	log.I.Ln(branch)
 	if e = runCmd("git", "push", "origin", branch); check(e) {
 		os.Exit(1)
 	}
