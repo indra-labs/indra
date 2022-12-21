@@ -142,13 +142,12 @@ func main() {
 	splitted := strings.Split(out, "\n")
 	var isBranch bool
 	for i := range splitted {
+		branch = splitted[i][2:]
 		if len(splitted[i]) < 2 {
 			continue
 		}
 		if splitted[i][2:] == branch {
-			log.I.S(splitted[i][2:])
 			isBranch = true
-			branch = splitted[i][2:]
 			break
 		}
 	}
