@@ -147,6 +147,7 @@ func main() {
 		}
 		if splitted[i][2:] == branch {
 			isBranch = true
+			branch = splitted[i][2:]
 			break
 		}
 	}
@@ -248,7 +249,6 @@ func Version() string {
 	if e = runCmd("git", "commit", "-m"+commitString); check(e) {
 		os.Exit(1)
 	}
-	panic(tag)
 	if tag {
 		if e = runCmd("git", "tag", SemVer); check(e) {
 			os.Exit(1)
