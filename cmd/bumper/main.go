@@ -228,6 +228,7 @@ func Version() string {
 			continue
 		}
 		if splitted[i][2:] == branch {
+			log.I.S(splitted[i][2:])
 			isBranch = true
 			branch = splitted[i][2:]
 			break
@@ -248,7 +249,6 @@ func Version() string {
 	if e = runCmd("git", "tag", SemVer); check(e) {
 		os.Exit(1)
 	}
-	log.I.Ln(branch)
 	if e = runCmd("git", "push", "origin", branch); check(e) {
 		os.Exit(1)
 	}
