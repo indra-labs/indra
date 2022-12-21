@@ -140,8 +140,39 @@ func main() {
 	default:
 		Patch++
 	}
-	// Update SemVer
-	SemVer = fmt.Sprintf("v%d.%d.%d", Major, Minor, Patch)
+	startArgs := 1
+	br := strings.Split(GitRef, "/")
+	branch := br[len(br)-1]
+	if major || minor {
+		branch = os.Args[2]
+	}
+	var out string
+	if out, e = runCmdWithOutput("git", "branch"); check(e) {
+		os.Exit(1)
+	}
+	splitted := strings.Split(out, "\n")
+	var isBranch bool
+	for i := range splitted {
+		if len(splitted[i]) < 2 {
+			continue
+		}
+		if splitted[i][2:] == branch {
+			log.I.S(splitted[i][2:])
+			isBranch = true
+			branch = splitted[i][2:]
+			break
+		}
+	}
+	if isBranch {
+		startArgs++
+	}
+	tag := true
+	if branch == "main" {
+		// Update SemVer
+		SemVer = fmt.Sprintf("v%d.%d.%d", Major, Minor, Patch)
+	} else {
+		tag = false
+	}
 	PathBase = tr.Filesystem.Root() + "/"
 	versionFile := `// Package indra is the root level package for Indranet, a low latency, 
 // Lightning Network monetised distributed VPN protocol designed for providing
@@ -212,35 +243,6 @@ func Version() string {
 		"\tMinor:", Minor, "\n",
 		"\tPatch:", Patch, "\n",
 	)
-	br := strings.Split(GitRef, "/")
-	branch := br[len(br)-1]
-	if major || minor {
-		branch = os.Args[2]
-	}
-	var out string
-	if out, e = runCmdWithOutput("git", "branch"); check(e) {
-		os.Exit(1)
-	}
-	splitted := strings.Split(out, "\n")
-	log.I.S(splitted)
-	var isBranch bool
-	for i := range splitted {
-		if len(splitted[i]) < 2 {
-			continue
-		}
-		log.I.Ln(branch)
-		if splitted[i][2:] == branch {
-			log.I.S(splitted[i][2:])
-			isBranch = true
-			branch = splitted[i][2:]
-			break
-		}
-	}
-	startArgs := 1
-	if isBranch {
-		startArgs++
-	}
-	log.I.Ln(branch)
 	if e = runCmd("git", "add", "."); check(e) {
 		os.Exit(1)
 	}
@@ -249,8 +251,10 @@ func Version() string {
 	if e = runCmd("git", "commit", "-m"+commitString); check(e) {
 		os.Exit(1)
 	}
-	if e = runCmd("git", "tag", SemVer); check(e) {
-		os.Exit(1)
+	if tag {
+		if e = runCmd("git", "tag", SemVer); check(e) {
+			os.Exit(1)
+		}
 	}
 	if e = runCmd("git", "push", "origin", branch); check(e) {
 		os.Exit(1)
