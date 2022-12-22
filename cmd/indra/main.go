@@ -15,7 +15,7 @@ var (
 	log      = log2.GetLogger(indra.PathBase)
 	check    = log.E.Chk
 	commands = &cmds.Command{
-		Name:          "ind",
+		Name:          "indra",
 		Description:   "The indra network daemon.",
 		Documentation: lorem,
 		Entrypoint: func(c *cmds.Command, args []string) error {
@@ -35,7 +35,7 @@ var (
 		Commands: cmds.Commands{
 			{
 				Name:        "version",
-				Description: "print ind version",
+				Description: "print indra version",
 
 				Documentation: lorem,
 				Entrypoint: func(c *cmds.Command, args []string) error {

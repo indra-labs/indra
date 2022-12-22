@@ -11,7 +11,7 @@ var (
 	// URL is the git URL for the repository.
 	URL = "github.com/Indra-Labs/indra"
 	// GitRef is the gitref, as in refs/heads/branchname.
-	GitRef = "refs/heads/ind-bootstrap"
+	GitRef = "refs/heads/indra-bootstrap"
 	// ParentGitCommit is the commit hash of the parent HEAD.
 	ParentGitCommit = "8c361507bd145da860c9753d1dfb8951223ffc39"
 	// BuildTime stores the time when the current binary was built.
