@@ -57,6 +57,8 @@ culpa qui officia deserunt mollit anim id est laborum.`
 
 func main() {
 
+	//log2.SetLogLevel(log2.Debug)
+
 	cmds.GetConfigBase(commands.Configs, commands.Name, false)
 
 	var err error
@@ -69,6 +71,8 @@ func main() {
 		spew.Dump(err)
 		os.Exit(1)
 	}
+
+	//log.I.S(application)
 
 	if err = application.Launch(); err != nil {
 		spew.Dump(err)
