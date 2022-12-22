@@ -8,9 +8,9 @@ import (
 	"github.com/Indra-Labs/indra/pkg/wire/magicbytes"
 )
 
-// Type cipher delivers a pair of public keys to be used in association with a Return
-// specifically in the situation of a node bootstrapping sessions, which doesn't
-// have sessions yet.
+// Type cipher delivers a pair of public keys to be used in association with a
+// Return specifically in the situation of a node bootstrapping sessions, which
+// doesn't have sessions yet.
 type Type struct {
 	Header, Payload *prv.Key
 	types.Onion
@@ -39,13 +39,11 @@ func (x *Type) Encode(o slice.Bytes, c *slice.Cursor) {
 
 func (x *Type) Decode(b slice.Bytes) (e error) {
 
-	magic := Magic
-	if !magicbytes.CheckMagic(b, magic) {
-		return magicbytes.WrongMagic(x, b, magic)
+	if !magicbytes.CheckMagic(b, Magic) {
+		return magicbytes.WrongMagic(x, b, Magic)
 	}
-	minLen := MinLen
-	if len(b) < minLen {
-		return magicbytes.TooShort(len(b), minLen, string(magic))
+	if len(b) < MinLen {
+		return magicbytes.TooShort(len(b), MinLen, string(Magic))
 	}
 	sc := slice.Cursor(0)
 	c := &sc

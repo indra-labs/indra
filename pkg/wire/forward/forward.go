@@ -42,13 +42,11 @@ func (x *Type) Encode(o slice.Bytes, c *slice.Cursor) {
 
 func (x *Type) Decode(b slice.Bytes) (e error) {
 
-	magic := Magic
-	if !magicbytes.CheckMagic(b, magic) {
-		return magicbytes.WrongMagic(x, b, magic)
+	if !magicbytes.CheckMagic(b, Magic) {
+		return magicbytes.WrongMagic(x, b, Magic)
 	}
-	minLen := MinLen
-	if len(b) < minLen {
-		return magicbytes.TooShort(len(b), minLen, string(magic))
+	if len(b) < MinLen {
+		return magicbytes.TooShort(len(b), MinLen, string(Magic))
 	}
 	sc := slice.Cursor(0)
 	c := &sc

@@ -36,7 +36,7 @@ func main() {
 			log.I.Ln("running node")
 			return nil
 		},
-		Default: cmds.Tags("ind"),
+		Default: cmds.Tags("help"),
 		Configs: config.Opts{
 			"AutoPorts": toggle.New(meta.Data{
 				Label:         "Automatic Ports",
@@ -64,14 +64,10 @@ func main() {
 
 	var application *app.App
 
-	log.I.S(command)
-
 	if application, err = app.New(command, os.Args); err != nil {
 		spew.Dump(err)
 		os.Exit(1)
 	}
-
-	log.I.S(application)
 
 	if err = application.Launch(); err != nil {
 		spew.Dump(err)

@@ -16,11 +16,11 @@ var (
 	check = log.E.Chk
 )
 
-// Type session is a message containing two public keys which identify to a relay how
-// to decrypt the header in a Return message, using the HeaderKey, and the
-// payload, which uses the PayloadKey. There is two keys in order to prevent the
-// Exit node from being able to decrypt the header, but enable it to encrypt the
-// payload, and Return relay hops have these key pairs and identify the
+// Type session is a message containing two public keys which identify to a
+// relay how to decrypt the header in a Return message, using the HeaderKey, and
+// the payload, which uses the PayloadKey. There is two keys in order to prevent
+// the Exit node from being able to decrypt the header, but enable it to encrypt
+// the payload, and Return relay hops have these key pairs and identify the
 // HeaderKey and then know they can unwrap their layer of the payload using the
 // PayloadKey.
 //
@@ -56,13 +56,11 @@ func (x *Type) Encode(o slice.Bytes, c *slice.Cursor) {
 
 func (x *Type) Decode(b slice.Bytes) (e error) {
 
-	magic := Magic
-	if !magicbytes.CheckMagic(b, magic) {
-		return magicbytes.WrongMagic(x, b, magic)
+	if !magicbytes.CheckMagic(b, Magic) {
+		return magicbytes.WrongMagic(x, b, Magic)
 	}
-	minLen := MinLen
-	if len(b) < minLen {
-		return magicbytes.TooShort(len(b), minLen, string(magic))
+	if len(b) < MinLen {
+		return magicbytes.TooShort(len(b), MinLen, string(Magic))
 	}
 	sc := slice.Cursor(0)
 	c := &sc
