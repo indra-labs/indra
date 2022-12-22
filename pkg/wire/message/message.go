@@ -1,8 +1,9 @@
-package wire
+package message
 
 import (
 	"crypto/cipher"
 
+	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/ciph"
 	"github.com/Indra-Labs/indra/pkg/key/address"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
@@ -11,12 +12,19 @@ import (
 	"github.com/Indra-Labs/indra/pkg/sha256"
 	"github.com/Indra-Labs/indra/pkg/slice"
 	"github.com/Indra-Labs/indra/pkg/types"
+	"github.com/Indra-Labs/indra/pkg/wire/magicbytes"
+	log2 "github.com/cybriq/proc/pkg/log"
 )
 
-// Message is the generic top level wrapper for an Onion. All following messages
+var (
+	log   = log2.GetLogger(indra.PathBase)
+	check = log.E.Chk
+)
+
+// Type message is the generic top level wrapper for an Onion. All following messages
 // are wrapped inside this. This type provides the encryption for each layer,
 // and a header which a relay uses to determine what cipher to use.
-type Message struct {
+type Type struct {
 	To   *address.Sender
 	From *prv.Key
 	// The following field is only populated in the outermost layer.
@@ -24,17 +32,18 @@ type Message struct {
 	types.Onion
 }
 
-const OnionHeaderLen = 4 + nonce.IVLen + address.Len + pub.KeyLen
+const MinLen = magicbytes.Len + slice.Uint32Len + nonce.IVLen +
+	address.Len + pub.KeyLen
 
-var _ types.Onion = &Message{}
+var _ types.Onion = &Type{}
 
-func (x *Message) Inner() types.Onion   { return x.Onion }
-func (x *Message) Insert(o types.Onion) { x.Onion = o }
-func (x *Message) Len() int {
-	return MagicLen + OnionHeaderLen + x.Onion.Len()
+func (x *Type) Inner() types.Onion   { return x.Onion }
+func (x *Type) Insert(o types.Onion) { x.Onion = o }
+func (x *Type) Len() int {
+	return MinLen + x.Onion.Len()
 }
 
-func (x *Message) Encode(o slice.Bytes, c *slice.Cursor) {
+func (x *Type) Encode(o slice.Bytes, c *slice.Cursor) {
 	// The first level message contains the Bytes, but the inner layers do
 	// not. The inner layers will be passed this buffer, but the first needs
 	// to have it copied from its original location.
@@ -72,8 +81,14 @@ func (x *Message) Encode(o slice.Bytes, c *slice.Cursor) {
 	copy(o[checkStart:checkEnd], hash[:4])
 }
 
-func (x *Message) Decode(b slice.Bytes, c *slice.Cursor) (in interface{},
-	e error) {
+func (x *Type) Decode(b slice.Bytes) (e error) {
+	minLen := MinLen
+	if len(b) < minLen {
+		return magicbytes.TooShort(len(b), minLen, "message")
+	}
+	sc := slice.Cursor(0)
+	c := &sc
+	_ = c
 
 	return
 }

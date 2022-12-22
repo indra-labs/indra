@@ -1,14 +1,22 @@
-package wire
+package exit
 
 import (
+	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/sha256"
 	"github.com/Indra-Labs/indra/pkg/slice"
 	"github.com/Indra-Labs/indra/pkg/types"
+	"github.com/Indra-Labs/indra/pkg/wire/magicbytes"
+	log2 "github.com/cybriq/proc/pkg/log"
 )
 
-// Exit messages are the layer of a message after two Forward packets that
+var (
+	log   = log2.GetLogger(indra.PathBase)
+	check = log.E.Chk
+)
+
+// Type exit messages are the layer of a message after two Forward packets that
 // provides an exit address and
-type Exit struct {
+type Type struct {
 	// Port identifies the type of service as well as being the port used by
 	// the service to be relayed to. Notice there is no IP address, this is
 	// because Indranet only forwards to exits of decentralised services
@@ -26,19 +34,20 @@ type Exit struct {
 }
 
 var (
-	ExitMagic             = slice.Bytes("exi")
-	_         types.Onion = &Exit{}
+	Magic              = slice.Bytes("exi")
+	MinLen             = magicbytes.Len + slice.Uint16Len + 3*sha256.Len
+	_      types.Onion = &Type{}
 )
 
-func (x *Exit) Inner() types.Onion   { return x.Onion }
-func (x *Exit) Insert(o types.Onion) { x.Onion = o }
-func (x *Exit) Len() int {
-	return MagicLen + slice.Uint16Len + 3*sha256.Len + x.Bytes.Len() +
+func (x *Type) Inner() types.Onion   { return x.Onion }
+func (x *Type) Insert(o types.Onion) { x.Onion = o }
+func (x *Type) Len() int {
+	return MinLen + x.Bytes.Len() +
 		x.Onion.Len()
 }
 
-func (x *Exit) Encode(o slice.Bytes, c *slice.Cursor) {
-	copy(o[*c:c.Inc(MagicLen)], ExitMagic)
+func (x *Type) Encode(o slice.Bytes, c *slice.Cursor) {
+	copy(o[*c:c.Inc(magicbytes.Len)], Magic)
 	port := slice.NewUint16()
 	slice.EncodeUint16(port, int(x.Port))
 	copy(o[*c:c.Inc(slice.Uint16Len)], port)
@@ -53,13 +62,19 @@ func (x *Exit) Encode(o slice.Bytes, c *slice.Cursor) {
 
 }
 
-func (x *Exit) Decode(b slice.Bytes, c *slice.Cursor) (in interface{},
-	e error) {
+func (x *Type) Decode(b slice.Bytes) (e error) {
 
-	magic := ExitMagic
-	if !CheckMagic(b, magic) {
-		return ReturnError(ErrWrongMagic, x, b, magic)
+	magic := Magic
+	if !magicbytes.CheckMagic(b, magic) {
+		return magicbytes.WrongMagic(x, b, magic)
 	}
+	minLen := MinLen
+	if len(b) < minLen {
+		return magicbytes.TooShort(len(b), minLen, string(magic))
+	}
+	sc := slice.Cursor(0)
+	c := &sc
+	_ = c
 
 	return
 }
