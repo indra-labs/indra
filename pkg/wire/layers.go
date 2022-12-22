@@ -9,9 +9,10 @@ import (
 	"github.com/Indra-Labs/indra/pkg/nonce"
 	"github.com/Indra-Labs/indra/pkg/sha256"
 	"github.com/Indra-Labs/indra/pkg/slice"
+	"github.com/Indra-Labs/indra/pkg/types"
 )
 
-type OnionSkins []Onion
+type OnionSkins []types.Onion
 
 func (o OnionSkins) Header(to *address.Sender, from *prv.Key) OnionSkins {
 	return append(o, &Message{To: to, From: from})
@@ -52,7 +53,7 @@ func (o OnionSkins) Token(tok sha256.Hash) OnionSkins {
 // contains the second, second contains the third, and so on, and then returns
 // the first onion, on which you can then call Encode and generate the wire
 // message form of the onion.
-func (o OnionSkins) Assemble() (on Onion) {
+func (o OnionSkins) Assemble() (on types.Onion) {
 	// First item is the outer layer.
 	on = o[0]
 	// Iterate through the remaining layers.
