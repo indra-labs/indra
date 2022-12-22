@@ -21,9 +21,9 @@ var (
 	check = log.E.Chk
 )
 
-// Type message is the generic top level wrapper for an Onion. All following messages
-// are wrapped inside this. This type provides the encryption for each layer,
-// and a header which a relay uses to determine what cipher to use.
+// Type message is the generic top level wrapper for an Onion. All following
+// messages are wrapped inside this. This type provides the encryption for each
+// layer, and a header which a relay uses to determine what cipher to use.
 type Type struct {
 	To   *address.Sender
 	From *prv.Key

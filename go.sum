@@ -6,8 +6,8 @@ github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5 h1:0CwZNZbxp69SHPd
 github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5/go.mod h1:wHh0iHkYZB8zMSxRWpUBQtwG5a7fFgvEO+odwuTv2gs=
 github.com/creack/pty v1.1.7/go.mod h1:lj5s0c3V2DBrqTV7llrYr5NG6My20zk30Fl46Y7DoTY=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
-github.com/cybriq/proc v0.2.0 h1:oemzeS1eXBX0OZZk0U5MXe+BzSvF/pQyPZ8Rt3jIc/U=
-github.com/cybriq/proc v0.2.0/go.mod h1:b6JDUUwfe8soxWzvAziWA/msrb73O2v6gZEQL+wHYx8=
+github.com/cybriq/proc v0.20.4 h1:BRlqzRdENMXkdWobtfm16vQ0k7jCnkP27A5SMkVEmbg=
+github.com/cybriq/proc v0.20.4/go.mod h1:b6JDUUwfe8soxWzvAziWA/msrb73O2v6gZEQL+wHYx8=
 github.com/cybriq/qu v0.1.2 h1:4R65BhG22C3mY4fXYZpfJYklw9N1AVkCwTwrby4andY=
 github.com/cybriq/qu v0.1.2/go.mod h1:1Ph7YWr5HVJTBSRTQ8cFcaFE+DK56r+cSpbNWD+CQS8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

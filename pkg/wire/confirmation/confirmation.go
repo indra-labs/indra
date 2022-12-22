@@ -14,8 +14,8 @@ var (
 	check = log.E.Chk
 )
 
-// Type confirmation is an encryption layer for messages returned to the client on
-// the inside of an onion, for Ping and Cipher messages, providing a
+// Type confirmation is an encryption layer for messages returned to the client
+// on the inside of an onion, for Ping and Cipher messages, providing a
 // confirmation of the transit of the onion through its encoded route.
 //
 // It is encrypted because otherwise internal identifiers could be leaked and
@@ -48,13 +48,11 @@ func (x *Type) Encode(o slice.Bytes, c *slice.Cursor) {
 
 func (x *Type) Decode(b slice.Bytes) (e error) {
 
-	magic := Magic
-	if !magicbytes.CheckMagic(b, magic) {
-		return magicbytes.WrongMagic(x, b, magic)
+	if !magicbytes.CheckMagic(b, Magic) {
+		return magicbytes.WrongMagic(x, b, Magic)
 	}
-	minLen := MinLen
-	if len(b) < minLen {
-		return magicbytes.TooShort(len(b), minLen, string(magic))
+	if len(b) < MinLen {
+		return magicbytes.TooShort(len(b), MinLen, string(Magic))
 	}
 	sc := slice.Cursor(0)
 	c := &sc
