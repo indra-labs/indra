@@ -158,7 +158,7 @@ func main() {
 		startArgs++
 	}
 	tag := true
-	if branch != "main" {
+	if branch != "main" && branch != "master" {
 		tag = false
 	} else {
 		switch {
