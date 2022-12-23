@@ -29,12 +29,12 @@ func (x Response) Inner() types.Onion   { return nil }
 func (x Response) Insert(_ types.Onion) {}
 func (x Response) Len() int             { return MinLen + len(x) }
 
-func (x Response) Encode(o slice.Bytes, c *slice.Cursor) {
-	copy(o[*c:c.Inc(magicbytes.Len)], Magic)
+func (x Response) Encode(b slice.Bytes, c *slice.Cursor) {
+	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	bytesLen := slice.NewUint32()
 	slice.EncodeUint32(bytesLen, len(x)-slice.Uint32Len)
-	copy(o[*c:c.Inc(slice.Uint32Len)], bytesLen)
-	copy(o[*c:c.Inc(len(x))], x)
+	copy(b[*c:c.Inc(slice.Uint32Len)], bytesLen)
+	copy(b[*c:c.Inc(len(x))], x)
 }
 
 func (x Response) Decode(b slice.Bytes, c *slice.Cursor) (e error) {

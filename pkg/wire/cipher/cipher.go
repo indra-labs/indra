@@ -41,13 +41,13 @@ func (x *Type) Len() int {
 	return magicbytes.Len + pub.KeyLen + x.Onion.Len()
 }
 
-func (x *Type) Encode(o slice.Bytes, c *slice.Cursor) {
-	copy(o[*c:c.Inc(magicbytes.Len)], Magic)
+func (x *Type) Encode(b slice.Bytes, c *slice.Cursor) {
+	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	hdr := x.Header.ToBytes()
 	pld := x.Payload.ToBytes()
-	copy(o[c.Inc(1):c.Inc(pub.KeyLen)], hdr[:])
-	copy(o[c.Inc(1):c.Inc(pub.KeyLen)], pld[:])
-	x.Onion.Encode(o, c)
+	copy(b[c.Inc(1):c.Inc(pub.KeyLen)], hdr[:])
+	copy(b[c.Inc(1):c.Inc(pub.KeyLen)], pld[:])
+	x.Onion.Encode(b, c)
 }
 
 // Decode unwraps a cipher.Type message.

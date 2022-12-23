@@ -43,12 +43,12 @@ func (x *Type) Len() int {
 	return magicbytes.Len + pub.KeyLen*2 + x.Onion.Len()
 }
 
-func (x *Type) Encode(o slice.Bytes, c *slice.Cursor) {
+func (x *Type) Encode(b slice.Bytes, c *slice.Cursor) {
 	hdr, pld := x.HeaderKey.ToBytes(), x.PayloadKey.ToBytes()
-	copy(o[*c:c.Inc(magicbytes.Len)], Magic)
-	copy(o[*c:c.Inc(pub.KeyLen)], hdr[:])
-	copy(o[*c:c.Inc(pub.KeyLen)], pld[:])
-	x.Onion.Encode(o, c)
+	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
+	copy(b[*c:c.Inc(pub.KeyLen)], hdr[:])
+	copy(b[*c:c.Inc(pub.KeyLen)], pld[:])
+	x.Onion.Encode(b, c)
 }
 
 func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
