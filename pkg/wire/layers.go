@@ -42,7 +42,7 @@ func (o OnionSkins) Return(ip net.IP) OnionSkins {
 	return append(o, &retrn.Type{IP: ip})
 }
 func (o OnionSkins) Cipher(hdr, pld *prv.Key) OnionSkins {
-	return append(o, &cipher.Type{Header: hdr, Payload: pld})
+	return append(o, &cipher.Type{PrivHeader: hdr, PrivPayload: pld})
 }
 func (o OnionSkins) Purchase(nBytes uint64, ciphers [3]sha256.Hash) OnionSkins {
 	return append(o, &purchase.Type{NBytes: nBytes, Ciphers: ciphers})
