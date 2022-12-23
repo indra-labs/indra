@@ -27,9 +27,9 @@ func (x Type) Inner() types.Onion   { return nil }
 func (x Type) Insert(_ types.Onion) {}
 func (x Type) Len() int             { return MinLen }
 
-func (x Type) Encode(o slice.Bytes, c *slice.Cursor) {
-	copy(o[*c:c.Inc(magicbytes.Len)], Magic)
-	copy(o[*c:c.Inc(sha256.Len)], x[:])
+func (x Type) Encode(b slice.Bytes, c *slice.Cursor) {
+	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
+	copy(b[*c:c.Inc(sha256.Len)], x[:])
 }
 
 func (x Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {

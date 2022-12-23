@@ -40,14 +40,13 @@ func (x *Type) Inner() types.Onion   { return nil }
 func (x *Type) Insert(o types.Onion) {}
 func (x *Type) Len() int             { return MinLen }
 
-func (x *Type) Encode(o slice.Bytes, c *slice.Cursor) {
-	copy(o[*c:c.Inc(magicbytes.Len)], Magic)
+func (x *Type) Encode(b slice.Bytes, c *slice.Cursor) {
+	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	// Copy in the ID.
-	copy(o[*c:c.Inc(nonce.IDLen)], x.ID[:])
+	copy(b[*c:c.Inc(nonce.IDLen)], x.ID[:])
 }
 
 func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
-
 	if !magicbytes.CheckMagic(b, Magic) {
 		return magicbytes.WrongMagic(x, b, Magic)
 	}

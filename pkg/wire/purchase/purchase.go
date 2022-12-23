@@ -37,14 +37,14 @@ func (x *Type) Len() int {
 	return MinLen + x.Onion.Len()
 }
 
-func (x *Type) Encode(o slice.Bytes, c *slice.Cursor) {
-	copy(o[*c:c.Inc(magicbytes.Len)], Magic)
+func (x *Type) Encode(b slice.Bytes, c *slice.Cursor) {
+	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	value := slice.NewUint64()
 	slice.EncodeUint64(value, x.NBytes)
-	copy(o[*c:c.Inc(sha256.Len)], x.Ciphers[0][:])
-	copy(o[*c:c.Inc(sha256.Len)], x.Ciphers[1][:])
-	copy(o[*c:c.Inc(sha256.Len)], x.Ciphers[1][:])
-	x.Onion.Encode(o, c)
+	copy(b[*c:c.Inc(sha256.Len)], x.Ciphers[0][:])
+	copy(b[*c:c.Inc(sha256.Len)], x.Ciphers[1][:])
+	copy(b[*c:c.Inc(sha256.Len)], x.Ciphers[1][:])
+	x.Onion.Encode(b, c)
 }
 
 func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
