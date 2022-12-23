@@ -1,8 +1,6 @@
 package session
 
 import (
-	"net"
-
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/slice"
@@ -29,14 +27,13 @@ var (
 // their generated private key which produces the public key that is placed in
 // the header.
 type Type struct {
-	HeaderKey  *pub.Key
-	PayloadKey *pub.Key
+	HeaderKey, PayloadKey *pub.Key
 	types.Onion
 }
 
 var (
 	Magic              = slice.Bytes("ses")
-	MinLen             = magicbytes.Len + 1 + net.IPv4len
+	MinLen             = magicbytes.Len + pub.KeyLen*2
 	_      types.Onion = &Type{}
 )
 
@@ -55,13 +52,19 @@ func (x *Type) Encode(o slice.Bytes, c *slice.Cursor) {
 }
 
 func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
-
 	if !magicbytes.CheckMagic(b, Magic) {
 		return magicbytes.WrongMagic(x, b, Magic)
 	}
 	if len(b) < MinLen {
 		return magicbytes.TooShort(len(b), MinLen, string(Magic))
 	}
+	if x.HeaderKey, e = pub.FromBytes(b[c.Inc(magicbytes.Len):c.Inc(
+		pub.KeyLen)]); check(e) {
 
+		return
+	}
+	if x.PayloadKey, e = pub.FromBytes(b[*c:c.Inc(pub.KeyLen)]); check(e) {
+		return
+	}
 	return
 }

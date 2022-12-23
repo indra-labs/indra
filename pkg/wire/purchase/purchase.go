@@ -41,17 +41,25 @@ func (x *Type) Encode(o slice.Bytes, c *slice.Cursor) {
 	copy(o[*c:c.Inc(magicbytes.Len)], Magic)
 	value := slice.NewUint64()
 	slice.EncodeUint64(value, x.NBytes)
+	copy(o[*c:c.Inc(sha256.Len)], x.Ciphers[0][:])
+	copy(o[*c:c.Inc(sha256.Len)], x.Ciphers[1][:])
+	copy(o[*c:c.Inc(sha256.Len)], x.Ciphers[1][:])
 	x.Onion.Encode(o, c)
 }
 
 func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
-
 	if !magicbytes.CheckMagic(b, Magic) {
 		return magicbytes.WrongMagic(x, b, Magic)
 	}
 	if len(b) < MinLen {
 		return magicbytes.TooShort(len(b), MinLen, string(Magic))
 	}
-
+	x.NBytes = slice.DecodeUint64(
+		b[c.Inc(magicbytes.Len):c.Inc(slice.Uint64Len)])
+	for i := range x.Ciphers {
+		bytes := b[*c:c.Inc(sha256.Len)]
+		copy(x.Ciphers[i][:], bytes)
+		bytes.Zero()
+	}
 	return
 }

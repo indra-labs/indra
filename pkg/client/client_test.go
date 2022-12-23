@@ -60,7 +60,7 @@ package client
 // 		t.FailNow()
 // 	}
 // 	// Create the onion
-// 	var lastMsg ifc.Header
+// 	var lastMsg ifc.Message
 // 	lastMsg, _, e = testutils.GenerateTestMessage(32)
 // 	original := make([]byte, 32)
 // 	copy(original, lastMsg)
@@ -70,7 +70,7 @@ package client
 // 		// progress through the hops in reverse
 // 		rm := &wire.HeaderKey{
 // 			IP:      ci.Hops[len(ci.Hops)-i-1].IP,
-// 			Header: lastMsg,
+// 			Message: lastMsg,
 // 		}
 // 		rmm := rm.Encode()
 // 		ep := message.EP{
@@ -127,7 +127,7 @@ package client
 // 			log.I.Ln("did not find matching address.Receiver")
 // 			t.FailNow()
 // 		}
-// 		var f *message.Header
+// 		var f *message.Message
 // 		if f, e = message.Decode(lastMsg, from,
 // 			match.Key); check(e) {
 //
@@ -135,7 +135,7 @@ package client
 // 			t.FailNow()
 // 		}
 // 		var rm *wire.HeaderKey
-// 		var msg wire.Header
+// 		var msg wire.Message
 // 		if msg, e = wire.Deserialize(f.Data); check(e) {
 // 			t.Error(e)
 // 			t.FailNow()
@@ -145,9 +145,9 @@ package client
 // 			t.FailNow()
 // 		}
 // 		// log.I.Ln(rm.IP)
-// 		// log.I.S(rm.Header)
+// 		// log.I.S(rm.Message)
 // 		// log.I.Ln(lastMsg[0], net.IP(lastMsg[1:5]))
-// 		lastMsg = rm.Header
+// 		lastMsg = rm.Message
 // 	}
 // 	if string(original) != string(lastMsg) {
 // 		t.Error("failed to recover original message")

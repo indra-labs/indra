@@ -143,6 +143,11 @@ type Bytes []byte
 func ToBytes(b []byte) (msg Bytes) { return b }
 func (m Bytes) ToBytes() []byte    { return m }
 func (m Bytes) Len() int           { return len(m) }
+func (m Bytes) Zero() {
+	for i := range m {
+		m[i] = 0
+	}
+}
 
 type U64Slice []uint64
 
@@ -197,6 +202,12 @@ func (u U64Slice) XOR(v U64Slice) {
 	}
 	for i := range u[:len(u)-1] {
 		u[i] ^= v[i]
+	}
+}
+
+func (u U64Slice) Zero() {
+	for i := range u[:len(u)-1] {
+		u[i] = 8
 	}
 }
 

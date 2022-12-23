@@ -2,6 +2,7 @@ package message
 
 import (
 	"crypto/cipher"
+	"fmt"
 
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/ciph"
@@ -27,7 +28,15 @@ var (
 type Type struct {
 	To   *address.Sender
 	From *prv.Key
-	// The following field is only populated in the outermost layer.
+	// The remainder here are for Decode.
+	Nonce   nonce.IV
+	Cloak   address.Cloaked
+	ToPriv  *prv.Key
+	FromPub *pub.Key
+	// The following field is only populated in the outermost layer, and
+	// passed in the `b slice.Bytes` parameter in both encode and decode,
+	// this is created after first getting the Len of everything and
+	// pre-allocating.
 	slice.Bytes
 	types.Onion
 }
@@ -44,50 +53,54 @@ func (x *Type) Len() int {
 	return MinLen + x.Onion.Len()
 }
 
-func (x *Type) Encode(o slice.Bytes, c *slice.Cursor) {
+func (x *Type) Encode(b slice.Bytes, c *slice.Cursor) {
 	// The first level message contains the Bytes, but the inner layers do
 	// not. The inner layers will be passed this buffer, but the first needs
 	// to have it copied from its original location.
-	if o == nil {
-		o = x.Bytes
+	if b == nil {
+		b = x.Bytes
 	}
 	// We write the checksum last so save the cursor position here.
 	checkStart, checkEnd := *c, c.Inc(4)
-	// Magic after the check so it is part of the checksum.
-	copy(o[*c:c.Inc(magicbytes.Len)], Magic)
+	// Magic after the check, so it is part of the checksum.
+	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	// Generate a new nonce and copy it in.
 	n := nonce.New()
-	copy(o[c.Inc(4):c.Inc(nonce.IVLen)], n[:])
+	copy(b[c.Inc(4):c.Inc(nonce.IVLen)], n[:])
 	// Derive the cloaked key and copy it in.
 	to := x.To.GetCloak()
-	copy(o[*c:c.Inc(address.Len)], to[:])
+	copy(b[*c:c.Inc(address.Len)], to[:])
 	// Derive the public key from the From key and copy in.
 	pubKey := pub.Derive(x.From).ToBytes()
-	copy(o[*c:c.Inc(pub.KeyLen)], pubKey[:])
+	copy(b[*c:c.Inc(pub.KeyLen)], pubKey[:])
 	// Encode the remaining data size of the message below. This will also
 	// be the entire remaining part of the message buffer.
-	mLen := len(o[*c:]) - slice.Uint32Len
+	mLen := len(b[*c:]) - slice.Uint32Len
 	length := slice.NewUint32()
 	slice.EncodeUint32(length, mLen)
-	copy(o[*c:c.Inc(mLen)], o[*c:])
+	copy(b[*c:c.Inc(mLen)], b[*c:])
 	// Call the tree of onions to perform their encoding.
-	x.Onion.Encode(o, c)
+	x.Onion.Encode(b, c)
 	// Then we can encrypt the message segment
 	var e error
 	var blk cipher.Block
 	if blk = ciph.GetBlock(x.From, x.To.Key); check(e) {
 		panic(e)
 	}
-	ciph.Encipher(blk, n, o[MinLen:])
+	ciph.Encipher(blk, n, b[MinLen:])
 	// Get the hash of the message and truncate it to the checksum at the
-	// start of the message. Every layer of the onion has a Header and an
-	// onion inside it, the Header takes care of the encryption. This saves
+	// start of the message. Every layer of the onion has a Message and an
+	// onion inside it, the Message takes care of the encryption. This saves
 	// x complications as every layer is header first, message after, with
 	// wrapped messages inside each message afterwards.
-	hash := sha256.Single(o[checkEnd:])
-	copy(o[checkStart:checkEnd], hash[:4])
+	hash := sha256.Single(b[checkEnd:])
+	copy(b[checkStart:checkEnd], hash[:4])
 }
 
+// Decode decodes a received message. Note that it only gets the relevant data
+// from the header, a subsequent process must be performed to find the prv.Key
+// corresponding to the Cloak and the pub.Key together forming the cipher secret
+// needed to decrypt the remainder of the bytes.
 func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	minLen := MinLen
 	if len(b) < minLen {
@@ -96,8 +109,28 @@ func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if !magicbytes.CheckMagic(b, Magic) {
 		return magicbytes.WrongMagic(x, b, Magic)
 	}
-	cloak := b[*c:c.Inc(address.Len)]
-	_ = cloak
-
+	var n nonce.IV
+	copy(n[:], b[c.Inc(magicbytes.Len):c.Inc(nonce.IVLen)])
+	copy(x.Nonce[:], n[:])
+	copy(x.Cloak[:], b[*c:c.Inc(address.Len)])
+	if x.FromPub, e = pub.FromBytes(b[*c:c.Inc(pub.KeyLen)]); check(e) {
+		return
+	}
+	length := slice.DecodeUint32(b[*c:c.Inc(slice.Uint32Len)])
+	if length < len(b[*c:]) {
+		e = fmt.Errorf("not enough remaining bytes as specified in"+
+			" length field, got: %d expected %d",
+			length, len(b[*c:]))
+	}
+	// A further step is required which decrypts the remainder of the bytes
+	// after finding the private key corresponding to the Cloak and
+	// FromPubKey.
 	return
+}
+
+// Decrypt requires the ToPriv key to be located from the Cloak, using the
+// FromPub key to derive the shared secret, and then decrypts the rest of the
+// message.
+func (x *Type) Decrypt(b slice.Bytes, c *slice.Cursor) {
+	ciph.Encipher(ciph.GetBlock(x.ToPriv, x.FromPub), x.Nonce, b[*c:])
 }
