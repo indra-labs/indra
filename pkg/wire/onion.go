@@ -9,6 +9,7 @@ import (
 	"github.com/Indra-Labs/indra/pkg/nonce"
 	"github.com/Indra-Labs/indra/pkg/sha256"
 	"github.com/Indra-Labs/indra/pkg/slice"
+	"github.com/Indra-Labs/indra/pkg/types"
 )
 
 // Ping is a message which checks the liveness of relays by ensuring they are
@@ -22,7 +23,7 @@ import (
 // offline their scores will fall to zero after a time whereas live nodes will
 // have steadily increasing scores from successful pings.
 func Ping(id nonce.ID, client node.Node, hop [3]node.Node,
-	set signer.KeySet) Onion {
+	set signer.KeySet) types.Onion {
 
 	return OnionSkins{}.
 		Header(address.FromPubKey(hop[0].HeaderKey), set.Next()).
@@ -50,7 +51,7 @@ func Ping(id nonce.ID, client node.Node, hop [3]node.Node,
 // that the key was successfully delivered to the Return relays that will be
 // used in the Purchase.
 func SendKeys(id nonce.ID, hdr, pld *prv.Key,
-	client node.Node, hop [5]node.Node, set signer.KeySet) Onion {
+	client node.Node, hop [5]node.Node, set signer.KeySet) types.Onion {
 
 	return OnionSkins{}.
 		Header(address.FromPubKey(hop[0].HeaderKey), set.Next()).
@@ -84,7 +85,7 @@ func SendKeys(id nonce.ID, hdr, pld *prv.Key,
 // remainder with noise, so it always looks like the first hop,
 // indistinguishable.
 func SendPurchase(nBytes uint64, client node.Node,
-	hop [5]node.Node, set signer.KeySet) Onion {
+	hop [5]node.Node, set signer.KeySet) types.Onion {
 
 	var rtns [3]*prv.Key
 	for i := range rtns {
@@ -136,7 +137,7 @@ func SendPurchase(nBytes uint64, client node.Node,
 // remainder with noise, so it always looks like the first hop,
 // indistinguishable.
 func SendExit(payload slice.Bytes, port uint16, client node.Node,
-	hop [5]node.Node, set signer.KeySet) Onion {
+	hop [5]node.Node, set signer.KeySet) types.Onion {
 
 	var rtns [3]*prv.Key
 	for i := range rtns {
