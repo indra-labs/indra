@@ -87,7 +87,7 @@ func (x *Type) Encode(b slice.Bytes, c *slice.Cursor) {
 	if blk = ciph.GetBlock(x.From, x.To.Key); check(e) {
 		panic(e)
 	}
-	ciph.Encipher(blk, n, b[MinLen:])
+	ciph.Encipher(blk, n, b[checkStart+MinLen:])
 	// Get the hash of the message and truncate it to the checksum at the
 	// start of the message. Every layer of the onion has a Message and an
 	// onion inside it, the Message takes care of the encryption. This saves
@@ -109,6 +109,8 @@ func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if !magicbytes.CheckMagic(b, Magic) {
 		return magicbytes.WrongMagic(x, b, Magic)
 	}
+	chek := b[*c:c.Inc(4)]
+	start := int(*c)
 	var n nonce.IV
 	copy(n[:], b[c.Inc(magicbytes.Len):c.Inc(nonce.IVLen)])
 	copy(x.Nonce[:], n[:])
@@ -122,15 +124,23 @@ func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 			" length field, got: %d expected %d",
 			length, len(b[*c:]))
 	}
+	hash := sha256.Single(b[start : start+length])
+	if string(hash[:4]) != string(chek) {
+		return fmt.Errorf("message decode fail checksum")
+	}
+	// Snip out bytes for this layer from the remainder, until the length
+	// indicated by the length prefix. Cursor will now be at the beginning
+	// of the next layer's messages.
+	x.Bytes = b[*c:c.Inc(length)]
 	// A further step is required which decrypts the remainder of the bytes
 	// after finding the private key corresponding to the Cloak and
 	// FromPubKey.
 	return
 }
 
-// Decrypt requires the ToPriv key to be located from the Cloak, using the
+// Decrypt requires the prv.Key to be located from the Cloak, using the
 // FromPub key to derive the shared secret, and then decrypts the rest of the
 // message.
-func (x *Type) Decrypt(b slice.Bytes, c *slice.Cursor) {
-	ciph.Encipher(ciph.GetBlock(x.ToPriv, x.FromPub), x.Nonce, b[*c:])
+func (x *Type) Decrypt(prk *prv.Key) {
+	ciph.Encipher(ciph.GetBlock(prk, x.FromPub), x.Nonce, x.Bytes)
 }
