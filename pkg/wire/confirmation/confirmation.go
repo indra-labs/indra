@@ -46,7 +46,7 @@ func (x *Type) Encode(o slice.Bytes, c *slice.Cursor) {
 	copy(o[*c:c.Inc(nonce.IDLen)], x.ID[:])
 }
 
-func (x *Type) Decode(b slice.Bytes) (e error) {
+func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 
 	if !magicbytes.CheckMagic(b, Magic) {
 		return magicbytes.WrongMagic(x, b, Magic)
@@ -54,9 +54,6 @@ func (x *Type) Decode(b slice.Bytes) (e error) {
 	if len(b) < MinLen {
 		return magicbytes.TooShort(len(b), MinLen, string(Magic))
 	}
-	sc := slice.Cursor(0)
-	c := &sc
-	_ = c
-
+	copy(x.ID[:], b[*c:c.Inc(nonce.IDLen)])
 	return
 }

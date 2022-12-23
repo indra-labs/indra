@@ -34,7 +34,7 @@ func (x Response) Encode(o slice.Bytes, c *slice.Cursor) {
 	copy(o[*c:c.Inc(len(x))], x)
 }
 
-func (x Response) Decode(b slice.Bytes) (e error) {
+func (x Response) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 
 	if !magicbytes.CheckMagic(b, Magic) {
 		return magicbytes.WrongMagic(x, b, Magic)
@@ -42,9 +42,6 @@ func (x Response) Decode(b slice.Bytes) (e error) {
 	if len(b) < MinLen {
 		return magicbytes.TooShort(len(b), MinLen, string(Magic))
 	}
-	sc := slice.Cursor(0)
-	c := &sc
-	_ = c
 
 	return
 }
