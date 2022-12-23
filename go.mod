@@ -3,7 +3,7 @@ module github.com/Indra-Labs/indra
 go 1.19
 
 require (
-	github.com/cybriq/proc v0.20.5
+	github.com/cybriq/proc v0.20.7
 	github.com/cybriq/qu v0.1.2
 	github.com/davecgh/go-spew v1.1.1
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0
@@ -38,3 +38,5 @@ require (
 replace crypto/sha256 => github.com/minio/sha256-simd v1.0.0
 
 replace math/rand => github.com/lukechampine/frand v1.4.2
+
+//replace github.com/cybriq/proc => ../../cybriq/proc
