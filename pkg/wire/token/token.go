@@ -33,7 +33,6 @@ func (x Type) Encode(b slice.Bytes, c *slice.Cursor) {
 }
 
 func (x Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
-
 	if !magicbytes.CheckMagic(b, Magic) {
 		return magicbytes.WrongMagic(x, b, Magic)
 	}
