@@ -46,20 +46,19 @@ func (x *Type) Len() int {
 		x.Onion.Len()
 }
 
-func (x *Type) Encode(o slice.Bytes, c *slice.Cursor) {
-	copy(o[*c:c.Inc(magicbytes.Len)], Magic)
+func (x *Type) Encode(b slice.Bytes, c *slice.Cursor) {
+	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	port := slice.NewUint16()
 	slice.EncodeUint16(port, int(x.Port))
-	copy(o[*c:c.Inc(slice.Uint16Len)], port)
-	copy(o[*c:c.Inc(sha256.Len)], x.Ciphers[0][:])
-	copy(o[*c:c.Inc(sha256.Len)], x.Ciphers[1][:])
-	copy(o[*c:c.Inc(sha256.Len)], x.Ciphers[1][:])
+	copy(b[*c:c.Inc(slice.Uint16Len)], port)
+	copy(b[*c:c.Inc(sha256.Len)], x.Ciphers[0][:])
+	copy(b[*c:c.Inc(sha256.Len)], x.Ciphers[1][:])
+	copy(b[*c:c.Inc(sha256.Len)], x.Ciphers[1][:])
 	bytesLen := slice.NewUint32()
 	slice.EncodeUint32(bytesLen, len(x.Bytes))
-	copy(o[*c:c.Inc(slice.Uint32Len)], bytesLen)
-	copy(o[*c:c.Inc(len(x.Bytes))], x.Bytes)
-	x.Onion.Encode(o, c)
-
+	copy(b[*c:c.Inc(slice.Uint32Len)], bytesLen)
+	copy(b[*c:c.Inc(len(x.Bytes))], x.Bytes)
+	x.Onion.Encode(b, c)
 }
 
 func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {

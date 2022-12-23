@@ -125,7 +125,7 @@ func NoisePad(l int) (noise []byte) {
 			end = l
 		}
 		seed = sha256.Single(seed[:])
-		copy(noise[cursor:end], seed[:])
+		copy(noise[cursor:end], seed[:end-cursor])
 		cursor = end
 	}
 	return

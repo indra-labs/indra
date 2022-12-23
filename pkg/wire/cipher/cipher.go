@@ -23,7 +23,7 @@ var (
 //
 // The Decode function wipes the original message data for security as the
 // private keys inside it are no longer needed and any secret should only have
-// one storage so it doesn't appear in any GC later.
+// one storage, so it doesn't appear in any GC later.
 type Type struct {
 	Header, Payload *prv.Key
 	types.Onion

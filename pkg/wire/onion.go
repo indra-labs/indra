@@ -139,9 +139,9 @@ func SendPurchase(nBytes uint64, client node.Node,
 func SendExit(payload slice.Bytes, port uint16, client node.Node,
 	hop [5]node.Node, set signer.KeySet) types.Onion {
 
-	var rtns [3]*prv.Key
-	for i := range rtns {
-		rtns[i] = set.Next()
+	var replies [3]*prv.Key
+	for i := range replies {
+		replies[i] = set.Next()
 	}
 
 	// The ciphers represent the combination of the same From key and the
@@ -149,9 +149,9 @@ func SendExit(payload slice.Bytes, port uint16, client node.Node,
 	// HeaderKey and the message underneath use a different cipher in place
 	// of the HeaderKey, the PayloadKey it corresponds to.
 	ciphers := [3]sha256.Hash{
-		ecdh.Compute(rtns[2], client.PayloadKey),
-		ecdh.Compute(rtns[1], hop[4].PayloadKey),
-		ecdh.Compute(rtns[0], hop[3].PayloadKey),
+		ecdh.Compute(replies[2], client.PayloadKey),
+		ecdh.Compute(replies[1], hop[4].PayloadKey),
+		ecdh.Compute(replies[0], hop[3].PayloadKey),
 	}
 
 	return OnionSkins{}.
@@ -162,10 +162,10 @@ func SendExit(payload slice.Bytes, port uint16, client node.Node,
 		Message(address.FromPubKey(hop[2].HeaderKey), set.Next()).
 		Exit(port, ciphers, payload).
 		Return(hop[3].IP).
-		Message(address.FromPubKey(hop[3].HeaderKey), rtns[0]).
+		Message(address.FromPubKey(hop[3].HeaderKey), replies[0]).
 		Return(hop[4].IP).
-		Message(address.FromPubKey(hop[4].HeaderKey), rtns[1]).
+		Message(address.FromPubKey(hop[4].HeaderKey), replies[1]).
 		Return(client.IP).
-		Message(address.FromPubKey(client.HeaderKey), rtns[2]).
+		Message(address.FromPubKey(client.HeaderKey), replies[2]).
 		Assemble()
 }
