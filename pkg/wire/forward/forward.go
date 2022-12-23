@@ -41,14 +41,13 @@ func (x *Type) Encode(o slice.Bytes, c *slice.Cursor) {
 }
 
 func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
-
 	if !magicbytes.CheckMagic(b, Magic) {
 		return magicbytes.WrongMagic(x, b, Magic)
 	}
 	if len(b) < MinLen {
 		return magicbytes.TooShort(len(b), MinLen, string(Magic))
 	}
-	ipLen := b[0]
-	x.IP = net.IP(b[1 : 1+ipLen])
+	ipLen := b[*c]
+	x.IP = net.IP(b[c.Inc(1):c.Inc(int(ipLen))])
 	return
 }

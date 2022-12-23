@@ -40,6 +40,6 @@ func (x Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b) < MinLen {
 		return magicbytes.TooShort(len(b), MinLen, string(Magic))
 	}
-
+	copy(x[:], b[c.Inc(magicbytes.Len):c.Inc(sha256.Len)])
 	return
 }

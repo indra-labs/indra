@@ -15,14 +15,14 @@ var (
 )
 
 // Type confirmation is an encryption layer for messages returned to the client
-// on the inside of an onion, for Ping and Cipher messages, providing a
+// on the inside of an onion, for Ping and Ciphers messages, providing a
 // confirmation of the transit of the onion through its encoded route.
 //
 // It is encrypted because otherwise internal identifiers could be leaked and
 // potentially reveal something about the entropy of a client/relay.
 //
 // In order to speed up recognition, the key of the table of pending Ping and
-// Cipher messages will include the last hop that will deliver this layer of the
+// Ciphers messages will include the last hop that will deliver this layer of the
 // onion - there can be more than one up in the air at a time, but they are
 // randomly selected, so they will generally be a much smaller subset versus the
 // current full set of Session s currently open.

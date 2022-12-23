@@ -25,9 +25,9 @@ type Type struct {
 	// a local Socks5 proxy into Indranet and the exit node also having
 	// this.
 	Port uint16
-	// Cipher is a set of 3 symmetric ciphers that are to be used in their
+	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
-	Cipher [3]sha256.Hash
+	Ciphers [3]sha256.Hash
 	// Bytes are the message to be passed to the exit service.
 	slice.Bytes
 	types.Onion
@@ -51,9 +51,9 @@ func (x *Type) Encode(o slice.Bytes, c *slice.Cursor) {
 	port := slice.NewUint16()
 	slice.EncodeUint16(port, int(x.Port))
 	copy(o[*c:c.Inc(slice.Uint16Len)], port)
-	copy(o[*c:c.Inc(sha256.Len)], x.Cipher[0][:])
-	copy(o[*c:c.Inc(sha256.Len)], x.Cipher[1][:])
-	copy(o[*c:c.Inc(sha256.Len)], x.Cipher[1][:])
+	copy(o[*c:c.Inc(sha256.Len)], x.Ciphers[0][:])
+	copy(o[*c:c.Inc(sha256.Len)], x.Ciphers[1][:])
+	copy(o[*c:c.Inc(sha256.Len)], x.Ciphers[1][:])
 	bytesLen := slice.NewUint32()
 	slice.EncodeUint32(bytesLen, len(x.Bytes))
 	copy(o[*c:c.Inc(slice.Uint32Len)], bytesLen)
@@ -63,13 +63,19 @@ func (x *Type) Encode(o slice.Bytes, c *slice.Cursor) {
 }
 
 func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
-
 	if !magicbytes.CheckMagic(b, Magic) {
 		return magicbytes.WrongMagic(x, b, Magic)
 	}
 	if len(b) < MinLen {
 		return magicbytes.TooShort(len(b), MinLen, string(Magic))
 	}
-
+	x.Port = uint16(slice.DecodeUint16(b[*c:slice.Uint16Len]))
+	for i := range x.Ciphers {
+		bytes := b[*c:c.Inc(sha256.Len)]
+		copy(x.Ciphers[i][:], bytes)
+		bytes.Zero()
+	}
+	bytesLen := slice.DecodeUint32(b[*c:c.Inc(slice.Uint32Len)])
+	x.Bytes = b[*c:c.Inc(bytesLen)]
 	return
 }

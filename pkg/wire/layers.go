@@ -16,15 +16,15 @@ import (
 	"github.com/Indra-Labs/indra/pkg/wire/forward"
 	"github.com/Indra-Labs/indra/pkg/wire/message"
 	"github.com/Indra-Labs/indra/pkg/wire/purchase"
+	"github.com/Indra-Labs/indra/pkg/wire/reply"
 	"github.com/Indra-Labs/indra/pkg/wire/response"
-	"github.com/Indra-Labs/indra/pkg/wire/retrn"
 	"github.com/Indra-Labs/indra/pkg/wire/session"
 	"github.com/Indra-Labs/indra/pkg/wire/token"
 )
 
 type OnionSkins []types.Onion
 
-func (o OnionSkins) Header(to *address.Sender, from *prv.Key) OnionSkins {
+func (o OnionSkins) Message(to *address.Sender, from *prv.Key) OnionSkins {
 	return append(o, &message.Type{To: to, From: from})
 }
 func (o OnionSkins) Confirmation(id nonce.ID) OnionSkins {
@@ -36,13 +36,13 @@ func (o OnionSkins) Forward(ip net.IP) OnionSkins {
 func (o OnionSkins) Exit(port uint16, ciphers [3]sha256.Hash,
 	payload slice.Bytes) OnionSkins {
 
-	return append(o, &exit.Type{Port: port, Cipher: ciphers, Bytes: payload})
+	return append(o, &exit.Type{Port: port, Ciphers: ciphers, Bytes: payload})
 }
 func (o OnionSkins) Return(ip net.IP) OnionSkins {
-	return append(o, &retrn.Type{IP: ip})
+	return append(o, &reply.Type{IP: ip})
 }
 func (o OnionSkins) Cipher(hdr, pld *prv.Key) OnionSkins {
-	return append(o, &cipher.Type{PrivHeader: hdr, PrivPayload: pld})
+	return append(o, &cipher.Type{Header: hdr, Payload: pld})
 }
 func (o OnionSkins) Purchase(nBytes uint64, ciphers [3]sha256.Hash) OnionSkins {
 	return append(o, &purchase.Type{NBytes: nBytes, Ciphers: ciphers})

@@ -1,4 +1,4 @@
-package retrn
+package reply
 
 import (
 	"net"
@@ -15,10 +15,12 @@ var (
 	check = log.E.Chk
 )
 
-// Type is return messages, distinct from Forward messages in that the header
-// encryption uses a different secret than the payload. The magic bytes signal
-// this to the relay that receives this, which then looks up the PayloadHey
-// matching the To address in the message header.
+// Type is reply messages, distinct from forward.Type messages in that the
+// header encryption uses a different secret than the payload. The magic bytes
+// signal this to the relay that receives this, which then looks up the
+// PayloadHey matching the To address in the message header. And lastly, each
+// step the relay budges up it's message to the front of the packet and puts
+// csprng random bytes into the remainder to the same length.
 type Type struct {
 	// IP is the address of the next relay in the return leg of a circuit.
 	net.IP
@@ -26,7 +28,7 @@ type Type struct {
 }
 
 var (
-	Magic              = slice.Bytes("rtn")
+	Magic              = slice.Bytes("rpl")
 	MinLen             = magicbytes.Len + 1 + net.IPv4len
 	_      types.Onion = &Type{}
 )
@@ -45,13 +47,13 @@ func (x *Type) Encode(o slice.Bytes, c *slice.Cursor) {
 }
 
 func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
-
 	if !magicbytes.CheckMagic(b, Magic) {
 		return magicbytes.WrongMagic(x, b, Magic)
 	}
 	if len(b) < MinLen {
 		return magicbytes.TooShort(len(b), MinLen, string(Magic))
 	}
-
+	ipLen := b[0]
+	x.IP = net.IP(b[1 : 1+ipLen])
 	return
 }

@@ -26,13 +26,13 @@ func Ping(id nonce.ID, client node.Node, hop [3]node.Node,
 	set signer.KeySet) types.Onion {
 
 	return OnionSkins{}.
-		Header(address.FromPubKey(hop[0].HeaderKey), set.Next()).
+		Message(address.FromPubKey(hop[0].HeaderKey), set.Next()).
 		Forward(hop[1].IP).
-		Header(address.FromPubKey(hop[1].HeaderKey), set.Next()).
+		Message(address.FromPubKey(hop[1].HeaderKey), set.Next()).
 		Forward(hop[2].IP).
-		Header(address.FromPubKey(hop[2].HeaderKey), set.Next()).
+		Message(address.FromPubKey(hop[2].HeaderKey), set.Next()).
 		Forward(client.IP).
-		Header(address.FromPubKey(client.HeaderKey), set.Next()).
+		Message(address.FromPubKey(client.HeaderKey), set.Next()).
 		Confirmation(id).
 		Assemble()
 }
@@ -41,7 +41,7 @@ func Ping(id nonce.ID, client node.Node, hop [3]node.Node,
 // Purchase header bytes and to generate the ciphers provided in the Purchase
 // message to encrypt the Session that is returned.
 //
-// The Header key, its cloaked public key counterpart used in the To field of
+// The Message key, its cloaked public key counterpart used in the To field of
 // the Purchase message preformed header bytes, but the Ciphers provided in the
 // Purchase message, for encrypting the Session to be returned, uses the Payload
 // key, along with the public key found in the encrypted layer of the header for
@@ -54,18 +54,18 @@ func SendKeys(id nonce.ID, hdr, pld *prv.Key,
 	client node.Node, hop [5]node.Node, set signer.KeySet) types.Onion {
 
 	return OnionSkins{}.
-		Header(address.FromPubKey(hop[0].HeaderKey), set.Next()).
+		Message(address.FromPubKey(hop[0].HeaderKey), set.Next()).
 		Forward(hop[1].IP).
-		Header(address.FromPubKey(hop[1].HeaderKey), set.Next()).
+		Message(address.FromPubKey(hop[1].HeaderKey), set.Next()).
 		Forward(hop[2].IP).
-		Header(address.FromPubKey(hop[2].HeaderKey), set.Next()).
+		Message(address.FromPubKey(hop[2].HeaderKey), set.Next()).
 		Cipher(hdr, pld).
 		Forward(hop[3].IP).
-		Header(address.FromPubKey(hop[3].HeaderKey), set.Next()).
+		Message(address.FromPubKey(hop[3].HeaderKey), set.Next()).
 		Forward(hop[4].IP).
-		Header(address.FromPubKey(hop[4].HeaderKey), set.Next()).
+		Message(address.FromPubKey(hop[4].HeaderKey), set.Next()).
 		Forward(client.IP).
-		Header(address.FromPubKey(client.HeaderKey), set.Next()).
+		Message(address.FromPubKey(client.HeaderKey), set.Next()).
 		Confirmation(id).
 		Assemble()
 }
@@ -103,18 +103,18 @@ func SendPurchase(nBytes uint64, client node.Node,
 	}
 
 	return OnionSkins{}.
-		Header(address.FromPubKey(hop[0].HeaderKey), set.Next()).
+		Message(address.FromPubKey(hop[0].HeaderKey), set.Next()).
 		Forward(hop[1].IP).
-		Header(address.FromPubKey(hop[1].HeaderKey), set.Next()).
+		Message(address.FromPubKey(hop[1].HeaderKey), set.Next()).
 		Forward(hop[2].IP).
-		Header(address.FromPubKey(hop[2].HeaderKey), set.Next()).
+		Message(address.FromPubKey(hop[2].HeaderKey), set.Next()).
 		Purchase(nBytes, ciphers).
 		Return(hop[3].IP).
-		Header(address.FromPubKey(hop[3].HeaderKey), rtns[0]).
+		Message(address.FromPubKey(hop[3].HeaderKey), rtns[0]).
 		Return(hop[4].IP).
-		Header(address.FromPubKey(hop[4].HeaderKey), rtns[1]).
+		Message(address.FromPubKey(hop[4].HeaderKey), rtns[1]).
 		Return(client.IP).
-		Header(address.FromPubKey(client.HeaderKey), rtns[2]).
+		Message(address.FromPubKey(client.HeaderKey), rtns[2]).
 		Assemble()
 }
 
@@ -155,17 +155,17 @@ func SendExit(payload slice.Bytes, port uint16, client node.Node,
 	}
 
 	return OnionSkins{}.
-		Header(address.FromPubKey(hop[0].HeaderKey), set.Next()).
+		Message(address.FromPubKey(hop[0].HeaderKey), set.Next()).
 		Forward(hop[1].IP).
-		Header(address.FromPubKey(hop[1].HeaderKey), set.Next()).
+		Message(address.FromPubKey(hop[1].HeaderKey), set.Next()).
 		Forward(hop[2].IP).
-		Header(address.FromPubKey(hop[2].HeaderKey), set.Next()).
+		Message(address.FromPubKey(hop[2].HeaderKey), set.Next()).
 		Exit(port, ciphers, payload).
 		Return(hop[3].IP).
-		Header(address.FromPubKey(hop[3].HeaderKey), rtns[0]).
+		Message(address.FromPubKey(hop[3].HeaderKey), rtns[0]).
 		Return(hop[4].IP).
-		Header(address.FromPubKey(hop[4].HeaderKey), rtns[1]).
+		Message(address.FromPubKey(hop[4].HeaderKey), rtns[1]).
 		Return(client.IP).
-		Header(address.FromPubKey(client.HeaderKey), rtns[2]).
+		Message(address.FromPubKey(client.HeaderKey), rtns[2]).
 		Assemble()
 }
