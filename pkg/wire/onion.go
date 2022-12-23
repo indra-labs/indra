@@ -4,6 +4,7 @@ import (
 	"github.com/Indra-Labs/indra/pkg/key/address"
 	"github.com/Indra-Labs/indra/pkg/key/ecdh"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
+	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/key/signer"
 	"github.com/Indra-Labs/indra/pkg/node"
 	"github.com/Indra-Labs/indra/pkg/nonce"
@@ -50,7 +51,7 @@ func Ping(id nonce.ID, client node.Node, hop [3]node.Node,
 // This message's last layer is a Confirmation, which allows the client to know
 // that the key was successfully delivered to the Return relays that will be
 // used in the Purchase.
-func SendKeys(id nonce.ID, hdr, pld *prv.Key,
+func SendKeys(id nonce.ID, hdr, pld *pub.Key,
 	client node.Node, hop [5]node.Node, set signer.KeySet) types.Onion {
 
 	return OnionSkins{}.

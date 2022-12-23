@@ -25,7 +25,7 @@ var (
 // private keys inside it are no longer needed and any secret should only have
 // one storage, so it doesn't appear in any GC later.
 type Type struct {
-	Header, Payload *prv.Key
+	Header, Payload *pub.Key
 	types.Onion
 }
 
@@ -59,9 +59,7 @@ func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 		return magicbytes.TooShort(len(b), MinLen, string(Magic))
 	}
 	start := c.Inc(magicbytes.Len)
-	x.Header = prv.PrivkeyFromBytes(b[start:c.Inc(pub.KeyLen)])
-	x.Payload = prv.PrivkeyFromBytes(b[*c:c.Inc(pub.KeyLen)])
-	// zero out the version in the message as we have copied it to an array.
-	b[start:*c].Zero()
+	x.Header, e = pub.FromBytes(b[start:c.Inc(pub.KeyLen)])
+	x.Payload, e = pub.FromBytes(b[*c:c.Inc(pub.KeyLen)])
 	return
 }
