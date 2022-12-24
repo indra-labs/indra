@@ -28,11 +28,11 @@ func Ping(id nonce.ID, client node.Node, hop [3]node.Node,
 
 	return OnionSkins{}.
 		Message(address.FromPubKey(hop[0].HeaderKey), set.Next()).
-		Forward(hop[1].IP).
+		Forward(hop[1].AddrPort).
 		Message(address.FromPubKey(hop[1].HeaderKey), set.Next()).
-		Forward(hop[2].IP).
+		Forward(hop[2].AddrPort).
 		Message(address.FromPubKey(hop[2].HeaderKey), set.Next()).
-		Forward(client.IP).
+		Forward(client.AddrPort).
 		Message(address.FromPubKey(client.HeaderKey), set.Next()).
 		Confirmation(id).
 		Assemble()
@@ -56,16 +56,16 @@ func SendKeys(id nonce.ID, hdr, pld *pub.Key,
 
 	return OnionSkins{}.
 		Message(address.FromPubKey(hop[0].HeaderKey), set.Next()).
-		Forward(hop[1].IP).
+		Forward(hop[1].AddrPort).
 		Message(address.FromPubKey(hop[1].HeaderKey), set.Next()).
-		Forward(hop[2].IP).
+		Forward(hop[2].AddrPort).
 		Message(address.FromPubKey(hop[2].HeaderKey), set.Next()).
 		Cipher(hdr, pld).
-		Forward(hop[3].IP).
+		Forward(hop[3].AddrPort).
 		Message(address.FromPubKey(hop[3].HeaderKey), set.Next()).
-		Forward(hop[4].IP).
+		Forward(hop[4].AddrPort).
 		Message(address.FromPubKey(hop[4].HeaderKey), set.Next()).
-		Forward(client.IP).
+		Forward(client.AddrPort).
 		Message(address.FromPubKey(client.HeaderKey), set.Next()).
 		Confirmation(id).
 		Assemble()
@@ -105,16 +105,16 @@ func SendPurchase(nBytes uint64, client node.Node,
 
 	return OnionSkins{}.
 		Message(address.FromPubKey(hop[0].HeaderKey), set.Next()).
-		Forward(hop[1].IP).
+		Forward(hop[1].AddrPort).
 		Message(address.FromPubKey(hop[1].HeaderKey), set.Next()).
-		Forward(hop[2].IP).
+		Forward(hop[2].AddrPort).
 		Message(address.FromPubKey(hop[2].HeaderKey), set.Next()).
 		Purchase(nBytes, ciphers).
-		Reply(hop[3].IP).
+		Reply(hop[3].AddrPort).
 		Message(address.FromPubKey(hop[3].HeaderKey), rtns[0]).
-		Reply(hop[4].IP).
+		Reply(hop[4].AddrPort).
 		Message(address.FromPubKey(hop[4].HeaderKey), rtns[1]).
-		Reply(client.IP).
+		Reply(client.AddrPort).
 		Message(address.FromPubKey(client.HeaderKey), rtns[2]).
 		Assemble()
 }
@@ -155,16 +155,16 @@ func SendExit(payload slice.Bytes, port uint16, client node.Node,
 	pubs[2] = hop[3].PayloadKey
 	return OnionSkins{}.
 		Message(address.FromPubKey(hop[0].HeaderKey), set.Next()).
-		Forward(hop[1].IP).
+		Forward(hop[1].AddrPort).
 		Message(address.FromPubKey(hop[1].HeaderKey), set.Next()).
-		Forward(hop[2].IP).
+		Forward(hop[2].AddrPort).
 		Message(address.FromPubKey(hop[2].HeaderKey), set.Next()).
 		Exit(port, prvs, pubs, payload).
-		Reply(hop[3].IP).
+		Reply(hop[3].AddrPort).
 		Message(address.FromPubKey(hop[3].HeaderKey), replies[0]).
-		Reply(hop[4].IP).
+		Reply(hop[4].AddrPort).
 		Message(address.FromPubKey(hop[4].HeaderKey), replies[1]).
-		Reply(client.IP).
+		Reply(client.AddrPort).
 		Message(address.FromPubKey(client.HeaderKey), replies[2]).
 		Assemble()
 }

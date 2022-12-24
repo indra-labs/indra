@@ -6,6 +6,7 @@ import (
 	"github.com/Indra-Labs/indra/pkg/types"
 	"github.com/Indra-Labs/indra/pkg/wire/cipher"
 	"github.com/Indra-Labs/indra/pkg/wire/confirmation"
+	"github.com/Indra-Labs/indra/pkg/wire/delay"
 	"github.com/Indra-Labs/indra/pkg/wire/exit"
 	"github.com/Indra-Labs/indra/pkg/wire/forward"
 	"github.com/Indra-Labs/indra/pkg/wire/magicbytes"
@@ -41,6 +42,12 @@ func PeelOnion(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 		on = &o
 	case confirmation.MagicString:
 		var o confirmation.OnionSkin
+		if e = o.Decode(b, c); check(e) {
+			return
+		}
+		on = &o
+	case delay.MagicString:
+		var o delay.OnionSkin
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
