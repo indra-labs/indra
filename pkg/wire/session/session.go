@@ -12,7 +12,7 @@ import (
 var (
 	log                     = log2.GetLogger(indra.PathBase)
 	check                   = log.E.Chk
-	MagicString             = "ses"
+	MagicString             = "ss"
 	Magic                   = slice.Bytes(MagicString)
 	MinLen                  = magicbytes.Len + pub.KeyLen*2
 	_           types.Onion = &Type{}
@@ -51,7 +51,7 @@ func (x *Type) Encode(b slice.Bytes, c *slice.Cursor) {
 
 func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < MinLen {
-		return magicbytes.TooShort(len(b), MinLen, string(Magic))
+		return magicbytes.TooShort(len(b[*c:]), MinLen, string(Magic))
 	}
 	if x.HeaderKey, e = pub.FromBytes(b[c.Inc(magicbytes.Len):c.Inc(
 		pub.KeyLen)]); check(e) {

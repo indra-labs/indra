@@ -20,7 +20,7 @@ import (
 var (
 	log                     = log2.GetLogger(indra.PathBase)
 	check                   = log.E.Chk
-	MagicString             = "msg"
+	MagicString             = "mg"
 	Magic                   = slice.Bytes(MagicString)
 	_           types.Onion = &Type{}
 )
@@ -103,7 +103,7 @@ func (x *Type) Encode(b slice.Bytes, c *slice.Cursor) {
 // needed to decrypt the remainder of the bytes.
 func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < MinLen {
-		return magicbytes.TooShort(len(b), MinLen, "message")
+		return magicbytes.TooShort(len(b[*c:]), MinLen, "message")
 	}
 	chek := b[*c:c.Inc(4)]
 	start := int(*c)

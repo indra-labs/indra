@@ -12,7 +12,7 @@ import (
 var (
 	log                     = log2.GetLogger(indra.PathBase)
 	check                   = log.E.Chk
-	MagicString             = "exi"
+	MagicString             = "ex"
 	Magic                   = slice.Bytes(MagicString)
 	MinLen                  = magicbytes.Len + slice.Uint16Len + 3*sha256.Len
 	_           types.Onion = &Type{}
@@ -61,7 +61,7 @@ func (x *Type) Encode(b slice.Bytes, c *slice.Cursor) {
 
 func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < MinLen {
-		return magicbytes.TooShort(len(b), MinLen, string(Magic))
+		return magicbytes.TooShort(len(b[*c:]), MinLen, string(Magic))
 	}
 	x.Port = uint16(slice.DecodeUint16(b[*c:slice.Uint16Len]))
 	for i := range x.Ciphers {
