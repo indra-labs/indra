@@ -46,7 +46,7 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 }
 
 func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
-	if len(b[*c:]) < MinLen {
+	if len(b[*c:]) < MinLen-magicbytes.Len {
 		return magicbytes.TooShort(len(b[*c:]), MinLen, string(Magic))
 	}
 	x.NBytes = slice.DecodeUint64(

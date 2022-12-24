@@ -145,23 +145,21 @@ func SendExit(payload slice.Bytes, port uint16, client node.Node,
 		replies[i] = set.Next()
 	}
 
-	// The ciphers represent the combination of the same From key and the
-	// payload keys combined, which the receiver knows means the header uses
-	// HeaderKey and the message underneath use a different cipher in place
-	// of the HeaderKey, the PayloadKey it corresponds to.
-	ciphers := [3]sha256.Hash{
-		ecdh.Compute(replies[2], client.PayloadKey),
-		ecdh.Compute(replies[1], hop[4].PayloadKey),
-		ecdh.Compute(replies[0], hop[3].PayloadKey),
-	}
-
+	var prvs [3]*prv.Key
+	var pubs [3]*pub.Key
+	prvs[0] = replies[2]
+	prvs[1] = replies[1]
+	prvs[2] = replies[0]
+	pubs[0] = client.PayloadKey
+	pubs[1] = hop[4].PayloadKey
+	pubs[2] = hop[3].PayloadKey
 	return OnionSkins{}.
 		Message(address.FromPubKey(hop[0].HeaderKey), set.Next()).
 		Forward(hop[1].IP).
 		Message(address.FromPubKey(hop[1].HeaderKey), set.Next()).
 		Forward(hop[2].IP).
 		Message(address.FromPubKey(hop[2].HeaderKey), set.Next()).
-		Exit(port, ciphers, payload).
+		Exit(port, prvs, pubs, payload).
 		Reply(hop[3].IP).
 		Message(address.FromPubKey(hop[3].HeaderKey), replies[0]).
 		Reply(hop[4].IP).

@@ -133,6 +133,11 @@ func NoisePad(l int) (noise []byte) {
 
 type Cursor int
 
+func NewCursor() (c *Cursor) {
+	var cc Cursor
+	return &cc
+}
+
 func (c *Cursor) Inc(v int) Cursor {
 	*c += Cursor(v)
 	return *c
