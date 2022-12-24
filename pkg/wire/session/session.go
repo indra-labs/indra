@@ -10,15 +10,19 @@ import (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
-	check = log.E.Chk
+	log                     = log2.GetLogger(indra.PathBase)
+	check                   = log.E.Chk
+	MagicString             = "ses"
+	Magic                   = slice.Bytes(MagicString)
+	MinLen                  = magicbytes.Len + pub.KeyLen*2
+	_           types.Onion = &Type{}
 )
 
 // Type session is a message containing two public keys which identify to a
-// relay how to decrypt the header in a Return message, using the HeaderKey, and
+// relay how to decrypt the header in a Reply message, using the HeaderKey, and
 // the payload, which uses the PayloadKey. There is two keys in order to prevent
 // the Exit node from being able to decrypt the header, but enable it to encrypt
-// the payload, and Return relay hops have these key pairs and identify the
+// the payload, and Reply relay hops have these key pairs and identify the
 // HeaderKey and then know they can unwrap their layer of the payload using the
 // PayloadKey.
 //
@@ -30,12 +34,6 @@ type Type struct {
 	HeaderKey, PayloadKey *pub.Key
 	types.Onion
 }
-
-var (
-	Magic              = slice.Bytes("ses")
-	MinLen             = magicbytes.Len + pub.KeyLen*2
-	_      types.Onion = &Type{}
-)
 
 func (x *Type) Inner() types.Onion   { return x.Onion }
 func (x *Type) Insert(o types.Onion) { x.Onion = o }
@@ -52,10 +50,7 @@ func (x *Type) Encode(b slice.Bytes, c *slice.Cursor) {
 }
 
 func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
-	if !magicbytes.CheckMagic(b, Magic) {
-		return magicbytes.WrongMagic(x, b, Magic)
-	}
-	if len(b) < MinLen {
+	if len(b[*c:]) < MinLen {
 		return magicbytes.TooShort(len(b), MinLen, string(Magic))
 	}
 	if x.HeaderKey, e = pub.FromBytes(b[c.Inc(magicbytes.Len):c.Inc(

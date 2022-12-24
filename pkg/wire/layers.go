@@ -24,36 +24,36 @@ import (
 
 type OnionSkins []types.Onion
 
-func (o OnionSkins) Message(to *address.Sender, from *prv.Key) OnionSkins {
-	return append(o, &message.Type{To: to, From: from})
+func (o OnionSkins) Cipher(hdr, pld *pub.Key) OnionSkins {
+	return append(o, &cipher.Type{Header: hdr, Payload: pld})
 }
 func (o OnionSkins) Confirmation(id nonce.ID) OnionSkins {
 	return append(o, &confirmation.Type{ID: id})
-}
-func (o OnionSkins) Forward(ip net.IP) OnionSkins {
-	return append(o, &forward.Type{IP: ip})
 }
 func (o OnionSkins) Exit(port uint16, ciphers [3]sha256.Hash,
 	payload slice.Bytes) OnionSkins {
 
 	return append(o, &exit.Type{Port: port, Ciphers: ciphers, Bytes: payload})
 }
-func (o OnionSkins) Return(ip net.IP) OnionSkins {
-	return append(o, &reply.Type{IP: ip})
+func (o OnionSkins) Forward(ip net.IP) OnionSkins {
+	return append(o, &forward.Type{IP: ip})
 }
-func (o OnionSkins) Cipher(hdr, pld *pub.Key) OnionSkins {
-	return append(o, &cipher.Type{Header: hdr, Payload: pld})
+func (o OnionSkins) Message(to *address.Sender, from *prv.Key) OnionSkins {
+	return append(o, &message.Type{To: to, From: from})
 }
 func (o OnionSkins) Purchase(nBytes uint64, ciphers [3]sha256.Hash) OnionSkins {
 	return append(o, &purchase.Type{NBytes: nBytes, Ciphers: ciphers})
+}
+func (o OnionSkins) Reply(ip net.IP) OnionSkins {
+	return append(o, &reply.Type{IP: ip})
+}
+func (o OnionSkins) Response(res slice.Bytes) OnionSkins {
+	return append(o, response.Response(res))
 }
 func (o OnionSkins) Session(fwd, rtn *pub.Key) OnionSkins {
 	return append(o, &session.Type{
 		HeaderKey: fwd, PayloadKey: rtn,
 	})
-}
-func (o OnionSkins) Response(res slice.Bytes) OnionSkins {
-	return append(o, response.Response(res))
 }
 func (o OnionSkins) Token(tok sha256.Hash) OnionSkins {
 	return append(o, token.Type(tok))

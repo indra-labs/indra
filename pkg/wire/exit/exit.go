@@ -10,8 +10,12 @@ import (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
-	check = log.E.Chk
+	log                     = log2.GetLogger(indra.PathBase)
+	check                   = log.E.Chk
+	MagicString             = "exi"
+	Magic                   = slice.Bytes(MagicString)
+	MinLen                  = magicbytes.Len + slice.Uint16Len + 3*sha256.Len
+	_           types.Onion = &Type{}
 )
 
 // Type exit messages are the layer of a message after two Forward packets that
@@ -32,12 +36,6 @@ type Type struct {
 	slice.Bytes
 	types.Onion
 }
-
-var (
-	Magic              = slice.Bytes("exi")
-	MinLen             = magicbytes.Len + slice.Uint16Len + 3*sha256.Len
-	_      types.Onion = &Type{}
-)
 
 func (x *Type) Inner() types.Onion   { return x.Onion }
 func (x *Type) Insert(o types.Onion) { x.Onion = o }
@@ -62,10 +60,7 @@ func (x *Type) Encode(b slice.Bytes, c *slice.Cursor) {
 }
 
 func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
-	if !magicbytes.CheckMagic(b, Magic) {
-		return magicbytes.WrongMagic(x, b, Magic)
-	}
-	if len(b) < MinLen {
+	if len(b[*c:]) < MinLen {
 		return magicbytes.TooShort(len(b), MinLen, string(Magic))
 	}
 	x.Port = uint16(slice.DecodeUint16(b[*c:slice.Uint16Len]))

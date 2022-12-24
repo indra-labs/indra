@@ -10,8 +10,12 @@ import (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
-	check = log.E.Chk
+	log                     = log2.GetLogger(indra.PathBase)
+	check                   = log.E.Chk
+	MagicString             = "pcg"
+	Magic                   = slice.Bytes(MagicString)
+	MinLen                  = magicbytes.Len + slice.Uint64Len + sha256.Len*3
+	_           types.Onion = &Type{}
 )
 
 // Type purchase is a message that requests a session key, which will activate
@@ -24,12 +28,6 @@ type Type struct {
 	Ciphers [3]sha256.Hash
 	types.Onion
 }
-
-var (
-	Magic              = slice.Bytes("prc")
-	MinLen             = magicbytes.Len + slice.Uint64Len + sha256.Len*3
-	_      types.Onion = &Type{}
-)
 
 func (x *Type) Inner() types.Onion   { return x.Onion }
 func (x *Type) Insert(o types.Onion) { x.Onion = o }
@@ -48,10 +46,7 @@ func (x *Type) Encode(b slice.Bytes, c *slice.Cursor) {
 }
 
 func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
-	if !magicbytes.CheckMagic(b, Magic) {
-		return magicbytes.WrongMagic(x, b, Magic)
-	}
-	if len(b) < MinLen {
+	if len(b[*c:]) < MinLen {
 		return magicbytes.TooShort(len(b), MinLen, string(Magic))
 	}
 	x.NBytes = slice.DecodeUint64(
