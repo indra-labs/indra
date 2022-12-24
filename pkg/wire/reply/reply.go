@@ -28,7 +28,7 @@ var (
 // csprng random bytes into the remainder to the same length.
 type OnionSkin struct {
 	// AddrPort is the address of the next relay in the return leg of a circuit.
-	netip.AddrPort
+	*netip.AddrPort
 	types.Onion
 }
 
@@ -51,7 +51,7 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 		return
 	}
 	b[*c] = byte(len(ap))
-
+	copy(b[c.Inc(1):c.Inc(len(ap))], ap)
 	x.Onion.Encode(b, c)
 }
 
@@ -61,6 +61,7 @@ func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	}
 	apLen := b[*c]
 	apBytes := b[c.Inc(1):c.Inc(int(apLen))]
+	x.AddrPort = &netip.AddrPort{}
 	if e = x.AddrPort.UnmarshalBinary(apBytes); check(e) {
 		return
 	}
