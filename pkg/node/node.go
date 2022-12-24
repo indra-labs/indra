@@ -69,7 +69,7 @@ func (n Nodes) FindByID(i nonce.ID) (no *Node) {
 }
 
 // FindByAddrPort searches for a Node by netip.AddrPort.
-func (n Nodes) FindByAddrPort(id netip.AddrPort) (no *Node) {
+func (n Nodes) FindByAddrPort(id *netip.AddrPort) (no *Node) {
 	for _, nn := range n {
 		if nn.AddrPort.String() == id.String() {
 			no = nn
@@ -93,7 +93,7 @@ func (n Nodes) DeleteByID(ii nonce.ID) (nn Nodes, e error) {
 }
 
 // DeleteByAddrPort deletes a node identified by a netip.AddrPort.
-func (n Nodes) DeleteByAddrPort(ip netip.AddrPort) (nn Nodes, e error) {
+func (n Nodes) DeleteByAddrPort(ip *netip.AddrPort) (nn Nodes, e error) {
 	e = fmt.Errorf("node with ip %v not found", ip)
 	nn = n
 	for i := range n {

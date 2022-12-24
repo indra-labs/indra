@@ -71,11 +71,11 @@ func PeelOnion(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 		}
 		on = &o
 	case purchase.MagicString:
-		var o purchase.OnionSkin
+		o := &purchase.OnionSkin{}
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
-		on = &o
+		on = o
 	case reply.MagicString:
 		var o reply.OnionSkin
 		if e = o.Decode(b, c); check(e) {
