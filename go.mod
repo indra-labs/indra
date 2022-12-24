@@ -133,3 +133,5 @@ require (
 replace crypto/sha256 => github.com/minio/sha256-simd v1.0.0
 
 replace math/rand => github.com/lukechampine/frand v1.4.2
+
+//replace github.com/cybriq/proc => ../../cybriq/proc

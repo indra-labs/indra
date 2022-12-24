@@ -4,6 +4,7 @@ import (
 	"github.com/Indra-Labs/indra/pkg/key/address"
 	"github.com/Indra-Labs/indra/pkg/key/ecdh"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
+	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/key/signer"
 	"github.com/Indra-Labs/indra/pkg/node"
 	"github.com/Indra-Labs/indra/pkg/nonce"
@@ -26,13 +27,13 @@ func Ping(id nonce.ID, client node.Node, hop [3]node.Node,
 	set signer.KeySet) types.Onion {
 
 	return OnionSkins{}.
-		Header(address.FromPubKey(hop[0].HeaderKey), set.Next()).
-		Forward(hop[1].IP).
-		Header(address.FromPubKey(hop[1].HeaderKey), set.Next()).
-		Forward(hop[2].IP).
-		Header(address.FromPubKey(hop[2].HeaderKey), set.Next()).
-		Forward(client.IP).
-		Header(address.FromPubKey(client.HeaderKey), set.Next()).
+		Message(address.FromPubKey(hop[0].HeaderKey), set.Next()).
+		Forward(hop[1].AddrPort).
+		Message(address.FromPubKey(hop[1].HeaderKey), set.Next()).
+		Forward(hop[2].AddrPort).
+		Message(address.FromPubKey(hop[2].HeaderKey), set.Next()).
+		Forward(client.AddrPort).
+		Message(address.FromPubKey(client.HeaderKey), set.Next()).
 		Confirmation(id).
 		Assemble()
 }
@@ -41,31 +42,31 @@ func Ping(id nonce.ID, client node.Node, hop [3]node.Node,
 // Purchase header bytes and to generate the ciphers provided in the Purchase
 // message to encrypt the Session that is returned.
 //
-// The Header key, its cloaked public key counterpart used in the To field of
+// The Message key, its cloaked public key counterpart used in the To field of
 // the Purchase message preformed header bytes, but the Ciphers provided in the
 // Purchase message, for encrypting the Session to be returned, uses the Payload
 // key, along with the public key found in the encrypted layer of the header for
-// the Return relay.
+// the Reply relay.
 //
 // This message's last layer is a Confirmation, which allows the client to know
-// that the key was successfully delivered to the Return relays that will be
+// that the key was successfully delivered to the Reply relays that will be
 // used in the Purchase.
-func SendKeys(id nonce.ID, hdr, pld *prv.Key,
+func SendKeys(id nonce.ID, hdr, pld *pub.Key,
 	client node.Node, hop [5]node.Node, set signer.KeySet) types.Onion {
 
 	return OnionSkins{}.
-		Header(address.FromPubKey(hop[0].HeaderKey), set.Next()).
-		Forward(hop[1].IP).
-		Header(address.FromPubKey(hop[1].HeaderKey), set.Next()).
-		Forward(hop[2].IP).
-		Header(address.FromPubKey(hop[2].HeaderKey), set.Next()).
+		Message(address.FromPubKey(hop[0].HeaderKey), set.Next()).
+		Forward(hop[1].AddrPort).
+		Message(address.FromPubKey(hop[1].HeaderKey), set.Next()).
+		Forward(hop[2].AddrPort).
+		Message(address.FromPubKey(hop[2].HeaderKey), set.Next()).
 		Cipher(hdr, pld).
-		Forward(hop[3].IP).
-		Header(address.FromPubKey(hop[3].HeaderKey), set.Next()).
-		Forward(hop[4].IP).
-		Header(address.FromPubKey(hop[4].HeaderKey), set.Next()).
-		Forward(client.IP).
-		Header(address.FromPubKey(client.HeaderKey), set.Next()).
+		Forward(hop[3].AddrPort).
+		Message(address.FromPubKey(hop[3].HeaderKey), set.Next()).
+		Forward(hop[4].AddrPort).
+		Message(address.FromPubKey(hop[4].HeaderKey), set.Next()).
+		Forward(client.AddrPort).
+		Message(address.FromPubKey(client.HeaderKey), set.Next()).
 		Confirmation(id).
 		Assemble()
 }
@@ -80,7 +81,7 @@ func SendKeys(id nonce.ID, hdr, pld *prv.Key,
 // order to create the correct payload encryption to match the PayloadKey
 // combined with the header's given public From key.
 //
-// The header remains a constant size and each node in the Return trims off
+// The header remains a constant size and each node in the Reply trims off
 // their section at the top, moves the next layer header to the top and pads the
 // remainder with noise, so it always looks like the first hop,
 // indistinguishable.
@@ -103,18 +104,18 @@ func SendPurchase(nBytes uint64, client node.Node,
 	}
 
 	return OnionSkins{}.
-		Header(address.FromPubKey(hop[0].HeaderKey), set.Next()).
-		Forward(hop[1].IP).
-		Header(address.FromPubKey(hop[1].HeaderKey), set.Next()).
-		Forward(hop[2].IP).
-		Header(address.FromPubKey(hop[2].HeaderKey), set.Next()).
+		Message(address.FromPubKey(hop[0].HeaderKey), set.Next()).
+		Forward(hop[1].AddrPort).
+		Message(address.FromPubKey(hop[1].HeaderKey), set.Next()).
+		Forward(hop[2].AddrPort).
+		Message(address.FromPubKey(hop[2].HeaderKey), set.Next()).
 		Purchase(nBytes, ciphers).
-		Return(hop[3].IP).
-		Header(address.FromPubKey(hop[3].HeaderKey), rtns[0]).
-		Return(hop[4].IP).
-		Header(address.FromPubKey(hop[4].HeaderKey), rtns[1]).
-		Return(client.IP).
-		Header(address.FromPubKey(client.HeaderKey), rtns[2]).
+		Reply(hop[3].AddrPort).
+		Message(address.FromPubKey(hop[3].HeaderKey), rtns[0]).
+		Reply(hop[4].AddrPort).
+		Message(address.FromPubKey(hop[4].HeaderKey), rtns[1]).
+		Reply(client.AddrPort).
+		Message(address.FromPubKey(client.HeaderKey), rtns[2]).
 		Assemble()
 }
 
@@ -132,40 +133,38 @@ func SendPurchase(nBytes uint64, client node.Node,
 // correct payload encryption to match the PayloadKey combined with the header's
 // given public From key.
 //
-// The header remains a constant size and each node in the Return trims off
+// The header remains a constant size and each node in the Reply trims off
 // their section at the top, moves the next layer header to the top and pads the
 // remainder with noise, so it always looks like the first hop,
 // indistinguishable.
 func SendExit(payload slice.Bytes, port uint16, client node.Node,
 	hop [5]node.Node, set signer.KeySet) types.Onion {
 
-	var rtns [3]*prv.Key
-	for i := range rtns {
-		rtns[i] = set.Next()
+	var replies [3]*prv.Key
+	for i := range replies {
+		replies[i] = set.Next()
 	}
 
-	// The ciphers represent the combination of the same From key and the
-	// payload keys combined, which the receiver knows means the header uses
-	// HeaderKey and the message underneath use a different cipher in place
-	// of the HeaderKey, the PayloadKey it corresponds to.
-	ciphers := [3]sha256.Hash{
-		ecdh.Compute(rtns[2], client.PayloadKey),
-		ecdh.Compute(rtns[1], hop[4].PayloadKey),
-		ecdh.Compute(rtns[0], hop[3].PayloadKey),
-	}
-
+	var prvs [3]*prv.Key
+	var pubs [3]*pub.Key
+	prvs[0] = replies[2]
+	prvs[1] = replies[1]
+	prvs[2] = replies[0]
+	pubs[0] = client.PayloadKey
+	pubs[1] = hop[4].PayloadKey
+	pubs[2] = hop[3].PayloadKey
 	return OnionSkins{}.
-		Header(address.FromPubKey(hop[0].HeaderKey), set.Next()).
-		Forward(hop[1].IP).
-		Header(address.FromPubKey(hop[1].HeaderKey), set.Next()).
-		Forward(hop[2].IP).
-		Header(address.FromPubKey(hop[2].HeaderKey), set.Next()).
-		Exit(port, ciphers, payload).
-		Return(hop[3].IP).
-		Header(address.FromPubKey(hop[3].HeaderKey), rtns[0]).
-		Return(hop[4].IP).
-		Header(address.FromPubKey(hop[4].HeaderKey), rtns[1]).
-		Return(client.IP).
-		Header(address.FromPubKey(client.HeaderKey), rtns[2]).
+		Message(address.FromPubKey(hop[0].HeaderKey), set.Next()).
+		Forward(hop[1].AddrPort).
+		Message(address.FromPubKey(hop[1].HeaderKey), set.Next()).
+		Forward(hop[2].AddrPort).
+		Message(address.FromPubKey(hop[2].HeaderKey), set.Next()).
+		Exit(port, prvs, pubs, payload).
+		Reply(hop[3].AddrPort).
+		Message(address.FromPubKey(hop[3].HeaderKey), replies[0]).
+		Reply(hop[4].AddrPort).
+		Message(address.FromPubKey(hop[4].HeaderKey), replies[1]).
+		Reply(client.AddrPort).
+		Message(address.FromPubKey(client.HeaderKey), replies[2]).
 		Assemble()
 }

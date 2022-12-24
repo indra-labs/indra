@@ -10,41 +10,30 @@ import (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
-	check = log.E.Chk
+	log                     = log2.GetLogger(indra.PathBase)
+	check                   = log.E.Chk
+	MagicString             = "tk"
+	Magic                   = slice.Bytes(MagicString)
+	MinLen                  = magicbytes.Len + sha256.Len
+	_           types.Onion = OnionSkin{}
 )
 
-// A Type is a 32 byte value.
-type Type sha256.Hash
+// A OnionSkin is a 32 byte value.
+type OnionSkin sha256.Hash
 
-var (
-	Magic              = slice.Bytes("tok")
-	MinLen             = magicbytes.Len + sha256.Len
-	_      types.Onion = Type{}
-)
+func (x OnionSkin) Inner() types.Onion   { return nil }
+func (x OnionSkin) Insert(_ types.Onion) {}
+func (x OnionSkin) Len() int             { return MinLen }
 
-func (x Type) Inner() types.Onion   { return nil }
-func (x Type) Insert(_ types.Onion) {}
-func (x Type) Len() int             { return MinLen }
-
-func (x Type) Encode(o slice.Bytes, c *slice.Cursor) {
-	copy(o[*c:c.Inc(magicbytes.Len)], Magic)
-	copy(o[*c:c.Inc(sha256.Len)], x[:])
+func (x OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
+	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
+	copy(b[*c:c.Inc(sha256.Len)], x[:])
 }
 
-func (x Type) Decode(b slice.Bytes) (e error) {
-
-	magic := Magic
-	if !magicbytes.CheckMagic(b, magic) {
-		return magicbytes.WrongMagic(x, b, magic)
+func (x OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
+	if len(b[*c:]) < MinLen {
+		return magicbytes.TooShort(len(b[*c:]), MinLen, string(Magic))
 	}
-	minLen := MinLen
-	if len(b) < minLen {
-		return magicbytes.TooShort(len(b), minLen, string(magic))
-	}
-	sc := slice.Cursor(0)
-	c := &sc
-	_ = c
-
+	copy(x[:], b[c.Inc(magicbytes.Len):c.Inc(sha256.Len)])
 	return
 }

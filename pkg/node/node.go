@@ -5,6 +5,7 @@ package node
 import (
 	"fmt"
 	"net"
+	"net/netip"
 
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/ifc"
@@ -24,18 +25,18 @@ var (
 // except when the net.IP is known via the packet sender address.
 type Node struct {
 	nonce.ID
-	net.IP
+	netip.AddrPort
 	HeaderKey, PayloadKey *pub.Key
 	ifc.Transport
 }
 
 // New creates a new Node. net.IP is optional if the counterparty is not in
 // direct connection.
-func New(ip net.IP, fwd, rtn *pub.Key, tpt ifc.Transport) (n *Node, id nonce.ID) {
+func New(ip netip.AddrPort, fwd, rtn *pub.Key, tpt ifc.Transport) (n *Node, id nonce.ID) {
 	id = nonce.NewID()
 	n = &Node{
 		ID:         id,
-		IP:         ip,
+		AddrPort:   ip,
 		Transport:  tpt,
 		HeaderKey:  fwd,
 		PayloadKey: rtn,
@@ -69,9 +70,9 @@ func (n Nodes) FindByID(i nonce.ID) (no *Node) {
 }
 
 // FindByIP searches for a Node by net.IP.
-func (n Nodes) FindByIP(id net.IP) (no *Node) {
+func (n Nodes) FindByIP(id netip.AddrPort) (no *Node) {
 	for _, nn := range n {
-		if nn.IP.String() == id.String() {
+		if nn.AddrPort.String() == id.String() {
 			no = nn
 			break
 		}
@@ -89,7 +90,7 @@ func (n Nodes) DeleteByID(ii nonce.ID) (nn Nodes, e error) {
 			break
 		}
 	}
-	return
+	return n, e
 }
 
 // DeleteByIP deletes a node identified by a net.IP.
@@ -97,7 +98,7 @@ func (n Nodes) DeleteByIP(ip net.IP) (nn Nodes, e error) {
 	e = fmt.Errorf("node with ip %v not found", ip)
 	nn = n
 	for i := range n {
-		if n[i].IP.String() == ip.String() {
+		if n[i].AddrPort.String() == ip.String() {
 			nn = append(n[:i], n[i+1:]...)
 			e = nil
 			break

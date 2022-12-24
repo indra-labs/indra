@@ -125,13 +125,18 @@ func NoisePad(l int) (noise []byte) {
 			end = l
 		}
 		seed = sha256.Single(seed[:])
-		copy(noise[cursor:end], seed[:])
+		copy(noise[cursor:end], seed[:end-cursor])
 		cursor = end
 	}
 	return
 }
 
 type Cursor int
+
+func NewCursor() (c *Cursor) {
+	var cc Cursor
+	return &cc
+}
 
 func (c *Cursor) Inc(v int) Cursor {
 	*c += Cursor(v)
@@ -141,8 +146,14 @@ func (c *Cursor) Inc(v int) Cursor {
 type Bytes []byte
 
 func ToBytes(b []byte) (msg Bytes) { return b }
+func (m Bytes) String() string     { return string(m) }
 func (m Bytes) ToBytes() []byte    { return m }
 func (m Bytes) Len() int           { return len(m) }
+func (m Bytes) Zero() {
+	for i := range m {
+		m[i] = 0
+	}
+}
 
 type U64Slice []uint64
 
@@ -197,6 +208,12 @@ func (u U64Slice) XOR(v U64Slice) {
 	}
 	for i := range u[:len(u)-1] {
 		u[i] ^= v[i]
+	}
+}
+
+func (u U64Slice) Zero() {
+	for i := range u[:len(u)-1] {
+		u[i] = 8
 	}
 }
 

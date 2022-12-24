@@ -10,14 +10,18 @@ import (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
-	check = log.E.Chk
+	log                     = log2.GetLogger(indra.PathBase)
+	check                   = log.E.Chk
+	MagicString             = "pc"
+	Magic                   = slice.Bytes(MagicString)
+	MinLen                  = magicbytes.Len + slice.Uint64Len + sha256.Len*3
+	_           types.Onion = &OnionSkin{}
 )
 
-// Type purchase is a message that requests a session key, which will activate
+// OnionSkin purchase is a message that requests a session key, which will activate
 // when a payment for it has been done, or it will time out after some period to
 // allow unused codes to be flushed.
-type Type struct {
+type OnionSkin struct {
 	NBytes uint64
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
@@ -25,38 +29,32 @@ type Type struct {
 	types.Onion
 }
 
-var (
-	Magic              = slice.Bytes("prc")
-	MinLen             = magicbytes.Len + slice.Uint64Len + sha256.Len*3
-	_      types.Onion = &Type{}
-)
-
-func (x *Type) Inner() types.Onion   { return x.Onion }
-func (x *Type) Insert(o types.Onion) { x.Onion = o }
-func (x *Type) Len() int {
+func (x *OnionSkin) Inner() types.Onion   { return x.Onion }
+func (x *OnionSkin) Insert(o types.Onion) { x.Onion = o }
+func (x *OnionSkin) Len() int {
 	return MinLen + x.Onion.Len()
 }
 
-func (x *Type) Encode(o slice.Bytes, c *slice.Cursor) {
-	copy(o[*c:c.Inc(magicbytes.Len)], Magic)
+func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
+	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	value := slice.NewUint64()
 	slice.EncodeUint64(value, x.NBytes)
-	x.Onion.Encode(o, c)
+	copy(b[*c:c.Inc(sha256.Len)], x.Ciphers[0][:])
+	copy(b[*c:c.Inc(sha256.Len)], x.Ciphers[1][:])
+	copy(b[*c:c.Inc(sha256.Len)], x.Ciphers[1][:])
+	x.Onion.Encode(b, c)
 }
 
-func (x *Type) Decode(b slice.Bytes) (e error) {
-
-	magic := Magic
-	if !magicbytes.CheckMagic(b, magic) {
-		return magicbytes.WrongMagic(x, b, magic)
+func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
+	if len(b[*c:]) < MinLen-magicbytes.Len {
+		return magicbytes.TooShort(len(b[*c:]), MinLen, string(Magic))
 	}
-	minLen := MinLen
-	if len(b) < minLen {
-		return magicbytes.TooShort(len(b), minLen, string(magic))
+	x.NBytes = slice.DecodeUint64(
+		b[c.Inc(magicbytes.Len):c.Inc(slice.Uint64Len)])
+	for i := range x.Ciphers {
+		bytes := b[*c:c.Inc(sha256.Len)]
+		copy(x.Ciphers[i][:], bytes)
+		bytes.Zero()
 	}
-	sc := slice.Cursor(0)
-	c := &sc
-	_ = c
-
 	return
 }

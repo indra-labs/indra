@@ -1,4 +1,4 @@
-package forward
+package reply
 
 import (
 	"net"
@@ -14,14 +14,20 @@ import (
 var (
 	log                     = log2.GetLogger(indra.PathBase)
 	check                   = log.E.Chk
-	MagicString             = "fw"
+	MagicString             = "rl"
 	Magic                   = slice.Bytes(MagicString)
 	MinLen                  = magicbytes.Len + 1 + net.IPv4len
 	_           types.Onion = &OnionSkin{}
 )
 
-// OnionSkin forward is just an IP address and a wrapper for another message.
+// OnionSkin is reply messages, distinct from forward.OnionSkin messages in that the
+// header encryption uses a different secret than the payload. The magic bytes
+// signal this to the relay that receives this, which then looks up the
+// PayloadHey matching the To address in the message header. And lastly, each
+// step the relay budges up it's message to the front of the packet and puts
+// csprng random bytes into the remainder to the same length.
 type OnionSkin struct {
+	// AddrPort is the address of the next relay in the return leg of a circuit.
 	netip.AddrPort
 	types.Onion
 }

@@ -1,9 +1,11 @@
 package wire
 
 import (
-	"net"
+	"net/netip"
+	"time"
 
 	"github.com/Indra-Labs/indra/pkg/key/address"
+	"github.com/Indra-Labs/indra/pkg/key/ecdh"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/nonce"
@@ -12,54 +14,89 @@ import (
 	"github.com/Indra-Labs/indra/pkg/types"
 	"github.com/Indra-Labs/indra/pkg/wire/cipher"
 	"github.com/Indra-Labs/indra/pkg/wire/confirmation"
+	"github.com/Indra-Labs/indra/pkg/wire/delay"
 	"github.com/Indra-Labs/indra/pkg/wire/exit"
 	"github.com/Indra-Labs/indra/pkg/wire/forward"
 	"github.com/Indra-Labs/indra/pkg/wire/message"
+	"github.com/Indra-Labs/indra/pkg/wire/noop"
 	"github.com/Indra-Labs/indra/pkg/wire/purchase"
+	"github.com/Indra-Labs/indra/pkg/wire/reply"
 	"github.com/Indra-Labs/indra/pkg/wire/response"
-	"github.com/Indra-Labs/indra/pkg/wire/retrn"
 	"github.com/Indra-Labs/indra/pkg/wire/session"
 	"github.com/Indra-Labs/indra/pkg/wire/token"
 )
 
+func GenCiphers(prvs [3]*prv.Key, pubs [3]*pub.Key) (ciphers [3]sha256.Hash) {
+	for i := range prvs {
+		ciphers[i] = ecdh.Compute(prvs[i], pubs[i])
+	}
+	return
+}
+
 type OnionSkins []types.Onion
 
-func (o OnionSkins) Header(to *address.Sender, from *prv.Key) OnionSkins {
-	return append(o, &message.Type{To: to, From: from})
-}
-func (o OnionSkins) Confirmation(id nonce.ID) OnionSkins {
-	return append(o, &confirmation.Type{ID: id})
-}
-func (o OnionSkins) Forward(ip net.IP) OnionSkins {
-	return append(o, &forward.Type{IP: ip})
-}
-func (o OnionSkins) Exit(port uint16, ciphers [3]sha256.Hash,
-	payload slice.Bytes) OnionSkins {
-
-	return append(o, &exit.Type{Port: port, Cipher: ciphers, Bytes: payload})
-}
-func (o OnionSkins) Return(ip net.IP) OnionSkins {
-	return append(o, &retrn.Type{IP: ip})
-}
-func (o OnionSkins) Cipher(hdr, pld *prv.Key) OnionSkins {
-	return append(o, &cipher.Type{Header: hdr, Payload: pld})
-}
-func (o OnionSkins) Purchase(nBytes uint64, ciphers [3]sha256.Hash) OnionSkins {
-	return append(o, &purchase.Type{NBytes: nBytes, Ciphers: ciphers})
-}
-func (o OnionSkins) Session(fwd, rtn *pub.Key) OnionSkins {
-	return append(o, &session.Type{
-		HeaderKey: fwd, PayloadKey: rtn,
+func (o OnionSkins) Cipher(hdr, pld *pub.Key) OnionSkins {
+	return append(o, &cipher.OnionSkin{
+		Header:  hdr,
+		Payload: pld,
+		Onion:   &noop.OnionSkin{},
 	})
 }
-func (o OnionSkins) Response(res slice.Bytes) OnionSkins {
-	return append(o, response.Response(res))
-}
-func (o OnionSkins) Token(tok sha256.Hash) OnionSkins {
-	return append(o, token.Type(tok))
+
+func (o OnionSkins) Confirmation(id nonce.ID) OnionSkins {
+	return append(o, &confirmation.OnionSkin{ID: id})
 }
 
-// Assemble inserts the slice of Onion s inside each other so the first then
+func (o OnionSkins) Delay(d time.Duration) OnionSkins {
+	return append(o, &delay.OnionSkin{Duration: d,
+		Onion: &noop.OnionSkin{}})
+}
+
+func (o OnionSkins) Exit(port uint16, prvs [3]*prv.Key, pubs [3]*pub.Key,
+	payload slice.Bytes) OnionSkins {
+
+	return append(o, &exit.OnionSkin{
+		Port:    port,
+		Ciphers: GenCiphers(prvs, pubs),
+		Bytes:   payload,
+		Onion:   &noop.OnionSkin{},
+	})
+}
+func (o OnionSkins) Forward(addr netip.AddrPort) OnionSkins {
+	return append(o, &forward.OnionSkin{AddrPort: addr, Onion: &noop.OnionSkin{}})
+}
+func (o OnionSkins) Message(to *address.Sender, from *prv.Key) OnionSkins {
+	return append(o, &message.OnionSkin{
+		To:    to,
+		From:  from,
+		Onion: &noop.OnionSkin{},
+	})
+}
+func (o OnionSkins) Purchase(nBytes uint64, ciphers [3]sha256.Hash) OnionSkins {
+	return append(o, &purchase.OnionSkin{
+		NBytes:  nBytes,
+		Ciphers: ciphers,
+		Onion:   &noop.OnionSkin{},
+	})
+}
+func (o OnionSkins) Reply(ip netip.AddrPort) OnionSkins {
+	return append(o, &reply.OnionSkin{AddrPort: ip, Onion: &noop.OnionSkin{}})
+}
+func (o OnionSkins) Response(res slice.Bytes) OnionSkins {
+	return append(o, response.OnionSkin(res))
+}
+func (o OnionSkins) Session(fwd, rtn *pub.Key) OnionSkins {
+	return append(o, &session.OnionSkin{
+		HeaderKey:  fwd,
+		PayloadKey: rtn,
+		Onion:      &noop.OnionSkin{},
+	})
+}
+func (o OnionSkins) Token(tok sha256.Hash) OnionSkins {
+	return append(o, token.OnionSkin(tok))
+}
+
+// Assemble inserts the slice of OnionSkin s inside each other so the first then
 // contains the second, second contains the third, and so on, and then returns
 // the first onion, on which you can then call Encode and generate the wire
 // message form of the onion.

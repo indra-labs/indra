@@ -8,7 +8,7 @@ import (
 // Message, which provides the cipher for the inner layers inside it.
 type Onion interface {
 	Encode(b slice.Bytes, c *slice.Cursor)
-	Decode(b slice.Bytes) (e error)
+	Decode(b slice.Bytes, c *slice.Cursor) (e error)
 	Len() int
 	Inner() Onion
 	Insert(on Onion)
