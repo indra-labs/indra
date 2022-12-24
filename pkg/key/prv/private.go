@@ -31,14 +31,14 @@ func GenerateKey() (prv *Key, e error) {
 }
 
 // PrivkeyFromBytes converts a byte slice into a private key.
-func PrivkeyFromBytes(b Bytes) *Key {
-	return (*Key)(secp256k1.PrivKeyFromBytes(b[:]))
+func PrivkeyFromBytes(b []byte) *Key {
+	return (*Key)(secp256k1.PrivKeyFromBytes(b))
 }
 
 // Zero out a private key to prevent key scraping from memory.
 func (prv *Key) Zero() { (*secp256k1.PrivateKey)(prv).Zero() }
 
-// ToBytes returns the Bytes serialized form.
+// ToBytes returns the Bytes serialized form. It zeroes the original bytes.
 func (prv *Key) ToBytes() (b Bytes) {
 	br := (*secp256k1.PrivateKey)(prv).Serialize()
 	copy(b[:], br[:KeyLen])

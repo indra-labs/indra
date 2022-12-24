@@ -158,7 +158,7 @@ func main() {
 		startArgs++
 	}
 	tag := true
-	if branch != "main" {
+	if branch != "main" && branch != "master" {
 		tag = false
 	} else {
 		switch {
@@ -175,10 +175,11 @@ func main() {
 	}
 	SemVer = fmt.Sprintf("v%d.%d.%d", Major, Minor, Patch)
 	PathBase = tr.Filesystem.Root() + "/"
-	versionFile := `// Package indra is the root level package for Indranet, a low latency, 
-// Lightning Network monetised distributed VPN protocol designed for providing
-// strong anonymity to valuable internet traffic.
-package indra
+	var dir string
+	if dir, e = os.Getwd(); check(e) {
+	}
+	name := filepath.Base(dir)
+	versionFile := `package ` + name + `
 
 import (
 	"fmt"
@@ -265,7 +266,7 @@ func Version() string {
 	}
 	// Lastly, we need to regenerate the version of bumper if it changed.
 	// Rather than check, we will just run the compilation command anyway.
-	if e = runCmd("go", "install", "./cmd/bumper/."); check(e) {
+	if e = runCmd("go", "install", "./cmd/bumper/."); e != nil {
 		os.Exit(1)
 	}
 	return
