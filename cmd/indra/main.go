@@ -16,7 +16,7 @@ func main() {
 
 	log2.App = "indra"
 
-	log.I.Ln("indra - the indra network tool")
+	log.I.Ln("-- indra - the indra network tool --")
 	log.I.Ln("version:", indra.SemVer)
 
 	var err error
@@ -30,5 +30,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	log.D.Ln("Shutdown complete.")
+	log.I.Ln("-- fin --")
+	os.Exit(0)
 }
