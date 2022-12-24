@@ -10,12 +10,13 @@ import (
 )
 
 var (
-	log                     = log2.GetLogger(indra.PathBase)
-	check                   = log.E.Chk
-	MagicString             = "ex"
-	Magic                   = slice.Bytes(MagicString)
-	MinLen                  = magicbytes.Len + slice.Uint16Len + 3*sha256.Len
-	_           types.Onion = &OnionSkin{}
+	log         = log2.GetLogger(indra.PathBase)
+	check       = log.E.Chk
+	MagicString = "ex"
+	Magic       = slice.Bytes(MagicString)
+	MinLen      = magicbytes.Len + slice.Uint16Len +
+		3*sha256.Len + slice.Uint32Len
+	_ types.Onion = &OnionSkin{}
 )
 
 // OnionSkin exit messages are the layer of a message after two Forward packets that
@@ -40,8 +41,7 @@ type OnionSkin struct {
 func (x *OnionSkin) Inner() types.Onion   { return x.Onion }
 func (x *OnionSkin) Insert(o types.Onion) { x.Onion = o }
 func (x *OnionSkin) Len() int {
-	return MinLen + x.Bytes.Len() +
-		x.Onion.Len()
+	return MinLen + x.Bytes.Len() + x.Onion.Len()
 }
 
 func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
@@ -51,7 +51,7 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(slice.Uint16Len)], port)
 	copy(b[*c:c.Inc(sha256.Len)], x.Ciphers[0][:])
 	copy(b[*c:c.Inc(sha256.Len)], x.Ciphers[1][:])
-	copy(b[*c:c.Inc(sha256.Len)], x.Ciphers[1][:])
+	copy(b[*c:c.Inc(sha256.Len)], x.Ciphers[2][:])
 	bytesLen := slice.NewUint32()
 	slice.EncodeUint32(bytesLen, len(x.Bytes))
 	copy(b[*c:c.Inc(slice.Uint32Len)], bytesLen)
@@ -60,10 +60,10 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 }
 
 func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
-	if len(b[*c:]) < MinLen {
+	if len(b[*c:]) < MinLen-magicbytes.Len {
 		return magicbytes.TooShort(len(b[*c:]), MinLen, string(Magic))
 	}
-	x.Port = uint16(slice.DecodeUint16(b[*c:slice.Uint16Len]))
+	x.Port = uint16(slice.DecodeUint16(b[*c:c.Inc(slice.Uint16Len)]))
 	for i := range x.Ciphers {
 		bytes := b[*c:c.Inc(sha256.Len)]
 		copy(x.Ciphers[i][:], bytes)

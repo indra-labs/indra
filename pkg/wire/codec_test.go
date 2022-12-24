@@ -1,15 +1,19 @@
 package wire
 
 import (
+	"math/rand"
 	"testing"
 
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/nonce"
+	"github.com/Indra-Labs/indra/pkg/sha256"
 	"github.com/Indra-Labs/indra/pkg/slice"
+	"github.com/Indra-Labs/indra/pkg/testutils"
 	"github.com/Indra-Labs/indra/pkg/types"
 	"github.com/Indra-Labs/indra/pkg/wire/cipher"
 	"github.com/Indra-Labs/indra/pkg/wire/confirmation"
+	"github.com/Indra-Labs/indra/pkg/wire/exit"
 	log2 "github.com/cybriq/proc/pkg/log"
 )
 
@@ -18,12 +22,10 @@ func TestOnionSkins_Cipher(t *testing.T) {
 	var e error
 	hdrP, pldP := GetTwoPrvKeys(t)
 	hdr, pld := pub.Derive(hdrP), pub.Derive(pldP)
-	log.I.S(hdr, pld)
-	n := nonce.NewID()
-	log.I.S(n)
+	// n := nonce.NewID()
 	on := OnionSkins{}.
 		Cipher(hdr, pld).
-		Confirmation(n).
+		// Confirmation(n).
 		Assemble()
 	onb := EncodeOnion(on)
 	var sc slice.Cursor
@@ -32,19 +34,26 @@ func TestOnionSkins_Cipher(t *testing.T) {
 	if onc, e = PeelOnion(onb, c); check(e) {
 		t.FailNow()
 	}
-	log.I.S(onc.(*cipher.OnionSkin))
-	var oncn types.Onion
-	if oncn, e = PeelOnion(onb, c); check(e) {
+	var ci *cipher.OnionSkin
+	var ok bool
+	if ci, ok = onc.(*cipher.OnionSkin); !ok {
+		t.Error("did not unwrap expected type")
 		t.FailNow()
 	}
-	log.I.S(oncn.(*confirmation.OnionSkin))
+	if !ci.Header.Equals(hdr) {
+		t.Error("header key did not unwrap correctly")
+		t.FailNow()
+	}
+	if !ci.Payload.Equals(pld) {
+		t.Error("payload key did not unwrap correctly")
+		t.FailNow()
+	}
 }
 
 func TestOnionSkins_Confirmation(t *testing.T) {
 	log2.CodeLoc = true
 	var e error
 	n := nonce.NewID()
-	log.I.S(n)
 	on := OnionSkins{}.
 		Confirmation(n).
 		Assemble()
@@ -55,11 +64,60 @@ func TestOnionSkins_Confirmation(t *testing.T) {
 	if oncn, e = PeelOnion(onb, c); check(e) {
 		t.FailNow()
 	}
-	log.I.S(oncn.(*confirmation.OnionSkin))
+	var cf *confirmation.OnionSkin
+	var ok bool
+	if cf, ok = oncn.(*confirmation.OnionSkin); !ok {
+		t.Error("did not unwrap expected type")
+		t.FailNow()
+	}
+	if cf.ID != n {
+		t.Error("confirmation ID did not unwrap correctly")
+		t.FailNow()
+	}
 }
 
 func TestOnionSkins_Exit(t *testing.T) {
-
+	log2.CodeLoc = true
+	var e error
+	var msg slice.Bytes
+	prvs, pubs := GetCipherSet(t)
+	ciphers := GenCiphers(prvs, pubs)
+	var hash sha256.Hash
+	if msg, hash, e = testutils.GenerateTestMessage(512); check(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	p := uint16(rand.Uint32())
+	on := OnionSkins{}.
+		Exit(p, prvs, pubs, msg).
+		Assemble()
+	onb := EncodeOnion(on)
+	c := slice.NewCursor()
+	var onex types.Onion
+	if onex, e = PeelOnion(onb, c); check(e) {
+		t.FailNow()
+	}
+	var ex *exit.OnionSkin
+	var ok bool
+	if ex, ok = onex.(*exit.OnionSkin); !ok {
+		t.Error("did not unwrap expected type")
+		t.FailNow()
+	}
+	if ex.Port != p {
+		t.Error("exit port did not unwrap correctly")
+		t.FailNow()
+	}
+	for i := range ex.Ciphers {
+		if ex.Ciphers[i] != ciphers[i] {
+			t.Errorf("cipher %d did not unwrap correctly", i)
+			t.FailNow()
+		}
+	}
+	plH := sha256.Single(ex.Bytes)
+	if plH != hash {
+		t.Errorf("exit message did not unwrap correctly")
+		t.FailNow()
+	}
 }
 
 func TestOnionSkins_Forward(t *testing.T) {
@@ -97,6 +155,15 @@ func GetTwoPrvKeys(t *testing.T) (prv1, prv2 *prv.Key) {
 	}
 	if prv2, e = prv.GenerateKey(); check(e) {
 		t.FailNow()
+	}
+	return
+}
+
+func GetCipherSet(t *testing.T) (prvs [3]*prv.Key, pubs [3]*pub.Key) {
+	for i := range prvs {
+		prv1, prv2 := GetTwoPrvKeys(t)
+		prvs[i] = prv1
+		pubs[i] = pub.Derive(prv2)
 	}
 	return
 }
