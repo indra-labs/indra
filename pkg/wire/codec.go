@@ -34,61 +34,61 @@ func EncodeOnion(on types.Onion) (b slice.Bytes) {
 func PeelOnion(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 	switch b[*c:c.Inc(magicbytes.Len)].String() {
 	case cipher.MagicString:
-		var o cipher.Type
+		var o cipher.OnionSkin
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
 		on = &o
 	case confirmation.MagicString:
-		var o confirmation.Type
+		var o confirmation.OnionSkin
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
 		on = &o
 	case exit.MagicString:
-		var o exit.Type
+		var o exit.OnionSkin
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
 		on = &o
 	case forward.MagicString:
-		var o forward.Type
+		var o forward.OnionSkin
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
 		on = &o
 	case message.MagicString:
-		var o message.Type
+		var o message.OnionSkin
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
 		on = &o
 	case purchase.MagicString:
-		var o purchase.Type
+		var o purchase.OnionSkin
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
 		on = &o
 	case reply.MagicString:
-		var o reply.Type
+		var o reply.OnionSkin
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
 		on = &o
 	case response.MagicString:
-		var o response.Response
+		var o response.OnionSkin
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
 		on = o
 	case session.MagicString:
-		var o session.Type
+		var o session.OnionSkin
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
 		on = &o
 	case token.MagicString:
-		var o token.Type
+		var o token.OnionSkin
 		if e = o.Decode(b, c); check(e) {
 			return
 		}

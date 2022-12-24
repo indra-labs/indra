@@ -15,22 +15,22 @@ var (
 	MagicString             = "tk"
 	Magic                   = slice.Bytes(MagicString)
 	MinLen                  = magicbytes.Len + sha256.Len
-	_           types.Onion = Type{}
+	_           types.Onion = OnionSkin{}
 )
 
-// A Type is a 32 byte value.
-type Type sha256.Hash
+// A OnionSkin is a 32 byte value.
+type OnionSkin sha256.Hash
 
-func (x Type) Inner() types.Onion   { return nil }
-func (x Type) Insert(_ types.Onion) {}
-func (x Type) Len() int             { return MinLen }
+func (x OnionSkin) Inner() types.Onion   { return nil }
+func (x OnionSkin) Insert(_ types.Onion) {}
+func (x OnionSkin) Len() int             { return MinLen }
 
-func (x Type) Encode(b slice.Bytes, c *slice.Cursor) {
+func (x OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	copy(b[*c:c.Inc(sha256.Len)], x[:])
 }
 
-func (x Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
+func (x OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < MinLen {
 		return magicbytes.TooShort(len(b[*c:]), MinLen, string(Magic))
 	}

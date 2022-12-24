@@ -22,13 +22,13 @@ var (
 	check                   = log.E.Chk
 	MagicString             = "mg"
 	Magic                   = slice.Bytes(MagicString)
-	_           types.Onion = &Type{}
+	_           types.Onion = &OnionSkin{}
 )
 
-// Type message is the generic top level wrapper for an Onion. All following
+// OnionSkin message is the generic top level wrapper for an OnionSkin. All following
 // messages are wrapped inside this. This type provides the encryption for each
 // layer, and a header which a relay uses to determine what cipher to use.
-type Type struct {
+type OnionSkin struct {
 	To   *address.Sender
 	From *prv.Key
 	// The remainder here are for Decode.
@@ -47,13 +47,13 @@ type Type struct {
 const MinLen = magicbytes.Len + nonce.IVLen +
 	address.Len + pub.KeyLen + slice.Uint32Len
 
-func (x *Type) Inner() types.Onion   { return x.Onion }
-func (x *Type) Insert(o types.Onion) { x.Onion = o }
-func (x *Type) Len() int {
+func (x *OnionSkin) Inner() types.Onion   { return x.Onion }
+func (x *OnionSkin) Insert(o types.Onion) { x.Onion = o }
+func (x *OnionSkin) Len() int {
 	return MinLen + x.Onion.Len()
 }
 
-func (x *Type) Encode(b slice.Bytes, c *slice.Cursor) {
+func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	// The first level message contains the Bytes, but the inner layers do
 	// not. The inner layers will be passed this buffer, but the first needs
 	// to have it copied from its original location.
@@ -101,7 +101,7 @@ func (x *Type) Encode(b slice.Bytes, c *slice.Cursor) {
 // from the header, a subsequent process must be performed to find the prv.Key
 // corresponding to the Cloak and the pub.Key together forming the cipher secret
 // needed to decrypt the remainder of the bytes.
-func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
+func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < MinLen {
 		return magicbytes.TooShort(len(b[*c:]), MinLen, "message")
 	}
@@ -136,6 +136,6 @@ func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 // Decrypt requires the prv.Key to be located from the Cloak, using the
 // FromPub key to derive the shared secret, and then decrypts the rest of the
 // message.
-func (x *Type) Decrypt(prk *prv.Key) {
+func (x *OnionSkin) Decrypt(prk *prv.Key) {
 	ciph.Encipher(ciph.GetBlock(prk, x.FromPub), x.Nonce, x.Bytes)
 }

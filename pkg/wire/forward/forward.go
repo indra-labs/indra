@@ -16,29 +16,29 @@ var (
 	MagicString             = "fw"
 	Magic                   = slice.Bytes(MagicString)
 	MinLen                  = magicbytes.Len + 1 + net.IPv4len
-	_           types.Onion = &Type{}
+	_           types.Onion = &OnionSkin{}
 )
 
-// Type forward is just an IP address and a wrapper for another message.
-type Type struct {
+// OnionSkin forward is just an IP address and a wrapper for another message.
+type OnionSkin struct {
 	net.IP
 	types.Onion
 }
 
-func (x *Type) Inner() types.Onion   { return x.Onion }
-func (x *Type) Insert(o types.Onion) { x.Onion = o }
-func (x *Type) Len() int {
+func (x *OnionSkin) Inner() types.Onion   { return x.Onion }
+func (x *OnionSkin) Insert(o types.Onion) { x.Onion = o }
+func (x *OnionSkin) Len() int {
 	return magicbytes.Len + len(x.IP) + 1 + x.Onion.Len()
 }
 
-func (x *Type) Encode(b slice.Bytes, c *slice.Cursor) {
+func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	b[*c] = byte(len(x.IP))
 	copy(b[c.Inc(1):c.Inc(len(x.IP))], x.IP)
 	x.Onion.Encode(b, c)
 }
 
-func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
+func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < MinLen {
 		return magicbytes.TooShort(len(b[*c:]), MinLen, string(Magic))
 	}

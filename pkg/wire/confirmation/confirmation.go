@@ -15,10 +15,10 @@ var (
 	MagicString             = "cn"
 	Magic                   = slice.Bytes(MagicString)
 	MinLen                  = magicbytes.Len + nonce.IDLen
-	_           types.Onion = &Type{}
+	_           types.Onion = &OnionSkin{}
 )
 
-// Type confirmation is an encryption layer for messages returned to the client
+// OnionSkin confirmation is an encryption layer for messages returned to the client
 // on the inside of an onion, for Ping and Ciphers messages, providing a
 // confirmation of the transit of the onion through its encoded route.
 //
@@ -30,23 +30,24 @@ var (
 // onion - there can be more than one up in the air at a time, but they are
 // randomly selected, so they will generally be a much smaller subset versus the
 // current full set of Session s currently open.
-type Type struct {
+type OnionSkin struct {
 	nonce.ID
 }
 
-func (x *Type) Inner() types.Onion   { return nil }
-func (x *Type) Insert(o types.Onion) {}
-func (x *Type) Len() int             { return MinLen }
+func (x *OnionSkin) Inner() types.Onion   { return nil }
+func (x *OnionSkin) Insert(o types.Onion) {}
+func (x *OnionSkin) Len() int             { return MinLen }
 
-func (x *Type) Encode(b slice.Bytes, c *slice.Cursor) {
+func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	// Copy in the ID.
 	copy(b[*c:c.Inc(nonce.IDLen)], x.ID[:])
 }
 
-func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
-	if len(b[*c:]) < MinLen {
-		return magicbytes.TooShort(len(b[*c:]), MinLen, string(Magic))
+func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
+	if len(b[*c:]) < MinLen-magicbytes.Len {
+		return magicbytes.TooShort(len(b[*c:]),
+			MinLen-magicbytes.Len, string(Magic))
 	}
 	copy(x.ID[:], b[*c:c.Inc(nonce.IDLen)])
 	return
