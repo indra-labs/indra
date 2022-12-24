@@ -10,8 +10,12 @@ import (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
-	check = log.E.Chk
+	log                     = log2.GetLogger(indra.PathBase)
+	check                   = log.E.Chk
+	MagicString             = "cnf"
+	Magic                   = slice.Bytes(MagicString)
+	MinLen                  = magicbytes.Len + nonce.IDLen
+	_           types.Onion = &Type{}
 )
 
 // Type confirmation is an encryption layer for messages returned to the client
@@ -30,12 +34,6 @@ type Type struct {
 	nonce.ID
 }
 
-var (
-	Magic              = slice.Bytes("cnf")
-	MinLen             = magicbytes.Len + nonce.IDLen
-	_      types.Onion = &Type{}
-)
-
 func (x *Type) Inner() types.Onion   { return nil }
 func (x *Type) Insert(o types.Onion) {}
 func (x *Type) Len() int             { return MinLen }
@@ -47,10 +45,7 @@ func (x *Type) Encode(b slice.Bytes, c *slice.Cursor) {
 }
 
 func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
-	if !magicbytes.CheckMagic(b, Magic) {
-		return magicbytes.WrongMagic(x, b, Magic)
-	}
-	if len(b) < MinLen {
+	if len(b[*c:]) < MinLen {
 		return magicbytes.TooShort(len(b), MinLen, string(Magic))
 	}
 	copy(x.ID[:], b[*c:c.Inc(nonce.IDLen)])

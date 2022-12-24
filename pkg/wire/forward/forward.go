@@ -11,8 +11,12 @@ import (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
-	check = log.E.Chk
+	log                     = log2.GetLogger(indra.PathBase)
+	check                   = log.E.Chk
+	MagicString             = "fwd"
+	Magic                   = slice.Bytes(MagicString)
+	MinLen                  = magicbytes.Len + 1 + net.IPv4len
+	_           types.Onion = &Type{}
 )
 
 // Type forward is just an IP address and a wrapper for another message.
@@ -20,12 +24,6 @@ type Type struct {
 	net.IP
 	types.Onion
 }
-
-var (
-	Magic              = slice.Bytes("fwd")
-	MinLen             = magicbytes.Len + 1 + net.IPv4len
-	_      types.Onion = &Type{}
-)
 
 func (x *Type) Inner() types.Onion   { return x.Onion }
 func (x *Type) Insert(o types.Onion) { x.Onion = o }
@@ -41,10 +39,7 @@ func (x *Type) Encode(b slice.Bytes, c *slice.Cursor) {
 }
 
 func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
-	if !magicbytes.CheckMagic(b, Magic) {
-		return magicbytes.WrongMagic(x, b, Magic)
-	}
-	if len(b) < MinLen {
+	if len(b[*c:]) < MinLen {
 		return magicbytes.TooShort(len(b), MinLen, string(Magic))
 	}
 	ipLen := b[*c]

@@ -12,18 +12,16 @@ import (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
-	check = log.E.Chk
+	log                     = log2.GetLogger(indra.PathBase)
+	check                   = log.E.Chk
+	MagicString             = "res"
+	Magic                   = slice.Bytes(MagicString)
+	MinLen                  = magicbytes.Len + slice.Uint32Len
+	_           types.Onion = Response{}
 )
 
-// Response messages are what are carried back via Return messages from an Exit.
+// Response messages are what are carried back via Reply messages from an Exit.
 type Response slice.Bytes
-
-var (
-	Magic              = slice.Bytes("res")
-	MinLen             = magicbytes.Len + slice.Uint32Len
-	_      types.Onion = Response{}
-)
 
 func (x Response) Inner() types.Onion   { return nil }
 func (x Response) Insert(_ types.Onion) {}
@@ -38,10 +36,7 @@ func (x Response) Encode(b slice.Bytes, c *slice.Cursor) {
 }
 
 func (x Response) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
-	if !magicbytes.CheckMagic(b, Magic) {
-		return magicbytes.WrongMagic(x, b, Magic)
-	}
-	if len(b) < MinLen {
+	if len(b[*c:]) < MinLen {
 		return magicbytes.TooShort(len(b), MinLen, string(Magic))
 	}
 	responseLen := slice.DecodeUint32(b[*c:c.Inc(slice.Uint32Len)])

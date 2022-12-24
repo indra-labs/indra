@@ -18,8 +18,11 @@ import (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
-	check = log.E.Chk
+	log                     = log2.GetLogger(indra.PathBase)
+	check                   = log.E.Chk
+	MagicString             = "msg"
+	Magic                   = slice.Bytes(MagicString)
+	_           types.Onion = &Type{}
 )
 
 // Type message is the generic top level wrapper for an Onion. All following
@@ -43,9 +46,6 @@ type Type struct {
 
 const MinLen = magicbytes.Len + nonce.IVLen +
 	address.Len + pub.KeyLen + slice.Uint32Len
-
-var Magic = slice.Bytes("msg")
-var _ types.Onion = &Type{}
 
 func (x *Type) Inner() types.Onion   { return x.Onion }
 func (x *Type) Insert(o types.Onion) { x.Onion = o }
@@ -102,12 +102,8 @@ func (x *Type) Encode(b slice.Bytes, c *slice.Cursor) {
 // corresponding to the Cloak and the pub.Key together forming the cipher secret
 // needed to decrypt the remainder of the bytes.
 func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
-	minLen := MinLen
-	if len(b) < minLen {
-		return magicbytes.TooShort(len(b), minLen, "message")
-	}
-	if !magicbytes.CheckMagic(b, Magic) {
-		return magicbytes.WrongMagic(x, b, Magic)
+	if len(b[*c:]) < MinLen {
+		return magicbytes.TooShort(len(b), MinLen, "message")
 	}
 	chek := b[*c:c.Inc(4)]
 	start := int(*c)
@@ -133,8 +129,7 @@ func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	// of the next layer's messages.
 	x.Bytes = b[*c:c.Inc(length)]
 	// A further step is required which decrypts the remainder of the bytes
-	// after finding the private key corresponding to the Cloak and
-	// FromPubKey.
+	// after finding the private key corresponding to the Cloak.
 	return
 }
 

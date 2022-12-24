@@ -46,10 +46,10 @@ func Ping(id nonce.ID, client node.Node, hop [3]node.Node,
 // the Purchase message preformed header bytes, but the Ciphers provided in the
 // Purchase message, for encrypting the Session to be returned, uses the Payload
 // key, along with the public key found in the encrypted layer of the header for
-// the Return relay.
+// the Reply relay.
 //
 // This message's last layer is a Confirmation, which allows the client to know
-// that the key was successfully delivered to the Return relays that will be
+// that the key was successfully delivered to the Reply relays that will be
 // used in the Purchase.
 func SendKeys(id nonce.ID, hdr, pld *pub.Key,
 	client node.Node, hop [5]node.Node, set signer.KeySet) types.Onion {
@@ -81,7 +81,7 @@ func SendKeys(id nonce.ID, hdr, pld *pub.Key,
 // order to create the correct payload encryption to match the PayloadKey
 // combined with the header's given public From key.
 //
-// The header remains a constant size and each node in the Return trims off
+// The header remains a constant size and each node in the Reply trims off
 // their section at the top, moves the next layer header to the top and pads the
 // remainder with noise, so it always looks like the first hop,
 // indistinguishable.
@@ -110,11 +110,11 @@ func SendPurchase(nBytes uint64, client node.Node,
 		Forward(hop[2].IP).
 		Message(address.FromPubKey(hop[2].HeaderKey), set.Next()).
 		Purchase(nBytes, ciphers).
-		Return(hop[3].IP).
+		Reply(hop[3].IP).
 		Message(address.FromPubKey(hop[3].HeaderKey), rtns[0]).
-		Return(hop[4].IP).
+		Reply(hop[4].IP).
 		Message(address.FromPubKey(hop[4].HeaderKey), rtns[1]).
-		Return(client.IP).
+		Reply(client.IP).
 		Message(address.FromPubKey(client.HeaderKey), rtns[2]).
 		Assemble()
 }
@@ -133,7 +133,7 @@ func SendPurchase(nBytes uint64, client node.Node,
 // correct payload encryption to match the PayloadKey combined with the header's
 // given public From key.
 //
-// The header remains a constant size and each node in the Return trims off
+// The header remains a constant size and each node in the Reply trims off
 // their section at the top, moves the next layer header to the top and pads the
 // remainder with noise, so it always looks like the first hop,
 // indistinguishable.
@@ -162,11 +162,11 @@ func SendExit(payload slice.Bytes, port uint16, client node.Node,
 		Forward(hop[2].IP).
 		Message(address.FromPubKey(hop[2].HeaderKey), set.Next()).
 		Exit(port, ciphers, payload).
-		Return(hop[3].IP).
+		Reply(hop[3].IP).
 		Message(address.FromPubKey(hop[3].HeaderKey), replies[0]).
-		Return(hop[4].IP).
+		Reply(hop[4].IP).
 		Message(address.FromPubKey(hop[4].HeaderKey), replies[1]).
-		Return(client.IP).
+		Reply(client.IP).
 		Message(address.FromPubKey(client.HeaderKey), replies[2]).
 		Assemble()
 }

@@ -11,8 +11,12 @@ import (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
-	check = log.E.Chk
+	log                     = log2.GetLogger(indra.PathBase)
+	check                   = log.E.Chk
+	MagicString             = "cif"
+	Magic                   = slice.Bytes(MagicString)
+	MinLen                  = magicbytes.Len + prv.KeyLen*2
+	_           types.Onion = &Type{}
 )
 
 // Type cipher delivers a pair of private keys to be used in association with a
@@ -28,12 +32,6 @@ type Type struct {
 	Header, Payload *pub.Key
 	types.Onion
 }
-
-var (
-	Magic              = slice.Bytes("cif")
-	MinLen             = magicbytes.Len + prv.KeyLen*2
-	_      types.Onion = &Type{}
-)
 
 func (x *Type) Inner() types.Onion   { return x.Onion }
 func (x *Type) Insert(o types.Onion) { x.Onion = o }
@@ -52,10 +50,7 @@ func (x *Type) Encode(b slice.Bytes, c *slice.Cursor) {
 
 // Decode unwraps a cipher.Type message.
 func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
-	if !magicbytes.CheckMagic(b, Magic) {
-		return magicbytes.WrongMagic(x, b, Magic)
-	}
-	if len(b) < MinLen {
+	if len(b[*c:]) < MinLen {
 		return magicbytes.TooShort(len(b), MinLen, string(Magic))
 	}
 	start := c.Inc(magicbytes.Len)
