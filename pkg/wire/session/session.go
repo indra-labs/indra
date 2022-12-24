@@ -50,12 +50,10 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 }
 
 func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
-	if len(b[*c:]) < MinLen {
-		return magicbytes.TooShort(len(b[*c:]), MinLen, string(Magic))
+	if len(b[*c:]) < MinLen-magicbytes.Len {
+		return magicbytes.TooShort(len(b[*c:]), MinLen-magicbytes.Len, string(Magic))
 	}
-	if x.HeaderKey, e = pub.FromBytes(b[c.Inc(magicbytes.Len):c.Inc(
-		pub.KeyLen)]); check(e) {
-
+	if x.HeaderKey, e = pub.FromBytes(b[*c:c.Inc(pub.KeyLen)]); check(e) {
 		return
 	}
 	if x.PayloadKey, e = pub.FromBytes(b[*c:c.Inc(pub.KeyLen)]); check(e) {
