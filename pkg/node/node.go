@@ -4,7 +4,6 @@ package node
 
 import (
 	"fmt"
-	"net"
 	"net/netip"
 
 	"github.com/Indra-Labs/indra"
@@ -93,8 +92,8 @@ func (n Nodes) DeleteByID(ii nonce.ID) (nn Nodes, e error) {
 	return n, e
 }
 
-// DeleteByIP deletes a node identified by a net.IP.
-func (n Nodes) DeleteByIP(ip net.IP) (nn Nodes, e error) {
+// DeleteByAddrPort deletes a node identified by a netip.AddrPort.
+func (n Nodes) DeleteByAddrPort(ip netip.AddrPort) (nn Nodes, e error) {
 	e = fmt.Errorf("node with ip %v not found", ip)
 	nn = n
 	for i := range n {
