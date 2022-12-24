@@ -15,12 +15,12 @@ var (
 	MagicString             = "ex"
 	Magic                   = slice.Bytes(MagicString)
 	MinLen                  = magicbytes.Len + slice.Uint16Len + 3*sha256.Len
-	_           types.Onion = &Type{}
+	_           types.Onion = &OnionSkin{}
 )
 
-// Type exit messages are the layer of a message after two Forward packets that
+// OnionSkin exit messages are the layer of a message after two Forward packets that
 // provides an exit address and
-type Type struct {
+type OnionSkin struct {
 	// Port identifies the type of service as well as being the port used by
 	// the service to be relayed to. Notice there is no IP address, this is
 	// because Indranet only forwards to exits of decentralised services
@@ -37,14 +37,14 @@ type Type struct {
 	types.Onion
 }
 
-func (x *Type) Inner() types.Onion   { return x.Onion }
-func (x *Type) Insert(o types.Onion) { x.Onion = o }
-func (x *Type) Len() int {
+func (x *OnionSkin) Inner() types.Onion   { return x.Onion }
+func (x *OnionSkin) Insert(o types.Onion) { x.Onion = o }
+func (x *OnionSkin) Len() int {
 	return MinLen + x.Bytes.Len() +
 		x.Onion.Len()
 }
 
-func (x *Type) Encode(b slice.Bytes, c *slice.Cursor) {
+func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	port := slice.NewUint16()
 	slice.EncodeUint16(port, int(x.Port))
@@ -59,7 +59,7 @@ func (x *Type) Encode(b slice.Bytes, c *slice.Cursor) {
 	x.Onion.Encode(b, c)
 }
 
-func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
+func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < MinLen {
 		return magicbytes.TooShort(len(b[*c:]), MinLen, string(Magic))
 	}

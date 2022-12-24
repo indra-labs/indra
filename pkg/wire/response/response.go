@@ -17,17 +17,17 @@ var (
 	MagicString             = "rs"
 	Magic                   = slice.Bytes(MagicString)
 	MinLen                  = magicbytes.Len + slice.Uint32Len
-	_           types.Onion = Response{}
+	_           types.Onion = OnionSkin{}
 )
 
-// Response messages are what are carried back via Reply messages from an Exit.
-type Response slice.Bytes
+// OnionSkin messages are what are carried back via Reply messages from an Exit.
+type OnionSkin slice.Bytes
 
-func (x Response) Inner() types.Onion   { return nil }
-func (x Response) Insert(_ types.Onion) {}
-func (x Response) Len() int             { return MinLen + len(x) }
+func (x OnionSkin) Inner() types.Onion   { return nil }
+func (x OnionSkin) Insert(_ types.Onion) {}
+func (x OnionSkin) Len() int             { return MinLen + len(x) }
 
-func (x Response) Encode(b slice.Bytes, c *slice.Cursor) {
+func (x OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	bytesLen := slice.NewUint32()
 	slice.EncodeUint32(bytesLen, len(x)-slice.Uint32Len)
@@ -35,12 +35,12 @@ func (x Response) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(len(x))], x)
 }
 
-func (x Response) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
+func (x OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < MinLen {
 		return magicbytes.TooShort(len(b[*c:]), MinLen, string(Magic))
 	}
 	responseLen := slice.DecodeUint32(b[*c:c.Inc(slice.Uint32Len)])
-	xd := Response(b[*c:c.Inc(responseLen)])
+	xd := OnionSkin(b[*c:c.Inc(responseLen)])
 	// replace current slice header using unsafe.
 	hdr := (*reflect.SliceHeader)(unsafe.Pointer(&x))
 	hdr.Data = (*reflect.SliceHeader)(unsafe.Pointer(&xd)).Data

@@ -15,13 +15,13 @@ var (
 	MagicString             = "pc"
 	Magic                   = slice.Bytes(MagicString)
 	MinLen                  = magicbytes.Len + slice.Uint64Len + sha256.Len*3
-	_           types.Onion = &Type{}
+	_           types.Onion = &OnionSkin{}
 )
 
-// Type purchase is a message that requests a session key, which will activate
+// OnionSkin purchase is a message that requests a session key, which will activate
 // when a payment for it has been done, or it will time out after some period to
 // allow unused codes to be flushed.
-type Type struct {
+type OnionSkin struct {
 	NBytes uint64
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
@@ -29,13 +29,13 @@ type Type struct {
 	types.Onion
 }
 
-func (x *Type) Inner() types.Onion   { return x.Onion }
-func (x *Type) Insert(o types.Onion) { x.Onion = o }
-func (x *Type) Len() int {
+func (x *OnionSkin) Inner() types.Onion   { return x.Onion }
+func (x *OnionSkin) Insert(o types.Onion) { x.Onion = o }
+func (x *OnionSkin) Len() int {
 	return MinLen + x.Onion.Len()
 }
 
-func (x *Type) Encode(b slice.Bytes, c *slice.Cursor) {
+func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	value := slice.NewUint64()
 	slice.EncodeUint64(value, x.NBytes)
@@ -45,7 +45,7 @@ func (x *Type) Encode(b slice.Bytes, c *slice.Cursor) {
 	x.Onion.Encode(b, c)
 }
 
-func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
+func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < MinLen {
 		return magicbytes.TooShort(len(b[*c:]), MinLen, string(Magic))
 	}
