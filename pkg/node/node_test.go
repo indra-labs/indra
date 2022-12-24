@@ -36,7 +36,7 @@ func TestNodes_DeleteByID(t *testing.T) {
 	}
 }
 
-func TestNodes_DeleteByIP(t *testing.T) {
+func TestNodes_DeleteByAddrPort(t *testing.T) {
 	n := NewNodes()
 	const nNodes = 10000
 	var e error
@@ -46,7 +46,7 @@ func TestNodes_DeleteByIP(t *testing.T) {
 		n.Add(nn)
 	}
 	for i := range n {
-		if n, e = n.DeleteByIP(n[nNodes-i-1].IP); check(e) {
+		if n, e = n.DeleteByAddrPort(n[nNodes-i-1].AddrPort); check(e) {
 			t.Error(e)
 		}
 	}
@@ -77,9 +77,9 @@ func TestNodes_FindByIP(t *testing.T) {
 		n.Add(nn)
 	}
 	for i := range n {
-		if n.FindByIP(n[nNodes-i-1].IP) == nil {
+		if n.FindByAddrPort(n[nNodes-i-1].AddrPort) == nil {
 			t.Error(fmt.Errorf("id %v not found",
-				n[nNodes-i-1].IP))
+				n[nNodes-i-1].AddrPort))
 		}
 	}
 }

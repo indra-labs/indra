@@ -35,6 +35,8 @@ func GenCiphers(prvs [3]*prv.Key, pubs [3]*pub.Key) (ciphers [3]sha256.Hash) {
 
 type OnionSkins []types.Onion
 
+var os = &noop.OnionSkin{}
+
 func (o OnionSkins) Cipher(hdr, pld *pub.Key) OnionSkins {
 	return append(o, &cipher.OnionSkin{
 		Header:  hdr,
@@ -48,8 +50,7 @@ func (o OnionSkins) Confirmation(id nonce.ID) OnionSkins {
 }
 
 func (o OnionSkins) Delay(d time.Duration) OnionSkins {
-	return append(o, &delay.OnionSkin{Duration: d,
-		Onion: &noop.OnionSkin{}})
+	return append(o, &delay.OnionSkin{Duration: d, Onion: os})
 }
 
 func (o OnionSkins) Exit(port uint16, prvs [3]*prv.Key, pubs [3]*pub.Key,
@@ -59,7 +60,7 @@ func (o OnionSkins) Exit(port uint16, prvs [3]*prv.Key, pubs [3]*pub.Key,
 		Port:    port,
 		Ciphers: GenCiphers(prvs, pubs),
 		Bytes:   payload,
-		Onion:   &noop.OnionSkin{},
+		Onion:   os,
 	})
 }
 func (o OnionSkins) Forward(addr *netip.AddrPort) OnionSkins {
@@ -69,20 +70,20 @@ func (o OnionSkins) Message(to *address.Sender, from *prv.Key) OnionSkins {
 	return append(o, &message.OnionSkin{
 		To:    to,
 		From:  from,
-		Onion: &noop.OnionSkin{},
+		Onion: os,
 	})
 }
 func (o OnionSkins) Purchase(nBytes uint64, prvs [3]*prv.Key,
-	pubs [3]*pub.Key, ) OnionSkins {
+	pubs [3]*pub.Key) OnionSkins {
 
 	return append(o, &purchase.OnionSkin{
 		NBytes:  nBytes,
 		Ciphers: GenCiphers(prvs, pubs),
-		Onion:   &noop.OnionSkin{},
+		Onion:   os,
 	})
 }
 func (o OnionSkins) Reply(ip *netip.AddrPort) OnionSkins {
-	return append(o, &reply.OnionSkin{AddrPort: ip, Onion: &noop.OnionSkin{}})
+	return append(o, &reply.OnionSkin{AddrPort: ip, Onion: os})
 }
 func (o OnionSkins) Response(res slice.Bytes) OnionSkins {
 	rs := response.OnionSkin(res)
@@ -92,7 +93,7 @@ func (o OnionSkins) Session(hdr, pld *pub.Key) OnionSkins {
 	return append(o, &session.OnionSkin{
 		HeaderKey:  hdr,
 		PayloadKey: pld,
-		Onion:      &noop.OnionSkin{},
+		Onion:      os,
 	})
 }
 func (o OnionSkins) Token(tok sha256.Hash) OnionSkins {

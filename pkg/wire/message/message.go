@@ -60,8 +60,6 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	if b == nil {
 		b = x.Bytes
 	}
-	// We write the checksum last so save the cursor position here.
-	checkStart, checkEnd := *c, c.Inc(4)
 	// Magic after the check, so it is part of the checksum.
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	// Generate a new nonce and copy it in.
@@ -79,6 +77,7 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	length := slice.NewUint32()
 	slice.EncodeUint32(length, mLen)
 	copy(b[*c:c.Inc(mLen)], b[*c:])
+	start := *c
 	// Call the tree of onions to perform their encoding.
 	x.Onion.Encode(b, c)
 	// Then we can encrypt the message segment
@@ -87,14 +86,7 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	if blk = ciph.GetBlock(x.From, x.To.Key); check(e) {
 		panic(e)
 	}
-	ciph.Encipher(blk, n, b[checkStart+MinLen:])
-	// Get the hash of the message and truncate it to the checksum at the
-	// start of the message. Every layer of the onion has a Message and an
-	// onion inside it, the Message takes care of the encryption. This saves
-	// x complications as every layer is header first, message after, with
-	// wrapped messages inside each message afterwards.
-	hash := sha256.Single(b[checkEnd:])
-	copy(b[checkStart:checkEnd], hash[:4])
+	ciph.Encipher(blk, n, b[start+MinLen:])
 }
 
 // Decode decodes a received message. Note that it only gets the relevant data

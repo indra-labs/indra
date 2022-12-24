@@ -82,6 +82,7 @@ func TestOnionSkins_Confirmation(t *testing.T) {
 		t.FailNow()
 	}
 }
+
 func TestOnionSkins_Delay(t *testing.T) {
 	log2.CodeLoc = true
 	var e error
@@ -213,7 +214,7 @@ func TestOnionSkins_Purchase(t *testing.T) {
 	if onex, e = PeelOnion(onb, c); check(e) {
 		t.FailNow()
 	}
-	var pr *purchase.OnionSkin
+	pr := &purchase.OnionSkin{}
 	var ok bool
 	if pr, ok = onex.(*purchase.OnionSkin); !ok {
 		t.Error("did not unwrap expected type")
