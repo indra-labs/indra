@@ -72,10 +72,12 @@ func (o OnionSkins) Message(to *address.Sender, from *prv.Key) OnionSkins {
 		Onion: &noop.OnionSkin{},
 	})
 }
-func (o OnionSkins) Purchase(nBytes uint64, ciphers [3]sha256.Hash) OnionSkins {
+func (o OnionSkins) Purchase(nBytes uint64, prvs [3]*prv.Key,
+	pubs [3]*pub.Key, ) OnionSkins {
+
 	return append(o, &purchase.OnionSkin{
 		NBytes:  nBytes,
-		Ciphers: ciphers,
+		Ciphers: GenCiphers(prvs, pubs),
 		Onion:   &noop.OnionSkin{},
 	})
 }
