@@ -20,6 +20,7 @@ import (
 	"github.com/Indra-Labs/indra/pkg/wire/delay"
 	"github.com/Indra-Labs/indra/pkg/wire/exit"
 	"github.com/Indra-Labs/indra/pkg/wire/forward"
+	"github.com/Indra-Labs/indra/pkg/wire/purchase"
 	"github.com/Indra-Labs/indra/pkg/wire/reply"
 	"github.com/Indra-Labs/indra/pkg/wire/response"
 	"github.com/Indra-Labs/indra/pkg/wire/session"
@@ -198,7 +199,36 @@ func TestOnionSkins_Message(t *testing.T) {
 }
 
 func TestOnionSkins_Purchase(t *testing.T) {
-
+	log2.CodeLoc = true
+	var e error
+	prvs, pubs := GetCipherSet(t)
+	ciphers := GenCiphers(prvs, pubs)
+	p := rand.Uint64()
+	on := OnionSkins{}.
+		Purchase(p, prvs, pubs).
+		Assemble()
+	onb := EncodeOnion(on)
+	c := slice.NewCursor()
+	var onex types.Onion
+	if onex, e = PeelOnion(onb, c); check(e) {
+		t.FailNow()
+	}
+	var pr *purchase.OnionSkin
+	var ok bool
+	if pr, ok = onex.(*purchase.OnionSkin); !ok {
+		t.Error("did not unwrap expected type")
+		t.FailNow()
+	}
+	if pr.NBytes != p {
+		t.Error("NBytes did not unwrap correctly")
+		t.FailNow()
+	}
+	for i := range pr.Ciphers {
+		if pr.Ciphers[i] != ciphers[i] {
+			t.Errorf("cipher %d did not unwrap correctly", i)
+			t.FailNow()
+		}
+	}
 }
 
 func TestOnionSkins_Reply(t *testing.T) {

@@ -2,13 +2,11 @@ package wire
 
 import (
 	"github.com/Indra-Labs/indra/pkg/key/address"
-	"github.com/Indra-Labs/indra/pkg/key/ecdh"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/key/signer"
 	"github.com/Indra-Labs/indra/pkg/node"
 	"github.com/Indra-Labs/indra/pkg/nonce"
-	"github.com/Indra-Labs/indra/pkg/sha256"
 	"github.com/Indra-Labs/indra/pkg/slice"
 	"github.com/Indra-Labs/indra/pkg/types"
 )
@@ -88,34 +86,31 @@ func SendKeys(id nonce.ID, hdr, pld *pub.Key,
 func SendPurchase(nBytes uint64, client node.Node,
 	hop [5]node.Node, set signer.KeySet) types.Onion {
 
-	var rtns [3]*prv.Key
-	for i := range rtns {
-		rtns[i] = set.Next()
+	var replies [3]*prv.Key
+	for i := range replies {
+		replies[i] = set.Next()
 	}
-
-	// The ciphers represent the combination of the same From key and the
-	// payload keys combined, which the receiver knows means the header uses
-	// HeaderKey and the message underneath use a different cipher in place
-	// of the HeaderKey, the PayloadKey it corresponds to.
-	ciphers := [3]sha256.Hash{
-		ecdh.Compute(rtns[2], client.PayloadKey),
-		ecdh.Compute(rtns[1], hop[4].PayloadKey),
-		ecdh.Compute(rtns[0], hop[3].PayloadKey),
-	}
-
+	var prvs [3]*prv.Key
+	var pubs [3]*pub.Key
+	prvs[0] = replies[2]
+	prvs[1] = replies[1]
+	prvs[2] = replies[0]
+	pubs[0] = client.PayloadKey
+	pubs[1] = hop[4].PayloadKey
+	pubs[2] = hop[3].PayloadKey
 	return OnionSkins{}.
 		Message(address.FromPubKey(hop[0].HeaderKey), set.Next()).
 		Forward(hop[1].AddrPort).
 		Message(address.FromPubKey(hop[1].HeaderKey), set.Next()).
 		Forward(hop[2].AddrPort).
 		Message(address.FromPubKey(hop[2].HeaderKey), set.Next()).
-		Purchase(nBytes, ciphers).
+		Purchase(nBytes, prvs, pubs).
 		Reply(hop[3].AddrPort).
-		Message(address.FromPubKey(hop[3].HeaderKey), rtns[0]).
+		Message(address.FromPubKey(hop[3].HeaderKey), replies[0]).
 		Reply(hop[4].AddrPort).
-		Message(address.FromPubKey(hop[4].HeaderKey), rtns[1]).
+		Message(address.FromPubKey(hop[4].HeaderKey), replies[1]).
 		Reply(client.AddrPort).
-		Message(address.FromPubKey(client.HeaderKey), rtns[2]).
+		Message(address.FromPubKey(client.HeaderKey), replies[2]).
 		Assemble()
 }
 
