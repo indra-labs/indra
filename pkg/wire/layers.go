@@ -1,7 +1,8 @@
 package wire
 
 import (
-	"net"
+	"net/netip"
+	"time"
 
 	"github.com/Indra-Labs/indra/pkg/key/address"
 	"github.com/Indra-Labs/indra/pkg/key/ecdh"
@@ -13,6 +14,7 @@ import (
 	"github.com/Indra-Labs/indra/pkg/types"
 	"github.com/Indra-Labs/indra/pkg/wire/cipher"
 	"github.com/Indra-Labs/indra/pkg/wire/confirmation"
+	"github.com/Indra-Labs/indra/pkg/wire/delay"
 	"github.com/Indra-Labs/indra/pkg/wire/exit"
 	"github.com/Indra-Labs/indra/pkg/wire/forward"
 	"github.com/Indra-Labs/indra/pkg/wire/message"
@@ -40,8 +42,14 @@ func (o OnionSkins) Cipher(hdr, pld *pub.Key) OnionSkins {
 		Onion:   &noop.OnionSkin{},
 	})
 }
+
 func (o OnionSkins) Confirmation(id nonce.ID) OnionSkins {
 	return append(o, &confirmation.OnionSkin{ID: id})
+}
+
+func (o OnionSkins) Delay(d time.Duration) OnionSkins {
+	return append(o, &delay.OnionSkin{Duration: d,
+		Onion: &noop.OnionSkin{}})
 }
 
 func (o OnionSkins) Exit(port uint16, prvs [3]*prv.Key, pubs [3]*pub.Key,
@@ -54,8 +62,8 @@ func (o OnionSkins) Exit(port uint16, prvs [3]*prv.Key, pubs [3]*pub.Key,
 		Onion:   &noop.OnionSkin{},
 	})
 }
-func (o OnionSkins) Forward(ip net.IP) OnionSkins {
-	return append(o, &forward.OnionSkin{IP: ip, Onion: &noop.OnionSkin{}})
+func (o OnionSkins) Forward(addr netip.AddrPort) OnionSkins {
+	return append(o, &forward.OnionSkin{AddrPort: addr, Onion: &noop.OnionSkin{}})
 }
 func (o OnionSkins) Message(to *address.Sender, from *prv.Key) OnionSkins {
 	return append(o, &message.OnionSkin{
@@ -71,8 +79,8 @@ func (o OnionSkins) Purchase(nBytes uint64, ciphers [3]sha256.Hash) OnionSkins {
 		Onion:   &noop.OnionSkin{},
 	})
 }
-func (o OnionSkins) Reply(ip net.IP) OnionSkins {
-	return append(o, &reply.OnionSkin{IP: ip, Onion: &noop.OnionSkin{}})
+func (o OnionSkins) Reply(ip netip.AddrPort) OnionSkins {
+	return append(o, &reply.OnionSkin{AddrPort: ip, Onion: &noop.OnionSkin{}})
 }
 func (o OnionSkins) Response(res slice.Bytes) OnionSkins {
 	return append(o, response.OnionSkin(res))

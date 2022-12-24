@@ -2,6 +2,7 @@ package reply
 
 import (
 	"net"
+	"net/netip"
 
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/slice"
@@ -26,29 +27,42 @@ var (
 // step the relay budges up it's message to the front of the packet and puts
 // csprng random bytes into the remainder to the same length.
 type OnionSkin struct {
-	// IP is the address of the next relay in the return leg of a circuit.
-	net.IP
+	// AddrPort is the address of the next relay in the return leg of a circuit.
+	netip.AddrPort
 	types.Onion
 }
 
 func (x *OnionSkin) Inner() types.Onion   { return x.Onion }
 func (x *OnionSkin) Insert(o types.Onion) { x.Onion = o }
 func (x *OnionSkin) Len() int {
-	return magicbytes.Len + len(x.IP) + 1 + x.Onion.Len()
+	var ap []byte
+	var e error
+	if ap, e = x.AddrPort.MarshalBinary(); check(e) {
+		return -1
+	}
+	return magicbytes.Len + 1 + len(ap) + x.Onion.Len()
 }
 
 func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
-	b[*c] = byte(len(x.IP))
-	copy(b[c.Inc(1):c.Inc(len(x.IP))], x.IP)
+	var ap []byte
+	var e error
+	if ap, e = x.AddrPort.MarshalBinary(); check(e) {
+		return
+	}
+	b[*c] = byte(len(ap))
+
 	x.Onion.Encode(b, c)
 }
 
 func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
-	if len(b[*c:]) < MinLen {
-		return magicbytes.TooShort(len(b[*c:]), MinLen, string(Magic))
+	if len(b[*c:]) < MinLen-magicbytes.Len {
+		return magicbytes.TooShort(len(b[*c:]), MinLen-magicbytes.Len, string(Magic))
 	}
-	ipLen := b[*c]
-	x.IP = net.IP(b[c.Inc(1):c.Inc(int(ipLen))])
+	apLen := b[*c]
+	apBytes := b[c.Inc(1):c.Inc(int(apLen))]
+	if e = x.AddrPort.UnmarshalBinary(apBytes); check(e) {
+		return
+	}
 	return
 }

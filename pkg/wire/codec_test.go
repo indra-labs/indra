@@ -2,7 +2,11 @@ package wire
 
 import (
 	"math/rand"
+	"net"
+	"net/netip"
+	"reflect"
 	"testing"
+	"time"
 
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
@@ -13,7 +17,9 @@ import (
 	"github.com/Indra-Labs/indra/pkg/types"
 	"github.com/Indra-Labs/indra/pkg/wire/cipher"
 	"github.com/Indra-Labs/indra/pkg/wire/confirmation"
+	"github.com/Indra-Labs/indra/pkg/wire/delay"
 	"github.com/Indra-Labs/indra/pkg/wire/exit"
+	"github.com/Indra-Labs/indra/pkg/wire/forward"
 	log2 "github.com/cybriq/proc/pkg/log"
 )
 
@@ -22,14 +28,11 @@ func TestOnionSkins_Cipher(t *testing.T) {
 	var e error
 	hdrP, pldP := GetTwoPrvKeys(t)
 	hdr, pld := pub.Derive(hdrP), pub.Derive(pldP)
-	// n := nonce.NewID()
 	on := OnionSkins{}.
 		Cipher(hdr, pld).
-		// Confirmation(n).
 		Assemble()
 	onb := EncodeOnion(on)
-	var sc slice.Cursor
-	c := &sc
+	c := slice.NewCursor()
 	var onc types.Onion
 	if onc, e = PeelOnion(onb, c); check(e) {
 		t.FailNow()
@@ -58,8 +61,7 @@ func TestOnionSkins_Confirmation(t *testing.T) {
 		Confirmation(n).
 		Assemble()
 	onb := EncodeOnion(on)
-	var sc slice.Cursor
-	c := &sc
+	c := slice.NewCursor()
 	var oncn types.Onion
 	if oncn, e = PeelOnion(onb, c); check(e) {
 		t.FailNow()
@@ -72,6 +74,30 @@ func TestOnionSkins_Confirmation(t *testing.T) {
 	}
 	if cf.ID != n {
 		t.Error("confirmation ID did not unwrap correctly")
+		t.FailNow()
+	}
+}
+func TestOnionSkins_Delay(t *testing.T) {
+	log2.CodeLoc = true
+	var e error
+	del := time.Duration(rand.Uint64())
+	on := OnionSkins{}.
+		Delay(del).
+		Assemble()
+	onb := EncodeOnion(on)
+	c := slice.NewCursor()
+	var ond types.Onion
+	if ond, e = PeelOnion(onb, c); check(e) {
+		t.FailNow()
+	}
+	var dl *delay.OnionSkin
+	var ok bool
+	if dl, ok = ond.(*delay.OnionSkin); !ok {
+		t.Error("did not unwrap expected type")
+		t.FailNow()
+	}
+	if dl.Duration != del {
+		t.Error("delay duration did not unwrap correctly")
 		t.FailNow()
 	}
 }
@@ -121,7 +147,46 @@ func TestOnionSkins_Exit(t *testing.T) {
 }
 
 func TestOnionSkins_Forward(t *testing.T) {
-
+	log2.CodeLoc = true
+	var e error
+	ipSizes := []int{net.IPv4len, net.IPv6len}
+	for i := range ipSizes {
+		n := nonce.New()
+		ip := net.IP(n[:ipSizes[i]])
+		var adr netip.Addr
+		if ipSizes[i] == net.IPv4len {
+			ip = ip.To4()
+		}
+		if ipSizes[i] == net.IPv6len {
+			ip = ip.To16()
+		}
+		var ok bool
+		if adr, ok = netip.AddrFromSlice(ip); !ok {
+			t.Error("unable to get netip.Addr")
+			t.FailNow()
+		}
+		port := uint16(rand.Uint32())
+		ap := netip.AddrPortFrom(adr, port)
+		on := OnionSkins{}.
+			Forward(ap).
+			Assemble()
+		onb := EncodeOnion(on)
+		c := slice.NewCursor()
+		var onf types.Onion
+		if onf, e = PeelOnion(onb, c); check(e) {
+			t.FailNow()
+		}
+		var cf *forward.OnionSkin
+		if cf, ok = onf.(*forward.OnionSkin); !ok {
+			t.Error("did not unwrap expected type", reflect.TypeOf(onf))
+			t.FailNow()
+		}
+		_ = cf
+		// if !cf.IP.Equal(ip) {
+		// 	t.Error("forward IP did not unwrap correctly")
+		// 	t.FailNow()
+		// }
+	}
 }
 
 func TestOnionSkins_Message(t *testing.T) {
