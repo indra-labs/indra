@@ -20,7 +20,7 @@ var (
 // OnionSkin messages are what are carried back via Reply messages from an Exit.
 type OnionSkin slice.Bytes
 
-func NewResponse() *OnionSkin {
+func New() *OnionSkin {
 	o := OnionSkin{}
 	return &o
 }
