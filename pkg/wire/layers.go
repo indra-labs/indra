@@ -83,12 +83,13 @@ func (o OnionSkins) Reply(ip *netip.AddrPort) OnionSkins {
 	return append(o, &reply.OnionSkin{AddrPort: ip, Onion: &noop.OnionSkin{}})
 }
 func (o OnionSkins) Response(res slice.Bytes) OnionSkins {
-	return append(o, response.OnionSkin(res))
+	rs := response.OnionSkin(res)
+	return append(o, &rs)
 }
-func (o OnionSkins) Session(fwd, rtn *pub.Key) OnionSkins {
+func (o OnionSkins) Session(hdr, pld *pub.Key) OnionSkins {
 	return append(o, &session.OnionSkin{
-		HeaderKey:  fwd,
-		PayloadKey: rtn,
+		HeaderKey:  hdr,
+		PayloadKey: pld,
 		Onion:      &noop.OnionSkin{},
 	})
 }

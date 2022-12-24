@@ -83,7 +83,7 @@ func PeelOnion(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 		}
 		on = &o
 	case response.MagicString:
-		var o response.OnionSkin
+		o := response.NewResponse()
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
