@@ -93,7 +93,7 @@ func (o OnionSkins) Session(fwd, rtn *pub.Key) OnionSkins {
 	})
 }
 func (o OnionSkins) Token(tok sha256.Hash) OnionSkins {
-	return append(o, token.OnionSkin(tok))
+	return append(o, (*token.OnionSkin)(&tok))
 }
 
 // Assemble inserts the slice of OnionSkin s inside each other so the first then

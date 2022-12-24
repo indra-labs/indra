@@ -21,6 +21,7 @@ import (
 	"github.com/Indra-Labs/indra/pkg/wire/exit"
 	"github.com/Indra-Labs/indra/pkg/wire/forward"
 	"github.com/Indra-Labs/indra/pkg/wire/reply"
+	"github.com/Indra-Labs/indra/pkg/wire/token"
 	log2 "github.com/cybriq/proc/pkg/log"
 )
 
@@ -250,7 +251,30 @@ func TestOnionSkins_Session(t *testing.T) {
 }
 
 func TestOnionSkins_Token(t *testing.T) {
-
+	log2.CodeLoc = true
+	var e error
+	ni := nonce.NewID()
+	n := sha256.Single(ni[:])
+	on := OnionSkins{}.
+		Token(n).
+		Assemble()
+	onb := EncodeOnion(on)
+	c := slice.NewCursor()
+	var oncn types.Onion
+	if oncn, e = PeelOnion(onb, c); check(e) {
+		t.FailNow()
+	}
+	var cf *token.OnionSkin
+	var ok bool
+	if cf, ok = oncn.(*token.OnionSkin); !ok {
+		t.Error("did not unwrap expected type", reflect.TypeOf(oncn))
+		t.FailNow()
+	}
+	if sha256.Hash(*cf) != n {
+		log.I.S(n, cf)
+		t.Error("confirmation ID did not unwrap correctly")
+		t.FailNow()
+	}
 }
 
 func GetTwoPrvKeys(t *testing.T) (prv1, prv2 *prv.Key) {
