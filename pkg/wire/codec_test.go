@@ -41,7 +41,21 @@ func TestOnionSkins_Cipher(t *testing.T) {
 }
 
 func TestOnionSkins_Confirmation(t *testing.T) {
-
+	log2.CodeLoc = true
+	var e error
+	n := nonce.NewID()
+	log.I.S(n)
+	on := OnionSkins{}.
+		Confirmation(n).
+		Assemble()
+	onb := EncodeOnion(on)
+	var sc slice.Cursor
+	c := &sc
+	var oncn types.Onion
+	if oncn, e = PeelOnion(onb, c); check(e) {
+		t.FailNow()
+	}
+	log.I.S(oncn.(*confirmation.OnionSkin))
 }
 
 func TestOnionSkins_Exit(t *testing.T) {
