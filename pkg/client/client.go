@@ -1,7 +1,7 @@
 package client
 
 import (
-	"net"
+	"net/netip"
 
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/ifc"
@@ -19,7 +19,7 @@ var (
 )
 
 type Client struct {
-	net.IP
+	*netip.AddrPort
 	Prv *prv.Key
 	Pub *pub.Key
 	*node.Node
@@ -32,14 +32,14 @@ type Client struct {
 	qu.C
 }
 
-func New(tpt ifc.Transport, nodes node.Nodes) (c *Client, e error) {
+func New(tpt ifc.Transport, no *node.Node, nodes node.Nodes) (c *Client, e error) {
 	var p *prv.Key
 	if p, e = prv.GenerateKey(); check(e) {
 		return
 	}
 	pubKey := pub.Derive(p)
 	var n *node.Node
-	n, _ = node.New(nil, pubKey, nil, tpt)
+	n, _ = node.New(no.AddrPort, pubKey, nil, tpt)
 	c = &Client{
 		Node:      n,
 		Nodes:     nodes,

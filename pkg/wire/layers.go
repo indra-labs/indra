@@ -62,7 +62,7 @@ func (o OnionSkins) Exit(port uint16, prvs [3]*prv.Key, pubs [3]*pub.Key,
 		Onion:   &noop.OnionSkin{},
 	})
 }
-func (o OnionSkins) Forward(addr netip.AddrPort) OnionSkins {
+func (o OnionSkins) Forward(addr *netip.AddrPort) OnionSkins {
 	return append(o, &forward.OnionSkin{AddrPort: addr, Onion: &noop.OnionSkin{}})
 }
 func (o OnionSkins) Message(to *address.Sender, from *prv.Key) OnionSkins {
@@ -79,7 +79,7 @@ func (o OnionSkins) Purchase(nBytes uint64, ciphers [3]sha256.Hash) OnionSkins {
 		Onion:   &noop.OnionSkin{},
 	})
 }
-func (o OnionSkins) Reply(ip netip.AddrPort) OnionSkins {
+func (o OnionSkins) Reply(ip *netip.AddrPort) OnionSkins {
 	return append(o, &reply.OnionSkin{AddrPort: ip, Onion: &noop.OnionSkin{}})
 }
 func (o OnionSkins) Response(res slice.Bytes) OnionSkins {
@@ -93,7 +93,7 @@ func (o OnionSkins) Session(fwd, rtn *pub.Key) OnionSkins {
 	})
 }
 func (o OnionSkins) Token(tok sha256.Hash) OnionSkins {
-	return append(o, token.OnionSkin(tok))
+	return append(o, (*token.OnionSkin)(&tok))
 }
 
 // Assemble inserts the slice of OnionSkin s inside each other so the first then
