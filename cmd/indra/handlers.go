@@ -19,6 +19,7 @@ var versionHandler = func(c *cmds.Command, args []string) error {
 
 var serveHandler = func(c *cmds.Command, args []string) error {
 
+
 	log.I.Ln("running serve.")
 
 	var err error
