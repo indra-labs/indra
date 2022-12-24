@@ -16,8 +16,7 @@ func main() {
 
 	log2.App = "indra"
 
-	log.I.Ln("-- indra - the indra network tool --")
-	log.I.Ln("version:", indra.SemVer)
+	log.I.Ln("-- indra -", indra.SemVer, "- the indra network tool --")
 
 	var err error
 	var application *app.App
