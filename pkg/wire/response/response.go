@@ -14,7 +14,7 @@ import (
 var (
 	log                     = log2.GetLogger(indra.PathBase)
 	check                   = log.E.Chk
-	MagicString             = "res"
+	MagicString             = "rs"
 	Magic                   = slice.Bytes(MagicString)
 	MinLen                  = magicbytes.Len + slice.Uint32Len
 	_           types.Onion = Response{}
@@ -37,7 +37,7 @@ func (x Response) Encode(b slice.Bytes, c *slice.Cursor) {
 
 func (x Response) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < MinLen {
-		return magicbytes.TooShort(len(b), MinLen, string(Magic))
+		return magicbytes.TooShort(len(b[*c:]), MinLen, string(Magic))
 	}
 	responseLen := slice.DecodeUint32(b[*c:c.Inc(slice.Uint32Len)])
 	xd := Response(b[*c:c.Inc(responseLen)])

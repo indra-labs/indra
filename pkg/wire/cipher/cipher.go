@@ -13,7 +13,7 @@ import (
 var (
 	log                     = log2.GetLogger(indra.PathBase)
 	check                   = log.E.Chk
-	MagicString             = "cif"
+	MagicString             = "cf"
 	Magic                   = slice.Bytes(MagicString)
 	MinLen                  = magicbytes.Len + prv.KeyLen*2
 	_           types.Onion = &Type{}
@@ -51,7 +51,7 @@ func (x *Type) Encode(b slice.Bytes, c *slice.Cursor) {
 // Decode unwraps a cipher.Type message.
 func (x *Type) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < MinLen {
-		return magicbytes.TooShort(len(b), MinLen, string(Magic))
+		return magicbytes.TooShort(len(b[*c:]), MinLen, string(Magic))
 	}
 	start := c.Inc(magicbytes.Len)
 	x.Header, e = pub.FromBytes(b[start:c.Inc(pub.KeyLen)])

@@ -13,9 +13,7 @@ var (
 )
 
 const (
-	// Len is 3 to make it infeasible that the wrong cipher will yield a
-	// valid Magic string as listed below.
-	Len         = 3
+	Len         = 2
 	ErrTooShort = "'%s' message  minimum size: %d got: %d"
 )
 
