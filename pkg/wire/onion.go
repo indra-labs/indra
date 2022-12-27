@@ -85,8 +85,8 @@ func SendKeys(id nonce.ID, hdr, pld *pub.Key,
 // their section at the top, moves the next layer header to the top and pads the
 // remainder with noise, so it always looks like the first hop,
 // indistinguishable.
-func SendPurchase(nBytes uint64, client node.Node,
-	hop [5]node.Node, set signer.KeySet) types.Onion {
+func SendPurchase(nBytes uint64, client *node.Node,
+	hop [5]*node.Node, set *signer.KeySet) types.Onion {
 
 	var replies [3]*prv.Key
 	for i := range replies {
@@ -101,6 +101,7 @@ func SendPurchase(nBytes uint64, client node.Node,
 	pubs[1] = hop[4].PayloadKey
 	pubs[2] = hop[3].PayloadKey
 	return OnionSkins{}.
+		Forward(hop[0].AddrPort).
 		OnionSkin(address.FromPubKey(hop[0].HeaderKey), set.Next()).
 		Forward(hop[1].AddrPort).
 		OnionSkin(address.FromPubKey(hop[1].HeaderKey), set.Next()).

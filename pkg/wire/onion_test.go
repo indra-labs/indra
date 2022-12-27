@@ -1,6 +1,7 @@
 package wire
 
 import (
+	"math/rand"
 	"reflect"
 	"testing"
 
@@ -14,6 +15,8 @@ import (
 	"github.com/Indra-Labs/indra/pkg/wire/confirmation"
 	"github.com/Indra-Labs/indra/pkg/wire/forward"
 	"github.com/Indra-Labs/indra/pkg/wire/layer"
+	"github.com/Indra-Labs/indra/pkg/wire/purchase"
+	"github.com/Indra-Labs/indra/pkg/wire/reply"
 	log2 "github.com/cybriq/proc/pkg/log"
 )
 
@@ -68,6 +71,40 @@ func PeelConfirmation(t *testing.T, b slice.Bytes,
 	return
 }
 
+func PeelPurchase(t *testing.T, b slice.Bytes,
+	c *slice.Cursor) (pr *purchase.OnionSkin) {
+
+	var ok bool
+	var e error
+	var on types.Onion
+	if on, e = PeelOnion(b, c); check(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	if pr, ok = on.(*purchase.OnionSkin); !ok {
+		t.Error("did not unwrap expected type", reflect.TypeOf(on))
+		t.FailNow()
+	}
+	return
+}
+
+func PeelReply(t *testing.T, b slice.Bytes,
+	c *slice.Cursor) (rp *reply.OnionSkin) {
+
+	var ok bool
+	var e error
+	var on types.Onion
+	if on, e = PeelOnion(b, c); check(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	if rp, ok = on.(*reply.OnionSkin); !ok {
+		t.Error("did not unwrap expected type", reflect.TypeOf(on))
+		t.FailNow()
+	}
+	return
+}
+
 func TestPing(t *testing.T) {
 	log2.CodeLoc = true
 	_, ks, e := signer.New()
@@ -98,7 +135,7 @@ func TestPing(t *testing.T) {
 	// Forward(hop[0].AddrPort).
 	f0 := PeelForward(t, b, c)
 	if hop[0].AddrPort.String() != f0.AddrPort.String() {
-		t.Errorf("failed to unwrap expected: '%s', got '%s'",
+		t.Errorf("failed to unwrap; expected: '%s', got: '%s'",
 			hop[0].AddrPort.String(), f0.AddrPort.String())
 		t.FailNow()
 	}
@@ -109,7 +146,7 @@ func TestPing(t *testing.T) {
 	// Forward(hop[1].AddrPort).
 	f1 := PeelForward(t, b, c)
 	if hop[1].AddrPort.String() != f1.AddrPort.String() {
-		t.Errorf("failed to unwrap expected: '%s', got '%s'",
+		t.Errorf("failed to unwrap; expected: '%s', got: '%s'",
 			hop[1].AddrPort.String(), f1.AddrPort.String())
 		t.FailNow()
 	}
@@ -120,7 +157,7 @@ func TestPing(t *testing.T) {
 	// Forward(hop[2].AddrPort).
 	f2 := PeelForward(t, b, c)
 	if hop[2].AddrPort.String() != f2.AddrPort.String() {
-		t.Errorf("failed to unwrap expected: '%s', got '%s'",
+		t.Errorf("failed to unwrap; expected: '%s', got: '%s'",
 			hop[2].AddrPort.String(), f2.AddrPort.String())
 		t.FailNow()
 	}
@@ -131,7 +168,7 @@ func TestPing(t *testing.T) {
 	// Forward(client.AddrPort).
 	f3 := PeelForward(t, b, c)
 	if client.AddrPort.String() != f3.AddrPort.String() {
-		t.Errorf("failed to unwrap expected: '%s', got '%s'",
+		t.Errorf("failed to unwrap; expected: '%s', got: '%s'",
 			client.AddrPort.String(), f3.AddrPort.String())
 		t.FailNow()
 	}
@@ -269,5 +306,104 @@ func TestSendKeys(t *testing.T) {
 		t.FailNow()
 
 	}
+
+}
+
+func TestSendPurchase(t *testing.T) {
+	log2.CodeLoc = true
+	_, ks, e := signer.New()
+	if check(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	var hop [5]*node.Node
+	for i := range hop {
+		prv1, prv2 := GetTwoPrvKeys(t)
+		pub1, pub2 := pub.Derive(prv1), pub.Derive(prv2)
+		hop[i], _ = node.New(slice.GenerateRandomAddrPortIPv4(),
+			pub1, pub2, prv1, prv2, nil)
+	}
+	cprv1, cprv2 := GetTwoPrvKeys(t)
+	cpub1, cpub2 := pub.Derive(cprv1), pub.Derive(cprv2)
+	var client *node.Node
+	client, _ = node.New(slice.GenerateRandomAddrPortIPv4(),
+		cpub1, cpub2, cprv1, cprv2, nil)
+	// ciprv1, ciprv2 := GetTwoPrvKeys(t)
+	// cipub1, cipub2 := pub.Derive(ciprv1), pub.Derive(ciprv2)
+	nBytes := rand.Uint64()
+	on := SendPurchase(nBytes, client, hop, ks)
+	b := EncodeOnion(on)
+	c := slice.NewCursor()
+	// var ok bool
+
+	// Forward(hop[0].AddrPort).
+	f0 := PeelForward(t, b, c)
+	if hop[0].AddrPort.String() != f0.AddrPort.String() {
+		t.Errorf("failed to unwrap expected: '%s', got '%s'",
+			hop[0].AddrPort.String(), f0.AddrPort.String())
+		t.FailNow()
+	}
+
+	// OnionSkin(address.FromPubKey(hop[0].HeaderKey), set.Next()).
+	PeelOnionSkin(t, b, c).Decrypt(hop[0].HeaderPriv, b, c)
+
+	// Forward(hop[1].AddrPort).
+	f1 := PeelForward(t, b, c)
+	if hop[1].AddrPort.String() != f1.AddrPort.String() {
+		t.Errorf("failed to unwrap expected: '%s', got '%s'",
+			hop[0].AddrPort.String(), f1.AddrPort.String())
+		t.FailNow()
+	}
+
+	// OnionSkin(address.FromPubKey(hop[1].HeaderKey), set.Next()).
+	PeelOnionSkin(t, b, c).Decrypt(hop[1].HeaderPriv, b, c)
+
+	// Forward(hop[2].AddrPort).
+	f2 := PeelForward(t, b, c)
+	if hop[2].AddrPort.String() != f2.AddrPort.String() {
+		t.Errorf("failed to unwrap expected: '%s', got '%s'",
+			hop[1].AddrPort.String(), f1.AddrPort.String())
+		t.FailNow()
+	}
+
+	// OnionSkin(address.FromPubKey(hop[2].HeaderKey), set.Next()).
+	PeelOnionSkin(t, b, c).Decrypt(hop[2].HeaderPriv, b, c)
+
+	// Purchase(nBytes, prvs, pubs).
+	pr := PeelPurchase(t, b, c)
+	if pr.NBytes != nBytes {
+		t.Errorf("failed to retrieve original purchase nBytes")
+		t.FailNow()
+	}
+
+	// Reply(hop[3].AddrPort).
+	rp1 := PeelReply(t, b, c)
+	if rp1.AddrPort.String() != hop[3].AddrPort.String() {
+		t.Errorf("failed to retrieve first reply hop")
+		t.FailNow()
+	}
+
+	// OnionSkin(address.FromPubKey(hop[3].HeaderKey), replies[0]).
+	PeelOnionSkin(t, b, c).Decrypt(hop[3].HeaderPriv, b, c)
+
+	// Reply(hop[4].AddrPort).
+	rp2 := PeelReply(t, b, c)
+	if rp2.AddrPort.String() != hop[4].AddrPort.String() {
+		t.Errorf("failed to retrieve first reply hop")
+		t.FailNow()
+	}
+
+	// OnionSkin(address.FromPubKey(hop[4].HeaderKey), replies[1]).
+	PeelOnionSkin(t, b, c).Decrypt(hop[4].HeaderPriv, b, c)
+
+	// Reply(client.AddrPort).
+	rp3 := PeelReply(t, b, c)
+	if rp3.AddrPort.String() != client.AddrPort.String() {
+		t.Errorf("failed to retrieve first reply hop")
+		t.FailNow()
+	}
+
+	// OnionSkin(address.FromPubKey(client.HeaderKey), replies[2]).
+	PeelOnionSkin(t, b, c).Decrypt(client.HeaderPriv, b, c)
 
 }
