@@ -1,6 +1,8 @@
 package wire
 
 import (
+	"fmt"
+
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/slice"
 	"github.com/Indra-Labs/indra/pkg/types"
@@ -101,6 +103,8 @@ func PeelOnion(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 		}
 		on = o
 	default:
+		e = fmt.Errorf("message magic not found")
+		check(e)
 		return
 	}
 	return
