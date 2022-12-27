@@ -399,7 +399,7 @@ func TestSendPurchase(t *testing.T) {
 	// Reply(hop[4].AddrPort).
 	rp2 := PeelReply(t, b, c)
 	if rp2.AddrPort.String() != hop[4].AddrPort.String() {
-		t.Errorf("failed to retrieve first reply hop")
+		t.Errorf("failed to retrieve second reply hop")
 		t.FailNow()
 	}
 
@@ -409,7 +409,7 @@ func TestSendPurchase(t *testing.T) {
 	// Reply(client.AddrPort).
 	rp3 := PeelReply(t, b, c)
 	if rp3.AddrPort.String() != client.AddrPort.String() {
-		t.Errorf("failed to retrieve first reply hop")
+		t.Errorf("failed to retrieve third reply hop")
 		t.FailNow()
 	}
 
@@ -503,7 +503,7 @@ func TestSendExit(t *testing.T) {
 	// Reply(hop[4].AddrPort).
 	rp2 := PeelReply(t, b, c)
 	if rp2.AddrPort.String() != hop[4].AddrPort.String() {
-		t.Errorf("failed to retrieve first reply hop")
+		t.Errorf("failed to retrieve second reply hop")
 		t.FailNow()
 	}
 
@@ -513,7 +513,7 @@ func TestSendExit(t *testing.T) {
 	// Reply(client.AddrPort).
 	rp3 := PeelReply(t, b, c)
 	if rp3.AddrPort.String() != client.AddrPort.String() {
-		t.Errorf("failed to retrieve first reply hop")
+		t.Errorf("failed to retrieve third reply hop")
 		t.FailNow()
 	}
 
