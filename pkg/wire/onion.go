@@ -21,10 +21,11 @@ import (
 // an increment of their liveness score. By using this scheme, when nodes are
 // offline their scores will fall to zero after a time whereas live nodes will
 // have steadily increasing scores from successful pings.
-func Ping(id nonce.ID, client node.Node, hop [3]node.Node,
-	set signer.KeySet) types.Onion {
+func Ping(id nonce.ID, client *node.Node, hop [3]*node.Node,
+	set *signer.KeySet) types.Onion {
 
 	return OnionSkins{}.
+		Forward(hop[0].AddrPort).
 		OnionSkin(address.FromPubKey(hop[0].HeaderKey), set.Next()).
 		Forward(hop[1].AddrPort).
 		OnionSkin(address.FromPubKey(hop[1].HeaderKey), set.Next()).
