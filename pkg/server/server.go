@@ -65,8 +65,7 @@ func (srv *Server) Serve() (err error) {
 		srv.Shutdown()
 	}
 
-	// Let's connect to the bootstrap nodes first. They will tell us about the
-	// other nodes in the network.
+	// We will first attempt to connect to the seed addresses.
 	var wg sync.WaitGroup
 	for _, peerAddr := range srv.config.SeedAddresses {
 		peerinfo, _ := peer.AddrInfoFromP2pAddr(peerAddr)
