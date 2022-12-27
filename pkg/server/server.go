@@ -8,6 +8,8 @@ import (
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/host"
+	"github.com/libp2p/go-libp2p/core/peer"
+	"sync"
 )
 
 var (
@@ -17,24 +19,11 @@ var (
 
 type Server struct {
 	context.Context
+
+	config Config
+
 	host host.Host
 	dht  *dht.IpfsDHT
-}
-
-func (srv *Server) Serve() (err error) {
-
-	// Bootstrap the DHT. In the default configuration, this spawns a Background
-	// thread that will refresh the peer table every five minutes.
-	if err = srv.dht.Bootstrap(srv.Context); check(err) {
-		return err
-	}
-
-	select {
-	case <-srv.Context.Done():
-		srv.Shutdown()
-	}
-
-	return nil
 }
 
 func (srv *Server) Restart() (err error) {
@@ -59,6 +48,39 @@ func (srv *Server) Shutdown() (err error) {
 	}
 
 	log.I.Ln("shutdown complete.")
+
+	return nil
+}
+
+func (srv *Server) Serve() (err error) {
+
+	// Bootstrap the DHT. In the default configuration, this spawns a Background
+	// thread that will refresh the peer table every five minutes.
+	if err = srv.dht.Bootstrap(srv.Context); check(err) {
+		return err
+	}
+
+	select {
+	case <-srv.Context.Done():
+		srv.Shutdown()
+	}
+
+	// Let's connect to the bootstrap nodes first. They will tell us about the
+	// other nodes in the network.
+	var wg sync.WaitGroup
+	for _, peerAddr := range srv.config.SeedAddresses {
+		peerinfo, _ := peer.AddrInfoFromP2pAddr(peerAddr)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := srv.host.Connect(srv, *peerinfo); err != nil {
+				log.W.Ln(err)
+			} else {
+				log.I.Ln("Connection established with bootstrap node:", *peerinfo)
+			}
+		}()
+	}
+	wg.Wait()
 
 	return nil
 }
