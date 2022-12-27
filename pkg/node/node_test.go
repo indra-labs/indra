@@ -12,7 +12,7 @@ func TestNodes_Add(t *testing.T) {
 	const nNodes = 10000
 	for i := 0; i < nNodes; i++ {
 		var nn *Node
-		nn, _ = New(nil, nil, nil, transport.NewSim(0))
+		nn, _ = New(nil, nil, nil, nil, nil, transport.NewSim(0))
 		n = n.Add(nn)
 	}
 	if n.Len() != nNodes {
@@ -26,7 +26,7 @@ func TestNodes_DeleteByID(t *testing.T) {
 	var e error
 	for i := 0; i < nNodes; i++ {
 		var nn *Node
-		nn, _ = New(nil, nil, nil, transport.NewSim(0))
+		nn, _ = New(nil, nil, nil, nil, nil, transport.NewSim(0))
 		n.Add(nn)
 	}
 	for i := range n {
@@ -36,17 +36,17 @@ func TestNodes_DeleteByID(t *testing.T) {
 	}
 }
 
-func TestNodes_DeleteByIP(t *testing.T) {
+func TestNodes_DeleteByAddrPort(t *testing.T) {
 	n := NewNodes()
 	const nNodes = 10000
 	var e error
 	for i := 0; i < nNodes; i++ {
 		var nn *Node
-		nn, _ = New(nil, nil, nil, transport.NewSim(0))
+		nn, _ = New(nil, nil, nil, nil, nil, transport.NewSim(0))
 		n.Add(nn)
 	}
 	for i := range n {
-		if n, e = n.DeleteByIP(n[nNodes-i-1].IP); check(e) {
+		if n, e = n.DeleteByAddrPort(n[nNodes-i-1].AddrPort); check(e) {
 			t.Error(e)
 		}
 	}
@@ -57,7 +57,7 @@ func TestNodes_FindByID(t *testing.T) {
 	const nNodes = 10000
 	for i := 0; i < nNodes; i++ {
 		var nn *Node
-		nn, _ = New(nil, nil, nil, transport.NewSim(0))
+		nn, _ = New(nil, nil, nil, nil, nil, transport.NewSim(0))
 		n.Add(nn)
 	}
 	for i := range n {
@@ -68,18 +68,18 @@ func TestNodes_FindByID(t *testing.T) {
 	}
 }
 
-func TestNodes_FindByIP(t *testing.T) {
+func TestNodes_FindByAddrPort(t *testing.T) {
 	n := NewNodes()
 	const nNodes = 10000
 	for i := 0; i < nNodes; i++ {
 		var nn *Node
-		nn, _ = New(nil, nil, nil, transport.NewSim(0))
+		nn, _ = New(nil, nil, nil, nil, nil, transport.NewSim(0))
 		n.Add(nn)
 	}
 	for i := range n {
-		if n.FindByIP(n[nNodes-i-1].IP) == nil {
+		if n.FindByAddrPort(n[nNodes-i-1].AddrPort) == nil {
 			t.Error(fmt.Errorf("id %v not found",
-				n[nNodes-i-1].IP))
+				n[nNodes-i-1].AddrPort))
 		}
 	}
 }

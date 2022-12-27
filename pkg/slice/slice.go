@@ -7,6 +7,8 @@ package slice
 import (
 	"crypto/rand"
 	"encoding/binary"
+	"fmt"
+	"net/netip"
 	"reflect"
 	"unsafe"
 
@@ -233,4 +235,17 @@ func (u U64Slice) ToMessage() (m Bytes) {
 	header.Len = mLen
 	header.Cap = mLen
 	return m
+}
+
+func GenerateRandomAddrPortIPv4() (ap *netip.AddrPort) {
+	a := netip.AddrPort{}
+	b := make([]byte, 7)
+	_, e := rand.Read(b)
+	if check(e) {
+		log.E.Ln(e)
+	}
+	port := DecodeUint16(b[5:7])
+	str := fmt.Sprintf("%d.%d.%d.%d:%d", b[1], b[2], b[3], b[4], port)
+	a, e = netip.ParseAddrPort(str)
+	return &a
 }
