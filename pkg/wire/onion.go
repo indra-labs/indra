@@ -88,15 +88,11 @@ func SendKeys(id nonce.ID, hdr, pld *pub.Key,
 func SendPurchase(nBytes uint64, client *node.Node,
 	hop [5]*node.Node, set *signer.KeySet) types.Onion {
 
-	var replies [3]*prv.Key
-	for i := range replies {
-		replies[i] = set.Next()
-	}
 	var prvs [3]*prv.Key
+	for i := range prvs {
+		prvs[i] = set.Next()
+	}
 	var pubs [3]*pub.Key
-	prvs[0] = replies[2]
-	prvs[1] = replies[1]
-	prvs[2] = replies[0]
 	pubs[0] = client.PayloadKey
 	pubs[1] = hop[4].PayloadKey
 	pubs[2] = hop[3].PayloadKey
@@ -109,11 +105,11 @@ func SendPurchase(nBytes uint64, client *node.Node,
 		OnionSkin(address.FromPubKey(hop[2].HeaderKey), set.Next()).
 		Purchase(nBytes, prvs, pubs).
 		Reply(hop[3].AddrPort).
-		OnionSkin(address.FromPubKey(hop[3].HeaderKey), replies[0]).
+		OnionSkin(address.FromPubKey(hop[3].HeaderKey), prvs[0]).
 		Reply(hop[4].AddrPort).
-		OnionSkin(address.FromPubKey(hop[4].HeaderKey), replies[1]).
+		OnionSkin(address.FromPubKey(hop[4].HeaderKey), prvs[1]).
 		Reply(client.AddrPort).
-		OnionSkin(address.FromPubKey(client.HeaderKey), replies[2]).
+		OnionSkin(address.FromPubKey(client.HeaderKey), prvs[2]).
 		Assemble()
 }
 
@@ -138,16 +134,12 @@ func SendPurchase(nBytes uint64, client *node.Node,
 func SendExit(payload slice.Bytes, port uint16, client *node.Node,
 	hop [5]*node.Node, set *signer.KeySet) types.Onion {
 
-	var replies [3]*prv.Key
-	for i := range replies {
-		replies[i] = set.Next()
+	var prvs [3]*prv.Key
+	for i := range prvs {
+		prvs[i] = set.Next()
 	}
 
-	var prvs [3]*prv.Key
 	var pubs [3]*pub.Key
-	prvs[0] = replies[2]
-	prvs[1] = replies[1]
-	prvs[2] = replies[0]
 	pubs[0] = client.PayloadKey
 	pubs[1] = hop[4].PayloadKey
 	pubs[2] = hop[3].PayloadKey
@@ -160,10 +152,10 @@ func SendExit(payload slice.Bytes, port uint16, client *node.Node,
 		OnionSkin(address.FromPubKey(hop[2].HeaderKey), set.Next()).
 		Exit(port, prvs, pubs, payload).
 		Reply(hop[3].AddrPort).
-		OnionSkin(address.FromPubKey(hop[3].HeaderKey), replies[0]).
+		OnionSkin(address.FromPubKey(hop[3].HeaderKey), prvs[0]).
 		Reply(hop[4].AddrPort).
-		OnionSkin(address.FromPubKey(hop[4].HeaderKey), replies[1]).
+		OnionSkin(address.FromPubKey(hop[4].HeaderKey), prvs[1]).
 		Reply(client.AddrPort).
-		OnionSkin(address.FromPubKey(client.HeaderKey), replies[2]).
+		OnionSkin(address.FromPubKey(client.HeaderKey), prvs[2]).
 		Assemble()
 }
