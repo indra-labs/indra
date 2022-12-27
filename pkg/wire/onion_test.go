@@ -9,7 +9,6 @@ import (
 	"github.com/Indra-Labs/indra/pkg/node"
 	"github.com/Indra-Labs/indra/pkg/nonce"
 	"github.com/Indra-Labs/indra/pkg/slice"
-	"github.com/Indra-Labs/indra/pkg/testutils"
 	"github.com/Indra-Labs/indra/pkg/types"
 	"github.com/Indra-Labs/indra/pkg/wire/confirmation"
 	"github.com/Indra-Labs/indra/pkg/wire/forward"
@@ -29,7 +28,7 @@ func TestPing(t *testing.T) {
 		prv1, prv2 := GetTwoPrvKeys(t)
 		pub1, pub2 := pub.Derive(prv1), pub.Derive(prv2)
 		var n nonce.ID
-		hop[i], n = node.New(testutils.GenerateRandomAddrPortIPv4(),
+		hop[i], n = node.New(slice.GenerateRandomAddrPortIPv4(),
 			pub1, pub2, prv1, prv2, nil)
 		_ = n
 	}
@@ -37,7 +36,7 @@ func TestPing(t *testing.T) {
 	cpub1, cpub2 := pub.Derive(cprv1), pub.Derive(cprv2)
 	var n nonce.ID
 	var client *node.Node
-	client, n = node.New(testutils.GenerateRandomAddrPortIPv4(),
+	client, n = node.New(slice.GenerateRandomAddrPortIPv4(),
 		cpub1, cpub2, cprv1, cprv2, nil)
 	on := Ping(n, client, hop, ks)
 	b := EncodeOnion(on)
