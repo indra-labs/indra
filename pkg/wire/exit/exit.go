@@ -19,8 +19,8 @@ var (
 	_ types.Onion = &OnionSkin{}
 )
 
-// OnionSkin exit messages are the layer of a message after two Forward packets that
-// provides an exit address and
+// OnionSkin exit messages are the layer of a message after two Forward packets
+// that provides an exit address and
 type OnionSkin struct {
 	// Port identifies the type of service as well as being the port used by
 	// the service to be relayed to. Notice there is no IP address, this is

@@ -9,8 +9,8 @@ import (
 	"github.com/Indra-Labs/indra/pkg/wire/delay"
 	"github.com/Indra-Labs/indra/pkg/wire/exit"
 	"github.com/Indra-Labs/indra/pkg/wire/forward"
+	"github.com/Indra-Labs/indra/pkg/wire/layer"
 	"github.com/Indra-Labs/indra/pkg/wire/magicbytes"
-	"github.com/Indra-Labs/indra/pkg/wire/message"
 	"github.com/Indra-Labs/indra/pkg/wire/purchase"
 	"github.com/Indra-Labs/indra/pkg/wire/reply"
 	"github.com/Indra-Labs/indra/pkg/wire/response"
@@ -41,6 +41,7 @@ func PeelOnion(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 		}
 		on = o
 	case confirmation.MagicString:
+		log.I.S("confirmation")
 		o := &confirmation.OnionSkin{}
 		if e = o.Decode(b, c); check(e) {
 			return
@@ -64,8 +65,8 @@ func PeelOnion(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 			return
 		}
 		on = o
-	case message.MagicString:
-		var o message.OnionSkin
+	case layer.MagicString:
+		var o layer.OnionSkin
 		if e = o.Decode(b, c); check(e) {
 			return
 		}

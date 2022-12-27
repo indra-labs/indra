@@ -17,7 +17,7 @@ import (
 	"github.com/Indra-Labs/indra/pkg/wire/delay"
 	"github.com/Indra-Labs/indra/pkg/wire/exit"
 	"github.com/Indra-Labs/indra/pkg/wire/forward"
-	"github.com/Indra-Labs/indra/pkg/wire/message"
+	"github.com/Indra-Labs/indra/pkg/wire/layer"
 	"github.com/Indra-Labs/indra/pkg/wire/noop"
 	"github.com/Indra-Labs/indra/pkg/wire/purchase"
 	"github.com/Indra-Labs/indra/pkg/wire/reply"
@@ -63,11 +63,13 @@ func (o OnionSkins) Exit(port uint16, prvs [3]*prv.Key, pubs [3]*pub.Key,
 		Onion:   os,
 	})
 }
+
 func (o OnionSkins) Forward(addr *netip.AddrPort) OnionSkins {
 	return append(o, &forward.OnionSkin{AddrPort: addr, Onion: &noop.OnionSkin{}})
 }
-func (o OnionSkins) Message(to *address.Sender, from *prv.Key) OnionSkins {
-	return append(o, &message.OnionSkin{
+
+func (o OnionSkins) OnionSkin(to *address.Sender, from *prv.Key) OnionSkins {
+	return append(o, &layer.OnionSkin{
 		To:    to,
 		From:  from,
 		Onion: os,

@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Indra-Labs/indra/pkg/key/address"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/nonce"
@@ -20,6 +21,7 @@ import (
 	"github.com/Indra-Labs/indra/pkg/wire/delay"
 	"github.com/Indra-Labs/indra/pkg/wire/exit"
 	"github.com/Indra-Labs/indra/pkg/wire/forward"
+	"github.com/Indra-Labs/indra/pkg/wire/layer"
 	"github.com/Indra-Labs/indra/pkg/wire/purchase"
 	"github.com/Indra-Labs/indra/pkg/wire/reply"
 	"github.com/Indra-Labs/indra/pkg/wire/response"
@@ -195,8 +197,48 @@ func TestOnionSkins_Forward(t *testing.T) {
 	}
 }
 
-func TestOnionSkins_Message(t *testing.T) {
-
+func TestOnionSkins_Layer(t *testing.T) {
+	log2.CodeLoc = true
+	var e error
+	n := nonce.NewID()
+	log.I.S("confirmation nonce", n)
+	prv1, prv2 := GetTwoPrvKeys(t)
+	pub1 := pub.Derive(prv1)
+	// log.I.S(pub1.ToBytes(), prv1.ToBytes())
+	on := OnionSkins{}.
+		OnionSkin(address.FromPubKey(pub1), prv2).
+		Confirmation(n).
+		Assemble()
+	onb := EncodeOnion(on)
+	// log.I.S(onb.ToBytes())
+	c := slice.NewCursor()
+	var onos, onc types.Onion
+	if onos, e = PeelOnion(onb, c); check(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	os := &layer.OnionSkin{}
+	var ok bool
+	if os, ok = onos.(*layer.OnionSkin); !ok {
+		t.Error("did not unwrap expected type")
+		t.FailNow()
+	}
+	// log.I.S(os.FromPub.ToBytes(), os.Cloak, os.Nonce)
+	log.I.S(onb[*c:].ToBytes())
+	os.Decrypt(prv1, onb, c)
+	log.I.S(onb[*c:].ToBytes())
+	// unwrap the confirmation
+	if onc, e = PeelOnion(onb, c); check(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	log.I.S(reflect.TypeOf(onc))
+	oc := &confirmation.OnionSkin{}
+	if oc, ok = onc.(*confirmation.OnionSkin); !ok {
+		t.Error("did not unwrap expected type")
+		t.FailNow()
+	}
+	log.I.S(oc)
 }
 
 func TestOnionSkins_Purchase(t *testing.T) {
