@@ -8,31 +8,12 @@ import (
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/multiformats/go-multiaddr"
 )
 
 var (
 	log   = log2.GetLogger(indra.PathBase)
 	check = log.E.Chk
 )
-
-var DefaultServerConfig = Config{
-
-	ListenAddresses: []multiaddr.Multiaddr{NewMultiAddrForced("/ip4/127.0.0.1/tcp/8337")},
-	SeedAddresses:   []multiaddr.Multiaddr{},
-}
-
-func NewMultiAddrForced(addr string) multiaddr.Multiaddr {
-
-	var mta, _ = multiaddr.NewMultiaddr(addr)
-
-	return mta
-}
-
-type Config struct {
-	ListenAddresses []multiaddr.Multiaddr
-	SeedAddresses   []multiaddr.Multiaddr
-}
 
 type Server struct {
 	context.Context
