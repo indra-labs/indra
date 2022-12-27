@@ -41,7 +41,6 @@ func PeelOnion(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 		}
 		on = o
 	case confirmation.MagicString:
-		log.I.S("confirmation")
 		o := &confirmation.OnionSkin{}
 		if e = o.Decode(b, c); check(e) {
 			return
