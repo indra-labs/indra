@@ -51,9 +51,10 @@ func Ping(id nonce.ID, client *node.Node, hop [3]*node.Node,
 // that the key was successfully delivered to the Reply relays that will be
 // used in the Purchase.
 func SendKeys(id nonce.ID, hdr, pld *pub.Key,
-	client node.Node, hop [5]node.Node, set signer.KeySet) types.Onion {
+	client *node.Node, hop [5]*node.Node, set *signer.KeySet) types.Onion {
 
 	return OnionSkins{}.
+		Forward(hop[0].AddrPort).
 		OnionSkin(address.FromPubKey(hop[0].HeaderKey), set.Next()).
 		Forward(hop[1].AddrPort).
 		OnionSkin(address.FromPubKey(hop[1].HeaderKey), set.Next()).
