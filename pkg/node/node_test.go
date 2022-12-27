@@ -68,7 +68,7 @@ func TestNodes_FindByID(t *testing.T) {
 	}
 }
 
-func TestNodes_FindByIP(t *testing.T) {
+func TestNodes_FindByAddrPort(t *testing.T) {
 	n := NewNodes()
 	const nNodes = 10000
 	for i := 0; i < nNodes; i++ {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/ifc"
+	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/nonce"
 	log2 "github.com/cybriq/proc/pkg/log"
@@ -25,20 +26,25 @@ var (
 type Node struct {
 	nonce.ID
 	*netip.AddrPort
-	HeaderKey, PayloadKey *pub.Key
+	HeaderKey, PayloadKey   *pub.Key
+	HeaderPriv, PayloadPriv *prv.Key
 	ifc.Transport
 }
 
 // New creates a new Node. net.IP is optional if the counterparty is not in
 // direct connection.
-func New(ip *netip.AddrPort, fwd, rtn *pub.Key, tpt ifc.Transport) (n *Node, id nonce.ID) {
+func New(ip *netip.AddrPort, hdr, pld *pub.Key, hdrPriv, pldPriv *prv.Key,
+	tpt ifc.Transport) (n *Node, id nonce.ID) {
+
 	id = nonce.NewID()
 	n = &Node{
-		ID:         id,
-		AddrPort:   ip,
-		Transport:  tpt,
-		HeaderKey:  fwd,
-		PayloadKey: rtn,
+		ID:          id,
+		AddrPort:    ip,
+		Transport:   tpt,
+		HeaderKey:   hdr,
+		PayloadKey:  pld,
+		HeaderPriv:  hdrPriv,
+		PayloadPriv: pldPriv,
 	}
 	return
 }

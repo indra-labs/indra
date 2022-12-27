@@ -2,11 +2,14 @@ package testutils
 
 import (
 	"crypto/rand"
+	"fmt"
+	"net/netip"
 
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/sha256"
+	"github.com/Indra-Labs/indra/pkg/slice"
 	log2 "github.com/cybriq/proc/pkg/log"
 )
 
@@ -36,4 +39,17 @@ func GenerateTestKeyPairs() (sp, rp *prv.Key, sP, rP *pub.Key, e error) {
 	}
 	rP = pub.Derive(rp)
 	return
+}
+
+func GenerateRandomAddrPortIPv4() (ap *netip.AddrPort) {
+	a := netip.AddrPort{}
+	b := make([]byte, 7)
+	_, e := rand.Read(b)
+	if check(e) {
+		log.E.Ln(e)
+	}
+	port := slice.DecodeUint16(b[5:7])
+	str := fmt.Sprintf("%d.%d.%d.%d:%d", b[1], b[2], b[3], b[4], port)
+	a, e = netip.ParseAddrPort(str)
+	return &a
 }
