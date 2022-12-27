@@ -19,8 +19,8 @@ var (
 	_ types.Onion = &OnionSkin{}
 )
 
-// OnionSkin exit messages are the layer of a message after two Forward packets that
-// provides an exit address and
+// OnionSkin exit messages are the layer of a message after two Forward packets
+// that provides an exit address and
 type OnionSkin struct {
 	// Port identifies the type of service as well as being the port used by
 	// the service to be relayed to. Notice there is no IP address, this is
@@ -61,7 +61,7 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 
 func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < MinLen-magicbytes.Len {
-		return magicbytes.TooShort(len(b[*c:]), MinLen, string(Magic))
+		return magicbytes.TooShort(len(b[*c:]), MinLen-magicbytes.Len, string(Magic))
 	}
 	x.Port = uint16(slice.DecodeUint16(b[*c:c.Inc(slice.Uint16Len)]))
 	for i := range x.Ciphers {

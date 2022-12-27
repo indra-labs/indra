@@ -9,8 +9,8 @@ import (
 	"github.com/Indra-Labs/indra/pkg/wire/delay"
 	"github.com/Indra-Labs/indra/pkg/wire/exit"
 	"github.com/Indra-Labs/indra/pkg/wire/forward"
+	"github.com/Indra-Labs/indra/pkg/wire/layer"
 	"github.com/Indra-Labs/indra/pkg/wire/magicbytes"
-	"github.com/Indra-Labs/indra/pkg/wire/message"
 	"github.com/Indra-Labs/indra/pkg/wire/purchase"
 	"github.com/Indra-Labs/indra/pkg/wire/reply"
 	"github.com/Indra-Labs/indra/pkg/wire/response"
@@ -35,65 +35,65 @@ func EncodeOnion(on types.Onion) (b slice.Bytes) {
 func PeelOnion(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 	switch b[*c:c.Inc(magicbytes.Len)].String() {
 	case cipher.MagicString:
-		var o cipher.OnionSkin
+		o := &cipher.OnionSkin{}
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
-		on = &o
+		on = o
 	case confirmation.MagicString:
-		var o confirmation.OnionSkin
+		o := &confirmation.OnionSkin{}
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
-		on = &o
+		on = o
 	case delay.MagicString:
-		var o delay.OnionSkin
+		o := &delay.OnionSkin{}
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
-		on = &o
+		on = o
 	case exit.MagicString:
-		var o exit.OnionSkin
+		o := &exit.OnionSkin{}
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
-		on = &o
+		on = o
 	case forward.MagicString:
-		var o forward.OnionSkin
+		o := &forward.OnionSkin{}
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
-		on = &o
-	case message.MagicString:
-		var o message.OnionSkin
+		on = o
+	case layer.MagicString:
+		var o layer.OnionSkin
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
 		on = &o
 	case purchase.MagicString:
-		var o purchase.OnionSkin
+		o := &purchase.OnionSkin{}
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
-		on = &o
+		on = o
 	case reply.MagicString:
-		var o reply.OnionSkin
+		o := &reply.OnionSkin{}
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
-		on = &o
+		on = o
 	case response.MagicString:
-		var o response.OnionSkin
+		o := response.New()
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
 		on = o
 	case session.MagicString:
-		var o session.OnionSkin
+		o := &session.OnionSkin{}
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
-		on = &o
+		on = o
 	case token.MagicString:
 		o := token.NewOnionSkin()
 		if e = o.Decode(b, c); check(e) {

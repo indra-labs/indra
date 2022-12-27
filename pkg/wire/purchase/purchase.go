@@ -39,18 +39,20 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	value := slice.NewUint64()
 	slice.EncodeUint64(value, x.NBytes)
+	copy(b[*c:c.Inc(slice.Uint64Len)], value)
 	copy(b[*c:c.Inc(sha256.Len)], x.Ciphers[0][:])
 	copy(b[*c:c.Inc(sha256.Len)], x.Ciphers[1][:])
-	copy(b[*c:c.Inc(sha256.Len)], x.Ciphers[1][:])
+	copy(b[*c:c.Inc(sha256.Len)], x.Ciphers[2][:])
 	x.Onion.Encode(b, c)
 }
 
 func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < MinLen-magicbytes.Len {
-		return magicbytes.TooShort(len(b[*c:]), MinLen, string(Magic))
+		return magicbytes.TooShort(len(b[*c:]),
+			MinLen-magicbytes.Len, MagicString)
 	}
 	x.NBytes = slice.DecodeUint64(
-		b[c.Inc(magicbytes.Len):c.Inc(slice.Uint64Len)])
+		b[*c:c.Inc(slice.Uint64Len)])
 	for i := range x.Ciphers {
 		bytes := b[*c:c.Inc(sha256.Len)]
 		copy(x.Ciphers[i][:], bytes)

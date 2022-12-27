@@ -39,7 +39,7 @@ func New(tpt ifc.Transport, no *node.Node, nodes node.Nodes) (c *Client, e error
 	}
 	pubKey := pub.Derive(p)
 	var n *node.Node
-	n, _ = node.New(no.AddrPort, pubKey, nil, tpt)
+	n, _ = node.New(no.AddrPort, pubKey, nil, p, nil, tpt)
 	c = &Client{
 		Node:      n,
 		Nodes:     nodes,
