@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/Indra-Labs/indra"
 	log2 "github.com/cybriq/proc/pkg/log"
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"os"
 	"time"
@@ -45,8 +46,18 @@ func main() {
 
 	defer cancel()
 
-	//build_image(ctx, cli)
-	push_tags(ctx, cli)
+	client := Client{
+		cli,
+		ctx,
+	}
+
+	if err = client.BuildImage(); check(err) {
+		return
+	}
+
+	if err = client.PushTags(types.ImagePushOptions{}); check(err) {
+		return
+	}
 
 	/*reader, err := cli.ImagePull(ctx, "docker.io/library/alpine", types.ImagePullOptions{})
 	if err != nil {
