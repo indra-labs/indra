@@ -16,19 +16,18 @@ func main() {
 
 	log2.App = "indra"
 
-	log.I.Ln("-- indra -", indra.SemVer, "- the indra network tool --")
-
 	var err error
 	var application *app.App
 
+	// Creates a new application
 	if application, err = app.New(commands, os.Args); check(err) {
 		os.Exit(1)
 	}
 
+	// Launches a new application
 	if err = application.Launch(); check(err) {
 		os.Exit(1)
 	}
 
-	log.I.Ln("-- fin --")
 	os.Exit(0)
 }

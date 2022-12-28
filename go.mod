@@ -6,6 +6,7 @@ require (
 	github.com/cybriq/proc v0.20.9
 	github.com/cybriq/qu v0.1.2
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0
+	github.com/docker/cli v0.0.0-20191017083524-a8ff7f821017
 	github.com/docker/docker v20.10.22+incompatible
 	github.com/libp2p/go-libp2p v0.24.1
 	github.com/libp2p/go-libp2p-kad-dht v0.20.0
@@ -29,6 +30,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/davidlazar/go-crypto v0.0.0-20200604182044-b73af7476f6c // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
+	github.com/docker/docker-credential-helpers v0.6.3 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/elastic/gosigar v0.14.2 // indirect
