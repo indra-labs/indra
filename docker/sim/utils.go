@@ -1,23 +1,30 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"github.com/Indra-Labs/indra"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
+	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/moby/term"
 	"io"
+	"io/ioutil"
 	"os"
-	"time"
 )
 
 var (
 	buildContextFilePath = "/tmp/indra-build.tar"
 	buildOpts            = types.ImageBuildOptions{
-		Tags: []string{"indra-labs/indra:" + indra.SemVer},
+		Tags: []string{
+			"indralabs/indra:" + indra.SemVer,
+			"indralabs/indra:latest",
+		},
 		Dockerfile: "docker/indra/Dockerfile",
 		SuppressOutput: false,
 		Remove:         true,
@@ -26,39 +33,105 @@ var (
 	}
 )
 
-func build_image(cli *client.Client) (err error) {
+func build_image(ctx context.Context, cli *client.Client) (err error) {
 
-	log.I.Ln("Building", buildOpts.Tags[0], "from", buildOpts.Dockerfile)
+	log.I.Ln("building", buildOpts.Tags[0], "from", buildOpts.Dockerfile)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second * 120)
-	defer cancel()
-
+	// Generate a tar file for docker's build context. It will contain the root of the repository's path.
+	// A tar file is passed in to the docker daemon.
 	var tar io.ReadCloser
-
 	if tar, err = archive.TarWithOptions(".", &archive.TarOptions{}); check(err) {
 		return
 	}
 
 	defer tar.Close()
 
-	// Here build the actual docker image
-	var response types.ImageBuildResponse
+	log.I.Ln("submitting build to docker...")
 
+	// Submit a build to docker; with the context tar, and default options defined above.
+	var response types.ImageBuildResponse
 	if response, err = cli.ImageBuild(ctx, tar, buildOpts); check(err) {
 		return
 	}
 
 	defer response.Body.Close()
 
+	// Generate a terminal for output
 	termFd, isTerm := term.GetFdInfo(os.Stderr)
 
 	if err = jsonmessage.DisplayJSONMessagesStream(response.Body, os.Stderr, termFd, isTerm, nil); check(err) {
 		return
 	}
 
+	log.I.Ln("pruning build container(s)...")
+
+	// Prune the intermediate golang:x.xx builder container
 	if _, err = cli.ImagesPrune(ctx, filters.NewArgs()); check(err) {
 		return
 	}
 
+	log.I.Ln("pruning successful.")
+	log.I.Ln("build successful!")
+
+	return
+}
+
+var (
+	push_opts = types.ImagePushOptions{}
+)
+
+func push_tags(ctx context.Context, cli *client.Client) (err error) {
+
+	log.I.Ln("pushing tagged images to repository...")
+
+	var file []byte
+	if file, err = ioutil.ReadFile(os.Getenv("INDRA_DOCKER_CONFIG")); check(err) {
+		return
+	}
+
+	config := configfile.New("config.json")
+	config.LoadFromReader(bytes.NewReader(file))
+
+	// Generate a terminal for output
+	termFd, isTerm := term.GetFdInfo(os.Stderr)
+
+	var pushResponse io.ReadCloser
+
+	for _, auth := range config.AuthConfigs {
+
+		log.I.Ln("found", auth.ServerAddress)
+
+		authConfigBytes, _ := json.Marshal(auth)
+		authConfigEncoded := base64.URLEncoding.EncodeToString(authConfigBytes)
+
+		push_opts.RegistryAuth = authConfigEncoded
+
+		for _, tag := range buildOpts.Tags {
+
+			log.I.Ln("pushing", tag)
+
+			if pushResponse, err = cli.ImagePush(ctx, tag, push_opts); check(err) {
+				return
+			}
+
+			if err = jsonmessage.DisplayJSONMessagesStream(pushResponse, os.Stderr, termFd, isTerm, nil); check(err) {
+				return
+			}
+
+			if err = pushResponse.Close(); check(err) {
+				return
+			}
+		}
+	}
+
+	return nil
+}
+
+func createNetworkIfNotExists(cli *client.Client) (err error) {
+
+	//ctx, cancel := context.WithTimeout(context.Background(), time.Second * 120)
+	//defer cancel()
+
+	//cli.NetworkCreate(ctx, "indranet")
 	return
 }

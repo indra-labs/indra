@@ -8,7 +8,7 @@ import (
 var (
 	commands = &cmds.Command{
 		Name:          "indra",
-		Description:   "The indra network daemon.",
+		Description:   "Network Freedom.",
 		Documentation: lorem,
 		Entrypoint:    defaultHandler,
 		Default:       cmds.Tags("help"),

@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"github.com/Indra-Labs/indra"
 	log2 "github.com/cybriq/proc/pkg/log"
 	"github.com/docker/docker/client"
 	"os"
+	"time"
 )
 
 var (
@@ -38,7 +40,13 @@ func main() {
 
 	defer cli.Close()
 
-	build_image(cli)
+	// Set a Timeout for 120 seconds
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second * 120)
+
+	defer cancel()
+
+	//build_image(ctx, cli)
+	push_tags(ctx, cli)
 
 	/*reader, err := cli.ImagePull(ctx, "docker.io/library/alpine", types.ImagePullOptions{})
 	if err != nil {
