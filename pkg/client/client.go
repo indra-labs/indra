@@ -20,31 +20,25 @@ var (
 
 type Client struct {
 	*netip.AddrPort
-	Prv *prv.Key
-	Pub *pub.Key
 	*node.Node
 	node.Nodes
 	*address.SendCache
 	*address.ReceiveCache
 	Circuits
 	Sessions
-	ifc.Transport
 	qu.C
 }
 
-func New(tpt ifc.Transport, no *node.Node, nodes node.Nodes) (c *Client, e error) {
-	var p *prv.Key
-	if p, e = prv.GenerateKey(); check(e) {
-		return
-	}
-	pubKey := pub.Derive(p)
+func New(tpt ifc.Transport, hdrPrv *prv.Key, no *node.Node,
+	nodes node.Nodes) (c *Client, e error) {
+
+	hdrPub := pub.Derive(hdrPrv)
 	var n *node.Node
-	n, _ = node.New(no.AddrPort, pubKey, nil, p, nil, tpt)
+	n, _ = node.New(no.AddrPort, hdrPub, nil, hdrPrv, nil, tpt)
 	c = &Client{
-		Node:      n,
-		Nodes:     nodes,
-		Transport: tpt,
-		C:         qu.T(),
+		Node:  n,
+		Nodes: nodes,
+		C:     qu.T(),
 	}
 	return
 }
@@ -59,6 +53,7 @@ out:
 		case msg := <-c.Node.Receive():
 			// process received message
 			_ = msg
+
 		}
 	}
 }

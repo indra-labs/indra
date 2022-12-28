@@ -3,6 +3,7 @@ package client
 import (
 	"github.com/Indra-Labs/indra/pkg/key/address"
 	"github.com/Indra-Labs/indra/pkg/key/signer"
+	"github.com/Indra-Labs/indra/pkg/node"
 	"github.com/Indra-Labs/indra/pkg/nonce"
 )
 
@@ -11,6 +12,7 @@ import (
 // with new credit, and the current state of the encryption.
 type Session struct {
 	nonce.ID
+	*node.Node
 	Remaining             uint64
 	HeaderKey, PayloadKey *address.SendEntry
 	*signer.KeySet
