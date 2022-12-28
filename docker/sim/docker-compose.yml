@@ -1,0 +1,58 @@
+version: '3'
+#volumes:
+  #vol_name:
+services:
+  seed_1:
+    image: indralabs/indra:v0.0.251
+    container_name: indra-seed-1
+    networks:
+      indranet:
+        ipv4_address: 172.16.238.2
+    #ports:
+      #- 8337:8337
+      #- 8338:8338
+    #environment:
+      #POSTGRES_DB: risky-local
+      #POSTGRES_USER: risky
+      #POSTGRES_PASSWORD: password
+    command: ["serve"]
+  peer_1:
+    image: indralabs/indra:v0.0.251
+    container_name: indra-peer-1
+    networks:
+      indranet:
+        ipv4_address: 172.16.238.3
+    depends_on:
+      - seed_1
+      #ports:
+      #- 8337:8337
+      #- 8338:8338
+      #environment:
+      #POSTGRES_DB: risky-local
+      #POSTGRES_USER: risky
+      #POSTGRES_PASSWORD: password
+    command: ["serve"]
+  peer_2:
+    image: indralabs/indra:v0.0.251
+    container_name: indra-peer-2
+    networks:
+      indranet:
+        ipv4_address: 172.16.238.4
+    depends_on:
+      - seed_1
+      #ports:
+      #- 8337:8337
+      #- 8338:8338
+      #environment:
+      #POSTGRES_DB: risky-local
+      #POSTGRES_USER: risky
+      #POSTGRES_PASSWORD: password
+    command: ["serve"]
+networks:
+  indranet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.238.0/24
+          gateway: 172.16.238.1

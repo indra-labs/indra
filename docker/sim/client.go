@@ -128,5 +128,7 @@ func (cli *Client) PushTags(opts types.ImagePushOptions) (err error) {
 		}
 	}
 
+	log.I.Ln("sucessfully pushed!")
+
 	return nil
 }
