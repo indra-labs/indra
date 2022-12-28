@@ -1,6 +1,15 @@
 package client
 
+import (
+	"testing"
+)
+
+func TestNew(t *testing.T) {
+
+}
+
 //
+
 // func TestClient_GenerateCircuit(t *testing.T) {
 // 	var nodes node.Nodes
 // 	var ids []nonce.ID
