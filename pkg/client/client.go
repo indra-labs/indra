@@ -87,52 +87,28 @@ func (c *Client) runner() (out bool) {
 		switch on := onion.(type) {
 		case *cipher.OnionSkin:
 			c.cipher(on, b)
-			break
-
 		case *confirmation.OnionSkin:
 			c.confirmation(on, b)
-			break
-
 		case *delay.OnionSkin:
 			c.delay(on, b)
-			break
-
 		case *exit.OnionSkin:
 			c.exit(on, b)
-			break
-
 		case *forward.OnionSkin:
 			c.forward(on, b)
-			break
-
 		case *layer.OnionSkin:
 			c.layer(on, b)
-			break
-
 		case *noop.OnionSkin:
 			c.noop(on, b)
-			break
-
 		case *purchase.OnionSkin:
 			c.purchase(on, b)
-			break
-
 		case *reply.OnionSkin:
 			c.reply(on, b)
-			break
-
 		case *response.OnionSkin:
 			c.response(on, b)
-			break
-
 		case *session.OnionSkin:
 			c.session(on, b)
-			break
-
 		case *token.OnionSkin:
 			c.token(on, b)
-			break
-
 		default:
 			log.I.S("unrecognised packet", b)
 		}
@@ -152,7 +128,7 @@ func (c *Client) confirmation(on *confirmation.OnionSkin, b slice.Bytes) {
 }
 
 func (c *Client) delay(on *delay.OnionSkin, b slice.Bytes) {
-	// this is a message to hold the message in the buffer until a time
+	// this is a message to hold the message in the buffer until a duration
 	// elapses. The accounting for the remainder of the message adds a
 	// factor to the effective byte consumption in accordance with the time
 	// to be stored.
