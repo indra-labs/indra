@@ -1,3 +1,5 @@
+
+
 package main
 
 import (
@@ -6,10 +8,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"github.com/Indra-Labs/indra"
+	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
-	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/moby/term"
@@ -33,7 +35,13 @@ var (
 	}
 )
 
-func build_image(ctx context.Context, cli *client.Client) (err error) {
+type Client struct {
+	*client.Client
+
+	ctx context.Context
+}
+
+func (cli *Client) BuildImage() (err error) {
 
 	log.I.Ln("building", buildOpts.Tags[0], "from", buildOpts.Dockerfile)
 
@@ -50,7 +58,7 @@ func build_image(ctx context.Context, cli *client.Client) (err error) {
 
 	// Submit a build to docker; with the context tar, and default options defined above.
 	var response types.ImageBuildResponse
-	if response, err = cli.ImageBuild(ctx, tar, buildOpts); check(err) {
+	if response, err = cli.ImageBuild(cli.ctx, tar, buildOpts); check(err) {
 		return
 	}
 
@@ -66,7 +74,7 @@ func build_image(ctx context.Context, cli *client.Client) (err error) {
 	log.I.Ln("pruning build container(s)...")
 
 	// Prune the intermediate golang:x.xx builder container
-	if _, err = cli.ImagesPrune(ctx, filters.NewArgs()); check(err) {
+	if _, err = cli.ImagesPrune(cli.ctx, filters.NewArgs()); check(err) {
 		return
 	}
 
@@ -76,11 +84,7 @@ func build_image(ctx context.Context, cli *client.Client) (err error) {
 	return
 }
 
-var (
-	push_opts = types.ImagePushOptions{}
-)
-
-func push_tags(ctx context.Context, cli *client.Client) (err error) {
+func (cli *Client) PushTags(opts types.ImagePushOptions) (err error) {
 
 	log.I.Ln("pushing tagged images to repository...")
 
@@ -104,13 +108,13 @@ func push_tags(ctx context.Context, cli *client.Client) (err error) {
 		authConfigBytes, _ := json.Marshal(auth)
 		authConfigEncoded := base64.URLEncoding.EncodeToString(authConfigBytes)
 
-		push_opts.RegistryAuth = authConfigEncoded
+		opts.RegistryAuth = authConfigEncoded
 
 		for _, tag := range buildOpts.Tags {
 
 			log.I.Ln("pushing", tag)
 
-			if pushResponse, err = cli.ImagePush(ctx, tag, push_opts); check(err) {
+			if pushResponse, err = cli.ImagePush(cli.ctx, tag, opts); check(err) {
 				return
 			}
 
@@ -125,13 +129,4 @@ func push_tags(ctx context.Context, cli *client.Client) (err error) {
 	}
 
 	return nil
-}
-
-func createNetworkIfNotExists(cli *client.Client) (err error) {
-
-	//ctx, cancel := context.WithTimeout(context.Background(), time.Second * 120)
-	//defer cancel()
-
-	//cli.NetworkCreate(ctx, "indranet")
-	return
 }
