@@ -22,17 +22,17 @@ var (
 // Node is a representation of a messaging counterparty. The net.IP can be nil
 // for the case of a client node that is not in a direct open connection. For
 // this reason all nodes are assigned an ID and will normally be handled by this
-// except when the net.IP is known via the packet sender address.
+// except when the netip.AddrPort is known via the packet sender address.
 type Node struct {
 	nonce.ID
 	*netip.AddrPort
-	HeaderKey, PayloadKey   *pub.Key
+	HeaderPub, PayloadPub   *pub.Key
 	HeaderPriv, PayloadPriv *prv.Key
 	ifc.Transport
 }
 
-// New creates a new Node. net.IP is optional if the counterparty is not in
-// direct connection.
+// New creates a new Node. netip.AddrPort is optional if the counterparty is not
+// in direct connection.
 func New(ip *netip.AddrPort, hdr, pld *pub.Key, hdrPriv, pldPriv *prv.Key,
 	tpt ifc.Transport) (n *Node, id nonce.ID) {
 
@@ -41,8 +41,8 @@ func New(ip *netip.AddrPort, hdr, pld *pub.Key, hdrPriv, pldPriv *prv.Key,
 		ID:          id,
 		AddrPort:    ip,
 		Transport:   tpt,
-		HeaderKey:   hdr,
-		PayloadKey:  pld,
+		HeaderPub:   hdr,
+		PayloadPub:  pld,
 		HeaderPriv:  hdrPriv,
 		PayloadPriv: pldPriv,
 	}

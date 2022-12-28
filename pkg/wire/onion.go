@@ -8,7 +8,6 @@ import (
 	"github.com/Indra-Labs/indra/pkg/node"
 	"github.com/Indra-Labs/indra/pkg/nonce"
 	"github.com/Indra-Labs/indra/pkg/slice"
-	"github.com/Indra-Labs/indra/pkg/types"
 )
 
 // Ping is a message which checks the liveness of relays by ensuring they are
@@ -22,19 +21,18 @@ import (
 // offline their scores will fall to zero after a time whereas live nodes will
 // have steadily increasing scores from successful pings.
 func Ping(id nonce.ID, client *node.Node, hop [3]*node.Node,
-	set *signer.KeySet) types.Onion {
+	set *signer.KeySet) OnionSkins {
 
 	return OnionSkins{}.
 		Forward(hop[0].AddrPort).
-		OnionSkin(address.FromPubKey(hop[0].HeaderKey), set.Next()).
+		OnionSkin(address.FromPubKey(hop[0].HeaderPub), set.Next()).
 		Forward(hop[1].AddrPort).
-		OnionSkin(address.FromPubKey(hop[1].HeaderKey), set.Next()).
+		OnionSkin(address.FromPubKey(hop[1].HeaderPub), set.Next()).
 		Forward(hop[2].AddrPort).
-		OnionSkin(address.FromPubKey(hop[2].HeaderKey), set.Next()).
+		OnionSkin(address.FromPubKey(hop[2].HeaderPub), set.Next()).
 		Forward(client.AddrPort).
-		OnionSkin(address.FromPubKey(client.HeaderKey), set.Next()).
-		Confirmation(id).
-		Assemble()
+		OnionSkin(address.FromPubKey(client.HeaderPub), set.Next()).
+		Confirmation(id)
 }
 
 // SendKeys provides a pair of private keys that will be used to generate the
@@ -51,24 +49,23 @@ func Ping(id nonce.ID, client *node.Node, hop [3]*node.Node,
 // that the key was successfully delivered to the Reply relays that will be
 // used in the Purchase.
 func SendKeys(id nonce.ID, hdr, pld *pub.Key,
-	client *node.Node, hop [5]*node.Node, set *signer.KeySet) types.Onion {
+	client *node.Node, hop [5]*node.Node, set *signer.KeySet) OnionSkins {
 
 	return OnionSkins{}.
 		Forward(hop[0].AddrPort).
-		OnionSkin(address.FromPubKey(hop[0].HeaderKey), set.Next()).
+		OnionSkin(address.FromPubKey(hop[0].HeaderPub), set.Next()).
 		Forward(hop[1].AddrPort).
-		OnionSkin(address.FromPubKey(hop[1].HeaderKey), set.Next()).
+		OnionSkin(address.FromPubKey(hop[1].HeaderPub), set.Next()).
 		Forward(hop[2].AddrPort).
-		OnionSkin(address.FromPubKey(hop[2].HeaderKey), set.Next()).
+		OnionSkin(address.FromPubKey(hop[2].HeaderPub), set.Next()).
 		Cipher(hdr, pld).
 		Forward(hop[3].AddrPort).
-		OnionSkin(address.FromPubKey(hop[3].HeaderKey), set.Next()).
+		OnionSkin(address.FromPubKey(hop[3].HeaderPub), set.Next()).
 		Forward(hop[4].AddrPort).
-		OnionSkin(address.FromPubKey(hop[4].HeaderKey), set.Next()).
+		OnionSkin(address.FromPubKey(hop[4].HeaderPub), set.Next()).
 		Forward(client.AddrPort).
-		OnionSkin(address.FromPubKey(client.HeaderKey), set.Next()).
-		Confirmation(id).
-		Assemble()
+		OnionSkin(address.FromPubKey(client.HeaderPub), set.Next()).
+		Confirmation(id)
 }
 
 // SendPurchase delivers a request for keys for a relaying session with a given
@@ -78,7 +75,7 @@ func SendKeys(id nonce.ID, hdr, pld *pub.Key,
 // The response, which will be two public keys that identify the session and
 // form the basis of the cloaked "To" keys, is encrypted with the given layers,
 // the ciphers are already given in reverse order, so they are decoded in given
-// order to create the correct payload encryption to match the PayloadKey
+// order to create the correct payload encryption to match the PayloadPub
 // combined with the header's given public From key.
 //
 // The header remains a constant size and each node in the Reply trims off
@@ -86,35 +83,34 @@ func SendKeys(id nonce.ID, hdr, pld *pub.Key,
 // remainder with noise, so it always looks like the first hop,
 // indistinguishable.
 func SendPurchase(nBytes uint64, client *node.Node,
-	hop [5]*node.Node, set *signer.KeySet) types.Onion {
+	hop [5]*node.Node, set *signer.KeySet) OnionSkins {
 
 	var prvs [3]*prv.Key
 	for i := range prvs {
 		prvs[i] = set.Next()
 	}
 	var pubs [3]*pub.Key
-	pubs[0] = client.PayloadKey
-	pubs[1] = hop[4].PayloadKey
-	pubs[2] = hop[3].PayloadKey
+	pubs[0] = client.PayloadPub
+	pubs[1] = hop[4].PayloadPub
+	pubs[2] = hop[3].PayloadPub
 	return OnionSkins{}.
 		Forward(hop[0].AddrPort).
-		OnionSkin(address.FromPubKey(hop[0].HeaderKey), set.Next()).
+		OnionSkin(address.FromPubKey(hop[0].HeaderPub), set.Next()).
 		Forward(hop[1].AddrPort).
-		OnionSkin(address.FromPubKey(hop[1].HeaderKey), set.Next()).
+		OnionSkin(address.FromPubKey(hop[1].HeaderPub), set.Next()).
 		Forward(hop[2].AddrPort).
-		OnionSkin(address.FromPubKey(hop[2].HeaderKey), set.Next()).
+		OnionSkin(address.FromPubKey(hop[2].HeaderPub), set.Next()).
 		Purchase(nBytes, prvs, pubs).
 		Reply(hop[3].AddrPort).
-		OnionSkin(address.FromPubKey(hop[3].HeaderKey), prvs[0]).
+		OnionSkin(address.FromPubKey(hop[3].HeaderPub), prvs[0]).
 		Reply(hop[4].AddrPort).
-		OnionSkin(address.FromPubKey(hop[4].HeaderKey), prvs[1]).
+		OnionSkin(address.FromPubKey(hop[4].HeaderPub), prvs[1]).
 		Reply(client.AddrPort).
-		OnionSkin(address.FromPubKey(client.HeaderKey), prvs[2]).
-		Assemble()
+		OnionSkin(address.FromPubKey(client.HeaderPub), prvs[2])
 }
 
 // SendExit constructs a message containing an arbitrary payload to a node (3rd
-// hop) with a set of 3 ciphers derived from the hidden PayloadKey of the return
+// hop) with a set of 3 ciphers derived from the hidden PayloadPub of the return
 // hops that are layered progressively after the Exit message.
 //
 // The Exit node forwards the packet it receives to the local port specified in
@@ -124,15 +120,14 @@ func SendPurchase(nBytes uint64, client *node.Node,
 //
 // The response is encrypted with the given layers, the ciphers are already
 // given in reverse order, so they are decoded in given order to create the
-// correct payload encryption to match the PayloadKey combined with the header's
+// correct payload encryption to match the PayloadPub combined with the header's
 // given public From key.
 //
 // The header remains a constant size and each node in the Reply trims off
 // their section at the top, moves the next layer header to the top and pads the
-// remainder with noise, so it always looks like the first hop,
-// indistinguishable.
+// remainder with noise, so it always looks like the first hop.
 func SendExit(payload slice.Bytes, port uint16, client *node.Node,
-	hop [5]*node.Node, set *signer.KeySet) types.Onion {
+	hop [5]*node.Node, set *signer.KeySet) OnionSkins {
 
 	var prvs [3]*prv.Key
 	for i := range prvs {
@@ -140,22 +135,21 @@ func SendExit(payload slice.Bytes, port uint16, client *node.Node,
 	}
 
 	var pubs [3]*pub.Key
-	pubs[0] = client.PayloadKey
-	pubs[1] = hop[4].PayloadKey
-	pubs[2] = hop[3].PayloadKey
+	pubs[0] = client.PayloadPub
+	pubs[1] = hop[4].PayloadPub
+	pubs[2] = hop[3].PayloadPub
 	return OnionSkins{}.
 		Forward(hop[0].AddrPort).
-		OnionSkin(address.FromPubKey(hop[0].HeaderKey), set.Next()).
+		OnionSkin(address.FromPubKey(hop[0].HeaderPub), set.Next()).
 		Forward(hop[1].AddrPort).
-		OnionSkin(address.FromPubKey(hop[1].HeaderKey), set.Next()).
+		OnionSkin(address.FromPubKey(hop[1].HeaderPub), set.Next()).
 		Forward(hop[2].AddrPort).
-		OnionSkin(address.FromPubKey(hop[2].HeaderKey), set.Next()).
+		OnionSkin(address.FromPubKey(hop[2].HeaderPub), set.Next()).
 		Exit(port, prvs, pubs, payload).
 		Reply(hop[3].AddrPort).
-		OnionSkin(address.FromPubKey(hop[3].HeaderKey), prvs[0]).
+		OnionSkin(address.FromPubKey(hop[3].HeaderPub), prvs[0]).
 		Reply(hop[4].AddrPort).
-		OnionSkin(address.FromPubKey(hop[4].HeaderKey), prvs[1]).
+		OnionSkin(address.FromPubKey(hop[4].HeaderPub), prvs[1]).
 		Reply(client.AddrPort).
-		OnionSkin(address.FromPubKey(client.HeaderKey), prvs[2]).
-		Assemble()
+		OnionSkin(address.FromPubKey(client.HeaderPub), prvs[2])
 }

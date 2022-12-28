@@ -139,7 +139,7 @@ func TestPing(t *testing.T) {
 		cpub1, cpub2, cprv1, cprv2, nil)
 
 	on := Ping(n, client, hop, ks)
-	b := EncodeOnion(on)
+	b := EncodeOnion(on.Assemble())
 	c := slice.NewCursor()
 
 	// Forward(hop[0].AddrPort).
@@ -150,7 +150,7 @@ func TestPing(t *testing.T) {
 		t.FailNow()
 	}
 
-	// OnionSkin(address.FromPubKey(hop[0].HeaderKey), set.Next()).
+	// OnionSkin(address.FromPubKey(hop[0].HeaderPub), set.Next()).
 	PeelOnionSkin(t, b, c).Decrypt(hop[0].HeaderPriv, b, c)
 
 	// Forward(hop[1].AddrPort).
@@ -161,7 +161,7 @@ func TestPing(t *testing.T) {
 		t.FailNow()
 	}
 
-	// OnionSkin(address.FromPubKey(hop[1].HeaderKey), set.Next()).
+	// OnionSkin(address.FromPubKey(hop[1].HeaderPub), set.Next()).
 	PeelOnionSkin(t, b, c).Decrypt(hop[1].HeaderPriv, b, c)
 
 	// Forward(hop[2].AddrPort).
@@ -172,7 +172,7 @@ func TestPing(t *testing.T) {
 		t.FailNow()
 	}
 
-	// OnionSkin(address.FromPubKey(hop[2].HeaderKey), set.Next()).
+	// OnionSkin(address.FromPubKey(hop[2].HeaderPub), set.Next()).
 	PeelOnionSkin(t, b, c).Decrypt(hop[2].HeaderPriv, b, c)
 
 	// Forward(client.AddrPort).
@@ -183,7 +183,7 @@ func TestPing(t *testing.T) {
 		t.FailNow()
 	}
 
-	// OnionSkin(address.FromPubKey(client.HeaderKey), set.Next()).
+	// OnionSkin(address.FromPubKey(client.HeaderPub), set.Next()).
 	PeelOnionSkin(t, b, c).Decrypt(client.HeaderPriv, b, c)
 
 	// Confirmation(id).
@@ -219,7 +219,7 @@ func TestSendKeys(t *testing.T) {
 	cipub1, cipub2 := pub.Derive(ciprv1), pub.Derive(ciprv2)
 
 	on := SendKeys(n, cipub1, cipub2, client, hop, ks)
-	b := EncodeOnion(on)
+	b := EncodeOnion(on.Assemble())
 	c := slice.NewCursor()
 	var ok bool
 
@@ -231,7 +231,7 @@ func TestSendKeys(t *testing.T) {
 		t.FailNow()
 	}
 
-	// OnionSkin(address.FromPubKey(hop[0].HeaderKey), set.Next()).
+	// OnionSkin(address.FromPubKey(hop[0].HeaderPub), set.Next()).
 	PeelOnionSkin(t, b, c).Decrypt(hop[0].HeaderPriv, b, c)
 
 	// Forward(hop[1].AddrPort).
@@ -242,7 +242,7 @@ func TestSendKeys(t *testing.T) {
 		t.FailNow()
 	}
 
-	// OnionSkin(address.FromPubKey(hop[1].HeaderKey), set.Next()).
+	// OnionSkin(address.FromPubKey(hop[1].HeaderPub), set.Next()).
 	PeelOnionSkin(t, b, c).Decrypt(hop[1].HeaderPriv, b, c)
 
 	// Forward(hop[2].AddrPort).
@@ -253,7 +253,7 @@ func TestSendKeys(t *testing.T) {
 		t.FailNow()
 	}
 
-	// OnionSkin(address.FromPubKey(hop[2].HeaderKey), set.Next()).
+	// OnionSkin(address.FromPubKey(hop[2].HeaderPub), set.Next()).
 	PeelOnionSkin(t, b, c).Decrypt(hop[2].HeaderPriv, b, c)
 
 	// Cipher(hdr, pld).
@@ -284,7 +284,7 @@ func TestSendKeys(t *testing.T) {
 		t.FailNow()
 	}
 
-	// OnionSkin(address.FromPubKey(hop[3].HeaderKey), set.Next()).
+	// OnionSkin(address.FromPubKey(hop[3].HeaderPub), set.Next()).
 	PeelOnionSkin(t, b, c).Decrypt(hop[3].HeaderPriv, b, c)
 
 	// Forward(hop[4].AddrPort).
@@ -295,7 +295,7 @@ func TestSendKeys(t *testing.T) {
 		t.FailNow()
 	}
 
-	// OnionSkin(address.FromPubKey(hop[4].HeaderKey), set.Next()).
+	// OnionSkin(address.FromPubKey(hop[4].HeaderPub), set.Next()).
 	PeelOnionSkin(t, b, c).Decrypt(hop[4].HeaderPriv, b, c)
 
 	// Forward(client.AddrPort).
@@ -306,7 +306,7 @@ func TestSendKeys(t *testing.T) {
 		t.FailNow()
 	}
 
-	// OnionSkin(address.FromPubKey(client.HeaderKey), set.Next()).
+	// OnionSkin(address.FromPubKey(client.HeaderPub), set.Next()).
 	PeelOnionSkin(t, b, c).Decrypt(client.HeaderPriv, b, c)
 
 	// Confirmation(id).
@@ -342,7 +342,7 @@ func TestSendPurchase(t *testing.T) {
 	// cipub1, cipub2 := pub.Derive(ciprv1), pub.Derive(ciprv2)
 	nBytes := rand.Uint64()
 	on := SendPurchase(nBytes, client, hop, ks)
-	b := EncodeOnion(on)
+	b := EncodeOnion(on.Assemble())
 	c := slice.NewCursor()
 	// var ok bool
 
@@ -354,7 +354,7 @@ func TestSendPurchase(t *testing.T) {
 		t.FailNow()
 	}
 
-	// OnionSkin(address.FromPubKey(hop[0].HeaderKey), set.Next()).
+	// OnionSkin(address.FromPubKey(hop[0].HeaderPub), set.Next()).
 	PeelOnionSkin(t, b, c).Decrypt(hop[0].HeaderPriv, b, c)
 
 	// Forward(hop[1].AddrPort).
@@ -365,7 +365,7 @@ func TestSendPurchase(t *testing.T) {
 		t.FailNow()
 	}
 
-	// OnionSkin(address.FromPubKey(hop[1].HeaderKey), set.Next()).
+	// OnionSkin(address.FromPubKey(hop[1].HeaderPub), set.Next()).
 	PeelOnionSkin(t, b, c).Decrypt(hop[1].HeaderPriv, b, c)
 
 	// Forward(hop[2].AddrPort).
@@ -376,7 +376,7 @@ func TestSendPurchase(t *testing.T) {
 		t.FailNow()
 	}
 
-	// OnionSkin(address.FromPubKey(hop[2].HeaderKey), set.Next()).
+	// OnionSkin(address.FromPubKey(hop[2].HeaderPub), set.Next()).
 	PeelOnionSkin(t, b, c).Decrypt(hop[2].HeaderPriv, b, c)
 
 	// Purchase(nBytes, prvs, pubs).
@@ -393,7 +393,7 @@ func TestSendPurchase(t *testing.T) {
 		t.FailNow()
 	}
 
-	// OnionSkin(address.FromPubKey(hop[3].HeaderKey), replies[0]).
+	// OnionSkin(address.FromPubKey(hop[3].HeaderPub), replies[0]).
 	PeelOnionSkin(t, b, c).Decrypt(hop[3].HeaderPriv, b, c)
 
 	// Reply(hop[4].AddrPort).
@@ -403,7 +403,7 @@ func TestSendPurchase(t *testing.T) {
 		t.FailNow()
 	}
 
-	// OnionSkin(address.FromPubKey(hop[4].HeaderKey), replies[1]).
+	// OnionSkin(address.FromPubKey(hop[4].HeaderPub), replies[1]).
 	PeelOnionSkin(t, b, c).Decrypt(hop[4].HeaderPriv, b, c)
 
 	// Reply(client.AddrPort).
@@ -413,7 +413,7 @@ func TestSendPurchase(t *testing.T) {
 		t.FailNow()
 	}
 
-	// OnionSkin(address.FromPubKey(client.HeaderKey), replies[2]).
+	// OnionSkin(address.FromPubKey(client.HeaderPub), replies[2]).
 	PeelOnionSkin(t, b, c).Decrypt(client.HeaderPriv, b, c)
 
 }
@@ -442,7 +442,7 @@ func TestSendExit(t *testing.T) {
 	var hash sha256.Hash
 	message, hash, e = testutils.GenerateTestMessage(2502)
 	on := SendExit(message, port, client, hop, ks)
-	b := EncodeOnion(on)
+	b := EncodeOnion(on.Assemble())
 	c := slice.NewCursor()
 
 	// Forward(hop[0].AddrPort).
@@ -453,7 +453,7 @@ func TestSendExit(t *testing.T) {
 		t.FailNow()
 	}
 
-	// OnionSkin(address.FromPubKey(hop[0].HeaderKey), set.Next()).
+	// OnionSkin(address.FromPubKey(hop[0].HeaderPub), set.Next()).
 	PeelOnionSkin(t, b, c).Decrypt(hop[0].HeaderPriv, b, c)
 
 	// Forward(hop[1].AddrPort).
@@ -464,7 +464,7 @@ func TestSendExit(t *testing.T) {
 		t.FailNow()
 	}
 
-	// OnionSkin(address.FromPubKey(hop[1].HeaderKey), set.Next()).
+	// OnionSkin(address.FromPubKey(hop[1].HeaderPub), set.Next()).
 	PeelOnionSkin(t, b, c).Decrypt(hop[1].HeaderPriv, b, c)
 
 	// Forward(hop[2].AddrPort).
@@ -475,7 +475,7 @@ func TestSendExit(t *testing.T) {
 		t.FailNow()
 	}
 
-	// OnionSkin(address.FromPubKey(hop[2].HeaderKey), set.Next()).
+	// OnionSkin(address.FromPubKey(hop[2].HeaderPub), set.Next()).
 	PeelOnionSkin(t, b, c).Decrypt(hop[2].HeaderPriv, b, c)
 
 	// Exit(port, prvs, pubs, payload).
@@ -497,7 +497,7 @@ func TestSendExit(t *testing.T) {
 		t.FailNow()
 	}
 
-	// OnionSkin(address.FromPubKey(hop[3].HeaderKey), replies[0]).
+	// OnionSkin(address.FromPubKey(hop[3].HeaderPub), replies[0]).
 	PeelOnionSkin(t, b, c).Decrypt(hop[3].HeaderPriv, b, c)
 
 	// Reply(hop[4].AddrPort).
@@ -507,7 +507,7 @@ func TestSendExit(t *testing.T) {
 		t.FailNow()
 	}
 
-	// OnionSkin(address.FromPubKey(hop[4].HeaderKey), replies[1]).
+	// OnionSkin(address.FromPubKey(hop[4].HeaderPub), replies[1]).
 	PeelOnionSkin(t, b, c).Decrypt(hop[4].HeaderPriv, b, c)
 
 	// Reply(client.AddrPort).
@@ -517,7 +517,7 @@ func TestSendExit(t *testing.T) {
 		t.FailNow()
 	}
 
-	// OnionSkin(address.FromPubKey(client.HeaderKey), replies[2]).
+	// OnionSkin(address.FromPubKey(client.HeaderPub), replies[2]).
 	PeelOnionSkin(t, b, c).Decrypt(client.HeaderPriv, b, c)
 
 }

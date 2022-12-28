@@ -68,7 +68,7 @@ package client
 // 	// log.I.Ln(len(ci.Hops))
 // 	for i := range ci.Hops {
 // 		// progress through the hops in reverse
-// 		rm := &wire.HeaderKey{
+// 		rm := &wire.HeaderPub{
 // 			IP:      ci.Hops[len(ci.Hops)-i-1].IP,
 // 			OnionSkin: lastMsg,
 // 		}
@@ -134,7 +134,7 @@ package client
 // 			t.Error(e)
 // 			t.FailNow()
 // 		}
-// 		var rm *wire.HeaderKey
+// 		var rm *wire.HeaderPub
 // 		var msg wire.OnionSkin
 // 		if msg, e = wire.Deserialize(f.Data); check(e) {
 // 			t.Error(e)
