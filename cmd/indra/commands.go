@@ -3,12 +3,13 @@ package main
 import (
 	"github.com/cybriq/proc/pkg/cmds"
 	"github.com/cybriq/proc/pkg/opts/config"
+	"github.com/cybriq/proc/pkg/opts/list"
 )
 
 var (
 	commands = &cmds.Command{
 		Name:          "indra",
-		Description:   "Network Freedom.",
+		Description:   "Nobody's watching you. Network Freedom.",
 		Documentation: lorem,
 		Entrypoint:    defaultHandler,
 		Default:       cmds.Tags("help"),
@@ -39,9 +40,11 @@ var (
 			{
 				Name:        "serve",
 				Description: "serves an instance of the indra network daemon",
-
 				Documentation: lorem,
 				Entrypoint: serveHandler,
+				Configs: config.Opts{
+						list.New():
+				},
 			},
 		},
 	}
