@@ -1,6 +1,3 @@
-// Package indra is the root level package for Indranet, a low latency, 
-// Lightning Network monetised distributed VPN protocol designed for providing
-// strong anonymity to valuable internet traffic.
 package indra
 
 import (
@@ -11,13 +8,13 @@ var (
 	// URL is the git URL for the repository.
 	URL = "github.com/Indra-Labs/indra"
 	// GitRef is the gitref, as in refs/heads/branchname.
-	GitRef = "refs/heads/ind-bootstrap"
+	GitRef = "refs/heads/main"
 	// ParentGitCommit is the commit hash of the parent HEAD.
-	ParentGitCommit = "ba46f778e53c3124b2557befd3780179e4c5face"
+	ParentGitCommit = "254cbece5f3af57d09f0e9bffcb8eb2e30e4b000"
 	// BuildTime stores the time when the current binary was built.
-	BuildTime = "2022-12-23T17:00:14Z"
+	BuildTime = "2022-12-28T09:23:35Z"
 	// SemVer lists the (latest) git tag on the build.
-	SemVer = "v0.0.214"
+	SemVer = "v0.0.251"
 	// PathBase is the path base returned from runtime caller.
 	PathBase = "/home/lyo/Seafile/Git/indra-labs/indra/"
 	// Major is the major number from the tag.
@@ -25,7 +22,7 @@ var (
 	// Minor is the minor number from the tag.
 	Minor = 0
 	// Patch is the patch version number from the tag.
-	Patch = 214
+	Patch = 251
 )
 
 // Version returns a pretty printed version information string.
