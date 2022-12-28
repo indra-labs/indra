@@ -2,6 +2,7 @@ package layer
 
 import (
 	"crypto/cipher"
+	"fmt"
 
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/ciph"
@@ -42,8 +43,13 @@ type OnionSkin struct {
 	types.Onion
 }
 
+func (x *OnionSkin) String() string {
+	return fmt.Sprintf("\n\tnonce: %x\n\tto: %x,\n\tfrom: %x,\n",
+		x.To.GetCloak(), pub.Derive(x.From).ToBytes(), x.Nonce)
+}
+
 const MinLen = magicbytes.Len + nonce.IVLen +
-	address.Len + pub.KeyLen + slice.Uint32Len
+	address.Len + pub.KeyLen
 
 func (x *OnionSkin) Inner() types.Onion   { return x.Onion }
 func (x *OnionSkin) Insert(o types.Onion) { x.Onion = o }

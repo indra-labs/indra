@@ -1,6 +1,8 @@
 package confirmation
 
 import (
+	"fmt"
+
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/nonce"
 	"github.com/Indra-Labs/indra/pkg/slice"
@@ -32,6 +34,11 @@ var (
 // current full set of Session s currently open.
 type OnionSkin struct {
 	nonce.ID
+}
+
+func (x *OnionSkin) String() string {
+	return fmt.Sprintf("\n\tnonce: %x\n",
+		x.ID)
 }
 
 func (x *OnionSkin) Inner() types.Onion   { return nil }
