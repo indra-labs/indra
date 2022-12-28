@@ -21,8 +21,8 @@ func main() {
 	var err error
 	var cli *client.Client
 
-	if cli, err = client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation()); err != nil {
-		panic(err)
+	if cli, err = client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation()); check(err) {
+		os.Exit(1)
 	}
 
 	defer cli.Close()
