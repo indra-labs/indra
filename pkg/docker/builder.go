@@ -1,6 +1,4 @@
-
-
-package main
+package docker
 
 import (
 	"bytes"
@@ -8,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"github.com/Indra-Labs/indra"
+	log2 "github.com/cybriq/proc/pkg/log"
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
@@ -18,6 +17,11 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+)
+
+var (
+	log      = log2.GetLogger(indra.PathBase)
+	check    = log.E.Chk
 )
 
 var (
@@ -35,13 +39,13 @@ var (
 	}
 )
 
-type Client struct {
+type Builder struct {
 	*client.Client
 
 	ctx context.Context
 }
 
-func (cli *Client) BuildImage() (err error) {
+func (cli *Builder) Build() (err error) {
 
 	log.I.Ln("building", buildOpts.Tags[0], "from", buildOpts.Dockerfile)
 
@@ -84,7 +88,7 @@ func (cli *Client) BuildImage() (err error) {
 	return
 }
 
-func (cli *Client) PushTags(opts types.ImagePushOptions) (err error) {
+func (cli *Builder) Push(opts types.ImagePushOptions) (err error) {
 
 	log.I.Ln("pushing tagged images to repository...")
 
@@ -131,4 +135,12 @@ func (cli *Client) PushTags(opts types.ImagePushOptions) (err error) {
 	log.I.Ln("sucessfully pushed!")
 
 	return nil
+}
+
+func NewBuilder(ctx context.Context, cli *client.Client) (builder *Builder) {
+
+	return &Builder{
+		cli,
+		ctx,
+	}
 }
