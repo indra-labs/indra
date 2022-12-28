@@ -1,6 +1,8 @@
 package client
 
 import (
+	"time"
+
 	"github.com/Indra-Labs/indra/pkg/key/address"
 	"github.com/Indra-Labs/indra/pkg/key/signer"
 	"github.com/Indra-Labs/indra/pkg/node"
@@ -15,6 +17,7 @@ type Session struct {
 	*node.Node
 	Remaining             uint64
 	HeaderKey, PayloadKey *address.SendEntry
+	Deadline              time.Time
 	*signer.KeySet
 }
 
