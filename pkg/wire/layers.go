@@ -72,6 +72,7 @@ func (o OnionSkins) OnionSkin(to *address.Sender, from *prv.Key) OnionSkins {
 	return append(o, &layer.OnionSkin{
 		To:    to,
 		From:  from,
+		Nonce: nonce.New(),
 		Onion: os,
 	})
 }
