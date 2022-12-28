@@ -3,6 +3,7 @@
 package main
 
 import (
+<<<<<<<< HEAD:docker/sim/client.go
 	"bytes"
 	"context"
 	"encoding/base64"
@@ -130,3 +131,16 @@ func (cli *Client) PushTags(opts types.ImagePushOptions) (err error) {
 
 	return nil
 }
+========
+	"github.com/docker/docker/client"
+)
+
+func createNetworkIfNotExists(cli *client.Client) (err error) {
+
+	//ctx, cancel := context.WithTimeout(context.Background(), time.Second * 120)
+	//defer cancel()
+
+	//cli.NetworkCreate(ctx, "indranet")
+	return
+}
+>>>>>>>> main:docker/sim/utils.go

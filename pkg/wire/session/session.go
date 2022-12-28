@@ -3,6 +3,7 @@ package session
 import (
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
+	"github.com/Indra-Labs/indra/pkg/nonce"
 	"github.com/Indra-Labs/indra/pkg/slice"
 	"github.com/Indra-Labs/indra/pkg/types"
 	"github.com/Indra-Labs/indra/pkg/wire/magicbytes"
@@ -31,6 +32,7 @@ var (
 // their generated private key which produces the public key that is placed in
 // the header.
 type OnionSkin struct {
+	nonce.ID
 	HeaderKey, PayloadKey *pub.Key
 	types.Onion
 }
@@ -38,12 +40,13 @@ type OnionSkin struct {
 func (x *OnionSkin) Inner() types.Onion   { return x.Onion }
 func (x *OnionSkin) Insert(o types.Onion) { x.Onion = o }
 func (x *OnionSkin) Len() int {
-	return magicbytes.Len + pub.KeyLen*2 + x.Onion.Len()
+	return magicbytes.Len + pub.KeyLen*2 + nonce.IDLen + x.Onion.Len()
 }
 
 func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	hdr, pld := x.HeaderKey.ToBytes(), x.PayloadKey.ToBytes()
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
+	copy(b[*c:c.Inc(nonce.IDLen)], x.ID[:])
 	copy(b[*c:c.Inc(pub.KeyLen)], hdr[:])
 	copy(b[*c:c.Inc(pub.KeyLen)], pld[:])
 	x.Onion.Encode(b, c)
@@ -53,6 +56,7 @@ func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < MinLen-magicbytes.Len {
 		return magicbytes.TooShort(len(b[*c:]), MinLen-magicbytes.Len, string(Magic))
 	}
+	copy(x.ID[:], b[*c:c.Inc(nonce.IDLen)])
 	if x.HeaderKey, e = pub.FromBytes(b[*c:c.Inc(pub.KeyLen)]); check(e) {
 		return
 	}
