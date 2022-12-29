@@ -16,6 +16,10 @@ var (
 	check = log.E.Chk
 )
 
+var (
+	timeout = 120 * time.Second
+)
+
 func main() {
 
 	var err error
@@ -28,7 +32,7 @@ func main() {
 	defer cli.Close()
 
 	// Set a Timeout for 120 seconds
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second * 120)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 
 	defer cancel()
 
