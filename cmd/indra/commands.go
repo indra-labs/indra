@@ -4,6 +4,7 @@ import (
 	"github.com/cybriq/proc/pkg/cmds"
 	"github.com/cybriq/proc/pkg/opts/config"
 	"github.com/cybriq/proc/pkg/opts/list"
+	"github.com/cybriq/proc/pkg/opts/meta"
 )
 
 var (
@@ -43,7 +44,24 @@ var (
 				Documentation: lorem,
 				Entrypoint: serveHandler,
 				Configs: config.Opts{
-						list.New():
+					"seed": list.New(meta.Data{
+						Label: "seed",
+						Description: "Adds additional seeds by hostname, or multiaddress. Examples: seed0.example.com, /ip4/127.0.0.1/tcp/8337",
+						Documentation: lorem,
+						Default: "/ip4/172.16.238.2/tcp/8337",
+					}, func(opt *list.Opt) error {
+
+						return nil
+					}),
+					"listen": list.New(meta.Data{
+						Label: "listen",
+						Description: "A list of listener multiaddresses. Example: /ip4/0.0.0.0/tcp/8337",
+						Documentation: lorem,
+						Default: "/ip4/0.0.0.0/tcp/8337",
+					}, func(opt *list.Opt) error {
+
+						return nil
+					}),
 				},
 			},
 		},
