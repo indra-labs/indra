@@ -7,15 +7,15 @@ import (
 	"github.com/Indra-Labs/indra/pkg/slice"
 	"github.com/Indra-Labs/indra/pkg/types"
 	"github.com/Indra-Labs/indra/pkg/wire/cipher"
-	"github.com/Indra-Labs/indra/pkg/wire/confirmation"
+	"github.com/Indra-Labs/indra/pkg/wire/confirm"
 	"github.com/Indra-Labs/indra/pkg/wire/delay"
 	"github.com/Indra-Labs/indra/pkg/wire/exit"
 	"github.com/Indra-Labs/indra/pkg/wire/forward"
 	"github.com/Indra-Labs/indra/pkg/wire/layer"
 	"github.com/Indra-Labs/indra/pkg/wire/magicbytes"
 	"github.com/Indra-Labs/indra/pkg/wire/purchase"
-	"github.com/Indra-Labs/indra/pkg/wire/reply"
 	"github.com/Indra-Labs/indra/pkg/wire/response"
+	"github.com/Indra-Labs/indra/pkg/wire/reverse"
 	"github.com/Indra-Labs/indra/pkg/wire/session"
 	"github.com/Indra-Labs/indra/pkg/wire/token"
 	log2 "github.com/cybriq/proc/pkg/log"
@@ -42,8 +42,8 @@ func PeelOnion(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 			return
 		}
 		on = o
-	case confirmation.MagicString:
-		o := &confirmation.OnionSkin{}
+	case confirm.MagicString:
+		o := &confirm.OnionSkin{}
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
@@ -78,8 +78,8 @@ func PeelOnion(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 			return
 		}
 		on = o
-	case reply.MagicString:
-		o := &reply.OnionSkin{}
+	case reverse.MagicString:
+		o := &reverse.OnionSkin{}
 		if e = o.Decode(b, c); check(e) {
 			return
 		}

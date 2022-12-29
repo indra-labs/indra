@@ -13,11 +13,14 @@ import (
 	"github.com/Indra-Labs/indra/pkg/slice"
 	"github.com/Indra-Labs/indra/pkg/transport"
 	"github.com/Indra-Labs/indra/pkg/wire"
+	"github.com/Indra-Labs/indra/pkg/wire/confirm"
 	log2 "github.com/cybriq/proc/pkg/log"
+	"github.com/cybriq/qu"
 )
 
 func TestPing(t *testing.T) {
 	log2.CodeLoc = true
+	// log2.SetLogLevel(log2.Trace)
 	var clients [4]*Client
 	var nodes [4]*node.Node
 	var transports [4]ifc.Transport
@@ -38,7 +41,6 @@ func TestPing(t *testing.T) {
 		}
 		pldPub := pub.Derive(pldPrv)
 		addr := slice.GenerateRandomAddrPortIPv4()
-		log.I.S(addr)
 		nodes[i], _ = node.New(addr, hdrPub, pldPub, hdrPrv, pldPrv, transports[i])
 		if clients[i], e = New(transports[i], hdrPrv, nodes[i], nil); check(e) {
 			t.Error(e)
@@ -70,12 +72,25 @@ func TestPing(t *testing.T) {
 		hop[i] = clients[0].Nodes[i]
 	}
 	os := wire.Ping(pn, clients[0].Node, hop, ks)
-	log.I.S(os)
+	// log.I.S(os)
+	quit := qu.T()
+	log.I.S("sending ping with ID", os[len(os)-1].(*confirm.OnionSkin))
+	clients[0].RegisterConfirmation(
+		os[len(os)-1].(*confirm.OnionSkin).ID,
+		func(cf *confirm.OnionSkin) {
+			log.I.S("received ping confirmation ID", cf)
+			quit.Q()
+		},
+	)
 	o := os.Assemble()
 	b := wire.EncodeOnion(o)
-	// log.I.S(b.ToBytes())
 	hop[0].Send(b)
-	time.Sleep(time.Second * 5)
+	go func() {
+		time.Sleep(time.Second * 2)
+		quit.Q()
+		t.Error("ping got stuck")
+	}()
+	<-quit.Wait()
 	for _, v := range clients {
 		v.Shutdown()
 	}

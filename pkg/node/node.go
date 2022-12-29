@@ -25,28 +25,28 @@ var (
 // except when the netip.AddrPort is known via the packet sender address.
 type Node struct {
 	nonce.ID
-	Addr                    string
-	AddrPort                *netip.AddrPort
-	HeaderPub, PayloadPub   *pub.Key
-	HeaderPriv, PayloadPriv *prv.Key
+	Addr                  string
+	AddrPort              *netip.AddrPort
+	HeaderPub, PayloadPub *pub.Key
+	HeaderPrv, PayloadPrv *prv.Key
 	ifc.Transport
 }
 
 // New creates a new Node. netip.AddrPort is optional if the counterparty is not
 // in direct connection.
-func New(addr *netip.AddrPort, hdr, pld *pub.Key, hdrPriv, pldPriv *prv.Key,
+func New(addr *netip.AddrPort, hdr, pld *pub.Key, hdrPrv, pldPrv *prv.Key,
 	tpt ifc.Transport) (n *Node, id nonce.ID) {
 
 	id = nonce.NewID()
 	n = &Node{
-		ID:          id,
-		Addr:        addr.String(),
-		AddrPort:    addr,
-		Transport:   tpt,
-		HeaderPub:   hdr,
-		PayloadPub:  pld,
-		HeaderPriv:  hdrPriv,
-		PayloadPriv: pldPriv,
+		ID:         id,
+		Addr:       addr.String(),
+		AddrPort:   addr,
+		Transport:  tpt,
+		HeaderPub:  hdr,
+		PayloadPub: pld,
+		HeaderPrv:  hdrPrv,
+		PayloadPrv: pldPrv,
 	}
 	return
 }

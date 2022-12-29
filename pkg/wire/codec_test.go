@@ -17,14 +17,14 @@ import (
 	"github.com/Indra-Labs/indra/pkg/testutils"
 	"github.com/Indra-Labs/indra/pkg/types"
 	"github.com/Indra-Labs/indra/pkg/wire/cipher"
-	"github.com/Indra-Labs/indra/pkg/wire/confirmation"
+	"github.com/Indra-Labs/indra/pkg/wire/confirm"
 	"github.com/Indra-Labs/indra/pkg/wire/delay"
 	"github.com/Indra-Labs/indra/pkg/wire/exit"
 	"github.com/Indra-Labs/indra/pkg/wire/forward"
 	"github.com/Indra-Labs/indra/pkg/wire/layer"
 	"github.com/Indra-Labs/indra/pkg/wire/purchase"
-	"github.com/Indra-Labs/indra/pkg/wire/reply"
 	"github.com/Indra-Labs/indra/pkg/wire/response"
+	"github.com/Indra-Labs/indra/pkg/wire/reverse"
 	"github.com/Indra-Labs/indra/pkg/wire/session"
 	"github.com/Indra-Labs/indra/pkg/wire/token"
 	log2 "github.com/cybriq/proc/pkg/log"
@@ -73,9 +73,9 @@ func TestOnionSkins_Confirmation(t *testing.T) {
 	if oncn, e = PeelOnion(onb, c); check(e) {
 		t.FailNow()
 	}
-	var cf *confirmation.OnionSkin
+	var cf *confirm.OnionSkin
 	var ok bool
-	if cf, ok = oncn.(*confirmation.OnionSkin); !ok {
+	if cf, ok = oncn.(*confirm.OnionSkin); !ok {
 		t.Error("did not unwrap expected type")
 		t.FailNow()
 	}
@@ -226,8 +226,8 @@ func TestOnionSkins_Layer(t *testing.T) {
 		t.Error(e)
 		t.FailNow()
 	}
-	oc := &confirmation.OnionSkin{}
-	if oc, ok = onc.(*confirmation.OnionSkin); !ok {
+	oc := &confirm.OnionSkin{}
+	if oc, ok = onc.(*confirm.OnionSkin); !ok {
 		t.Error("did not unwrap expected type")
 		t.FailNow()
 	}
@@ -300,8 +300,8 @@ func TestOnionSkins_Reply(t *testing.T) {
 		if onf, e = PeelOnion(onb, c); check(e) {
 			t.FailNow()
 		}
-		var cf *reply.OnionSkin
-		if cf, ok = onf.(*reply.OnionSkin); !ok {
+		var cf *reverse.OnionSkin
+		if cf, ok = onf.(*reverse.OnionSkin); !ok {
 			t.Error("did not unwrap expected type", reflect.TypeOf(onf))
 			t.FailNow()
 		}
