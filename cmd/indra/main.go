@@ -85,7 +85,7 @@ var commands = &cmds.Command{
 			},
 			Entrypoint: func(c *cmds.Command, args []string) error {
 
-				log.I.Ln("-- ", log2.App, "-", indra.SemVer, "- Nobody's watching you. Network Freedom. --")
+				log.I.Ln("-- ", log2.App, "-", indra.SemVer, "- Network Freedom. --")
 
 				var err error
 				var srv *server.Server
