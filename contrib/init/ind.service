@@ -4,8 +4,8 @@
 Description=Indra Network Daemon
 
 # Make sure ind starts after lnd is ready
-Requires=lnd.service
-After=lnd.service
+# Requires=lnd.service
+# After=lnd.service
 
 [Service]
 ExecStart=/usr/local/bin/ind
