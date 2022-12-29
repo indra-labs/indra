@@ -14,12 +14,12 @@ import (
 	"github.com/Indra-Labs/indra/pkg/testutils"
 	"github.com/Indra-Labs/indra/pkg/types"
 	"github.com/Indra-Labs/indra/pkg/wire/cipher"
-	"github.com/Indra-Labs/indra/pkg/wire/confirmation"
+	"github.com/Indra-Labs/indra/pkg/wire/confirm"
 	"github.com/Indra-Labs/indra/pkg/wire/exit"
 	"github.com/Indra-Labs/indra/pkg/wire/forward"
 	"github.com/Indra-Labs/indra/pkg/wire/layer"
 	"github.com/Indra-Labs/indra/pkg/wire/purchase"
-	"github.com/Indra-Labs/indra/pkg/wire/reply"
+	"github.com/Indra-Labs/indra/pkg/wire/reverse"
 	log2 "github.com/cybriq/proc/pkg/log"
 )
 
@@ -54,7 +54,7 @@ func PeelOnionSkin(t *testing.T, b slice.Bytes,
 }
 
 func PeelConfirmation(t *testing.T, b slice.Bytes,
-	c *slice.Cursor) (cn *confirmation.OnionSkin) {
+	c *slice.Cursor) (cn *confirm.OnionSkin) {
 
 	var ok bool
 	var e error
@@ -62,7 +62,7 @@ func PeelConfirmation(t *testing.T, b slice.Bytes,
 	if on, e = PeelOnion(b, c); check(e) {
 		t.Error(e)
 	}
-	if cn, ok = on.(*confirmation.OnionSkin); !ok {
+	if cn, ok = on.(*confirm.OnionSkin); !ok {
 		t.Error("did not unwrap expected type", reflect.TypeOf(on))
 	}
 	return
@@ -84,7 +84,7 @@ func PeelPurchase(t *testing.T, b slice.Bytes,
 }
 
 func PeelReply(t *testing.T, b slice.Bytes,
-	c *slice.Cursor) (rp *reply.OnionSkin) {
+	c *slice.Cursor) (rp *reverse.OnionSkin) {
 
 	var ok bool
 	var e error
@@ -92,7 +92,7 @@ func PeelReply(t *testing.T, b slice.Bytes,
 	if on, e = PeelOnion(b, c); check(e) {
 		t.Error(e)
 	}
-	if rp, ok = on.(*reply.OnionSkin); !ok {
+	if rp, ok = on.(*reverse.OnionSkin); !ok {
 		t.Error("did not unwrap expected type", reflect.TypeOf(on))
 	}
 	return

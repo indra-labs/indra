@@ -17,15 +17,15 @@ import (
 	"github.com/Indra-Labs/indra/pkg/types"
 	"github.com/Indra-Labs/indra/pkg/wire"
 	"github.com/Indra-Labs/indra/pkg/wire/cipher"
-	"github.com/Indra-Labs/indra/pkg/wire/confirmation"
+	"github.com/Indra-Labs/indra/pkg/wire/confirm"
 	"github.com/Indra-Labs/indra/pkg/wire/delay"
 	"github.com/Indra-Labs/indra/pkg/wire/exit"
 	"github.com/Indra-Labs/indra/pkg/wire/forward"
 	"github.com/Indra-Labs/indra/pkg/wire/layer"
 	"github.com/Indra-Labs/indra/pkg/wire/noop"
 	"github.com/Indra-Labs/indra/pkg/wire/purchase"
-	"github.com/Indra-Labs/indra/pkg/wire/reply"
 	"github.com/Indra-Labs/indra/pkg/wire/response"
+	"github.com/Indra-Labs/indra/pkg/wire/reverse"
 	"github.com/Indra-Labs/indra/pkg/wire/session"
 	"github.com/Indra-Labs/indra/pkg/wire/token"
 	log2 "github.com/cybriq/proc/pkg/log"
@@ -69,66 +69,66 @@ func New(tpt ifc.Transport, hdrPrv *prv.Key, no *node.Node,
 }
 
 // Start a single thread of the Client.
-func (c *Client) Start() {
+func (cl *Client) Start() {
 out:
 	for {
-		if c.runner() {
+		if cl.runner() {
 			break out
 		}
 	}
 }
 
-func (c *Client) runner() (out bool) {
+func (cl *Client) runner() (out bool) {
 	select {
-	case <-c.C.Wait():
-		c.Cleanup()
+	case <-cl.C.Wait():
+		cl.Cleanup()
 		out = true
 		break
-	case b := <-c.Node.Receive():
+	case b := <-cl.Node.Receive():
 		// process received message
 		var onion types.Onion
 		var e error
-		cur := slice.NewCursor()
-		if onion, e = wire.PeelOnion(b, cur); check(e) {
+		c := slice.NewCursor()
+		if onion, e = wire.PeelOnion(b, c); check(e) {
 			break
 		}
 		switch on := onion.(type) {
 		case *cipher.OnionSkin:
 			log.I.Ln(reflect.TypeOf(on))
-			c.cipher(on, b, cur)
-		case *confirmation.OnionSkin:
+			cl.cipher(on, b, c)
+		case *confirm.OnionSkin:
 			log.I.Ln(reflect.TypeOf(on))
-			c.confirmation(on, b, cur)
+			cl.confirm(on, b, c)
 		case *delay.OnionSkin:
 			log.I.Ln(reflect.TypeOf(on))
-			c.delay(on, b, cur)
+			cl.delay(on, b, c)
 		case *exit.OnionSkin:
 			log.I.Ln(reflect.TypeOf(on))
-			c.exit(on, b, cur)
+			cl.exit(on, b, c)
 		case *forward.OnionSkin:
 			log.I.Ln(reflect.TypeOf(on))
-			c.forward(on, b, cur)
+			cl.forward(on, b, c)
 		case *layer.OnionSkin:
 			log.I.Ln(reflect.TypeOf(on))
-			c.layer(on, b, cur)
+			cl.layer(on, b, c)
 		case *noop.OnionSkin:
 			log.I.Ln(reflect.TypeOf(on))
-			c.noop(on, b, cur)
+			cl.noop(on, b, c)
 		case *purchase.OnionSkin:
 			log.I.Ln(reflect.TypeOf(on))
-			c.purchase(on, b, cur)
-		case *reply.OnionSkin:
+			cl.purchase(on, b, c)
+		case *reverse.OnionSkin:
 			log.I.Ln(reflect.TypeOf(on))
-			c.reply(on, b, cur)
+			cl.reply(on, b, c)
 		case *response.OnionSkin:
 			log.I.Ln(reflect.TypeOf(on))
-			c.response(on, b, cur)
+			cl.response(on, b, c)
 		case *session.OnionSkin:
 			log.I.Ln(reflect.TypeOf(on))
-			c.session(on, b, cur)
+			cl.session(on, b, c)
 		case *token.OnionSkin:
 			log.I.Ln(reflect.TypeOf(on))
-			c.token(on, b, cur)
+			cl.token(on, b, c)
 		default:
 			log.I.S("unrecognised packet", b)
 		}
@@ -136,91 +136,93 @@ func (c *Client) runner() (out bool) {
 	return false
 }
 
-func (c *Client) cipher(on *cipher.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
+func (cl *Client) cipher(on *cipher.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
 	// This either is in a forward only SendKeys message or we are the buyer
 	// and these are our session keys.
 }
 
-func (c *Client) confirmation(on *confirmation.OnionSkin, b slice.Bytes,
-	cur *slice.Cursor) {
+func (cl *Client) confirm(on *confirm.OnionSkin, b slice.Bytes,
+	c *slice.Cursor) {
 	// This will be an 8 byte nonce that confirms a message passed, ping and
 	// cipher onions return these, as they are pure forward messages that
 	// send a message one way and the confirmation is the acknowledgement.
 	log.I.S(on)
 }
 
-func (c *Client) delay(on *delay.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
+func (cl *Client) delay(on *delay.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
 	// this is a message to hold the message in the buffer until a duration
 	// elapses. The accounting for the remainder of the message adds a
 	// factor to the effective byte consumption in accordance with the time
 	// to be stored.
 }
 
-func (c *Client) exit(on *exit.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
+func (cl *Client) exit(on *exit.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
 	// payload is forwarded to a local port and the response is forwarded
 	// back with a reply header.
 }
 
-func (c *Client) forward(on *forward.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
+func (cl *Client) forward(on *forward.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	// forward the whole buffer received onwards. Usually there will be a
 	// layer.OnionSkin under this which will be unwrapped by the receiver.
-	if on.AddrPort.String() == c.Node.AddrPort.String() {
+	if on.AddrPort.String() == cl.Node.AddrPort.String() {
 		// it is for us, we want to unwrap the next
 		// part.
-		log.I.Ln("processing new message")
-		c.Node.Send(b[*cur:])
+		log.I.Ln("processing new message", *c)
+		b = append(b[*c:], slice.NoisePad(int(*c))...)
+		cl.Node.Send(b)
 	} else {
 		// we need to forward this message onion.
 		log.I.Ln("forwarding")
-		c.Send(on.AddrPort, b)
+		cl.Send(on.AddrPort, b)
 	}
 }
 
-func (c *Client) layer(on *layer.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
+func (cl *Client) layer(on *layer.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	// this is probably an encrypted layer for us.
 	log.I.Ln("decrypting onion skin")
-	// log.I.S(on, b[*cur:].ToBytes())
-	rcv := c.ReceiveCache.FindCloaked(on.Cloak)
+	// log.I.S(on, b[*c:].ToBytes())
+	rcv := cl.ReceiveCache.FindCloaked(on.Cloak)
 	if rcv == nil {
 		log.I.Ln("no matching key found from cloaked key")
 		return
 	}
-	on.Decrypt(rcv.Key, b, cur)
-	log.I.S(b[*cur:].ToBytes())
-	c.Node.Send(b[*cur:])
+	on.Decrypt(rcv.Key, b, c)
+	b = append(b[*c:], slice.NoisePad(int(*c))...)
+	log.I.S(b.ToBytes())
+	cl.Node.Send(b)
 }
 
-func (c *Client) noop(on *noop.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
+func (cl *Client) noop(on *noop.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	// this won't happen normally
 }
 
-func (c *Client) purchase(on *purchase.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
+func (cl *Client) purchase(on *purchase.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	// Create a new Session.
 	s := &Session{}
-	c.Mutex.Lock()
+	cl.Mutex.Lock()
 	s.Deadline = time.Now().Add(DefaultDeadline)
-	c.Sessions = append(c.Sessions, s)
-	c.Mutex.Unlock()
+	cl.Sessions = append(cl.Sessions, s)
+	cl.Mutex.Unlock()
 }
 
-func (c *Client) reply(on *reply.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
+func (cl *Client) reply(on *reverse.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	// Reply means another OnionSkin is coming and the payload encryption
 	// uses the Payload key.
-	if on.AddrPort.String() == c.Node.AddrPort.String() {
+	if on.AddrPort.String() == cl.Node.AddrPort.String() {
 		// it is for us, we want to unwrap the next part.
-		c.Node.Send(b)
+		cl.Node.Send(b)
 	} else {
 		// we need to forward this message onion.
-		c.Send(on.AddrPort, b)
+		cl.Send(on.AddrPort, b)
 	}
 
 }
 
-func (c *Client) response(on *response.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
+func (cl *Client) response(on *response.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
 	// Response is a payload from an exit message.
 }
 
-func (c *Client) session(s *session.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
+func (cl *Client) session(s *session.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
 	// Session is returned from a Purchase message in the reply layers.
 	//
 	// Session has a nonce.ID that is given in the last layer of a LN sphinx
@@ -229,26 +231,26 @@ func (c *Client) session(s *session.OnionSkin, b slice.Bytes, cur *slice.Cursor)
 	// nonce, so long as it has not yet expired.
 }
 
-func (c *Client) token(t *token.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
+func (cl *Client) token(t *token.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
 	// not really sure if we are using these.
 	return
 }
 
-func (c *Client) Cleanup() {
+func (cl *Client) Cleanup() {
 	// Do cleanup stuff before shutdown.
 }
 
-func (c *Client) Shutdown() {
-	c.C.Q()
+func (cl *Client) Shutdown() {
+	cl.C.Q()
 }
 
-func (c *Client) Send(addr *netip.AddrPort, b slice.Bytes) {
+func (cl *Client) Send(addr *netip.AddrPort, b slice.Bytes) {
 	// first search if we already have the node available with connection
 	// open.
 	as := addr.String()
-	for i := range c.Nodes {
-		if as == c.Nodes[i].Addr {
-			c.Nodes[i].Transport.Send(b)
+	for i := range cl.Nodes {
+		if as == cl.Nodes[i].Addr {
+			cl.Nodes[i].Transport.Send(b)
 			return
 		}
 	}
