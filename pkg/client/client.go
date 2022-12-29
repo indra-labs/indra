@@ -31,6 +31,7 @@ import (
 	"github.com/Indra-Labs/indra/pkg/wire/token"
 	log2 "github.com/cybriq/proc/pkg/log"
 	"github.com/cybriq/qu"
+	"go.uber.org/atomic"
 )
 
 const DefaultDeadline = 10 * time.Minute
@@ -48,27 +49,21 @@ type Client struct {
 	*address.ReceiveCache
 	Circuits
 	Sessions
-	Confirms
+	*confirm.Confirms
 	sync.Mutex
 	*signer.KeySet
+	atomic.Bool
 	qu.C
 }
-type ConfirmHook func(cf *confirm.OnionSkin)
-
-type ConfirmCallback struct {
-	nonce.ID
-	Hook ConfirmHook
-}
-
-type Confirms []ConfirmCallback
 
 func New(tpt ifc.Transport, hdrPrv *prv.Key, no *node.Node,
 	nodes node.Nodes) (c *Client, e error) {
 
 	no.Transport = tpt
-	no.HeaderPriv = hdrPrv
+	no.HeaderPrv = hdrPrv
 	no.HeaderPub = pub.Derive(hdrPrv)
 	c = &Client{
+		Confirms:     confirm.NewConfirms(),
 		Node:         no,
 		Nodes:        nodes,
 		ReceiveCache: address.NewReceiveCache(),
@@ -143,7 +138,7 @@ func (cl *Client) runner() (out bool) {
 			log.I.S("unrecognised packet", b)
 		}
 	}
-	return false
+	return
 }
 
 func (cl *Client) cipher(on *cipher.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
@@ -153,16 +148,25 @@ func (cl *Client) cipher(on *cipher.OnionSkin, b slice.Bytes, cur *slice.Cursor)
 
 func (cl *Client) confirm(on *confirm.OnionSkin, b slice.Bytes,
 	c *slice.Cursor) {
-	// This will be an 8 byte nonce that confirms a message passed, ping and
-	// cipher onions return these, as they are pure forward messages that
-	// send a message one way and the confirmation is the acknowledgement.
-	// log.I.S(on)
-	for i := range cl.Confirms {
-		// log.I.S(cl.Confirms[i].ID, on.ID)
-		if on.ID == cl.Confirms[i].ID {
-			cl.Confirms[i].Hook(on)
+	// When a confirm arrives check if it is registered for and run
+	// the hook that was registered with it.
+	cl.Confirms.Lock()
+	for i := range (*cl).Cnf {
+		if on.ID == (*cl).Cnf[i].ID {
+			(*cl).Cnf[i].Hook(on)
 		}
 	}
+	cl.Confirms.Unlock()
+}
+
+func (cl *Client) RegisterConfirmation(id nonce.ID, hook confirm.Hook) {
+	cl.Confirms.Lock()
+	cl.Cnf = append((*cl).Cnf, confirm.Callback{
+		ID:   id,
+		Time: time.Now(),
+		Hook: hook,
+	})
+	cl.Confirms.Unlock()
 }
 
 func (cl *Client) delay(on *delay.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
@@ -252,20 +256,16 @@ func (cl *Client) token(t *token.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
 	return
 }
 
-func (cl *Client) RegisterConfirmation(id nonce.ID, hook ConfirmHook) {
-	cl.Mutex.Lock()
-	cl.Confirms = append(cl.Confirms, ConfirmCallback{
-		ID:   id,
-		Hook: hook,
-	})
-	cl.Mutex.Unlock()
-}
-
 func (cl *Client) Cleanup() {
 	// Do cleanup stuff before shutdown.
 }
 
 func (cl *Client) Shutdown() {
+	if cl.Bool.Load() {
+		return
+	}
+	log.I.Ln("shutting down client", cl.Node.AddrPort.String())
+	cl.Bool.Store(true)
 	cl.C.Q()
 }
 
