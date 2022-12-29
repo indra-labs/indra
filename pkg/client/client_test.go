@@ -2,10 +2,83 @@ package client
 
 import (
 	"testing"
+	"time"
+
+	"github.com/Indra-Labs/indra/pkg/ifc"
+	"github.com/Indra-Labs/indra/pkg/key/prv"
+	"github.com/Indra-Labs/indra/pkg/key/pub"
+	"github.com/Indra-Labs/indra/pkg/key/signer"
+	"github.com/Indra-Labs/indra/pkg/node"
+	"github.com/Indra-Labs/indra/pkg/nonce"
+	"github.com/Indra-Labs/indra/pkg/slice"
+	"github.com/Indra-Labs/indra/pkg/transport"
+	"github.com/Indra-Labs/indra/pkg/wire"
+	log2 "github.com/cybriq/proc/pkg/log"
 )
 
-func TestNew(t *testing.T) {
-
+func TestPing(t *testing.T) {
+	log2.CodeLoc = true
+	var clients [4]*Client
+	var nodes [4]*node.Node
+	var transports [4]ifc.Transport
+	var e error
+	for i := range transports {
+		transports[i] = transport.NewSim(4)
+	}
+	for i := range nodes {
+		var hdrPrv, pldPrv *prv.Key
+		if hdrPrv, e = prv.GenerateKey(); check(e) {
+			t.Error(e)
+			t.FailNow()
+		}
+		hdrPub := pub.Derive(hdrPrv)
+		if pldPrv, e = prv.GenerateKey(); check(e) {
+			t.Error(e)
+			t.FailNow()
+		}
+		pldPub := pub.Derive(pldPrv)
+		addr := slice.GenerateRandomAddrPortIPv4()
+		log.I.S(addr)
+		nodes[i], _ = node.New(addr, hdrPub, pldPub, hdrPrv, pldPrv, transports[i])
+		if clients[i], e = New(transports[i], hdrPrv, nodes[i], nil); check(e) {
+			t.Error(e)
+			t.FailNow()
+		}
+		clients[i].AddrPort = nodes[i].AddrPort
+	}
+	// add each node to each other's Nodes except itself.
+	for i := range nodes {
+		for j := range nodes {
+			if i == j {
+				continue
+			}
+			clients[i].Nodes = append(clients[i].Nodes, nodes[j])
+		}
+	}
+	// Start up the clients.
+	for _, v := range clients {
+		go v.Start()
+	}
+	pn := nonce.NewID()
+	var ks *signer.KeySet
+	if _, ks, e = signer.New(); check(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	var hop [3]*node.Node
+	for i := range clients[0].Nodes {
+		hop[i] = clients[0].Nodes[i]
+	}
+	os := wire.Ping(pn, clients[0].Node, hop, ks)
+	log.I.S(os)
+	o := os.Assemble()
+	b := wire.EncodeOnion(o)
+	// log.I.S(b.ToBytes())
+	hop[0].Send(b)
+	time.Sleep(time.Second * 5)
+	for _, v := range clients {
+		v.Shutdown()
+	}
 }
 
 //

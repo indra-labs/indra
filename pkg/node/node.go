@@ -25,8 +25,8 @@ var (
 // except when the netip.AddrPort is known via the packet sender address.
 type Node struct {
 	nonce.ID
-	Addr string
-	*netip.AddrPort
+	Addr                    string
+	AddrPort                *netip.AddrPort
 	HeaderPub, PayloadPub   *pub.Key
 	HeaderPriv, PayloadPriv *prv.Key
 	ifc.Transport
