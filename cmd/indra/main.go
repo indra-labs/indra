@@ -24,7 +24,7 @@ func init() {
 
 var commands = &cmds.Command{
 	Name:          "indra",
-	Description:   "Nobody's watching you. Network Freedom.",
+	Description:   "Network Freedom.",
 	Documentation: lorem,
 	Default:       cmds.Tags("help"),
 	Configs:       config.Opts{},
@@ -37,7 +37,7 @@ var commands = &cmds.Command{
 	Commands: cmds.Commands{
 		{
 			Name:          "version",
-			Description:   "print indra version",
+			Description:   "prints the indra version",
 			Documentation: lorem,
 			Configs:       config.Opts{},
 			Entrypoint: func(c *cmds.Command, args []string) error {
