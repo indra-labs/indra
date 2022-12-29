@@ -150,23 +150,15 @@ func (cl *Client) confirm(on *confirm.OnionSkin, b slice.Bytes,
 	c *slice.Cursor) {
 	// When a confirm arrives check if it is registered for and run
 	// the hook that was registered with it.
-	cl.Confirms.Lock()
-	for i := range (*cl).Cnf {
-		if on.ID == (*cl).Cnf[i].ID {
-			(*cl).Cnf[i].Hook(on)
-		}
-	}
-	cl.Confirms.Unlock()
+	cl.Confirms.Confirm(on.ID)
 }
 
 func (cl *Client) RegisterConfirmation(id nonce.ID, hook confirm.Hook) {
-	cl.Confirms.Lock()
-	cl.Cnf = append((*cl).Cnf, confirm.Callback{
+	cl.Confirms.Add(&confirm.Callback{
 		ID:   id,
 		Time: time.Now(),
 		Hook: hook,
 	})
-	cl.Confirms.Unlock()
 }
 
 func (cl *Client) delay(on *delay.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
