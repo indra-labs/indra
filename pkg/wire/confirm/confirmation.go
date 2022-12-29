@@ -1,4 +1,4 @@
-package confirmation
+package confirm
 
 import (
 	"fmt"

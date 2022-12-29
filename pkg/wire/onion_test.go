@@ -14,12 +14,12 @@ import (
 	"github.com/Indra-Labs/indra/pkg/testutils"
 	"github.com/Indra-Labs/indra/pkg/types"
 	"github.com/Indra-Labs/indra/pkg/wire/cipher"
-	"github.com/Indra-Labs/indra/pkg/wire/confirmation"
+	"github.com/Indra-Labs/indra/pkg/wire/confirm"
 	"github.com/Indra-Labs/indra/pkg/wire/exit"
 	"github.com/Indra-Labs/indra/pkg/wire/forward"
 	"github.com/Indra-Labs/indra/pkg/wire/layer"
 	"github.com/Indra-Labs/indra/pkg/wire/purchase"
-	"github.com/Indra-Labs/indra/pkg/wire/reply"
+	"github.com/Indra-Labs/indra/pkg/wire/reverse"
 	log2 "github.com/cybriq/proc/pkg/log"
 )
 
@@ -54,7 +54,7 @@ func PeelOnionSkin(t *testing.T, b slice.Bytes,
 }
 
 func PeelConfirmation(t *testing.T, b slice.Bytes,
-	c *slice.Cursor) (cn *confirmation.OnionSkin) {
+	c *slice.Cursor) (cn *confirm.OnionSkin) {
 
 	var ok bool
 	var e error
@@ -62,7 +62,7 @@ func PeelConfirmation(t *testing.T, b slice.Bytes,
 	if on, e = PeelOnion(b, c); check(e) {
 		t.Error(e)
 	}
-	if cn, ok = on.(*confirmation.OnionSkin); !ok {
+	if cn, ok = on.(*confirm.OnionSkin); !ok {
 		t.Error("did not unwrap expected type", reflect.TypeOf(on))
 	}
 	return
@@ -84,7 +84,7 @@ func PeelPurchase(t *testing.T, b slice.Bytes,
 }
 
 func PeelReply(t *testing.T, b slice.Bytes,
-	c *slice.Cursor) (rp *reply.OnionSkin) {
+	c *slice.Cursor) (rp *reverse.OnionSkin) {
 
 	var ok bool
 	var e error
@@ -92,7 +92,7 @@ func PeelReply(t *testing.T, b slice.Bytes,
 	if on, e = PeelOnion(b, c); check(e) {
 		t.Error(e)
 	}
-	if rp, ok = on.(*reply.OnionSkin); !ok {
+	if rp, ok = on.(*reverse.OnionSkin); !ok {
 		t.Error("did not unwrap expected type", reflect.TypeOf(on))
 	}
 	return
@@ -151,7 +151,7 @@ func TestPing(t *testing.T) {
 	}
 
 	// OnionSkin(address.FromPubKey(hop[0].HeaderPub), set.Next()).
-	PeelOnionSkin(t, b, c).Decrypt(hop[0].HeaderPriv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(hop[0].HeaderPrv, b, c)
 
 	// Forward(hop[1].AddrPort).
 	f1 := PeelForward(t, b, c)
@@ -162,7 +162,7 @@ func TestPing(t *testing.T) {
 	}
 
 	// OnionSkin(address.FromPubKey(hop[1].HeaderPub), set.Next()).
-	PeelOnionSkin(t, b, c).Decrypt(hop[1].HeaderPriv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(hop[1].HeaderPrv, b, c)
 
 	// Forward(hop[2].AddrPort).
 	f2 := PeelForward(t, b, c)
@@ -173,7 +173,7 @@ func TestPing(t *testing.T) {
 	}
 
 	// OnionSkin(address.FromPubKey(hop[2].HeaderPub), set.Next()).
-	PeelOnionSkin(t, b, c).Decrypt(hop[2].HeaderPriv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(hop[2].HeaderPrv, b, c)
 
 	// Forward(client.AddrPort).
 	f3 := PeelForward(t, b, c)
@@ -184,7 +184,7 @@ func TestPing(t *testing.T) {
 	}
 
 	// OnionSkin(address.FromPubKey(client.HeaderPub), set.Next()).
-	PeelOnionSkin(t, b, c).Decrypt(client.HeaderPriv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(client.HeaderPrv, b, c)
 
 	// Confirmation(id).
 	co := PeelConfirmation(t, b, c)
@@ -232,7 +232,7 @@ func TestSendKeys(t *testing.T) {
 	}
 
 	// OnionSkin(address.FromPubKey(hop[0].HeaderPub), set.Next()).
-	PeelOnionSkin(t, b, c).Decrypt(hop[0].HeaderPriv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(hop[0].HeaderPrv, b, c)
 
 	// Forward(hop[1].AddrPort).
 	f1 := PeelForward(t, b, c)
@@ -243,7 +243,7 @@ func TestSendKeys(t *testing.T) {
 	}
 
 	// OnionSkin(address.FromPubKey(hop[1].HeaderPub), set.Next()).
-	PeelOnionSkin(t, b, c).Decrypt(hop[1].HeaderPriv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(hop[1].HeaderPrv, b, c)
 
 	// Forward(hop[2].AddrPort).
 	f2 := PeelForward(t, b, c)
@@ -254,7 +254,7 @@ func TestSendKeys(t *testing.T) {
 	}
 
 	// OnionSkin(address.FromPubKey(hop[2].HeaderPub), set.Next()).
-	PeelOnionSkin(t, b, c).Decrypt(hop[2].HeaderPriv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(hop[2].HeaderPrv, b, c)
 
 	// Cipher(hdr, pld).
 	var onc types.Onion
@@ -285,7 +285,7 @@ func TestSendKeys(t *testing.T) {
 	}
 
 	// OnionSkin(address.FromPubKey(hop[3].HeaderPub), set.Next()).
-	PeelOnionSkin(t, b, c).Decrypt(hop[3].HeaderPriv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(hop[3].HeaderPrv, b, c)
 
 	// Forward(hop[4].AddrPort).
 	f4 := PeelForward(t, b, c)
@@ -296,7 +296,7 @@ func TestSendKeys(t *testing.T) {
 	}
 
 	// OnionSkin(address.FromPubKey(hop[4].HeaderPub), set.Next()).
-	PeelOnionSkin(t, b, c).Decrypt(hop[4].HeaderPriv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(hop[4].HeaderPrv, b, c)
 
 	// Forward(client.AddrPort).
 	f5 := PeelForward(t, b, c)
@@ -307,7 +307,7 @@ func TestSendKeys(t *testing.T) {
 	}
 
 	// OnionSkin(address.FromPubKey(client.HeaderPub), set.Next()).
-	PeelOnionSkin(t, b, c).Decrypt(client.HeaderPriv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(client.HeaderPrv, b, c)
 
 	// Confirmation(id).
 	co := PeelConfirmation(t, b, c)
@@ -355,7 +355,7 @@ func TestSendPurchase(t *testing.T) {
 	}
 
 	// OnionSkin(address.FromPubKey(hop[0].HeaderPub), set.Next()).
-	PeelOnionSkin(t, b, c).Decrypt(hop[0].HeaderPriv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(hop[0].HeaderPrv, b, c)
 
 	// Forward(hop[1].AddrPort).
 	f1 := PeelForward(t, b, c)
@@ -366,7 +366,7 @@ func TestSendPurchase(t *testing.T) {
 	}
 
 	// OnionSkin(address.FromPubKey(hop[1].HeaderPub), set.Next()).
-	PeelOnionSkin(t, b, c).Decrypt(hop[1].HeaderPriv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(hop[1].HeaderPrv, b, c)
 
 	// Forward(hop[2].AddrPort).
 	f2 := PeelForward(t, b, c)
@@ -377,7 +377,7 @@ func TestSendPurchase(t *testing.T) {
 	}
 
 	// OnionSkin(address.FromPubKey(hop[2].HeaderPub), set.Next()).
-	PeelOnionSkin(t, b, c).Decrypt(hop[2].HeaderPriv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(hop[2].HeaderPrv, b, c)
 
 	// Purchase(nBytes, prvs, pubs).
 	pr := PeelPurchase(t, b, c)
@@ -394,7 +394,7 @@ func TestSendPurchase(t *testing.T) {
 	}
 
 	// OnionSkin(address.FromPubKey(hop[3].HeaderPub), replies[0]).
-	PeelOnionSkin(t, b, c).Decrypt(hop[3].HeaderPriv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(hop[3].HeaderPrv, b, c)
 
 	// Reply(hop[4].AddrPort).
 	rp2 := PeelReply(t, b, c)
@@ -404,7 +404,7 @@ func TestSendPurchase(t *testing.T) {
 	}
 
 	// OnionSkin(address.FromPubKey(hop[4].HeaderPub), replies[1]).
-	PeelOnionSkin(t, b, c).Decrypt(hop[4].HeaderPriv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(hop[4].HeaderPrv, b, c)
 
 	// Reply(client.AddrPort).
 	rp3 := PeelReply(t, b, c)
@@ -414,7 +414,7 @@ func TestSendPurchase(t *testing.T) {
 	}
 
 	// OnionSkin(address.FromPubKey(client.HeaderPub), replies[2]).
-	PeelOnionSkin(t, b, c).Decrypt(client.HeaderPriv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(client.HeaderPrv, b, c)
 
 }
 
@@ -454,7 +454,7 @@ func TestSendExit(t *testing.T) {
 	}
 
 	// OnionSkin(address.FromPubKey(hop[0].HeaderPub), set.Next()).
-	PeelOnionSkin(t, b, c).Decrypt(hop[0].HeaderPriv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(hop[0].HeaderPrv, b, c)
 
 	// Forward(hop[1].AddrPort).
 	f1 := PeelForward(t, b, c)
@@ -465,7 +465,7 @@ func TestSendExit(t *testing.T) {
 	}
 
 	// OnionSkin(address.FromPubKey(hop[1].HeaderPub), set.Next()).
-	PeelOnionSkin(t, b, c).Decrypt(hop[1].HeaderPriv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(hop[1].HeaderPrv, b, c)
 
 	// Forward(hop[2].AddrPort).
 	f2 := PeelForward(t, b, c)
@@ -476,7 +476,7 @@ func TestSendExit(t *testing.T) {
 	}
 
 	// OnionSkin(address.FromPubKey(hop[2].HeaderPub), set.Next()).
-	PeelOnionSkin(t, b, c).Decrypt(hop[2].HeaderPriv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(hop[2].HeaderPrv, b, c)
 
 	// Exit(port, prvs, pubs, payload).
 	pr := PeelExit(t, b, c)
@@ -498,7 +498,7 @@ func TestSendExit(t *testing.T) {
 	}
 
 	// OnionSkin(address.FromPubKey(hop[3].HeaderPub), replies[0]).
-	PeelOnionSkin(t, b, c).Decrypt(hop[3].HeaderPriv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(hop[3].HeaderPrv, b, c)
 
 	// Reply(hop[4].AddrPort).
 	rp2 := PeelReply(t, b, c)
@@ -508,7 +508,7 @@ func TestSendExit(t *testing.T) {
 	}
 
 	// OnionSkin(address.FromPubKey(hop[4].HeaderPub), replies[1]).
-	PeelOnionSkin(t, b, c).Decrypt(hop[4].HeaderPriv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(hop[4].HeaderPrv, b, c)
 
 	// Reply(client.AddrPort).
 	rp3 := PeelReply(t, b, c)
@@ -518,6 +518,6 @@ func TestSendExit(t *testing.T) {
 	}
 
 	// OnionSkin(address.FromPubKey(client.HeaderPub), replies[2]).
-	PeelOnionSkin(t, b, c).Decrypt(client.HeaderPriv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(client.HeaderPrv, b, c)
 
 }

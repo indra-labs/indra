@@ -13,15 +13,15 @@ import (
 	"github.com/Indra-Labs/indra/pkg/slice"
 	"github.com/Indra-Labs/indra/pkg/types"
 	"github.com/Indra-Labs/indra/pkg/wire/cipher"
-	"github.com/Indra-Labs/indra/pkg/wire/confirmation"
+	"github.com/Indra-Labs/indra/pkg/wire/confirm"
 	"github.com/Indra-Labs/indra/pkg/wire/delay"
 	"github.com/Indra-Labs/indra/pkg/wire/exit"
 	"github.com/Indra-Labs/indra/pkg/wire/forward"
 	"github.com/Indra-Labs/indra/pkg/wire/layer"
 	"github.com/Indra-Labs/indra/pkg/wire/noop"
 	"github.com/Indra-Labs/indra/pkg/wire/purchase"
-	"github.com/Indra-Labs/indra/pkg/wire/reply"
 	"github.com/Indra-Labs/indra/pkg/wire/response"
+	"github.com/Indra-Labs/indra/pkg/wire/reverse"
 	"github.com/Indra-Labs/indra/pkg/wire/session"
 	"github.com/Indra-Labs/indra/pkg/wire/token"
 )
@@ -46,7 +46,7 @@ func (o OnionSkins) Cipher(hdr, pld *pub.Key) OnionSkins {
 }
 
 func (o OnionSkins) Confirmation(id nonce.ID) OnionSkins {
-	return append(o, &confirmation.OnionSkin{ID: id})
+	return append(o, &confirm.OnionSkin{ID: id})
 }
 
 func (o OnionSkins) Delay(d time.Duration) OnionSkins {
@@ -86,7 +86,7 @@ func (o OnionSkins) Purchase(nBytes uint64, prvs [3]*prv.Key,
 	})
 }
 func (o OnionSkins) Reply(ip *netip.AddrPort) OnionSkins {
-	return append(o, &reply.OnionSkin{AddrPort: ip, Onion: os})
+	return append(o, &reverse.OnionSkin{AddrPort: ip, Onion: os})
 }
 func (o OnionSkins) Response(res slice.Bytes) OnionSkins {
 	rs := response.OnionSkin(res)
