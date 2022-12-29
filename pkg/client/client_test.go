@@ -94,7 +94,6 @@ func TestPing(t *testing.T) {
 	for _, v := range clients {
 		v.Shutdown()
 	}
-
 }
 
 //
