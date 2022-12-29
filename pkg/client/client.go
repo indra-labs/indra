@@ -13,6 +13,7 @@ import (
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/key/signer"
 	"github.com/Indra-Labs/indra/pkg/node"
+	"github.com/Indra-Labs/indra/pkg/nonce"
 	"github.com/Indra-Labs/indra/pkg/slice"
 	"github.com/Indra-Labs/indra/pkg/types"
 	"github.com/Indra-Labs/indra/pkg/wire"
@@ -47,10 +48,19 @@ type Client struct {
 	*address.ReceiveCache
 	Circuits
 	Sessions
+	Confirms
 	sync.Mutex
 	*signer.KeySet
 	qu.C
 }
+type ConfirmHook func(cf *confirm.OnionSkin)
+
+type ConfirmCallback struct {
+	nonce.ID
+	Hook ConfirmHook
+}
+
+type Confirms []ConfirmCallback
 
 func New(tpt ifc.Transport, hdrPrv *prv.Key, no *node.Node,
 	nodes node.Nodes) (c *Client, e error) {
@@ -94,40 +104,40 @@ func (cl *Client) runner() (out bool) {
 		}
 		switch on := onion.(type) {
 		case *cipher.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
+			log.T.Ln(reflect.TypeOf(on))
 			cl.cipher(on, b, c)
 		case *confirm.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
+			log.T.Ln(reflect.TypeOf(on))
 			cl.confirm(on, b, c)
 		case *delay.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
+			log.T.Ln(reflect.TypeOf(on))
 			cl.delay(on, b, c)
 		case *exit.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
+			log.T.Ln(reflect.TypeOf(on))
 			cl.exit(on, b, c)
 		case *forward.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
+			log.T.Ln(reflect.TypeOf(on))
 			cl.forward(on, b, c)
 		case *layer.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
+			log.T.Ln(reflect.TypeOf(on))
 			cl.layer(on, b, c)
 		case *noop.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
+			log.T.Ln(reflect.TypeOf(on))
 			cl.noop(on, b, c)
 		case *purchase.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
+			log.T.Ln(reflect.TypeOf(on))
 			cl.purchase(on, b, c)
 		case *reverse.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
+			log.T.Ln(reflect.TypeOf(on))
 			cl.reply(on, b, c)
 		case *response.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
+			log.T.Ln(reflect.TypeOf(on))
 			cl.response(on, b, c)
 		case *session.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
+			log.T.Ln(reflect.TypeOf(on))
 			cl.session(on, b, c)
 		case *token.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
+			log.T.Ln(reflect.TypeOf(on))
 			cl.token(on, b, c)
 		default:
 			log.I.S("unrecognised packet", b)
@@ -146,7 +156,13 @@ func (cl *Client) confirm(on *confirm.OnionSkin, b slice.Bytes,
 	// This will be an 8 byte nonce that confirms a message passed, ping and
 	// cipher onions return these, as they are pure forward messages that
 	// send a message one way and the confirmation is the acknowledgement.
-	log.I.S(on)
+	// log.I.S(on)
+	for i := range cl.Confirms {
+		// log.I.S(cl.Confirms[i].ID, on.ID)
+		if on.ID == cl.Confirms[i].ID {
+			cl.Confirms[i].Hook(on)
+		}
+	}
 }
 
 func (cl *Client) delay(on *delay.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
@@ -167,28 +183,28 @@ func (cl *Client) forward(on *forward.OnionSkin, b slice.Bytes, c *slice.Cursor)
 	if on.AddrPort.String() == cl.Node.AddrPort.String() {
 		// it is for us, we want to unwrap the next
 		// part.
-		log.I.Ln("processing new message", *c)
+		log.T.Ln("processing new message", *c)
 		b = append(b[*c:], slice.NoisePad(int(*c))...)
 		cl.Node.Send(b)
 	} else {
 		// we need to forward this message onion.
-		log.I.Ln("forwarding")
+		log.T.Ln("forwarding")
 		cl.Send(on.AddrPort, b)
 	}
 }
 
 func (cl *Client) layer(on *layer.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	// this is probably an encrypted layer for us.
-	log.I.Ln("decrypting onion skin")
+	log.T.Ln("decrypting onion skin")
 	// log.I.S(on, b[*c:].ToBytes())
 	rcv := cl.ReceiveCache.FindCloaked(on.Cloak)
 	if rcv == nil {
-		log.I.Ln("no matching key found from cloaked key")
+		log.T.Ln("no matching key found from cloaked key")
 		return
 	}
 	on.Decrypt(rcv.Key, b, c)
 	b = append(b[*c:], slice.NoisePad(int(*c))...)
-	log.I.S(b.ToBytes())
+	log.T.S(b.ToBytes())
 	cl.Node.Send(b)
 }
 
@@ -234,6 +250,15 @@ func (cl *Client) session(s *session.OnionSkin, b slice.Bytes, cur *slice.Cursor
 func (cl *Client) token(t *token.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
 	// not really sure if we are using these.
 	return
+}
+
+func (cl *Client) RegisterConfirmation(id nonce.ID, hook ConfirmHook) {
+	cl.Mutex.Lock()
+	cl.Confirms = append(cl.Confirms, ConfirmCallback{
+		ID:   id,
+		Hook: hook,
+	})
+	cl.Mutex.Unlock()
 }
 
 func (cl *Client) Cleanup() {
