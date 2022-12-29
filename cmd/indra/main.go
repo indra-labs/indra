@@ -36,8 +36,8 @@ var commands = &cmds.Command{
 	},
 	Commands: cmds.Commands{
 		{
-			Name:        "version",
-			Description: "print indra version",
+			Name:          "version",
+			Description:   "print indra version",
 			Documentation: lorem,
 			Configs:       config.Opts{},
 			Entrypoint: func(c *cmds.Command, args []string) error {

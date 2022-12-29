@@ -16,11 +16,7 @@ func NewMultiAddrForced(addr string) multiaddr.Multiaddr {
 }
 
 type Config struct {
-
-	PublicAddress multiaddr.Multiaddr
+	PublicAddress   multiaddr.Multiaddr
 	ListenAddresses []multiaddr.Multiaddr
 	SeedAddresses   []multiaddr.Multiaddr
-
-
-
 }
