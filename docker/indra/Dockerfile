@@ -31,8 +31,7 @@ RUN set -ex \
 #  && if [ "${ARCH}" = "arm32v7" ]; then export GOARCH=arm; fi \
 #  && if [ "${ARCH}" = "arm64v8" ]; then export GOARCH=arm64; fi \
   && go install -v ./cmd/indra/. \
-  && mkdir -pv /release/bin \
-  && CGO_ENABLED=0 go release --ldflags '-w -s' -o /release/bin/indra ./cmd/indra/.
+  && CGO_ENABLED=0 go build --ldflags '-w -s' -o /bin/indra ./cmd/indra/.
 
 # ---
 # Configure and Build the target container
@@ -44,18 +43,18 @@ FROM scratch
 COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /etc/group /etc/group
 
-# Migrate the binaries
-COPY --from=builder /build/bin /bin
-COPY --from=builder /var/indra /var/indra
+# Migrate the binaries and storage folder
+COPY --from=builder --chown=indra:indra /bin/indra /bin/indra
+COPY --from=builder --chown=indra:indra /var/indra /var/indra
 
-# Enable the btcd user
+# Enable the indra user
 USER indra:indra
 
 # ENV defaults
 # ENV IND_LOGFILEPATH=""
 
 # Set the data volume
-#VOLUME ["/indra"]
+#VOLUME ["/var/indra"]
 
 # :8337  indra peer-to-peer port
 # :8338  indra RPC port
