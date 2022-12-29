@@ -32,7 +32,7 @@ RUN set -ex \
 #  && if [ "${ARCH}" = "arm64v8" ]; then export GOARCH=arm64; fi \
   && go install -v ./cmd/indra/. \
   && mkdir -pv /build/bin \
-  && CGO_ENABLED=0 go build -buildvcs=false --ldflags '-w -s' -o /build/bin/indra ./cmd/indra/.
+  && CGO_ENABLED=0 go build --ldflags '-w -s' -o /build/bin/indra ./cmd/indra/.
 
 # ---
 # Configure and Build the target container
