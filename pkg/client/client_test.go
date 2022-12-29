@@ -38,7 +38,6 @@ func TestPing(t *testing.T) {
 		}
 		pldPub := pub.Derive(pldPrv)
 		addr := slice.GenerateRandomAddrPortIPv4()
-		log.I.S(addr)
 		nodes[i], _ = node.New(addr, hdrPub, pldPub, hdrPrv, pldPrv, transports[i])
 		if clients[i], e = New(transports[i], hdrPrv, nodes[i], nil); check(e) {
 			t.Error(e)

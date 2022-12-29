@@ -23,10 +23,6 @@ var (
 //
 // After ~10 seconds these can be purged from the cache as they are otherwise a
 // DoS vector buffer flooding.
-//
-// The Decode function wipes the original message data for security as the
-// private keys inside it are no longer needed and any secret should only have
-// one storage, so it doesn't appear in any GC later.
 type OnionSkin struct {
 	Header, Payload *pub.Key
 	types.Onion
