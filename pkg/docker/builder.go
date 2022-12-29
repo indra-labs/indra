@@ -57,7 +57,7 @@ func (cli *Builder) Build() (err error) {
 		buildOpts.Tags = append(buildOpts.Tags, buildRepositoryName + ":" + "stable")
 	}
 
-	// Generate a tar file for docker's build context. It will contain the root of the repository's path.
+	// Generate a tar file for docker's release context. It will contain the root of the repository's path.
 	// A tar file is passed in to the docker daemon.
 
 	var tar io.ReadCloser
@@ -68,9 +68,9 @@ func (cli *Builder) Build() (err error) {
 
 	defer tar.Close()
 
-	// Submit a build to docker; with the context tar, and default options defined above.
+	// Submit a release to docker; with the context tar, and default options defined above.
 
-	log.I.Ln("submitting build to docker...")
+	log.I.Ln("submitting release to docker...")
 
 	var response types.ImageBuildResponse
 
@@ -90,14 +90,14 @@ func (cli *Builder) Build() (err error) {
 
 	// Prune the intermediate golang:x.xx builder container
 
-	log.I.Ln("pruning build container(s)...")
+	log.I.Ln("pruning release container(s)...")
 
 	if _, err = cli.ImagesPrune(cli.ctx, filters.NewArgs()); check(err) {
 		return
 	}
 
 	log.I.Ln("pruning successful.")
-	log.I.Ln("build successful!")
+	log.I.Ln("release successful!")
 
 	return
 }

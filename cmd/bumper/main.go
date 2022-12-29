@@ -1,7 +1,7 @@
 // Package main is a tool for creating version information to be placed at the
 // repository root of a project.
 //
-// It provides basic build information, references the parent Git commit hash,
+// It provides basic release information, references the parent Git commit hash,
 // automatically increments the minor version, tags the commit with the version
 // so that it is easy for importing projects to use a Semantic Versioning
 // version code instead of depending on automatic generated codes from Go's
@@ -194,7 +194,7 @@ var (
 	ParentGitCommit = "%s"
 	// BuildTime stores the time when the current binary was built.
 	BuildTime = "%s"
-	// SemVer lists the (latest) git tag on the build.
+	// SemVer lists the (latest) git tag on the release.
 	SemVer = "%s"
 	// PathBase is the path base returned from runtime caller.
 	PathBase = "%s"

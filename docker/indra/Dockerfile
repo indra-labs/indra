@@ -17,7 +17,7 @@ RUN addgroup ${GROUP} --gid ${GID} \
     "${USER}" \
  && mkdir -pv /var/indra/.indra && chown -R indra:indra /var/indra
 
-# Source/Target build defaults
+# Source/Target release defaults
 ARG ARCH=amd64
 ARG GOARCH=amd64
 
@@ -31,8 +31,8 @@ RUN set -ex \
 #  && if [ "${ARCH}" = "arm32v7" ]; then export GOARCH=arm; fi \
 #  && if [ "${ARCH}" = "arm64v8" ]; then export GOARCH=arm64; fi \
   && go install -v ./cmd/indra/. \
-  && mkdir -pv /build/bin \
-  && CGO_ENABLED=0 go build --ldflags '-w -s' -o /build/bin/indra ./cmd/indra/.
+  && mkdir -pv /release/bin \
+  && CGO_ENABLED=0 go release --ldflags '-w -s' -o /release/bin/indra ./cmd/indra/.
 
 # ---
 # Configure and Build the target container

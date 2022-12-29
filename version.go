@@ -13,7 +13,7 @@ var (
 	ParentGitCommit = "2dc3027cf28b04b52b8bca3839a96267122f8b92"
 	// BuildTime stores the time when the current binary was built.
 	BuildTime = "2022-12-29T02:49:15Z"
-	// SemVer lists the (latest) git tag on the build.
+	// SemVer lists the (latest) git tag on the release.
 	SemVer = "v0.0.255"
 	// PathBase is the path base returned from runtime caller.
 	PathBase = "/home/lyo/Seafile/Git/indra-labs/indra/"

@@ -133,7 +133,7 @@ var (
 	ParentGitCommit = "%s"
 	// BuildTime stores the time when the current binary was built.
 	BuildTime = "%s"
-	// SemVer lists the (latest) git tag on the build.
+	// SemVer lists the (latest) git tag on the release.
 	SemVer = "%s"
 	// PathBase is the path base returned from runtime caller.
 	PathBase = "%s"
