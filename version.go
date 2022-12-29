@@ -10,9 +10,9 @@ var (
 	// GitRef is the gitref, as in refs/heads/branchname.
 	GitRef = "refs/heads/ind-bootstrap"
 	// ParentGitCommit is the commit hash of the parent HEAD.
-	ParentGitCommit = "878a6ec79d65b75c9dbc05274bee6eba923d2134"
+	ParentGitCommit = "9403cbbbd2a0eecf6e7c6a53b090efc7eeb4b54e"
 	// BuildTime stores the time when the current binary was built.
-	BuildTime = "2022-12-29T14:43:34Z"
+	BuildTime = "2022-12-29T14:45:40Z"
 	// SemVer lists the (latest) git tag on the release.
 	SemVer = "v0.1.0"
 	// PathBase is the path base returned from runtime caller.
