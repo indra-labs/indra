@@ -52,7 +52,7 @@ func (s Sessions) Find(t nonce.ID) (se *Session) {
 // NewSession creates a new Session.
 //
 // Purchasing a session the seller returns a token, based on a requested data
-// allocation,
+// allocation.
 func NewSession(id nonce.ID, rem uint64, hdr, pld *address.SendEntry,
 	kr *signer.KeySet) (s *Session) {
 

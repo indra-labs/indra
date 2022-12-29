@@ -1,6 +1,7 @@
 package forward
 
 import (
+	"fmt"
 	"net"
 	"net/netip"
 
@@ -24,6 +25,11 @@ var (
 type OnionSkin struct {
 	*netip.AddrPort
 	types.Onion
+}
+
+func (x *OnionSkin) String() string {
+	s, _ := x.AddrPort.MarshalBinary()
+	return fmt.Sprintf("\n\taddrport: %x %v\n", s, x.AddrPort.String())
 }
 
 func (x *OnionSkin) Inner() types.Onion   { return x.Onion }
