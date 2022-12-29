@@ -25,11 +25,13 @@ var (
 )
 
 var (
-	buildContextFilePath = "/tmp/indra-build.tar"
+	buildContextFilePath = "/tmp/indra-" + indra.SemVer + ".tar"
+	buildRepositoryName = "indralabs/indra"
+	isRelease = false
 	buildOpts            = types.ImageBuildOptions{
 		Tags: []string{
-			"indralabs/indra:" + indra.SemVer,
-			"indralabs/indra:latest",
+			buildRepositoryName + ":" + indra.SemVer,
+			buildRepositoryName +":" + "latest",
 		},
 		Dockerfile: "docker/indra/Dockerfile",
 		SuppressOutput: false,
@@ -57,6 +59,10 @@ func (cli *Builder) Build() (err error) {
 	}
 
 	defer tar.Close()
+
+	if isRelease {
+		buildOpts.Tags = append(buildOpts.Tags, buildRepositoryName + ":" + "stable")
+	}
 
 	log.I.Ln("submitting build to docker...")
 
@@ -97,6 +103,7 @@ func (cli *Builder) Push(opts types.ImagePushOptions) (err error) {
 		return
 	}
 
+	// Load the docker config
 	config := configfile.New("config.json")
 	config.LoadFromReader(bytes.NewReader(file))
 
@@ -105,15 +112,18 @@ func (cli *Builder) Push(opts types.ImagePushOptions) (err error) {
 
 	var pushResponse io.ReadCloser
 
+	// Run through all repositories.
 	for _, auth := range config.AuthConfigs {
 
 		log.I.Ln("found", auth.ServerAddress)
 
+		// Generate an authentication token
 		authConfigBytes, _ := json.Marshal(auth)
 		authConfigEncoded := base64.URLEncoding.EncodeToString(authConfigBytes)
 
 		opts.RegistryAuth = authConfigEncoded
 
+		// Pushes each tag to the docker repository.
 		for _, tag := range buildOpts.Tags {
 
 			log.I.Ln("pushing", tag)
