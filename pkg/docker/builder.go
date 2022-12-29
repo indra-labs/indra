@@ -51,23 +51,29 @@ func (cli *Builder) Build() (err error) {
 
 	log.I.Ln("building", buildOpts.Tags[0], "from", buildOpts.Dockerfile)
 
+	// If we're building a release, we should also tag stable.
+
+	if isRelease {
+		buildOpts.Tags = append(buildOpts.Tags, buildRepositoryName + ":" + "stable")
+	}
+
 	// Generate a tar file for docker's build context. It will contain the root of the repository's path.
 	// A tar file is passed in to the docker daemon.
+
 	var tar io.ReadCloser
+
 	if tar, err = archive.TarWithOptions(".", &archive.TarOptions{}); check(err) {
 		return
 	}
 
 	defer tar.Close()
 
-	if isRelease {
-		buildOpts.Tags = append(buildOpts.Tags, buildRepositoryName + ":" + "stable")
-	}
+	// Submit a build to docker; with the context tar, and default options defined above.
 
 	log.I.Ln("submitting build to docker...")
 
-	// Submit a build to docker; with the context tar, and default options defined above.
 	var response types.ImageBuildResponse
+
 	if response, err = cli.ImageBuild(cli.ctx, tar, buildOpts); check(err) {
 		return
 	}
@@ -75,15 +81,17 @@ func (cli *Builder) Build() (err error) {
 	defer response.Body.Close()
 
 	// Generate a terminal for output
+
 	termFd, isTerm := term.GetFdInfo(os.Stderr)
 
 	if err = jsonmessage.DisplayJSONMessagesStream(response.Body, os.Stderr, termFd, isTerm, nil); check(err) {
 		return
 	}
 
+	// Prune the intermediate golang:x.xx builder container
+
 	log.I.Ln("pruning build container(s)...")
 
-	// Prune the intermediate golang:x.xx builder container
 	if _, err = cli.ImagesPrune(cli.ctx, filters.NewArgs()); check(err) {
 		return
 	}
@@ -104,20 +112,24 @@ func (cli *Builder) Push(opts types.ImagePushOptions) (err error) {
 	}
 
 	// Load the docker config
+
 	config := configfile.New("config.json")
 	config.LoadFromReader(bytes.NewReader(file))
 
 	// Generate a terminal for output
+
 	termFd, isTerm := term.GetFdInfo(os.Stderr)
+
+	// Push the specified tags to each docker repository
 
 	var pushResponse io.ReadCloser
 
-	// Run through all repositories.
 	for _, auth := range config.AuthConfigs {
 
 		log.I.Ln("found", auth.ServerAddress)
 
 		// Generate an authentication token
+
 		authConfigBytes, _ := json.Marshal(auth)
 		authConfigEncoded := base64.URLEncoding.EncodeToString(authConfigBytes)
 
