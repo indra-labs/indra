@@ -91,6 +91,7 @@ func (cl *Client) runner() (out bool) {
 		break
 	case b := <-cl.Node.Receive():
 		// process received message
+		log.I.Ln("received message")
 		var onion types.Onion
 		var e error
 		c := slice.NewCursor()
@@ -99,40 +100,40 @@ func (cl *Client) runner() (out bool) {
 		}
 		switch on := onion.(type) {
 		case *cipher.OnionSkin:
-			log.T.Ln(reflect.TypeOf(on))
+			log.I.Ln(reflect.TypeOf(on))
 			cl.cipher(on, b, c)
 		case *confirm.OnionSkin:
-			log.T.Ln(reflect.TypeOf(on))
+			log.I.Ln(reflect.TypeOf(on))
 			cl.confirm(on, b, c)
 		case *delay.OnionSkin:
-			log.T.Ln(reflect.TypeOf(on))
+			log.I.Ln(reflect.TypeOf(on))
 			cl.delay(on, b, c)
 		case *exit.OnionSkin:
-			log.T.Ln(reflect.TypeOf(on))
+			log.I.Ln(reflect.TypeOf(on))
 			cl.exit(on, b, c)
 		case *forward.OnionSkin:
-			log.T.Ln(reflect.TypeOf(on))
+			log.I.Ln(reflect.TypeOf(on))
 			cl.forward(on, b, c)
 		case *layer.OnionSkin:
-			log.T.Ln(reflect.TypeOf(on))
+			log.I.Ln(reflect.TypeOf(on))
 			cl.layer(on, b, c)
 		case *noop.OnionSkin:
-			log.T.Ln(reflect.TypeOf(on))
+			log.I.Ln(reflect.TypeOf(on))
 			cl.noop(on, b, c)
 		case *purchase.OnionSkin:
-			log.T.Ln(reflect.TypeOf(on))
+			log.I.Ln(reflect.TypeOf(on))
 			cl.purchase(on, b, c)
 		case *reverse.OnionSkin:
-			log.T.Ln(reflect.TypeOf(on))
+			log.I.Ln(reflect.TypeOf(on))
 			cl.reply(on, b, c)
 		case *response.OnionSkin:
-			log.T.Ln(reflect.TypeOf(on))
+			log.I.Ln(reflect.TypeOf(on))
 			cl.response(on, b, c)
 		case *session.OnionSkin:
-			log.T.Ln(reflect.TypeOf(on))
+			log.I.Ln(reflect.TypeOf(on))
 			cl.session(on, b, c)
 		case *token.OnionSkin:
-			log.T.Ln(reflect.TypeOf(on))
+			log.I.Ln(reflect.TypeOf(on))
 			cl.token(on, b, c)
 		default:
 			log.I.S("unrecognised packet", b)
@@ -141,9 +142,12 @@ func (cl *Client) runner() (out bool) {
 	return
 }
 
-func (cl *Client) cipher(on *cipher.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
+func (cl *Client) cipher(on *cipher.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	// This either is in a forward only SendKeys message or we are the buyer
 	// and these are our session keys.
+	log.I.S(on)
+	b = append(b[*c:], slice.NoisePad(int(*c))...)
+	cl.Node.Send(b)
 }
 
 func (cl *Client) confirm(on *confirm.OnionSkin, b slice.Bytes,
@@ -179,28 +183,28 @@ func (cl *Client) forward(on *forward.OnionSkin, b slice.Bytes, c *slice.Cursor)
 	if on.AddrPort.String() == cl.Node.AddrPort.String() {
 		// it is for us, we want to unwrap the next
 		// part.
-		log.T.Ln("processing new message", *c)
+		log.I.Ln("processing new message", *c, cl.AddrPort.String())
 		b = append(b[*c:], slice.NoisePad(int(*c))...)
 		cl.Node.Send(b)
 	} else {
 		// we need to forward this message onion.
-		log.T.Ln("forwarding")
+		log.I.Ln("forwarding")
 		cl.Send(on.AddrPort, b)
 	}
 }
 
 func (cl *Client) layer(on *layer.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	// this is probably an encrypted layer for us.
-	log.T.Ln("decrypting onion skin")
+	log.I.Ln("decrypting onion skin")
 	// log.I.S(on, b[*c:].ToBytes())
 	rcv := cl.ReceiveCache.FindCloaked(on.Cloak)
 	if rcv == nil {
-		log.T.Ln("no matching key found from cloaked key")
+		log.I.Ln("no matching key found from cloaked key")
 		return
 	}
 	on.Decrypt(rcv.Key, b, c)
 	b = append(b[*c:], slice.NoisePad(int(*c))...)
-	log.T.S(b.ToBytes())
+	log.I.S(b.ToBytes())
 	cl.Node.Send(b)
 }
 
