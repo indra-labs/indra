@@ -8,11 +8,11 @@ var (
 	// URL is the git URL for the repository.
 	URL = "github.com/Indra-Labs/indra"
 	// GitRef is the gitref, as in refs/heads/branchname.
-	GitRef = "refs/heads/main"
+	GitRef = "refs/heads/protocol"
 	// ParentGitCommit is the commit hash of the parent HEAD.
-	ParentGitCommit = "cd62009a5db7dd18f53b311af756a005b732cf20"
+	ParentGitCommit = "83a692da2d96ef804e799e802d6815b07aa66c77"
 	// BuildTime stores the time when the current binary was built.
-	BuildTime = "2022-12-29T12:02:30Z"
+	BuildTime = "2022-12-29T12:06:37Z"
 	// SemVer lists the (latest) git tag on the release.
 	SemVer = "v0.0.259"
 	// PathBase is the path base returned from runtime caller.
