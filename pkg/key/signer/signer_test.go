@@ -11,7 +11,7 @@ import (
 
 // this just really demonstrates how the keys generated are not linkable.
 func TestKeySet_Next(t *testing.T) {
-	for rounds := 0; rounds < 10000; rounds++ {
+	for rounds := 0; rounds < 1000; rounds++ {
 		key, ks, e := New()
 		if check(e) {
 			t.FailNow()
