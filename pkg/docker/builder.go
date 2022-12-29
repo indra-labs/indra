@@ -20,30 +20,33 @@ import (
 )
 
 var (
-	log      = log2.GetLogger(indra.PathBase)
-	check    = log.E.Chk
+	log   = log2.GetLogger(indra.PathBase)
+	check = log.E.Chk
 )
 
 var (
+	buildRepositoryName  = "indralabs/indra"
 	buildContextFilePath = "/tmp/indra-" + indra.SemVer + ".tar"
-	buildRepositoryName = "indralabs/indra"
-	isRelease = false
 	buildOpts            = types.ImageBuildOptions{
+		Dockerfile: "docker/indra/Dockerfile",
 		Tags: []string{
 			buildRepositoryName + ":" + indra.SemVer,
-			buildRepositoryName +":" + "latest",
+			buildRepositoryName + ":" + "latest",
 		},
-		Dockerfile: "docker/indra/Dockerfile",
 		SuppressOutput: false,
 		Remove:         true,
 		ForceRemove:    true,
 		PullParent:     true,
 	}
+	isRelease = false
 )
+
+func SetRelease() {
+	isRelease = true
+}
 
 type Builder struct {
 	*client.Client
-
 	ctx context.Context
 }
 
@@ -54,7 +57,7 @@ func (cli *Builder) Build() (err error) {
 	// If we're building a release, we should also tag stable.
 
 	if isRelease {
-		buildOpts.Tags = append(buildOpts.Tags, buildRepositoryName + ":" + "stable")
+		buildOpts.Tags = append(buildOpts.Tags, buildRepositoryName+":"+"stable")
 	}
 
 	// Generate a tar file for docker's release context. It will contain the root of the repository's path.
@@ -138,6 +141,7 @@ func (cli *Builder) Push(opts types.ImagePushOptions) (err error) {
 		opts.RegistryAuth = base64.URLEncoding.EncodeToString(authConfigBytes)
 
 		// Pushes each tag to the docker repository.
+
 		for _, tag := range buildOpts.Tags {
 
 			log.I.Ln("pushing", tag)
