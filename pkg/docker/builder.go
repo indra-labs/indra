@@ -106,14 +106,17 @@ func (cli *Builder) Push(opts types.ImagePushOptions) (err error) {
 
 	log.I.Ln("pushing tagged images to repository...")
 
+	// Load the docker config
+
 	var file []byte
+	var config *configfile.ConfigFile
+
 	if file, err = ioutil.ReadFile(os.Getenv("INDRA_DOCKER_CONFIG")); check(err) {
 		return
 	}
 
-	// Load the docker config
+	config = configfile.New("config.json")
 
-	config := configfile.New("config.json")
 	config.LoadFromReader(bytes.NewReader(file))
 
 	// Generate a terminal for output
@@ -131,9 +134,8 @@ func (cli *Builder) Push(opts types.ImagePushOptions) (err error) {
 		// Generate an authentication token
 
 		authConfigBytes, _ := json.Marshal(auth)
-		authConfigEncoded := base64.URLEncoding.EncodeToString(authConfigBytes)
 
-		opts.RegistryAuth = authConfigEncoded
+		opts.RegistryAuth = base64.URLEncoding.EncodeToString(authConfigBytes)
 
 		// Pushes each tag to the docker repository.
 		for _, tag := range buildOpts.Tags {
