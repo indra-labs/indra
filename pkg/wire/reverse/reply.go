@@ -16,7 +16,7 @@ var (
 	check                   = log.E.Chk
 	MagicString             = "rl"
 	Magic                   = slice.Bytes(MagicString)
-	MinLen                  = magicbytes.Len + 1 + net.IPv4len
+	MinLen                  = magicbytes.Len + 1 + net.IPv6len + 2
 	_           types.Onion = &OnionSkin{}
 )
 
@@ -34,14 +34,7 @@ type OnionSkin struct {
 
 func (x *OnionSkin) Inner() types.Onion   { return x.Onion }
 func (x *OnionSkin) Insert(o types.Onion) { x.Onion = o }
-func (x *OnionSkin) Len() int {
-	var ap []byte
-	var e error
-	if ap, e = x.AddrPort.MarshalBinary(); check(e) {
-		return -1
-	}
-	return magicbytes.Len + 1 + len(ap) + x.Onion.Len()
-}
+func (x *OnionSkin) Len() int             { return MinLen + x.Onion.Len() }
 
 func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
@@ -51,7 +44,7 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 		return
 	}
 	b[*c] = byte(len(ap))
-	copy(b[c.Inc(1):c.Inc(len(ap))], ap)
+	copy(b[c.Inc(1):c.Inc(MinLen-magicbytes.Len-1)], ap)
 	x.Onion.Encode(b, c)
 }
 
@@ -60,9 +53,9 @@ func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 		return magicbytes.TooShort(len(b[*c:]), MinLen-magicbytes.Len, string(Magic))
 	}
 	apLen := b[*c]
-	apBytes := b[c.Inc(1):c.Inc(int(apLen))]
+	apBytes := b[c.Inc(1):c.Inc(MinLen-magicbytes.Len-1)]
 	x.AddrPort = &netip.AddrPort{}
-	if e = x.AddrPort.UnmarshalBinary(apBytes); check(e) {
+	if e = x.AddrPort.UnmarshalBinary(apBytes[:apLen]); check(e) {
 		return
 	}
 	return
