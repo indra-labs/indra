@@ -10,6 +10,7 @@ import (
 	"github.com/cybriq/proc/pkg/opts/config"
 	"github.com/cybriq/proc/pkg/opts/list"
 	"github.com/cybriq/proc/pkg/opts/meta"
+	"github.com/davecgh/go-spew/spew"
 	"os"
 )
 
@@ -24,7 +25,7 @@ func init() {
 
 var commands = &cmds.Command{
 	Name:          "indra",
-	Description:   "Nobody's watching you. Network Freedom.",
+	Description:   "Network Freedom.",
 	Documentation: lorem,
 	Default:       cmds.Tags("help"),
 	Configs:       config.Opts{},
@@ -37,7 +38,7 @@ var commands = &cmds.Command{
 	Commands: cmds.Commands{
 		{
 			Name:          "version",
-			Description:   "print indra version",
+			Description:   "prints the indra version",
 			Documentation: lorem,
 			Configs:       config.Opts{},
 			Entrypoint: func(c *cmds.Command, args []string) error {
@@ -71,6 +72,19 @@ var commands = &cmds.Command{
 					Default:       "/ip4/172.16.238.2/tcp/8337",
 				}, func(opt *list.Opt) error {
 
+					log.I.Ln("adding seed", opt.String())
+
+					return nil
+				}),
+				"peer": list.New(meta.Data{
+					Label:         "peer",
+					Description:   "Adds a list of peer multiaddresses. Example: /ip4/0.0.0.0/tcp/8337",
+					Documentation: lorem,
+					Default:       "/ip4/0.0.0.0/tcp/8337",
+				}, func(opt *list.Opt) error {
+
+					log.I.Ln("adding peer", opt.String())
+
 					return nil
 				}),
 				"listen": list.New(meta.Data{
@@ -80,12 +94,16 @@ var commands = &cmds.Command{
 					Default:       "/ip4/0.0.0.0/tcp/8337",
 				}, func(opt *list.Opt) error {
 
+					log.I.Ln("adding p2p listener", opt.String())
+
 					return nil
 				}),
 			},
 			Entrypoint: func(c *cmds.Command, args []string) error {
 
 				log.I.Ln("-- ", log2.App, "-", indra.SemVer, "- Network Freedom. --")
+
+				spew.Dump(c.Configs)
 
 				var err error
 				var srv *server.Server
