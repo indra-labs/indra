@@ -3,8 +3,9 @@ module github.com/Indra-Labs/indra
 go 1.19
 
 require (
-	github.com/cybriq/proc v0.20.9
+	github.com/cybriq/proc v0.20.10
 	github.com/cybriq/qu v0.1.2
+	github.com/davecgh/go-spew v1.1.1
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0
 	github.com/docker/cli v0.0.0-20191017083524-a8ff7f821017
 	github.com/docker/docker v20.10.22+incompatible
@@ -14,6 +15,7 @@ require (
 	github.com/moby/term v0.0.0-20221205130635-1aeaba878587
 	github.com/multiformats/go-multiaddr v0.8.0
 	github.com/templexxx/reedsolomon v1.1.3
+	go.uber.org/atomic v1.10.0
 	gopkg.in/src-d/go-git.v4 v4.13.1
 )
 
@@ -27,7 +29,6 @@ require (
 	github.com/containerd/cgroups v1.0.4 // indirect
 	github.com/containerd/containerd v1.6.14 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/davidlazar/go-crypto v0.0.0-20200604182044-b73af7476f6c // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.6.3 // indirect
@@ -131,7 +132,6 @@ require (
 	github.com/xanzy/ssh-agent v0.2.1 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/dig v1.15.0 // indirect
 	go.uber.org/fx v1.18.2 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
@@ -154,4 +154,4 @@ replace crypto/sha256 => github.com/minio/sha256-simd v1.0.0
 
 replace math/rand => github.com/lukechampine/frand v1.4.2
 
-//replace github.com/cybriq/proc => ../../cybriq/proc
+replace github.com/cybriq/proc => ./pkg/proc

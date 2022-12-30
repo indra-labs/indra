@@ -91,7 +91,7 @@ func (cl *Client) runner() (out bool) {
 		break
 	case b := <-cl.Node.Receive():
 		// process received message
-		log.I.Ln("received message")
+		// log.I.Ln("received message")
 		var onion types.Onion
 		var e error
 		c := slice.NewCursor()
@@ -125,7 +125,7 @@ func (cl *Client) runner() (out bool) {
 			cl.purchase(on, b, c)
 		case *reverse.OnionSkin:
 			log.I.Ln(reflect.TypeOf(on))
-			cl.reply(on, b, c)
+			cl.reverse(on, b, c)
 		case *response.OnionSkin:
 			log.I.Ln(reflect.TypeOf(on))
 			cl.response(on, b, c)
@@ -174,7 +174,7 @@ func (cl *Client) delay(on *delay.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
 
 func (cl *Client) exit(on *exit.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
 	// payload is forwarded to a local port and the response is forwarded
-	// back with a reply header.
+	// back with a reverse header.
 }
 
 func (cl *Client) forward(on *forward.OnionSkin, b slice.Bytes, c *slice.Cursor) {
@@ -204,7 +204,7 @@ func (cl *Client) layer(on *layer.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	}
 	on.Decrypt(rcv.Key, b, c)
 	b = append(b[*c:], slice.NoisePad(int(*c))...)
-	log.I.S(b.ToBytes())
+	// log.I.S(b.ToBytes())
 	cl.Node.Send(b)
 }
 
@@ -219,17 +219,25 @@ func (cl *Client) purchase(on *purchase.OnionSkin, b slice.Bytes, c *slice.Curso
 	s.Deadline = time.Now().Add(DefaultDeadline)
 	cl.Sessions = append(cl.Sessions, s)
 	cl.Mutex.Unlock()
+	// log.I.Ln("todo: construct return message")
+	log.I.S(b[*c:].ToBytes())
+	// cl.Node.Send(b[*c:])
+
+	panic("todo: process purchase message")
 }
 
-func (cl *Client) reply(on *reverse.OnionSkin, b slice.Bytes, c *slice.Cursor) {
+func (cl *Client) reverse(on *reverse.OnionSkin, b slice.Bytes, c *slice.Cursor) {
+	log.I.Ln("reverse")
 	// Reply means another OnionSkin is coming and the payload encryption
 	// uses the Payload key.
 	if on.AddrPort.String() == cl.Node.AddrPort.String() {
+		log.I.Ln("it's for us")
 		// it is for us, we want to unwrap the next part.
 		cl.Node.Send(b)
 	} else {
 		// we need to forward this message onion.
-		cl.Send(on.AddrPort, b)
+		// cl.Send(on.AddrPort, b)
+		panic("we haven't processed it yet")
 	}
 
 }
@@ -239,7 +247,7 @@ func (cl *Client) response(on *response.OnionSkin, b slice.Bytes, cur *slice.Cur
 }
 
 func (cl *Client) session(s *session.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
-	// Session is returned from a Purchase message in the reply layers.
+	// Session is returned from a Purchase message in the reverse layers.
 	//
 	// Session has a nonce.ID that is given in the last layer of a LN sphinx
 	// Bolt 4 onion routed payment path that will cause the seller to
