@@ -249,3 +249,19 @@ func GenerateRandomAddrPortIPv4() (ap *netip.AddrPort) {
 	a, e = netip.ParseAddrPort(str)
 	return &a
 }
+
+func GenerateRandomAddrPortIPv6() (ap *netip.AddrPort) {
+	a := netip.AddrPort{}
+	b := make([]byte, 19)
+	_, e := rand.Read(b)
+	if check(e) {
+		log.E.Ln(e)
+	}
+	port := DecodeUint16(b[5:7])
+	str := fmt.Sprintf("[%x:%x:%x:%x:%x:%x:%x:%x]:%d",
+		b[1:3], b[3:5], b[5:7], b[7:9],
+		b[9:11], b[11:13], b[13:15], b[15:17],
+		port)
+	a, e = netip.ParseAddrPort(str)
+	return &a
+}
