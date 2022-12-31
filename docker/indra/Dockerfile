@@ -54,7 +54,7 @@ USER indra:indra
 # ENV IND_LOGFILEPATH=""
 
 # Set the data volume
-VOLUME ["/var/indra"]
+#VOLUME ["/var/indra"]
 
 # :8337  indra peer-to-peer port
 # :8338  indra RPC port
