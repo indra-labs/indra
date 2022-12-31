@@ -10,13 +10,16 @@ import (
 	log2 "github.com/cybriq/proc/pkg/log"
 )
 
+const (
+	MagicString = "dl"
+	Len         = magicbytes.Len + slice.Uint64Len
+)
+
 var (
-	log                     = log2.GetLogger(indra.PathBase)
-	check                   = log.E.Chk
-	MagicString             = "dl"
-	Magic                   = slice.Bytes(MagicString)
-	MinLen                  = magicbytes.Len + slice.Uint64Len
-	_           types.Onion = &OnionSkin{}
+	log               = log2.GetLogger(indra.PathBase)
+	check             = log.E.Chk
+	Magic             = slice.Bytes(MagicString)
+	_     types.Onion = &OnionSkin{}
 )
 
 // A OnionSkin is a 32 byte value.
@@ -27,7 +30,7 @@ type OnionSkin struct {
 
 func (x *OnionSkin) Inner() types.Onion   { return nil }
 func (x *OnionSkin) Insert(_ types.Onion) {}
-func (x *OnionSkin) Len() int             { return MinLen }
+func (x *OnionSkin) Len() int             { return Len }
 
 func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
@@ -36,8 +39,8 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 }
 
 func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
-	if len(b[*c:]) < MinLen-magicbytes.Len {
-		return magicbytes.TooShort(len(b[*c:]), MinLen-magicbytes.Len,
+	if len(b[*c:]) < Len-magicbytes.Len {
+		return magicbytes.TooShort(len(b[*c:]), Len-magicbytes.Len,
 			string(Magic))
 	}
 	x.Duration = time.Duration(

@@ -9,13 +9,16 @@ import (
 	log2 "github.com/cybriq/proc/pkg/log"
 )
 
+const (
+	MagicString = "cf"
+	Len         = magicbytes.Len + pub.KeyLen*2
+)
+
 var (
-	log                     = log2.GetLogger(indra.PathBase)
-	check                   = log.E.Chk
-	MagicString             = "cf"
-	Magic                   = slice.Bytes(MagicString)
-	MinLen                  = magicbytes.Len + pub.KeyLen*2
-	_           types.Onion = &OnionSkin{}
+	log               = log2.GetLogger(indra.PathBase)
+	check             = log.E.Chk
+	Magic             = slice.Bytes(MagicString)
+	_     types.Onion = &OnionSkin{}
 )
 
 // OnionSkin cipher delivers a pair of private keys to be used in association with a
@@ -30,7 +33,7 @@ type OnionSkin struct {
 
 func (x *OnionSkin) Inner() types.Onion   { return x.Onion }
 func (x *OnionSkin) Insert(o types.Onion) { x.Onion = o }
-func (x *OnionSkin) Len() int             { return MinLen + x.Onion.Len() }
+func (x *OnionSkin) Len() int             { return Len + x.Onion.Len() }
 
 func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
@@ -43,9 +46,9 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 
 // Decode unwraps a cipher.OnionSkin message.
 func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
-	if len(b[*c:]) < MinLen-magicbytes.Len {
+	if len(b[*c:]) < Len-magicbytes.Len {
 		return magicbytes.TooShort(len(b[*c:]),
-			MinLen-magicbytes.Len, string(Magic))
+			Len-magicbytes.Len, string(Magic))
 	}
 	x.Header, e = pub.FromBytes(b[*c:c.Inc(pub.KeyLen)])
 	x.Payload, e = pub.FromBytes(b[*c:c.Inc(pub.KeyLen)])

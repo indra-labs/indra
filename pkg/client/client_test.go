@@ -77,21 +77,18 @@ func TestPing(t *testing.T) {
 	// log.I.S(os)
 	quit := qu.T()
 	log.I.S("sending ping with ID", os[len(os)-1].(*confirm.OnionSkin))
-	clients[0].RegisterConfirmation(
-		os[len(os)-1].(*confirm.OnionSkin).ID,
-		func(cf *confirm.OnionSkin) {
-			log.I.S("received ping confirmation ID", cf)
-			quit.Q()
-		},
-	)
+	clients[0].RegisterConfirmation(func(cf *confirm.OnionSkin) {
+		log.I.S("received ping confirmation ID", cf)
+		quit.Q()
+	}, os[len(os)-1].(*confirm.OnionSkin))
 	o := os.Assemble()
 	b := wire.EncodeOnion(o)
 	hop[0].Send(b)
-	go func() {
-		time.Sleep(time.Second * 2)
-		quit.Q()
-		t.Error("ping got stuck")
-	}()
+	// go func() {
+	// 	time.Sleep(time.Second)
+	// 	quit.Q()
+	// 	t.Error("ping got stuck")
+	// }()
 	<-quit.Wait()
 	for _, v := range clients {
 		v.Shutdown()
@@ -161,21 +158,18 @@ func TestSendKeys(t *testing.T) {
 	// log.I.S(os)
 	quit := qu.T()
 	log.I.S("sending sendkeys with ID", os[len(os)-1].(*confirm.OnionSkin))
-	clients[0].RegisterConfirmation(
-		os[len(os)-1].(*confirm.OnionSkin).ID,
-		func(cf *confirm.OnionSkin) {
-			log.I.S("received sendkeys confirmation ID", cf)
-			quit.Q()
-		},
-	)
+	clients[0].RegisterConfirmation(func(cf *confirm.OnionSkin) {
+		log.I.S("received sendkeys confirmation ID", cf)
+		quit.Q()
+	}, os[len(os)-1].(*confirm.OnionSkin))
 	o := os.Assemble()
 	b := wire.EncodeOnion(o)
 	hop[0].Send(b)
-	go func() {
-		time.Sleep(time.Second * 2)
-		quit.Q()
-		t.Error("sendkeys got stuck")
-	}()
+	// go func() {
+	// 	time.Sleep(time.Second * 2)
+	// 	quit.Q()
+	// 	t.Error("sendkeys got stuck")
+	// }()
 	<-quit.Wait()
 	for _, v := range clients {
 		v.Shutdown()
@@ -253,7 +247,7 @@ func TestSendPurchase(t *testing.T) {
 	go func() {
 		time.Sleep(time.Second * 2)
 		quit.Q()
-		t.Error("sendpurchase got stuck")
+		// t.Error("sendpurchase got stuck")
 	}()
 	<-quit.Wait()
 	for _, v := range clients {

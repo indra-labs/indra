@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/Indra-Labs/indra/pkg/key/address"
+	"github.com/Indra-Labs/indra/pkg/key/prv"
+	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/key/signer"
 	"github.com/Indra-Labs/indra/pkg/node"
 	"github.com/Indra-Labs/indra/pkg/nonce"
@@ -17,6 +19,7 @@ type Session struct {
 	*node.Node
 	Remaining             uint64
 	HeaderKey, PayloadKey *address.SendEntry
+	HeaderPrv, PayloadPrv *prv.Key
 	Deadline              time.Time
 	*signer.KeySet
 }
@@ -53,15 +56,29 @@ func (s Sessions) Find(t nonce.ID) (se *Session) {
 //
 // Purchasing a session the seller returns a token, based on a requested data
 // allocation.
-func NewSession(id nonce.ID, rem uint64, hdr, pld *address.SendEntry,
+func NewSession(id nonce.ID, rem uint64, deadline time.Duration,
 	kr *signer.KeySet) (s *Session) {
+
+	var e error
+	var hdrPrv, pldPrv *prv.Key
+	if hdrPrv, e = prv.GenerateKey(); check(e) {
+	}
+	hdrPub := pub.Derive(hdrPrv)
+	hdrSend := address.NewSendEntry(hdrPub)
+	if pldPrv, e = prv.GenerateKey(); check(e) {
+	}
+	pldPub := pub.Derive(pldPrv)
+	pldSend := address.NewSendEntry(pldPub)
 
 	s = &Session{
 		ID:         id,
 		Remaining:  rem,
-		HeaderKey:  hdr,
-		PayloadKey: pld,
+		HeaderKey:  hdrSend,
+		PayloadKey: pldSend,
+		HeaderPrv:  hdrPrv,
+		PayloadPrv: pldPrv,
 		KeySet:     kr,
+		Deadline:   time.Now().Add(deadline),
 	}
 	return
 }

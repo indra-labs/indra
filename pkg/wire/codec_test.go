@@ -201,10 +201,11 @@ func TestOnionSkins_Layer(t *testing.T) {
 	log2.CodeLoc = true
 	var e error
 	n := nonce.NewID()
+	n1 := nonce.New()
 	prv1, prv2 := GetTwoPrvKeys(t)
 	pub1 := pub.Derive(prv1)
 	on := OnionSkins{}.
-		OnionSkin(address.FromPubKey(pub1), prv2).
+		OnionSkin(address.FromPub(pub1), prv2, n1).
 		Confirmation(n).
 		Assemble()
 	onb := EncodeOnion(on)
@@ -243,8 +244,9 @@ func TestOnionSkins_Purchase(t *testing.T) {
 	prvs, pubs := GetCipherSet(t)
 	ciphers := GenCiphers(prvs, pubs)
 	p := rand.Uint64()
+	n3 := Gen3Nonces()
 	on := OnionSkins{}.
-		Purchase(p, prvs, pubs).
+		Purchase(p, prvs, pubs, n3).
 		Assemble()
 	onb := EncodeOnion(on)
 	c := slice.NewCursor()

@@ -33,6 +33,20 @@ func GenCiphers(prvs [3]*prv.Key, pubs [3]*pub.Key) (ciphers [3]sha256.Hash) {
 	return
 }
 
+func Gen3Nonces() (n [3]nonce.IV) {
+	for i := range n {
+		n[i] = nonce.New()
+	}
+	return
+}
+
+func GenPingNonces() (n [4]nonce.IV) {
+	for i := range n {
+		n[i] = nonce.New()
+	}
+	return
+}
+
 type OnionSkins []types.Onion
 
 var os = &noop.OnionSkin{}
@@ -68,20 +82,21 @@ func (o OnionSkins) Forward(addr *netip.AddrPort) OnionSkins {
 	return append(o, &forward.OnionSkin{AddrPort: addr, Onion: &noop.OnionSkin{}})
 }
 
-func (o OnionSkins) OnionSkin(to *address.Sender, from *prv.Key) OnionSkins {
+func (o OnionSkins) OnionSkin(to *address.Sender, from *prv.Key, n nonce.IV) OnionSkins {
 	return append(o, &layer.OnionSkin{
 		To:    to,
 		From:  from,
-		Nonce: nonce.New(),
+		Nonce: n,
 		Onion: os,
 	})
 }
 func (o OnionSkins) Purchase(nBytes uint64, prvs [3]*prv.Key,
-	pubs [3]*pub.Key) OnionSkins {
+	pubs [3]*pub.Key, n [3]nonce.IV) OnionSkins {
 
 	return append(o, &purchase.OnionSkin{
 		NBytes:  nBytes,
 		Ciphers: GenCiphers(prvs, pubs),
+		Nonces:  n,
 		Onion:   os,
 	})
 }

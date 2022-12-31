@@ -48,8 +48,8 @@ type Sender struct {
 	*pub.Key
 }
 
-// FromPubKey creates a Sender from a public key.
-func FromPubKey(k *pub.Key) (s *Sender) {
+// FromPub creates a Sender from a public key.
+func FromPub(k *pub.Key) (s *Sender) {
 	s = &Sender{Key: k}
 	return
 }
