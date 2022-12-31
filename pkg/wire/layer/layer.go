@@ -16,17 +16,22 @@ import (
 	log2 "github.com/cybriq/proc/pkg/log"
 )
 
-var (
-	log                     = log2.GetLogger(indra.PathBase)
-	check                   = log.E.Chk
-	MagicString             = "os"
-	Magic                   = slice.Bytes(MagicString)
-	_           types.Onion = &OnionSkin{}
+const (
+	MagicString = "os"
+	Len         = magicbytes.Len + nonce.IVLen + address.Len + pub.KeyLen
 )
 
-// OnionSkin message is the generic top level wrapper for an OnionSkin. All following
-// messages are wrapped inside this. This type provides the encryption for each
-// layer, and a header which a relay uses to determine what cipher to use.
+var (
+	log               = log2.GetLogger(indra.PathBase)
+	check             = log.E.Chk
+	Magic             = slice.Bytes(MagicString)
+	_     types.Onion = &OnionSkin{}
+)
+
+// OnionSkin message is the generic top level wrapper for an OnionSkin. All
+// following messages are wrapped inside this. This type provides the encryption
+// for each layer, and a header which a relay uses to determine what cipher to
+// use.
 type OnionSkin struct {
 	To   *address.Sender
 	From *prv.Key
@@ -48,13 +53,10 @@ func (x *OnionSkin) String() string {
 		x.To.GetCloak(), pub.Derive(x.From).ToBytes(), x.Nonce)
 }
 
-const MinLen = magicbytes.Len + nonce.IVLen +
-	address.Len + pub.KeyLen
-
 func (x *OnionSkin) Inner() types.Onion   { return x.Onion }
 func (x *OnionSkin) Insert(o types.Onion) { x.Onion = o }
 func (x *OnionSkin) Len() int {
-	return MinLen + x.Onion.Len()
+	return Len + x.Onion.Len()
 }
 
 func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
@@ -87,8 +89,8 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 // Decode decodes a received OnionSkin. The entire remainder of the message is
 // encrypted by this layer.
 func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
-	if len(b[*c:]) < MinLen-magicbytes.Len {
-		return magicbytes.TooShort(len(b[*c:]), MinLen-magicbytes.Len, "message")
+	if len(b[*c:]) < Len-magicbytes.Len {
+		return magicbytes.TooShort(len(b[*c:]), Len-magicbytes.Len, "message")
 	}
 	copy(x.Nonce[:], b[*c:c.Inc(nonce.IVLen)])
 	copy(x.Cloak[:], b[*c:c.Inc(address.Len)])
@@ -100,9 +102,8 @@ func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	return
 }
 
-// Decrypt requires the prv.Key to be located from the Cloak, using the
-// FromPub key to derive the shared secret, and then decrypts the rest of the
-// message.
+// Decrypt requires the prv.Key to be located from the Cloak, using the FromPub
+// key to derive the shared secret, and then decrypts the rest of the message.
 func (x *OnionSkin) Decrypt(prk *prv.Key, b slice.Bytes, c *slice.Cursor) {
 	ciph.Encipher(ciph.GetBlock(prk, x.FromPub), x.Nonce, b[*c:])
 }

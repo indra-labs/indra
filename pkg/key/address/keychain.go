@@ -18,7 +18,7 @@ type SendEntry struct {
 
 func NewSendEntry(pub *pub.Key) *SendEntry {
 	return &SendEntry{
-		Sender: FromPubKey(pub),
+		Sender: FromPub(pub),
 		Time:   time.Now(),
 	}
 }

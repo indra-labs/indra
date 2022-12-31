@@ -9,14 +9,17 @@ import (
 	log2 "github.com/cybriq/proc/pkg/log"
 )
 
-var (
-	log         = log2.GetLogger(indra.PathBase)
-	check       = log.E.Chk
+const (
 	MagicString = "ex"
-	Magic       = slice.Bytes(MagicString)
-	MinLen      = magicbytes.Len + slice.Uint16Len +
-		3*sha256.Len + slice.Uint32Len
-	_ types.Onion = &OnionSkin{}
+	Len         = magicbytes.Len + slice.Uint16Len + 3*sha256.Len +
+		slice.Uint32Len
+)
+
+var (
+	log               = log2.GetLogger(indra.PathBase)
+	check             = log.E.Chk
+	Magic             = slice.Bytes(MagicString)
+	_     types.Onion = &OnionSkin{}
 )
 
 // OnionSkin exit messages are the layer of a message after two Forward packets
@@ -41,7 +44,7 @@ type OnionSkin struct {
 func (x *OnionSkin) Inner() types.Onion   { return x.Onion }
 func (x *OnionSkin) Insert(o types.Onion) { x.Onion = o }
 func (x *OnionSkin) Len() int {
-	return MinLen + x.Bytes.Len() + x.Onion.Len()
+	return Len + x.Bytes.Len() + x.Onion.Len()
 }
 
 func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
@@ -60,8 +63,8 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 }
 
 func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
-	if len(b[*c:]) < MinLen-magicbytes.Len {
-		return magicbytes.TooShort(len(b[*c:]), MinLen-magicbytes.Len, string(Magic))
+	if len(b[*c:]) < Len-magicbytes.Len {
+		return magicbytes.TooShort(len(b[*c:]), Len-magicbytes.Len, string(Magic))
 	}
 	x.Port = uint16(slice.DecodeUint16(b[*c:c.Inc(slice.Uint16Len)]))
 	for i := range x.Ciphers {

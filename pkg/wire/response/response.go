@@ -8,13 +8,16 @@ import (
 	log2 "github.com/cybriq/proc/pkg/log"
 )
 
+const (
+	MagicString = "rs"
+	Len         = magicbytes.Len + slice.Uint32Len
+)
+
 var (
-	log                     = log2.GetLogger(indra.PathBase)
-	check                   = log.E.Chk
-	MagicString             = "rs"
-	Magic                   = slice.Bytes(MagicString)
-	MinLen                  = magicbytes.Len + slice.Uint32Len
-	_           types.Onion = &OnionSkin{}
+	log               = log2.GetLogger(indra.PathBase)
+	check             = log.E.Chk
+	Magic             = slice.Bytes(MagicString)
+	_     types.Onion = &OnionSkin{}
 )
 
 // OnionSkin messages are what are carried back via Reply messages from an Exit.
@@ -27,7 +30,7 @@ func New() *OnionSkin {
 
 func (x *OnionSkin) Inner() types.Onion   { return nil }
 func (x *OnionSkin) Insert(_ types.Onion) {}
-func (x *OnionSkin) Len() int             { return MinLen + len(*x) }
+func (x *OnionSkin) Len() int             { return Len + len(*x) }
 
 func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
@@ -38,9 +41,9 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 }
 
 func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
-	if len(b[*c:]) < MinLen-magicbytes.Len {
+	if len(b[*c:]) < Len-magicbytes.Len {
 		return magicbytes.TooShort(len(b[*c:]),
-			MinLen-magicbytes.Len, string(Magic))
+			Len-magicbytes.Len, string(Magic))
 	}
 	responseLen := slice.DecodeUint32(b[*c:c.Inc(slice.Uint32Len)])
 	bb := b[*c:c.Inc(responseLen)]
