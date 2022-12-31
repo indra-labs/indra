@@ -67,9 +67,8 @@ var commands = &cmds.Command{
 			Configs: config.Opts{
 				"seed": list.New(meta.Data{
 					Label:         "seed",
-					Description:   "Adds additional seeds by hostname, or multiaddress. Examples: seed0.example.com, /ip4/127.0.0.1/tcp/8337",
+					Description:   "Adds additional seeds by multiaddress. Examples: /dns4/seed0.example.com/tcp/8337, /ip4/127.0.0.1/tcp/8337",
 					Documentation: lorem,
-					Default:       "/ip4/172.16.238.2/tcp/8337",
 				}, func(opt *list.Opt) error {
 
 					log.I.Ln("adding seed", opt.String())
@@ -91,7 +90,7 @@ var commands = &cmds.Command{
 					Label:         "listen",
 					Description:   "A list of listener multiaddresses. Example: /ip4/0.0.0.0/tcp/8337",
 					Documentation: lorem,
-					Default:       "/ip4/0.0.0.0/tcp/8337",
+					Default:       "/ip4/127.0.0.1/tcp/8337",
 				}, func(opt *list.Opt) error {
 
 					log.I.Ln("adding p2p listener", opt.String())
@@ -103,7 +102,8 @@ var commands = &cmds.Command{
 
 				log.I.Ln("-- ", log2.App, "-", indra.SemVer, "- Network Freedom. --")
 
-				spew.Dump(c.Configs)
+				spew.Dump(c.GetCommand("indra serve").Configs)
+				spew.Dump(c.GetCommand("indra serve").Configs["seed"].String())
 
 				var err error
 				var srv *server.Server
