@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Indra-Labs/indra"
+	"github.com/Indra-Labs/indra/pkg/ciph"
 	"github.com/Indra-Labs/indra/pkg/ifc"
 	"github.com/Indra-Labs/indra/pkg/key/address"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
@@ -34,7 +35,10 @@ import (
 	"go.uber.org/atomic"
 )
 
-const DefaultDeadline = 10 * time.Minute
+const (
+	DefaultDeadline = 10 * time.Minute
+	ReplyHeaderLen  = 3*reverse.Len + 3*layer.Len
+)
 
 var (
 	log   = log2.GetLogger(indra.PathBase)
@@ -157,11 +161,13 @@ func (cl *Client) confirm(on *confirm.OnionSkin, b slice.Bytes,
 	cl.Confirms.Confirm(on.ID)
 }
 
-func (cl *Client) RegisterConfirmation(id nonce.ID, hook confirm.Hook) {
+func (cl *Client) RegisterConfirmation(hook confirm.Hook, on *confirm.OnionSkin) {
+
 	cl.Confirms.Add(&confirm.Callback{
-		ID:   id,
-		Time: time.Now(),
-		Hook: hook,
+		ID:    on.ID,
+		Time:  time.Now(),
+		Hook:  hook,
+		Onion: on,
 	})
 }
 
@@ -214,19 +220,32 @@ func (cl *Client) noop(on *noop.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 
 func (cl *Client) purchase(on *purchase.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	// Create a new Session.
-	s := &Session{}
+	s := NewSession(nonce.NewID(), on.NBytes, DefaultDeadline, cl.KeySet)
+	se := &session.OnionSkin{
+		ID:         s.ID,
+		HeaderKey:  s.HeaderKey.Key,
+		PayloadKey: s.PayloadKey.Key,
+		Onion:      &noop.OnionSkin{},
+	}
 	cl.Mutex.Lock()
-	s.Deadline = time.Now().Add(DefaultDeadline)
-	cl.Sessions = append(cl.Sessions, s)
+	cl.Sessions.Add(s)
 	cl.Mutex.Unlock()
-	// log.I.Ln("todo: construct return message")
-	log.I.S(b[*c:].ToBytes())
-	// cl.Node.Send(b[*c:])
-
-	panic("todo: process purchase message")
+	header := b[*c:c.Inc(ReplyHeaderLen)]
+	rb := make(slice.Bytes, ReplyHeaderLen+session.Len)
+	cur := slice.NewCursor()
+	copy(rb[*cur:cur.Inc(ReplyHeaderLen)], header[:ReplyHeaderLen])
+	start := *cur
+	se.Encode(rb, cur)
+	for i := range on.Ciphers {
+		blk := ciph.BlockFromHash(on.Ciphers[i])
+		ciph.Encipher(blk, on.Nonces[i], rb[start:])
+	}
+	cl.Node.Send(rb)
 }
 
-func (cl *Client) reverse(on *reverse.OnionSkin, b slice.Bytes, c *slice.Cursor) {
+func (cl *Client) reverse(on *reverse.OnionSkin, b slice.Bytes,
+	c *slice.Cursor) {
+
 	log.I.Ln("reverse")
 	// Reply means another OnionSkin is coming and the payload encryption
 	// uses the Payload key.
@@ -237,7 +256,7 @@ func (cl *Client) reverse(on *reverse.OnionSkin, b slice.Bytes, c *slice.Cursor)
 	} else {
 		// we need to forward this message onion.
 		// cl.Send(on.AddrPort, b)
-		panic("we haven't processed it yet")
+		log.I.Ln("we haven't processed it yet")
 	}
 
 }

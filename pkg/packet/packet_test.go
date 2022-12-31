@@ -28,7 +28,7 @@ func TestEncode_Decode(t *testing.T) {
 	if sp, rp, sP, rP, e = testutils.GenerateTestKeyPairs(); check(e) {
 		t.FailNow()
 	}
-	addr := address.FromPubKey(rP)
+	addr := address.FromPub(rP)
 	var pkt []byte
 	params := EP{
 		To:       addr,

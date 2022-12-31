@@ -28,7 +28,7 @@ func TestSplitJoin(t *testing.T) {
 		t.FailNow()
 	}
 	_, _, _, _ = sP, Rp, RP, rp
-	addr := address.FromPubKey(rP)
+	addr := address.FromPub(rP)
 	params := EP{
 		To:     addr,
 		From:   sp,
@@ -89,7 +89,7 @@ func BenchmarkSplit(b *testing.B) {
 		b.FailNow()
 	}
 	_, _, _ = sP, Rp, rp
-	addr := address.FromPubKey(rP)
+	addr := address.FromPub(rP)
 	for n := 0; n < b.N; n++ {
 		params := EP{
 			To:     addr,
@@ -160,7 +160,7 @@ func TestSplitJoinFEC(t *testing.T) {
 			punctures[p], punctures[len(punctures)-p-1] =
 				punctures[len(punctures)-p-1], punctures[p]
 		}
-		addr := address.FromPubKey(rP)
+		addr := address.FromPub(rP)
 		for p := range punctures {
 			var splitted [][]byte
 			ep := EP{
