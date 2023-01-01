@@ -294,7 +294,7 @@ func TestOnionSkins_Reply(t *testing.T) {
 		port := uint16(rand.Uint32())
 		ap := netip.AddrPortFrom(adr, port)
 		on := OnionSkins{}.
-			Reply(&ap).
+			Reverse(&ap).
 			Assemble()
 		onb := EncodeOnion(on)
 		c := slice.NewCursor()

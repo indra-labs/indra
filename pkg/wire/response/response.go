@@ -20,7 +20,7 @@ var (
 	_     types.Onion = &OnionSkin{}
 )
 
-// OnionSkin messages are what are carried back via Reply messages from an Exit.
+// OnionSkin messages are what are carried back via Reverse messages from an Exit.
 type OnionSkin slice.Bytes
 
 func New() *OnionSkin {

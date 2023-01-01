@@ -10,6 +10,7 @@ import (
 	"github.com/Indra-Labs/indra/pkg/key/signer"
 	"github.com/Indra-Labs/indra/pkg/node"
 	"github.com/Indra-Labs/indra/pkg/nonce"
+	"github.com/Indra-Labs/indra/pkg/session"
 	"github.com/Indra-Labs/indra/pkg/slice"
 	"github.com/Indra-Labs/indra/pkg/testutils"
 	"github.com/Indra-Labs/indra/pkg/transport"
@@ -31,19 +32,14 @@ func TestPing(t *testing.T) {
 		transports[i] = transport.NewSim(nTotal)
 	}
 	for i := range nodes {
-		var hdrPrv, pldPrv *prv.Key
+		var hdrPrv *prv.Key
 		if hdrPrv, e = prv.GenerateKey(); check(e) {
 			t.Error(e)
 			t.FailNow()
 		}
 		hdrPub := pub.Derive(hdrPrv)
-		if pldPrv, e = prv.GenerateKey(); check(e) {
-			t.Error(e)
-			t.FailNow()
-		}
-		pldPub := pub.Derive(pldPrv)
 		addr := slice.GenerateRandomAddrPortIPv6()
-		nodes[i], _ = node.New(addr, hdrPub, pldPub, hdrPrv, pldPrv, transports[i])
+		nodes[i], _ = node.New(addr, hdrPub, hdrPrv, transports[i])
 		if clients[i], e = New(transports[i], hdrPrv, nodes[i], nil); check(e) {
 			t.Error(e)
 			t.FailNow()
@@ -107,19 +103,14 @@ func TestSendKeys(t *testing.T) {
 		transports[i] = transport.NewSim(nTotal)
 	}
 	for i := range nodes {
-		var hdrPrv, pldPrv *prv.Key
+		var hdrPrv *prv.Key
 		if hdrPrv, e = prv.GenerateKey(); check(e) {
 			t.Error(e)
 			t.FailNow()
 		}
 		hdrPub := pub.Derive(hdrPrv)
-		if pldPrv, e = prv.GenerateKey(); check(e) {
-			t.Error(e)
-			t.FailNow()
-		}
-		pldPub := pub.Derive(pldPrv)
 		addr := slice.GenerateRandomAddrPortIPv4()
-		nodes[i], _ = node.New(addr, hdrPub, pldPub, hdrPrv, pldPrv, transports[i])
+		nodes[i], _ = node.New(addr, hdrPub, hdrPrv, transports[i])
 		if clients[i], e = New(transports[i], hdrPrv, nodes[i], nil); check(e) {
 			t.Error(e)
 			t.FailNow()
@@ -188,19 +179,14 @@ func TestSendPurchase(t *testing.T) {
 		transports[i] = transport.NewSim(nTotal)
 	}
 	for i := range nodes {
-		var hdrPrv, pldPrv *prv.Key
+		var hdrPrv *prv.Key
 		if hdrPrv, e = prv.GenerateKey(); check(e) {
 			t.Error(e)
 			t.FailNow()
 		}
 		hdrPub := pub.Derive(hdrPrv)
-		if pldPrv, e = prv.GenerateKey(); check(e) {
-			t.Error(e)
-			t.FailNow()
-		}
-		pldPub := pub.Derive(pldPrv)
 		addr := slice.GenerateRandomAddrPortIPv4()
-		nodes[i], _ = node.New(addr, hdrPub, pldPub, hdrPrv, pldPrv, transports[i])
+		nodes[i], _ = node.New(addr, hdrPub, hdrPrv, transports[i])
 		if clients[i], e = New(transports[i], hdrPrv, nodes[i], nil); check(e) {
 			t.Error(e)
 			t.FailNow()
@@ -230,7 +216,12 @@ func TestSendPurchase(t *testing.T) {
 		hop[i] = clients[0].Nodes[i]
 	}
 	const nBytes = 2342342
-	os := wire.SendPurchase(nBytes, clients[0].Node, hop, ks)
+	var sess [3]*session.Session
+	for i := range sess {
+		sess[i] = session.NewSession(nonce.NewID(), 203230230,
+			time.Hour, ks)
+	}
+	os := wire.SendPurchase(nBytes, clients[0].Node, hop, sess, ks)
 	// log.I.S(os)
 	quit := qu.T()
 	// log.I.S("sending sendkeys with ID", os[len(os)-1].(*confirm.OnionSkin))
@@ -245,7 +236,7 @@ func TestSendPurchase(t *testing.T) {
 	b := wire.EncodeOnion(o)
 	hop[0].Send(b)
 	go func() {
-		time.Sleep(time.Second * 2)
+		time.Sleep(time.Second)
 		quit.Q()
 		// t.Error("sendpurchase got stuck")
 	}()
