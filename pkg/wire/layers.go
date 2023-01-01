@@ -100,7 +100,7 @@ func (o OnionSkins) Purchase(nBytes uint64, prvs [3]*prv.Key,
 		Onion:   os,
 	})
 }
-func (o OnionSkins) Reply(ip *netip.AddrPort) OnionSkins {
+func (o OnionSkins) Reverse(ip *netip.AddrPort) OnionSkins {
 	return append(o, &reverse.OnionSkin{AddrPort: ip, Onion: os})
 }
 func (o OnionSkins) Response(res slice.Bytes) OnionSkins {

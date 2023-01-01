@@ -2,7 +2,6 @@ package client
 
 import (
 	"net/netip"
-	"reflect"
 	"sync"
 	"time"
 
@@ -15,6 +14,7 @@ import (
 	"github.com/Indra-Labs/indra/pkg/key/signer"
 	"github.com/Indra-Labs/indra/pkg/node"
 	"github.com/Indra-Labs/indra/pkg/nonce"
+	session2 "github.com/Indra-Labs/indra/pkg/session"
 	"github.com/Indra-Labs/indra/pkg/slice"
 	"github.com/Indra-Labs/indra/pkg/types"
 	"github.com/Indra-Labs/indra/pkg/wire"
@@ -52,7 +52,7 @@ type Client struct {
 	*address.SendCache
 	*address.ReceiveCache
 	Circuits
-	Sessions
+	session2.Sessions
 	*confirm.Confirms
 	sync.Mutex
 	*signer.KeySet
@@ -104,40 +104,28 @@ func (cl *Client) runner() (out bool) {
 		}
 		switch on := onion.(type) {
 		case *cipher.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
 			cl.cipher(on, b, c)
 		case *confirm.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
 			cl.confirm(on, b, c)
 		case *delay.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
 			cl.delay(on, b, c)
 		case *exit.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
 			cl.exit(on, b, c)
 		case *forward.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
 			cl.forward(on, b, c)
 		case *layer.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
 			cl.layer(on, b, c)
 		case *noop.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
 			cl.noop(on, b, c)
 		case *purchase.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
 			cl.purchase(on, b, c)
 		case *reverse.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
 			cl.reverse(on, b, c)
 		case *response.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
 			cl.response(on, b, c)
 		case *session.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
 			cl.session(on, b, c)
 		case *token.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
 			cl.token(on, b, c)
 		default:
 			log.I.S("unrecognised packet", b)
@@ -220,7 +208,7 @@ func (cl *Client) noop(on *noop.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 
 func (cl *Client) purchase(on *purchase.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	// Create a new Session.
-	s := NewSession(nonce.NewID(), on.NBytes, DefaultDeadline, cl.KeySet)
+	s := session2.NewSession(nonce.NewID(), on.NBytes, DefaultDeadline, cl.KeySet)
 	se := &session.OnionSkin{
 		ID:         s.ID,
 		HeaderKey:  s.HeaderKey.Key,
@@ -246,17 +234,39 @@ func (cl *Client) purchase(on *purchase.OnionSkin, b slice.Bytes, c *slice.Curso
 func (cl *Client) reverse(on *reverse.OnionSkin, b slice.Bytes,
 	c *slice.Cursor) {
 
-	log.I.Ln("reverse")
-	// Reply means another OnionSkin is coming and the payload encryption
-	// uses the Payload key.
+	var e error
+	var onion types.Onion
 	if on.AddrPort.String() == cl.Node.AddrPort.String() {
-		log.I.Ln("it's for us")
+		log.I.Ln("it's for us", on.AddrPort.String())
 		// it is for us, we want to unwrap the next part.
-		cl.Node.Send(b)
+		// b = append(b[*c:], slice.NoisePad(int(*c))...)
+		if onion, e = wire.PeelOnion(b, c); check(e) {
+			return
+		}
+		switch on1 := onion.(type) {
+		case *layer.OnionSkin:
+			log.I.S(on1)
+			rcv := cl.ReceiveCache.FindCloaked(on1.Cloak)
+			log.I.S("rcv", rcv)
+			// We need to find the PayloadKey to match.
+			ses := cl.Sessions.FindPub(rcv.Pub)
+			log.I.S(cl.Sessions)
+			log.I.S(ses)
+			prvKey := ses.PayloadPrv
+			pubKey := on1.FromPub
+			blk := ciph.GetBlock(prvKey, pubKey)
+			// Decrypt using the Payload key and header nonce.
+			ciph.Encipher(blk, on1.Nonce, b[*c:])
+		default:
+			return
+		}
+		// cl.Node.Send(b)
 	} else {
 		// we need to forward this message onion.
-		// cl.Send(on.AddrPort, b)
-		log.I.Ln("we haven't processed it yet")
+		log.I.Ln(
+			"reversing", cl.Node.AddrPort.String(),
+			on.AddrPort.String())
+		cl.Send(on.AddrPort, b)
 	}
 
 }
