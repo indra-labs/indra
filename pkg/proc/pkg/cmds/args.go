@@ -138,25 +138,15 @@ func (c *Command) ParseCLIArgs(a []string) (run *Command, runArgs []string, err 
 										// followed by true or false
 										if cmd.Configs[cfgName].Type() == meta.Bool {
 											if len(iArgs) <= cursor {
-												log.I.Ln("bing")
-												err = cmd.Configs[cfgName].
-													FromString(iArgs[cursor+1])
-											} else {
-												err = cmd.Configs[cfgName].
-													FromString("true")
+													if IsBoolString(iArgs[cursor+1]){
+														cmd.Configs[cfgName].FromString(iArgs[cursor+1])
+														inc++
+														found = true
+														continue
+													}
 											}
 											inc++
 											found = true
-											// next value is not a truth value,
-											// simply assign true and increment
-											// only 1 to cursor
-											if err != nil {
-												log.T.Chk(err)
-												found = true
-												log.I.F("assigned value 'true' to %s",
-													cfgName)
-												break
-											}
 										} else {
 											log.T.F("assigning value '%s' to %s",
 												iArgs[cursor+1], cfgName)
