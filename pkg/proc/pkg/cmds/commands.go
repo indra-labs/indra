@@ -260,6 +260,11 @@ func (c *Command) GetCommand(p string) (o *Command) {
 	return
 }
 
+func (c *Command) GetValue(value string) (config.Concrete) {
+
+	return c.Configs[value].Value()
+}
+
 // ForEach runs a closure on every node in the Commands tree, stopping if the
 // closure returns false
 func (c *Command) ForEach(cl func(*Command, int) bool, hereDepth,

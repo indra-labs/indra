@@ -10,7 +10,6 @@ import (
 	"github.com/cybriq/proc/pkg/opts/config"
 	"github.com/cybriq/proc/pkg/opts/meta"
 	"github.com/cybriq/proc/pkg/opts/toggle"
-	"github.com/cybriq/proc/pkg/path"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"os"
@@ -51,6 +50,12 @@ var commands = &cmds.Command{
 	},
 	Entrypoint: func(command *cmds.Command, args []string) error {
 
+		// Set a Timeout for 120 seconds
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+
+		// Setup a new instance of the docker client
+
 		var err error
 		var cli *client.Client
 
@@ -60,23 +65,25 @@ var commands = &cmds.Command{
 
 		defer cli.Close()
 
-		// Set a Timeout for 120 seconds
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-
-		defer cancel()
-
-		// If we've flagged stable, we should also build a stable tag
-		if command.GetOpt(path.From("release stable")).Value().Bool() {
-			docker.SetRelease()
-		}
+		// Get ready to submit a build
 
 		var builder = docker.NewBuilder(ctx, cli)
+
+		// If we've flagged stable, we should also build a stable tag
+		if command.GetValue("stable").Bool() {
+
+			log.I.Ln("enabling stable release.")
+
+			docker.SetRelease()
+		}
 
 		if err = builder.Build(); check(err) {
 			return err
 		}
 
-		if command.GetOpt(path.From("release push")).Value().Bool() {
+		// If we've flagged push, the tags will be pushed to all repositories.
+		if command.GetValue("push").Bool() {
+
 			if err = builder.Push(types.ImagePushOptions{}); check(err) {
 				return err
 			}
