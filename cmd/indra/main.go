@@ -79,7 +79,6 @@ var commands = &cmds.Command{
 					Label:         "peer",
 					Description:   "Adds a list of peer multiaddresses. Example: /ip4/0.0.0.0/tcp/8337",
 					Documentation: lorem,
-					Default:       "/ip4/0.0.0.0/tcp/8337",
 				}, func(opt *list.Opt) error {
 
 					log.I.Ln("adding peer", opt.String())

@@ -44,7 +44,7 @@ COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /etc/group /etc/group
 
 # Migrate the binaries and storage folder
-COPY --from=builder --chown=indra:indra /bin/indra /bin/indra
+COPY --from=builder --chown=indra:indra /bin /bin
 COPY --from=builder --chown=indra:indra /var/indra /var/indra
 
 # Enable the indra user
