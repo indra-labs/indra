@@ -12,7 +12,8 @@ import (
 
 const (
 	MagicString = "pc"
-	Len         = magicbytes.Len + slice.Uint64Len + sha256.Len*3 + nonce.IVLen*3
+	Len         = magicbytes.Len + slice.Uint64Len + sha256.Len*3 +
+		nonce.IVLen*3 + nonce.IDLen
 )
 
 var (
@@ -26,6 +27,7 @@ var (
 // activate when a payment for it has been done, or it will time out after some
 // period to allow unused codes to be flushed.
 type OnionSkin struct {
+	nonce.ID
 	NBytes uint64
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
@@ -44,6 +46,7 @@ func (x *OnionSkin) Len() int {
 
 func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
+	copy(b[*c:c.Inc(nonce.IDLen)], x.ID[:])
 	value := slice.NewUint64()
 	slice.EncodeUint64(value, x.NBytes)
 	copy(b[*c:c.Inc(slice.Uint64Len)], value)
@@ -61,6 +64,7 @@ func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 		return magicbytes.TooShort(len(b[*c:]),
 			Len-magicbytes.Len, MagicString)
 	}
+	copy(x.ID[:], b[*c:c.Inc(nonce.IDLen)])
 	x.NBytes = slice.DecodeUint64(
 		b[*c:c.Inc(slice.Uint64Len)])
 	for i := range x.Ciphers {

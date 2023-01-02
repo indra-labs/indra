@@ -28,7 +28,7 @@ import (
 
 func GenCiphers(prvs [3]*prv.Key, pubs [3]*pub.Key) (ciphers [3]sha256.Hash) {
 	for i := range prvs {
-		ciphers[i] = ecdh.Compute(prvs[i], pubs[i])
+		ciphers[2-i] = ecdh.Compute(prvs[i], pubs[i])
 	}
 	return
 }
@@ -90,15 +90,18 @@ func (o OnionSkins) OnionSkin(to *address.Sender, from *prv.Key, n nonce.IV) Oni
 		Onion: os,
 	})
 }
-func (o OnionSkins) Purchase(nBytes uint64, prvs [3]*prv.Key,
+func (o OnionSkins) Purchase(id nonce.ID, nBytes uint64, prvs [3]*prv.Key,
 	pubs [3]*pub.Key, n [3]nonce.IV) OnionSkins {
 
-	return append(o, &purchase.OnionSkin{
+	oo := append(o, &purchase.OnionSkin{
+		ID:      id,
 		NBytes:  nBytes,
 		Ciphers: GenCiphers(prvs, pubs),
 		Nonces:  n,
 		Onion:   os,
 	})
+
+	return oo
 }
 func (o OnionSkins) Reverse(ip *netip.AddrPort) OnionSkins {
 	return append(o, &reverse.OnionSkin{AddrPort: ip, Onion: os})

@@ -85,7 +85,7 @@ func PeelPurchase(t *testing.T, b slice.Bytes,
 	return
 }
 
-func PeelReply(t *testing.T, b slice.Bytes,
+func PeelReverse(t *testing.T, b slice.Bytes,
 	c *slice.Cursor) (rp *reverse.OnionSkin) {
 
 	var ok bool
@@ -347,7 +347,8 @@ func TestSendPurchase(t *testing.T) {
 			time.Hour, ks)
 	}
 	nBytes := rand.Uint64()
-	on := SendPurchase(nBytes, client, hop, sess, ks)
+	n := nonce.NewID()
+	on := SendPurchase(n, nBytes, client, hop, sess, ks)
 	b := EncodeOnion(on.Assemble())
 	c := slice.NewCursor()
 
@@ -392,7 +393,7 @@ func TestSendPurchase(t *testing.T) {
 	}
 
 	// Reverse(hop[3].AddrPort).
-	rp1 := PeelReply(t, b, c)
+	rp1 := PeelReverse(t, b, c)
 	if rp1.AddrPort.String() != hop[3].AddrPort.String() {
 		t.Errorf("failed to retrieve first reply hop")
 		t.FailNow()
@@ -402,7 +403,7 @@ func TestSendPurchase(t *testing.T) {
 	PeelOnionSkin(t, b, c).Decrypt(sess[0].HeaderPrv, b, c)
 
 	// Reverse(hop[4].AddrPort).
-	rp2 := PeelReply(t, b, c)
+	rp2 := PeelReverse(t, b, c)
 	if rp2.AddrPort.String() != hop[4].AddrPort.String() {
 		t.Errorf("failed to retrieve second reply hop")
 		t.FailNow()
@@ -412,7 +413,7 @@ func TestSendPurchase(t *testing.T) {
 	PeelOnionSkin(t, b, c).Decrypt(sess[1].HeaderPrv, b, c)
 
 	// Reverse(client.AddrPort).
-	rp3 := PeelReply(t, b, c)
+	rp3 := PeelReverse(t, b, c)
 	if rp3.AddrPort.String() != client.AddrPort.String() {
 		t.Errorf("failed to retrieve third reply hop")
 		t.FailNow()
@@ -501,7 +502,7 @@ func TestSendExit(t *testing.T) {
 	}
 
 	// Reverse(hop[3].AddrPort).
-	rp1 := PeelReply(t, b, c)
+	rp1 := PeelReverse(t, b, c)
 	if rp1.AddrPort.String() != hop[3].AddrPort.String() {
 		t.Errorf("failed to retrieve first reply hop")
 		t.FailNow()
@@ -511,7 +512,7 @@ func TestSendExit(t *testing.T) {
 	PeelOnionSkin(t, b, c).Decrypt(sess[0].HeaderPrv, b, c)
 
 	// Reverse(hop[4].AddrPort).
-	rp2 := PeelReply(t, b, c)
+	rp2 := PeelReverse(t, b, c)
 	if rp2.AddrPort.String() != hop[4].AddrPort.String() {
 		t.Errorf("failed to retrieve second reply hop")
 		t.FailNow()
@@ -521,7 +522,7 @@ func TestSendExit(t *testing.T) {
 	PeelOnionSkin(t, b, c).Decrypt(sess[1].HeaderPrv, b, c)
 
 	// Reverse(client.AddrPort).
-	rp3 := PeelReply(t, b, c)
+	rp3 := PeelReverse(t, b, c)
 	if rp3.AddrPort.String() != client.AddrPort.String() {
 		t.Errorf("failed to retrieve third reply hop")
 		t.FailNow()
