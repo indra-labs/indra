@@ -50,6 +50,16 @@ var commands = &cmds.Command{
 	},
 	Entrypoint: func(command *cmds.Command, args []string) error {
 
+		// If we've flagged stable, we should also build a stable tag
+		if command.GetValue("stable").Bool() {
+			docker.SetRelease()
+		}
+
+		// If we've flagged push, the tags will be pushed to all repositories.
+		if command.GetValue("push").Bool() {
+			docker.SetPush()
+		}
+
 		// Set a Timeout for 120 seconds
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
@@ -69,24 +79,12 @@ var commands = &cmds.Command{
 
 		var builder = docker.NewBuilder(ctx, cli)
 
-		// If we've flagged stable, we should also build a stable tag
-		if command.GetValue("stable").Bool() {
-
-			log.I.Ln("enabling stable release.")
-
-			docker.SetRelease()
-		}
-
 		if err = builder.Build(); check(err) {
 			return err
 		}
 
-		// If we've flagged push, the tags will be pushed to all repositories.
-		if command.GetValue("push").Bool() {
-
-			if err = builder.Push(types.ImagePushOptions{}); check(err) {
-				return err
-			}
+		if err = builder.Push(types.ImagePushOptions{}); check(err) {
+			return err
 		}
 
 		if err = builder.Close(); check(err) {
