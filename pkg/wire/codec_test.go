@@ -245,8 +245,9 @@ func TestOnionSkins_Purchase(t *testing.T) {
 	ciphers := GenCiphers(prvs, pubs)
 	p := rand.Uint64()
 	n3 := Gen3Nonces()
+	n := nonce.NewID()
 	on := OnionSkins{}.
-		Purchase(p, prvs, pubs, n3).
+		Purchase(n, p, prvs, pubs, n3).
 		Assemble()
 	onb := EncodeOnion(on)
 	c := slice.NewCursor()
@@ -262,6 +263,11 @@ func TestOnionSkins_Purchase(t *testing.T) {
 	}
 	if pr.NBytes != p {
 		t.Error("NBytes did not unwrap correctly")
+		t.FailNow()
+	}
+	if pr.ID != n {
+		t.Errorf("id %v did not unwrap correctly, expected %v",
+			pr.ID, n)
 		t.FailNow()
 	}
 	for i := range pr.Ciphers {

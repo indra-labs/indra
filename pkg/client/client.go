@@ -9,6 +9,7 @@ import (
 	"github.com/Indra-Labs/indra/pkg/ciph"
 	"github.com/Indra-Labs/indra/pkg/ifc"
 	"github.com/Indra-Labs/indra/pkg/key/address"
+	"github.com/Indra-Labs/indra/pkg/key/ecdh"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/key/signer"
@@ -36,8 +37,9 @@ import (
 )
 
 const (
-	DefaultDeadline = 10 * time.Minute
-	ReplyHeaderLen  = 3*reverse.Len + 3*layer.Len
+	DefaultDeadline  = 10 * time.Minute
+	ReverseLayerLen  = reverse.Len + layer.Len
+	ReverseHeaderLen = 3 * ReverseLayerLen
 )
 
 var (
@@ -53,6 +55,7 @@ type Client struct {
 	*address.ReceiveCache
 	Circuits
 	session2.Sessions
+	PendingSessions []nonce.ID
 	*confirm.Confirms
 	sync.Mutex
 	*signer.KeySet
@@ -208,7 +211,7 @@ func (cl *Client) noop(on *noop.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 
 func (cl *Client) purchase(on *purchase.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	// Create a new Session.
-	s := session2.NewSession(nonce.NewID(), on.NBytes, DefaultDeadline, cl.KeySet)
+	s := session2.NewSession(on.ID, on.NBytes, DefaultDeadline, cl.KeySet)
 	se := &session.OnionSkin{
 		ID:         s.ID,
 		HeaderKey:  s.HeaderKey.Key,
@@ -218,15 +221,20 @@ func (cl *Client) purchase(on *purchase.OnionSkin, b slice.Bytes, c *slice.Curso
 	cl.Mutex.Lock()
 	cl.Sessions.Add(s)
 	cl.Mutex.Unlock()
-	header := b[*c:c.Inc(ReplyHeaderLen)]
-	rb := make(slice.Bytes, ReplyHeaderLen+session.Len)
+	header := b[*c:c.Inc(ReverseHeaderLen)]
+	// log.I.S(header.ToBytes())
+	rb := make(slice.Bytes, ReverseHeaderLen+session.Len)
 	cur := slice.NewCursor()
-	copy(rb[*cur:cur.Inc(ReplyHeaderLen)], header[:ReplyHeaderLen])
+	copy(rb[*cur:cur.Inc(ReverseHeaderLen)], header[:ReverseHeaderLen])
 	start := *cur
 	se.Encode(rb, cur)
+	log.I.S(rb[start:].ToBytes())
+	// on.Ciphers[0], on.Ciphers[2] = on.Ciphers[2], on.Ciphers[0]
+	// on.Nonces[0], on.Nonces[2] = on.Nonces[2], on.Nonces[0]
 	for i := range on.Ciphers {
 		blk := ciph.BlockFromHash(on.Ciphers[i])
-		ciph.Encipher(blk, on.Nonces[i], rb[start:])
+		ciph.Encipher(blk, nonce.IV{}, rb[start:])
+		log.I.S(on.Ciphers[i], nonce.IV{}, rb[start:].ToBytes())
 	}
 	cl.Node.Send(rb)
 }
@@ -234,37 +242,66 @@ func (cl *Client) purchase(on *purchase.OnionSkin, b slice.Bytes, c *slice.Curso
 func (cl *Client) reverse(on *reverse.OnionSkin, b slice.Bytes,
 	c *slice.Cursor) {
 
+	// log.I.S(on)
+
 	var e error
 	var onion types.Onion
 	if on.AddrPort.String() == cl.Node.AddrPort.String() {
-		log.I.Ln("it's for us", on.AddrPort.String())
-		// it is for us, we want to unwrap the next part.
-		// b = append(b[*c:], slice.NoisePad(int(*c))...)
+		// log.I.S("it's for us", on.AddrPort.String(),
+		// 	b[*c:].ToBytes())
 		if onion, e = wire.PeelOnion(b, c); check(e) {
 			return
 		}
 		switch on1 := onion.(type) {
 		case *layer.OnionSkin:
-			log.I.S(on1)
+			start := *c - ReverseLayerLen
+			first := *c
+			second := first + ReverseLayerLen
+			last := second + ReverseLayerLen
+			// log.I.S(b[start:first].ToBytes(),
+			// 	b[first:second].ToBytes(),
+			// 	b[second:last].ToBytes(),
+			// )
 			rcv := cl.ReceiveCache.FindCloaked(on1.Cloak)
-			log.I.S("rcv", rcv)
 			// We need to find the PayloadKey to match.
 			ses := cl.Sessions.FindPub(rcv.Pub)
-			log.I.S(cl.Sessions)
-			log.I.S(ses)
-			prvKey := ses.PayloadPrv
-			pubKey := on1.FromPub
-			blk := ciph.GetBlock(prvKey, pubKey)
+			hdrPrv := ses.HeaderPrv
+			hdrPub := on1.FromPub
+			blk := ciph.GetBlock(hdrPrv, hdrPub)
 			// Decrypt using the Payload key and header nonce.
-			ciph.Encipher(blk, on1.Nonce, b[*c:])
+			ciph.Encipher(blk, on1.Nonce,
+				b[*c:c.Inc(2*ReverseLayerLen)])
+			blk = ciph.GetBlock(ses.PayloadPrv, hdrPub)
+			log.I.S(ecdh.Compute(ses.PayloadPrv, hdrPub),
+				on1.Nonce)
+			ciph.Encipher(blk, nonce.IV{}, b[*c:])
+			log.I.S("!!!!!!!", b[*c:].ToBytes())
+			// if b[start:].String() !=
+			// 	reverse.MagicString {
+			// 	cl.Node.Send(b[*c:])
+			// }
+			// log.I.S(cl.AddrPort.String(),
+			// 	// b.ToBytes()[:ReverseHeaderLen],
+			// 	b.ToBytes(), // [ReverseHeaderLen:],
+			// )
+			// shift the header segment upwards and pad the
+			// remainder.
+			copy(b[start:first], b[first:second])
+			copy(b[first:second], b[second:last])
+			copy(b[second:last], slice.NoisePad(ReverseLayerLen))
+			if b[start:start+2].String() != reverse.MagicString {
+				log.I.S(b[last:].ToBytes())
+				cl.Node.Send(b[last:])
+				break
+			}
+			log.I.S(b[start:].ToBytes())
+			cl.Node.Send(b[start:])
 		default:
 			return
 		}
-		// cl.Node.Send(b)
 	} else {
 		// we need to forward this message onion.
-		log.I.Ln(
-			"reversing", cl.Node.AddrPort.String(),
+		log.I.Ln("reversing", cl.Node.AddrPort.String(),
 			on.AddrPort.String())
 		cl.Send(on.AddrPort, b)
 	}
@@ -282,6 +319,14 @@ func (cl *Client) session(s *session.OnionSkin, b slice.Bytes, cur *slice.Cursor
 	// Bolt 4 onion routed payment path that will cause the seller to
 	// activate the accounting onion the two keys it sent back with the
 	// nonce, so long as it has not yet expired.
+	for i := range cl.PendingSessions {
+		if cl.PendingSessions[i] == s.ID {
+			// we would make payment and move session to running
+			// sessions list.
+			log.I.S("session received, now to pay", s)
+		}
+	}
+	// So now we want to pay.
 }
 
 func (cl *Client) token(t *token.OnionSkin, b slice.Bytes, cur *slice.Cursor) {

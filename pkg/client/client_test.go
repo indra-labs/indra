@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/Indra-Labs/indra/pkg/ifc"
+	"github.com/Indra-Labs/indra/pkg/key/address"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/key/signer"
@@ -202,36 +203,36 @@ func TestSendPurchase(t *testing.T) {
 			clients[i].Nodes = append(clients[i].Nodes, nodes[j])
 		}
 	}
-	// Start up the clients.
-	for _, v := range clients {
-		go v.Start()
-	}
 	var ks *signer.KeySet
 	if _, ks, e = signer.New(); check(e) {
 		t.Error(e)
 		t.FailNow()
+	}
+	var sess [3]*session.Session
+	for i := range sess {
+		sess[i] = session.NewSession(nonce.NewID(), 203230230,
+			time.Hour, ks)
+	}
+	clients[4].ReceiveCache.Add(address.NewReceiver(sess[0].HeaderPrv))
+	clients[5].ReceiveCache.Add(address.NewReceiver(sess[1].HeaderPrv))
+	clients[0].ReceiveCache.Add(address.NewReceiver(sess[2].HeaderPrv))
+	clients[4].Sessions = clients[4].Sessions.Add(sess[0])
+	clients[5].Sessions = clients[5].Sessions.Add(sess[1])
+	clients[0].Sessions = clients[0].Sessions.Add(sess[2])
+
+	// Start up the clients.
+	for _, v := range clients {
+		go v.Start()
 	}
 	var hop [nTotal - 1]*node.Node
 	for i := range clients[0].Nodes {
 		hop[i] = clients[0].Nodes[i]
 	}
 	const nBytes = 2342342
-	var sess [3]*session.Session
-	for i := range sess {
-		sess[i] = session.NewSession(nonce.NewID(), 203230230,
-			time.Hour, ks)
-	}
-	os := wire.SendPurchase(nBytes, clients[0].Node, hop, sess, ks)
-	// log.I.S(os)
+	id := nonce.NewID()
+	os := wire.SendPurchase(id, nBytes, clients[0].Node, hop, sess, ks)
+	clients[0].PendingSessions = append(clients[0].PendingSessions, id)
 	quit := qu.T()
-	// log.I.S("sending sendkeys with ID", os[len(os)-1].(*confirm.OnionSkin))
-	// clients[0].RegisterConfirmation(
-	// 	os[len(os)-1].(*confirm.OnionSkin).ID,
-	// 	func(cf *confirm.OnionSkin) {
-	// 		log.I.S("received sendkeys confirmation ID", cf)
-	// 		quit.Q()
-	// 	},
-	// )
 	o := os.Assemble()
 	b := wire.EncodeOnion(o)
 	hop[0].Send(b)

@@ -62,7 +62,7 @@ func (s Sessions) Find(t nonce.ID) (se *Session) {
 
 func (s Sessions) FindPub(pubKey *pub.Key) (se *Session) {
 	for i := range s {
-		if s[i].HeaderPub.Equals(pubKey) {
+		if s[i].HeaderKey.Key.Equals(pubKey) {
 			se = s[i]
 			return
 		}
