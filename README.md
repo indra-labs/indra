@@ -5,7 +5,7 @@
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://pkg.go.dev/github.com/Indra-Labs/indra)
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](http://unlicense.org/)
 [![](https://img.shields.io/badge/chat-telegram-blue)](https://t.me/indranet)
-[![](https://img.shields.io/badge/chat-keet.io-blue)](punch://jc38t9nr7fasay4nqfxwfaawywfd3y14krnsitj67ymoubiezqdy/ykm4nji4y6nnnt9u9t89ny1xecizm1aex1k16aoewr31cxsdrbiwaprbhjuzfgpok68mjxhwnark3daxq97cjfcy84rqsk9gpippp44yyry965ncp17akyeyybyet64d9ou73icercidjz4sfxa8i6pedsj467dno4r6h87hpga15pog1r5wcs9enpr7qrnt9zyh7ontjcdukca1kffwuqf5nk9a8egwba)
+[![](https://img.shields.io/badge/chat-keet.io-blue.svg)](punch://jc38t9nr7fasay4nqfxwfaawywfd3y14krnsitj67ymoubiezqdy/ykm4nji4y6nnnt9u9t89ny1xecizm1aex1k16aoewr31cxsdrbiwaprbhjuzfgpok68mjxhwnark3daxq97cjfcy84rqsk9gpippp44yyry965ncp17akyeyybyet64d9ou73icercidjz4sfxa8i6pedsj467dno4r6h87hpga15pog1r5wcs9enpr7qrnt9zyh7ontjcdukca1kffwuqf5nk9a8egwba)
 
 Lightning powered distributed virtual private network for anonymising traffic on decentralised protocol networks.
 
