@@ -39,10 +39,15 @@ var (
 		PullParent:     true,
 	}
 	isRelease = false
+	isPushable = false
 )
 
 func SetRelease() {
 	isRelease = true
+}
+
+func SetPush() {
+	isPushable = true
 }
 
 type Builder struct {
@@ -106,6 +111,10 @@ func (cli *Builder) Build() (err error) {
 }
 
 func (cli *Builder) Push(opts types.ImagePushOptions) (err error) {
+
+	if !isPushable {
+		return nil
+	}
 
 	log.I.Ln("pushing tagged images to repository...")
 
