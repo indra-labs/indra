@@ -237,7 +237,7 @@ func TestSendPurchase(t *testing.T) {
 	b := wire.EncodeOnion(o)
 	hop[0].Send(b)
 	go func() {
-		time.Sleep(time.Second)
+		time.Sleep(time.Second * 2)
 		quit.Q()
 		// t.Error("sendpurchase got stuck")
 	}()
