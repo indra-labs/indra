@@ -1,13 +1,13 @@
 package list
 
 import (
-	"strings"
-
 	"github.com/cybriq/proc/pkg/opts/config"
 	"github.com/cybriq/proc/pkg/opts/meta"
 	"github.com/cybriq/proc/pkg/opts/normalize"
 	"github.com/cybriq/proc/pkg/path"
 	"go.uber.org/atomic"
+	"sort"
+	"strings"
 )
 
 type Opt struct {
@@ -51,14 +51,46 @@ func (o *Opt) RunHooks() (e error) {
 }
 
 func (o *Opt) FromValue(v []string) *Opt {
-	o.v.Store(v)
+	old := o.v.Load().([]string)
+	o.v.Store(append(old, v...))
 	return o
 }
 
 func (o *Opt) FromString(s string) (e error) {
 	s = strings.TrimSpace(s)
 	split := strings.Split(s, ",")
-	o.v.Store(split)
+
+	if o.v.Load() == nil {
+		o.v.Store([]string{})
+	}
+
+	ov := o.v.Load().([]string)
+
+	sort.Strings(ov)
+
+	emptyMap := make(map[string]bool)
+
+	for _, v := range ov {
+		emptyMap[v] = true
+	}
+
+	for _, v := range split {
+		emptyMap[v] = true
+	}
+
+	ov = []string{}
+
+	for i := range emptyMap{
+
+		if i == "" {
+			continue
+		}
+
+		ov = append(ov, i)
+	}
+
+	o.v.Store(ov)
+
 	e = o.RunHooks()
 	return
 }

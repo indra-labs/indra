@@ -71,7 +71,7 @@ var commands = &cmds.Command{
 					Documentation: lorem,
 				}, func(opt *list.Opt) error {
 
-					log.I.Ln("adding seed", opt.String())
+					//log.I.Ln("adding seed", opt.String())
 
 					return nil
 				}),
@@ -81,7 +81,7 @@ var commands = &cmds.Command{
 					Documentation: lorem,
 				}, func(opt *list.Opt) error {
 
-					log.I.Ln("adding peer", opt.String())
+					//log.I.Ln("adding peer", opt.String())
 
 					return nil
 				}),
@@ -92,7 +92,7 @@ var commands = &cmds.Command{
 					Default:       "/ip4/127.0.0.1/tcp/8337",
 				}, func(opt *list.Opt) error {
 
-					log.I.Ln("adding p2p listener", opt.String())
+					//log.I.Ln("adding p2p listener", opt.String())
 
 					return nil
 				}),
@@ -101,8 +101,9 @@ var commands = &cmds.Command{
 
 				log.I.Ln("-- ", log2.App, "-", indra.SemVer, "- Network Freedom. --")
 
-				spew.Dump(c.GetCommand("indra serve").Configs)
-				spew.Dump(c.GetCommand("indra serve").Configs["seed"].String())
+				spew.Dump(c.GetValue("seed").List())
+				spew.Dump(c.GetValue("peer").List())
+				spew.Dump(c.GetValue("listen").List())
 
 				var err error
 				var srv *server.Server
