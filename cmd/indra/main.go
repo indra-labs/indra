@@ -101,9 +101,9 @@ var commands = &cmds.Command{
 
 				log.I.Ln("-- ", log2.App, "-", indra.SemVer, "- Network Freedom. --")
 
-				spew.Dump(c.GetValue("seed").List())
-				spew.Dump(c.GetValue("peer").List())
-				spew.Dump(c.GetValue("listen").List())
+				spew.Dump(c.GetListValue("seed"))
+				spew.Dump(c.GetListValue("peer"))
+				spew.Dump(c.GetListValue("listen"))
 
 				var err error
 				var srv *server.Server

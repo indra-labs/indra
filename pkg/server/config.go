@@ -23,6 +23,12 @@ var DefaultServerConfig = Config{
 	ListenAddresses: []multiaddr.Multiaddr{},
 }
 
+var SimnetServerConfig = Config{
+
+	SeedAddresses:   []multiaddr.Multiaddr{},
+	ListenAddresses: []multiaddr.Multiaddr{},
+}
+
 func NewMultiAddrForced(addr string) multiaddr.Multiaddr {
 
 	var mta, _ = multiaddr.NewMultiaddr(addr)

@@ -260,9 +260,13 @@ func (c *Command) GetCommand(p string) (o *Command) {
 	return
 }
 
-func (c *Command) GetValue(value string) (config.Concrete) {
+func (c *Command) GetValue(key string) (config.Concrete) {
 
-	return c.Configs[value].Value()
+	return c.Configs[key].Value()
+}
+
+func (c *Command) GetListValue(key string)  ([]string) {
+	return c.Configs[key].Value().List()
 }
 
 // ForEach runs a closure on every node in the Commands tree, stopping if the
