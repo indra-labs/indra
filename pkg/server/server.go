@@ -3,12 +3,15 @@ package server
 import (
 	"context"
 	"github.com/Indra-Labs/indra"
+	"github.com/Indra-Labs/indra/pkg/cfg"
 	"github.com/cybriq/proc/pkg/interrupt"
 	log2 "github.com/cybriq/proc/pkg/log"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/multiformats/go-multiaddr"
 	"sync"
 )
 
@@ -21,6 +24,8 @@ type Server struct {
 	context.Context
 
 	config Config
+
+	params *cfg.Params
 
 	host host.Host
 	dht  *dht.IpfsDHT
@@ -67,7 +72,14 @@ func (srv *Server) Serve() (err error) {
 
 	// We will first attempt to connect to the seed addresses.
 	var wg sync.WaitGroup
-	for _, peerAddr := range srv.config.SeedAddresses {
+
+	spew.Dump(srv.params.ParseSeedMultiAddresses())
+
+	var seedAddresses []multiaddr.Multiaddr
+
+	seedAddresses, err = srv.params.ParseSeedMultiAddresses()
+
+	for _, peerAddr := range seedAddresses {
 		peerinfo, _ := peer.AddrInfoFromP2pAddr(peerAddr)
 		wg.Add(1)
 		go func() {
@@ -79,16 +91,20 @@ func (srv *Server) Serve() (err error) {
 			}
 		}()
 	}
+
 	wg.Wait()
 
 	return nil
 }
 
-func New(config Config) (srv *Server, err error) {
+func New(params *cfg.Params, config *Config) (srv *Server, err error) {
 
 	log.I.Ln("initializing the server.")
 
 	var s Server
+
+	s.params = params
+
 	var cancel context.CancelFunc
 
 	s.Context, cancel = context.WithCancel(context.Background())

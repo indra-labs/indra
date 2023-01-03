@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/Indra-Labs/indra"
+	"github.com/Indra-Labs/indra/pkg/cfg"
 	"github.com/Indra-Labs/indra/pkg/server"
 	"github.com/cybriq/proc/pkg/app"
 	"github.com/cybriq/proc/pkg/cmds"
@@ -110,7 +111,7 @@ var commands = &cmds.Command{
 
 				log.I.Ln("running serve.")
 
-				if srv, err = server.New(server.DefaultServerConfig); check(err) {
+				if srv, err = server.New(cfg.MainNetServerParams, server.DefaultConfig); check(err) {
 					return err
 				}
 
