@@ -9,7 +9,6 @@ import (
 	"github.com/Indra-Labs/indra/pkg/ciph"
 	"github.com/Indra-Labs/indra/pkg/ifc"
 	"github.com/Indra-Labs/indra/pkg/key/address"
-	"github.com/Indra-Labs/indra/pkg/key/ecdh"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/key/signer"
@@ -98,7 +97,6 @@ func (cl *Client) runner() (out bool) {
 		break
 	case b := <-cl.Node.Receive():
 		// process received message
-		// log.I.Ln("received message")
 		var onion types.Onion
 		var e error
 		c := slice.NewCursor()
@@ -180,20 +178,16 @@ func (cl *Client) forward(on *forward.OnionSkin, b slice.Bytes, c *slice.Cursor)
 	if on.AddrPort.String() == cl.Node.AddrPort.String() {
 		// it is for us, we want to unwrap the next
 		// part.
-		log.I.Ln("processing new message", *c, cl.AddrPort.String())
 		b = append(b[*c:], slice.NoisePad(int(*c))...)
 		cl.Node.Send(b)
 	} else {
 		// we need to forward this message onion.
-		log.I.Ln("forwarding")
 		cl.Send(on.AddrPort, b)
 	}
 }
 
 func (cl *Client) layer(on *layer.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	// this is probably an encrypted layer for us.
-	log.I.Ln("decrypting onion skin")
-	// log.I.S(on, b[*c:].ToBytes())
 	rcv := cl.ReceiveCache.FindCloaked(on.Cloak)
 	if rcv == nil {
 		log.I.Ln("no matching key found from cloaked key")
@@ -201,7 +195,6 @@ func (cl *Client) layer(on *layer.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	}
 	on.Decrypt(rcv.Key, b, c)
 	b = append(b[*c:], slice.NoisePad(int(*c))...)
-	// log.I.S(b.ToBytes())
 	cl.Node.Send(b)
 }
 
@@ -228,13 +221,10 @@ func (cl *Client) purchase(on *purchase.OnionSkin, b slice.Bytes, c *slice.Curso
 	copy(rb[*cur:cur.Inc(ReverseHeaderLen)], header[:ReverseHeaderLen])
 	start := *cur
 	se.Encode(rb, cur)
-	log.I.S(rb[start:].ToBytes())
-	// on.Ciphers[0], on.Ciphers[2] = on.Ciphers[2], on.Ciphers[0]
-	// on.Nonces[0], on.Nonces[2] = on.Nonces[2], on.Nonces[0]
+
 	for i := range on.Ciphers {
 		blk := ciph.BlockFromHash(on.Ciphers[i])
-		ciph.Encipher(blk, nonce.IV{}, rb[start:])
-		log.I.S(on.Ciphers[i], nonce.IV{}, rb[start:].ToBytes())
+		ciph.Encipher(blk, on.Nonces[2-i], rb[start:])
 	}
 	cl.Node.Send(rb)
 }
@@ -242,26 +232,20 @@ func (cl *Client) purchase(on *purchase.OnionSkin, b slice.Bytes, c *slice.Curso
 func (cl *Client) reverse(on *reverse.OnionSkin, b slice.Bytes,
 	c *slice.Cursor) {
 
-	// log.I.S(on)
-
 	var e error
 	var onion types.Onion
 	if on.AddrPort.String() == cl.Node.AddrPort.String() {
-		// log.I.S("it's for us", on.AddrPort.String(),
-		// 	b[*c:].ToBytes())
 		if onion, e = wire.PeelOnion(b, c); check(e) {
 			return
 		}
 		switch on1 := onion.(type) {
 		case *layer.OnionSkin:
+			// log.I.F("in reverse %x %s", on1.Nonce[:], on.AddrPort.String())
+			// log.I.S(on1)
 			start := *c - ReverseLayerLen
 			first := *c
 			second := first + ReverseLayerLen
 			last := second + ReverseLayerLen
-			// log.I.S(b[start:first].ToBytes(),
-			// 	b[first:second].ToBytes(),
-			// 	b[second:last].ToBytes(),
-			// )
 			rcv := cl.ReceiveCache.FindCloaked(on1.Cloak)
 			// We need to find the PayloadKey to match.
 			ses := cl.Sessions.FindPub(rcv.Pub)
@@ -272,37 +256,22 @@ func (cl *Client) reverse(on *reverse.OnionSkin, b slice.Bytes,
 			ciph.Encipher(blk, on1.Nonce,
 				b[*c:c.Inc(2*ReverseLayerLen)])
 			blk = ciph.GetBlock(ses.PayloadPrv, hdrPub)
-			log.I.S(ecdh.Compute(ses.PayloadPrv, hdrPub),
-				on1.Nonce)
-			ciph.Encipher(blk, nonce.IV{}, b[*c:])
-			log.I.S("!!!!!!!", b[*c:].ToBytes())
-			// if b[start:].String() !=
-			// 	reverse.MagicString {
-			// 	cl.Node.Send(b[*c:])
-			// }
-			// log.I.S(cl.AddrPort.String(),
-			// 	// b.ToBytes()[:ReverseHeaderLen],
-			// 	b.ToBytes(), // [ReverseHeaderLen:],
-			// )
+			ciph.Encipher(blk, on1.Nonce, b[*c:])
 			// shift the header segment upwards and pad the
 			// remainder.
 			copy(b[start:first], b[first:second])
 			copy(b[first:second], b[second:last])
 			copy(b[second:last], slice.NoisePad(ReverseLayerLen))
 			if b[start:start+2].String() != reverse.MagicString {
-				log.I.S(b[last:].ToBytes())
 				cl.Node.Send(b[last:])
 				break
 			}
-			log.I.S(b[start:].ToBytes())
 			cl.Node.Send(b[start:])
 		default:
 			return
 		}
 	} else {
 		// we need to forward this message onion.
-		log.I.Ln("reversing", cl.Node.AddrPort.String(),
-			on.AddrPort.String())
 		cl.Send(on.AddrPort, b)
 	}
 
