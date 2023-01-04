@@ -121,9 +121,10 @@ func TestOnionSkins_Exit(t *testing.T) {
 		t.Error(e)
 		t.FailNow()
 	}
+	n3 := Gen3Nonces()
 	p := uint16(rand.Uint32())
 	on := OnionSkins{}.
-		Exit(p, prvs, pubs, msg).
+		Exit(p, prvs, pubs, n3, msg).
 		Assemble()
 	onb := EncodeOnion(on)
 	c := slice.NewCursor()
@@ -144,6 +145,12 @@ func TestOnionSkins_Exit(t *testing.T) {
 	for i := range ex.Ciphers {
 		if ex.Ciphers[i] != ciphers[i] {
 			t.Errorf("cipher %d did not unwrap correctly", i)
+			t.FailNow()
+		}
+	}
+	for i := range ex.Nonces {
+		if ex.Nonces[i] != n3[i] {
+			t.Errorf("nonce %d did not unwrap correctly", i)
 			t.FailNow()
 		}
 	}
@@ -245,8 +252,9 @@ func TestOnionSkins_Purchase(t *testing.T) {
 	ciphers := GenCiphers(prvs, pubs)
 	p := rand.Uint64()
 	n3 := Gen3Nonces()
+	n := nonce.NewID()
 	on := OnionSkins{}.
-		Purchase(p, prvs, pubs, n3).
+		Purchase(n, p, prvs, pubs, n3).
 		Assemble()
 	onb := EncodeOnion(on)
 	c := slice.NewCursor()
@@ -262,6 +270,11 @@ func TestOnionSkins_Purchase(t *testing.T) {
 	}
 	if pr.NBytes != p {
 		t.Error("NBytes did not unwrap correctly")
+		t.FailNow()
+	}
+	if pr.ID != n {
+		t.Errorf("id %v did not unwrap correctly, expected %v",
+			pr.ID, n)
 		t.FailNow()
 	}
 	for i := range pr.Ciphers {
@@ -294,7 +307,7 @@ func TestOnionSkins_Reply(t *testing.T) {
 		port := uint16(rand.Uint32())
 		ap := netip.AddrPortFrom(adr, port)
 		on := OnionSkins{}.
-			Reply(&ap).
+			Reverse(&ap).
 			Assemble()
 		onb := EncodeOnion(on)
 		c := slice.NewCursor()
@@ -325,7 +338,7 @@ func TestOnionSkins_Response(t *testing.T) {
 		t.FailNow()
 	}
 	on := OnionSkins{}.
-		Response(msg).
+		Response(hash, msg).
 		Assemble()
 	onb := EncodeOnion(on)
 	c := slice.NewCursor()
@@ -339,7 +352,7 @@ func TestOnionSkins_Response(t *testing.T) {
 		t.Error("did not unwrap expected type")
 		t.FailNow()
 	}
-	plH := sha256.Single(*ex)
+	plH := sha256.Single(ex.Bytes)
 	if plH != hash {
 		t.Errorf("exit message did not unwrap correctly")
 		t.FailNow()

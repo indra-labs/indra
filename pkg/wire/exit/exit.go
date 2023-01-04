@@ -2,17 +2,19 @@ package exit
 
 import (
 	"github.com/Indra-Labs/indra"
+	"github.com/Indra-Labs/indra/pkg/nonce"
 	"github.com/Indra-Labs/indra/pkg/sha256"
 	"github.com/Indra-Labs/indra/pkg/slice"
 	"github.com/Indra-Labs/indra/pkg/types"
 	"github.com/Indra-Labs/indra/pkg/wire/magicbytes"
 	log2 "github.com/cybriq/proc/pkg/log"
+	"github.com/davecgh/go-spew/spew"
 )
 
 const (
 	MagicString = "ex"
 	Len         = magicbytes.Len + slice.Uint16Len + 3*sha256.Len +
-		slice.Uint32Len
+		slice.Uint32Len + nonce.IVLen*3
 )
 
 var (
@@ -36,9 +38,16 @@ type OnionSkin struct {
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
 	Ciphers [3]sha256.Hash
+	// Nonces are the nonces to use with the cipher when creating the
+	// encryption for the reply message.
+	Nonces [3]nonce.IV
 	// Bytes are the message to be passed to the exit service.
 	slice.Bytes
 	types.Onion
+}
+
+func (x *OnionSkin) String() string {
+	return spew.Sdump(x.Port, x.Ciphers, x.Nonces, x.Bytes.ToBytes())
 }
 
 func (x *OnionSkin) Inner() types.Onion   { return x.Onion }
@@ -55,6 +64,9 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(sha256.Len)], x.Ciphers[0][:])
 	copy(b[*c:c.Inc(sha256.Len)], x.Ciphers[1][:])
 	copy(b[*c:c.Inc(sha256.Len)], x.Ciphers[2][:])
+	copy(b[*c:c.Inc(nonce.IVLen)], x.Nonces[0][:])
+	copy(b[*c:c.Inc(nonce.IVLen)], x.Nonces[1][:])
+	copy(b[*c:c.Inc(nonce.IVLen)], x.Nonces[2][:])
 	bytesLen := slice.NewUint32()
 	slice.EncodeUint32(bytesLen, len(x.Bytes))
 	copy(b[*c:c.Inc(slice.Uint32Len)], bytesLen)
@@ -70,6 +82,11 @@ func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	for i := range x.Ciphers {
 		bytes := b[*c:c.Inc(sha256.Len)]
 		copy(x.Ciphers[i][:], bytes)
+		bytes.Zero()
+	}
+	for i := range x.Nonces {
+		bytes := b[*c:c.Inc(nonce.IVLen)]
+		copy(x.Nonces[i][:], bytes)
 		bytes.Zero()
 	}
 	bytesLen := slice.DecodeUint32(b[*c:c.Inc(slice.Uint32Len)])

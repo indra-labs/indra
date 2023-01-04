@@ -2,6 +2,7 @@ package response
 
 import (
 	"github.com/Indra-Labs/indra"
+	"github.com/Indra-Labs/indra/pkg/sha256"
 	"github.com/Indra-Labs/indra/pkg/slice"
 	"github.com/Indra-Labs/indra/pkg/types"
 	"github.com/Indra-Labs/indra/pkg/wire/magicbytes"
@@ -10,7 +11,7 @@ import (
 
 const (
 	MagicString = "rs"
-	Len         = magicbytes.Len + slice.Uint32Len
+	Len         = magicbytes.Len + slice.Uint32Len + sha256.Len
 )
 
 var (
@@ -20,8 +21,11 @@ var (
 	_     types.Onion = &OnionSkin{}
 )
 
-// OnionSkin messages are what are carried back via Reply messages from an Exit.
-type OnionSkin slice.Bytes
+// OnionSkin messages are what are carried back via Reverse messages from an Exit.
+type OnionSkin struct {
+	sha256.Hash
+	slice.Bytes
+}
 
 func New() *OnionSkin {
 	o := OnionSkin{}
@@ -30,14 +34,15 @@ func New() *OnionSkin {
 
 func (x *OnionSkin) Inner() types.Onion   { return nil }
 func (x *OnionSkin) Insert(_ types.Onion) {}
-func (x *OnionSkin) Len() int             { return Len + len(*x) }
+func (x *OnionSkin) Len() int             { return Len + len(x.Bytes) }
 
 func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
+	copy(b[*c:c.Inc(sha256.Len)], x.Hash[:])
 	bytesLen := slice.NewUint32()
-	slice.EncodeUint32(bytesLen, len(*x))
+	slice.EncodeUint32(bytesLen, len(x.Bytes))
 	copy(b[*c:c.Inc(slice.Uint32Len)], bytesLen)
-	copy(b[*c:c.Inc(len(*x))], *x)
+	copy(b[*c:c.Inc(len(x.Bytes))], x.Bytes)
 }
 
 func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
@@ -45,8 +50,9 @@ func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 		return magicbytes.TooShort(len(b[*c:]),
 			Len-magicbytes.Len, string(Magic))
 	}
+	copy(x.Hash[:], b[*c:c.Inc(sha256.Len)])
 	responseLen := slice.DecodeUint32(b[*c:c.Inc(slice.Uint32Len)])
 	bb := b[*c:c.Inc(responseLen)]
-	*x = OnionSkin(bb)
+	x.Bytes = bb
 	return
 }
