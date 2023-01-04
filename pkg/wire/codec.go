@@ -105,6 +105,7 @@ func PeelOnion(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 	default:
 		e = fmt.Errorf("message magic not found")
 		check(e)
+		log.I.S(b.ToBytes())
 		return
 	}
 	return

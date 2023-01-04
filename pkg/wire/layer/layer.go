@@ -61,16 +61,12 @@ func (x *OnionSkin) Len() int {
 
 func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
-	// log.I.S("encryption nonce", n)
 	copy(b[*c:c.Inc(nonce.IVLen)], x.Nonce[:])
 	// Derive the cloaked key and copy it in.
-	// log.I.S("public key", x.To.ToBytes())
 	to := x.To.GetCloak()
-	// log.I.S("cloaked public key", to)
 	copy(b[*c:c.Inc(address.Len)], to[:])
 	// Derive the public key from the From key and copy in.
 	pubKey := pub.Derive(x.From).ToBytes()
-	// log.I.S("public key of private key used for encryption", pubKey)
 	copy(b[*c:c.Inc(pub.KeyLen)], pubKey[:])
 	start := *c
 	// Call the tree of onions to perform their encoding.
