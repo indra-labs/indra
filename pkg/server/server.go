@@ -6,7 +6,6 @@ import (
 	"github.com/Indra-Labs/indra/pkg/cfg"
 	"github.com/cybriq/proc/pkg/interrupt"
 	log2 "github.com/cybriq/proc/pkg/log"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -59,40 +58,57 @@ func (srv *Server) Shutdown() (err error) {
 
 func (srv *Server) Serve() (err error) {
 
+	log.I.Ln("bootstrapping the DHT")
+
 	// Bootstrap the DHT. In the default configuration, this spawns a Background
 	// thread that will refresh the peer table every five minutes.
 	if err = srv.dht.Bootstrap(srv.Context); check(err) {
 		return err
 	}
 
-	select {
-	case <-srv.Context.Done():
-		srv.Shutdown()
-	}
+	log.I.Ln("attempting to peer with seed addresses...")
 
 	// We will first attempt to connect to the seed addresses.
 	var wg sync.WaitGroup
 
-	spew.Dump(srv.params.ParseSeedMultiAddresses())
-
 	var seedAddresses []multiaddr.Multiaddr
 
-	seedAddresses, err = srv.params.ParseSeedMultiAddresses()
+	if seedAddresses, err = srv.params.ParseSeedMultiAddresses(); check(err) {
+		return
+	}
+
+	log.I.Ln("seed peers:")
+
+	var peerInfo *peer.AddrInfo
 
 	for _, peerAddr := range seedAddresses {
-		peerinfo, _ := peer.AddrInfoFromP2pAddr(peerAddr)
+
+		log.I.Ln("-", peerAddr.String())
+
+		if peerInfo, err = peer.AddrInfoFromP2pAddr(peerAddr); check(err) {
+			return
+		}
+
 		wg.Add(1)
+
 		go func() {
+
 			defer wg.Done()
-			if err := srv.host.Connect(srv, *peerinfo); err != nil {
+
+			if err := srv.host.Connect(srv.Context, *peerInfo); err != nil {
 				log.W.Ln(err)
 			} else {
-				log.I.Ln("Connection established with bootstrap node:", *peerinfo)
+				log.I.Ln("Connection established with bootstrap node:", *peerInfo)
 			}
 		}()
 	}
 
 	wg.Wait()
+
+	select {
+	case <-srv.Context.Done():
+		srv.Shutdown()
+	}
 
 	return nil
 }

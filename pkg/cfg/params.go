@@ -23,17 +23,19 @@ type Params struct {
 	// DefaultPort is the default port for p2p listening
 	DefaultPort string
 
-	// SeedAddresses is a list of DNS hostnames used to bootstrap a new node on the network
-	SeedAddresses   []string
+	// DNSSeedAddresses is a list of DNS hostnames used to bootstrap a new node on the network
+	DNSSeedAddresses []*DNSSeedAddress
 }
 
 func(self *Params) ParseSeedMultiAddresses() (addresses []multiaddr.Multiaddr, err error) {
 
 	var adr multiaddr.Multiaddr
 
-	for _, addr := range self.SeedAddresses {
+	addresses = []multiaddr.Multiaddr{}
 
-		if adr, err = multiaddr.NewMultiaddr(addr+":"+self.DefaultPort); check(err) {
+	for _, addr := range self.DNSSeedAddresses {
+
+		if adr, err = multiaddr.NewMultiaddr("/dns4/"+addr.DNSAddress+"/tcp/"+self.DefaultPort+"/p2p/"+addr.ID); check(err) {
 			return
 		}
 
@@ -51,19 +53,16 @@ var MainNetServerParams = &Params{
 
 	DefaultPort: "8337",
 
-	SeedAddresses: []string{
-		// "seed0.indra.org",
-		// "seed1.indra.org",
-		// "seed2.indra.org",
-		// "seed3.indra.org",
-		// "seed0.example.com",
-		// "seed1.example.com",
-		// "seed2.example.com",
-		// "seed3.example.com",
-		// "1.1.1.1",
-		// "::1",
+	DNSSeedAddresses: []*DNSSeedAddress{
+		NewSeedAddress("seed0.indra.org", "12D3KooWCfTmWavthiVV7Vkm9eouCdiLdGnhd2PShQ2hiu2VVU6Q"),
+		NewSeedAddress("seed1.indra.org", "12D3KooWASwYWP2gMh581EQG25nauvWfwAU3g6v8TugEoEzL5Ags"),
+		NewSeedAddress("seed2.indra.org", "12D3KooWFW7k2YcxjZrqWXJhmoCTNiNtgjLkEUeqgvZRAF3xHZjs"),
+		NewSeedAddress("seed3.indra.org", "12D3KooWPxx3WMiCv3SwBNfrM6peGBWDypJqqxfdGgZKpr7BF9Vo"),
+		// NewSeedAddress("seed0.example.com", "12D3KooWDj2wXRVPRVP8HcQXTyAXeigAAjaX6hgdgALyNFuK1Htv"),
+		// NewSeedAddress("seed1.example.com", "12D3KooWMkBp6E2qjz2saq9eocT9FTh3zuoP5yAcFgFGSfXoZN8K"),
+		// NewSeedAddress("seed2.example.com", "12D3KooWEonhWcCp6FMwycNFrE5hSDbPdezy5ftBcHLxLPoESzgZ"),
+		// NewSeedAddress("seed3.example.com", "12D3KooWFq8irCNNCdE4zxjcUGVdG47fnPSd4hj9MsxH8RAunHTx"),
 	},
-
 }
 
 var TestNetServerParams = &Params{
@@ -74,17 +73,15 @@ var TestNetServerParams = &Params{
 
 	DefaultPort: "58337",
 
-	SeedAddresses: []string{
-		// "seed0.testnet.indra.org",
-		// "seed1.testnet.indra.org",
-		// "seed2.testnet.indra.org",
-		// "seed3.testnet.indra.org",
-		// "seed0.testnet.example.com",
-		// "seed1.testnet.example.com",
-		// "seed2.testnet.example.com",
-		// "seed3.testnet.example.com",
-		// "1.1.1.1",
-		// "::1",
+	DNSSeedAddresses: []*DNSSeedAddress{
+		// NewSeedAddress("seed0.indra.org", "12D3KooWCfTmWavthiVV7Vkm9eouCdiLdGnhd2PShQ2hiu2VVU6Q"),
+		// NewSeedAddress("seed1.indra.org", "12D3KooWASwYWP2gMh581EQG25nauvWfwAU3g6v8TugEoEzL5Ags"),
+		// NewSeedAddress("seed2.indra.org", "12D3KooWFW7k2YcxjZrqWXJhmoCTNiNtgjLkEUeqgvZRAF3xHZjs"),
+		// NewSeedAddress("seed3.indra.org", "12D3KooWPxx3WMiCv3SwBNfrM6peGBWDypJqqxfdGgZKpr7BF9Vo"),
+		// NewSeedAddress("seed0.example.com", "12D3KooWDj2wXRVPRVP8HcQXTyAXeigAAjaX6hgdgALyNFuK1Htv"),
+		// NewSeedAddress("seed1.example.com", "12D3KooWMkBp6E2qjz2saq9eocT9FTh3zuoP5yAcFgFGSfXoZN8K"),
+		// NewSeedAddress("seed2.example.com", "12D3KooWEonhWcCp6FMwycNFrE5hSDbPdezy5ftBcHLxLPoESzgZ"),
+		// NewSeedAddress("seed3.example.com", "12D3KooWFq8irCNNCdE4zxjcUGVdG47fnPSd4hj9MsxH8RAunHTx"),
 	},
 
 }
@@ -97,7 +94,6 @@ var SimnetServerParams = &Params{
 
 	DefaultPort: "62134",
 
-	SeedAddresses:   []string{
-		// We likely will never need any seed addresses here
-	},
+	// We likely will never need any seed addresses here
+	DNSSeedAddresses: []*DNSSeedAddress{},
 }

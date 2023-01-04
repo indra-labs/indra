@@ -11,7 +11,6 @@ import (
 	"github.com/cybriq/proc/pkg/opts/config"
 	"github.com/cybriq/proc/pkg/opts/list"
 	"github.com/cybriq/proc/pkg/opts/meta"
-	"github.com/davecgh/go-spew/spew"
 	"os"
 )
 
@@ -100,18 +99,20 @@ var commands = &cmds.Command{
 			},
 			Entrypoint: func(c *cmds.Command, args []string) error {
 
-				log.I.Ln("-- ", log2.App, "-", indra.SemVer, "- Network Freedom. --")
+				var params = cfg.MainNetServerParams
 
-				spew.Dump(c.GetListValue("seed"))
-				spew.Dump(c.GetListValue("peer"))
-				spew.Dump(c.GetListValue("listen"))
+				log.I.Ln("-- ", log2.App, "("+cfg.MainNetServerParams.Name+") -", indra.SemVer, "- Network Freedom. --")
+
+				//spew.Dump(c.GetListValue("seed"))
+				//spew.Dump(c.GetListValue("peer"))
+				//spew.Dump(c.GetListValue("listen"))
 
 				var err error
 				var srv *server.Server
 
 				log.I.Ln("running serve.")
 
-				if srv, err = server.New(cfg.MainNetServerParams, server.DefaultConfig); check(err) {
+				if srv, err = server.New(params, server.DefaultConfig); check(err) {
 					return err
 				}
 
