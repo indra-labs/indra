@@ -68,12 +68,13 @@ func (o OnionSkins) Delay(d time.Duration) OnionSkins {
 }
 
 func (o OnionSkins) Exit(port uint16, prvs [3]*prv.Key, pubs [3]*pub.Key,
-	payload slice.Bytes) OnionSkins {
+	nonces [3]nonce.IV, payload slice.Bytes) OnionSkins {
 
 	return append(o, &exit.OnionSkin{
 		Port:    port,
 		Ciphers: GenCiphers(prvs, pubs),
 		Bytes:   payload,
+		Nonces:  nonces,
 		Onion:   os,
 	})
 }
@@ -106,8 +107,8 @@ func (o OnionSkins) Purchase(id nonce.ID, nBytes uint64, prvs [3]*prv.Key,
 func (o OnionSkins) Reverse(ip *netip.AddrPort) OnionSkins {
 	return append(o, &reverse.OnionSkin{AddrPort: ip, Onion: os})
 }
-func (o OnionSkins) Response(res slice.Bytes) OnionSkins {
-	rs := response.OnionSkin(res)
+func (o OnionSkins) Response(hash sha256.Hash, res slice.Bytes) OnionSkins {
+	rs := response.OnionSkin{Hash: hash, Bytes: res}
 	return append(o, &rs)
 }
 func (o OnionSkins) Session(hdr, pld *pub.Key) OnionSkins {

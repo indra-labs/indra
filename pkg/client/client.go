@@ -15,6 +15,7 @@ import (
 	"github.com/Indra-Labs/indra/pkg/node"
 	"github.com/Indra-Labs/indra/pkg/nonce"
 	session2 "github.com/Indra-Labs/indra/pkg/session"
+	"github.com/Indra-Labs/indra/pkg/sha256"
 	"github.com/Indra-Labs/indra/pkg/slice"
 	"github.com/Indra-Labs/indra/pkg/types"
 	"github.com/Indra-Labs/indra/pkg/wire"
@@ -56,6 +57,7 @@ type Client struct {
 	session2.Sessions
 	PendingSessions []nonce.ID
 	*confirm.Confirms
+	ExitHooks response.Hooks
 	sync.Mutex
 	*signer.KeySet
 	atomic.Bool
@@ -167,9 +169,35 @@ func (cl *Client) delay(on *delay.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
 	// to be stored.
 }
 
-func (cl *Client) exit(on *exit.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
-	// payload is forwarded to a local port and the response is forwarded
+func (cl *Client) exit(on *exit.OnionSkin, b slice.Bytes, c *slice.Cursor) {
+	// payload is forwarded to a local port and the result is forwarded
 	// back with a reverse header.
+	var e error
+	var result slice.Bytes
+	if e = cl.SendTo(on.Port, on.Bytes); check(e) {
+		return
+	}
+	timer := time.NewTicker(time.Second * 5)
+	select {
+	case result = <-cl.ReceiveFrom(on.Port):
+	case <-timer.C:
+	}
+	// We need to wrap the result in a message layer.
+	res := wire.EncodeOnion(&response.OnionSkin{
+		Hash:  sha256.Single(on.Bytes),
+		Bytes: result,
+	})
+	header := b[*c:c.Inc(ReverseHeaderLen)]
+	rb := make(slice.Bytes, ReverseHeaderLen+len(res))
+	cur := slice.NewCursor()
+	copy(rb[*cur:cur.Inc(ReverseHeaderLen)], header[:ReverseHeaderLen])
+	copy(rb[ReverseHeaderLen:], res)
+	start := *cur
+	for i := range on.Ciphers {
+		blk := ciph.BlockFromHash(on.Ciphers[i])
+		ciph.Encipher(blk, on.Nonces[2-i], rb[start:])
+	}
+	cl.Node.Send(rb)
 }
 
 func (cl *Client) forward(on *forward.OnionSkin, b slice.Bytes, c *slice.Cursor) {
@@ -215,16 +243,16 @@ func (cl *Client) purchase(on *purchase.OnionSkin, b slice.Bytes, c *slice.Curso
 	cl.Sessions.Add(s)
 	cl.Mutex.Unlock()
 	header := b[*c:c.Inc(ReverseHeaderLen)]
-	// log.I.S(header.ToBytes())
 	rb := make(slice.Bytes, ReverseHeaderLen+session.Len)
 	cur := slice.NewCursor()
 	copy(rb[*cur:cur.Inc(ReverseHeaderLen)], header[:ReverseHeaderLen])
 	start := *cur
 	se.Encode(rb, cur)
-
+	log.I.S(rb.ToBytes())
 	for i := range on.Ciphers {
 		blk := ciph.BlockFromHash(on.Ciphers[i])
 		ciph.Encipher(blk, on.Nonces[2-i], rb[start:])
+		log.I.S(rb[start:].ToBytes())
 	}
 	cl.Node.Send(rb)
 }
@@ -240,8 +268,6 @@ func (cl *Client) reverse(on *reverse.OnionSkin, b slice.Bytes,
 		}
 		switch on1 := onion.(type) {
 		case *layer.OnionSkin:
-			// log.I.F("in reverse %x %s", on1.Nonce[:], on.AddrPort.String())
-			// log.I.S(on1)
 			start := *c - ReverseLayerLen
 			first := *c
 			second := first + ReverseLayerLen
@@ -262,7 +288,10 @@ func (cl *Client) reverse(on *reverse.OnionSkin, b slice.Bytes,
 			copy(b[start:first], b[first:second])
 			copy(b[first:second], b[second:last])
 			copy(b[second:last], slice.NoisePad(ReverseLayerLen))
+			// log.I.S(b[start+ReverseHeaderLen:].ToBytes())
 			if b[start:start+2].String() != reverse.MagicString {
+				log.I.S("message now decrypted",
+					b[last:].ToBytes(), on.AddrPort.String())
 				cl.Node.Send(b[last:])
 				break
 			}
@@ -279,6 +308,8 @@ func (cl *Client) reverse(on *reverse.OnionSkin, b slice.Bytes,
 
 func (cl *Client) response(on *response.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
 	// Response is a payload from an exit message.
+	// log.I.S(on.Hash, on.Bytes.ToBytes())
+	cl.ExitHooks.Find(on.Hash)
 }
 
 func (cl *Client) session(s *session.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
@@ -295,7 +326,9 @@ func (cl *Client) session(s *session.OnionSkin, b slice.Bytes, cur *slice.Cursor
 			log.I.S("session received, now to pay", s)
 		}
 	}
-	// So now we want to pay.
+	// So now we want to pay. For now we are just going to shut down the
+	// client as this finishes the test correctly.
+	cl.C.Q()
 }
 
 func (cl *Client) token(t *token.OnionSkin, b slice.Bytes, cur *slice.Cursor) {

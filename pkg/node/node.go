@@ -11,6 +11,7 @@ import (
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/nonce"
+	"github.com/Indra-Labs/indra/pkg/slice"
 	log2 "github.com/cybriq/proc/pkg/log"
 )
 
@@ -29,6 +30,7 @@ type Node struct {
 	AddrPort  *netip.AddrPort
 	HeaderPub *pub.Key
 	HeaderPrv *prv.Key
+	Services
 	ifc.Transport
 }
 
@@ -45,6 +47,29 @@ func New(addr *netip.AddrPort, hdr *pub.Key, hdrPrv *prv.Key,
 		Transport: tpt,
 		HeaderPub: hdr,
 		HeaderPrv: hdrPrv,
+	}
+	return
+}
+
+func (n *Node) SendTo(port uint16, b slice.Bytes) (e error) {
+	e = fmt.Errorf("port not registered %d", port)
+	for i := range n.Services {
+		if n.Services[i].Port == port {
+			n.Services[i].Send(b)
+			e = nil
+			return
+		}
+	}
+	return
+}
+
+func (n *Node) ReceiveFrom(port uint16) (b <-chan slice.Bytes) {
+	for i := range n.Services {
+		if n.Services[i].Port == port {
+			log.I.Ln("receivefrom")
+			b = n.Services[i].Receive()
+			return
+		}
 	}
 	return
 }

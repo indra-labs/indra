@@ -151,7 +151,7 @@ func SendExit(payload slice.Bytes, port uint16, client *node.Node,
 		OnionSkin(address.FromPub(hop[1].HeaderPub), set.Next(), n0[1]).
 		Forward(hop[2].AddrPort).
 		OnionSkin(address.FromPub(hop[2].HeaderPub), set.Next(), n0[2]).
-		Exit(port, prvs, pubs, payload).
+		Exit(port, prvs, pubs, n1, payload).
 		Reverse(hop[3].AddrPort).
 		OnionSkin(address.FromPub(sess[0].HeaderKey.Key), prvs[0], n1[0]).
 		Reverse(hop[4].AddrPort).
