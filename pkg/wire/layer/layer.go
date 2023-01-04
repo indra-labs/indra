@@ -50,7 +50,7 @@ type OnionSkin struct {
 
 func (x *OnionSkin) String() string {
 	return fmt.Sprintf("\n\tnonce: %x\n\tto: %x,\n\tfrom: %x,\n",
-		x.To.GetCloak(), pub.Derive(x.From).ToBytes(), x.Nonce)
+		x.Nonce, x.To.ToBytes(), x.From.ToBytes())
 }
 
 func (x *OnionSkin) Inner() types.Onion   { return x.Onion }
@@ -61,18 +61,12 @@ func (x *OnionSkin) Len() int {
 
 func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
-	// Generate a new nonce and copy it in.
-	n := nonce.New()
-	// log.I.S("encryption nonce", n)
-	copy(b[*c:c.Inc(nonce.IVLen)], n[:])
+	copy(b[*c:c.Inc(nonce.IVLen)], x.Nonce[:])
 	// Derive the cloaked key and copy it in.
-	// log.I.S("public key", x.To.ToBytes())
 	to := x.To.GetCloak()
-	// log.I.S("cloaked public key", to)
 	copy(b[*c:c.Inc(address.Len)], to[:])
 	// Derive the public key from the From key and copy in.
 	pubKey := pub.Derive(x.From).ToBytes()
-	// log.I.S("public key of private key used for encryption", pubKey)
 	copy(b[*c:c.Inc(pub.KeyLen)], pubKey[:])
 	start := *c
 	// Call the tree of onions to perform their encoding.
@@ -83,7 +77,7 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	if blk = ciph.GetBlock(x.From, x.To.Key); check(e) {
 		panic(e)
 	}
-	ciph.Encipher(blk, n, b[start:])
+	ciph.Encipher(blk, x.Nonce, b[start:])
 }
 
 // Decode decodes a received OnionSkin. The entire remainder of the message is

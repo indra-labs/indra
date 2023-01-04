@@ -4,6 +4,8 @@
 package signer
 
 import (
+	"sync"
+
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	log2 "github.com/cybriq/proc/pkg/log"
@@ -15,6 +17,7 @@ var (
 )
 
 type KeySet struct {
+	sync.Mutex
 	Base, Increment *prv.Key
 }
 
@@ -35,8 +38,10 @@ func New() (first *prv.Key, ks *KeySet, e error) {
 // Next adds Increment to Base, assigns the new value to the Base and returns
 // the new value.
 func (ks *KeySet) Next() (n *prv.Key) {
+	ks.Mutex.Lock()
 	next := ks.Base.Key.Add(&ks.Increment.Key)
 	ks.Base.Key = *next
 	n = ks.Base
+	ks.Mutex.Unlock()
 	return
 }

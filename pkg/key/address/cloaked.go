@@ -98,7 +98,7 @@ type Receiver struct {
 	pub.Bytes
 }
 
-// NewReceiver takes a private key and generates an Receiver for the address
+// NewReceiver takes a private key and generates a Receiver for the address
 // cache.
 func NewReceiver(k *prv.Key) (a *Receiver) {
 	a = &Receiver{

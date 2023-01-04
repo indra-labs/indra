@@ -4,11 +4,13 @@ import (
 	"math/rand"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/key/signer"
 	"github.com/Indra-Labs/indra/pkg/node"
 	"github.com/Indra-Labs/indra/pkg/nonce"
+	"github.com/Indra-Labs/indra/pkg/session"
 	"github.com/Indra-Labs/indra/pkg/sha256"
 	"github.com/Indra-Labs/indra/pkg/slice"
 	"github.com/Indra-Labs/indra/pkg/testutils"
@@ -83,7 +85,7 @@ func PeelPurchase(t *testing.T, b slice.Bytes,
 	return
 }
 
-func PeelReply(t *testing.T, b slice.Bytes,
+func PeelReverse(t *testing.T, b slice.Bytes,
 	c *slice.Cursor) (rp *reverse.OnionSkin) {
 
 	var ok bool
@@ -124,19 +126,19 @@ func TestPing(t *testing.T) {
 	}
 	var hop [3]*node.Node
 	for i := range hop {
-		prv1, prv2 := GetTwoPrvKeys(t)
-		pub1, pub2 := pub.Derive(prv1), pub.Derive(prv2)
+		prv1, _ := GetTwoPrvKeys(t)
+		pub1 := pub.Derive(prv1)
 		var n nonce.ID
 		hop[i], n = node.New(slice.GenerateRandomAddrPortIPv4(),
-			pub1, pub2, prv1, prv2, nil)
+			pub1, prv1, nil)
 		_ = n
 	}
-	cprv1, cprv2 := GetTwoPrvKeys(t)
-	cpub1, cpub2 := pub.Derive(cprv1), pub.Derive(cprv2)
+	cprv1, _ := GetTwoPrvKeys(t)
+	cpub1 := pub.Derive(cprv1)
 	var n nonce.ID
 	var client *node.Node
 	client, n = node.New(slice.GenerateRandomAddrPortIPv4(),
-		cpub1, cpub2, cprv1, cprv2, nil)
+		cpub1, cprv1, nil)
 
 	on := Ping(n, client, hop, ks)
 	b := EncodeOnion(on.Assemble())
@@ -204,17 +206,17 @@ func TestSendKeys(t *testing.T) {
 	}
 	var hop [5]*node.Node
 	for i := range hop {
-		prv1, prv2 := GetTwoPrvKeys(t)
-		pub1, pub2 := pub.Derive(prv1), pub.Derive(prv2)
+		prv1, _ := GetTwoPrvKeys(t)
+		pub1 := pub.Derive(prv1)
 		hop[i], _ = node.New(slice.GenerateRandomAddrPortIPv4(),
-			pub1, pub2, prv1, prv2, nil)
+			pub1, prv1, nil)
 	}
-	cprv1, cprv2 := GetTwoPrvKeys(t)
-	cpub1, cpub2 := pub.Derive(cprv1), pub.Derive(cprv2)
+	cprv1, _ := GetTwoPrvKeys(t)
+	cpub1 := pub.Derive(cprv1)
 	var n nonce.ID
 	var client *node.Node
 	client, n = node.New(slice.GenerateRandomAddrPortIPv4(),
-		cpub1, cpub2, cprv1, cprv2, nil)
+		cpub1, cprv1, nil)
 	ciprv1, ciprv2 := GetTwoPrvKeys(t)
 	cipub1, cipub2 := pub.Derive(ciprv1), pub.Derive(ciprv2)
 
@@ -321,6 +323,7 @@ func TestSendKeys(t *testing.T) {
 
 func TestSendPurchase(t *testing.T) {
 	log2.CodeLoc = true
+	log2.SetLogLevel(log2.Trace)
 	_, ks, e := signer.New()
 	if check(e) {
 		t.Error(e)
@@ -328,23 +331,26 @@ func TestSendPurchase(t *testing.T) {
 	}
 	var hop [5]*node.Node
 	for i := range hop {
-		prv1, prv2 := GetTwoPrvKeys(t)
-		pub1, pub2 := pub.Derive(prv1), pub.Derive(prv2)
+		prv1, _ := GetTwoPrvKeys(t)
+		pub1 := pub.Derive(prv1)
 		hop[i], _ = node.New(slice.GenerateRandomAddrPortIPv4(),
-			pub1, pub2, prv1, prv2, nil)
+			pub1, prv1, nil)
 	}
-	cprv1, cprv2 := GetTwoPrvKeys(t)
-	cpub1, cpub2 := pub.Derive(cprv1), pub.Derive(cprv2)
+	cprv1, _ := GetTwoPrvKeys(t)
+	cpub1 := pub.Derive(cprv1)
 	var client *node.Node
 	client, _ = node.New(slice.GenerateRandomAddrPortIPv4(),
-		cpub1, cpub2, cprv1, cprv2, nil)
-	// ciprv1, ciprv2 := GetTwoPrvKeys(t)
-	// cipub1, cipub2 := pub.Derive(ciprv1), pub.Derive(ciprv2)
+		cpub1, cprv1, nil)
+	var sess [3]*session.Session
+	for i := range sess {
+		sess[i] = session.NewSession(nonce.NewID(), 203230230,
+			time.Hour, ks)
+	}
 	nBytes := rand.Uint64()
-	on := SendPurchase(nBytes, client, hop, ks)
+	n := nonce.NewID()
+	on := SendPurchase(n, nBytes, client, hop, sess, ks)
 	b := EncodeOnion(on.Assemble())
 	c := slice.NewCursor()
-	// var ok bool
 
 	// Forward(hop[0].AddrPort).
 	f0 := PeelForward(t, b, c)
@@ -386,35 +392,35 @@ func TestSendPurchase(t *testing.T) {
 		t.FailNow()
 	}
 
-	// Reply(hop[3].AddrPort).
-	rp1 := PeelReply(t, b, c)
+	// Reverse(hop[3].AddrPort).
+	rp1 := PeelReverse(t, b, c)
 	if rp1.AddrPort.String() != hop[3].AddrPort.String() {
 		t.Errorf("failed to retrieve first reply hop")
 		t.FailNow()
 	}
 
 	// OnionSkin(address.FromPubKey(hop[3].HeaderPub), replies[0]).
-	PeelOnionSkin(t, b, c).Decrypt(hop[3].HeaderPrv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(sess[0].HeaderPrv, b, c)
 
-	// Reply(hop[4].AddrPort).
-	rp2 := PeelReply(t, b, c)
+	// Reverse(hop[4].AddrPort).
+	rp2 := PeelReverse(t, b, c)
 	if rp2.AddrPort.String() != hop[4].AddrPort.String() {
 		t.Errorf("failed to retrieve second reply hop")
 		t.FailNow()
 	}
 
 	// OnionSkin(address.FromPubKey(hop[4].HeaderPub), replies[1]).
-	PeelOnionSkin(t, b, c).Decrypt(hop[4].HeaderPrv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(sess[1].HeaderPrv, b, c)
 
-	// Reply(client.AddrPort).
-	rp3 := PeelReply(t, b, c)
+	// Reverse(client.AddrPort).
+	rp3 := PeelReverse(t, b, c)
 	if rp3.AddrPort.String() != client.AddrPort.String() {
 		t.Errorf("failed to retrieve third reply hop")
 		t.FailNow()
 	}
 
 	// OnionSkin(address.FromPubKey(client.HeaderPub), replies[2]).
-	PeelOnionSkin(t, b, c).Decrypt(client.HeaderPrv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(sess[2].HeaderPrv, b, c)
 
 }
 
@@ -427,21 +433,26 @@ func TestSendExit(t *testing.T) {
 	}
 	var hop [5]*node.Node
 	for i := range hop {
-		prv1, prv2 := GetTwoPrvKeys(t)
-		pub1, pub2 := pub.Derive(prv1), pub.Derive(prv2)
+		prv1, _ := GetTwoPrvKeys(t)
+		pub1 := pub.Derive(prv1)
 		hop[i], _ = node.New(slice.GenerateRandomAddrPortIPv4(),
-			pub1, pub2, prv1, prv2, nil)
+			pub1, prv1, nil)
 	}
-	cprv1, cprv2 := GetTwoPrvKeys(t)
-	cpub1, cpub2 := pub.Derive(cprv1), pub.Derive(cprv2)
+	cprv1, _ := GetTwoPrvKeys(t)
+	cpub1 := pub.Derive(cprv1)
 	var client *node.Node
 	client, _ = node.New(slice.GenerateRandomAddrPortIPv4(),
-		cpub1, cpub2, cprv1, cprv2, nil)
+		cpub1, cprv1, nil)
 	port := uint16(rand.Uint32())
 	var message slice.Bytes
 	var hash sha256.Hash
 	message, hash, e = testutils.GenerateTestMessage(2502)
-	on := SendExit(message, port, client, hop, ks)
+	var sess [3]*session.Session
+	for i := range sess {
+		sess[i] = session.NewSession(nonce.NewID(), 203230230,
+			time.Hour, ks)
+	}
+	on := SendExit(message, port, client, hop, sess, ks)
 	b := EncodeOnion(on.Assemble())
 	c := slice.NewCursor()
 
@@ -490,34 +501,34 @@ func TestSendExit(t *testing.T) {
 		t.FailNow()
 	}
 
-	// Reply(hop[3].AddrPort).
-	rp1 := PeelReply(t, b, c)
+	// Reverse(hop[3].AddrPort).
+	rp1 := PeelReverse(t, b, c)
 	if rp1.AddrPort.String() != hop[3].AddrPort.String() {
 		t.Errorf("failed to retrieve first reply hop")
 		t.FailNow()
 	}
 
 	// OnionSkin(address.FromPubKey(hop[3].HeaderPub), replies[0]).
-	PeelOnionSkin(t, b, c).Decrypt(hop[3].HeaderPrv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(sess[0].HeaderPrv, b, c)
 
-	// Reply(hop[4].AddrPort).
-	rp2 := PeelReply(t, b, c)
+	// Reverse(hop[4].AddrPort).
+	rp2 := PeelReverse(t, b, c)
 	if rp2.AddrPort.String() != hop[4].AddrPort.String() {
 		t.Errorf("failed to retrieve second reply hop")
 		t.FailNow()
 	}
 
 	// OnionSkin(address.FromPubKey(hop[4].HeaderPub), replies[1]).
-	PeelOnionSkin(t, b, c).Decrypt(hop[4].HeaderPrv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(sess[1].HeaderPrv, b, c)
 
-	// Reply(client.AddrPort).
-	rp3 := PeelReply(t, b, c)
+	// Reverse(client.AddrPort).
+	rp3 := PeelReverse(t, b, c)
 	if rp3.AddrPort.String() != client.AddrPort.String() {
 		t.Errorf("failed to retrieve third reply hop")
 		t.FailNow()
 	}
 
 	// OnionSkin(address.FromPubKey(client.HeaderPub), replies[2]).
-	PeelOnionSkin(t, b, c).Decrypt(client.HeaderPrv, b, c)
+	PeelOnionSkin(t, b, c).Decrypt(sess[2].HeaderPrv, b, c)
 
 }

@@ -28,7 +28,7 @@ import (
 
 func GenCiphers(prvs [3]*prv.Key, pubs [3]*pub.Key) (ciphers [3]sha256.Hash) {
 	for i := range prvs {
-		ciphers[i] = ecdh.Compute(prvs[i], pubs[i])
+		ciphers[2-i] = ecdh.Compute(prvs[i], pubs[i])
 	}
 	return
 }
@@ -68,12 +68,13 @@ func (o OnionSkins) Delay(d time.Duration) OnionSkins {
 }
 
 func (o OnionSkins) Exit(port uint16, prvs [3]*prv.Key, pubs [3]*pub.Key,
-	payload slice.Bytes) OnionSkins {
+	nonces [3]nonce.IV, payload slice.Bytes) OnionSkins {
 
 	return append(o, &exit.OnionSkin{
 		Port:    port,
 		Ciphers: GenCiphers(prvs, pubs),
 		Bytes:   payload,
+		Nonces:  nonces,
 		Onion:   os,
 	})
 }
@@ -90,21 +91,24 @@ func (o OnionSkins) OnionSkin(to *address.Sender, from *prv.Key, n nonce.IV) Oni
 		Onion: os,
 	})
 }
-func (o OnionSkins) Purchase(nBytes uint64, prvs [3]*prv.Key,
+func (o OnionSkins) Purchase(id nonce.ID, nBytes uint64, prvs [3]*prv.Key,
 	pubs [3]*pub.Key, n [3]nonce.IV) OnionSkins {
 
-	return append(o, &purchase.OnionSkin{
+	oo := append(o, &purchase.OnionSkin{
+		ID:      id,
 		NBytes:  nBytes,
 		Ciphers: GenCiphers(prvs, pubs),
 		Nonces:  n,
 		Onion:   os,
 	})
+
+	return oo
 }
-func (o OnionSkins) Reply(ip *netip.AddrPort) OnionSkins {
+func (o OnionSkins) Reverse(ip *netip.AddrPort) OnionSkins {
 	return append(o, &reverse.OnionSkin{AddrPort: ip, Onion: os})
 }
-func (o OnionSkins) Response(res slice.Bytes) OnionSkins {
-	rs := response.OnionSkin(res)
+func (o OnionSkins) Response(hash sha256.Hash, res slice.Bytes) OnionSkins {
+	rs := response.OnionSkin{Hash: hash, Bytes: res}
 	return append(o, &rs)
 }
 func (o OnionSkins) Session(hdr, pld *pub.Key) OnionSkins {
