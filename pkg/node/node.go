@@ -11,6 +11,7 @@ import (
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/nonce"
+	"github.com/Indra-Labs/indra/pkg/slice"
 	log2 "github.com/cybriq/proc/pkg/log"
 )
 
@@ -19,34 +20,56 @@ var (
 	check = log.E.Chk
 )
 
-// Node is a representation of a messaging counterparty. The net.IP can be nil
-// for the case of a client node that is not in a direct open connection. For
-// this reason all nodes are assigned an ID and will normally be handled by this
-// except when the netip.AddrPort is known via the packet sender address.
+// Node is a representation of a messaging counterparty. The netip.AddrPort can
+// be nil for the case of a client node that is not in a direct open connection.
+// For this reason all nodes are assigned an ID and will normally be handled by
+// this except when the netip.AddrPort is known via the packet sender address.
 type Node struct {
 	nonce.ID
-	Addr                  string
-	AddrPort              *netip.AddrPort
-	HeaderPub, PayloadPub *pub.Key
-	HeaderPrv, PayloadPrv *prv.Key
+	Addr      string
+	AddrPort  *netip.AddrPort
+	HeaderPub *pub.Key
+	HeaderPrv *prv.Key
+	Services
 	ifc.Transport
 }
 
 // New creates a new Node. netip.AddrPort is optional if the counterparty is not
 // in direct connection.
-func New(addr *netip.AddrPort, hdr, pld *pub.Key, hdrPrv, pldPrv *prv.Key,
+func New(addr *netip.AddrPort, hdr *pub.Key, hdrPrv *prv.Key,
 	tpt ifc.Transport) (n *Node, id nonce.ID) {
 
 	id = nonce.NewID()
 	n = &Node{
-		ID:         id,
-		Addr:       addr.String(),
-		AddrPort:   addr,
-		Transport:  tpt,
-		HeaderPub:  hdr,
-		PayloadPub: pld,
-		HeaderPrv:  hdrPrv,
-		PayloadPrv: pldPrv,
+		ID:        id,
+		Addr:      addr.String(),
+		AddrPort:  addr,
+		Transport: tpt,
+		HeaderPub: hdr,
+		HeaderPrv: hdrPrv,
+	}
+	return
+}
+
+func (n *Node) SendTo(port uint16, b slice.Bytes) (e error) {
+	e = fmt.Errorf("port not registered %d", port)
+	for i := range n.Services {
+		if n.Services[i].Port == port {
+			n.Services[i].Send(b)
+			e = nil
+			return
+		}
+	}
+	return
+}
+
+func (n *Node) ReceiveFrom(port uint16) (b <-chan slice.Bytes) {
+	for i := range n.Services {
+		if n.Services[i].Port == port {
+			log.I.Ln("receivefrom")
+			b = n.Services[i].Receive()
+			return
+		}
 	}
 	return
 }

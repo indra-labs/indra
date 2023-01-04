@@ -23,10 +23,10 @@ var (
 )
 
 // OnionSkin session is a message containing two public keys which identify to a
-// relay how to decrypt the header in a Reply message, using the HeaderKey, and
+// relay how to decrypt the header in a Reverse message, using the HeaderKey, and
 // the payload, which uses the PayloadKey. There is two keys in order to prevent
 // the Exit node from being able to decrypt the header, but enable it to encrypt
-// the payload, and Reply relay hops have these key pairs and identify the
+// the payload, and Reverse relay hops have these key pairs and identify the
 // HeaderKey and then know they can unwrap their layer of the payload using the
 // PayloadKey.
 //

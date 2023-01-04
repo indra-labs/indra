@@ -2,7 +2,6 @@ package client
 
 import (
 	"net/netip"
-	"reflect"
 	"sync"
 	"time"
 
@@ -15,6 +14,8 @@ import (
 	"github.com/Indra-Labs/indra/pkg/key/signer"
 	"github.com/Indra-Labs/indra/pkg/node"
 	"github.com/Indra-Labs/indra/pkg/nonce"
+	session2 "github.com/Indra-Labs/indra/pkg/session"
+	"github.com/Indra-Labs/indra/pkg/sha256"
 	"github.com/Indra-Labs/indra/pkg/slice"
 	"github.com/Indra-Labs/indra/pkg/types"
 	"github.com/Indra-Labs/indra/pkg/wire"
@@ -36,8 +37,9 @@ import (
 )
 
 const (
-	DefaultDeadline = 10 * time.Minute
-	ReplyHeaderLen  = 3*reverse.Len + 3*layer.Len
+	DefaultDeadline  = 10 * time.Minute
+	ReverseLayerLen  = reverse.Len + layer.Len
+	ReverseHeaderLen = 3 * ReverseLayerLen
 )
 
 var (
@@ -52,8 +54,10 @@ type Client struct {
 	*address.SendCache
 	*address.ReceiveCache
 	Circuits
-	Sessions
+	session2.Sessions
+	PendingSessions []nonce.ID
 	*confirm.Confirms
+	ExitHooks response.Hooks
 	sync.Mutex
 	*signer.KeySet
 	atomic.Bool
@@ -95,7 +99,6 @@ func (cl *Client) runner() (out bool) {
 		break
 	case b := <-cl.Node.Receive():
 		// process received message
-		// log.I.Ln("received message")
 		var onion types.Onion
 		var e error
 		c := slice.NewCursor()
@@ -104,40 +107,28 @@ func (cl *Client) runner() (out bool) {
 		}
 		switch on := onion.(type) {
 		case *cipher.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
 			cl.cipher(on, b, c)
 		case *confirm.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
 			cl.confirm(on, b, c)
 		case *delay.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
 			cl.delay(on, b, c)
 		case *exit.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
 			cl.exit(on, b, c)
 		case *forward.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
 			cl.forward(on, b, c)
 		case *layer.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
 			cl.layer(on, b, c)
 		case *noop.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
 			cl.noop(on, b, c)
 		case *purchase.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
 			cl.purchase(on, b, c)
 		case *reverse.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
 			cl.reverse(on, b, c)
 		case *response.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
 			cl.response(on, b, c)
 		case *session.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
 			cl.session(on, b, c)
 		case *token.OnionSkin:
-			log.I.Ln(reflect.TypeOf(on))
 			cl.token(on, b, c)
 		default:
 			log.I.S("unrecognised packet", b)
@@ -178,9 +169,35 @@ func (cl *Client) delay(on *delay.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
 	// to be stored.
 }
 
-func (cl *Client) exit(on *exit.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
-	// payload is forwarded to a local port and the response is forwarded
+func (cl *Client) exit(on *exit.OnionSkin, b slice.Bytes, c *slice.Cursor) {
+	// payload is forwarded to a local port and the result is forwarded
 	// back with a reverse header.
+	var e error
+	var result slice.Bytes
+	if e = cl.SendTo(on.Port, on.Bytes); check(e) {
+		return
+	}
+	timer := time.NewTicker(time.Second * 5)
+	select {
+	case result = <-cl.ReceiveFrom(on.Port):
+	case <-timer.C:
+	}
+	// We need to wrap the result in a message layer.
+	res := wire.EncodeOnion(&response.OnionSkin{
+		Hash:  sha256.Single(on.Bytes),
+		Bytes: result,
+	})
+	header := b[*c:c.Inc(ReverseHeaderLen)]
+	rb := make(slice.Bytes, ReverseHeaderLen+len(res))
+	cur := slice.NewCursor()
+	copy(rb[*cur:cur.Inc(ReverseHeaderLen)], header[:ReverseHeaderLen])
+	copy(rb[ReverseHeaderLen:], res)
+	start := *cur
+	for i := range on.Ciphers {
+		blk := ciph.BlockFromHash(on.Ciphers[i])
+		ciph.Encipher(blk, on.Nonces[2-i], rb[start:])
+	}
+	cl.Node.Send(rb)
 }
 
 func (cl *Client) forward(on *forward.OnionSkin, b slice.Bytes, c *slice.Cursor) {
@@ -189,20 +206,16 @@ func (cl *Client) forward(on *forward.OnionSkin, b slice.Bytes, c *slice.Cursor)
 	if on.AddrPort.String() == cl.Node.AddrPort.String() {
 		// it is for us, we want to unwrap the next
 		// part.
-		log.I.Ln("processing new message", *c, cl.AddrPort.String())
 		b = append(b[*c:], slice.NoisePad(int(*c))...)
 		cl.Node.Send(b)
 	} else {
 		// we need to forward this message onion.
-		log.I.Ln("forwarding")
 		cl.Send(on.AddrPort, b)
 	}
 }
 
 func (cl *Client) layer(on *layer.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	// this is probably an encrypted layer for us.
-	log.I.Ln("decrypting onion skin")
-	// log.I.S(on, b[*c:].ToBytes())
 	rcv := cl.ReceiveCache.FindCloaked(on.Cloak)
 	if rcv == nil {
 		log.I.Ln("no matching key found from cloaked key")
@@ -210,7 +223,6 @@ func (cl *Client) layer(on *layer.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	}
 	on.Decrypt(rcv.Key, b, c)
 	b = append(b[*c:], slice.NoisePad(int(*c))...)
-	// log.I.S(b.ToBytes())
 	cl.Node.Send(b)
 }
 
@@ -220,7 +232,7 @@ func (cl *Client) noop(on *noop.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 
 func (cl *Client) purchase(on *purchase.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	// Create a new Session.
-	s := NewSession(nonce.NewID(), on.NBytes, DefaultDeadline, cl.KeySet)
+	s := session2.NewSession(on.ID, on.NBytes, DefaultDeadline, cl.KeySet)
 	se := &session.OnionSkin{
 		ID:         s.ID,
 		HeaderKey:  s.HeaderKey.Key,
@@ -230,15 +242,17 @@ func (cl *Client) purchase(on *purchase.OnionSkin, b slice.Bytes, c *slice.Curso
 	cl.Mutex.Lock()
 	cl.Sessions.Add(s)
 	cl.Mutex.Unlock()
-	header := b[*c:c.Inc(ReplyHeaderLen)]
-	rb := make(slice.Bytes, ReplyHeaderLen+session.Len)
+	header := b[*c:c.Inc(ReverseHeaderLen)]
+	rb := make(slice.Bytes, ReverseHeaderLen+session.Len)
 	cur := slice.NewCursor()
-	copy(rb[*cur:cur.Inc(ReplyHeaderLen)], header[:ReplyHeaderLen])
+	copy(rb[*cur:cur.Inc(ReverseHeaderLen)], header[:ReverseHeaderLen])
 	start := *cur
 	se.Encode(rb, cur)
+	log.I.S(rb.ToBytes())
 	for i := range on.Ciphers {
 		blk := ciph.BlockFromHash(on.Ciphers[i])
-		ciph.Encipher(blk, on.Nonces[i], rb[start:])
+		ciph.Encipher(blk, on.Nonces[2-i], rb[start:])
+		log.I.S(rb[start:].ToBytes())
 	}
 	cl.Node.Send(rb)
 }
@@ -246,23 +260,56 @@ func (cl *Client) purchase(on *purchase.OnionSkin, b slice.Bytes, c *slice.Curso
 func (cl *Client) reverse(on *reverse.OnionSkin, b slice.Bytes,
 	c *slice.Cursor) {
 
-	log.I.Ln("reverse")
-	// Reply means another OnionSkin is coming and the payload encryption
-	// uses the Payload key.
+	var e error
+	var onion types.Onion
 	if on.AddrPort.String() == cl.Node.AddrPort.String() {
-		log.I.Ln("it's for us")
-		// it is for us, we want to unwrap the next part.
-		cl.Node.Send(b)
+		if onion, e = wire.PeelOnion(b, c); check(e) {
+			return
+		}
+		switch on1 := onion.(type) {
+		case *layer.OnionSkin:
+			start := *c - ReverseLayerLen
+			first := *c
+			second := first + ReverseLayerLen
+			last := second + ReverseLayerLen
+			rcv := cl.ReceiveCache.FindCloaked(on1.Cloak)
+			// We need to find the PayloadKey to match.
+			ses := cl.Sessions.FindPub(rcv.Pub)
+			hdrPrv := ses.HeaderPrv
+			hdrPub := on1.FromPub
+			blk := ciph.GetBlock(hdrPrv, hdrPub)
+			// Decrypt using the Payload key and header nonce.
+			ciph.Encipher(blk, on1.Nonce,
+				b[*c:c.Inc(2*ReverseLayerLen)])
+			blk = ciph.GetBlock(ses.PayloadPrv, hdrPub)
+			ciph.Encipher(blk, on1.Nonce, b[*c:])
+			// shift the header segment upwards and pad the
+			// remainder.
+			copy(b[start:first], b[first:second])
+			copy(b[first:second], b[second:last])
+			copy(b[second:last], slice.NoisePad(ReverseLayerLen))
+			// log.I.S(b[start+ReverseHeaderLen:].ToBytes())
+			if b[start:start+2].String() != reverse.MagicString {
+				log.I.S("message now decrypted",
+					b[last:].ToBytes(), on.AddrPort.String())
+				cl.Node.Send(b[last:])
+				break
+			}
+			cl.Node.Send(b[start:])
+		default:
+			return
+		}
 	} else {
 		// we need to forward this message onion.
-		// cl.Send(on.AddrPort, b)
-		log.I.Ln("we haven't processed it yet")
+		cl.Send(on.AddrPort, b)
 	}
 
 }
 
 func (cl *Client) response(on *response.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
 	// Response is a payload from an exit message.
+	// log.I.S(on.Hash, on.Bytes.ToBytes())
+	cl.ExitHooks.Find(on.Hash)
 }
 
 func (cl *Client) session(s *session.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
@@ -272,6 +319,16 @@ func (cl *Client) session(s *session.OnionSkin, b slice.Bytes, cur *slice.Cursor
 	// Bolt 4 onion routed payment path that will cause the seller to
 	// activate the accounting onion the two keys it sent back with the
 	// nonce, so long as it has not yet expired.
+	for i := range cl.PendingSessions {
+		if cl.PendingSessions[i] == s.ID {
+			// we would make payment and move session to running
+			// sessions list.
+			log.I.S("session received, now to pay", s)
+		}
+	}
+	// So now we want to pay. For now we are just going to shut down the
+	// client as this finishes the test correctly.
+	cl.C.Q()
 }
 
 func (cl *Client) token(t *token.OnionSkin, b slice.Bytes, cur *slice.Cursor) {

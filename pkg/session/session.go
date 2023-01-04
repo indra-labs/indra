@@ -1,14 +1,21 @@
-package client
+package session
 
 import (
 	"time"
 
+	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/key/address"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/key/signer"
 	"github.com/Indra-Labs/indra/pkg/node"
 	"github.com/Indra-Labs/indra/pkg/nonce"
+	log2 "github.com/Indra-Labs/indra/pkg/proc/pkg/log"
+)
+
+var (
+	log   = log2.GetLogger(indra.PathBase)
+	check = log.E.Chk
 )
 
 // A Session keeps track of a connection session. It specifically maintains the
@@ -47,6 +54,17 @@ func (s Sessions) Find(t nonce.ID) (se *Session) {
 	for i := range s {
 		if s[i].ID == t {
 			se = s[i]
+			return
+		}
+	}
+	return
+}
+
+func (s Sessions) FindPub(pubKey *pub.Key) (se *Session) {
+	for i := range s {
+		if s[i].HeaderKey.Key.Equals(pubKey) {
+			se = s[i]
+			return
 		}
 	}
 	return
