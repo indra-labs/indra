@@ -2,14 +2,15 @@ package server
 
 import (
 	"context"
+	"sync"
+
 	"github.com/Indra-Labs/indra"
-	"github.com/cybriq/proc/pkg/interrupt"
-	log2 "github.com/cybriq/proc/pkg/log"
+	"github.com/Indra-Labs/indra/pkg/interrupt"
+	log2 "github.com/Indra-Labs/indra/pkg/log"
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
-	"sync"
 )
 
 var (

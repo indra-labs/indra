@@ -12,6 +12,7 @@ import (
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/key/signer"
+	log2 "github.com/Indra-Labs/indra/pkg/log"
 	"github.com/Indra-Labs/indra/pkg/node"
 	"github.com/Indra-Labs/indra/pkg/nonce"
 	session2 "github.com/Indra-Labs/indra/pkg/session"
@@ -31,7 +32,6 @@ import (
 	"github.com/Indra-Labs/indra/pkg/wire/reverse"
 	"github.com/Indra-Labs/indra/pkg/wire/session"
 	"github.com/Indra-Labs/indra/pkg/wire/token"
-	log2 "github.com/cybriq/proc/pkg/log"
 	"github.com/cybriq/qu"
 	"go.uber.org/atomic"
 )
@@ -288,7 +288,6 @@ func (cl *Client) reverse(on *reverse.OnionSkin, b slice.Bytes,
 			copy(b[start:first], b[first:second])
 			copy(b[first:second], b[second:last])
 			copy(b[second:last], slice.NoisePad(ReverseLayerLen))
-			// log.I.S(b[start+ReverseHeaderLen:].ToBytes())
 			if b[start:start+2].String() != reverse.MagicString {
 				log.I.S("message now decrypted",
 					b[last:].ToBytes(), on.AddrPort.String())

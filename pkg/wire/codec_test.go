@@ -11,6 +11,7 @@ import (
 	"github.com/Indra-Labs/indra/pkg/key/address"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
+	log2 "github.com/Indra-Labs/indra/pkg/log"
 	"github.com/Indra-Labs/indra/pkg/nonce"
 	"github.com/Indra-Labs/indra/pkg/sha256"
 	"github.com/Indra-Labs/indra/pkg/slice"
@@ -27,7 +28,6 @@ import (
 	"github.com/Indra-Labs/indra/pkg/wire/reverse"
 	"github.com/Indra-Labs/indra/pkg/wire/session"
 	"github.com/Indra-Labs/indra/pkg/wire/token"
-	log2 "github.com/cybriq/proc/pkg/log"
 )
 
 func TestOnionSkins_Cipher(t *testing.T) {

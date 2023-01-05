@@ -14,10 +14,10 @@ import (
 	"github.com/Indra-Labs/indra/pkg/key/address"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
+	log2 "github.com/Indra-Labs/indra/pkg/log"
 	"github.com/Indra-Labs/indra/pkg/nonce"
 	"github.com/Indra-Labs/indra/pkg/sha256"
 	"github.com/Indra-Labs/indra/pkg/slice"
-	log2 "github.com/cybriq/proc/pkg/log"
 )
 
 var (
@@ -26,8 +26,7 @@ var (
 )
 
 // Packet is the standard format for an encrypted, possibly segmented message
-// container with parameters for Reed Solomon Forward Error Correction and
-// contains previously seen cipher keys so the correspondent can free them.
+// container with parameters for Reed Solomon Forward Error Correction.
 type Packet struct {
 	// Seq specifies the segment number of the message, 4 bytes long.
 	Seq uint16
@@ -129,7 +128,7 @@ func Encode(ep EP) (pkt []byte, e error) {
 }
 
 // GetKeys returns the To field of the message in order, checks the packet
-// checksum and recovers the public key signing it.
+// checksum and recovers the public key.
 //
 // After this, if the matching private key to the cloaked address returned is
 // found, it is combined with the public key to generate the cipher and the

@@ -2,13 +2,14 @@ package main
 
 import (
 	"context"
-	"github.com/Indra-Labs/indra"
-	"github.com/Indra-Labs/indra/pkg/docker"
-	log2 "github.com/cybriq/proc/pkg/log"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
 	"os"
 	"time"
+
+	"github.com/Indra-Labs/indra"
+	"github.com/Indra-Labs/indra/pkg/docker"
+	log2 "github.com/Indra-Labs/indra/pkg/log"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 )
 
 var (
