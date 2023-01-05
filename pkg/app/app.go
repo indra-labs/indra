@@ -47,7 +47,7 @@ func New(cmd *cmds2.Command, args []string) (a *App, e error) {
 }
 
 func (a *App) Launch() (e error) {
-	e = a.launch.Entrypoint(a.Command, a.runArgs)
+	e = a.launch.Entrypoint(a.launch, a.runArgs)
 	log.E.Chk(e)
 	return
 }

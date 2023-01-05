@@ -1,22 +1,26 @@
 package server
 
-import "github.com/multiformats/go-multiaddr"
+import (
+	"github.com/multiformats/go-multiaddr"
+)
 
-var DefaultServerConfig = Config{
+func NewMultiAddr(addr string) (maddr multiaddr.Multiaddr) {
 
-	SeedAddresses:   []multiaddr.Multiaddr{},
+	var err error
+
+	if maddr, err = multiaddr.NewMultiaddr(addr); check(err) {
+		panic("Not a valid multiaddress.")
+	}
+
+	return
+}
+
+var DefaultConfig = &Config{
 	ListenAddresses: []multiaddr.Multiaddr{},
 }
 
-func NewMultiAddrForced(addr string) multiaddr.Multiaddr {
-
-	var mta, _ = multiaddr.NewMultiaddr(addr)
-
-	return mta
-}
-
 type Config struct {
+
 	PublicAddress   multiaddr.Multiaddr
 	ListenAddresses []multiaddr.Multiaddr
-	SeedAddresses   []multiaddr.Multiaddr
 }

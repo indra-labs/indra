@@ -40,7 +40,7 @@ var (
 //     by the CLI if there is one, otherwise the Command itself.
 func (c *Command) ParseCLIArgs(a []string) (run *Command, runArgs []string,
 	e error) {
-	
+
 	var args []string
 	var cursor int
 	for i := range a {

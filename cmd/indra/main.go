@@ -2,10 +2,9 @@ package main
 
 import (
 	"fmt"
-	"os"
-
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/app"
+	"github.com/Indra-Labs/indra/pkg/cfg"
 	"github.com/Indra-Labs/indra/pkg/cmds"
 	log2 "github.com/Indra-Labs/indra/pkg/log"
 	"github.com/Indra-Labs/indra/pkg/opts/config"
@@ -13,6 +12,7 @@ import (
 	"github.com/Indra-Labs/indra/pkg/opts/meta"
 	"github.com/Indra-Labs/indra/pkg/server"
 	"github.com/davecgh/go-spew/spew"
+	"os"
 )
 
 var (
@@ -68,50 +68,37 @@ var commands = &cmds.Command{
 			Configs: config.Opts{
 				"seed": list.New(meta.Data{
 					Label:         "seed",
-					Description:   "Adds additional seeds by hostname, or multiaddress. Examples: seed0.example.com, /ip4/127.0.0.1/tcp/8337",
+					Description:   "Adds additional seeds by multiaddress. Examples: /dns4/seed0.example.com/tcp/8337, /ip4/127.0.0.1/tcp/8337",
 					Documentation: lorem,
-					Default:       "/ip4/172.16.238.2/tcp/8337",
-				}, func(opt *list.Opt) error {
-
-					log.I.Ln("adding seed", opt.String())
-
-					return nil
-				}),
+				}, multiAddrSanitizer),
 				"peer": list.New(meta.Data{
 					Label:         "peer",
 					Description:   "Adds a list of peer multiaddresses. Example: /ip4/0.0.0.0/tcp/8337",
 					Documentation: lorem,
-					Default:       "/ip4/0.0.0.0/tcp/8337",
-				}, func(opt *list.Opt) error {
-
-					log.I.Ln("adding peer", opt.String())
-
-					return nil
-				}),
+				}, multiAddrSanitizer),
 				"listen": list.New(meta.Data{
 					Label:         "listen",
 					Description:   "A list of listener multiaddresses. Example: /ip4/0.0.0.0/tcp/8337",
 					Documentation: lorem,
-					Default:       "/ip4/0.0.0.0/tcp/8337",
-				}, func(opt *list.Opt) error {
-
-					log.I.Ln("adding p2p listener", opt.String())
-
-					return nil
-				}),
+					Default:       "/ip4/127.0.0.1/tcp/8337",
+				}, multiAddrSanitizer),
 			},
 			Entrypoint: func(c *cmds.Command, args []string) error {
 
-				log.I.Ln("-- ", log2.App, "-", indra.SemVer, "- Network Freedom. --")
+				var params = cfg.SimnetServerParams
 
-				spew.Dump(c.Configs)
+				log.I.Ln("-- ", log2.App, "("+params.Name+") -", indra.SemVer, "- Network Freedom. --")
+
+				spew.Dump(c.GetListValue("seed"))
+				spew.Dump(c.GetListValue("peer"))
+				spew.Dump(c.GetListValue("listen"))
 
 				var err error
 				var srv *server.Server
 
 				log.I.Ln("running serve.")
 
-				if srv, err = server.New(server.DefaultServerConfig); check(err) {
+				if srv, err = server.New(params, server.DefaultConfig); check(err) {
 					return err
 				}
 
@@ -127,6 +114,13 @@ var commands = &cmds.Command{
 			},
 		},
 	},
+}
+
+func multiAddrSanitizer(opt *list.Opt) error {
+
+	//log.I.Ln("adding p2p listener", opt.String())
+
+	return nil
 }
 
 func main() {

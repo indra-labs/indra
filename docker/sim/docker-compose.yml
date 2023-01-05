@@ -12,8 +12,8 @@ services:
       #- 8337:8337
       #- 8338:8338
     #environment:
-      #POSTGRES_DB: risky-local
-      #POSTGRES_USER: risky
+      #POSTGRES_DB: indra-local
+      #POSTGRES_USER: indra
       #POSTGRES_PASSWORD: password
     command: ["serve"]
   peer_1:
@@ -28,8 +28,8 @@ services:
       #- 8337:8337
       #- 8338:8338
       #environment:
-      #POSTGRES_DB: risky-local
-      #POSTGRES_USER: risky
+      #POSTGRES_DB: indra-local
+      #POSTGRES_USER: indra
       #POSTGRES_PASSWORD: password
     command: ["serve"]
   peer_2:
@@ -44,8 +44,8 @@ services:
       #- 8337:8337
       #- 8338:8338
       #environment:
-      #POSTGRES_DB: risky-local
-      #POSTGRES_USER: risky
+      #POSTGRES_DB: indra-local
+      #POSTGRES_USER: indra
       #POSTGRES_PASSWORD: password
     command: ["serve"]
 networks:

@@ -2,15 +2,16 @@ package server
 
 import (
 	"context"
-	"sync"
-
 	"github.com/Indra-Labs/indra"
+	"github.com/Indra-Labs/indra/pkg/cfg"
 	"github.com/Indra-Labs/indra/pkg/interrupt"
 	log2 "github.com/Indra-Labs/indra/pkg/log"
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/multiformats/go-multiaddr"
+	"sync"
 )
 
 var (
@@ -22,6 +23,8 @@ type Server struct {
 	context.Context
 
 	config Config
+
+	params *cfg.Params
 
 	host host.Host
 	dht  *dht.IpfsDHT
@@ -55,41 +58,69 @@ func (srv *Server) Shutdown() (err error) {
 
 func (srv *Server) Serve() (err error) {
 
+	log.I.Ln("bootstrapping the DHT")
+
 	// Bootstrap the DHT. In the default configuration, this spawns a Background
 	// thread that will refresh the peer table every five minutes.
 	if err = srv.dht.Bootstrap(srv.Context); check(err) {
 		return err
 	}
 
+	log.I.Ln("attempting to peer with seed addresses...")
+
+	// We will first attempt to connect to the seed addresses.
+	var wg sync.WaitGroup
+
+	var seedAddresses []multiaddr.Multiaddr
+
+	if seedAddresses, err = srv.params.ParseSeedMultiAddresses(); check(err) {
+		return
+	}
+
+	log.I.Ln("seed peers:")
+
+	var peerInfo *peer.AddrInfo
+
+	for _, peerAddr := range seedAddresses {
+
+		log.I.Ln("-", peerAddr.String())
+
+		if peerInfo, err = peer.AddrInfoFromP2pAddr(peerAddr); check(err) {
+			return
+		}
+
+		wg.Add(1)
+
+		go func() {
+
+			defer wg.Done()
+
+			if err := srv.host.Connect(srv.Context, *peerInfo); err != nil {
+				log.W.Ln(err)
+			} else {
+				log.I.Ln("Connection established with bootstrap node:", *peerInfo)
+			}
+		}()
+	}
+
+	wg.Wait()
+
 	select {
 	case <-srv.Context.Done():
 		srv.Shutdown()
 	}
 
-	// We will first attempt to connect to the seed addresses.
-	var wg sync.WaitGroup
-	for _, peerAddr := range srv.config.SeedAddresses {
-		peerinfo, _ := peer.AddrInfoFromP2pAddr(peerAddr)
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			if err := srv.host.Connect(srv, *peerinfo); err != nil {
-				log.W.Ln(err)
-			} else {
-				log.I.Ln("Connection established with bootstrap node:", *peerinfo)
-			}
-		}()
-	}
-	wg.Wait()
-
 	return nil
 }
 
-func New(config Config) (srv *Server, err error) {
+func New(params *cfg.Params, config *Config) (srv *Server, err error) {
 
 	log.I.Ln("initializing the server.")
 
 	var s Server
+
+	s.params = params
+
 	var cancel context.CancelFunc
 
 	s.Context, cancel = context.WithCancel(context.Background())
