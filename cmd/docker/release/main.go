@@ -2,18 +2,19 @@ package main
 
 import (
 	"context"
-	"github.com/Indra-Labs/indra"
-	"github.com/Indra-Labs/indra/pkg/docker"
-	"github.com/cybriq/proc/pkg/app"
-	"github.com/cybriq/proc/pkg/cmds"
-	log2 "github.com/cybriq/proc/pkg/log"
-	"github.com/cybriq/proc/pkg/opts/config"
-	"github.com/cybriq/proc/pkg/opts/meta"
-	"github.com/cybriq/proc/pkg/opts/toggle"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
 	"os"
 	"time"
+
+	"github.com/Indra-Labs/indra"
+	"github.com/Indra-Labs/indra/pkg/app"
+	"github.com/Indra-Labs/indra/pkg/cmds"
+	"github.com/Indra-Labs/indra/pkg/docker"
+	log2 "github.com/Indra-Labs/indra/pkg/log"
+	"github.com/Indra-Labs/indra/pkg/opts/config"
+	"github.com/Indra-Labs/indra/pkg/opts/meta"
+	"github.com/Indra-Labs/indra/pkg/opts/toggle"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 )
 
 var (
@@ -33,19 +34,19 @@ var commands = &cmds.Command{
 	Name:          "release",
 	Description:   "Builds the indra docker image and pushes it to a list of docker repositories.",
 	Documentation: lorem,
-	Default: cmds.Tags("release"),
-	Configs:       config.Opts{
+	Default:       cmds.Tags("release"),
+	Configs: config.Opts{
 		"stable": toggle.New(meta.Data{
 			Label:         "stable",
 			Description:   "tag the current build as stable.",
 			Documentation: lorem,
-			Default: "false",
+			Default:       "false",
 		}),
 		"push": toggle.New(meta.Data{
 			Label:         "push",
 			Description:   "push the newly built/tagged images to the docker repositories.",
 			Documentation: lorem,
-			Default: "false",
+			Default:       "false",
 		}),
 	},
 	Entrypoint: func(command *cmds.Command, args []string) error {
