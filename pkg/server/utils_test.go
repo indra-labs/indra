@@ -16,13 +16,13 @@ func TestBase58(t *testing.T){
 	// Generate priv
 	priv1, _, err = crypto.GenerateSecp256k1Key(rand.Reader)
 
-	if keyStr1, err = base58encode(priv1); err != nil {
+	if keyStr1, err = Base58Encode(priv1); err != nil {
 		t.Error("base58encode error: ", err)
 	}
 
 	spew.Dump(priv1)
 
-	if priv2, err = base58decode(keyStr1); err != nil {
+	if priv2, err = Base58Decode(keyStr1); err != nil {
 		t.Error("base58decode error: ", err)
 	}
 
@@ -30,7 +30,7 @@ func TestBase58(t *testing.T){
 		t.Error("Keys are not equal!")
 	}
 
-	if keyStr2, err = base58encode(priv2); err != nil {
+	if keyStr2, err = Base58Encode(priv2); err != nil {
 		t.Error("base58encode error: ", err)
 	}
 

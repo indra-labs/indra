@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/multiformats/go-multiaddr"
 )
 
@@ -20,6 +21,8 @@ var DefaultConfig = &Config{
 }
 
 type Config struct {
+
+	PrivKey crypto.PrivKey
 
 	PublicAddress   multiaddr.Multiaddr
 	ListenAddresses []multiaddr.Multiaddr

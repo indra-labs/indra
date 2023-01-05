@@ -45,7 +45,7 @@ func bech32decode(keyStr string) (privKey crypto.PrivKey, err error) {
 	return privKey, nil
 }
 
-func base58encode(priv crypto.PrivKey) (key string, err error) {
+func Base58Encode(priv crypto.PrivKey) (key string, err error) {
 
 	var raw []byte
 
@@ -56,7 +56,7 @@ func base58encode(priv crypto.PrivKey) (key string, err error) {
 	return
 }
 
-func base58decode(key string) (priv crypto.PrivKey, err error) {
+func Base58Decode(key string) (priv crypto.PrivKey, err error) {
 
 	var raw []byte
 

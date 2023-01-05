@@ -10,8 +10,10 @@ import (
 	"github.com/Indra-Labs/indra/pkg/opts/config"
 	"github.com/Indra-Labs/indra/pkg/opts/list"
 	"github.com/Indra-Labs/indra/pkg/opts/meta"
+	"github.com/Indra-Labs/indra/pkg/opts/text"
 	"github.com/Indra-Labs/indra/pkg/server"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/libp2p/go-libp2p/core/crypto"
 	"os"
 )
 
@@ -66,6 +68,11 @@ var commands = &cmds.Command{
 			Description:   "serves an instance of the indra network daemon",
 			Documentation: lorem,
 			Configs: config.Opts{
+				"key": text.New(meta.Data{
+					Label: "key",
+					Description: "A base58 encoded private key.",
+					Documentation: lorem,
+				}),
 				"seed": list.New(meta.Data{
 					Label:         "seed",
 					Description:   "Adds additional seeds by multiaddress. Examples: /dns4/seed0.example.com/tcp/8337, /ip4/127.0.0.1/tcp/8337",
@@ -85,6 +92,7 @@ var commands = &cmds.Command{
 			},
 			Entrypoint: func(c *cmds.Command, args []string) error {
 
+				var err error
 				var params = cfg.SimnetServerParams
 
 				log.I.Ln("-- ", log2.App, "("+params.Name+") -", indra.SemVer, "- Network Freedom. --")
@@ -92,8 +100,20 @@ var commands = &cmds.Command{
 				spew.Dump(c.GetListValue("seed"))
 				spew.Dump(c.GetListValue("peer"))
 				spew.Dump(c.GetListValue("listen"))
+				spew.Dump(c.GetValue("key").Text())
 
-				var err error
+				var privKey crypto.PrivKey
+
+				key := c.GetValue("key").Text()
+
+				spew.Dump(c.GetValue("key").Text())
+
+				if privKey, err = server.Base58Decode(key); check(err) {
+					return err
+				}
+
+				server.DefaultConfig.PrivKey = privKey
+
 				var srv *server.Server
 
 				log.I.Ln("running serve.")
