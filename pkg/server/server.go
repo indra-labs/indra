@@ -8,6 +8,7 @@ import (
 	log2 "github.com/Indra-Labs/indra/pkg/log"
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
+	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
@@ -17,6 +18,10 @@ import (
 var (
 	log   = log2.GetLogger(indra.PathBase)
 	check = log.E.Chk
+)
+
+var (
+	userAgent = "/indra:"+indra.SemVer+"/"
 )
 
 type Server struct {
@@ -128,7 +133,14 @@ func New(params *cfg.Params, config *Config) (srv *Server, err error) {
 	// Add an interrupt handler for the server shutdown
 	interrupt.AddHandler(cancel)
 
-	if s.host, err = libp2p.New(libp2p.ListenAddrs(config.ListenAddresses...)); check(err) {
+	var base58PrivKey = "66T7j5JnhsjDTqVvV8zEM2rTUobu66tocizfqArVEnPJ"
+	var privKey crypto.PrivKey
+
+	if privKey, err = base58decode(base58PrivKey); check(err) {
+		return
+	}
+
+	if s.host, err = libp2p.New(libp2p.Identity(privKey), libp2p.UserAgent(userAgent), libp2p.ListenAddrs(config.ListenAddresses...)); check(err) {
 		return nil, err
 	}
 

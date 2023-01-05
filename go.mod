@@ -3,6 +3,7 @@ module github.com/Indra-Labs/indra
 go 1.19
 
 require (
+	github.com/btcsuite/btcutil v1.0.2
 	github.com/cybriq/proc v0.20.10
 	github.com/cybriq/qu v0.1.2
 	github.com/davecgh/go-spew v1.1.1
