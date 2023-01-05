@@ -66,7 +66,7 @@ Three key elements of the Tor protocol make it less than desirable in general.
 3. **Low Scaling Incentives** - There is no profit motive to drive expansion of relaying
    capacity, weakening anonymity by not expanding the anonymity set to cope with a rise in the number of users.
 
-Tor is a poor solution for a very limited subset of of the use cases that
+Tor is a poor solution for a very limited subset of the use cases that
 benefit from the security of route obfuscation. Indra aims to provide what Tor
 has definitely now failed to achieve for a large majority of internet users:
 location privacy.
