@@ -11,7 +11,6 @@ import (
 	"github.com/cybriq/proc/pkg/opts/config"
 	"github.com/cybriq/proc/pkg/opts/list"
 	"github.com/cybriq/proc/pkg/opts/meta"
-	"github.com/cybriq/proc/pkg/opts/text"
 	"github.com/davecgh/go-spew/spew"
 	"os"
 )
