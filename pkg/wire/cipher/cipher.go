@@ -3,10 +3,10 @@ package cipher
 import (
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
+	log2 "github.com/Indra-Labs/indra/pkg/log"
 	"github.com/Indra-Labs/indra/pkg/slice"
 	"github.com/Indra-Labs/indra/pkg/types"
 	"github.com/Indra-Labs/indra/pkg/wire/magicbytes"
-	log2 "github.com/cybriq/proc/pkg/log"
 )
 
 const (

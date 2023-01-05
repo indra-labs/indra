@@ -13,8 +13,8 @@ import (
 	"unsafe"
 
 	"github.com/Indra-Labs/indra"
+	log2 "github.com/Indra-Labs/indra/pkg/log"
 	"github.com/Indra-Labs/indra/pkg/sha256"
-	log2 "github.com/cybriq/proc/pkg/log"
 )
 
 var (

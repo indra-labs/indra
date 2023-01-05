@@ -10,9 +10,9 @@ import (
 	"github.com/Indra-Labs/indra/pkg/ifc"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
+	log2 "github.com/Indra-Labs/indra/pkg/log"
 	"github.com/Indra-Labs/indra/pkg/nonce"
 	"github.com/Indra-Labs/indra/pkg/slice"
-	log2 "github.com/cybriq/proc/pkg/log"
 )
 
 var (

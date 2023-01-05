@@ -8,7 +8,7 @@ import (
 
 	"github.com/Indra-Labs/indra"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
-	log2 "github.com/cybriq/proc/pkg/log"
+	log2 "github.com/Indra-Labs/indra/pkg/log"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 

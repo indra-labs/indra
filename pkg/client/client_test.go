@@ -9,6 +9,7 @@ import (
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/key/signer"
+	log2 "github.com/Indra-Labs/indra/pkg/log"
 	"github.com/Indra-Labs/indra/pkg/node"
 	"github.com/Indra-Labs/indra/pkg/nonce"
 	"github.com/Indra-Labs/indra/pkg/session"
@@ -18,7 +19,6 @@ import (
 	"github.com/Indra-Labs/indra/pkg/transport"
 	"github.com/Indra-Labs/indra/pkg/wire"
 	"github.com/Indra-Labs/indra/pkg/wire/confirm"
-	log2 "github.com/cybriq/proc/pkg/log"
 	"github.com/cybriq/qu"
 )
 

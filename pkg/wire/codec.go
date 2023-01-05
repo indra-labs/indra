@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Indra-Labs/indra"
+	log2 "github.com/Indra-Labs/indra/pkg/log"
 	"github.com/Indra-Labs/indra/pkg/slice"
 	"github.com/Indra-Labs/indra/pkg/types"
 	"github.com/Indra-Labs/indra/pkg/wire/cipher"
@@ -18,7 +19,6 @@ import (
 	"github.com/Indra-Labs/indra/pkg/wire/reverse"
 	"github.com/Indra-Labs/indra/pkg/wire/session"
 	"github.com/Indra-Labs/indra/pkg/wire/token"
-	log2 "github.com/cybriq/proc/pkg/log"
 )
 
 var (

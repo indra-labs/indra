@@ -2,12 +2,12 @@ package exit
 
 import (
 	"github.com/Indra-Labs/indra"
+	log2 "github.com/Indra-Labs/indra/pkg/log"
 	"github.com/Indra-Labs/indra/pkg/nonce"
 	"github.com/Indra-Labs/indra/pkg/sha256"
 	"github.com/Indra-Labs/indra/pkg/slice"
 	"github.com/Indra-Labs/indra/pkg/types"
 	"github.com/Indra-Labs/indra/pkg/wire/magicbytes"
-	log2 "github.com/cybriq/proc/pkg/log"
 	"github.com/davecgh/go-spew/spew"
 )
 

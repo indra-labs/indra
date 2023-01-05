@@ -8,6 +8,7 @@ import (
 
 	"github.com/Indra-Labs/indra/pkg/key/pub"
 	"github.com/Indra-Labs/indra/pkg/key/signer"
+	log2 "github.com/Indra-Labs/indra/pkg/log"
 	"github.com/Indra-Labs/indra/pkg/node"
 	"github.com/Indra-Labs/indra/pkg/nonce"
 	"github.com/Indra-Labs/indra/pkg/session"
@@ -22,7 +23,6 @@ import (
 	"github.com/Indra-Labs/indra/pkg/wire/layer"
 	"github.com/Indra-Labs/indra/pkg/wire/purchase"
 	"github.com/Indra-Labs/indra/pkg/wire/reverse"
-	log2 "github.com/cybriq/proc/pkg/log"
 )
 
 func PeelForward(t *testing.T, b slice.Bytes,

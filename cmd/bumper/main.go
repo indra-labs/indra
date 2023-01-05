@@ -17,7 +17,7 @@ import (
 	"time"
 
 	"github.com/Indra-Labs/indra"
-	log2 "github.com/cybriq/proc/pkg/log"
+	log2 "github.com/Indra-Labs/indra/pkg/log"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"

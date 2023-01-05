@@ -2,7 +2,7 @@ package cfg
 
 import (
 	"github.com/Indra-Labs/indra"
-	log2 "github.com/Indra-Labs/indra/pkg/proc/pkg/log"
+	log2 "github.com/Indra-Labs/indra/pkg/log"
 	"github.com/Indra-Labs/indra/pkg/wire"
 	"github.com/multiformats/go-multiaddr"
 )
@@ -27,7 +27,7 @@ type Params struct {
 	DNSSeedAddresses []*DNSSeedAddress
 }
 
-func(self *Params) ParseSeedMultiAddresses() (addresses []multiaddr.Multiaddr, err error) {
+func (self *Params) ParseSeedMultiAddresses() (addresses []multiaddr.Multiaddr, err error) {
 
 	var adr multiaddr.Multiaddr
 
@@ -35,7 +35,7 @@ func(self *Params) ParseSeedMultiAddresses() (addresses []multiaddr.Multiaddr, e
 
 	for _, addr := range self.DNSSeedAddresses {
 
-		if adr, err = multiaddr.NewMultiaddr("/dns4/"+addr.DNSAddress+"/tcp/"+self.DefaultPort+"/p2p/"+addr.ID); check(err) {
+		if adr, err = multiaddr.NewMultiaddr("/dns4/" + addr.DNSAddress + "/tcp/" + self.DefaultPort + "/p2p/" + addr.ID); check(err) {
 			return
 		}
 
@@ -83,7 +83,6 @@ var TestNetServerParams = &Params{
 		// NewSeedAddress("seed2.example.com", "12D3KooWEonhWcCp6FMwycNFrE5hSDbPdezy5ftBcHLxLPoESzgZ"),
 		// NewSeedAddress("seed3.example.com", "12D3KooWFq8irCNNCdE4zxjcUGVdG47fnPSd4hj9MsxH8RAunHTx"),
 	},
-
 }
 
 var SimnetServerParams = &Params{

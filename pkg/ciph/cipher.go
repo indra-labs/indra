@@ -9,9 +9,9 @@ import (
 	"github.com/Indra-Labs/indra/pkg/key/ecdh"
 	"github.com/Indra-Labs/indra/pkg/key/prv"
 	"github.com/Indra-Labs/indra/pkg/key/pub"
+	log2 "github.com/Indra-Labs/indra/pkg/log"
 	"github.com/Indra-Labs/indra/pkg/nonce"
 	"github.com/Indra-Labs/indra/pkg/sha256"
-	log2 "github.com/cybriq/proc/pkg/log"
 )
 
 var (
