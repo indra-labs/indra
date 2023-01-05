@@ -112,19 +112,26 @@ func (c *Command) ParseCLIArgs(a []string) (run *Command, runArgs []string, e er
 			if strings.Contains(arg, "=") {
 				split := strings.Split(arg, "=")
 				if len(split) > 2 {
-					split = append(split[:1], strings.Join(split[1:], "="))
+					split = append(split[:1],
+						strings.Join(split[1:], "="))
 				}
 				for cfgName := range cmd.Configs {
-					aliases := cmd.Configs[cfgName].Meta().Aliases()
+					aliases := cmd.Configs[cfgName].Meta().
+						Aliases()
 					names := append(
 						[]string{cfgName}, aliases...)
 					for _, name := range names {
-						if util.Norm(name) == util.Norm(split[0]) {
-							e = cmd.Configs[cfgName].FromString(split[1])
-							if log.E.Chk(e) {
-								return
-							}
+						if util.Norm(name) !=
+							util.Norm(split[0]) {
+							continue
 						}
+
+						e = cmd.Configs[cfgName].
+							FromString(split[1])
+						if log.E.Chk(e) {
+							return
+						}
+
 					}
 				}
 				cursor += inc
@@ -136,36 +143,46 @@ func (c *Command) ParseCLIArgs(a []string) (run *Command, runArgs []string, e er
 				names := append(
 					[]string{cfgName}, aliases...)
 				for _, name := range names {
-					if util.Norm(name) == util.Norm(arg) {
-						// check for booleans, which can only be
-						// followed by true or false
-						if cmd.Configs[cfgName].Type() == meta.Bool {
-							if len(iArgs)-1 > cursor {
-								e = cmd.Configs[cfgName].
-									FromString(iArgs[cursor+1])
-								if e == nil {
-									inc++
-								}
-							} else {
-								cur := cmd.Configs[cfgName].Meta().Default()
-								e = cmd.Configs[cfgName].FromString(cur)
-								e = cmd.Configs[cfgName].FromString(
-									fmt.Sprint(!cmd.Configs[cfgName].Value().Bool()),
-								)
-							}
-							found = true
-							break
-						} else {
-							e = cmd.Configs[cfgName].
-								FromString(iArgs[cursor+1])
-							if log.E.Chk(e) {
-								return
-							}
+					if util.Norm(name) != util.Norm(arg) {
+						continue
+					}
+					// check for booleans, which can only be
+					// followed by true or false
+					if cmd.Configs[cfgName].Type() !=
+						meta.Bool {
+
+						e = cmd.Configs[cfgName].
+							FromString(
+								iArgs[cursor+1])
+						if check(e) {
+							return
+						}
+						inc++
+						found = true
+						break
+					}
+					if len(iArgs)-1 > cursor {
+						e = cmd.Configs[cfgName].
+							FromString(iArgs[cursor+1])
+						if e == nil {
 							inc++
 							found = true
 							break
 						}
 					}
+					cur := cmd.Configs[cfgName].
+						Meta().Default()
+					cmd.Configs[cfgName].
+						FromString(cur)
+					v := !cmd.Configs[cfgName].
+						Value().Bool()
+					cmd.Configs[cfgName].
+						FromString(
+							fmt.Sprint(v),
+						)
+					found = true
+					break
+
 				}
 			}
 			if !found {
