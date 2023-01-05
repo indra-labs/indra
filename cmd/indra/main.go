@@ -11,6 +11,8 @@ import (
 	"github.com/cybriq/proc/pkg/opts/config"
 	"github.com/cybriq/proc/pkg/opts/list"
 	"github.com/cybriq/proc/pkg/opts/meta"
+	"github.com/cybriq/proc/pkg/opts/text"
+	"github.com/davecgh/go-spew/spew"
 	"os"
 )
 
@@ -69,43 +71,28 @@ var commands = &cmds.Command{
 					Label:         "seed",
 					Description:   "Adds additional seeds by multiaddress. Examples: /dns4/seed0.example.com/tcp/8337, /ip4/127.0.0.1/tcp/8337",
 					Documentation: lorem,
-				}, func(opt *list.Opt) error {
-
-					//log.I.Ln("adding seed", opt.String())
-
-					return nil
-				}),
+				}, multiAddrSanitizer),
 				"peer": list.New(meta.Data{
 					Label:         "peer",
 					Description:   "Adds a list of peer multiaddresses. Example: /ip4/0.0.0.0/tcp/8337",
 					Documentation: lorem,
-				}, func(opt *list.Opt) error {
-
-					//log.I.Ln("adding peer", opt.String())
-
-					return nil
-				}),
+				}, multiAddrSanitizer),
 				"listen": list.New(meta.Data{
 					Label:         "listen",
 					Description:   "A list of listener multiaddresses. Example: /ip4/0.0.0.0/tcp/8337",
 					Documentation: lorem,
 					Default:       "/ip4/127.0.0.1/tcp/8337",
-				}, func(opt *list.Opt) error {
-
-					//log.I.Ln("adding p2p listener", opt.String())
-
-					return nil
-				}),
+				}, multiAddrSanitizer),
 			},
 			Entrypoint: func(c *cmds.Command, args []string) error {
 
-				var params = cfg.MainNetServerParams
+				var params = cfg.SimnetServerParams
 
-				log.I.Ln("-- ", log2.App, "("+cfg.MainNetServerParams.Name+") -", indra.SemVer, "- Network Freedom. --")
+				log.I.Ln("-- ", log2.App, "("+params.Name+") -", indra.SemVer, "- Network Freedom. --")
 
-				//spew.Dump(c.GetListValue("seed"))
-				//spew.Dump(c.GetListValue("peer"))
-				//spew.Dump(c.GetListValue("listen"))
+				spew.Dump(c.GetListValue("seed"))
+				spew.Dump(c.GetListValue("peer"))
+				spew.Dump(c.GetListValue("listen"))
 
 				var err error
 				var srv *server.Server
@@ -128,6 +115,13 @@ var commands = &cmds.Command{
 			},
 		},
 	},
+}
+
+func multiAddrSanitizer(opt *list.Opt) error {
+
+	//log.I.Ln("adding p2p listener", opt.String())
+
+	return nil
 }
 
 func main() {
