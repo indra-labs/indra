@@ -3,8 +3,8 @@
 package prv
 
 import (
-	"github.com/Indra-Labs/indra"
-	log2 "github.com/Indra-Labs/indra/pkg/log"
+	"github.com/indra-labs/indra"
+	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 

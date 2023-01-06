@@ -1,7 +1,7 @@
 package node
 
 import (
-	"github.com/Indra-Labs/indra/pkg/ifc"
+	"github.com/indra-labs/indra/pkg/ifc"
 )
 
 type Service struct {

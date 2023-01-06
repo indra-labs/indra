@@ -9,14 +9,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Indra-Labs/indra/pkg/opts/Integer"
-	"github.com/Indra-Labs/indra/pkg/opts/duration"
-	"github.com/Indra-Labs/indra/pkg/opts/float"
-	"github.com/Indra-Labs/indra/pkg/opts/list"
-	"github.com/Indra-Labs/indra/pkg/opts/meta"
-	"github.com/Indra-Labs/indra/pkg/opts/text"
-	"github.com/Indra-Labs/indra/pkg/opts/toggle"
-	path2 "github.com/Indra-Labs/indra/pkg/path"
+	"github.com/indra-labs/indra/pkg/opts/Integer"
+	"github.com/indra-labs/indra/pkg/opts/duration"
+	"github.com/indra-labs/indra/pkg/opts/float"
+	"github.com/indra-labs/indra/pkg/opts/list"
+	"github.com/indra-labs/indra/pkg/opts/meta"
+	"github.com/indra-labs/indra/pkg/opts/text"
+	"github.com/indra-labs/indra/pkg/opts/toggle"
+	path2 "github.com/indra-labs/indra/pkg/path"
 	"github.com/naoina/toml"
 )
 

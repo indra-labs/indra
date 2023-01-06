@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	log2 "github.com/Indra-Labs/indra/pkg/log"
-	"github.com/Indra-Labs/indra/pkg/opts/config"
-	"github.com/Indra-Labs/indra/pkg/path"
+	log2 "github.com/indra-labs/indra/pkg/log"
+	"github.com/indra-labs/indra/pkg/opts/config"
+	"github.com/indra-labs/indra/pkg/path"
 )
 
 func TestCommand_Foreach(t *testing.T) {

@@ -3,8 +3,8 @@ package client
 import (
 	"fmt"
 
-	"github.com/Indra-Labs/indra/pkg/node"
-	"github.com/Indra-Labs/indra/pkg/nonce"
+	"github.com/indra-labs/indra/pkg/node"
+	"github.com/indra-labs/indra/pkg/nonce"
 )
 
 // A Circuit is a series of relays through which a message will be delivered.

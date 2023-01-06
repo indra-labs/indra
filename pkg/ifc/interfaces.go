@@ -1,7 +1,7 @@
 package ifc
 
 import (
-	"github.com/Indra-Labs/indra/pkg/slice"
+	"github.com/indra-labs/indra/pkg/slice"
 )
 
 // var (

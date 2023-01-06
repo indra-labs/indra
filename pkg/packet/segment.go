@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/Indra-Labs/indra/pkg/sha256"
-	"github.com/Indra-Labs/indra/pkg/slice"
+	"github.com/indra-labs/indra/pkg/sha256"
+	"github.com/indra-labs/indra/pkg/slice"
 	"github.com/templexxx/reedsolomon"
 )
 

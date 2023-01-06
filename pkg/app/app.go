@@ -1,9 +1,9 @@
 package app
 
 import (
-	"github.com/Indra-Labs/indra"
-	cmds2 "github.com/Indra-Labs/indra/pkg/cmds"
-	log2 "github.com/Indra-Labs/indra/pkg/log"
+	"github.com/indra-labs/indra"
+	cmds2 "github.com/indra-labs/indra/pkg/cmds"
+	log2 "github.com/indra-labs/indra/pkg/log"
 )
 
 var (

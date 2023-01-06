@@ -6,9 +6,9 @@ package signer
 import (
 	"sync"
 
-	"github.com/Indra-Labs/indra"
-	"github.com/Indra-Labs/indra/pkg/key/prv"
-	log2 "github.com/Indra-Labs/indra/pkg/log"
+	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/pkg/key/prv"
+	log2 "github.com/indra-labs/indra/pkg/log"
 )
 
 var (

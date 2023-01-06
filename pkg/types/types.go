@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/Indra-Labs/indra/pkg/slice"
+	"github.com/indra-labs/indra/pkg/slice"
 )
 
 // Onion is an interface for the layers of messages each encrypted inside a

@@ -23,7 +23,7 @@ ARG GOARCH=amd64
 
 ENV GO111MODULE=on GOOS=linux
 
-WORKDIR $GOPATH/src/github.com/Indra-Labs/indra
+WORKDIR $GOPATH/src/github.com/indra-labs/indra
 ADD . .
 
 RUN set -ex \

@@ -1,7 +1,7 @@
 package response
 
 import (
-	"github.com/Indra-Labs/indra/pkg/sha256"
+	"github.com/indra-labs/indra/pkg/sha256"
 )
 
 type Hook struct {

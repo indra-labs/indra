@@ -4,9 +4,9 @@
 package ecdh
 
 import (
-	"github.com/Indra-Labs/indra/pkg/key/prv"
-	"github.com/Indra-Labs/indra/pkg/key/pub"
-	"github.com/Indra-Labs/indra/pkg/sha256"
+	"github.com/indra-labs/indra/pkg/key/prv"
+	"github.com/indra-labs/indra/pkg/key/pub"
+	"github.com/indra-labs/indra/pkg/sha256"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 

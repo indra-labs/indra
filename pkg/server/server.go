@@ -2,10 +2,10 @@ package server
 
 import (
 	"context"
-	"github.com/Indra-Labs/indra"
-	"github.com/Indra-Labs/indra/pkg/cfg"
-	"github.com/Indra-Labs/indra/pkg/interrupt"
-	log2 "github.com/Indra-Labs/indra/pkg/log"
+	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/pkg/cfg"
+	"github.com/indra-labs/indra/pkg/interrupt"
+	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/host"

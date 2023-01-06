@@ -3,7 +3,7 @@ package path
 import (
 	"strings"
 
-	"github.com/Indra-Labs/indra/pkg/util"
+	"github.com/indra-labs/indra/pkg/util"
 )
 
 type Path []string

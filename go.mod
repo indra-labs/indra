@@ -1,10 +1,9 @@
-module github.com/Indra-Labs/indra
+module github.com/indra-labs/indra
 
 go 1.19
 
 require (
 	github.com/btcsuite/btcutil v1.0.2
-	github.com/cybriq/proc v0.20.10
 	github.com/cybriq/qu v0.1.2
 	github.com/davecgh/go-spew v1.1.1
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0
@@ -71,6 +70,7 @@ require (
 	github.com/klauspost/compress v1.15.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.1 // indirect
 	github.com/koron/go-ssdp v0.0.3 // indirect
+	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/libp2p/go-buffer-pool v0.1.0 // indirect
 	github.com/libp2p/go-cidranger v1.1.0 // indirect
 	github.com/libp2p/go-flow-metrics v0.1.0 // indirect

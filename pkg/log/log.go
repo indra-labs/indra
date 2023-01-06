@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Indra-Labs/indra"
+	"github.com/indra-labs/indra"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gookit/color"
 )
