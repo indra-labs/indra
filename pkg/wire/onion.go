@@ -86,8 +86,8 @@ func SendKeys(id nonce.ID, hdr, pld *pub.Key,
 // their section at the top, moves the next layer header to the top and pads the
 // remainder with noise, so it always looks like the first hop,
 // indistinguishable.
-func SendPurchase(n nonce.ID, nBytes uint64, client *node.Node, hop [5]*node.Node,
-	sess [3]*session.Session,
+func SendPurchase(n nonce.ID, nBytes uint64, client *node.Node,
+	hop [5]*node.Node, sess [3]*session.Session,
 	set *signer.KeySet) OnionSkins {
 
 	var prvs [3]*prv.Key

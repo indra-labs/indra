@@ -5,9 +5,7 @@ import (
 	"time"
 
 	"github.com/cybriq/qu"
-	"github.com/indra-labs/indra/pkg/ifc"
 	"github.com/indra-labs/indra/pkg/key/address"
-	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/key/pub"
 	"github.com/indra-labs/indra/pkg/key/signer"
 	log2 "github.com/indra-labs/indra/pkg/log"
@@ -26,36 +24,11 @@ func TestPing(t *testing.T) {
 	// log2.CodeLoc = true
 	log2.SetLogLevel(log2.Trace)
 	const nTotal = 4
-	var clients [nTotal]*Client
-	var nodes [nTotal]*node.Node
-	var transports [nTotal]ifc.Transport
+	clients := make([]*Client, nTotal)
 	var e error
-	for i := range transports {
-		transports[i] = transport.NewSim(nTotal)
-	}
-	for i := range nodes {
-		var hdrPrv *prv.Key
-		if hdrPrv, e = prv.GenerateKey(); check(e) {
-			t.Error(e)
-			t.FailNow()
-		}
-		hdrPub := pub.Derive(hdrPrv)
-		addr := slice.GenerateRandomAddrPortIPv6()
-		nodes[i], _ = node.New(addr, hdrPub, hdrPrv, transports[i])
-		if clients[i], e = New(transports[i], hdrPrv, nodes[i], nil); check(e) {
-			t.Error(e)
-			t.FailNow()
-		}
-		clients[i].AddrPort = nodes[i].AddrPort
-	}
-	// add each node to each other's Nodes except itself.
-	for i := range nodes {
-		for j := range nodes {
-			if i == j {
-				continue
-			}
-			clients[i].Nodes = append(clients[i].Nodes, nodes[j])
-		}
+	if clients, e = CreateMockCircuitClients(nTotal); check(e) {
+		t.Error(e)
+		t.FailNow()
 	}
 	// Start up the clients.
 	for _, v := range clients {
@@ -82,11 +55,11 @@ func TestPing(t *testing.T) {
 	o := os.Assemble()
 	b := wire.EncodeOnion(o)
 	hop[0].Send(b)
-	// go func() {
-	// 	time.Sleep(time.Second)
-	// 	quit.Q()
-	// 	t.Error("ping got stuck")
-	// }()
+	go func() {
+		time.Sleep(time.Second)
+		quit.Q()
+		t.Error("ping got stuck")
+	}()
 	<-quit.Wait()
 	for _, v := range clients {
 		v.Shutdown()
@@ -97,36 +70,11 @@ func TestSendKeys(t *testing.T) {
 	log2.CodeLoc = true
 	// log2.SetLogLevel(log2.Trace)
 	const nTotal = 6
-	var clients [nTotal]*Client
-	var nodes [nTotal]*node.Node
-	var transports [nTotal]ifc.Transport
+	clients := make([]*Client, nTotal)
 	var e error
-	for i := range transports {
-		transports[i] = transport.NewSim(nTotal)
-	}
-	for i := range nodes {
-		var hdrPrv *prv.Key
-		if hdrPrv, e = prv.GenerateKey(); check(e) {
-			t.Error(e)
-			t.FailNow()
-		}
-		hdrPub := pub.Derive(hdrPrv)
-		addr := slice.GenerateRandomAddrPortIPv4()
-		nodes[i], _ = node.New(addr, hdrPub, hdrPrv, transports[i])
-		if clients[i], e = New(transports[i], hdrPrv, nodes[i], nil); check(e) {
-			t.Error(e)
-			t.FailNow()
-		}
-		clients[i].AddrPort = nodes[i].AddrPort
-	}
-	// add each node to each other's Nodes except itself.
-	for i := range nodes {
-		for j := range nodes {
-			if i == j {
-				continue
-			}
-			clients[i].Nodes = append(clients[i].Nodes, nodes[j])
-		}
+	if clients, e = CreateMockCircuitClients(nTotal); check(e) {
+		t.Error(e)
+		t.FailNow()
 	}
 	// Start up the clients.
 	for _, v := range clients {
@@ -173,36 +121,11 @@ func TestSendPurchase(t *testing.T) {
 	// log2.CodeLoc = true
 	// log2.SetLogLevel(log2.Trace)
 	const nTotal = 6
-	var clients [nTotal]*Client
-	var nodes [nTotal]*node.Node
-	var transports [nTotal]ifc.Transport
+	clients := make([]*Client, nTotal)
 	var e error
-	for i := range transports {
-		transports[i] = transport.NewSim(nTotal)
-	}
-	for i := range nodes {
-		var hdrPrv *prv.Key
-		if hdrPrv, e = prv.GenerateKey(); check(e) {
-			t.Error(e)
-			t.FailNow()
-		}
-		hdrPub := pub.Derive(hdrPrv)
-		addr := slice.GenerateRandomAddrPortIPv4()
-		nodes[i], _ = node.New(addr, hdrPub, hdrPrv, transports[i])
-		if clients[i], e = New(transports[i], hdrPrv, nodes[i], nil); check(e) {
-			t.Error(e)
-			t.FailNow()
-		}
-		clients[i].AddrPort = nodes[i].AddrPort
-	}
-	// add each node to each other's Nodes except itself.
-	for i := range nodes {
-		for j := range nodes {
-			if i == j {
-				continue
-			}
-			clients[i].Nodes = append(clients[i].Nodes, nodes[j])
-		}
+	if clients, e = CreateMockCircuitClients(nTotal); check(e) {
+		t.Error(e)
+		t.FailNow()
 	}
 	var ks *signer.KeySet
 	if _, ks, e = signer.New(); check(e) {
@@ -251,36 +174,11 @@ func TestSendExit(t *testing.T) {
 	log2.CodeLoc = true
 	// log2.SetLogLevel(log2.Trace)
 	const nTotal = 6
-	var clients [nTotal]*Client
-	var nodes [nTotal]*node.Node
-	var transports [nTotal]ifc.Transport
+	clients := make([]*Client, nTotal)
 	var e error
-	for i := range transports {
-		transports[i] = transport.NewSim(nTotal)
-	}
-	for i := range nodes {
-		var hdrPrv *prv.Key
-		if hdrPrv, e = prv.GenerateKey(); check(e) {
-			t.Error(e)
-			t.FailNow()
-		}
-		hdrPub := pub.Derive(hdrPrv)
-		addr := slice.GenerateRandomAddrPortIPv4()
-		nodes[i], _ = node.New(addr, hdrPub, hdrPrv, transports[i])
-		if clients[i], e = New(transports[i], hdrPrv, nodes[i], nil); check(e) {
-			t.Error(e)
-			t.FailNow()
-		}
-		clients[i].AddrPort = nodes[i].AddrPort
-	}
-	// add each node to each other's Nodes except itself.
-	for i := range nodes {
-		for j := range nodes {
-			if i == j {
-				continue
-			}
-			clients[i].Nodes = append(clients[i].Nodes, nodes[j])
-		}
+	if clients, e = CreateMockCircuitClients(nTotal); check(e) {
+		t.Error(e)
+		t.FailNow()
 	}
 	var ks *signer.KeySet
 	if _, ks, e = signer.New(); check(e) {

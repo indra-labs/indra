@@ -122,12 +122,13 @@ func (cl *Client) exit(on *exit.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	cl.Node.Send(rb)
 }
 
-func (cl *Client) forward(on *forward.OnionSkin, b slice.Bytes, c *slice.Cursor) {
+func (cl *Client) forward(on *forward.OnionSkin, b slice.Bytes,
+	c *slice.Cursor) {
+
 	// forward the whole buffer received onwards. Usually there will be a
 	// layer.OnionSkin under this which will be unwrapped by the receiver.
 	if on.AddrPort.String() == cl.Node.AddrPort.String() {
-		// it is for us, we want to unwrap the next
-		// part.
+		// it is for us, we want to unwrap the next part.
 		b = append(b[*c:], slice.NoisePad(int(*c))...)
 		cl.Node.Send(b)
 	} else {

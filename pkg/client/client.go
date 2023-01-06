@@ -15,7 +15,7 @@ import (
 	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/indra-labs/indra/pkg/node"
 	"github.com/indra-labs/indra/pkg/nonce"
-	session2 "github.com/indra-labs/indra/pkg/session"
+	"github.com/indra-labs/indra/pkg/session"
 	"github.com/indra-labs/indra/pkg/slice"
 	"github.com/indra-labs/indra/pkg/wire/confirm"
 	"github.com/indra-labs/indra/pkg/wire/layer"
@@ -40,8 +40,7 @@ type Client struct {
 	node.Nodes
 	*address.SendCache
 	*address.ReceiveCache
-	Circuits
-	session2.Sessions
+	session.Sessions
 	PendingSessions []nonce.ID
 	*confirm.Confirms
 	ExitHooks response.Hooks
@@ -83,7 +82,8 @@ out:
 	}
 }
 
-func (cl *Client) RegisterConfirmation(hook confirm.Hook, on *confirm.OnionSkin) {
+func (cl *Client) RegisterConfirmation(hook confirm.Hook,
+	on *confirm.OnionSkin) {
 
 	cl.Confirms.Add(&confirm.Callback{
 		ID:    on.ID,
