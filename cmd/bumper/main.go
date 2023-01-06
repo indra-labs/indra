@@ -16,8 +16,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Indra-Labs/indra"
-	log2 "github.com/Indra-Labs/indra/pkg/log"
+	"github.com/indra-labs/indra"
+	log2 "github.com/indra-labs/indra/pkg/log"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"

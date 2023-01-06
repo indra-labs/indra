@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/Indra-Labs/indra/pkg/sha256"
-	"github.com/Indra-Labs/indra/pkg/testutils"
+	"github.com/indra-labs/indra/pkg/sha256"
+	"github.com/indra-labs/indra/pkg/testutils"
 )
 
 func TestSize24(t *testing.T) {

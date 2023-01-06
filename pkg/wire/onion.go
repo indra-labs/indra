@@ -1,14 +1,14 @@
 package wire
 
 import (
-	"github.com/Indra-Labs/indra/pkg/key/address"
-	"github.com/Indra-Labs/indra/pkg/key/prv"
-	"github.com/Indra-Labs/indra/pkg/key/pub"
-	"github.com/Indra-Labs/indra/pkg/key/signer"
-	"github.com/Indra-Labs/indra/pkg/node"
-	"github.com/Indra-Labs/indra/pkg/nonce"
-	"github.com/Indra-Labs/indra/pkg/session"
-	"github.com/Indra-Labs/indra/pkg/slice"
+	"github.com/indra-labs/indra/pkg/key/address"
+	"github.com/indra-labs/indra/pkg/key/prv"
+	"github.com/indra-labs/indra/pkg/key/pub"
+	"github.com/indra-labs/indra/pkg/key/signer"
+	"github.com/indra-labs/indra/pkg/node"
+	"github.com/indra-labs/indra/pkg/nonce"
+	"github.com/indra-labs/indra/pkg/session"
+	"github.com/indra-labs/indra/pkg/slice"
 )
 
 // Ping is a message which checks the liveness of relays by ensuring they are

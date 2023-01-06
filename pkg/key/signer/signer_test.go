@@ -4,9 +4,9 @@ import (
 	"crypto/rand"
 	"testing"
 
-	"github.com/Indra-Labs/indra/pkg/key/pub"
-	"github.com/Indra-Labs/indra/pkg/key/sig"
-	"github.com/Indra-Labs/indra/pkg/sha256"
+	"github.com/indra-labs/indra/pkg/key/pub"
+	"github.com/indra-labs/indra/pkg/key/sig"
+	"github.com/indra-labs/indra/pkg/sha256"
 )
 
 // this just really demonstrates how the keys generated are not linkable.

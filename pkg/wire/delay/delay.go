@@ -3,11 +3,11 @@ package delay
 import (
 	"time"
 
-	"github.com/Indra-Labs/indra"
-	log2 "github.com/Indra-Labs/indra/pkg/log"
-	"github.com/Indra-Labs/indra/pkg/slice"
-	"github.com/Indra-Labs/indra/pkg/types"
-	"github.com/Indra-Labs/indra/pkg/wire/magicbytes"
+	"github.com/indra-labs/indra"
+	log2 "github.com/indra-labs/indra/pkg/log"
+	"github.com/indra-labs/indra/pkg/slice"
+	"github.com/indra-labs/indra/pkg/types"
+	"github.com/indra-labs/indra/pkg/wire/magicbytes"
 )
 
 const (

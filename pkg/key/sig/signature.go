@@ -7,13 +7,13 @@ package sig
 import (
 	"fmt"
 
-	"github.com/Indra-Labs/indra"
-	"github.com/Indra-Labs/indra/pkg/key/prv"
-	"github.com/Indra-Labs/indra/pkg/key/pub"
-	log2 "github.com/Indra-Labs/indra/pkg/log"
-	"github.com/Indra-Labs/indra/pkg/sha256"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
+	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/pkg/key/prv"
+	"github.com/indra-labs/indra/pkg/key/pub"
+	log2 "github.com/indra-labs/indra/pkg/log"
+	"github.com/indra-labs/indra/pkg/sha256"
 )
 
 var (

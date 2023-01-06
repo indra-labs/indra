@@ -12,9 +12,9 @@ import (
 	"reflect"
 	"unsafe"
 
-	"github.com/Indra-Labs/indra"
-	log2 "github.com/Indra-Labs/indra/pkg/log"
-	"github.com/Indra-Labs/indra/pkg/sha256"
+	"github.com/indra-labs/indra"
+	log2 "github.com/indra-labs/indra/pkg/log"
+	"github.com/indra-labs/indra/pkg/sha256"
 )
 
 var (

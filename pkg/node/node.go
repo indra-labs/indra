@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"net/netip"
 
-	"github.com/Indra-Labs/indra"
-	"github.com/Indra-Labs/indra/pkg/ifc"
-	"github.com/Indra-Labs/indra/pkg/key/prv"
-	"github.com/Indra-Labs/indra/pkg/key/pub"
-	log2 "github.com/Indra-Labs/indra/pkg/log"
-	"github.com/Indra-Labs/indra/pkg/nonce"
-	"github.com/Indra-Labs/indra/pkg/slice"
+	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/pkg/ifc"
+	"github.com/indra-labs/indra/pkg/key/prv"
+	"github.com/indra-labs/indra/pkg/key/pub"
+	log2 "github.com/indra-labs/indra/pkg/log"
+	"github.com/indra-labs/indra/pkg/nonce"
+	"github.com/indra-labs/indra/pkg/slice"
 )
 
 var (

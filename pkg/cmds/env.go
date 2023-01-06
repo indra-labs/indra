@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Indra-Labs/indra/pkg/opts/config"
-	"github.com/Indra-Labs/indra/pkg/path"
+	"github.com/indra-labs/indra/pkg/opts/config"
+	"github.com/indra-labs/indra/pkg/path"
 )
 
 type Env struct {

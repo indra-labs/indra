@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Indra-Labs/indra/pkg/nonce"
+	"github.com/indra-labs/indra/pkg/nonce"
 )
 
 type Hook func(cf *OnionSkin)

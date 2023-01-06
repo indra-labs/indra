@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Indra-Labs/indra/pkg/key/prv"
+	"github.com/indra-labs/indra/pkg/key/prv"
 )
 
 func TestAddress(t *testing.T) {

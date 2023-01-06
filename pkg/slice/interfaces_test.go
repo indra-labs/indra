@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/Indra-Labs/indra/pkg/sha256"
-	"github.com/Indra-Labs/indra/pkg/testutils"
+	"github.com/indra-labs/indra/pkg/sha256"
+	"github.com/indra-labs/indra/pkg/testutils"
 )
 
 func TestMessage_ToU64Slice(t *testing.T) {

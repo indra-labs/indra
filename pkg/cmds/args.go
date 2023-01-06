@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Indra-Labs/indra"
-	log2 "github.com/Indra-Labs/indra/pkg/log"
-	"github.com/Indra-Labs/indra/pkg/opts/meta"
-	"github.com/Indra-Labs/indra/pkg/util"
+	"github.com/indra-labs/indra"
+	log2 "github.com/indra-labs/indra/pkg/log"
+	"github.com/indra-labs/indra/pkg/opts/meta"
+	"github.com/indra-labs/indra/pkg/util"
 )
 
 var (

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Indra-Labs/indra/pkg/key/prv"
-	"github.com/Indra-Labs/indra/pkg/key/pub"
-	"github.com/Indra-Labs/indra/pkg/nonce"
+	"github.com/indra-labs/indra/pkg/key/prv"
+	"github.com/indra-labs/indra/pkg/key/pub"
+	"github.com/indra-labs/indra/pkg/nonce"
 )
 
 // SendEntry tracks the received signing keys to be used for messages with a

@@ -4,8 +4,8 @@
 package sha256
 
 import (
-	"github.com/Indra-Labs/indra"
-	log2 "github.com/Indra-Labs/indra/pkg/log"
+	"github.com/indra-labs/indra"
+	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/minio/sha256-simd"
 )
 

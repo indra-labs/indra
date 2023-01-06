@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Indra-Labs/indra/pkg/opts/config"
-	"github.com/Indra-Labs/indra/pkg/opts/meta"
-	"github.com/Indra-Labs/indra/pkg/path"
+	"github.com/indra-labs/indra/pkg/opts/config"
+	"github.com/indra-labs/indra/pkg/opts/meta"
+	"github.com/indra-labs/indra/pkg/path"
 	"go.uber.org/atomic"
 )
 

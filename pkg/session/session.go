@@ -3,14 +3,14 @@ package session
 import (
 	"time"
 
-	"github.com/Indra-Labs/indra"
-	"github.com/Indra-Labs/indra/pkg/key/address"
-	"github.com/Indra-Labs/indra/pkg/key/prv"
-	"github.com/Indra-Labs/indra/pkg/key/pub"
-	"github.com/Indra-Labs/indra/pkg/key/signer"
-	log2 "github.com/Indra-Labs/indra/pkg/log"
-	"github.com/Indra-Labs/indra/pkg/node"
-	"github.com/Indra-Labs/indra/pkg/nonce"
+	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/pkg/key/address"
+	"github.com/indra-labs/indra/pkg/key/prv"
+	"github.com/indra-labs/indra/pkg/key/pub"
+	"github.com/indra-labs/indra/pkg/key/signer"
+	log2 "github.com/indra-labs/indra/pkg/log"
+	"github.com/indra-labs/indra/pkg/node"
+	"github.com/indra-labs/indra/pkg/nonce"
 )
 
 var (

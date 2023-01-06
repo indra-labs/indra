@@ -6,10 +6,10 @@ package pub
 import (
 	"encoding/hex"
 
-	"github.com/Indra-Labs/indra"
-	"github.com/Indra-Labs/indra/pkg/key/prv"
-	log2 "github.com/Indra-Labs/indra/pkg/log"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/pkg/key/prv"
+	log2 "github.com/indra-labs/indra/pkg/log"
 )
 
 var (

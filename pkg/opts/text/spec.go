@@ -3,10 +3,10 @@ package text
 import (
 	"strings"
 
-	"github.com/Indra-Labs/indra/pkg/opts/config"
-	"github.com/Indra-Labs/indra/pkg/opts/meta"
-	normalize2 "github.com/Indra-Labs/indra/pkg/opts/normalize"
-	"github.com/Indra-Labs/indra/pkg/path"
+	"github.com/indra-labs/indra/pkg/opts/config"
+	"github.com/indra-labs/indra/pkg/opts/meta"
+	normalize2 "github.com/indra-labs/indra/pkg/opts/normalize"
+	"github.com/indra-labs/indra/pkg/path"
 	"go.uber.org/atomic"
 )
 
