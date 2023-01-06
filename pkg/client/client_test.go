@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cybriq/qu"
 	"github.com/indra-labs/indra/pkg/ifc"
 	"github.com/indra-labs/indra/pkg/key/address"
 	"github.com/indra-labs/indra/pkg/key/prv"
@@ -19,12 +20,11 @@ import (
 	"github.com/indra-labs/indra/pkg/transport"
 	"github.com/indra-labs/indra/pkg/wire"
 	"github.com/indra-labs/indra/pkg/wire/confirm"
-	"github.com/cybriq/qu"
 )
 
 func TestPing(t *testing.T) {
-	log2.CodeLoc = true
-	// log2.SetLogLevel(log2.Trace)
+	// log2.CodeLoc = true
+	log2.SetLogLevel(log2.Trace)
 	const nTotal = 4
 	var clients [nTotal]*Client
 	var nodes [nTotal]*node.Node
@@ -148,7 +148,7 @@ func TestSendKeys(t *testing.T) {
 		t.FailNow()
 	}
 	os := wire.SendKeys(pn, hdr, pld, clients[0].Node, hop, ks)
-	// log.I.S(os)
+	log.I.S(os)
 	quit := qu.T()
 	log.I.S("sending sendkeys with ID", os[len(os)-1].(*confirm.OnionSkin))
 	clients[0].RegisterConfirmation(func(cf *confirm.OnionSkin) {
@@ -170,7 +170,7 @@ func TestSendKeys(t *testing.T) {
 }
 
 func TestSendPurchase(t *testing.T) {
-	log2.CodeLoc = true
+	// log2.CodeLoc = true
 	// log2.SetLogLevel(log2.Trace)
 	const nTotal = 6
 	var clients [nTotal]*Client

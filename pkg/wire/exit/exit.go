@@ -1,6 +1,7 @@
 package exit
 
 import (
+	"github.com/davecgh/go-spew/spew"
 	"github.com/indra-labs/indra"
 	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/indra-labs/indra/pkg/nonce"
@@ -8,7 +9,6 @@ import (
 	"github.com/indra-labs/indra/pkg/slice"
 	"github.com/indra-labs/indra/pkg/types"
 	"github.com/indra-labs/indra/pkg/wire/magicbytes"
-	"github.com/davecgh/go-spew/spew"
 )
 
 const (
