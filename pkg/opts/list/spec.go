@@ -58,6 +58,11 @@ func (o *Opt) FromValue(v []string) *Opt {
 func (o *Opt) FromString(s string) (e error) {
 	s = strings.TrimSpace(s)
 	split := strings.Split(s, ",")
+
+	if len(split) == 1 && split[0] == "" {
+		split = make([]string, 0)
+	}
+
 	o.v.Store(split)
 	e = o.RunHooks()
 	return

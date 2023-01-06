@@ -18,6 +18,7 @@ func NewMultiAddr(addr string) (maddr multiaddr.Multiaddr) {
 
 var DefaultConfig = &Config{
 	ListenAddresses: []multiaddr.Multiaddr{},
+	SeedAddresses: []multiaddr.Multiaddr{},
 }
 
 type Config struct {
@@ -25,5 +26,6 @@ type Config struct {
 	PrivKey crypto.PrivKey
 
 	PublicAddress   multiaddr.Multiaddr
+	SeedAddresses []multiaddr.Multiaddr
 	ListenAddresses []multiaddr.Multiaddr
 }

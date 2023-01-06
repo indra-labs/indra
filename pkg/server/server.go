@@ -26,7 +26,7 @@ var (
 type Server struct {
 	context.Context
 
-	config Config
+	config *Config
 
 	params *cfg.Params
 
@@ -81,6 +81,8 @@ func (srv *Server) Serve() (err error) {
 		return
 	}
 
+	seedAddresses = append(seedAddresses, srv.config.SeedAddresses...)
+
 	log.I.Ln("seed peers:")
 
 	var peerInfo *peer.AddrInfo
@@ -124,6 +126,7 @@ func New(params *cfg.Params, config *Config) (srv *Server, err error) {
 	var s Server
 
 	s.params = params
+	s.config = config
 
 	var cancel context.CancelFunc
 

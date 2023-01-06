@@ -14,6 +14,7 @@ import (
 	"github.com/indra-labs/indra/pkg/opts/text"
 	"github.com/indra-labs/indra/pkg/server"
 	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/multiformats/go-multiaddr"
 	"os"
 )
 
@@ -98,16 +99,25 @@ var commands = &cmds.Command{
 				log.I.Ln("-- ", log2.App, "("+params.Name+") -", indra.SemVer, "- Network Freedom. --")
 
 				spew.Dump(c.GetListValue("seed"))
-				spew.Dump(c.GetListValue("peer"))
-				spew.Dump(c.GetListValue("listen"))
-				spew.Dump(c.GetValue("key").Text())
+				//spew.Dump(c.GetListValue("peer"))
+				//spew.Dump(c.GetListValue("listen"))
+				//spew.Dump(c.GetValue("key").Text())
 
 				var privKey crypto.PrivKey
+
 				if privKey, err = server.Base58Decode(c.GetValue("key").Text()); check(err) {
 					return err
 				}
 
 				server.DefaultConfig.PrivKey = privKey
+
+				for _, listener := range c.GetListValue("listen"){
+					server.DefaultConfig.ListenAddresses = append(server.DefaultConfig.ListenAddresses, multiaddr.StringCast(listener))
+				}
+
+				for _, seed := range c.GetListValue("seed"){
+					server.DefaultConfig.SeedAddresses = append(server.DefaultConfig.SeedAddresses, multiaddr.StringCast(seed))
+				}
 
 				var srv *server.Server
 
