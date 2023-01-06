@@ -1,0 +1,70 @@
+version: '3'
+services:
+  seed_1:
+    image: indralabs/indra-dev:latest
+    container_name: indra-seed-1
+    volumes:
+      - seed_1_gopath:/go
+      - ./../../:/indra
+    networks:
+      indranet:
+        ipv4_address: 172.16.238.2
+      #ports:
+      #- 8337:8337
+      #- 8338:8338
+      #environment:
+      #POSTGRES_DB: indra-local
+      #POSTGRES_USER: indra
+      #POSTGRES_PASSWORD: password
+  peer_1:
+    image: indralabs/indra-dev:latest
+    container_name: indra-peer-1
+    volumes:
+      - peer_1_gopath:/go
+      - ./../../:/indra
+    networks:
+      indranet:
+        ipv4_address: 172.16.238.3
+    depends_on:
+      - seed_1
+      #ports:
+      #- 8337:8337
+      #- 8338:8338
+      #environment:
+      #POSTGRES_DB: indra-local
+      #POSTGRES_USER: indra
+      #POSTGRES_PASSWORD: password
+  peer_2:
+    image: indralabs/indra-dev:latest
+    container_name: indra-peer-2
+    volumes:
+      - peer_2_gopath:/go
+      - ./../../:/indra
+    networks:
+      indranet:
+        ipv4_address: 172.16.238.4
+    depends_on:
+      - seed_1
+      #ports:
+      #- 8337:8337
+      #- 8338:8338
+      #environment:
+      #POSTGRES_DB: indra-local
+      #POSTGRES_USER: indra
+      #POSTGRES_PASSWORD: password
+volumes:
+  seed_1_gopath:
+  peer_1_gopath:
+  peer_2_gopath:
+networks:
+  indranet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.238.0/24
+          gateway: 172.16.238.1
+
+
+# docker build -t indralabs/indra-dev -f docker/indra/Dockerfile.dev .
+# docker-compose -f docker/sim/docker-compose-dev.yml up
