@@ -1,61 +1,56 @@
 version: '3'
 services:
-  seed_1:
+  seed0:
     image: indralabs/indra-dev:latest
-    container_name: indra-seed-1
+    container_name: indra-seed0
     volumes:
-      - seed_1_gopath:/go
+      - seed0_gopath:/go
       - ./../../:/indra
     networks:
       indranet:
         ipv4_address: 172.16.238.2
-      #ports:
-      #- 8337:8337
-      #- 8338:8338
-      #environment:
-      #POSTGRES_DB: indra-local
-      #POSTGRES_USER: indra
-      #POSTGRES_PASSWORD: password
-  peer_1:
+    expose:
+      - 62134
+      - 62135
+    environment:
+      INDRA_SERVE_KEY: "66T7j5JnhsjDTqVvV8zEM2rTUobu66tocizfqArVEnPJ"
+      INDRA_SERVE_LISTEN: "/ip4/0.0.0.0/tcp/62134"
+  peer0:
     image: indralabs/indra-dev:latest
-    container_name: indra-peer-1
+    container_name: indra-peer0
     volumes:
-      - peer_1_gopath:/go
+      - peer0_gopath:/go
       - ./../../:/indra
     networks:
       indranet:
         ipv4_address: 172.16.238.3
     depends_on:
-      - seed_1
-      #ports:
-      #- 8337:8337
-      #- 8338:8338
-      #environment:
-      #POSTGRES_DB: indra-local
-      #POSTGRES_USER: indra
-      #POSTGRES_PASSWORD: password
-  peer_2:
+      - seed0
+    expose:
+      - 62134
+      - 62135
+    environment:
+      INDRA_SERVE_SEED: "/dns4/seed0/tcp/62134/p2p/16Uiu2HAm2LgowPNBM47dR6gSJmEeQaqCZ6u4WPhTCSWkxyNrfAxo"
+  peer1:
     image: indralabs/indra-dev:latest
-    container_name: indra-peer-2
+    container_name: indra-peer1
     volumes:
-      - peer_2_gopath:/go
+      - peer1_gopath:/go
       - ./../../:/indra
     networks:
       indranet:
         ipv4_address: 172.16.238.4
     depends_on:
-      - seed_1
-      #ports:
-      #- 8337:8337
-      #- 8338:8338
-      #environment:
-      #POSTGRES_DB: indra-local
-      #POSTGRES_USER: indra
-      #POSTGRES_PASSWORD: password
+      - seed0
+    expose:
+      - 62134
+      - 62135
+    environment:
+      INDRA_SERVE_SEED: "/dns4/seed0/tcp/62134/p2p/16Uiu2HAm2LgowPNBM47dR6gSJmEeQaqCZ6u4WPhTCSWkxyNrfAxo"
 volumes:
-  seed_1_gopath:
-  peer_1_gopath:
-  peer_2_gopath:
+  seed0_gopath:
+  peer0_gopath:
+  peer1_gopath:
 networks:
   indranet:
     driver: bridge

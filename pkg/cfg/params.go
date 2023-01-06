@@ -93,6 +93,6 @@ var SimnetServerParams = &Params{
 
 	DefaultPort: "62134",
 
-	// We likely will never need any seed addresses here
+	// Should be passed via --seed
 	DNSSeedAddresses: []*DNSSeedAddress{},
 }
