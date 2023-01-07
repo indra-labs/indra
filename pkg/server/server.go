@@ -61,10 +61,6 @@ func (srv *Server) Shutdown() (err error) {
 	return nil
 }
 
-func seedConnect(ctx context.Context, attempts int) {
-
-}
-
 func peer_metrics(host host.Host, quitChan <-chan struct{}) {
 
 	for {
@@ -77,6 +73,7 @@ func peer_metrics(host host.Host, quitChan <-chan struct{}) {
 		}
 
 		log.I.Ln("peers:",len(host.Network().Peers()))
+		log.I.Ln("connections:",len(host.Network().Conns()))
 
 		time.Sleep(10 * time.Second)
 	}
@@ -84,13 +81,13 @@ func peer_metrics(host host.Host, quitChan <-chan struct{}) {
 
 func (srv *Server) attempt(ctx context.Context, peer *peer.AddrInfo, attempts_left int, wg sync.WaitGroup) {
 
-	log.I.Ln("attempting connection to", peer.ID)
+	log.I.Ln("attempting connection", peer.ID)
 
 	defer wg.Done()
 
 	if err := srv.host.Connect(srv.Context, *peer); check(err) {
 
-		log.E.Ln("connection attempt failed to", peer.ID)
+		log.E.Ln("connection attempt failed:", peer.ID)
 
 		attempts_left--
 
@@ -106,14 +103,14 @@ func (srv *Server) attempt(ctx context.Context, peer *peer.AddrInfo, attempts_le
 		return
 	}
 
-	log.I.Ln("connection established with seed node:", peer.ID)
+	log.I.Ln("seed connection established:", peer.String())
 
 	ctx.Done()
 }
 
 func (srv *Server) seed_connect() (err error) {
 
-	log.I.Ln("attempting to peer with seed addresses...")
+	log.I.Ln("attempting to peer with seeds...")
 
 	// We will first attempt to seed_connect to the seed addresses.
 	var wg sync.WaitGroup
@@ -129,9 +126,6 @@ func (srv *Server) seed_connect() (err error) {
 		}
 
 		if peerInfo.ID == srv.host.ID() {
-
-			log.I.Ln("attempting to seed_connect to self, skipping...")
-
 			continue
 		}
 
@@ -206,16 +200,13 @@ func New(params *cfg.Params, config *Config) (srv *Server, err error) {
 
 	config.SeedAddresses = append(config.SeedAddresses, seedAddresses...)
 
-	log.I.Ln("seed addresses:")
-	log.I.Ln("-", config.SeedAddresses)
-
 	// Start a DHT, for use in peer discovery. We can't just make a new DHT
 	// client because we want each peer to maintain its own local copy of the
 	// DHT, so that the bootstrapping node of the DHT can go down without
 	// inhibiting future peer discovery.
-	//if s.dht, err = dht.New(s.Context, s.host); check(err) {
-	//	return nil, err
-	//}
+	if s.dht, err = dht.New(s.Context, s.host); check(err) {
+		return nil, err
+	}
 
 	return &s, err
 }

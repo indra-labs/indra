@@ -10,6 +10,7 @@ services:
       - ./../../:/indra
     networks:
       indranet:
+        ipv4_address: 172.16.238.2
     expose:
       - 62134
       - 62135
@@ -26,6 +27,7 @@ services:
       - ./../../:/indra
     networks:
       indranet:
+        ipv4_address: 172.16.238.3
     depends_on:
       - seed0
     expose:
@@ -44,6 +46,7 @@ services:
       - ./../../:/indra
     networks:
       indranet:
+        ipv4_address: 172.16.238.4
     depends_on:
       - seed0
       - seed1
