@@ -101,11 +101,11 @@ func (srv *Server) Serve() (err error) {
 
 			defer wg.Done()
 
-			if err := srv.host.Connect(srv.Context, *peerInfo); err != nil {
-				log.W.Ln(err)
-			} else {
-				log.I.Ln("Connection established with bootstrap node:", *peerInfo)
+			if err := srv.host.Connect(srv.Context, *peerInfo); check(err) {
+				return
 			}
+
+			log.I.Ln("connection established with seed node:", peerInfo.ID)
 		}()
 	}
 

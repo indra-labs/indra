@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/app"
 	"github.com/indra-labs/indra/pkg/cfg"
@@ -97,11 +96,6 @@ var commands = &cmds.Command{
 				var params = cfg.SimnetServerParams
 
 				log.I.Ln("-- ", log2.App, "("+params.Name+") -", indra.SemVer, "- Network Freedom. --")
-
-				spew.Dump(c.GetListValue("seed"))
-				//spew.Dump(c.GetListValue("peer"))
-				//spew.Dump(c.GetListValue("listen"))
-				//spew.Dump(c.GetValue("key").Text())
 
 				var privKey crypto.PrivKey
 
