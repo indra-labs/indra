@@ -265,3 +265,11 @@ func GenerateRandomAddrPortIPv6() (ap *netip.AddrPort) {
 	a, e = netip.ParseAddrPort(str)
 	return &a
 }
+
+func GetCryptoRandSeed() int64 {
+	rBytes := make([]byte, 8)
+	if n, e := rand.Read(rBytes); n != 8 && check(e) {
+		return 0
+	}
+	return int64(DecodeUint64(rBytes))
+}

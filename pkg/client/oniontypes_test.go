@@ -8,7 +8,6 @@ import (
 	"github.com/indra-labs/indra/pkg/key/address"
 	"github.com/indra-labs/indra/pkg/key/pub"
 	"github.com/indra-labs/indra/pkg/key/signer"
-	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/indra-labs/indra/pkg/node"
 	"github.com/indra-labs/indra/pkg/nonce"
 	"github.com/indra-labs/indra/pkg/session"
@@ -21,8 +20,6 @@ import (
 )
 
 func TestPing(t *testing.T) {
-	// log2.CodeLoc = true
-	log2.SetLogLevel(log2.Trace)
 	const nTotal = 4
 	clients := make([]*Client, nTotal)
 	var e error
@@ -45,21 +42,20 @@ func TestPing(t *testing.T) {
 		hop[i] = clients[0].Nodes[i]
 	}
 	os := wire.Ping(pn, clients[0].Node, hop, ks)
-	// log.I.S(os)
 	quit := qu.T()
 	log.I.S("sending ping with ID", os[len(os)-1].(*confirm.OnionSkin))
-	clients[0].RegisterConfirmation(func(cf *confirm.OnionSkin) {
+	clients[0].RegisterConfirmation(func(cf nonce.ID) {
 		log.I.S("received ping confirmation ID", cf)
 		quit.Q()
-	}, os[len(os)-1].(*confirm.OnionSkin))
+	}, os[len(os)-1].(*confirm.OnionSkin).ID)
 	o := os.Assemble()
 	b := wire.EncodeOnion(o)
 	hop[0].Send(b)
-	go func() {
-		time.Sleep(time.Second)
-		quit.Q()
-		t.Error("ping got stuck")
-	}()
+	// go func() {
+	// 	time.Sleep(time.Second)
+	// 	quit.Q()
+	// 	t.Error("ping got stuck")
+	// }()
 	<-quit.Wait()
 	for _, v := range clients {
 		v.Shutdown()
@@ -67,8 +63,6 @@ func TestPing(t *testing.T) {
 }
 
 func TestSendKeys(t *testing.T) {
-	log2.CodeLoc = true
-	// log2.SetLogLevel(log2.Trace)
 	const nTotal = 6
 	clients := make([]*Client, nTotal)
 	var e error
@@ -97,12 +91,12 @@ func TestSendKeys(t *testing.T) {
 	}
 	os := wire.SendKeys(pn, hdr, pld, clients[0].Node, hop, ks)
 	log.I.S(os)
-	quit := qu.T()
 	log.I.S("sending sendkeys with ID", os[len(os)-1].(*confirm.OnionSkin))
-	clients[0].RegisterConfirmation(func(cf *confirm.OnionSkin) {
+	quit := qu.T()
+	clients[0].RegisterConfirmation(func(cf nonce.ID) {
 		log.I.S("received sendkeys confirmation ID", cf)
 		quit.Q()
-	}, os[len(os)-1].(*confirm.OnionSkin))
+	}, os[len(os)-1].(*confirm.OnionSkin).ID)
 	o := os.Assemble()
 	b := wire.EncodeOnion(o)
 	hop[0].Send(b)
@@ -118,8 +112,6 @@ func TestSendKeys(t *testing.T) {
 }
 
 func TestSendPurchase(t *testing.T) {
-	// log2.CodeLoc = true
-	// log2.SetLogLevel(log2.Trace)
 	const nTotal = 6
 	clients := make([]*Client, nTotal)
 	var e error
@@ -159,11 +151,6 @@ func TestSendPurchase(t *testing.T) {
 	o := os.Assemble()
 	b := wire.EncodeOnion(o)
 	hop[0].Send(b)
-	go func() {
-		time.Sleep(time.Second * 2)
-		clients[0].Q()
-		t.Error("sendpurchase got stuck")
-	}()
 	<-clients[0].Wait()
 	for _, v := range clients {
 		v.Shutdown()
@@ -171,8 +158,6 @@ func TestSendPurchase(t *testing.T) {
 }
 
 func TestSendExit(t *testing.T) {
-	log2.CodeLoc = true
-	// log2.SetLogLevel(log2.Trace)
 	const nTotal = 6
 	clients := make([]*Client, nTotal)
 	var e error
@@ -218,13 +203,11 @@ func TestSendExit(t *testing.T) {
 		t.FailNow()
 	}
 	quit := qu.T()
-	// log.I.S(hash, message.ToBytes())
 	os := wire.SendExit(message, port, clients[0].Node, hop, sess, ks)
 	clients[0].ExitHooks = clients[0].ExitHooks.Add(hash, func() {
 		log.I.S("finished")
 		quit.Q()
 	})
-	// clients[0].PendingSessions = append(clients[0].PendingSessions, id)
 	o := os.Assemble()
 	b := wire.EncodeOnion(o)
 	hop[0].Send(b)

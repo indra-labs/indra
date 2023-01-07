@@ -83,14 +83,30 @@ out:
 }
 
 func (cl *Client) RegisterConfirmation(hook confirm.Hook,
-	on *confirm.OnionSkin) {
+	cnf nonce.ID) {
 
 	cl.Confirms.Add(&confirm.Callback{
-		ID:    on.ID,
-		Time:  time.Now(),
-		Hook:  hook,
-		Onion: on,
+		ID:   cnf,
+		Time: time.Now(),
+		Hook: hook,
 	})
+}
+
+func (cl *Client) SendKeys(nodeID nonce.ID) (hdr, pld *prv.Key, hdrPub,
+	pldPub *pub.Key, id nonce.ID, hook func(cf nonce.ID), e error) {
+
+	if hdr, e = prv.GenerateKey(); check(e) {
+		return
+	}
+	hdrPub = pub.Derive(hdr)
+	if pld, e = prv.GenerateKey(); check(e) {
+		return
+	}
+	pldPub = pub.Derive(pld)
+
+	n := cl.Nodes.FindByID(nodeID)
+	_ = n
+	return
 }
 
 func (cl *Client) Cleanup() {

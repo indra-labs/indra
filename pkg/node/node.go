@@ -136,3 +136,13 @@ func (n Nodes) DeleteByAddrPort(ip *netip.AddrPort) (nn Nodes, e error) {
 	}
 	return
 }
+
+type Selector func(n Nodes, exit *Node, count int) (selected Nodes)
+
+func (n Nodes) Select(selector Selector, exit *Node, count int) (selected Nodes) {
+	if selector == nil {
+		log.E.Ln("no selector function given")
+		return
+	}
+	return selector(n, exit, count)
+}
