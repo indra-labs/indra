@@ -286,9 +286,9 @@ func runCmdWithOutput(cmd ...string) (out string, err error) {
 	c := exec.Command(cmd[0], cmd[1:]...)
 	var output []byte
 	output, err = c.CombinedOutput()
-	if err == nil && string(output) != "" {
-		errPrintln(string(output))
-	}
+	// if err == nil && string(output) != "" {
+	// 	errPrintln(string(output))
+	// }
 	out = string(output)
 	return
 }
