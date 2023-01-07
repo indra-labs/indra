@@ -17,6 +17,7 @@ import (
 	"github.com/indra-labs/indra/pkg/nonce"
 	"github.com/indra-labs/indra/pkg/session"
 	"github.com/indra-labs/indra/pkg/slice"
+	"github.com/indra-labs/indra/pkg/wire"
 	"github.com/indra-labs/indra/pkg/wire/confirm"
 	"github.com/indra-labs/indra/pkg/wire/layer"
 	"github.com/indra-labs/indra/pkg/wire/response"
@@ -92,9 +93,11 @@ func (cl *Client) RegisterConfirmation(hook confirm.Hook,
 	})
 }
 
-func (cl *Client) SendKeys(nodeID nonce.ID) (hdr, pld *prv.Key, hdrPub,
-	pldPub *pub.Key, id nonce.ID, hook func(cf nonce.ID), e error) {
+func (cl *Client) SendKeys(nodeID nonce.ID,
+	hook func(cf nonce.ID)) (confirmation nonce.ID, hdr, pld *prv.Key,
+	e error) {
 
+	var hdrPub, pldPub *pub.Key
 	if hdr, e = prv.GenerateKey(); check(e) {
 		return
 	}
@@ -105,7 +108,16 @@ func (cl *Client) SendKeys(nodeID nonce.ID) (hdr, pld *prv.Key, hdrPub,
 	pldPub = pub.Derive(pld)
 
 	n := cl.Nodes.FindByID(nodeID)
-	_ = n
+	selected := cl.Nodes.Select(SimpleSelector, n, 4)
+	var hop [5]*node.Node
+	hop[0], hop[1], hop[2], hop[3], hop[4] =
+		selected[0], selected[1], selected[2], selected[3], cl.Node
+	confirmation = nonce.NewID()
+	os := wire.SendKeys(confirmation, hdrPub, pldPub, cl.Node, hop, cl.KeySet)
+	cl.RegisterConfirmation(hook, os[len(os)-1].(*confirm.OnionSkin).ID)
+	o := os.Assemble()
+	b := wire.EncodeOnion(o)
+	cl.Send(hop[0].AddrPort, b)
 	return
 }
 

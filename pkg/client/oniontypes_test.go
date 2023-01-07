@@ -6,7 +6,6 @@ import (
 
 	"github.com/cybriq/qu"
 	"github.com/indra-labs/indra/pkg/key/address"
-	"github.com/indra-labs/indra/pkg/key/pub"
 	"github.com/indra-labs/indra/pkg/key/signer"
 	"github.com/indra-labs/indra/pkg/node"
 	"github.com/indra-labs/indra/pkg/nonce"
@@ -74,37 +73,11 @@ func TestSendKeys(t *testing.T) {
 	for _, v := range clients {
 		go v.Start()
 	}
-	pn := nonce.NewID()
-	var ks *signer.KeySet
-	if _, ks, e = signer.New(); check(e) {
-		t.Error(e)
-		t.FailNow()
-	}
-	var hop [nTotal - 1]*node.Node
-	for i := range clients[0].Nodes {
-		hop[i] = clients[0].Nodes[i]
-	}
-	var hdr, pld *pub.Key
-	if _, _, hdr, pld, e = testutils.GenerateTestKeyPairs(); check(e) {
-		t.Error(e)
-		t.FailNow()
-	}
-	os := wire.SendKeys(pn, hdr, pld, clients[0].Node, hop, ks)
-	log.I.S(os)
-	log.I.S("sending sendkeys with ID", os[len(os)-1].(*confirm.OnionSkin))
 	quit := qu.T()
-	clients[0].RegisterConfirmation(func(cf nonce.ID) {
+	clients[0].SendKeys(clients[0].Nodes[0].ID, func(cf nonce.ID) {
 		log.I.S("received sendkeys confirmation ID", cf)
 		quit.Q()
-	}, os[len(os)-1].(*confirm.OnionSkin).ID)
-	o := os.Assemble()
-	b := wire.EncodeOnion(o)
-	hop[0].Send(b)
-	// go func() {
-	// 	time.Sleep(time.Second * 2)
-	// 	quit.Q()
-	// 	t.Error("sendkeys got stuck")
-	// }()
+	})
 	<-quit.Wait()
 	for _, v := range clients {
 		v.Shutdown()

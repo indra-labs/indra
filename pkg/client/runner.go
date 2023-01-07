@@ -72,7 +72,7 @@ func (cl *Client) runner() (out bool) {
 func (cl *Client) cipher(on *cipher.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	// This either is in a forward only SendKeys message or we are the buyer
 	// and these are our session keys.
-	log.I.S(on)
+	// log.I.S(on)
 	b = append(b[*c:], slice.NoisePad(int(*c))...)
 	cl.Node.Send(b)
 }

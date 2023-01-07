@@ -22,9 +22,11 @@ func SimpleSelector(n node.Nodes, exit *node.Node,
 	}
 	// Remove the exit from the list of options.
 	var nCandidates node.Nodes
-	for i := range n {
-		if n[i].ID != exit.ID {
-			nCandidates = append(nCandidates, n[i])
+	if exit != nil {
+		for i := range n {
+			if n[i].ID != exit.ID {
+				nCandidates = append(nCandidates, n[i])
+			}
 		}
 	}
 	// Shuffle the list we made
