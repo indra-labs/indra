@@ -50,7 +50,7 @@ func Ping(id nonce.ID, client *node.Node, hop [3]*node.Node,
 // This message's last layer is a Confirmation, which allows the client to know
 // that the key was successfully delivered to the Reverse relays that will be
 // used in the Purchase.
-func SendKeys(id nonce.ID, hdr, pld *pub.Key,
+func SendKeys(id nonce.ID, hdr, pld *prv.Key,
 	client *node.Node, hop [5]*node.Node, set *signer.KeySet) OnionSkins {
 
 	n0 := Gen3Nonces()

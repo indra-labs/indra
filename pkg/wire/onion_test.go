@@ -218,9 +218,9 @@ func TestSendKeys(t *testing.T) {
 	client, n = node.New(slice.GenerateRandomAddrPortIPv4(),
 		cpub1, cprv1, nil)
 	ciprv1, ciprv2 := GetTwoPrvKeys(t)
-	cipub1, cipub2 := pub.Derive(ciprv1), pub.Derive(ciprv2)
+	// cipub1, cipub2 := pub.Derive(ciprv1), pub.Derive(ciprv2)
 
-	on := SendKeys(n, cipub1, cipub2, client, hop, ks)
+	on := SendKeys(n, ciprv1, ciprv2, client, hop, ks)
 	b := EncodeOnion(on.Assemble())
 	c := slice.NewCursor()
 	var ok bool
@@ -269,11 +269,11 @@ func TestSendKeys(t *testing.T) {
 		t.Error("did not unwrap expected type", reflect.TypeOf(onc))
 		t.FailNow()
 	}
-	if !ci.Header.Equals(cipub1) {
+	if !ci.Header.Key.Equals(&ciprv1.Key) {
 		t.Error("did not unwrap header key")
 		t.FailNow()
 	}
-	if !ci.Payload.Equals(cipub2) {
+	if !ci.Payload.Key.Equals(&ciprv2.Key) {
 		t.Error("did not unwrap payload key")
 		t.FailNow()
 	}

@@ -34,9 +34,9 @@ func TestOnionSkins_Cipher(t *testing.T) {
 	log2.CodeLoc = true
 	var e error
 	hdrP, pldP := GetTwoPrvKeys(t)
-	hdr, pld := pub.Derive(hdrP), pub.Derive(pldP)
+	// hdr, pld := pub.Derive(hdrP), pub.Derive(pldP)
 	on := OnionSkins{}.
-		Cipher(hdr, pld).
+		Cipher(hdrP, pldP).
 		Assemble()
 	onb := EncodeOnion(on)
 	c := slice.NewCursor()
@@ -50,11 +50,11 @@ func TestOnionSkins_Cipher(t *testing.T) {
 		t.Error("did not unwrap expected type")
 		t.FailNow()
 	}
-	if !ci.Header.Equals(hdr) {
+	if !ci.Header.Key.Equals(&hdrP.Key) {
 		t.Error("header key did not unwrap correctly")
 		t.FailNow()
 	}
-	if !ci.Payload.Equals(pld) {
+	if !ci.Payload.Key.Equals(&pldP.Key) {
 		t.Error("payload key did not unwrap correctly")
 		t.FailNow()
 	}

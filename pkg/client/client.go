@@ -97,15 +97,15 @@ func (cl *Client) SendKeys(nodeID nonce.ID,
 	hook func(cf nonce.ID)) (confirmation nonce.ID, hdr, pld *prv.Key,
 	e error) {
 
-	var hdrPub, pldPub *pub.Key
+	// var hdrPub, pldPub *pub.Key
 	if hdr, e = prv.GenerateKey(); check(e) {
 		return
 	}
-	hdrPub = pub.Derive(hdr)
+	// hdrPub = pub.Derive(hdr)
 	if pld, e = prv.GenerateKey(); check(e) {
 		return
 	}
-	pldPub = pub.Derive(pld)
+	// pldPub = pub.Derive(pld)
 
 	n := cl.Nodes.FindByID(nodeID)
 	selected := cl.Nodes.Select(SimpleSelector, n, 4)
@@ -113,7 +113,7 @@ func (cl *Client) SendKeys(nodeID nonce.ID,
 	hop[0], hop[1], hop[2], hop[3], hop[4] =
 		selected[0], selected[1], selected[2], selected[3], cl.Node
 	confirmation = nonce.NewID()
-	os := wire.SendKeys(confirmation, hdrPub, pldPub, cl.Node, hop, cl.KeySet)
+	os := wire.SendKeys(confirmation, hdr, pld, cl.Node, hop, cl.KeySet)
 	cl.RegisterConfirmation(hook, os[len(os)-1].(*confirm.OnionSkin).ID)
 	o := os.Assemble()
 	b := wire.EncodeOnion(o)

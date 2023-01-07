@@ -2,6 +2,7 @@ package cipher
 
 import (
 	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/key/pub"
 	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/indra-labs/indra/pkg/slice"
@@ -27,7 +28,7 @@ var (
 // After ~10 seconds these can be purged from the cache as they are otherwise a
 // DoS vector buffer flooding.
 type OnionSkin struct {
-	Header, Payload *pub.Key
+	Header, Payload *prv.Key
 	types.Onion
 }
 
@@ -50,7 +51,7 @@ func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 		return magicbytes.TooShort(len(b[*c:]),
 			Len-magicbytes.Len, string(Magic))
 	}
-	x.Header, e = pub.FromBytes(b[*c:c.Inc(pub.KeyLen)])
-	x.Payload, e = pub.FromBytes(b[*c:c.Inc(pub.KeyLen)])
+	x.Header = prv.PrivkeyFromBytes(b[*c:c.Inc(pub.KeyLen)])
+	x.Payload = prv.PrivkeyFromBytes(b[*c:c.Inc(pub.KeyLen)])
 	return
 }
