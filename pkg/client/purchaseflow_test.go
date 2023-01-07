@@ -42,6 +42,8 @@ func TestPurchaseFlow(t *testing.T) {
 	}
 	log.I.S(confirmation)
 	wait.Wait()
+	// now to do the purchase
+
 	for _, v := range clients {
 		v.Shutdown()
 	}

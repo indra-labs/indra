@@ -33,7 +33,7 @@ var (
 // for each layer, and a header which a relay uses to determine what cipher to
 // use.
 type OnionSkin struct {
-	To   *address.Sender
+	To   *pub.Key
 	From *prv.Key
 	// The remainder here are for Decode.
 	Nonce   nonce.IV
@@ -63,7 +63,7 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	copy(b[*c:c.Inc(nonce.IVLen)], x.Nonce[:])
 	// Derive the cloaked key and copy it in.
-	to := x.To.GetCloak()
+	to := address.GetCloak(x.To)
 	copy(b[*c:c.Inc(address.Len)], to[:])
 	// Derive the public key from the From key and copy in.
 	pubKey := pub.Derive(x.From).ToBytes()
@@ -74,7 +74,7 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	// Then we can encrypt the message segment
 	var e error
 	var blk cipher.Block
-	if blk = ciph.GetBlock(x.From, x.To.Key); check(e) {
+	if blk = ciph.GetBlock(x.From, x.To); check(e) {
 		panic(e)
 	}
 	ciph.Encipher(blk, x.Nonce, b[start:])

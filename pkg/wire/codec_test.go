@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/indra-labs/indra/pkg/key/address"
 	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/key/pub"
 	log2 "github.com/indra-labs/indra/pkg/log"
@@ -212,7 +211,7 @@ func TestOnionSkins_Layer(t *testing.T) {
 	prv1, prv2 := GetTwoPrvKeys(t)
 	pub1 := pub.Derive(prv1)
 	on := OnionSkins{}.
-		OnionSkin(address.FromPub(pub1), prv2, n1).
+		OnionSkin(pub1, prv2, n1).
 		Confirmation(n).
 		Assemble()
 	onb := EncodeOnion(on)

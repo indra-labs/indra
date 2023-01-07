@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/indra-labs/indra/pkg/key/address"
 	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/key/pub"
 	"github.com/indra-labs/indra/pkg/sha256"
@@ -28,7 +27,7 @@ func TestSplitJoin(t *testing.T) {
 		t.FailNow()
 	}
 	_, _, _, _ = sP, Rp, RP, rp
-	addr := address.FromPub(rP)
+	addr := rP
 	params := EP{
 		To:     addr,
 		From:   sp,
@@ -89,7 +88,7 @@ func BenchmarkSplit(b *testing.B) {
 		b.FailNow()
 	}
 	_, _, _ = sP, Rp, rp
-	addr := address.FromPub(rP)
+	addr := rP
 	for n := 0; n < b.N; n++ {
 		params := EP{
 			To:     addr,
@@ -160,7 +159,7 @@ func TestSplitJoinFEC(t *testing.T) {
 			punctures[p], punctures[len(punctures)-p-1] =
 				punctures[len(punctures)-p-1], punctures[p]
 		}
-		addr := address.FromPub(rP)
+		addr := rP
 		for p := range punctures {
 			var splitted [][]byte
 			ep := EP{

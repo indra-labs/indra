@@ -27,13 +27,15 @@ func GenerateTestMessage(msgSize int) (msg []byte, hash sha256.Hash, e error) {
 }
 
 func GenerateTestKeyPairs() (sp, rp *prv.Key, sP, rP *pub.Key, e error) {
+	sp, sP, e = GenerateTestKeyPair()
+	rp, rP, e = GenerateTestKeyPair()
+	return
+}
+
+func GenerateTestKeyPair() (sp *prv.Key, sP *pub.Key, e error) {
 	if sp, e = prv.GenerateKey(); check(e) {
 		return
 	}
 	sP = pub.Derive(sp)
-	if rp, e = prv.GenerateKey(); check(e) {
-		return
-	}
-	rP = pub.Derive(rp)
 	return
 }

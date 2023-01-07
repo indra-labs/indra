@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/indra-labs/indra/pkg/key/address"
 	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/key/pub"
 	"github.com/indra-labs/indra/pkg/sha256"
@@ -28,7 +27,7 @@ func TestEncode_Decode(t *testing.T) {
 	if sp, rp, sP, rP, e = testutils.GenerateTestKeyPairs(); check(e) {
 		t.FailNow()
 	}
-	addr := address.FromPub(rP)
+	addr := rP
 	var pkt []byte
 	params := EP{
 		To:       addr,

@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/cybriq/qu"
-	"github.com/indra-labs/indra/pkg/key/address"
 	"github.com/indra-labs/indra/pkg/key/signer"
 	"github.com/indra-labs/indra/pkg/node"
 	"github.com/indra-labs/indra/pkg/nonce"
@@ -99,12 +98,11 @@ func TestSendPurchase(t *testing.T) {
 	}
 	var sess [3]*session.Session
 	for i := range sess {
-		sess[i] = session.NewSession(nonce.NewID(), 203230230,
-			time.Hour, ks)
+		sess[i] = session.NewSession(nonce.NewID(), 203230230, time.Hour)
 	}
-	clients[4].ReceiveCache.Add(address.NewReceiver(sess[0].HeaderPrv))
-	clients[5].ReceiveCache.Add(address.NewReceiver(sess[1].HeaderPrv))
-	clients[0].ReceiveCache.Add(address.NewReceiver(sess[2].HeaderPrv))
+	// clients[4].ReceiveCache.Add(address.NewReceiver(sess[0].HeaderPrv))
+	// clients[5].ReceiveCache.Add(address.NewReceiver(sess[1].HeaderPrv))
+	// clients[0].ReceiveCache.Add(address.NewReceiver(sess[2].HeaderPrv))
 	clients[4].Sessions = clients[4].Sessions.Add(sess[0])
 	clients[5].Sessions = clients[5].Sessions.Add(sess[1])
 	clients[0].Sessions = clients[0].Sessions.Add(sess[2])
@@ -145,12 +143,11 @@ func TestSendExit(t *testing.T) {
 	}
 	var sess [3]*session.Session
 	for i := range sess {
-		sess[i] = session.NewSession(nonce.NewID(), 203230230,
-			time.Hour, ks)
+		sess[i] = session.NewSession(nonce.NewID(), 203230230, time.Hour)
 	}
-	clients[4].ReceiveCache.Add(address.NewReceiver(sess[0].HeaderPrv))
-	clients[5].ReceiveCache.Add(address.NewReceiver(sess[1].HeaderPrv))
-	clients[0].ReceiveCache.Add(address.NewReceiver(sess[2].HeaderPrv))
+	// clients[4].ReceiveCache.Add(address.NewReceiver(sess[0].HeaderPrv))
+	// clients[5].ReceiveCache.Add(address.NewReceiver(sess[1].HeaderPrv))
+	// clients[0].ReceiveCache.Add(address.NewReceiver(sess[2].HeaderPrv))
 	clients[4].Sessions = clients[4].Sessions.Add(sess[0])
 	clients[5].Sessions = clients[5].Sessions.Add(sess[1])
 	clients[0].Sessions = clients[0].Sessions.Add(sess[2])

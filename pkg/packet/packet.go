@@ -11,7 +11,6 @@ import (
 
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/ciph"
-	"github.com/indra-labs/indra/pkg/key/address"
 	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/key/pub"
 	log2 "github.com/indra-labs/indra/pkg/log"
@@ -76,7 +75,7 @@ func (p Packets) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 // is 32 bits in size as precision to the second is sufficient, and low latency
 // messages will potentially beat the deadline at one second.
 type EP struct {
-	To       *address.Sender
+	To       *pub.Key
 	From     *prv.Key
 	Parity   int
 	Seq      int
@@ -96,7 +95,7 @@ func (ep EP) GetOverhead() int {
 // the signature to the end.
 func Encode(ep EP) (pkt []byte, e error) {
 	var blk cipher.Block
-	if blk = ciph.GetBlock(ep.From, ep.To.Key); check(e) {
+	if blk = ciph.GetBlock(ep.From, ep.To); check(e) {
 		return
 	}
 	nonc := nonce.New()

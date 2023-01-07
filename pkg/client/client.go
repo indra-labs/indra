@@ -39,8 +39,8 @@ var (
 type Client struct {
 	*node.Node
 	node.Nodes
-	*address.SendCache
-	*address.ReceiveCache
+	// *address.SendCache
+	// *address.ReceiveCache
 	session.Sessions
 	PendingSessions []nonce.ID
 	*confirm.Confirms
@@ -62,14 +62,14 @@ func New(tpt ifc.Transport, hdrPrv *prv.Key, no *node.Node,
 		return
 	}
 	c = &Client{
-		Confirms:     confirm.NewConfirms(),
-		Node:         no,
-		Nodes:        nodes,
-		ReceiveCache: address.NewReceiveCache(),
-		KeySet:       ks,
-		C:            qu.T(),
+		Confirms: confirm.NewConfirms(),
+		Node:     no,
+		Nodes:    nodes,
+		// ReceiveCache: address.NewReceiveCache(),
+		KeySet: ks,
+		C:      qu.T(),
 	}
-	c.ReceiveCache.Add(address.NewReceiver(hdrPrv))
+	// c.ReceiveCache.Add(address.NewReceiver(hdrPrv))
 	return
 }
 
@@ -91,6 +91,27 @@ func (cl *Client) RegisterConfirmation(hook confirm.Hook,
 		Time: time.Now(),
 		Hook: hook,
 	})
+}
+
+// FindCloaked searches the client identity key and the Sessions for a match.
+func (cl *Client) FindCloaked(clk address.Cloaked) (hdr *prv.Key, pld *prv.Key) {
+	var b address.Blinder
+	copy(b[:], clk[:address.BlindLen])
+	hash := address.Cloak(b, cl.Node.HeaderBytes)
+	if hash == clk {
+		hdr = cl.Node.HeaderPrv
+		// there is no payload key for the node, only in sessions.
+		return
+	}
+	for i := range cl.Sessions {
+		hash = address.Cloak(b, cl.Sessions[i].HeaderBytes)
+		if hash == clk {
+			hdr = cl.Sessions[i].HeaderPrv
+			pld = cl.Sessions[i].PayloadPrv
+			return
+		}
+	}
+	return
 }
 
 func (cl *Client) SendKeys(nodeID nonce.ID,
