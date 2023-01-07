@@ -2,4 +2,4 @@
 
 go mod tidy
 
-go run ./cmd/indra/. serve
+IPFS_LOGGING=info go run ./cmd/indra/. -lcl serve

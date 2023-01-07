@@ -12,6 +12,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
 	"sync"
+	"time"
 )
 
 var (
@@ -60,34 +61,66 @@ func (srv *Server) Shutdown() (err error) {
 	return nil
 }
 
-func (srv *Server) Serve() (err error) {
+func seedConnect(ctx context.Context, attempts int) {
 
-	log.I.Ln("bootstrapping the DHT")
+}
 
-	// Bootstrap the DHT. In the default configuration, this spawns a Background
-	// thread that will refresh the peer table every five minutes.
-	if err = srv.dht.Bootstrap(srv.Context); check(err) {
-		return err
+func peer_metrics(host host.Host, quitChan <-chan struct{}) {
+
+	for {
+
+		select {
+		case <- quitChan:
+			break
+		default:
+
+		}
+
+		log.I.Ln("peers:",len(host.Network().Peers()))
+
+		time.Sleep(10 * time.Second)
 	}
+}
 
-	log.I.Ln("attempting to peer with seed addresses...")
+func (srv *Server) attempt(ctx context.Context, peer *peer.AddrInfo, attempts_left int, wg sync.WaitGroup) {
 
-	// We will first attempt to connect to the seed addresses.
-	var wg sync.WaitGroup
+	log.I.Ln("attempting connection to", peer.ID)
 
-	var seedAddresses []multiaddr.Multiaddr
+	defer wg.Done()
 
-	if seedAddresses, err = srv.params.ParseSeedMultiAddresses(); check(err) {
+	if err := srv.host.Connect(srv.Context, *peer); check(err) {
+
+		log.E.Ln("connection attempt failed to", peer.ID)
+
+		attempts_left--
+
+		if attempts_left <= 0 {
+
+			return
+		}
+
+		time.Sleep(10 * time.Second)
+
+		srv.attempt(ctx, peer, attempts_left, wg)
+
 		return
 	}
 
-	seedAddresses = append(seedAddresses, srv.config.SeedAddresses...)
+	log.I.Ln("connection established with seed node:", peer.ID)
 
-	log.I.Ln("seed peers:")
+	ctx.Done()
+}
+
+func (srv *Server) seed_connect() (err error) {
+
+	log.I.Ln("attempting to peer with seed addresses...")
+
+	// We will first attempt to seed_connect to the seed addresses.
+	var wg sync.WaitGroup
 
 	var peerInfo *peer.AddrInfo
 
-	for _, peerAddr := range seedAddresses {
+	for _, peerAddr := range srv.config.SeedAddresses {
 
 		log.I.Ln("-", peerAddr.String())
 
@@ -95,21 +128,41 @@ func (srv *Server) Serve() (err error) {
 			return
 		}
 
+		if peerInfo.ID == srv.host.ID() {
+
+			log.I.Ln("attempting to seed_connect to self, skipping...")
+
+			continue
+		}
+
 		wg.Add(1)
 
-		go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 30 * time.Second)
+		defer cancel()
 
-			defer wg.Done()
-
-			if err := srv.host.Connect(srv.Context, *peerInfo); check(err) {
-				return
-			}
-
-			log.I.Ln("connection established with seed node:", peerInfo.ID)
-		}()
+		go srv.attempt(ctx, peerInfo, 3, wg)
 	}
 
 	wg.Wait()
+
+	return
+}
+
+func (srv *Server) Serve() (err error) {
+
+	go peer_metrics(srv.host, srv.Context.Done())
+
+	//log.I.Ln("bootstrapping the DHT")
+
+	// Bootstrap the DHT. In the default configuration, this spawns a Background
+	// thread that will refresh the peer table every five minutes.
+	if err = srv.dht.Bootstrap(srv.Context); check(err) {
+		return err
+	}
+
+	if err = srv.seed_connect(); check(err) {
+		return
+	}
 
 	select {
 	case <-srv.Context.Done():
@@ -139,19 +192,30 @@ func New(params *cfg.Params, config *Config) (srv *Server, err error) {
 		return nil, err
 	}
 
+	log.I.Ln("host id:")
+	log.I.Ln("-", s.host.ID())
+
 	log.I.Ln("p2p listeners:")
 	log.I.Ln("-", s.host.Addrs())
 
-	log.I.Ln("host id:")
-	log.I.Ln("-", s.host.ID())
+	var seedAddresses []multiaddr.Multiaddr
+
+	if seedAddresses, err = params.ParseSeedMultiAddresses(); check(err) {
+		return
+	}
+
+	config.SeedAddresses = append(config.SeedAddresses, seedAddresses...)
+
+	log.I.Ln("seed addresses:")
+	log.I.Ln("-", config.SeedAddresses)
 
 	// Start a DHT, for use in peer discovery. We can't just make a new DHT
 	// client because we want each peer to maintain its own local copy of the
 	// DHT, so that the bootstrapping node of the DHT can go down without
 	// inhibiting future peer discovery.
-	if s.dht, err = dht.New(s.Context, s.host); check(err) {
-		return nil, err
-	}
+	//if s.dht, err = dht.New(s.Context, s.host); check(err) {
+	//	return nil, err
+	//}
 
 	return &s, err
 }
