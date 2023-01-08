@@ -19,8 +19,9 @@ var (
 
 var (
 	defaultConnectionAttempts        uint = 3
-	defaultConnectionAttemptInterval time.Duration = 10 * time.Second
+	defaultConnectionAttemptInterval      = 10 * time.Second
 
+	defaultConnectionsMax       uint = 32
 	defaultConnectionsToSatisfy uint = 5
 )
 
@@ -28,7 +29,7 @@ var (
 	wg sync.WaitGroup
 	m  sync.Mutex
 	c  context.Context
-	h host.Host = nil
+	h  host.Host = nil
 
 	failedChan = make(chan error)
 )
@@ -42,13 +43,16 @@ func connection_attempt(peer *peer.AddrInfo, attempts_left uint) {
 		return
 	}
 
-	if err := h.Connect(c, *peer); check(err) {
+	if err := h.Connect(c, *peer); err != nil {
 
-		log.D.Ln("connection connection_attempt failed:", peer.ID)
+		log.I.Ln("connection attempt failed:", peer.ID)
 
-		time.Sleep(defaultConnectionAttemptInterval)
-
-		connection_attempt(peer, attempts_left - 1)
+		select {
+		case <-time.After(defaultConnectionAttemptInterval):
+			connection_attempt(peer, attempts_left-1)
+		case <-c.Done():
+			wg.Done()
+		}
 
 		return
 	}

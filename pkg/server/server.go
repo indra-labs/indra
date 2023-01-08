@@ -20,7 +20,7 @@ var (
 )
 
 var (
-	userAgent = "/indra:"+indra.SemVer+"/"
+	userAgent = "/indra:" + indra.SemVer + "/"
 )
 
 type Server struct {

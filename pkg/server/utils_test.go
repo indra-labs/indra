@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestBase58(t *testing.T){
+func TestBase58(t *testing.T) {
 
 	var err error
 	var priv1, priv2 crypto.PrivKey

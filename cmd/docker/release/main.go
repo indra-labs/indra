@@ -2,16 +2,16 @@ package main
 
 import (
 	"context"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 	"github.com/indra-labs/indra"
-	"github.com/indra-labs/indra/pkg/docker"
 	"github.com/indra-labs/indra/pkg/app"
 	"github.com/indra-labs/indra/pkg/cmds"
+	"github.com/indra-labs/indra/pkg/docker"
 	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/indra-labs/indra/pkg/opts/config"
 	"github.com/indra-labs/indra/pkg/opts/meta"
 	"github.com/indra-labs/indra/pkg/opts/toggle"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
 	"os"
 	"time"
 )
@@ -33,19 +33,19 @@ var commands = &cmds.Command{
 	Name:          "release",
 	Description:   "Builds the indra docker image and pushes it to a list of docker repositories.",
 	Documentation: lorem,
-	Default: cmds.Tags("release"),
-	Configs:       config.Opts{
+	Default:       cmds.Tags("release"),
+	Configs: config.Opts{
 		"stable": toggle.New(meta.Data{
 			Label:         "stable",
 			Description:   "tag the current build as stable.",
 			Documentation: lorem,
-			Default: "false",
+			Default:       "false",
 		}),
 		"push": toggle.New(meta.Data{
 			Label:         "push",
 			Description:   "push the newly built/tagged images to the docker repositories.",
 			Documentation: lorem,
-			Default: "false",
+			Default:       "false",
 		}),
 	},
 	Entrypoint: func(command *cmds.Command, args []string) error {
