@@ -1,15 +1,6 @@
-// Package address manages encryption keys to be used with a specific
-// counterparty, in a list that is used by node.Node via session.Sessions in the
-// SendCache and ReceiveCache data structures.
-//
-// Receiver keys are the private keys that are advertised in messages to be used
-// in the next reply message.
-//
-// Sender keys are public keys taken from received messages Receiver keys, they
-// are received in a cloaked form to eliminate observer correlation and provide
-// a recogniser that scans the SendCache for public keys that generate the
-// matching public key in order to associate a message to a node.Node.
-package address
+// Package cloak provides a cover for the public keys for which a node has a
+// private key that prevents matching the keys between one message and another.
+package cloak
 
 import (
 	"crypto/rand"
@@ -29,14 +20,14 @@ const BlindLen = 3
 const HashLen = 5
 const Len = BlindLen + HashLen
 
-func (c Cloaked) CopyBlinder() (blinder Blinder) {
+func (c PubKey) CopyBlinder() (blinder Blinder) {
 	copy(blinder[:], c[:BlindLen])
 	return
 }
 
-// Cloaked is the blinded hash of a public key used to conceal a message
+// PubKey is the blinded hash of a public key used to conceal a message
 // public key from attackers.
-type Cloaked [Len]byte
+type PubKey [Len]byte
 
 type Blinder [BlindLen]byte
 type Hash [HashLen]byte
@@ -46,10 +37,10 @@ type Hash [HashLen]byte
 // private key to generate the message cipher.
 //
 // The three byte blinding factor concatenated in front of the public key
-// generates the 5 bytes at the end of the Cloaked code. In this way the
+// generates the 5 bytes at the end of the PubKey code. In this way the
 // source public key it relates to is hidden to any who don't have this public
 // key, which only the parties know.
-func GetCloak(s *pub.Key) (c Cloaked) {
+func GetCloak(s *pub.Key) (c PubKey) {
 	var blinder Blinder
 	var n int
 	var e error
@@ -60,7 +51,7 @@ func GetCloak(s *pub.Key) (c Cloaked) {
 	return
 }
 
-func Cloak(b Blinder, key pub.Bytes) (c Cloaked) {
+func Cloak(b Blinder, key pub.Bytes) (c PubKey) {
 	h := sha256.Single(append(b[:], key[:]...))
 	copy(c[:BlindLen], b[:BlindLen])
 	copy(c[BlindLen:BlindLen+HashLen], h[:HashLen])
@@ -70,7 +61,7 @@ func Cloak(b Blinder, key pub.Bytes) (c Cloaked) {
 // Match uses the cached public key and the provided blinding factor to
 // match the source public key so the packet address field is only recognisable
 // to the intended recipient.
-func Match(r Cloaked, k pub.Bytes) bool {
+func Match(r PubKey, k pub.Bytes) bool {
 	var b Blinder
 	copy(b[:], r[:BlindLen])
 	hash := Cloak(b, k)

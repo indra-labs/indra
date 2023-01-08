@@ -8,7 +8,7 @@ import (
 	"github.com/cybriq/qu"
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/ifc"
-	"github.com/indra-labs/indra/pkg/key/address"
+	"github.com/indra-labs/indra/pkg/key/cloak"
 	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/key/pub"
 	"github.com/indra-labs/indra/pkg/key/signer"
@@ -94,17 +94,17 @@ func (cl *Client) RegisterConfirmation(hook confirm.Hook,
 }
 
 // FindCloaked searches the client identity key and the Sessions for a match.
-func (cl *Client) FindCloaked(clk address.Cloaked) (hdr *prv.Key, pld *prv.Key) {
-	var b address.Blinder
-	copy(b[:], clk[:address.BlindLen])
-	hash := address.Cloak(b, cl.Node.HeaderBytes)
+func (cl *Client) FindCloaked(clk cloak.PubKey) (hdr *prv.Key, pld *prv.Key) {
+	var b cloak.Blinder
+	copy(b[:], clk[:cloak.BlindLen])
+	hash := cloak.Cloak(b, cl.Node.HeaderBytes)
 	if hash == clk {
 		hdr = cl.Node.HeaderPrv
 		// there is no payload key for the node, only in sessions.
 		return
 	}
 	for i := range cl.Sessions {
-		hash = address.Cloak(b, cl.Sessions[i].HeaderBytes)
+		hash = cloak.Cloak(b, cl.Sessions[i].HeaderBytes)
 		if hash == clk {
 			hdr = cl.Sessions[i].HeaderPrv
 			pld = cl.Sessions[i].PayloadPrv
