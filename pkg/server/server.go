@@ -89,33 +89,12 @@ func (srv *Server) Serve() (err error) {
 
 	//log.I.Ln("successfully connected")
 
-	//var pingService *ping.PingService
-	//
-	//if pingService = ping.NewPingService(srv.host); check(err) {
-	//	return
-	//}
-	//
-	//go func() {
-	//
-	//	log.I.Ln("attempting ping")
-	//
-	//	for {
-	//
-	//		for _, peer := range srv.host.Peerstore().Peers() {
-	//
-	//			select {
-	//				case result := <- pingService.Ping(context.Background(), peer):
-	//					log.I.Ln("ping", peer.String(), "-", result.RTT)
-	//			}
-	//		}
-	//
-	//		time.Sleep(10 * time.Second)
-	//	}
-	//
-	//}()
-
 	select {
+
 	case <-ctx.Done():
+
+		log.I.Ln("shutting down server")
+
 		srv.Shutdown()
 	}
 

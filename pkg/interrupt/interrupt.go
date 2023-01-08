@@ -43,7 +43,7 @@ var interruptCallbackSources []string
 // responds to custom shutdown signals as required
 func Listener() {
 	invokeCallbacks := func() {
-		log.I.Ln(
+		log.D.Ln(
 			"running interrupt callbacks",
 			len(interruptCallbacks),
 			strings.Repeat(" ", 48),
@@ -52,11 +52,11 @@ func Listener() {
 		// run handlers in LIFO order.
 		for i := range interruptCallbacks {
 			idx := len(interruptCallbacks) - 1 - i
-			log.I.Ln("running callback", idx,
+			log.D.Ln("running callback", idx,
 				interruptCallbackSources[idx])
 			interruptCallbacks[idx]()
 		}
-		log.I.Ln("interrupt handlers finished")
+		log.D.Ln("interrupt handlers finished")
 		close(HandlersDone)
 		if Restart {
 			var file string
@@ -103,7 +103,7 @@ out:
 		case sig := <-ch:
 			// if !requested {
 			// 	L.Printf("\r>>> received signal (%s)\n", sig)
-			log.I.Ln("received interrupt signal", sig)
+			log.I.Ln("received signal", sig)
 			requested.Store(true)
 			invokeCallbacks()
 			// pprof.Lookup("goroutine").WriteTo(os.Stderr, 2)

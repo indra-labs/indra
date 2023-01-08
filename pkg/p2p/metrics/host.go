@@ -36,7 +36,6 @@ func HostStatus(ctx context.Context, host host.Host) {
 			log.I.Ln("-- peers:", len(host.Network().Peers()))
 			log.I.Ln("-- connections:", len(host.Network().Conns()))
 			log.I.Ln("---- ---- ------ ----")
-			log.I.Ln()
 
 		case <-ctx.Done():
 

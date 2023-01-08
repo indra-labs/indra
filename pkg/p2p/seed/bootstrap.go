@@ -37,27 +37,24 @@ var (
 func connection_attempt(peer *peer.AddrInfo, attempts_left uint) {
 
 	if attempts_left == 0 {
-
 		wg.Done()
-
 		return
 	}
 
-	log.I.Ln("attempting connection", peer.ID)
+	log.D.Ln("attempting connection", peer.ID)
 
-	if err := h.Connect(c, *peer); err != nil {
+	var err error
+
+	if err = h.Connect(c, *peer); err != nil {
 
 		log.I.Ln("connection attempt failed:", peer.ID)
 
 		select {
-
 		case <-time.After(defaultConnectionAttemptInterval):
-
 			connection_attempt(peer, attempts_left-1)
-
 		case <-c.Done():
 
-			log.I.Ln("[seed.bootstrap] connection to", peer.ID, "interrupted, shutting down")
+			log.I.Ln("connection attempt to", peer.ID, "interrupted, shutting down")
 
 			wg.Done()
 		}
@@ -82,7 +79,7 @@ func Bootstrap(ctx context.Context, host host.Host, seeds []multiaddr.Multiaddr)
 	c = ctx
 	h = host
 
-	log.I.Ln("attempting peering with seeds...")
+	log.I.Ln("using seeds:")
 
 	var peerInfo *peer.AddrInfo
 
