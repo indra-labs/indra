@@ -6,12 +6,12 @@ import (
 	"github.com/indra-labs/indra/pkg/cfg"
 	"github.com/indra-labs/indra/pkg/interrupt"
 	log2 "github.com/indra-labs/indra/pkg/log"
+	"github.com/indra-labs/indra/pkg/p2p/metrics"
+	"github.com/indra-labs/indra/pkg/p2p/seed"
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
-	"sync"
 )
 
 var (
@@ -43,11 +43,11 @@ func (srv *Server) Restart() (err error) {
 
 func (srv *Server) Shutdown() (err error) {
 
-	log.I.Ln("shutting down the dht...")
-
-	if srv.dht.Close(); check(err) {
-		return
-	}
+	//log.I.Ln("shutting down the dht...")
+	//
+	//if srv.dht.Close(); check(err) {
+	//	return
+	//}
 
 	log.I.Ln("shutting down the p2p host...")
 
@@ -62,57 +62,62 @@ func (srv *Server) Shutdown() (err error) {
 
 func (srv *Server) Serve() (err error) {
 
-	log.I.Ln("bootstrapping the DHT")
+	// Here we create a context with cancel and add it to the interrupt handler
+	var ctx context.Context
+	var cancel context.CancelFunc
 
-	// Bootstrap the DHT. In the default configuration, this spawns a Background
-	// thread that will refresh the peer table every five minutes.
-	if err = srv.dht.Bootstrap(srv.Context); check(err) {
-		return err
-	}
+	ctx, cancel = context.WithCancel(context.Background())
 
-	log.I.Ln("attempting to peer with seed addresses...")
+	interrupt.AddHandler(cancel)
 
-	// We will first attempt to connect to the seed addresses.
-	var wg sync.WaitGroup
+	// Get some basic metrics for the host
+	//metrics.Init()
+	//metrics.Set('indra.host.status.reporting.interval', 30 * time.Second)
+	//metrics.Enable('indra.host.status')
+	go metrics.HostStatus(ctx, srv.host)
 
-	var seedAddresses []multiaddr.Multiaddr
-
-	if seedAddresses, err = srv.params.ParseSeedMultiAddresses(); check(err) {
+	// Run the bootstrapping service on the peer.
+	if err = seed.Bootstrap(ctx, srv.host, srv.config.SeedAddresses); check(err) {
 		return
 	}
 
-	seedAddresses = append(seedAddresses, srv.config.SeedAddresses...)
+	//log.I.Ln("bootstrapping the DHT")
 
-	log.I.Ln("seed peers:")
+	// Bootstrap the DHT. In the default configuration, this spawns a Background
+	// thread that will refresh the peer table every five minutes.
+	//if err = srv.dht.Bootstrap(srv.Context); check(err) {
+	//	return err
+	//}
 
-	var peerInfo *peer.AddrInfo
+	log.I.Ln("successfully connected")
 
-	for _, peerAddr := range seedAddresses {
-
-		log.I.Ln("-", peerAddr.String())
-
-		if peerInfo, err = peer.AddrInfoFromP2pAddr(peerAddr); check(err) {
-			return
-		}
-
-		wg.Add(1)
-
-		go func() {
-
-			defer wg.Done()
-
-			if err := srv.host.Connect(srv.Context, *peerInfo); check(err) {
-				return
-			}
-
-			log.I.Ln("connection established with seed node:", peerInfo.ID)
-		}()
-	}
-
-	wg.Wait()
+	//var pingService *ping.PingService
+	//
+	//if pingService = ping.NewPingService(srv.host); check(err) {
+	//	return
+	//}
+	//
+	//go func() {
+	//
+	//	log.I.Ln("attempting ping")
+	//
+	//	for {
+	//
+	//		for _, peer := range srv.host.Peerstore().Peers() {
+	//
+	//			select {
+	//				case result := <- pingService.Ping(context.Background(), peer):
+	//					log.I.Ln("ping", peer.String(), "-", result.RTT)
+	//			}
+	//		}
+	//
+	//		time.Sleep(10 * time.Second)
+	//	}
+	//
+	//}()
 
 	select {
-	case <-srv.Context.Done():
+	case <-ctx.Done():
 		srv.Shutdown()
 	}
 
@@ -121,37 +126,38 @@ func (srv *Server) Serve() (err error) {
 
 func New(params *cfg.Params, config *Config) (srv *Server, err error) {
 
-	log.I.Ln("initializing the server.")
+	log.I.Ln("initializing the server")
 
 	var s Server
 
 	s.params = params
 	s.config = config
 
-	var cancel context.CancelFunc
-
-	s.Context, cancel = context.WithCancel(context.Background())
-
-	// Add an interrupt handler for the server shutdown
-	interrupt.AddHandler(cancel)
-
 	if s.host, err = libp2p.New(libp2p.Identity(config.PrivKey), libp2p.UserAgent(userAgent), libp2p.ListenAddrs(config.ListenAddresses...)); check(err) {
 		return nil, err
 	}
 
+	log.I.Ln("host id:")
+	log.I.Ln("-", s.host.ID())
+
 	log.I.Ln("p2p listeners:")
 	log.I.Ln("-", s.host.Addrs())
 
-	log.I.Ln("host id:")
-	log.I.Ln("-", s.host.ID())
+	var seedAddresses []multiaddr.Multiaddr
+
+	if seedAddresses, err = params.ParseSeedMultiAddresses(); check(err) {
+		return
+	}
+
+	config.SeedAddresses = append(config.SeedAddresses, seedAddresses...)
 
 	// Start a DHT, for use in peer discovery. We can't just make a new DHT
 	// client because we want each peer to maintain its own local copy of the
 	// DHT, so that the bootstrapping node of the DHT can go down without
 	// inhibiting future peer discovery.
-	if s.dht, err = dht.New(s.Context, s.host); check(err) {
-		return nil, err
-	}
+	//if s.dht, err = dht.New(s.Context, s.host); check(err) {
+	//	return nil, err
+	//}
 
 	return &s, err
 }

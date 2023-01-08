@@ -87,7 +87,7 @@ var commands = &cmds.Command{
 					Label:         "listen",
 					Description:   "A list of listener multiaddresses. Example: /ip4/0.0.0.0/tcp/8337",
 					Documentation: lorem,
-					Default:       "/ip4/127.0.0.1/tcp/8337",
+					Default:       "/ip4/127.0.0.1/tcp/8337,/ip6/::1/tcp/8337",
 				}, multiAddrSanitizer),
 			},
 			Entrypoint: func(c *cmds.Command, args []string) error {

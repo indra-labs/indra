@@ -6,6 +6,9 @@ ARG ARCH=amd64
 ARG GOARCH=amd64
 ENV GO111MODULE=on GOOS=linux
 
+RUN set -ex \
+  && apt update && apt install net-tools
+
 WORKDIR /indra
 
 # ENV defaults
