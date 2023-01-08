@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/app"
 	"github.com/indra-labs/indra/pkg/cfg"
@@ -11,7 +10,10 @@ import (
 	"github.com/indra-labs/indra/pkg/opts/config"
 	"github.com/indra-labs/indra/pkg/opts/list"
 	"github.com/indra-labs/indra/pkg/opts/meta"
+	"github.com/indra-labs/indra/pkg/opts/text"
 	"github.com/indra-labs/indra/pkg/server"
+	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/multiformats/go-multiaddr"
 	"os"
 )
 
@@ -66,6 +68,11 @@ var commands = &cmds.Command{
 			Description:   "serves an instance of the indra network daemon",
 			Documentation: lorem,
 			Configs: config.Opts{
+				"key": text.New(meta.Data{
+					Label: "key",
+					Description: "A base58 encoded private key.",
+					Documentation: lorem,
+				}),
 				"seed": list.New(meta.Data{
 					Label:         "seed",
 					Description:   "Adds additional seeds by multiaddress. Examples: /dns4/seed0.example.com/tcp/8337, /ip4/127.0.0.1/tcp/8337",
@@ -85,15 +92,27 @@ var commands = &cmds.Command{
 			},
 			Entrypoint: func(c *cmds.Command, args []string) error {
 
+				var err error
 				var params = cfg.SimnetServerParams
 
 				log.I.Ln("-- ", log2.App, "("+params.Name+") -", indra.SemVer, "- Network Freedom. --")
 
-				spew.Dump(c.GetListValue("seed"))
-				spew.Dump(c.GetListValue("peer"))
-				spew.Dump(c.GetListValue("listen"))
+				var privKey crypto.PrivKey
 
-				var err error
+				if privKey, err = server.Base58Decode(c.GetValue("key").Text()); check(err) {
+					return err
+				}
+
+				server.DefaultConfig.PrivKey = privKey
+
+				for _, listener := range c.GetListValue("listen"){
+					server.DefaultConfig.ListenAddresses = append(server.DefaultConfig.ListenAddresses, multiaddr.StringCast(listener))
+				}
+
+				for _, seed := range c.GetListValue("seed"){
+					server.DefaultConfig.SeedAddresses = append(server.DefaultConfig.SeedAddresses, multiaddr.StringCast(seed))
+				}
+
 				var srv *server.Server
 
 				log.I.Ln("running serve.")
@@ -118,7 +137,7 @@ var commands = &cmds.Command{
 
 func multiAddrSanitizer(opt *list.Opt) error {
 
-	// log.I.Ln("adding p2p listener", opt.String())
+	//log.I.Ln("adding p2p listener", opt.String())
 
 	return nil
 }

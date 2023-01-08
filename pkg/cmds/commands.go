@@ -270,6 +270,10 @@ func (c *Command) GetListValue(key string) []string {
 	return c.Configs[key].Value().List()
 }
 
+func (c *Command) GetTextValue(key string) string {
+	return c.Configs[key].Value().Text()
+}
+
 // ForEach runs a closure on every node in the Commands tree, stopping if the
 // closure returns false
 func (c *Command) ForEach(cl func(*Command, int) bool, hereDepth,

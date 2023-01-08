@@ -19,10 +19,14 @@ var (
 	check = log.E.Chk
 )
 
+var (
+	userAgent = "/indra:"+indra.SemVer+"/"
+)
+
 type Server struct {
 	context.Context
 
-	config Config
+	config *Config
 
 	params *cfg.Params
 
@@ -77,6 +81,8 @@ func (srv *Server) Serve() (err error) {
 		return
 	}
 
+	seedAddresses = append(seedAddresses, srv.config.SeedAddresses...)
+
 	log.I.Ln("seed peers:")
 
 	var peerInfo *peer.AddrInfo
@@ -95,11 +101,11 @@ func (srv *Server) Serve() (err error) {
 
 			defer wg.Done()
 
-			if err := srv.host.Connect(srv.Context, *peerInfo); err != nil {
-				log.W.Ln(err)
-			} else {
-				log.I.Ln("Connection established with bootstrap node:", *peerInfo)
+			if err := srv.host.Connect(srv.Context, *peerInfo); check(err) {
+				return
 			}
+
+			log.I.Ln("connection established with seed node:", peerInfo.ID)
 		}()
 	}
 
@@ -120,6 +126,7 @@ func New(params *cfg.Params, config *Config) (srv *Server, err error) {
 	var s Server
 
 	s.params = params
+	s.config = config
 
 	var cancel context.CancelFunc
 
@@ -128,7 +135,7 @@ func New(params *cfg.Params, config *Config) (srv *Server, err error) {
 	// Add an interrupt handler for the server shutdown
 	interrupt.AddHandler(cancel)
 
-	if s.host, err = libp2p.New(libp2p.ListenAddrs(config.ListenAddresses...)); check(err) {
+	if s.host, err = libp2p.New(libp2p.Identity(config.PrivKey), libp2p.UserAgent(userAgent), libp2p.ListenAddrs(config.ListenAddresses...)); check(err) {
 		return nil, err
 	}
 
