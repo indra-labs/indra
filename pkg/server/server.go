@@ -49,13 +49,13 @@ func (srv *Server) Shutdown() (err error) {
 	//	return
 	//}
 
-	log.I.Ln("shutting down the p2p host...")
+	log.I.Ln("shutting down [p2p.host]")
 
 	if srv.host.Close(); check(err) {
 		return
 	}
 
-	log.I.Ln("shutdown complete.")
+	log.I.Ln("shutdown complete")
 
 	return nil
 }
@@ -77,9 +77,7 @@ func (srv *Server) Serve() (err error) {
 	go metrics.HostStatus(ctx, srv.host)
 
 	// Run the bootstrapping service on the peer.
-	if err = seed.Bootstrap(ctx, srv.host, srv.config.SeedAddresses); check(err) {
-		return
-	}
+	go seed.Bootstrap(ctx, srv.host, srv.config.SeedAddresses)
 
 	//log.I.Ln("bootstrapping the DHT")
 
@@ -89,7 +87,7 @@ func (srv *Server) Serve() (err error) {
 	//	return err
 	//}
 
-	log.I.Ln("successfully connected")
+	//log.I.Ln("successfully connected")
 
 	//var pingService *ping.PingService
 	//

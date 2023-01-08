@@ -19,7 +19,7 @@ var (
 
 var (
 	defaultConnectionAttempts        uint = 3
-	defaultConnectionAttemptInterval      = 10 * time.Second
+	defaultConnectionAttemptInterval      = 3 * time.Second
 
 	defaultConnectionsMax       uint = 32
 	defaultConnectionsToSatisfy uint = 5
@@ -43,14 +43,22 @@ func connection_attempt(peer *peer.AddrInfo, attempts_left uint) {
 		return
 	}
 
+	log.I.Ln("attempting connection", peer.ID)
+
 	if err := h.Connect(c, *peer); err != nil {
 
 		log.I.Ln("connection attempt failed:", peer.ID)
 
 		select {
+
 		case <-time.After(defaultConnectionAttemptInterval):
+
 			connection_attempt(peer, attempts_left-1)
+
 		case <-c.Done():
+
+			log.I.Ln("[seed.bootstrap] connection to", peer.ID ,"interrupted, shutting down")
+
 			wg.Done()
 		}
 
@@ -64,7 +72,7 @@ func connection_attempt(peer *peer.AddrInfo, attempts_left uint) {
 
 func Bootstrap(ctx context.Context, host host.Host, seeds []multiaddr.Multiaddr) (err error) {
 
-	log.I.Ln("[seed.bootstrap] starting")
+	log.I.Ln("starting [seed.bootstrap]")
 
 	// Guarding against multiple instantiations
 	if !m.TryLock() {
@@ -93,12 +101,18 @@ func Bootstrap(ctx context.Context, host host.Host, seeds []multiaddr.Multiaddr)
 
 		wg.Add(1)
 
-		log.I.Ln("attempting connection", peerInfo.ID)
-
 		go connection_attempt(peerInfo, defaultConnectionAttempts)
 	}
 
 	wg.Wait()
+
+	select {
+	case <- c.Done():
+
+		log.I.Ln("shutting down [seed.bootstrap]")
+
+		return
+	}
 
 	log.I.Ln("finished seed bootstrapping")
 
