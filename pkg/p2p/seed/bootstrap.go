@@ -57,7 +57,7 @@ func connection_attempt(peer *peer.AddrInfo, attempts_left uint) {
 
 		case <-c.Done():
 
-			log.I.Ln("[seed.bootstrap] connection to", peer.ID ,"interrupted, shutting down")
+			log.I.Ln("[seed.bootstrap] connection to", peer.ID, "interrupted, shutting down")
 
 			wg.Done()
 		}
@@ -107,7 +107,7 @@ func Bootstrap(ctx context.Context, host host.Host, seeds []multiaddr.Multiaddr)
 	wg.Wait()
 
 	select {
-	case <- c.Done():
+	case <-c.Done():
 
 		log.I.Ln("shutting down [seed.bootstrap]")
 

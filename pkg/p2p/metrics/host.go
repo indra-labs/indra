@@ -29,7 +29,7 @@ func HostStatus(ctx context.Context, host host.Host) {
 
 		select {
 
-		case <- time.After(hostStatusInterval):
+		case <-time.After(hostStatusInterval):
 
 			log.I.Ln()
 			log.I.Ln("---- host status ----")
@@ -38,7 +38,7 @@ func HostStatus(ctx context.Context, host host.Host) {
 			log.I.Ln("---- ---- ------ ----")
 			log.I.Ln()
 
-		case <- ctx.Done():
+		case <-ctx.Done():
 
 			log.I.Ln("shutting down [metrics.hoststatus]")
 
