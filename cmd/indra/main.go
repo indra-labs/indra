@@ -69,8 +69,8 @@ var commands = &cmds.Command{
 			Documentation: lorem,
 			Configs: config.Opts{
 				"key": text.New(meta.Data{
-					Label: "key",
-					Description: "A base58 encoded private key.",
+					Label:         "key",
+					Description:   "A base58 encoded private key.",
 					Documentation: lorem,
 				}),
 				"seed": list.New(meta.Data{
@@ -105,11 +105,11 @@ var commands = &cmds.Command{
 
 				server.DefaultConfig.PrivKey = privKey
 
-				for _, listener := range c.GetListValue("listen"){
+				for _, listener := range c.GetListValue("listen") {
 					server.DefaultConfig.ListenAddresses = append(server.DefaultConfig.ListenAddresses, multiaddr.StringCast(listener))
 				}
 
-				for _, seed := range c.GetListValue("seed"){
+				for _, seed := range c.GetListValue("seed") {
 					server.DefaultConfig.SeedAddresses = append(server.DefaultConfig.SeedAddresses, multiaddr.StringCast(seed))
 				}
 
