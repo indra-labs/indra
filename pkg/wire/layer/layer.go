@@ -6,7 +6,7 @@ import (
 
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/ciph"
-	"github.com/indra-labs/indra/pkg/key/address"
+	"github.com/indra-labs/indra/pkg/key/cloak"
 	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/key/pub"
 	log2 "github.com/indra-labs/indra/pkg/log"
@@ -18,7 +18,7 @@ import (
 
 const (
 	MagicString = "os"
-	Len         = magicbytes.Len + nonce.IVLen + address.Len + pub.KeyLen
+	Len         = magicbytes.Len + nonce.IVLen + cloak.Len + pub.KeyLen
 )
 
 var (
@@ -37,7 +37,7 @@ type OnionSkin struct {
 	From *prv.Key
 	// The remainder here are for Decode.
 	Nonce   nonce.IV
-	Cloak   address.Cloaked
+	Cloak   cloak.PubKey
 	ToPriv  *prv.Key
 	FromPub *pub.Key
 	// The following field is only populated in the outermost layer, and
@@ -63,8 +63,8 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	copy(b[*c:c.Inc(nonce.IVLen)], x.Nonce[:])
 	// Derive the cloaked key and copy it in.
-	to := address.GetCloak(x.To)
-	copy(b[*c:c.Inc(address.Len)], to[:])
+	to := cloak.GetCloak(x.To)
+	copy(b[*c:c.Inc(cloak.Len)], to[:])
 	// Derive the public key from the From key and copy in.
 	pubKey := pub.Derive(x.From).ToBytes()
 	copy(b[*c:c.Inc(pub.KeyLen)], pubKey[:])
@@ -87,7 +87,7 @@ func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 		return magicbytes.TooShort(len(b[*c:]), Len-magicbytes.Len, "message")
 	}
 	copy(x.Nonce[:], b[*c:c.Inc(nonce.IVLen)])
-	copy(x.Cloak[:], b[*c:c.Inc(address.Len)])
+	copy(x.Cloak[:], b[*c:c.Inc(cloak.Len)])
 	if x.FromPub, e = pub.FromBytes(b[*c:c.Inc(pub.KeyLen)]); check(e) {
 		return
 	}

@@ -2,9 +2,6 @@ package main
 
 import (
 	"context"
-	"os"
-	"time"
-
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/indra-labs/indra"
@@ -15,6 +12,8 @@ import (
 	"github.com/indra-labs/indra/pkg/opts/config"
 	"github.com/indra-labs/indra/pkg/opts/meta"
 	"github.com/indra-labs/indra/pkg/opts/toggle"
+	"os"
+	"time"
 )
 
 var (

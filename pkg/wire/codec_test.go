@@ -10,7 +10,6 @@ import (
 
 	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/key/pub"
-	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/indra-labs/indra/pkg/nonce"
 	"github.com/indra-labs/indra/pkg/sha256"
 	"github.com/indra-labs/indra/pkg/slice"
@@ -30,7 +29,7 @@ import (
 )
 
 func TestOnionSkins_Cipher(t *testing.T) {
-	log2.CodeLoc = true
+
 	var e error
 	hdrP, pldP := GetTwoPrvKeys(t)
 	// hdr, pld := pub.Derive(hdrP), pub.Derive(pldP)
@@ -60,7 +59,7 @@ func TestOnionSkins_Cipher(t *testing.T) {
 }
 
 func TestOnionSkins_Confirmation(t *testing.T) {
-	log2.CodeLoc = true
+
 	var e error
 	n := nonce.NewID()
 	on := OnionSkins{}.
@@ -85,7 +84,7 @@ func TestOnionSkins_Confirmation(t *testing.T) {
 }
 
 func TestOnionSkins_Delay(t *testing.T) {
-	log2.CodeLoc = true
+
 	var e error
 	del := time.Duration(rand.Uint64())
 	on := OnionSkins{}.
@@ -110,7 +109,7 @@ func TestOnionSkins_Delay(t *testing.T) {
 }
 
 func TestOnionSkins_Exit(t *testing.T) {
-	log2.CodeLoc = true
+
 	var e error
 	prvs, pubs := GetCipherSet(t)
 	ciphers := GenCiphers(prvs, pubs)
@@ -161,7 +160,7 @@ func TestOnionSkins_Exit(t *testing.T) {
 }
 
 func TestOnionSkins_Forward(t *testing.T) {
-	log2.CodeLoc = true
+
 	var e error
 	ipSizes := []int{net.IPv4len, net.IPv6len}
 	for i := range ipSizes {
@@ -204,7 +203,7 @@ func TestOnionSkins_Forward(t *testing.T) {
 }
 
 func TestOnionSkins_Layer(t *testing.T) {
-	log2.CodeLoc = true
+
 	var e error
 	n := nonce.NewID()
 	n1 := nonce.New()
@@ -245,7 +244,7 @@ func TestOnionSkins_Layer(t *testing.T) {
 }
 
 func TestOnionSkins_Purchase(t *testing.T) {
-	log2.CodeLoc = true
+
 	var e error
 	prvs, pubs := GetCipherSet(t)
 	ciphers := GenCiphers(prvs, pubs)
@@ -285,7 +284,7 @@ func TestOnionSkins_Purchase(t *testing.T) {
 }
 
 func TestOnionSkins_Reply(t *testing.T) {
-	log2.CodeLoc = true
+
 	var e error
 	ipSizes := []int{net.IPv4len, net.IPv6len}
 	for i := range ipSizes {
@@ -328,7 +327,7 @@ func TestOnionSkins_Reply(t *testing.T) {
 }
 
 func TestOnionSkins_Response(t *testing.T) {
-	log2.CodeLoc = true
+
 	var e error
 	var msg slice.Bytes
 	var hash sha256.Hash
@@ -360,7 +359,7 @@ func TestOnionSkins_Response(t *testing.T) {
 }
 
 func TestOnionSkins_Session(t *testing.T) {
-	log2.CodeLoc = true
+
 	var e error
 	hdrP, pldP := GetTwoPrvKeys(t)
 	hdr, pld := pub.Derive(hdrP), pub.Derive(pldP)
@@ -391,7 +390,7 @@ func TestOnionSkins_Session(t *testing.T) {
 }
 
 func TestOnionSkins_Token(t *testing.T) {
-	log2.CodeLoc = true
+
 	var e error
 	ni := nonce.NewID()
 	n := sha256.Single(ni[:])

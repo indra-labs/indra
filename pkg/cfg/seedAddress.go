@@ -12,7 +12,7 @@ type DNSSeedAddress struct {
 func NewSeedAddress(dns string, id string) *DNSSeedAddress {
 
 	return &DNSSeedAddress{
-		ID: id,
+		ID:         id,
 		DNSAddress: dns,
 	}
 }

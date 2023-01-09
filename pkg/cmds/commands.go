@@ -19,9 +19,7 @@ import (
 type Op func(c *Command, args []string) error
 
 var NoOp = func(c *Command, args []string) error { return nil }
-var Tags = func(s ...string) []string {
-	return s
-}
+var Tags = func(s ...string) []string { return s }
 
 // Command is a specification for a command and can include any number of
 // subcommands, and for each Command a list of options
@@ -96,12 +94,9 @@ loaded from at application startup, and where it will be written if changed.
 			Documentation: strings.TrimSpace(strings.TrimSpace(`
 Toggles on and off the printing of code locations in logs.
 `)),
-			Default: "true",
+			Default: "false",
 		}, func(o *toggle.Opt) (err error) {
-			// fmt.Println(log2.CodeLoc)
-			// fmt.Println(runtime.Caller(1))
-			// fmt.Println(spew.Sdump(o.Value().Bool()))
-			// log2.CodeLoc = o.Value().Bool()
+			log2.LogCodeLocations(o.Value().Bool())
 			return
 		}),
 
@@ -227,7 +222,8 @@ func (c *Command) GetOpt(path path.Path) (o config.Option) {
 		// search subcommands
 		for i := range c.Commands {
 			if util.Norm(c.Commands[i].Name) == util.Norm(p[1]) {
-				return c.Commands[i].GetOpt(p[1:])
+				cc := c.Commands[i]
+				return cc.GetOpt(p[1:])
 			}
 		}
 	case len(p) == 2:
@@ -262,12 +258,15 @@ func (c *Command) GetCommand(p string) (o *Command) {
 }
 
 func (c *Command) GetValue(key string) config.Concrete {
-
 	return c.Configs[key].Value()
 }
 
 func (c *Command) GetListValue(key string) []string {
 	return c.Configs[key].Value().List()
+}
+
+func (c *Command) GetTextValue(key string) string {
+	return c.Configs[key].Value().Text()
 }
 
 // ForEach runs a closure on every node in the Commands tree, stopping if the

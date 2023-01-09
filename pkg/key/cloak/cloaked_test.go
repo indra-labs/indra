@@ -1,4 +1,4 @@
-package address
+package cloak
 
 import (
 	"math/rand"
@@ -17,14 +17,14 @@ func TestAddress(t *testing.T) {
 	}
 	sendPub := pub.Derive(sendPriv)
 	sendBytes := sendPub.ToBytes()
-	var cloaked Cloaked
+	var cloaked PubKey
 	cloaked = GetCloak(sendPub)
 	if !Match(cloaked, sendBytes) {
 		t.Error("failed to recognise cloaked address")
 	}
 	rand.Seed(time.Now().Unix())
 	flip := rand.Intn(Len)
-	var broken Cloaked
+	var broken PubKey
 	copy(broken[:], cloaked[:])
 	broken[flip] = ^broken[flip]
 	if Match(broken, sendBytes) {
