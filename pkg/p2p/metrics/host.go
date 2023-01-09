@@ -23,7 +23,7 @@ var (
 	mutex sync.Mutex
 )
 
-func SetTimeout(key string, timeout time.Duration) {
+func SetInterval(timeout time.Duration) {
 	hostStatusInterval = timeout
 }
 
