@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/indra-labs/indra"
@@ -18,6 +19,10 @@ var (
 	hostStatusInterval = 10 * time.Second
 )
 
+var (
+	mutex sync.Mutex
+)
+
 func SetTimeout(key string, timeout time.Duration) {
 	hostStatusInterval = timeout
 }
@@ -25,6 +30,11 @@ func SetTimeout(key string, timeout time.Duration) {
 func HostStatus(ctx context.Context, host host.Host) {
 
 	log.I.Ln("starting [metrics.hoststatus]")
+
+	// Guarding against multiple instantiations
+	if !mutex.TryLock() {
+		return
+	}
 
 	for {
 
