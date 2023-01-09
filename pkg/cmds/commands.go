@@ -96,7 +96,7 @@ Toggles on and off the printing of code locations in logs.
 `)),
 			Default: "false",
 		}, func(o *toggle.Opt) (err error) {
-			log2.LogCodeLocations(o.Value().Bool())
+			log2.CodeLocations(o.Value().Bool())
 			return
 		}),
 

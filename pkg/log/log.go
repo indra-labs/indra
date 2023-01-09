@@ -202,7 +202,7 @@ func SetLogLevel(l LogLevel) {
 	logLevel = l
 }
 
-func LogCodeLocations(on bool) {
+func CodeLocations(on bool) {
 	writerMx.Lock()
 	defer writerMx.Unlock()
 	codeLoc = on
