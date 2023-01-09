@@ -34,13 +34,14 @@ func TestPurchaseFlow(t *testing.T) {
 	var wait sync.WaitGroup
 	for i := range returnNodes {
 		wait.Add(1)
-		confirmation[i], rtnHdr[i], rtnPld[i], e = clients[0].
+		confirmation[i], e = clients[0].
 			SendKeys(returnNodes[i].ID, func(cf nonce.ID) {
 				log.I.S("confirmed", cf)
 				wait.Done()
 			})
 	}
 	log.I.S(confirmation)
+	log.I.S(rtnHdr, rtnPld)
 	wait.Wait()
 	// now to do the purchase
 

@@ -144,7 +144,7 @@ var (
 	// allSubsystems stores all package subsystem names found in the current
 	// application.
 	allSubsystems []string
-	codeLoc       = false
+	codeLoc       = true
 )
 
 func GetAllSubsystems() (o []string) {

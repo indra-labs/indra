@@ -343,7 +343,7 @@ func TestSendPurchase(t *testing.T) {
 		cpub1, cprv1, nil)
 	var sess [3]*session.Session
 	for i := range sess {
-		sess[i] = session.NewSession(nonce.NewID(), 203230230, time.Hour)
+		sess[i] = session.New(nonce.NewID(), 203230230, time.Hour)
 	}
 	nBytes := rand.Uint64()
 	n := nonce.NewID()
@@ -448,7 +448,7 @@ func TestSendExit(t *testing.T) {
 	message, hash, e = testutils.GenerateTestMessage(2502)
 	var sess [3]*session.Session
 	for i := range sess {
-		sess[i] = session.NewSession(nonce.NewID(), 203230230, time.Hour)
+		sess[i] = session.New(nonce.NewID(), 203230230, time.Hour)
 	}
 	on := SendExit(message, port, client, hop, sess, ks)
 	b := EncodeOnion(on.Assemble())

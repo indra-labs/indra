@@ -1,6 +1,7 @@
 package client
 
 import (
+	"math"
 	"net/netip"
 	"sync"
 	"time"
@@ -39,8 +40,6 @@ var (
 type Client struct {
 	*node.Node
 	node.Nodes
-	// *address.SendCache
-	// *address.ReceiveCache
 	session.Sessions
 	PendingSessions []nonce.ID
 	*confirm.Confirms
@@ -65,11 +64,10 @@ func New(tpt ifc.Transport, hdrPrv *prv.Key, no *node.Node,
 		Confirms: confirm.NewConfirms(),
 		Node:     no,
 		Nodes:    nodes,
-		// ReceiveCache: address.NewReceiveCache(),
-		KeySet: ks,
-		C:      qu.T(),
+		KeySet:   ks,
+		C:        qu.T(),
 	}
-	// c.ReceiveCache.Add(address.NewReceiver(hdrPrv))
+	c.Sessions = c.Sessions.Add(session.New(no.ID, math.MaxUint64, 0))
 	return
 }
 
@@ -115,27 +113,36 @@ func (cl *Client) FindCloaked(clk cloak.PubKey) (hdr *prv.Key, pld *prv.Key) {
 }
 
 func (cl *Client) SendKeys(nodeID nonce.ID,
-	hook func(cf nonce.ID)) (confirmation nonce.ID, hdr, pld *prv.Key,
-	e error) {
+	hook func(cf nonce.ID)) (conf nonce.ID, e error) {
 
-	// var hdrPub, pldPub *pub.Key
-	if hdr, e = prv.GenerateKey(); check(e) {
+	var hdrPrv, pldPrv *prv.Key
+	if hdrPrv, e = prv.GenerateKey(); check(e) {
 		return
 	}
-	// hdrPub = pub.Derive(hdr)
-	if pld, e = prv.GenerateKey(); check(e) {
+	hdrPub := pub.Derive(hdrPrv)
+	if pldPrv, e = prv.GenerateKey(); check(e) {
 		return
 	}
-	// pldPub = pub.Derive(pld)
-
+	pldPub := pub.Derive(pldPrv)
 	n := cl.Nodes.FindByID(nodeID)
 	selected := cl.Nodes.Select(SimpleSelector, n, 4)
 	var hop [5]*node.Node
 	hop[0], hop[1], hop[2], hop[3], hop[4] =
-		selected[0], selected[1], selected[2], selected[3], cl.Node
-	confirmation = nonce.NewID()
-	os := wire.SendKeys(confirmation, hdr, pld, cl.Node, hop, cl.KeySet)
+		selected[0], selected[1], n, selected[2], selected[3]
+	conf = nonce.NewID()
+	os := wire.SendKeys(conf, hdrPrv, pldPrv, cl.Node, hop, cl.KeySet)
 	cl.RegisterConfirmation(hook, os[len(os)-1].(*confirm.OnionSkin).ID)
+	cl.Sessions.Add(&session.Session{
+		ID:           n.ID,
+		Remaining:    1 << 16,
+		HeaderPub:    hdrPub,
+		HeaderBytes:  hdrPub.ToBytes(),
+		PayloadPub:   pldPub,
+		PayloadBytes: pldPub.ToBytes(),
+		HeaderPrv:    hdrPrv,
+		PayloadPrv:   pldPrv,
+		Deadline:     time.Now().Add(DefaultDeadline),
+	})
 	o := os.Assemble()
 	b := wire.EncodeOnion(o)
 	cl.Send(hop[0].AddrPort, b)

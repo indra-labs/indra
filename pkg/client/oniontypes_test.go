@@ -97,16 +97,12 @@ func TestSendPurchase(t *testing.T) {
 		t.FailNow()
 	}
 	var sess [3]*session.Session
-	for i := range sess {
-		sess[i] = session.NewSession(nonce.NewID(), 203230230, time.Hour)
-	}
-	// clients[4].ReceiveCache.Add(address.NewReceiver(sess[0].HeaderPrv))
-	// clients[5].ReceiveCache.Add(address.NewReceiver(sess[1].HeaderPrv))
-	// clients[0].ReceiveCache.Add(address.NewReceiver(sess[2].HeaderPrv))
+	sess[0] = clients[4].Sessions.Find(clients[4].ID)
+	sess[1] = clients[5].Sessions.Find(clients[5].ID)
+	sess[2] = clients[0].Sessions.Find(clients[0].ID)
 	clients[4].Sessions = clients[4].Sessions.Add(sess[0])
 	clients[5].Sessions = clients[5].Sessions.Add(sess[1])
 	clients[0].Sessions = clients[0].Sessions.Add(sess[2])
-
 	// Start up the clients.
 	for _, v := range clients {
 		go v.Start()
@@ -142,12 +138,9 @@ func TestSendExit(t *testing.T) {
 		t.FailNow()
 	}
 	var sess [3]*session.Session
-	for i := range sess {
-		sess[i] = session.NewSession(nonce.NewID(), 203230230, time.Hour)
-	}
-	// clients[4].ReceiveCache.Add(address.NewReceiver(sess[0].HeaderPrv))
-	// clients[5].ReceiveCache.Add(address.NewReceiver(sess[1].HeaderPrv))
-	// clients[0].ReceiveCache.Add(address.NewReceiver(sess[2].HeaderPrv))
+	sess[0] = clients[4].Sessions.Find(clients[4].ID)
+	sess[1] = clients[5].Sessions.Find(clients[5].ID)
+	sess[2] = clients[0].Sessions.Find(clients[0].ID)
 	clients[4].Sessions = clients[4].Sessions.Add(sess[0])
 	clients[5].Sessions = clients[5].Sessions.Add(sess[1])
 	clients[0].Sessions = clients[0].Sessions.Add(sess[2])

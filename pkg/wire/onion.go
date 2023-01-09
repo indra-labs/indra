@@ -49,6 +49,9 @@ func Ping(id nonce.ID, client *node.Node, hop [3]*node.Node,
 // This message's last layer is a Confirmation, which allows the client to know
 // that the key was successfully delivered to the Reverse relays that will be
 // used in the Purchase.
+//
+// The node that will receive the new keys is hop[2], the third element of the
+// hop array.
 func SendKeys(id nonce.ID, hdr, pld *prv.Key,
 	client *node.Node, hop [5]*node.Node, set *signer.KeySet) OnionSkins {
 
@@ -83,8 +86,7 @@ func SendKeys(id nonce.ID, hdr, pld *prv.Key,
 //
 // The header remains a constant size and each node in the Reverse trims off
 // their section at the top, moves the next layer header to the top and pads the
-// remainder with noise, so it always looks like the first hop,
-// indistinguishable.
+// remainder with noise, so it always looks like the first hop.
 func SendPurchase(n nonce.ID, nBytes uint64, client *node.Node,
 	hop [5]*node.Node, sess [3]*session.Session,
 	set *signer.KeySet) OnionSkins {

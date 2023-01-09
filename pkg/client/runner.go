@@ -155,7 +155,7 @@ func (cl *Client) noop(on *noop.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 
 func (cl *Client) purchase(on *purchase.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	// Create a new Session.
-	s := session2.NewSession(on.ID, on.NBytes, DefaultDeadline)
+	s := session2.New(on.ID, on.NBytes, DefaultDeadline)
 	se := &session.OnionSkin{
 		ID:         s.ID,
 		HeaderKey:  s.HeaderPub,
@@ -230,7 +230,9 @@ func (cl *Client) response(on *response.OnionSkin, b slice.Bytes, cur *slice.Cur
 	cl.ExitHooks.Find(on.Hash)
 }
 
-func (cl *Client) session(s *session.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
+func (cl *Client) session(s *session.OnionSkin, b slice.Bytes,
+	cur *slice.Cursor) {
+
 	// Session is returned from a Purchase message in the reverse layers.
 	//
 	// Session has a nonce.ID that is given in the last layer of a LN sphinx
