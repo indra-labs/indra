@@ -136,7 +136,7 @@ func AddHandler(handler func()) {
 	// all other callbacks and exits if not already done.
 	_, loc, line, _ := runtime.Caller(1)
 	msg := fmt.Sprintf("%s:%d", loc, line)
-	log.I.Ln("handler added by:", msg)
+	log.D.Ln("handler added by:", msg)
 	if ch == nil {
 		ch = make(chan os.Signal)
 		signal.Notify(ch, signals...)
