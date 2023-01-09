@@ -7,7 +7,7 @@ import (
 	"github.com/indra-labs/indra/pkg/nonce"
 )
 
-type Hook func(cf *OnionSkin)
+type Hook func(cf nonce.ID)
 
 type Callback struct {
 	nonce.ID
@@ -39,7 +39,7 @@ func (cn *Confirms) Confirm(id nonce.ID) bool {
 	defer cn.Unlock()
 	for i := range (*cn).Cnf {
 		if id == (*cn).Cnf[i].ID {
-			(*cn).Cnf[i].Hook((*cn).Cnf[i].Onion)
+			(*cn).Cnf[i].Hook(id)
 			// delete Callback.
 			end := i + 1
 			// if this is the last one, the end is the last one

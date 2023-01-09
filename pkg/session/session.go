@@ -4,10 +4,8 @@ import (
 	"time"
 
 	"github.com/indra-labs/indra"
-	"github.com/indra-labs/indra/pkg/key/address"
 	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/key/pub"
-	"github.com/indra-labs/indra/pkg/key/signer"
 	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/indra-labs/indra/pkg/node"
 	"github.com/indra-labs/indra/pkg/nonce"
@@ -24,22 +22,18 @@ var (
 type Session struct {
 	nonce.ID
 	*node.Node
-	Remaining             uint64
-	HeaderKey, PayloadKey *address.SendEntry
-	HeaderPrv, PayloadPrv *prv.Key
-	Deadline              time.Time
-	*signer.KeySet
+	Remaining                 uint64
+	HeaderPub, PayloadPub     *pub.Key
+	HeaderBytes, PayloadBytes pub.Bytes
+	HeaderPrv, PayloadPrv     *prv.Key
+	Deadline                  time.Time
 }
 
 type Sessions []*Session
 
-func (s Sessions) Len() int {
-	return len(s)
-}
+func (s Sessions) Len() int { return len(s) }
 
-func (s Sessions) Add(se *Session) Sessions {
-	return append(s, se)
-}
+func (s Sessions) Add(se *Session) Sessions { return append(s, se) }
 
 func (s Sessions) Delete(se *Session) Sessions {
 	for i := range s {
@@ -62,7 +56,7 @@ func (s Sessions) Find(t nonce.ID) (se *Session) {
 
 func (s Sessions) FindPub(pubKey *pub.Key) (se *Session) {
 	for i := range s {
-		if s[i].HeaderKey.Key.Equals(pubKey) {
+		if s[i].HeaderPub.Equals(pubKey) {
 			se = s[i]
 			return
 		}
@@ -74,38 +68,36 @@ func (s Sessions) FindPub(pubKey *pub.Key) (se *Session) {
 //
 // Purchasing a session the seller returns a token, based on a requested data
 // allocation.
-func NewSession(id nonce.ID, rem uint64, deadline time.Duration,
-	kr *signer.KeySet) (s *Session) {
+func NewSession(id nonce.ID, rem uint64, deadline time.Duration) (s *Session) {
 
 	var e error
 	var hdrPrv, pldPrv *prv.Key
 	if hdrPrv, e = prv.GenerateKey(); check(e) {
 	}
 	hdrPub := pub.Derive(hdrPrv)
-	hdrSend := address.NewSendEntry(hdrPub)
+	// hdrSend := address.NewSendEntry(hdrPub)
 	if pldPrv, e = prv.GenerateKey(); check(e) {
 	}
 	pldPub := pub.Derive(pldPrv)
-	pldSend := address.NewSendEntry(pldPub)
+	// pldSend := address.NewSendEntry(pldPub)
 
 	s = &Session{
-		ID:         id,
-		Remaining:  rem,
-		HeaderKey:  hdrSend,
-		PayloadKey: pldSend,
-		HeaderPrv:  hdrPrv,
-		PayloadPrv: pldPrv,
-		KeySet:     kr,
-		Deadline:   time.Now().Add(deadline),
+		ID:           id,
+		Remaining:    rem,
+		HeaderPub:    hdrPub,
+		HeaderBytes:  hdrPub.ToBytes(),
+		PayloadPub:   pldPub,
+		PayloadBytes: pldPub.ToBytes(),
+		HeaderPrv:    hdrPrv,
+		PayloadPrv:   pldPrv,
+		Deadline:     time.Now().Add(deadline),
 	}
 	return
 }
 
 // AddBytes adds to the Remaining counter, used when new data allowance has been
 // purchased.
-func (s *Session) AddBytes(b uint64) {
-	s.Remaining += b
-}
+func (s *Session) AddBytes(b uint64) { s.Remaining += b }
 
 // SubtractBytes reduces the amount Remaining, if the requested amount would put
 // the total below zero it returns false, signalling that new data allowance

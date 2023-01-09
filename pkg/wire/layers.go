@@ -4,7 +4,6 @@ import (
 	"net/netip"
 	"time"
 
-	"github.com/indra-labs/indra/pkg/key/address"
 	"github.com/indra-labs/indra/pkg/key/ecdh"
 	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/key/pub"
@@ -51,7 +50,7 @@ type OnionSkins []types.Onion
 
 var os = &noop.OnionSkin{}
 
-func (o OnionSkins) Cipher(hdr, pld *pub.Key) OnionSkins {
+func (o OnionSkins) Cipher(hdr, pld *prv.Key) OnionSkins {
 	return append(o, &cipher.OnionSkin{
 		Header:  hdr,
 		Payload: pld,
@@ -83,7 +82,9 @@ func (o OnionSkins) Forward(addr *netip.AddrPort) OnionSkins {
 	return append(o, &forward.OnionSkin{AddrPort: addr, Onion: &noop.OnionSkin{}})
 }
 
-func (o OnionSkins) OnionSkin(to *address.Sender, from *prv.Key, n nonce.IV) OnionSkins {
+func (o OnionSkins) OnionSkin(to *pub.Key, from *prv.Key,
+	n nonce.IV) OnionSkins {
+
 	return append(o, &layer.OnionSkin{
 		To:    to,
 		From:  from,

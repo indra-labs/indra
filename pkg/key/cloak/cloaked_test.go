@@ -1,4 +1,4 @@
-package address
+package cloak
 
 import (
 	"math/rand"
@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/indra-labs/indra/pkg/key/prv"
+	"github.com/indra-labs/indra/pkg/key/pub"
 )
 
 func TestAddress(t *testing.T) {
@@ -14,19 +15,19 @@ func TestAddress(t *testing.T) {
 	if sendPriv, e = prv.GenerateKey(); check(e) {
 		return
 	}
-	r := NewReceiver(sendPriv)
-	s := FromPub(r.Pub)
-	var cloaked Cloaked
-	cloaked = s.GetCloak()
-	if !r.Match(cloaked) {
+	sendPub := pub.Derive(sendPriv)
+	sendBytes := sendPub.ToBytes()
+	var cloaked PubKey
+	cloaked = GetCloak(sendPub)
+	if !Match(cloaked, sendBytes) {
 		t.Error("failed to recognise cloaked address")
 	}
 	rand.Seed(time.Now().Unix())
 	flip := rand.Intn(Len)
-	var broken Cloaked
+	var broken PubKey
 	copy(broken[:], cloaked[:])
 	broken[flip] = ^broken[flip]
-	if r.Match(broken) {
+	if Match(broken, sendBytes) {
 		t.Error("recognised incorrectly broken cloaked address")
 	}
 }

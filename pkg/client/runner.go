@@ -72,7 +72,7 @@ func (cl *Client) runner() (out bool) {
 func (cl *Client) cipher(on *cipher.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	// This either is in a forward only SendKeys message or we are the buyer
 	// and these are our session keys.
-	log.I.S(on)
+	// log.I.S(on)
 	b = append(b[*c:], slice.NoisePad(int(*c))...)
 	cl.Node.Send(b)
 }
@@ -122,12 +122,13 @@ func (cl *Client) exit(on *exit.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	cl.Node.Send(rb)
 }
 
-func (cl *Client) forward(on *forward.OnionSkin, b slice.Bytes, c *slice.Cursor) {
+func (cl *Client) forward(on *forward.OnionSkin, b slice.Bytes,
+	c *slice.Cursor) {
+
 	// forward the whole buffer received onwards. Usually there will be a
 	// layer.OnionSkin under this which will be unwrapped by the receiver.
 	if on.AddrPort.String() == cl.Node.AddrPort.String() {
-		// it is for us, we want to unwrap the next
-		// part.
+		// it is for us, we want to unwrap the next part.
 		b = append(b[*c:], slice.NoisePad(int(*c))...)
 		cl.Node.Send(b)
 	} else {
@@ -138,12 +139,12 @@ func (cl *Client) forward(on *forward.OnionSkin, b slice.Bytes, c *slice.Cursor)
 
 func (cl *Client) layer(on *layer.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	// this is probably an encrypted layer for us.
-	rcv := cl.ReceiveCache.FindCloaked(on.Cloak)
-	if rcv == nil {
+	hdr, _ := cl.FindCloaked(on.Cloak)
+	if hdr == nil {
 		log.I.Ln("no matching key found from cloaked key")
 		return
 	}
-	on.Decrypt(rcv.Key, b, c)
+	on.Decrypt(hdr, b, c)
 	b = append(b[*c:], slice.NoisePad(int(*c))...)
 	cl.Node.Send(b)
 }
@@ -154,11 +155,11 @@ func (cl *Client) noop(on *noop.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 
 func (cl *Client) purchase(on *purchase.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	// Create a new Session.
-	s := session2.NewSession(on.ID, on.NBytes, DefaultDeadline, cl.KeySet)
+	s := session2.NewSession(on.ID, on.NBytes, DefaultDeadline)
 	se := &session.OnionSkin{
 		ID:         s.ID,
-		HeaderKey:  s.HeaderKey.Key,
-		PayloadKey: s.PayloadKey.Key,
+		HeaderKey:  s.HeaderPub,
+		PayloadKey: s.PayloadPub,
 		Onion:      &noop.OnionSkin{},
 	}
 	cl.Mutex.Lock()
@@ -192,16 +193,16 @@ func (cl *Client) reverse(on *reverse.OnionSkin, b slice.Bytes,
 			first := *c
 			second := first + ReverseLayerLen
 			last := second + ReverseLayerLen
-			rcv := cl.ReceiveCache.FindCloaked(on1.Cloak)
-			// We need to find the PayloadKey to match.
-			ses := cl.Sessions.FindPub(rcv.Pub)
-			hdrPrv := ses.HeaderPrv
+			hdr, pld := cl.FindCloaked(on1.Cloak)
+			// We need to find the PayloadPub to match.
+			// ses := cl.Sessions.FindPub(hdr.Pub)
+			hdrPrv := hdr
 			hdrPub := on1.FromPub
 			blk := ciph.GetBlock(hdrPrv, hdrPub)
 			// Decrypt using the Payload key and header nonce.
 			ciph.Encipher(blk, on1.Nonce,
 				b[*c:c.Inc(2*ReverseLayerLen)])
-			blk = ciph.GetBlock(ses.PayloadPrv, hdrPub)
+			blk = ciph.GetBlock(pld, hdrPub)
 			ciph.Encipher(blk, on1.Nonce, b[*c:])
 			// shift the header segment upwards and pad the
 			// remainder.

@@ -8,15 +8,16 @@ import (
 	"github.com/cybriq/qu"
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/ifc"
-	"github.com/indra-labs/indra/pkg/key/address"
+	"github.com/indra-labs/indra/pkg/key/cloak"
 	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/key/pub"
 	"github.com/indra-labs/indra/pkg/key/signer"
 	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/indra-labs/indra/pkg/node"
 	"github.com/indra-labs/indra/pkg/nonce"
-	session2 "github.com/indra-labs/indra/pkg/session"
+	"github.com/indra-labs/indra/pkg/session"
 	"github.com/indra-labs/indra/pkg/slice"
+	"github.com/indra-labs/indra/pkg/wire"
 	"github.com/indra-labs/indra/pkg/wire/confirm"
 	"github.com/indra-labs/indra/pkg/wire/layer"
 	"github.com/indra-labs/indra/pkg/wire/response"
@@ -38,10 +39,9 @@ var (
 type Client struct {
 	*node.Node
 	node.Nodes
-	*address.SendCache
-	*address.ReceiveCache
-	Circuits
-	session2.Sessions
+	// *address.SendCache
+	// *address.ReceiveCache
+	session.Sessions
 	PendingSessions []nonce.ID
 	*confirm.Confirms
 	ExitHooks response.Hooks
@@ -62,14 +62,14 @@ func New(tpt ifc.Transport, hdrPrv *prv.Key, no *node.Node,
 		return
 	}
 	c = &Client{
-		Confirms:     confirm.NewConfirms(),
-		Node:         no,
-		Nodes:        nodes,
-		ReceiveCache: address.NewReceiveCache(),
-		KeySet:       ks,
-		C:            qu.T(),
+		Confirms: confirm.NewConfirms(),
+		Node:     no,
+		Nodes:    nodes,
+		// ReceiveCache: address.NewReceiveCache(),
+		KeySet: ks,
+		C:      qu.T(),
 	}
-	c.ReceiveCache.Add(address.NewReceiver(hdrPrv))
+	// c.ReceiveCache.Add(address.NewReceiver(hdrPrv))
 	return
 }
 
@@ -83,14 +83,63 @@ out:
 	}
 }
 
-func (cl *Client) RegisterConfirmation(hook confirm.Hook, on *confirm.OnionSkin) {
+func (cl *Client) RegisterConfirmation(hook confirm.Hook,
+	cnf nonce.ID) {
 
 	cl.Confirms.Add(&confirm.Callback{
-		ID:    on.ID,
-		Time:  time.Now(),
-		Hook:  hook,
-		Onion: on,
+		ID:   cnf,
+		Time: time.Now(),
+		Hook: hook,
 	})
+}
+
+// FindCloaked searches the client identity key and the Sessions for a match.
+func (cl *Client) FindCloaked(clk cloak.PubKey) (hdr *prv.Key, pld *prv.Key) {
+	var b cloak.Blinder
+	copy(b[:], clk[:cloak.BlindLen])
+	hash := cloak.Cloak(b, cl.Node.HeaderBytes)
+	if hash == clk {
+		hdr = cl.Node.HeaderPrv
+		// there is no payload key for the node, only in sessions.
+		return
+	}
+	for i := range cl.Sessions {
+		hash = cloak.Cloak(b, cl.Sessions[i].HeaderBytes)
+		if hash == clk {
+			hdr = cl.Sessions[i].HeaderPrv
+			pld = cl.Sessions[i].PayloadPrv
+			return
+		}
+	}
+	return
+}
+
+func (cl *Client) SendKeys(nodeID nonce.ID,
+	hook func(cf nonce.ID)) (confirmation nonce.ID, hdr, pld *prv.Key,
+	e error) {
+
+	// var hdrPub, pldPub *pub.Key
+	if hdr, e = prv.GenerateKey(); check(e) {
+		return
+	}
+	// hdrPub = pub.Derive(hdr)
+	if pld, e = prv.GenerateKey(); check(e) {
+		return
+	}
+	// pldPub = pub.Derive(pld)
+
+	n := cl.Nodes.FindByID(nodeID)
+	selected := cl.Nodes.Select(SimpleSelector, n, 4)
+	var hop [5]*node.Node
+	hop[0], hop[1], hop[2], hop[3], hop[4] =
+		selected[0], selected[1], selected[2], selected[3], cl.Node
+	confirmation = nonce.NewID()
+	os := wire.SendKeys(confirmation, hdr, pld, cl.Node, hop, cl.KeySet)
+	cl.RegisterConfirmation(hook, os[len(os)-1].(*confirm.OnionSkin).ID)
+	o := os.Assemble()
+	b := wire.EncodeOnion(o)
+	cl.Send(hop[0].AddrPort, b)
+	return
 }
 
 func (cl *Client) Cleanup() {

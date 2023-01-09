@@ -118,7 +118,7 @@ func PeelExit(t *testing.T, b slice.Bytes,
 }
 
 func TestPing(t *testing.T) {
-	log2.CodeLoc = true
+
 	_, ks, e := signer.New()
 	if check(e) {
 		t.Error(e)
@@ -198,7 +198,7 @@ func TestPing(t *testing.T) {
 }
 
 func TestSendKeys(t *testing.T) {
-	log2.CodeLoc = true
+
 	_, ks, e := signer.New()
 	if check(e) {
 		t.Error(e)
@@ -218,9 +218,9 @@ func TestSendKeys(t *testing.T) {
 	client, n = node.New(slice.GenerateRandomAddrPortIPv4(),
 		cpub1, cprv1, nil)
 	ciprv1, ciprv2 := GetTwoPrvKeys(t)
-	cipub1, cipub2 := pub.Derive(ciprv1), pub.Derive(ciprv2)
+	// cipub1, cipub2 := pub.Derive(ciprv1), pub.Derive(ciprv2)
 
-	on := SendKeys(n, cipub1, cipub2, client, hop, ks)
+	on := SendKeys(n, ciprv1, ciprv2, client, hop, ks)
 	b := EncodeOnion(on.Assemble())
 	c := slice.NewCursor()
 	var ok bool
@@ -269,11 +269,11 @@ func TestSendKeys(t *testing.T) {
 		t.Error("did not unwrap expected type", reflect.TypeOf(onc))
 		t.FailNow()
 	}
-	if !ci.Header.Equals(cipub1) {
+	if !ci.Header.Key.Equals(&ciprv1.Key) {
 		t.Error("did not unwrap header key")
 		t.FailNow()
 	}
-	if !ci.Payload.Equals(cipub2) {
+	if !ci.Payload.Key.Equals(&ciprv2.Key) {
 		t.Error("did not unwrap payload key")
 		t.FailNow()
 	}
@@ -322,7 +322,7 @@ func TestSendKeys(t *testing.T) {
 }
 
 func TestSendPurchase(t *testing.T) {
-	log2.CodeLoc = true
+
 	log2.SetLogLevel(log2.Trace)
 	_, ks, e := signer.New()
 	if check(e) {
@@ -343,8 +343,7 @@ func TestSendPurchase(t *testing.T) {
 		cpub1, cprv1, nil)
 	var sess [3]*session.Session
 	for i := range sess {
-		sess[i] = session.NewSession(nonce.NewID(), 203230230,
-			time.Hour, ks)
+		sess[i] = session.NewSession(nonce.NewID(), 203230230, time.Hour)
 	}
 	nBytes := rand.Uint64()
 	n := nonce.NewID()
@@ -425,7 +424,7 @@ func TestSendPurchase(t *testing.T) {
 }
 
 func TestSendExit(t *testing.T) {
-	log2.CodeLoc = true
+
 	_, ks, e := signer.New()
 	if check(e) {
 		t.Error(e)
@@ -449,8 +448,7 @@ func TestSendExit(t *testing.T) {
 	message, hash, e = testutils.GenerateTestMessage(2502)
 	var sess [3]*session.Session
 	for i := range sess {
-		sess[i] = session.NewSession(nonce.NewID(), 203230230,
-			time.Hour, ks)
+		sess[i] = session.NewSession(nonce.NewID(), 203230230, time.Hour)
 	}
 	on := SendExit(message, port, client, hop, sess, ks)
 	b := EncodeOnion(on.Assemble())

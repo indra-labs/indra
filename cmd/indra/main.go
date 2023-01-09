@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/app"
 	"github.com/indra-labs/indra/pkg/cfg"
@@ -14,17 +16,12 @@ import (
 	"github.com/indra-labs/indra/pkg/server"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/multiformats/go-multiaddr"
-	"os"
 )
 
 var (
 	log   = log2.GetLogger(indra.PathBase)
 	check = log.E.Chk
 )
-
-func init() {
-	log2.App = "indra"
-}
 
 var commands = &cmds.Command{
 	Name:          "indra",
@@ -137,7 +134,7 @@ var commands = &cmds.Command{
 
 func multiAddrSanitizer(opt *list.Opt) error {
 
-	//log.I.Ln("adding p2p listener", opt.String())
+	// log.I.Ln("adding p2p listener", opt.String())
 
 	return nil
 }

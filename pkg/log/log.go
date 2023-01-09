@@ -144,7 +144,7 @@ var (
 	// allSubsystems stores all package subsystem names found in the current
 	// application.
 	allSubsystems []string
-	CodeLoc       = true
+	codeLoc       = false
 )
 
 func GetAllSubsystems() (o []string) {
@@ -202,6 +202,12 @@ func SetLogLevel(l LogLevel) {
 	logLevel = l
 }
 
+func CodeLocations(on bool) {
+	writerMx.Lock()
+	defer writerMx.Unlock()
+	codeLoc = on
+}
+
 // GetLoc calls runtime.Caller and formats as expected by source code editors
 // for terminal hyperlinks
 //
@@ -246,8 +252,9 @@ func GetLoc(skip int, subsystem string) (output string) {
 }
 
 // LocTimeStampFormat is a custom time format that provides millisecond precision.
-var LocTimeStampFormat = "2006-01-02T15:04:05.000000Z07:00"
-var timeStampFormat = time.Stamp
+var LocTimeStampFormat = "2006-01-02T15:04:05.000000"
+
+var timeStampFormat = "15:04:05.000"
 
 // SetTimeStampFormat sets a custom timeStampFormat for the logger
 func SetTimeStampFormat(format string) {
@@ -256,9 +263,7 @@ func SetTimeStampFormat(format string) {
 
 // getTimeText is a helper that returns the current time with the
 // timeStampFormat that is configured.
-func getTimeText(tsf string) string {
-	return time.Now().Format(tsf)
-}
+func getTimeText(tsf string) string { return time.Now().Format(tsf) }
 
 // joinStrings constructs a string from a slice of interface same as Println but
 // without the terminal newline
@@ -286,7 +291,7 @@ func logPrint(
 			formatString := "%v%s%s%-6v %s\n"
 			loc := ""
 			tsf := timeStampFormat
-			if CodeLoc {
+			if codeLoc {
 				formatString = "%-58v%s%s%-6v %s\n"
 				loc = GetLoc(3, subsystem)
 				tsf = LocTimeStampFormat
