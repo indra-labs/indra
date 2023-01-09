@@ -90,6 +90,15 @@ func (s Sessions) Delete(se *Session) Sessions {
 	return s
 }
 
+func (s Sessions) DeleteByID(id nonce.ID) Sessions {
+	for i := range s {
+		if s[i].ID == id {
+			return append(s[:i], s[i:]...)
+		}
+	}
+	return s
+}
+
 func (s Sessions) Find(t nonce.ID) (se *Session) {
 	for i := range s {
 		if s[i].ID == t {

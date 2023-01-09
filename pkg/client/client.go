@@ -1,6 +1,7 @@
 package client
 
 import (
+	"fmt"
 	"math"
 	"net/netip"
 	"sync"
@@ -91,8 +92,12 @@ func (cl *Client) RegisterConfirmation(hook confirm.Hook,
 	})
 }
 
-// FindCloaked searches the client identity key and the Sessions for a match.
-func (cl *Client) FindCloaked(clk cloak.PubKey) (hdr *prv.Key, pld *prv.Key) {
+// FindCloaked searches the client identity key and the Sessions for a match. It
+// returns the session as well, though not all users of this function will need
+// this.
+func (cl *Client) FindCloaked(clk cloak.PubKey) (hdr *prv.Key, pld *prv.Key,
+	sess *session.Session) {
+
 	var b cloak.Blinder
 	copy(b[:], clk[:cloak.BlindLen])
 	hash := cloak.Cloak(b, cl.Node.HeaderBytes)
@@ -106,14 +111,21 @@ func (cl *Client) FindCloaked(clk cloak.PubKey) (hdr *prv.Key, pld *prv.Key) {
 		if hash == clk {
 			hdr = cl.Sessions[i].HeaderPrv
 			pld = cl.Sessions[i].PayloadPrv
+			sess = cl.Sessions[i]
 			return
 		}
 	}
 	return
 }
 
-func (cl *Client) SendKeys(nodeID nonce.ID,
-	hook func(cf nonce.ID)) (conf nonce.ID, e error) {
+// SendKeys is a function used to create temporary sessions during the
+// bootstrapping process when starting up a new client.
+//
+// The sessions it creates expire after the DefaultDeadline period, which will
+// probably later be adjusted downwards to fit the requirements. When paid
+// sessions are created, these temporary sessions should also be deleted.
+func (cl *Client) SendKeys(nodeID nonce.ID, hook confirm.Hook) (conf nonce.ID,
+	e error) {
 
 	var hdrPrv, pldPrv *prv.Key
 	if hdrPrv, e = prv.GenerateKey(); check(e) {
@@ -126,9 +138,13 @@ func (cl *Client) SendKeys(nodeID nonce.ID,
 	pldPub := pub.Derive(pldPrv)
 	n := cl.Nodes.FindByID(nodeID)
 	selected := cl.Nodes.Select(SimpleSelector, n, 4)
-	var hop [5]*node.Node
-	hop[0], hop[1], hop[2], hop[3], hop[4] =
-		selected[0], selected[1], n, selected[2], selected[3]
+	if len(selected) < 4 {
+		e = fmt.Errorf("not enough nodes known to form circuit")
+		return
+	}
+	hop := [5]*node.Node{
+		selected[0], selected[1], n, selected[2], selected[3],
+	}
 	conf = nonce.NewID()
 	os := wire.SendKeys(conf, hdrPrv, pldPrv, cl.Node, hop, cl.KeySet)
 	cl.RegisterConfirmation(hook, os[len(os)-1].(*confirm.OnionSkin).ID)
@@ -146,6 +162,38 @@ func (cl *Client) SendKeys(nodeID nonce.ID,
 	o := os.Assemble()
 	b := wire.EncodeOnion(o)
 	cl.Send(hop[0].AddrPort, b)
+	return
+}
+
+func (cl *Client) SendPurchase(seller *node.Node) (e error) {
+	// We need at least two sessions in order to get the session message
+	// back from the seller. If there isn't two, we would need to make them
+	// using SendKeys.
+	var selected node.Nodes
+	if len(cl.Sessions) < 3 {
+		selected = cl.Nodes.Select(SimpleSelector, seller, 4)
+		if len(selected) < 4 {
+			e = fmt.Errorf("not enough nodes known to form circuit")
+			return
+		}
+		returnNodes := selected[2:]
+		var confirmation [2]nonce.ID
+		var wait sync.WaitGroup
+		for i := range returnNodes {
+			wait.Add(1)
+			confirmation[i], e = cl.SendKeys(returnNodes[i].ID,
+				func(cf nonce.ID) {
+					log.I.S("confirmed", cf)
+					wait.Done()
+				},
+			)
+		}
+		log.I.S(confirmation)
+		wait.Wait()
+		// We now have the reverse hops ready. The remainder of this
+		// process will automatically find the new sessions.
+	}
+
 	return
 }
 

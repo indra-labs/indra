@@ -13,7 +13,7 @@ type Callback struct {
 	nonce.ID
 	time.Time
 	Onion *OnionSkin
-	Hook  Hook
+	Hook
 }
 
 type Confirms struct {

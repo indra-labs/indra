@@ -5,6 +5,7 @@ package node
 import (
 	"fmt"
 	"net/netip"
+	"time"
 
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/ifc"
@@ -31,6 +32,8 @@ type Node struct {
 	HeaderPub   *pub.Key
 	HeaderBytes pub.Bytes
 	HeaderPrv   *prv.Key
+	PingCount   int
+	LastSeen    time.Time
 	Services
 	ifc.Transport
 }

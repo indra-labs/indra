@@ -4,7 +4,6 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/nonce"
 )
 
@@ -29,7 +28,6 @@ func TestPurchaseFlow(t *testing.T) {
 	selected := clients[0].Nodes.Select(SimpleSelector, clients[1].Node, 4)
 	// next to send out keys for the return hops
 	returnNodes := selected[2:]
-	var rtnHdr, rtnPld [2]*prv.Key
 	var confirmation [2]nonce.ID
 	var wait sync.WaitGroup
 	for i := range returnNodes {
@@ -41,7 +39,6 @@ func TestPurchaseFlow(t *testing.T) {
 			})
 	}
 	log.I.S(confirmation)
-	log.I.S(rtnHdr, rtnPld)
 	wait.Wait()
 	// now to do the purchase
 
