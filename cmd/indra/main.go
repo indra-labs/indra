@@ -118,7 +118,7 @@ var commands = &cmds.Command{
 					return err
 				}
 
-				if srv.Serve(); check(err) {
+				if err = srv.Serve(); check(err) {
 					return err
 				}
 

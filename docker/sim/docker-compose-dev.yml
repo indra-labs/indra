@@ -17,6 +17,8 @@ services:
     environment:
       INDRA_SERVE_KEY: "66T7j5JnhsjDTqVvV8zEM2rTUobu66tocizfqArVEnP1"
       INDRA_SERVE_LISTEN: "/ip4/0.0.0.0/tcp/62134,/ip6/::/tcp/62134"
+    command:
+      - "serve"
   seed1:
     sysctls:
       - "net.ipv6.conf.all.disable_ipv6=0"
@@ -36,6 +38,8 @@ services:
     environment:
       INDRA_SERVE_KEY: "66T7j5JnhsjDTqVvV8zEM2rTUobu66tocizfqArVEnP2"
       INDRA_SERVE_LISTEN: "/ip4/0.0.0.0/tcp/62134,/ip6/::/tcp/62134"
+    command:
+      - "serve"
   seed2:
     sysctls:
       - "net.ipv6.conf.all.disable_ipv6=0"
@@ -56,6 +60,8 @@ services:
     environment:
       INDRA_SERVE_KEY: "66T7j5JnhsjDTqVvV8zEM2rTUobu66tocizfqArVEnP3"
       INDRA_SERVE_LISTEN: "/ip4/0.0.0.0/tcp/62134,/ip6/::/tcp/62134"
+    command:
+      - "serve"
   peer0:
     sysctls:
       - "net.ipv6.conf.all.disable_ipv6=0"
@@ -76,6 +82,8 @@ services:
     environment:
       #INDRA_SERVE_SEED: "/dns4/seed0/tcp/62134/p2p/16Uiu2HAm2LgowPNBM47dR6gSJmEeQaqCZ6u4WPhTCSWkxyNrfAxo"
       INDRA_SERVE_LISTEN: "/ip4/0.0.0.0/tcp/62134,/ip6/::/tcp/62134"
+    command:
+      - "serve"
   peer1:
     sysctls:
       - "net.ipv6.conf.all.disable_ipv6=0"
@@ -96,6 +104,8 @@ services:
     environment:
       #INDRA_SERVE_SEED: "/dns4/seed0/tcp/62134/p2p/16Uiu2HAm2LgowPNBM47dR6gSJmEeQaqCZ6u4WPhTCSWkxyNrfAxo"
       INDRA_SERVE_LISTEN: "/ip4/0.0.0.0/tcp/62134,/ip6/::/tcp/62134"
+    command:
+      - "serve"
   peer2:
     sysctls:
       - "net.ipv6.conf.all.disable_ipv6=0"
@@ -116,6 +126,8 @@ services:
     environment:
       #INDRA_SERVE_SEED: "/dns4/seed0/tcp/62134/p2p/16Uiu2HAm2LgowPNBM47dR6gSJmEeQaqCZ6u4WPhTCSWkxyNrfAxo"
       INDRA_SERVE_LISTEN: "/ip4/127.0.0.1/tcp/62134,/ip6/::1/tcp/62134"
+    command:
+      - "serve"
 volumes:
   seed0_gopath:
   seed1_gopath:

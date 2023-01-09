@@ -3,6 +3,7 @@ package seed
 import (
 	"context"
 	"errors"
+	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"sync"
 	"time"
 
@@ -31,6 +32,8 @@ var (
 	m  sync.Mutex
 	c  context.Context
 	h  host.Host = nil
+
+	kadht *dht.IpfsDHT
 
 	failedChan = make(chan error)
 )
@@ -79,6 +82,14 @@ func Bootstrap(ctx context.Context, host host.Host, seeds []multiaddr.Multiaddr)
 
 	c = ctx
 	h = host
+
+	if kadht, err = dht.New(ctx, h); check(err) {
+		return
+	}
+
+	if err = kadht.Bootstrap(ctx); check(err) {
+		return
+	}
 
 	log.I.Ln("using seeds:")
 
