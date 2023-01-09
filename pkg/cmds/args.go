@@ -187,7 +187,6 @@ func lookAhead(cmd *Command, cfgName, arg string, iArgs []string,
 				break
 			}
 		}
-		// Otherwise set the boolean value to the opposite of default.
 		cur := cmd.Configs[cfgName].Meta().Default()
 		cmd.Configs[cfgName].FromString(cur)
 		v := !cmd.Configs[cfgName].Value().Bool()

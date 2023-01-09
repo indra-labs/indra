@@ -9,7 +9,7 @@ import (
 
 func TestCommand_ParseCLIArgs(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
-	log2.CodeLoc = true
+
 	ec := GetExampleCommands()
 	o, _ := Init(ec, nil)
 	args6 := "/random/path/to/server_binary --cafile ~/some/cafile --LC=cn " +

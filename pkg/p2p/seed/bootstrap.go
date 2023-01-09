@@ -3,13 +3,14 @@ package seed
 import (
 	"context"
 	"errors"
+	"sync"
+	"time"
+
 	"github.com/indra-labs/indra"
 	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
-	"sync"
-	"time"
 )
 
 var (

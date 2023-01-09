@@ -2,10 +2,11 @@ package metrics
 
 import (
 	"context"
+	"time"
+
 	"github.com/indra-labs/indra"
 	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/libp2p/go-libp2p/core/host"
-	"time"
 )
 
 var (

@@ -6,7 +6,6 @@ import (
 	"os/exec"
 	"os/signal"
 	"runtime"
-	"strings"
 	"syscall"
 
 	"go.uber.org/atomic"
@@ -43,12 +42,6 @@ var interruptCallbackSources []string
 // responds to custom shutdown signals as required
 func Listener() {
 	invokeCallbacks := func() {
-		log.I.Ln(
-			"running interrupt callbacks",
-			len(interruptCallbacks),
-			strings.Repeat(" ", 48),
-			interruptCallbackSources,
-		)
 		// run handlers in LIFO order.
 		for i := range interruptCallbacks {
 			idx := len(interruptCallbacks) - 1 - i
@@ -103,6 +96,7 @@ out:
 		case sig := <-ch:
 			// if !requested {
 			// 	L.Printf("\r>>> received signal (%s)\n", sig)
+			fmt.Print("\r")
 			log.I.Ln("received interrupt signal", sig)
 			requested.Store(true)
 			invokeCallbacks()

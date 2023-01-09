@@ -118,7 +118,7 @@ func PeelExit(t *testing.T, b slice.Bytes,
 }
 
 func TestPing(t *testing.T) {
-	log2.CodeLoc = true
+
 	_, ks, e := signer.New()
 	if check(e) {
 		t.Error(e)
@@ -198,7 +198,7 @@ func TestPing(t *testing.T) {
 }
 
 func TestSendKeys(t *testing.T) {
-	log2.CodeLoc = true
+
 	_, ks, e := signer.New()
 	if check(e) {
 		t.Error(e)
@@ -322,7 +322,7 @@ func TestSendKeys(t *testing.T) {
 }
 
 func TestSendPurchase(t *testing.T) {
-	log2.CodeLoc = true
+
 	log2.SetLogLevel(log2.Trace)
 	_, ks, e := signer.New()
 	if check(e) {
@@ -424,7 +424,7 @@ func TestSendPurchase(t *testing.T) {
 }
 
 func TestSendExit(t *testing.T) {
-	log2.CodeLoc = true
+
 	_, ks, e := signer.New()
 	if check(e) {
 		t.Error(e)

@@ -20,13 +20,9 @@ type Opt struct {
 
 var _ config.Option = &Opt{}
 
-func (o *Opt) Path() (p path.Path) {
-	return o.p
-}
+func (o *Opt) Path() (p path.Path) { return o.p }
 
-func (o *Opt) SetPath(p path.Path) {
-	o.p = p
-}
+func (o *Opt) SetPath(p path.Path) { o.p = p }
 
 type Hook func(*Opt) error
 

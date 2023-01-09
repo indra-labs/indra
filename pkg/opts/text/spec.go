@@ -18,13 +18,9 @@ type Opt struct {
 	h []Hook
 }
 
-func (o *Opt) Path() (p path.Path) {
-	return o.p
-}
+func (o *Opt) Path() (p path.Path) { return o.p }
 
-func (o *Opt) SetPath(p path.Path) {
-	o.p = p
-}
+func (o *Opt) SetPath(p path.Path) { o.p = p }
 
 var _ config.Option = &Opt{}
 
@@ -62,17 +58,11 @@ func (o *Opt) FromString(s string) (e error) {
 	return
 }
 
-func (o *Opt) String() (s string) {
-	return o.v.Load()
-}
+func (o *Opt) String() (s string) { return o.v.Load() }
 
-func (o *Opt) Expanded() (s string) {
-	return o.x.Load()
-}
+func (o *Opt) Expanded() (s string) { return o.x.Load() }
 
-func (o *Opt) SetExpanded(s string) {
-	o.x.Store(s)
-}
+func (o *Opt) SetExpanded(s string) { o.x.Store(s) }
 
 func (o *Opt) Value() (c config.Concrete) {
 	c = config.NewConcrete()
