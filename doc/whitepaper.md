@@ -52,6 +52,28 @@ It is not hard to see:
 Not only that, you can also see that onion routing is forming an increasingly
 large component of Bitcoin connectivity.
 
+## How Indranet Improves Upon Existing Mixnet Designs
+
+Indranet, in contrast to other anonymising network designs, is pure [source routed](https://en.wikipedia.org/wiki/Source_routing). This means that only the clients know the full path along which their traffic moves, and relays have no influence on the path of traffic aside from failing to deliver it.
+
+Many of the [vulnerabilities](https://en.wikipedia.org/wiki/Mix_network#Vulnerabilities) of mixnets relate to the relays having the ability to change the path of traffic. In Indranet, relays either forward traffic as instructed, or not. To some degree, source routing creates protection against byzantine type faults, because failure to deliver and most malicious attack methods result in clients distrusting the malicious nodes, the same way as they distrust unreliable nodes. Because unreliable nodes cost clients money, effectively, malicious nodes will be quickly forgotten and end up being used by nobody.
+
+### Active Attacks 
+
+It is not possible for adversaries to modify packets without effectively breaking the path, as messages are integrity protected by cryptography that is opaque to other than the client and the ciphers it . This can adversely effect the randomly selected next path because it may be inferred that possibly the receiver is faulty rather than the sender. The client will use probes to check the liveness and latency of the path, and by a process of elimination it will determine the sender is faulty and deprecate it from further use, potentially eventually fully blacklisting it and not sharing the node's existence with peers.
+
+### Artificial Gap (packet dropping/delay) and Artificial Bursts
+
+This attack fails because the client will determine via ping probes that nodes are failing to execute the forwarding/returning of packets and this will gradually result in the malicious nodes not being shared by clients altogether, not just way down the scale of reliability. It is part of the contract of operating a relay on Indranet that your node follows the instructions given to it.
+
+### Timing Analysis
+
+Discovering the relationships between clients and the services they are connecting to is the essence of all of the attacks on mixnets. Indra takes several approaches to resolving this issue:
+
+- **Packet scheduling is shuffled constantly** - Relays do not simply behave as First In First Out buffers, but rather, mix together the messages they receive. All messages have to be segmented for network transport, and as these segments are fed into the outbound queue, they are shuffled so that the ordering is broken up. This slightly increases latency but it decreases associativity between streams of packets constituting messages.
+- **Deliberate delays** - This is a tactic that is more often seen in email mixnets but can be used to a degree in lower latency mixnets like Indranet because not all traffic is time critical. Bitcoin transactions and blocks are relatively time critical, but DNS requests can comfortably take up to 100 ms without disrupting the functioning of ancillary centralised type services using them (IE, DNS for web traffic). Email is also a potential service type on Indranet, and because it is inherently slow and non-interactive, the delays can be even longer, potentially several seconds to deliver, and so the segments of the packets as they pass through will not have strong timing correlation.
+- **Client-side anonymity** - Indranet does not also expose relays to uncompensated exposure to entities outside of the network. Potentially Indra can implement Tor style web browser anonymisation, but because such traffic is often used to attack websites and web services it is usually going to be only a matter of time if a free cloak for malicious traffic becomes blacklisted by inbound connection filters on these services. Most Indranet traffic will be passed to decentralised servers, such as Bitcoin, Lightning and IPFS, which do not have a central point of observation either.
+
 ## Why We Need Indranet
 
 Three key elements of the Tor protocol make it less than desirable in general.
@@ -121,11 +143,11 @@ In Indranet there are two primary types of messages, one having a hexagonal shap
 - **Forward** messages are purely constructed by the **client**. They are to be carried forwards to a specified IP address, which will be the next hop in the path, or an **exit**, and use the **forward** key provided by relays on purchase. The next hop will decrypt the payload, which can contain either another **forward** or an **exit** message.
 - **Return** messages consist of a preformed header encrypted to three secondary keys provided in the purchase process, derived from key pairs embedded in the encrypted layers of the header, called "return" keys, and three ciphers that are to be used sequentially to encrypt the reply message, and the cloaked address in a **return** relay message header layer combined with a public key the client generates to secure the message.
 
-	The provided ciphers for a layer uses the second key known to the **return** relay and client but not the **exit** relay, thus they are unable to unwrap the encrypted message giving the address to the next hop, but by the header and a type byte in the message the **return** hop node then switches to the secondary key that the **exit** doesn't know, that corresponds to the cloaked key, which generates the cipher the **exit** hop was given, combined with the public key visible in the first header. (This is based on the reply messages in Sphinx).
+	The provided ciphers for a layer uses the second key known to the **return** relay and client but not the **exit** relay, thus they are unable to unwrap the encrypted message giving the address to the next hop, but by the header and a type byte in the message the **return** hop node then switches to the secondary key that the **exit** doesn't know, that corresponds to the cloaked key, which generates the cipher the **exit** hop was given, combined with the public key visible in the first header. (This is based on the reply messages in Sphinx).
 
 	The second **return** hop also uses this alternate key in order to conceal to the relay whether it is first from the exit or second, the last header only has a packet identifier, because the cipher for the payload is cached by the sender alongside the identifier. This slightly elaborate scheme enables pure forward source routing with the only caveat that exits know they are exits, but **forward** relays don't know whether they are receiving from client, or first hop, and likewise **return** relays don't know whether they are receiving from an exit or sending to a client.
 
-	When a client lacks the **forward**/**return** key pair from a session purchase, it uses a 5 hop circular forward chain which delivers an identifier and the three required ciphers, which the relay will cache for a time expecting a purchase message with which these keys will be used to create the **return** onion encryption.
+	When a client lacks the **forward**/**return** key pair from a session purchase, it uses a 5 hop circular forward chain which delivers an identifier and the three required ciphers, which the relay will cache for a time expecting a purchase message with which these keys will be used to create the **return** onion encryption.
 - **Exit** messages are a special type of message. They contain three symmetric cipher keys that must be used in sequence over the payload, and then appended to the preformed routing header with the return byte flag set.
 
 ### Ping
@@ -152,7 +174,7 @@ The resolution to this is inspired by the mechanism used by the [Sphinx](https:/
 
 Instead of nymservers, since it is possible to construct forward messages with only one public key advertised by each relay in the path, we can then send out a registration of a set of 3 ciphers connected to a public key, and this is sent to the intended seller, the relay that a client wants to acquire permission to route some amount of data through. These are encapsulated in an onion with two forward messages, the registration message payload, and two forward messages that actually just carry a token back to the client that informs them that most likely the relay they are trying to purchase from has received these ciphers.
 
-Then the client sends a payment request message to the first hop for the amount required to perform the purchase, which includes a fee for each hop in the path, The purchase for bytes is randomised, so a little above or below the requested amount, plus the forwarding fees to the two hops that are required to reach the seller, there is no need for these in the return. The return message is encrypted with the return key, and the two return hops are processed as per **return** message protocol described previously.
+Then the client sends a payment request message to the first hop for the amount required to perform the purchase, which includes a fee for each hop in the path, The purchase for bytes is randomised, so a little above or below the requested amount, plus the forwarding fees to the two hops that are required to reach the seller, there is no need for these in the return. The return message is encrypted with the return key, and the two return hops are processed as per **return** message protocol described previously.
 
 ### Zero Fee Relaying
 
@@ -196,7 +218,7 @@ A flexible configuration system for selecting paths and exit points is required 
 
 In much the same way as for emerging directly at a selected router, rendezvous allows relay operators to provide services without revealing their location to the network. This functionality is fairly simple, it is a type of exit that requires the use of a specified public key used by the hidden service operator to negotiate routes to the rendezvous points, the router at the rendezvous essentially takes the packet received at the end point and instead of directly forwarding to another address, sends it in **return** messages to the hidden service's outbound rendezvous path.
 
-This functionality is slated for later implementation after direct, at-router and forwarded connections are implemented, as it requires the design of a protocol for the hidden service to request relaying and wait for **return** messages as they arrive. This is a relatively complex addition to the protocol, but it is important to add it later as this enables both forward **and** backward privacy, whereas the main purpose of the protocol is focused on providing forward privacy, and the exit services are advertised by nodes associated with an address.
+This functionality is slated for later implementation after direct, at-router and forwarded connections are implemented, as it requires the design of a protocol for the hidden service to request relaying and wait for **return** messages as they arrive. This is a relatively complex addition to the protocol, but it is important to add it later as this enables both forward **and** backward privacy, whereas the main purpose of the protocol is focused on providing forward privacy, and the exit services are advertised by nodes associated with an address.
 
 ## Protocol Agnostic Transport
 
