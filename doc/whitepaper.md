@@ -3,7 +3,7 @@
 ![logo](logo.png)
 
 #### Onion routed distributed virtual private network protocol with anonymised payments to create scaling incentives.
-> [David Vennik](mailto:david@cybriq.systems) September - December 2022
+> [David Vennik](mailto:david@cybriq.systems) September 2022 - January 2023
 
 ## Abstract
 
@@ -175,13 +175,37 @@ Using the less well known sender initiated payment process in Lightning called K
 
 The payment will be for an amount of satoshis in accordance with the rate advertised by the seller. There is no direct return confirmation in this process. As with the rest of Indranet's design, the client is in control of everything, tightening the security.
 
-In the initial bootstrap, the client will send out 5 such payments to establish enough hops to form a secure path. With 5 payments made, relating to 5 sets of **forward/return** keys by the hash of these keys being the preimage used, an onion is formed where all 5 hops are forwards based on the relay's identity key, and contains these two keys to deliver them for the relay to both identify the session and decrypt, which is the only type of relay traffic that nodes will accept, as effectively the sender has proven they paid and so the seller is obligated to deliver the packet onwards. This prevents denial of service attacks. 
+In the initial bootstrap, the client will send out 5 such payments to establish enough hops to form a secure path. With 5 payments made, relating to 5 sets of **forward/return** keys by the hash of these keys being the preimage used.
 
 This payment delivery onion can deliver 1 to 5 key sets, to handle all possible cases, the only difference between them being the additional key layer in each hop, followed by a forward for the next, the message type is named "SendKeys", which is what follows an LN "keysend", and the bundled LND server then relays the bytes amount and preimage to Indra which then holds this to confirm the **SendKeys**.
 
+If the bootstrapping client is sending out an onion directly to a node to deliver the keys, however, this would unmask the identity of the buyer.
+
+But on the other side, allowing nodes to send messages for forwarding without a paid session would open the way for a denial of service attack where an attacker can flood the free relaying messages and prevent new clients acquiring their sessions.
+
+Thus, to cover the case for this initial bootstrap, there can be a second type of payment keysend delivered via LN to permit one message to be relayed, the initial SendKeys messages, a payment for the forwarding of **one** message. This would be a relatively high fee in order to further raise the cost of spamming using these one shot forwarding payments.
+
+By paying for three such initial hops, only the first of the three unmasks the bootstrapping client, but the second and third one shot forwarding nodes do not know whether they are second or third, nor whether the ones following are key deliveries or not.
+
+Subsequent purchases of bandwidth to establish new sessions can instead be carried via established sessions, and concealed via the two initial and two later forwarding layers that relay the payment to the seller.
+
 Once the key delivery onion is confirmed the client can then run a set of pings to confirm all nodes are delivering on their obligations after being paid.
 
-Lastly, with enough sessions open, nodes can run a special type of proxy type onion that returns the current state of remaining bandwidth on a session.
+Lastly, with enough sessions open, nodes can send a special type of proxy type onion that returns the current state of remaining bandwidth on a session.
+
+### Session Security and IP to Session Association
+
+An important element of the anonymity requires that sessions only get used at a given depth of the onion, and to use the same node in a different depth, another session is required, so the two do not get associated with the client identity.
+
+It is basically impossible to eliminate the problem that over the p2p network malicious nodes can tell the difference between a client and a relay. Clients are short lived. Clients don't provide services, they only provide feedback on the performance of nodes via their p2p sharing with ordering based on their positive experiences with the relay.
+
+So, on the client side, every session is associated with depth value, which represents the 5 hops in a circuit. In order to use a node in a different position in the 5 hops, the client must acquire a session for the node at the different depth.
+
+Implicitly, the first layer essentially is not anonymous between the session and the IP. The second is less possible to correlate, but is more visible than the exit layers.
+
+This stricture must be adhered to in order to prevent traffic correlation, sessions must only be used in their given position.
+
+Sessions thus are associated with a specific distance from the node where it will be used, and in which direction they are going to carry traffic.
 
 ## Relay to Relay Traffic
 
