@@ -60,7 +60,6 @@ func TestPing(t *testing.T) {
 	}
 }
 
-//
 // func TestSendKeys(t *testing.T) {
 // 	const nTotal = 6
 // 	clients := make([]*Client, nTotal)

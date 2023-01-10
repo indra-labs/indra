@@ -27,13 +27,13 @@ var (
 // this except when the netip.AddrPort is known via the packet sender address.
 type Node struct {
 	nonce.ID
-	Addr        string
-	AddrPort    *netip.AddrPort
-	HeaderPub   *pub.Key
-	HeaderBytes pub.Bytes
-	HeaderPrv   *prv.Key
-	PingCount   int
-	LastSeen    time.Time
+	Addr          string
+	AddrPort      *netip.AddrPort
+	IdentityPub   *pub.Key
+	IdentityBytes pub.Bytes
+	IdentityPrv   *prv.Key
+	PingCount     int
+	LastSeen      time.Time
 	Services
 	ifc.Transport
 }
@@ -45,13 +45,13 @@ func New(addr *netip.AddrPort, hdr *pub.Key, hdrPrv *prv.Key,
 
 	id = nonce.NewID()
 	n = &Node{
-		ID:          id,
-		Addr:        addr.String(),
-		AddrPort:    addr,
-		Transport:   tpt,
-		HeaderPub:   hdr,
-		HeaderBytes: hdr.ToBytes(),
-		HeaderPrv:   hdrPrv,
+		ID:            id,
+		Addr:          addr.String(),
+		AddrPort:      addr,
+		Transport:     tpt,
+		IdentityPub:   hdr,
+		IdentityBytes: hdr.ToBytes(),
+		IdentityPrv:   hdrPrv,
 	}
 	return
 }

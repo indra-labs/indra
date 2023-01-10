@@ -54,8 +54,8 @@ func New(tpt ifc.Transport, hdrPrv *prv.Key, no *node.Node,
 	nodes node.Nodes) (c *Client, e error) {
 
 	no.Transport = tpt
-	no.HeaderPrv = hdrPrv
-	no.HeaderPub = pub.Derive(hdrPrv)
+	no.IdentityPrv = hdrPrv
+	no.IdentityPub = pub.Derive(hdrPrv)
 	var ks *signer.KeySet
 	if _, ks, e = signer.New(); check(e) {
 		return
@@ -99,9 +99,9 @@ func (cl *Client) FindCloaked(clk cloak.PubKey) (hdr *prv.Key, pld *prv.Key,
 
 	var b cloak.Blinder
 	copy(b[:], clk[:cloak.BlindLen])
-	hash := cloak.Cloak(b, cl.Node.HeaderBytes)
+	hash := cloak.Cloak(b, cl.Node.IdentityBytes)
 	if hash == clk {
-		hdr = cl.Node.HeaderPrv
+		hdr = cl.Node.IdentityPrv
 		// there is no payload key for the node, only in sessions.
 		return
 	}
@@ -159,11 +159,11 @@ func (cl *Client) SendKeys(nodeID []nonce.ID, hook confirm.Hook) (conf nonce.ID,
 	// cl.Sessions.Add(&session.Session{
 	// 	ID:           n.ID,
 	// 	Remaining:    1 << 16,
-	// 	HeaderPub:    hdrPub,
-	// 	HeaderBytes:  hdrPub.ToBytes(),
+	// 	IdentityPub:    hdrPub,
+	// 	IdentityBytes:  hdrPub.ToBytes(),
 	// 	PayloadPub:   pldPub,
 	// 	PayloadBytes: pldPub.ToBytes(),
-	// 	HeaderPrv:    hdrPrv,
+	// 	IdentityPrv:    hdrPrv,
 	// 	PayloadPrv:   pldPrv,
 	// 	Deadline:     time.Now().Add(DefaultDeadline),
 	// })
