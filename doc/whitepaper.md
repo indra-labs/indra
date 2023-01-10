@@ -168,7 +168,7 @@ All messages look the same as packets in transit, and have no common data betwee
 
 ## Payment for Traffic
 
-Using the less well known sender initiated payment process in Lightning called Keysend, relays advertise their LN node public keys alongside their Indra identity keys, they send a message constructed as follows:
+Using [Atomic Multi-path Payment](https://docs.lightning.engineering/lightning-network-tools/lnd/amp) (AMP), relays advertise their LN node public keys alongside their Indra identity keys, they send a message constructed as follows:
 
 - Preimage hash of the forward and return private keys that will be delivered after payment to prove payment and provide the keys for handling return messages.
 - Amount of bytes the payment is for.
@@ -177,13 +177,17 @@ The payment will be for an amount of satoshis in accordance with the rate advert
 
 In the initial bootstrap, the client will send out 5 such payments to establish enough hops to form a secure path. With 5 payments made, relating to 5 sets of **forward/return** keys by the hash of these keys being the preimage used.
 
-This payment delivery onion can deliver 1 to 5 key sets, to handle all possible cases, the only difference between them being the additional key layer in each hop, followed by a forward for the next, the message type is named "SendKeys", which is what follows an LN "keysend", and the bundled LND server then relays the bytes amount and preimage to Indra which then holds this to confirm the **SendKeys**.
+This payment delivery onion can deliver 1 to 5 key sets, to handle all possible cases, the only difference between them being the additional key layer in each hop, followed by a forward for the next, the message type is named "SendKeys", which is what follows an LN AMP, and the bundled LND server then relays the bytes amount and preimage to Indra which then holds this to confirm the **SendKeys**.
 
 ### Sessions, Depth and Direction
 
 The nodes that are directly adjacent, the one the onion is sent to by the client, and the one that returns a response to a client, can easily associate a session key with the IP address. The second level of depth is less problematic in this way, but has weaker anonymity than the exit hops.
 
 Thus, sessions have a value associated with them to indicate what depth they can be used, and which direction. A simple signed byte integer is sufficient to cover the usual 3 layers of depth. In a ping message there is 1, 2, and -1. In an exit message, there is 1, 2, 3, -2, -1.
+
+This also indirectly brings up the subject of the amount of bandwidth that would be paid for in each case, since each relay needs a session for each of the 5 positions it might be selected to use. Because `AMP` is a fast and relatively cheap operation, it also reduces the risk of loss due to a node failing to deliver service, as the cost paid is low per unit and this observed failure will reduce the chances of the node being selected for future work.
+
+As a relay dutifully performs its service it can then be selected to be used for further sessions at different positions and possibly at larger amounts of bandwidth at a time to reduce the per-transaction cost overhead.
 
 ## Relay to Relay Traffic
 
