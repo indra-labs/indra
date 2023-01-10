@@ -21,7 +21,6 @@ import (
 	"github.com/indra-labs/indra/pkg/wire/exit"
 	"github.com/indra-labs/indra/pkg/wire/forward"
 	"github.com/indra-labs/indra/pkg/wire/layer"
-	"github.com/indra-labs/indra/pkg/wire/purchase"
 	"github.com/indra-labs/indra/pkg/wire/response"
 	"github.com/indra-labs/indra/pkg/wire/reverse"
 	"github.com/indra-labs/indra/pkg/wire/session"
@@ -240,46 +239,6 @@ func TestOnionSkins_Layer(t *testing.T) {
 	if oc.ID != n {
 		t.Error("did not recover the confirmation nonce")
 		t.FailNow()
-	}
-}
-
-func TestOnionSkins_Purchase(t *testing.T) {
-
-	var e error
-	prvs, pubs := GetCipherSet(t)
-	ciphers := GenCiphers(prvs, pubs)
-	p := rand.Uint64()
-	n3 := Gen3Nonces()
-	n := nonce.NewID()
-	on := OnionSkins{}.
-		Purchase(n, p, prvs, pubs, n3).
-		Assemble()
-	onb := EncodeOnion(on)
-	c := slice.NewCursor()
-	var onex types.Onion
-	if onex, e = PeelOnion(onb, c); check(e) {
-		t.FailNow()
-	}
-	pr := &purchase.OnionSkin{}
-	var ok bool
-	if pr, ok = onex.(*purchase.OnionSkin); !ok {
-		t.Error("did not unwrap expected type")
-		t.FailNow()
-	}
-	if pr.NBytes != p {
-		t.Error("NBytes did not unwrap correctly")
-		t.FailNow()
-	}
-	if pr.ID != n {
-		t.Errorf("id %v did not unwrap correctly, expected %v",
-			pr.ID, n)
-		t.FailNow()
-	}
-	for i := range pr.Ciphers {
-		if pr.Ciphers[i] != ciphers[i] {
-			t.Errorf("cipher %d did not unwrap correctly", i)
-			t.FailNow()
-		}
 	}
 }
 

@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/indra-labs/indra/pkg/ciph"
-	session2 "github.com/indra-labs/indra/pkg/session"
 	"github.com/indra-labs/indra/pkg/sha256"
 	"github.com/indra-labs/indra/pkg/slice"
 	"github.com/indra-labs/indra/pkg/types"
@@ -16,7 +15,6 @@ import (
 	"github.com/indra-labs/indra/pkg/wire/forward"
 	"github.com/indra-labs/indra/pkg/wire/layer"
 	"github.com/indra-labs/indra/pkg/wire/noop"
-	"github.com/indra-labs/indra/pkg/wire/purchase"
 	"github.com/indra-labs/indra/pkg/wire/response"
 	"github.com/indra-labs/indra/pkg/wire/reverse"
 	"github.com/indra-labs/indra/pkg/wire/session"
@@ -52,8 +50,6 @@ func (cl *Client) runner() (out bool) {
 			cl.layer(on, b, c)
 		case *noop.OnionSkin:
 			cl.noop(on, b, c)
-		case *purchase.OnionSkin:
-			cl.purchase(on, b, c)
 		case *reverse.OnionSkin:
 			cl.reverse(on, b, c)
 		case *response.OnionSkin:
@@ -151,40 +147,6 @@ func (cl *Client) layer(on *layer.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 
 func (cl *Client) noop(on *noop.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	// this won't happen normally
-}
-
-func (cl *Client) purchase(on *purchase.OnionSkin, b slice.Bytes, c *slice.Cursor) {
-	// Create a new Session.
-	s := session2.New(on.ID, on.NBytes, DefaultDeadline)
-	se := &session.OnionSkin{
-		ID:         s.ID,
-		HeaderKey:  s.HeaderPub,
-		PayloadKey: s.PayloadPub,
-		Onion:      &noop.OnionSkin{},
-	}
-	cl.Mutex.Lock()
-	// If there is already a session for the same ID (if a client previously
-	// used SendKeys with the current client, and the deadline hasn't
-	// passed) we need to remove it now, as the client will not use it again
-	// anyway.
-	sess := cl.Sessions.Find(on.ID)
-	if sess != nil {
-		cl.Sessions.Delete(sess)
-	}
-	// Add the new session.
-	cl.Sessions.Add(s)
-	cl.Mutex.Unlock()
-	header := b[*c:c.Inc(ReverseHeaderLen)]
-	rb := make(slice.Bytes, ReverseHeaderLen+session.Len)
-	cur := slice.NewCursor()
-	copy(rb[*cur:cur.Inc(ReverseHeaderLen)], header[:ReverseHeaderLen])
-	start := *cur
-	se.Encode(rb, cur)
-	for i := range on.Ciphers {
-		blk := ciph.BlockFromHash(on.Ciphers[i])
-		ciph.Encipher(blk, on.Nonces[2-i], rb[start:])
-	}
-	cl.Node.Send(rb)
 }
 
 func (cl *Client) reverse(on *reverse.OnionSkin, b slice.Bytes,

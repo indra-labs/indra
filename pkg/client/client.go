@@ -19,7 +19,6 @@ import (
 	"github.com/indra-labs/indra/pkg/nonce"
 	"github.com/indra-labs/indra/pkg/session"
 	"github.com/indra-labs/indra/pkg/slice"
-	"github.com/indra-labs/indra/pkg/wire"
 	"github.com/indra-labs/indra/pkg/wire/confirm"
 	"github.com/indra-labs/indra/pkg/wire/layer"
 	"github.com/indra-labs/indra/pkg/wire/response"
@@ -118,82 +117,59 @@ func (cl *Client) FindCloaked(clk cloak.PubKey) (hdr *prv.Key, pld *prv.Key,
 	return
 }
 
-// SendKeys is a function used to create temporary sessions during the
-// bootstrapping process when starting up a new client.
-//
-// The sessions it creates expire after the DefaultDeadline period, which will
-// probably later be adjusted downwards to fit the requirements. When paid
-// sessions are created, these temporary sessions should also be deleted.
-func (cl *Client) SendKeys(nodeID nonce.ID, hook confirm.Hook) (conf nonce.ID,
+// SendKeys is...
+func (cl *Client) SendKeys(nodeID []nonce.ID, hook confirm.Hook) (conf nonce.ID,
 	e error) {
 
-	var hdrPrv, pldPrv *prv.Key
-	if hdrPrv, e = prv.GenerateKey(); check(e) {
-		return
+	var n []*node.Node
+	for i := range nodeID {
+		no := cl.Nodes.FindByID(nodeID[i])
+		if no != nil {
+			n = append(n, no)
+		}
 	}
-	hdrPub := pub.Derive(hdrPrv)
-	if pldPrv, e = prv.GenerateKey(); check(e) {
-		return
+	if len(n) > 5 {
+		e = fmt.Errorf("SendKeys maximum 5 keys %d given", len(nodeID))
 	}
-	pldPub := pub.Derive(pldPrv)
-	n := cl.Nodes.FindByID(nodeID)
-	selected := cl.Nodes.Select(SimpleSelector, n, 4)
-	if len(selected) < 4 {
-		e = fmt.Errorf("not enough nodes known to form circuit")
-		return
-	}
-	hop := [5]*node.Node{
-		selected[0], selected[1], n, selected[2], selected[3],
-	}
-	conf = nonce.NewID()
-	os := wire.SendKeys(conf, hdrPrv, pldPrv, cl.Node, hop, cl.KeySet)
-	cl.RegisterConfirmation(hook, os[len(os)-1].(*confirm.OnionSkin).ID)
-	cl.Sessions.Add(&session.Session{
-		ID:           n.ID,
-		Remaining:    1 << 16,
-		HeaderPub:    hdrPub,
-		HeaderBytes:  hdrPub.ToBytes(),
-		PayloadPub:   pldPub,
-		PayloadBytes: pldPub.ToBytes(),
-		HeaderPrv:    hdrPrv,
-		PayloadPrv:   pldPrv,
-		Deadline:     time.Now().Add(DefaultDeadline),
-	})
-	o := os.Assemble()
-	b := wire.EncodeOnion(o)
-	cl.Send(hop[0].AddrPort, b)
-	return
-}
-
-func (cl *Client) SendPurchase(seller *node.Node) (e error) {
-	// We need at least two sessions in order to get the session message
-	// back from the seller. If there isn't two, we would need to make them
-	// using SendKeys.
-	var selected node.Nodes
-	if len(cl.Sessions) < 3 {
-		selected = cl.Nodes.Select(SimpleSelector, seller, 4)
-		if len(selected) < 4 {
-			e = fmt.Errorf("not enough nodes known to form circuit")
+	ln := len(n)
+	hdrPrv, pldPrv := make([]*prv.Key, ln), make([]*prv.Key, ln)
+	hdrPub, pldPub := make([]*pub.Key, ln), make([]*pub.Key, ln)
+	for i := range n {
+		if hdrPrv[i], e = prv.GenerateKey(); check(e) {
 			return
 		}
-		returnNodes := selected[2:]
-		var confirmation [2]nonce.ID
-		var wait sync.WaitGroup
-		for i := range returnNodes {
-			wait.Add(1)
-			confirmation[i], e = cl.SendKeys(returnNodes[i].ID,
-				func(cf nonce.ID) {
-					log.I.S("confirmed", cf)
-					wait.Done()
-				},
-			)
+		hdrPub[i] = pub.Derive(hdrPrv[i])
+		if pldPrv[i], e = prv.GenerateKey(); check(e) {
+			return
 		}
-		log.I.S(confirmation)
-		wait.Wait()
-		// We now have the reverse hops ready. The remainder of this
-		// process will automatically find the new sessions.
+		pldPub[i] = pub.Derive(pldPrv[i])
 	}
 
+	// selected := cl.Nodes.Select(SimpleSelector, n, 4)
+	// if len(selected) < 4 {
+	// 	e = fmt.Errorf("not enough nodes known to form circuit")
+	// 	return
+	// }
+	// hop := [5]*node.Node{
+	// 	selected[0], selected[1], n, selected[2], selected[3],
+	// }
+	// conf = nonce.NewID()
+	// os := wire.SendKeys(conf, hdrPrv, pldPrv, cl.Node, hop, cl.KeySet)
+	// cl.RegisterConfirmation(hook, os[len(os)-1].(*confirm.OnionSkin).ID)
+	// cl.Sessions.Add(&session.Session{
+	// 	ID:           n.ID,
+	// 	Remaining:    1 << 16,
+	// 	HeaderPub:    hdrPub,
+	// 	HeaderBytes:  hdrPub.ToBytes(),
+	// 	PayloadPub:   pldPub,
+	// 	PayloadBytes: pldPub.ToBytes(),
+	// 	HeaderPrv:    hdrPrv,
+	// 	PayloadPrv:   pldPrv,
+	// 	Deadline:     time.Now().Add(DefaultDeadline),
+	// })
+	// o := os.Assemble()
+	// b := wire.EncodeOnion(o)
+	// cl.Send(hop[0].AddrPort, b)
 	return
 }
 

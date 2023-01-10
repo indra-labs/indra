@@ -26,6 +26,7 @@ type Session struct {
 	HeaderPub, PayloadPub     *pub.Key
 	HeaderBytes, PayloadBytes pub.Bytes
 	HeaderPrv, PayloadPrv     *prv.Key
+	Depth                     int8
 	Deadline                  time.Time
 }
 

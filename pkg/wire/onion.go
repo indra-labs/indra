@@ -49,71 +49,29 @@ func Ping(id nonce.ID, client *node.Node, hop [3]*node.Node,
 // This message's last layer is a Confirmation, which allows the client to know
 // that the key was successfully delivered to the Reverse relays that will be
 // used in the Purchase.
-//
-// The node that will receive the new keys is hop[2], the third element of the
-// hop array.
-func SendKeys(id nonce.ID, hdr, pld *prv.Key,
+func SendKeys(id nonce.ID, hdr, pld [5]*prv.Key,
 	client *node.Node, hop [5]*node.Node, set *signer.KeySet) OnionSkins {
 
-	n0 := Gen3Nonces()
-	n1 := Gen3Nonces()
+	n := GenNonces(6)
 	return OnionSkins{}.
 		Forward(hop[0].AddrPort).
-		OnionSkin(hop[0].HeaderPub, set.Next(), n0[0]).
+		OnionSkin(hop[0].HeaderPub, set.Next(), n[0]).
+		Cipher(hdr[0], pld[0]).
 		Forward(hop[1].AddrPort).
-		OnionSkin(hop[1].HeaderPub, set.Next(), n0[1]).
+		OnionSkin(hop[1].HeaderPub, set.Next(), n[1]).
+		Cipher(hdr[1], pld[1]).
 		Forward(hop[2].AddrPort).
-		OnionSkin(hop[2].HeaderPub, set.Next(), n0[2]).
-		Cipher(hdr, pld).
+		OnionSkin(hop[2].HeaderPub, set.Next(), n[2]).
+		Cipher(hdr[2], pld[2]).
 		Forward(hop[3].AddrPort).
-		OnionSkin(hop[3].HeaderPub, set.Next(), n1[0]).
+		OnionSkin(hop[3].HeaderPub, set.Next(), n[3]).
+		Cipher(hdr[3], pld[3]).
 		Forward(hop[4].AddrPort).
-		OnionSkin(hop[4].HeaderPub, set.Next(), n1[1]).
+		OnionSkin(hop[4].HeaderPub, set.Next(), n[4]).
+		Cipher(hdr[4], pld[4]).
 		Forward(client.AddrPort).
-		OnionSkin(client.HeaderPub, set.Next(), n1[2]).
+		OnionSkin(client.HeaderPub, set.Next(), n[5]).
 		Confirmation(id)
-}
-
-// SendPurchase delivers a request for keys for a relaying session with a given
-// router (in this case, hop 2). It is almost identical to an Exit except the
-// payload is always just a 64-bit unsigned integer.
-//
-// The response, which will be two public keys that identify the session and
-// form the basis of the cloaked "To" keys, is encrypted with the given layers,
-// the ciphers are already given in reverse order, so they are decoded in given
-// order to create the correct payload encryption to match the PayloadPub
-// combined with the header's given public From key.
-//
-// The header remains a constant size and each node in the Reverse trims off
-// their section at the top, moves the next layer header to the top and pads the
-// remainder with noise, so it always looks like the first hop.
-func SendPurchase(n nonce.ID, nBytes uint64, client *node.Node,
-	hop [5]*node.Node, sess [3]*session.Session,
-	set *signer.KeySet) OnionSkins {
-
-	var prvs [3]*prv.Key
-	for i := range prvs {
-		prvs[i] = set.Next()
-	}
-	n0, n1 := Gen3Nonces(), Gen3Nonces()
-	var pubs [3]*pub.Key
-	pubs[0] = sess[0].PayloadPub
-	pubs[1] = sess[1].PayloadPub
-	pubs[2] = sess[2].PayloadPub
-	return OnionSkins{}.
-		Forward(hop[0].AddrPort).
-		OnionSkin(hop[0].HeaderPub, set.Next(), n0[0]).
-		Forward(hop[1].AddrPort).
-		OnionSkin(hop[1].HeaderPub, set.Next(), n0[1]).
-		Forward(hop[2].AddrPort).
-		OnionSkin(hop[2].HeaderPub, set.Next(), n0[2]).
-		Purchase(n, nBytes, prvs, pubs, n1).
-		Reverse(hop[3].AddrPort).
-		OnionSkin(sess[0].HeaderPub, prvs[0], n1[0]).
-		Reverse(hop[4].AddrPort).
-		OnionSkin(sess[1].HeaderPub, prvs[1], n1[1]).
-		Reverse(client.AddrPort).
-		OnionSkin(sess[2].HeaderPub, prvs[2], n1[2])
 }
 
 // SendExit constructs a message containing an arbitrary payload to a node (3rd

@@ -60,69 +60,29 @@ func TestPing(t *testing.T) {
 	}
 }
 
-func TestSendKeys(t *testing.T) {
-	const nTotal = 6
-	clients := make([]*Client, nTotal)
-	var e error
-	if clients, e = CreateMockCircuitClients(nTotal); check(e) {
-		t.Error(e)
-		t.FailNow()
-	}
-	// Start up the clients.
-	for _, v := range clients {
-		go v.Start()
-	}
-	quit := qu.T()
-	clients[0].SendKeys(clients[0].Nodes[0].ID, func(cf nonce.ID) {
-		log.I.S("received sendkeys confirmation ID", cf)
-		quit.Q()
-	})
-	<-quit.Wait()
-	for _, v := range clients {
-		v.Shutdown()
-	}
-}
-
-func TestSendPurchase(t *testing.T) {
-	const nTotal = 6
-	clients := make([]*Client, nTotal)
-	var e error
-	if clients, e = CreateMockCircuitClients(nTotal); check(e) {
-		t.Error(e)
-		t.FailNow()
-	}
-	var ks *signer.KeySet
-	if _, ks, e = signer.New(); check(e) {
-		t.Error(e)
-		t.FailNow()
-	}
-	var sess [3]*session.Session
-	sess[0] = clients[4].Sessions.Find(clients[4].ID)
-	sess[1] = clients[5].Sessions.Find(clients[5].ID)
-	sess[2] = clients[0].Sessions.Find(clients[0].ID)
-	clients[4].Sessions = clients[4].Sessions.Add(sess[0])
-	clients[5].Sessions = clients[5].Sessions.Add(sess[1])
-	clients[0].Sessions = clients[0].Sessions.Add(sess[2])
-	// Start up the clients.
-	for _, v := range clients {
-		go v.Start()
-	}
-	var hop [nTotal - 1]*node.Node
-	for i := range clients[0].Nodes {
-		hop[i] = clients[0].Nodes[i]
-	}
-	const nBytes = 2342342
-	id := nonce.NewID()
-	os := wire.SendPurchase(id, nBytes, clients[0].Node, hop, sess, ks)
-	clients[0].PendingSessions = append(clients[0].PendingSessions, id)
-	o := os.Assemble()
-	b := wire.EncodeOnion(o)
-	hop[0].Send(b)
-	<-clients[0].Wait()
-	for _, v := range clients {
-		v.Shutdown()
-	}
-}
+//
+// func TestSendKeys(t *testing.T) {
+// 	const nTotal = 6
+// 	clients := make([]*Client, nTotal)
+// 	var e error
+// 	if clients, e = CreateMockCircuitClients(nTotal); check(e) {
+// 		t.Error(e)
+// 		t.FailNow()
+// 	}
+// 	// Start up the clients.
+// 	for _, v := range clients {
+// 		go v.Start()
+// 	}
+// 	quit := qu.T()
+// 	clients[0].SendKeys(clients[0].Nodes[0].ID, func(cf nonce.ID) {
+// 		log.I.S("received sendkeys confirmation ID", cf)
+// 		quit.Q()
+// 	})
+// 	<-quit.Wait()
+// 	for _, v := range clients {
+// 		v.Shutdown()
+// 	}
+// }
 
 func TestSendExit(t *testing.T) {
 	const nTotal = 6

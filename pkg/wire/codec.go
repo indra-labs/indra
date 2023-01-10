@@ -14,7 +14,6 @@ import (
 	"github.com/indra-labs/indra/pkg/wire/forward"
 	"github.com/indra-labs/indra/pkg/wire/layer"
 	"github.com/indra-labs/indra/pkg/wire/magicbytes"
-	"github.com/indra-labs/indra/pkg/wire/purchase"
 	"github.com/indra-labs/indra/pkg/wire/response"
 	"github.com/indra-labs/indra/pkg/wire/reverse"
 	"github.com/indra-labs/indra/pkg/wire/session"
@@ -72,12 +71,6 @@ func PeelOnion(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 			return
 		}
 		on = &o
-	case purchase.MagicString:
-		o := &purchase.OnionSkin{}
-		if e = o.Decode(b, c); check(e) {
-			return
-		}
-		on = o
 	case reverse.MagicString:
 		o := &reverse.OnionSkin{}
 		if e = o.Decode(b, c); check(e) {
