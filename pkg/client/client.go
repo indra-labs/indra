@@ -67,16 +67,18 @@ func New(tpt ifc.Transport, hdrPrv *prv.Key, no *node.Node,
 		KeySet:   ks,
 		C:        qu.T(),
 	}
-	c.Sessions = c.Sessions.Add(session.New(no.ID, math.MaxUint64, 0))
+	// A new client requires a Session for receiving responses. This session
+	// should have its keys changed periodically, or at least once on
+	// startup.
+	c.Sessions = c.Sessions.Add(session.New(no.ID, no, math.MaxUint64, 0, 0))
 	return
 }
 
 // Start a single thread of the Client.
 func (cl *Client) Start() {
-out:
 	for {
 		if cl.runner() {
-			break out
+			break
 		}
 	}
 }

@@ -18,7 +18,7 @@ import (
 )
 
 func TestPing(t *testing.T) {
-	const nTotal = 4
+	const nTotal = 6
 	clients := make([]*Client, nTotal)
 	var e error
 	if clients, e = CreateMockCircuitClients(nTotal); check(e) {
@@ -29,17 +29,18 @@ func TestPing(t *testing.T) {
 	for _, v := range clients {
 		go v.Start()
 	}
-	pn := nonce.NewID()
+	conf := nonce.NewID()
 	var ks *signer.KeySet
 	if _, ks, e = signer.New(); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
-	var hop [nTotal - 1]*node.Node
-	for i := range clients[0].Nodes {
-		hop[i] = clients[0].Nodes[i]
+	var sessions session.Sessions
+	for _, v := range clients[1:] {
+		sessions = append(sessions, v.Sessions[0])
 	}
-	os := wire.Ping(pn, clients[0].Node, hop, ks)
+	sessions = append(sessions, clients[0].Sessions[0])
+	os := wire.Ping(conf, sessions, ks)
 	quit := qu.T()
 	log.I.S("sending ping with ID", os[len(os)-1].(*confirm.OnionSkin))
 	clients[0].RegisterConfirmation(func(cf nonce.ID) {
@@ -48,12 +49,16 @@ func TestPing(t *testing.T) {
 	}, os[len(os)-1].(*confirm.OnionSkin).ID)
 	o := os.Assemble()
 	b := wire.EncodeOnion(o)
-	hop[0].Send(b)
-	// go func() {
-	// 	time.Sleep(time.Second)
-	// 	quit.Q()
-	// 	t.Error("ping got stuck")
-	// }()
+	clients[0].Send(clients[1].AddrPort, b)
+	go func() {
+		select {
+		case <-time.After(time.Second):
+			t.Error("ping got stuck")
+		case <-quit:
+		}
+		time.Sleep(time.Second)
+		quit.Q()
+	}()
 	<-quit.Wait()
 	for _, v := range clients {
 		v.Shutdown()

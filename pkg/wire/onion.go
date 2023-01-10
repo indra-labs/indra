@@ -20,19 +20,25 @@ import (
 // an increment of their liveness score. By using this scheme, when nodes are
 // offline their scores will fall to zero after a time whereas live nodes will
 // have steadily increasing scores from successful pings.
-func Ping(id nonce.ID, client *node.Node, hop [3]*node.Node,
-	set *signer.KeySet) OnionSkins {
-
+func Ping(id nonce.ID, s session.Sessions, ks *signer.KeySet) OnionSkins {
+	if len(s) != 6 {
+		log.E.F("Ping requires 4 sessions, received %d", len(s))
+		return nil
+	}
 	n := GenPingNonces()
 	return OnionSkins{}.
-		Forward(hop[0].AddrPort).
-		OnionSkin(hop[0].IdentityPub, set.Next(), n[0]).
-		Forward(hop[1].AddrPort).
-		OnionSkin(hop[1].IdentityPub, set.Next(), n[1]).
-		Forward(hop[2].AddrPort).
-		OnionSkin(hop[2].IdentityPub, set.Next(), n[2]).
-		Forward(client.AddrPort).
-		OnionSkin(client.IdentityPub, set.Next(), n[3]).
+		Forward(s[0].AddrPort).
+		OnionSkin(s[0].HeaderPub, ks.Next(), n[0]).
+		Forward(s[1].AddrPort).
+		OnionSkin(s[1].HeaderPub, ks.Next(), n[1]).
+		Forward(s[2].AddrPort).
+		OnionSkin(s[2].HeaderPub, ks.Next(), n[2]).
+		Forward(s[3].AddrPort).
+		OnionSkin(s[3].HeaderPub, ks.Next(), n[3]).
+		Forward(s[4].AddrPort).
+		OnionSkin(s[4].HeaderPub, ks.Next(), n[3]).
+		Forward(s[5].AddrPort).
+		OnionSkin(s[5].HeaderPub, ks.Next(), n[3]).
 		Confirmation(id)
 }
 

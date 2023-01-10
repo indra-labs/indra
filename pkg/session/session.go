@@ -34,7 +34,7 @@ type Session struct {
 //
 // Purchasing a session the seller returns a token, based on a requested data
 // allocation.
-func New(id nonce.ID, rem uint64, deadline time.Duration) (s *Session) {
+func New(id nonce.ID, node *node.Node, rem uint64, deadline time.Duration, depth int8) (s *Session) {
 
 	var e error
 	var hdrPrv, pldPrv *prv.Key
@@ -49,6 +49,7 @@ func New(id nonce.ID, rem uint64, deadline time.Duration) (s *Session) {
 
 	s = &Session{
 		ID:           id,
+		Node:         node,
 		Remaining:    rem,
 		HeaderPub:    hdrPub,
 		HeaderBytes:  hdrPub.ToBytes(),
@@ -57,6 +58,7 @@ func New(id nonce.ID, rem uint64, deadline time.Duration) (s *Session) {
 		HeaderPrv:    hdrPrv,
 		PayloadPrv:   pldPrv,
 		Deadline:     time.Now().Add(deadline),
+		Depth:        depth,
 	}
 	return
 }
