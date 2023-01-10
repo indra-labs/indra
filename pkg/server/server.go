@@ -6,10 +6,9 @@ import (
 	"github.com/indra-labs/indra/pkg/cfg"
 	"github.com/indra-labs/indra/pkg/interrupt"
 	log2 "github.com/indra-labs/indra/pkg/log"
+	"github.com/indra-labs/indra/pkg/p2p/introducer"
 	"github.com/indra-labs/indra/pkg/p2p/metrics"
-	"github.com/indra-labs/indra/pkg/p2p/seed"
 	"github.com/libp2p/go-libp2p"
-	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/multiformats/go-multiaddr"
 	"time"
@@ -32,7 +31,6 @@ type Server struct {
 	params *cfg.Params
 
 	host host.Host
-	dht  *dht.IpfsDHT
 }
 
 func (srv *Server) Restart() (err error) {
@@ -67,6 +65,9 @@ func (srv *Server) Serve() (err error) {
 
 	interrupt.AddHandler(cancel)
 
+	// Introduce your node to the network
+	go introducer.Bootstrap(ctx, srv.host, srv.config.SeedAddresses)
+
 	// Get some basic metrics for the host
 	//metrics.Init()
 	//metrics.Set('indra.host.status.reporting.interval', 30 * time.Second)
@@ -74,9 +75,6 @@ func (srv *Server) Serve() (err error) {
 	metrics.SetInterval(30 * time.Second)
 
 	go metrics.HostStatus(ctx, srv.host)
-
-	// Run the bootstrapping service on the peer.
-	go seed.Bootstrap(ctx, srv.host, srv.config.SeedAddresses)
 
 	select {
 

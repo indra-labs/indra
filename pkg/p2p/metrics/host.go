@@ -36,6 +36,8 @@ func HostStatus(ctx context.Context, host host.Host) {
 		return
 	}
 
+	log.I.Ln("[metrics.hoststatus] is ready")
+
 	for {
 
 		select {
