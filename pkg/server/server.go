@@ -7,7 +7,7 @@ import (
 	"github.com/indra-labs/indra/pkg/interrupt"
 	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/indra-labs/indra/pkg/p2p/introducer"
-	"github.com/indra-labs/indra/pkg/p2p/metrics"
+	"github.com/indra-labs/indra/pkg/server/metrics"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/multiformats/go-multiaddr"
