@@ -70,6 +70,7 @@ func Bootstrap(ctx context.Context, host host.Host, seeds []multiaddr.Multiaddr)
 		dht.ProtocolPrefix(protocolPrefix),
 		dht.BootstrapPeers(bootstrapPeers...),
 		dht.DisableValues(),
+		dht.DisableProviders(),
 		//dht.Validator(),
 	}
 
