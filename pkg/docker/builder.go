@@ -26,19 +26,6 @@ var (
 )
 
 var (
-	buildRepositoryName  = "indralabs/indra"
-	buildContextFilePath = "/tmp/indra-" + indra.SemVer + ".tar"
-	buildOpts            = types.ImageBuildOptions{
-		Dockerfile: "docker/indra/Dockerfile",
-		Tags: []string{
-			buildRepositoryName + ":" + indra.SemVer,
-			buildRepositoryName + ":" + "latest",
-		},
-		SuppressOutput: false,
-		Remove:         true,
-		ForceRemove:    true,
-		PullParent:     true,
-	}
 	isRelease  = false
 	isPushable = false
 )
@@ -53,17 +40,21 @@ func SetPush() {
 
 type Builder struct {
 	*client.Client
-	ctx context.Context
+	ctx     context.Context
+	configs []BuildConfiguration
 }
 
-func (cli *Builder) Build() (err error) {
+func (self *Builder) build(buildConfig BuildConfiguration) (err error) {
 
-	log.I.Ln("building", buildOpts.Tags[0], "from", buildOpts.Dockerfile)
+	// We need the absolute path for build tags to be valid
+	buildConfig.BuildOpts.Tags = buildConfig.FixTagPrefix()
+
+	log.I.Ln("building", buildConfig.BuildOpts.Tags[0], "from", buildConfig.BuildOpts.Dockerfile)
 
 	// If we're building a release, we should also tag stable.
 
 	if isRelease {
-		buildOpts.Tags = append(buildOpts.Tags, buildRepositoryName+":"+"stable")
+		buildConfig.BuildOpts.Tags = append(buildConfig.BuildOpts.Tags, "stable")
 	}
 
 	// Generate a tar file for docker's release context. It will contain the root of the repository's path.
@@ -83,7 +74,7 @@ func (cli *Builder) Build() (err error) {
 
 	var response types.ImageBuildResponse
 
-	if response, err = cli.ImageBuild(cli.ctx, tar, buildOpts); check(err) {
+	if response, err = self.ImageBuild(self.ctx, tar, buildConfig.BuildOpts); check(err) {
 		return
 	}
 
@@ -101,7 +92,7 @@ func (cli *Builder) Build() (err error) {
 
 	log.I.Ln("pruning release container(s)...")
 
-	if _, err = cli.ImagesPrune(cli.ctx, filters.NewArgs()); check(err) {
+	if _, err = self.ImagesPrune(self.ctx, filters.NewArgs()); check(err) {
 		return
 	}
 
@@ -111,7 +102,19 @@ func (cli *Builder) Build() (err error) {
 	return
 }
 
-func (cli *Builder) Push(opts types.ImagePushOptions) (err error) {
+func (self *Builder) Build() (err error) {
+
+	for _, buildConfig := range self.configs {
+
+		if err = self.build(buildConfig); check(err) {
+			return
+		}
+	}
+
+	return nil
+}
+
+func (self *Builder) push(buildConfig BuildConfiguration) (err error) {
 
 	if !isPushable {
 		return nil
@@ -148,15 +151,15 @@ func (cli *Builder) Push(opts types.ImagePushOptions) (err error) {
 
 		authConfigBytes, _ := json.Marshal(auth)
 
-		opts.RegistryAuth = base64.URLEncoding.EncodeToString(authConfigBytes)
+		buildConfig.PushOpts.RegistryAuth = base64.URLEncoding.EncodeToString(authConfigBytes)
 
 		// Pushes each tag to the docker repository.
 
-		for _, tag := range buildOpts.Tags {
+		for _, tag := range buildConfig.FixTagPrefix() {
 
 			log.I.Ln("pushing", tag)
 
-			if pushResponse, err = cli.ImagePush(cli.ctx, tag, opts); check(err) {
+			if pushResponse, err = self.ImagePush(self.ctx, tag, buildConfig.PushOpts); check(err) {
 				return
 			}
 
@@ -175,10 +178,23 @@ func (cli *Builder) Push(opts types.ImagePushOptions) (err error) {
 	return nil
 }
 
-func NewBuilder(ctx context.Context, cli *client.Client) (builder *Builder) {
+func (self *Builder) Push() (err error) {
+
+	for _, buildConfig := range self.configs {
+
+		if err = self.push(buildConfig); check(err) {
+			return
+		}
+	}
+
+	return nil
+}
+
+func NewBuilder(ctx context.Context, cli *client.Client, buildConfigs []BuildConfiguration) (builder *Builder) {
 
 	return &Builder{
 		cli,
 		ctx,
+		buildConfigs,
 	}
 }

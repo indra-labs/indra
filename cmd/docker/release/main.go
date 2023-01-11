@@ -26,8 +26,51 @@ func init() {
 }
 
 var (
-	timeout = 120 * time.Second
+	timeout = 240 * time.Second
+
+	defaultRepositoryName = "indralabs"
 )
+
+func strPtr(str string) *string { return &str }
+
+var buildConfigurations = []docker.BuildConfiguration{
+	docker.BuildConfiguration{
+		Name:            defaultRepositoryName + "/" + "indra",
+		ContextFilePath: "/tmp/indra-" + indra.SemVer + ".tar",
+		BuildOpts: types.ImageBuildOptions{
+			Dockerfile: "docker/indra/Dockerfile",
+			Tags: []string{
+				indra.SemVer,
+				"latest",
+			},
+			BuildArgs:      map[string]*string{},
+			SuppressOutput: false,
+			Remove:         true,
+			ForceRemove:    true,
+			PullParent:     true,
+		},
+	},
+	docker.BuildConfiguration{
+		Name:            defaultRepositoryName + "/" + "lnd",
+		ContextFilePath: "/tmp/lnd.tar",
+		BuildOpts: types.ImageBuildOptions{
+			Dockerfile: "docker/lnd/Dockerfile",
+			Tags: []string{
+				"v0.15.5-beta",
+				"latest",
+			},
+			BuildArgs: map[string]*string{
+				// This argument is the tag fetched by git
+				// It MUST be updated alongside the tag above
+				"lnd_version": strPtr("v0.15.5-beta"),
+			},
+			SuppressOutput: false,
+			Remove:         true,
+			ForceRemove:    true,
+			PullParent:     true,
+		},
+	},
+}
 
 var commands = &cmds.Command{
 	Name:          "release",
@@ -75,15 +118,14 @@ var commands = &cmds.Command{
 
 		defer cli.Close()
 
-		// Get ready to submit a build
-
-		var builder = docker.NewBuilder(ctx, cli)
+		// Get ready to submit the builds
+		var builder = docker.NewBuilder(ctx, cli, buildConfigurations)
 
 		if err = builder.Build(); check(err) {
 			return err
 		}
 
-		if err = builder.Push(types.ImagePushOptions{}); check(err) {
+		if err = builder.Push(); check(err) {
 			return err
 		}
 
