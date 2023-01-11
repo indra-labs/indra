@@ -118,9 +118,7 @@ var commands = &cmds.Command{
 					return err
 				}
 
-				log.I.Ln("starting the server.")
-
-				if srv.Serve(); check(err) {
+				if err = srv.Serve(); check(err) {
 					return err
 				}
 

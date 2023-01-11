@@ -12,6 +12,7 @@ import (
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/multiformats/go-multiaddr"
+	"time"
 )
 
 var (
@@ -43,24 +44,20 @@ func (srv *Server) Restart() (err error) {
 
 func (srv *Server) Shutdown() (err error) {
 
-	//log.I.Ln("shutting down the dht...")
-	//
-	//if srv.dht.Close(); check(err) {
-	//	return
-	//}
-
-	log.I.Ln("shutting down the p2p host...")
+	log.I.Ln("shutting down [p2p.host]")
 
 	if srv.host.Close(); check(err) {
 		return
 	}
 
-	log.I.Ln("shutdown complete.")
+	log.I.Ln("shutdown complete")
 
 	return nil
 }
 
 func (srv *Server) Serve() (err error) {
+
+	log.I.Ln("starting the server")
 
 	// Here we create a context with cancel and add it to the interrupt handler
 	var ctx context.Context
@@ -74,50 +71,19 @@ func (srv *Server) Serve() (err error) {
 	//metrics.Init()
 	//metrics.Set('indra.host.status.reporting.interval', 30 * time.Second)
 	//metrics.Enable('indra.host.status')
+	metrics.SetInterval(30 * time.Second)
+
 	go metrics.HostStatus(ctx, srv.host)
 
 	// Run the bootstrapping service on the peer.
-	if err = seed.Bootstrap(ctx, srv.host, srv.config.SeedAddresses); check(err) {
-		return
-	}
-
-	//log.I.Ln("bootstrapping the DHT")
-
-	// Bootstrap the DHT. In the default configuration, this spawns a Background
-	// thread that will refresh the peer table every five minutes.
-	//if err = srv.dht.Bootstrap(srv.Context); check(err) {
-	//	return err
-	//}
-
-	log.I.Ln("successfully connected")
-
-	//var pingService *ping.PingService
-	//
-	//if pingService = ping.NewPingService(srv.host); check(err) {
-	//	return
-	//}
-	//
-	//go func() {
-	//
-	//	log.I.Ln("attempting ping")
-	//
-	//	for {
-	//
-	//		for _, peer := range srv.host.Peerstore().Peers() {
-	//
-	//			select {
-	//				case result := <- pingService.Ping(context.Background(), peer):
-	//					log.I.Ln("ping", peer.String(), "-", result.RTT)
-	//			}
-	//		}
-	//
-	//		time.Sleep(10 * time.Second)
-	//	}
-	//
-	//}()
+	go seed.Bootstrap(ctx, srv.host, srv.config.SeedAddresses)
 
 	select {
+
 	case <-ctx.Done():
+
+		log.I.Ln("shutting down server")
+
 		srv.Shutdown()
 	}
 
@@ -150,14 +116,6 @@ func New(params *cfg.Params, config *Config) (srv *Server, err error) {
 	}
 
 	config.SeedAddresses = append(config.SeedAddresses, seedAddresses...)
-
-	// Start a DHT, for use in peer discovery. We can't just make a new DHT
-	// client because we want each peer to maintain its own local copy of the
-	// DHT, so that the bootstrapping node of the DHT can go down without
-	// inhibiting future peer discovery.
-	//if s.dht, err = dht.New(s.Context, s.host); check(err) {
-	//	return nil, err
-	//}
 
 	return &s, err
 }

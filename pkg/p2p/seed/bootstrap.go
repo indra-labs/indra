@@ -3,6 +3,7 @@ package seed
 import (
 	"context"
 	"errors"
+	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"sync"
 	"time"
 
@@ -20,7 +21,7 @@ var (
 
 var (
 	defaultConnectionAttempts        uint = 3
-	defaultConnectionAttemptInterval      = 10 * time.Second
+	defaultConnectionAttemptInterval      = 3 * time.Second
 
 	defaultConnectionsMax       uint = 32
 	defaultConnectionsToSatisfy uint = 5
@@ -32,19 +33,23 @@ var (
 	c  context.Context
 	h  host.Host = nil
 
+	kadht *dht.IpfsDHT
+
 	failedChan = make(chan error)
 )
 
 func connection_attempt(peer *peer.AddrInfo, attempts_left uint) {
 
 	if attempts_left == 0 {
-
 		wg.Done()
-
 		return
 	}
 
-	if err := h.Connect(c, *peer); err != nil {
+	log.D.Ln("attempting connection", peer.ID)
+
+	var err error
+
+	if err = h.Connect(c, *peer); err != nil {
 
 		log.I.Ln("connection attempt failed:", peer.ID)
 
@@ -52,6 +57,9 @@ func connection_attempt(peer *peer.AddrInfo, attempts_left uint) {
 		case <-time.After(defaultConnectionAttemptInterval):
 			connection_attempt(peer, attempts_left-1)
 		case <-c.Done():
+
+			log.I.Ln("connection attempt to", peer.ID, "interrupted, shutting down")
+
 			wg.Done()
 		}
 
@@ -65,7 +73,7 @@ func connection_attempt(peer *peer.AddrInfo, attempts_left uint) {
 
 func Bootstrap(ctx context.Context, host host.Host, seeds []multiaddr.Multiaddr) (err error) {
 
-	log.I.Ln("[seed.bootstrap] starting")
+	log.I.Ln("starting [seed.bootstrap]")
 
 	// Guarding against multiple instantiations
 	if !m.TryLock() {
@@ -75,7 +83,15 @@ func Bootstrap(ctx context.Context, host host.Host, seeds []multiaddr.Multiaddr)
 	c = ctx
 	h = host
 
-	log.I.Ln("attempting peering with seeds...")
+	if kadht, err = dht.New(ctx, h); check(err) {
+		return
+	}
+
+	if err = kadht.Bootstrap(ctx); check(err) {
+		return
+	}
+
+	log.I.Ln("using seeds:")
 
 	var peerInfo *peer.AddrInfo
 
@@ -94,12 +110,18 @@ func Bootstrap(ctx context.Context, host host.Host, seeds []multiaddr.Multiaddr)
 
 		wg.Add(1)
 
-		log.I.Ln("attempting connection", peerInfo.ID)
-
 		go connection_attempt(peerInfo, defaultConnectionAttempts)
 	}
 
 	wg.Wait()
+
+	select {
+	case <-c.Done():
+
+		log.I.Ln("shutting down [seed.bootstrap]")
+
+		return
+	}
 
 	log.I.Ln("finished seed bootstrapping")
 
