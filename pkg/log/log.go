@@ -287,52 +287,51 @@ func logPrint(
 	printFunc func() string,
 ) func() {
 	return func() {
-		if level > Off && level <= logLevel {
-			formatString := "%v%s%s%-6v %s\n"
-			loc := ""
-			tsf := timeStampFormat
-			if codeLoc {
-				formatString = "%-58v%s%s%-6v %s\n"
-				loc = GetLoc(3, subsystem)
-				tsf = LocTimeStampFormat
-			}
-			var app string
-			if len(App) > 0 {
-				fmt.Sprint(" [" + App + "]")
-			}
-			s := fmt.Sprintf(
-				formatString,
-				loc,
-				color.Gray.Sprint(getTimeText(tsf)),
-				app,
-				LevelSpecs[level].Colorizer(
-					" "+LevelSpecs[level].Name+" ",
-				),
-				printFunc(),
-			)
-			writerMx.Lock()
-			defer writerMx.Unlock()
-			fmt.Fprintf(writer, s)
+		if level <= Off && level > logLevel {
+			return
 		}
+		formatString := "%v%s%s%-6v %s\n"
+		loc := ""
+		tsf := timeStampFormat
+		if codeLoc {
+			formatString = "%-58v%s%s%-6v %s\n"
+			loc = GetLoc(3, subsystem)
+			tsf = LocTimeStampFormat
+		}
+		var app string
+		if len(App) > 0 {
+			fmt.Sprint(" [" + App + "]")
+		}
+		s := fmt.Sprintf(
+			formatString,
+			loc,
+			color.Gray.Sprint(getTimeText(tsf)),
+			app,
+			LevelSpecs[level].Colorizer(
+				" "+LevelSpecs[level].Name+" ",
+			),
+			printFunc(),
+		)
+		writerMx.Lock()
+		defer writerMx.Unlock()
+		fmt.Fprintf(writer, s)
 	}
 }
 
 // sortSubsystemsList sorts the list of subsystems, to keep the data read-only,
 // call this function right at the top of the main, which runs after
 // declarations and main/init. Really this is just here to alert the reader.
-func sortSubsystemsList() {
-	sort.Strings(allSubsystems)
-}
+func sortSubsystemsList() { sort.Strings(allSubsystems) }
 
 // Add adds a subsystem to the list of known subsystems and returns the
 // string so it is nice and neat in the package logg.go file
 func Add(pathBase string) (subsystem string) {
 	var ok bool
-	var file string
-	_, file, _, ok = runtime.Caller(2)
+	var fh string
+	_, fh, _, ok = runtime.Caller(2)
 	if ok {
-		r := strings.Split(file, pathBase)
-		fromRoot := filepath.Base(file)
+		r := strings.Split(fh, pathBase)
+		fromRoot := filepath.Base(fh)
 		if len(r) > 1 {
 			fromRoot = r[1]
 		}
@@ -349,7 +348,6 @@ func Add(pathBase string) (subsystem string) {
 // GetLogger returns a set of LevelPrinter with their subsystem preloaded
 func GetLogger(pathBase string) (l *Logger) {
 	ss := Add(pathBase)
-	// fmt.Println("subsystems:", allSubsystems)
 	return &Logger{
 		getOnePrinter(Fatal, ss),
 		getOnePrinter(Error, ss),

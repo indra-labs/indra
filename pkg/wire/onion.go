@@ -15,14 +15,14 @@ import (
 // last hop as the key to narrow the number of elements to search through to
 // find the matching cipher and reveal the contained ID inside it.
 //
-// The pending ping records keep the identifiers of the three nodes that were in
+// The pending ping records keep the identifiers of the 5 nodes that were in
 // a ping onion and when the Confirmation is correctly received these nodes get
 // an increment of their liveness score. By using this scheme, when nodes are
 // offline their scores will fall to zero after a time whereas live nodes will
 // have steadily increasing scores from successful pings.
 func Ping(id nonce.ID, s session.Sessions, ks *signer.KeySet) OnionSkins {
 	if len(s) != 6 {
-		log.E.F("Ping requires 4 sessions, received %d", len(s))
+		log.E.F("Ping requires 6 sessions, received %d", len(s))
 		return nil
 	}
 	n := GenPingNonces()
@@ -53,8 +53,7 @@ func Ping(id nonce.ID, s session.Sessions, ks *signer.KeySet) OnionSkins {
 // the Reverse relay.
 //
 // This message's last layer is a Confirmation, which allows the client to know
-// that the key was successfully delivered to the Reverse relays that will be
-// used in the Purchase.
+// that the keys were successfully delivered.
 func SendKeys(id nonce.ID, hdr, pld []*prv.Key,
 	client *node.Node, hop []*node.Node, set *signer.KeySet) OnionSkins {
 

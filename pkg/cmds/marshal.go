@@ -95,7 +95,8 @@ func (c *Command) MarshalText() (text []byte, err error) {
 				current = current.Parent
 			}
 			text = append(text,
-				[]byte("# "+cmdPath+cmd.Name+": "+cmd.Description+"\n")...)
+				[]byte("# "+cmdPath+cmd.Name+": "+
+					cmd.Description+"\n")...)
 			text = append(text,
 				[]byte("["+cmdPath+cmd.Name+"]"+"\n\n")...)
 		}
@@ -141,32 +142,32 @@ func (c *Command) UnmarshalText(t []byte) (err error) {
 			switch op.Type() {
 			case meta.Bool:
 				v := op.(*toggle.Opt)
-				nv, ok := oo[i].value.(bool)
-				if ok {
+				if nv, ok := oo[i].value.(bool); ok {
 					v.FromValue(nv)
+					log.T.Ln("setting value of", oo[i].path,
+						"to", nv)
 				}
-				log.T.Ln("setting value of", oo[i].path, "to", nv)
 			case meta.Duration:
 				v := op.(*duration.Opt)
-				nv, ok := oo[i].value.(time.Duration)
-				if ok {
+				if nv, ok := oo[i].value.(time.Duration); ok {
 					v.FromValue(nv)
+					log.T.Ln("setting value of", oo[i].path,
+						"to", nv)
 				}
-				log.T.Ln("setting value of", oo[i].path, "to", nv)
 			case meta.Float:
 				v := op.(*float.Opt)
-				nv, ok := oo[i].value.(float64)
-				if ok {
+				if nv, ok := oo[i].value.(float64); ok {
 					v.FromValue(nv)
+					log.T.Ln("setting value of", oo[i].path,
+						"to", nv)
 				}
-				log.T.Ln("setting value of", oo[i].path, "to", nv)
 			case meta.Integer:
 				v := op.(*integer.Opt)
-				nv, ok := oo[i].value.(int64)
-				if ok {
+				if nv, ok := oo[i].value.(int64); ok {
 					v.FromValue(nv)
+					log.T.Ln("setting value of", oo[i].path,
+						"to", nv)
 				}
-				log.T.Ln("setting value of", oo[i].path, "to", nv)
 			case meta.List:
 				v := op.(*list.Opt)
 				nv, ok := oo[i].value.([]interface{})
@@ -177,16 +178,18 @@ func (c *Command) UnmarshalText(t []byte) (err error) {
 				if ok {
 					v.FromValue(strings)
 				}
-				log.T.Ln("setting value of", oo[i].path, "to", nv)
+				log.T.Ln("setting value of", oo[i].path, "to",
+					nv)
 			case meta.Text:
 				v := op.(*text.Opt)
-				nv, ok := oo[i].value.(string)
-				if ok {
+				if nv, ok := oo[i].value.(string); ok {
 					v.FromValue(nv)
+					log.T.Ln("setting value of", oo[i].path,
+						"to", nv)
 				}
-				log.T.Ln("setting value of", oo[i].path, "to", nv)
 			default:
-				log.E.Ln("option type unknown:", oo[i].path, op.Type())
+				log.E.Ln("option type unknown:",
+					oo[i].path, op.Type())
 			}
 		} else {
 			log.D.Ln("option not found:", oo[i].path)
@@ -199,7 +202,8 @@ func (c *Command) LoadConfig() (err error) {
 	var file io.Reader
 	if file, err = os.Open(cfgFile.Expanded()); err != nil {
 		log.T.F("creating config file at path: '%s'", cfgFile.Expanded())
-		// If no config found, create data dir and drop the default in place
+		// If no config found, create data dir and drop the default in
+		// place
 		return c.SaveConfig()
 	} else {
 		var all []byte
@@ -213,8 +217,8 @@ func (c *Command) LoadConfig() (err error) {
 }
 
 func (c *Command) SaveConfig() (err error) {
-	datadir := c.GetOpt(path2.Path{c.Name, "DataDir"})
-	if err = os.MkdirAll(datadir.Expanded(), 0700); log.E.Chk(err) {
+	dd := c.GetOpt(path2.Path{c.Name, "DataDir"})
+	if err = os.MkdirAll(dd.Expanded(), 0700); log.E.Chk(err) {
 		return err
 	}
 	var f *os.File

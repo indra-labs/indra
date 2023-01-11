@@ -3,6 +3,14 @@ package normalize
 import (
 	"net"
 	"strconv"
+
+	"github.com/indra-labs/indra"
+	log2 "github.com/indra-labs/indra/pkg/log"
+)
+
+var (
+	log   = log2.GetLogger(indra.PathBase)
+	check = log.E.Chk
 )
 
 // Address returns addr with the passed default port appended if there is not

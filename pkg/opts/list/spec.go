@@ -3,11 +3,18 @@ package list
 import (
 	"strings"
 
+	"github.com/indra-labs/indra"
+	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/indra-labs/indra/pkg/opts/config"
 	"github.com/indra-labs/indra/pkg/opts/meta"
 	normalize2 "github.com/indra-labs/indra/pkg/opts/normalize"
 	"github.com/indra-labs/indra/pkg/path"
 	"go.uber.org/atomic"
+)
+
+var (
+	log   = log2.GetLogger(indra.PathBase)
+	check = log.E.Chk
 )
 
 type Opt struct {
@@ -54,11 +61,9 @@ func (o *Opt) FromValue(v []string) *Opt {
 func (o *Opt) FromString(s string) (e error) {
 	s = strings.TrimSpace(s)
 	split := strings.Split(s, ",")
-
 	if len(split) == 1 && split[0] == "" {
 		split = make([]string, 0)
 	}
-
 	o.v.Store(split)
 	e = o.RunHooks()
 	return

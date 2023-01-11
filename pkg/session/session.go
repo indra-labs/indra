@@ -34,7 +34,8 @@ type Session struct {
 //
 // Purchasing a session the seller returns a token, based on a requested data
 // allocation.
-func New(id nonce.ID, node *node.Node, rem uint64, deadline time.Duration, depth int8) (s *Session) {
+func New(id nonce.ID, node *node.Node, rem uint64, deadline time.Duration,
+	depth int8) (s *Session) {
 
 	var e error
 	var hdrPrv, pldPrv *prv.Key
@@ -87,7 +88,7 @@ func (s Sessions) Add(se *Session) Sessions { return append(s, se) }
 func (s Sessions) Delete(se *Session) Sessions {
 	for i := range s {
 		if s[i] == se {
-			return append(s[:i], s[i:]...)
+			return append(s[:i], s[i+1:]...)
 		}
 	}
 	return s
@@ -96,7 +97,7 @@ func (s Sessions) Delete(se *Session) Sessions {
 func (s Sessions) DeleteByID(id nonce.ID) Sessions {
 	for i := range s {
 		if s[i].ID == id {
-			return append(s[:i], s[i:]...)
+			return append(s[:i], s[i+1:]...)
 		}
 	}
 	return s
@@ -105,8 +106,7 @@ func (s Sessions) DeleteByID(id nonce.ID) Sessions {
 func (s Sessions) Find(t nonce.ID) (se *Session) {
 	for i := range s {
 		if s[i].ID == t {
-			se = s[i]
-			return
+			return s[i]
 		}
 	}
 	return
@@ -115,8 +115,7 @@ func (s Sessions) Find(t nonce.ID) (se *Session) {
 func (s Sessions) FindPub(pubKey *pub.Key) (se *Session) {
 	for i := range s {
 		if s[i].HeaderPub.Equals(pubKey) {
-			se = s[i]
-			return
+			return s[i]
 		}
 	}
 	return

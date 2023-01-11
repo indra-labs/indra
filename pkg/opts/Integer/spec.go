@@ -4,10 +4,17 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/indra-labs/indra"
+	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/indra-labs/indra/pkg/opts/config"
 	"github.com/indra-labs/indra/pkg/opts/meta"
 	"github.com/indra-labs/indra/pkg/path"
 	"go.uber.org/atomic"
+)
+
+var (
+	log   = log2.GetLogger(indra.PathBase)
+	check = log.E.Chk
 )
 
 type Opt struct {
@@ -53,8 +60,7 @@ func (o *Opt) FromValue(v int64) *Opt {
 func (o *Opt) FromString(s string) (e error) {
 	s = strings.TrimSpace(s)
 	var p int64
-	p, e = strconv.ParseInt(s, 10, 64)
-	if e != nil {
+	if p, e = strconv.ParseInt(s, 10, 64); check(e) {
 		return e
 	}
 	o.v.Store(p)
@@ -70,7 +76,7 @@ func (o *Opt) Expanded() (s string) { return o.String() }
 
 func (o *Opt) SetExpanded(s string) {
 	err := o.FromString(s)
-	log.E.Chk(err)
+	check(err)
 }
 
 func (o *Opt) Value() (c config.Concrete) {

@@ -8,9 +8,16 @@ import (
 	"runtime"
 	"syscall"
 
+	"github.com/indra-labs/indra"
+	log2 "github.com/indra-labs/indra/pkg/log"
 	"go.uber.org/atomic"
 
 	"github.com/kardianos/osext"
+)
+
+var (
+	log   = log2.GetLogger(indra.PathBase)
+	check = log.E.Chk
 )
 
 type HandlerWithSource struct {
@@ -19,7 +26,7 @@ type HandlerWithSource struct {
 }
 
 var (
-	Restart   bool // = true
+	Restart   bool
 	requested atomic.Bool
 	// ch is used to receive SIGINT (Ctrl+C) signals.
 	ch chan os.Signal
@@ -126,7 +133,7 @@ out:
 
 // AddHandler adds a handler to call when a SIGINT (Ctrl+C) is received.
 func AddHandler(handler func()) {
-	// Create the channel and start the main interrupt handler which invokes
+	// Create the channel and start the main interrupt handler that invokes
 	// all other callbacks and exits if not already done.
 	_, loc, line, _ := runtime.Caller(1)
 	msg := fmt.Sprintf("%s:%d", loc, line)

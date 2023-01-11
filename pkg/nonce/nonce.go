@@ -22,7 +22,7 @@ type IV [IVLen]byte
 
 // New reads a nonce from a cryptographically secure random number source
 func New() (n IV) {
-	if _, e := rand.Read(n[:]); check(e) {
+	if c, e := rand.Read(n[:]); check(e) && c != IDLen {
 	}
 	return
 }

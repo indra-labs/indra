@@ -5,8 +5,6 @@
 package sig
 
 import (
-	"fmt"
-
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 	"github.com/indra-labs/indra"
@@ -30,23 +28,6 @@ const Len = 65
 // of the public key from the signature. This allows messages to avoid adding
 // extra bytes to also specify the public key of the signer.
 type Bytes [Len]byte
-
-func New() Bytes { return Bytes{} }
-
-// IsValid checks that the signature is the correct length. This avoids needing
-// to copy into a static array. Static arrays save on this code because they
-// automatically must be correct.
-func (sig Bytes) IsValid() (e error) {
-	if len(sig) == Len {
-		return
-	}
-	return fmt.Errorf(
-		"signature incorrect length, expect %d, got %d",
-		Len, len(sig))
-}
-
-// FromBytes checks if signature bytes are the correct length to be a signature.
-func FromBytes(sig Bytes) (e error) { return sig.IsValid() }
 
 // Sign produces an ECDSA BIP62 compact signature.
 func Sign(prv *prv.Key, hash sha256.Hash) (sig Bytes, e error) {

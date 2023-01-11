@@ -59,12 +59,14 @@ func Cat(chunks ...[]byte) (pkt []byte) {
 	return
 }
 
-var put64 = binary.LittleEndian.PutUint64
-var get64 = binary.LittleEndian.Uint64
-var put32 = binary.LittleEndian.PutUint32
-var get32 = binary.LittleEndian.Uint32
-var put16 = binary.LittleEndian.PutUint16
-var get16 = binary.LittleEndian.Uint16
+var (
+	put64 = binary.LittleEndian.PutUint64
+	get64 = binary.LittleEndian.Uint64
+	put32 = binary.LittleEndian.PutUint32
+	get32 = binary.LittleEndian.Uint32
+	put16 = binary.LittleEndian.PutUint16
+	get16 = binary.LittleEndian.Uint16
+)
 
 // DecodeUint64 returns an int containing the little endian encoded 64-bit value
 // stored in a 4 byte long slice
@@ -102,10 +104,12 @@ func DecodeUint16(b []byte) int { return int(get16(b)) }
 // EncodeUint16 puts an int into a uint32 and then into 2 byte long slice.
 func EncodeUint16(b []byte, n int) { put16(b, uint16(n)) }
 
-const Uint64Len = 8
-const Uint32Len = 4
-const Uint24Len = 3
-const Uint16Len = 2
+const (
+	Uint64Len = 8
+	Uint32Len = 4
+	Uint24Len = 3
+	Uint16Len = 2
+)
 
 func NewUint64() Bytes { return make(Bytes, Uint64Len) }
 func NewUint32() Bytes { return make(Bytes, Uint32Len) }

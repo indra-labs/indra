@@ -119,7 +119,12 @@ func (cl *Client) FindCloaked(clk cloak.PubKey) (hdr *prv.Key, pld *prv.Key,
 	return
 }
 
-// SendKeys is...
+// SendKeys is the delivery of a ...
+//
+// todo: this function should be requiring input of keys, and a related prior
+//
+//	function that generates the preimage for an LN AMP, from the hash of the
+//	keys.
 func (cl *Client) SendKeys(nodeID []nonce.ID, hook confirm.Hook) (conf nonce.ID,
 	e error) {
 
@@ -175,10 +180,14 @@ func (cl *Client) SendKeys(nodeID []nonce.ID, hook confirm.Hook) (conf nonce.ID,
 	return
 }
 
+// Cleanup closes and flushes any resources the client opened that require sync
+// in order to reopen correctly.
 func (cl *Client) Cleanup() {
 	// Do cleanup stuff before shutdown.
 }
 
+// Shutdown triggers the shutdown of the client and the Cleanup before
+// finishing.
 func (cl *Client) Shutdown() {
 	if cl.Bool.Load() {
 		return
@@ -188,6 +197,7 @@ func (cl *Client) Shutdown() {
 	cl.C.Q()
 }
 
+// Send a message to a peer via their AddrPort.
 func (cl *Client) Send(addr *netip.AddrPort, b slice.Bytes) {
 	// first search if we already have the node available with connection
 	// open.

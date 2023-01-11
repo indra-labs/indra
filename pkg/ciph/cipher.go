@@ -1,4 +1,7 @@
-// Package ciph manages encryption ciphers and encrypting blobs of data.
+// Package ciph manages encryption ciphers and encrypting blobs of data. Keys
+// are generated using ECDH from a public and private secp256k1 combined, as
+// well as directly from a 32 byte secret in the form of a static array as used
+// in most cryptographic hash function implementations in Go.
 package ciph
 
 import (
@@ -27,8 +30,9 @@ func GetBlock(from *prv.Key, to *pub.Key) (block cipher.Block) {
 	return
 }
 
-// BlockFromHash creates an AES block cipher from an sha256.Hash
+// BlockFromHash creates an AES block cipher from an sha256.Hash.
 func BlockFromHash(h sha256.Hash) (block cipher.Block) {
+	// We can ignore the error because sha256.Hash is a valid key size.
 	block, _ = aes.NewCipher(h[:])
 	return
 }

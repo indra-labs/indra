@@ -25,8 +25,8 @@ fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
 culpa qui officia deserunt mollit anim id est laborum.`
 
 // GetExampleCommands returns available subcommands in hypothetical Parallelcoin
-// Pod example for testing (derived from btcd and btcwallet plus
-// parallelcoin kopach miner)
+// Pod example for testing (derived from btcd and btcwallet plus parallelcoin
+// GUI and kopach miner).
 func GetExampleCommands() (c *Command) {
 	c = &Command{
 		Name:          "pod123",
