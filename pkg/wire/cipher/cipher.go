@@ -22,8 +22,9 @@ var (
 	_     types.Onion = &OnionSkin{}
 )
 
-// OnionSkin cipher delivers a pair of private keys to be used in association with a
-// reply.Type specifically in the situation of a node bootstrapping sessions.
+// OnionSkin cipher delivers a pair of private keys to be used in association
+// with a reply.Type specifically in the situation of a node bootstrapping
+// sessions.
 //
 // After ~10 seconds these can be purged from the cache as they are otherwise a
 // DoS vector buffer flooding.
@@ -35,7 +36,6 @@ type OnionSkin struct {
 func (x *OnionSkin) Inner() types.Onion   { return x.Onion }
 func (x *OnionSkin) Insert(o types.Onion) { x.Onion = o }
 func (x *OnionSkin) Len() int             { return Len + x.Onion.Len() }
-
 func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	hdr := x.Header.ToBytes()
@@ -44,8 +44,6 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(pub.KeyLen)], pld[:])
 	x.Onion.Encode(b, c)
 }
-
-// Decode unwraps a cipher.OnionSkin message.
 func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < Len-magicbytes.Len {
 		return magicbytes.TooShort(len(b[*c:]),

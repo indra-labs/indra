@@ -21,12 +21,7 @@ type Confirms struct {
 	Cnf []Callback
 }
 
-func NewConfirms() *Confirms {
-	cn := Confirms{
-		Cnf: make([]Callback, 0),
-	}
-	return &cn
-}
+func NewConfirms() *Confirms { return &Confirms{Cnf: make([]Callback, 0)} }
 
 func (cn *Confirms) Add(cb *Callback) {
 	cn.Lock()

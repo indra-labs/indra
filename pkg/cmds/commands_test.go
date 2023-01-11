@@ -6,13 +6,11 @@ import (
 	"strings"
 	"testing"
 
-	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/indra-labs/indra/pkg/opts/config"
 	"github.com/indra-labs/indra/pkg/path"
 )
 
 func TestCommand_Foreach(t *testing.T) {
-	log2.SetLogLevel(log2.Info)
 	cm, _ := Init(GetExampleCommands(), nil)
 	log.I.Ln("spewing only droptxindex")
 	cm.ForEach(func(cmd *Command, _ int) bool {
@@ -23,7 +21,6 @@ func TestCommand_Foreach(t *testing.T) {
 	}, 0, 0, cm)
 	log.I.Ln("printing name of all commands found on search")
 	cm.ForEach(func(cmd *Command, depth int) bool {
-		log.I.Ln()
 		log.I.F("%s%s #(%d)", path.GetIndent(depth), cmd.Path, depth)
 		for i := range cmd.Configs {
 			log.I.F("%s%s -%s %v #%v (%d)", path.GetIndent(depth),
@@ -34,10 +31,7 @@ func TestCommand_Foreach(t *testing.T) {
 }
 
 func TestCommand_MarshalText(t *testing.T) {
-
-	log2.SetLogLevel(log2.Info)
 	o, _ := Init(GetExampleCommands(), nil)
-	// log.I.S(o)
 	conf, err := o.MarshalText()
 	if log.E.Chk(err) {
 		t.FailNow()
@@ -46,7 +40,6 @@ func TestCommand_MarshalText(t *testing.T) {
 }
 
 func TestCommand_UnmarshalText(t *testing.T) {
-	log2.SetLogLevel(log2.Info)
 	o, _ := Init(GetExampleCommands(), nil)
 	var conf []byte
 	var err error
@@ -61,7 +54,6 @@ func TestCommand_UnmarshalText(t *testing.T) {
 }
 
 func TestCommand_GetEnvs(t *testing.T) {
-	log2.SetLogLevel(log2.Info)
 	o, _ := Init(GetExampleCommands(), nil)
 	envs := o.GetEnvs()
 	var out []string
@@ -80,7 +72,6 @@ func TestCommand_GetEnvs(t *testing.T) {
 var testSeparator = fmt.Sprintf("%s\n", strings.Repeat("-", 72))
 
 func TestCommand_Help(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
 	ex := GetExampleCommands()
 	ex.AddCommand(Help())
 	o, _ := Init(ex, nil)
@@ -207,7 +198,6 @@ func TestCommand_Help(t *testing.T) {
 
 }
 func TestCommand_LogToFile(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
 	ex := GetExampleCommands()
 	ex.AddCommand(Help())
 	ex, _ = Init(ex, nil)

@@ -5,10 +5,17 @@ import (
 	"strings"
 	"time"
 
+	"github.com/indra-labs/indra"
+	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/indra-labs/indra/pkg/opts/config"
 	"github.com/indra-labs/indra/pkg/opts/meta"
 	"github.com/indra-labs/indra/pkg/path"
 	"go.uber.org/atomic"
+)
+
+var (
+	log   = log2.GetLogger(indra.PathBase)
+	check = log.E.Chk
 )
 
 type Opt struct {

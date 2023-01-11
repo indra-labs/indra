@@ -10,7 +10,7 @@ import (
 	"github.com/indra-labs/indra/pkg/sha256"
 )
 
-// Compute computes an elliptic curve diffie hellman shared secret that can be
+// Compute computes an Elliptic Curve Diffie-Hellman shared secret that can be
 // decrypted by the holder of the private key matching the public key provided.
 func Compute(prv *prv.Key, pub *pub.Key) sha256.Hash {
 	return sha256.Single(

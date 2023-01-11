@@ -47,13 +47,11 @@ func (x *OnionSkin) String() string {
 func (x *OnionSkin) Inner() types.Onion   { return nil }
 func (x *OnionSkin) Insert(o types.Onion) {}
 func (x *OnionSkin) Len() int             { return Len }
-
 func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	// Copy in the ID.
 	copy(b[*c:c.Inc(nonce.IDLen)], x.ID[:])
 }
-
 func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < Len-magicbytes.Len {
 		return magicbytes.TooShort(len(b[*c:]),

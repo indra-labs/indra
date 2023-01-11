@@ -27,13 +27,13 @@ var (
 // this except when the netip.AddrPort is known via the packet sender address.
 type Node struct {
 	nonce.ID
-	Addr        string
-	AddrPort    *netip.AddrPort
-	HeaderPub   *pub.Key
-	HeaderBytes pub.Bytes
-	HeaderPrv   *prv.Key
-	PingCount   int
-	LastSeen    time.Time
+	Addr          string
+	AddrPort      *netip.AddrPort
+	IdentityPub   *pub.Key
+	IdentityBytes pub.Bytes
+	IdentityPrv   *prv.Key
+	PingCount     int
+	LastSeen      time.Time
 	Services
 	ifc.Transport
 }
@@ -45,17 +45,18 @@ func New(addr *netip.AddrPort, hdr *pub.Key, hdrPrv *prv.Key,
 
 	id = nonce.NewID()
 	n = &Node{
-		ID:          id,
-		Addr:        addr.String(),
-		AddrPort:    addr,
-		Transport:   tpt,
-		HeaderPub:   hdr,
-		HeaderBytes: hdr.ToBytes(),
-		HeaderPrv:   hdrPrv,
+		ID:            id,
+		Addr:          addr.String(),
+		AddrPort:      addr,
+		Transport:     tpt,
+		IdentityPub:   hdr,
+		IdentityBytes: hdr.ToBytes(),
+		IdentityPrv:   hdrPrv,
 	}
 	return
 }
 
+// SendTo delivers a message to a service identified by its port.
 func (n *Node) SendTo(port uint16, b slice.Bytes) (e error) {
 	e = fmt.Errorf("port not registered %d", port)
 	for i := range n.Services {
@@ -68,6 +69,7 @@ func (n *Node) SendTo(port uint16, b slice.Bytes) (e error) {
 	return
 }
 
+// ReceiveFrom returns the channel that receives messages for a given port.
 func (n *Node) ReceiveFrom(port uint16) (b <-chan slice.Bytes) {
 	for i := range n.Services {
 		if n.Services[i].Port == port {
@@ -84,14 +86,11 @@ type Nodes []*Node
 // NewNodes creates an empty Nodes
 func NewNodes() (n Nodes) { return Nodes{} }
 
-func (n Nodes) Len() int {
-	return len(n)
-}
+// Len returns the length of a Nodes.
+func (n Nodes) Len() int { return len(n) }
 
 // Add a Node to a Nodes.
-func (n Nodes) Add(nn *Node) Nodes {
-	return append(n, nn)
-}
+func (n Nodes) Add(nn *Node) Nodes { return append(n, nn) }
 
 // FindByID searches for a Node by ID.
 func (n Nodes) FindByID(i nonce.ID) (no *Node) {
@@ -117,21 +116,18 @@ func (n Nodes) FindByAddrPort(id *netip.AddrPort) (no *Node) {
 
 // DeleteByID deletes a node identified by an ID.
 func (n Nodes) DeleteByID(ii nonce.ID) (nn Nodes, e error) {
-	e = fmt.Errorf("id %x not found", ii)
+	e, nn = fmt.Errorf("id %x not found", ii), n
 	for i := range n {
 		if n[i].ID == ii {
-			n = append(n[:i], n[i+1:]...)
-			e = nil
-			break
+			return append(n[:i], n[i+1:]...), nil
 		}
 	}
-	return n, e
+	return
 }
 
 // DeleteByAddrPort deletes a node identified by a netip.AddrPort.
 func (n Nodes) DeleteByAddrPort(ip *netip.AddrPort) (nn Nodes, e error) {
-	e = fmt.Errorf("node with ip %v not found", ip)
-	nn = n
+	e, nn = fmt.Errorf("node with ip %v not found", ip), n
 	for i := range n {
 		if n[i].AddrPort.String() == ip.String() {
 			nn = append(n[:i], n[i+1:]...)
@@ -140,14 +136,4 @@ func (n Nodes) DeleteByAddrPort(ip *netip.AddrPort) (nn Nodes, e error) {
 		}
 	}
 	return
-}
-
-type Selector func(n Nodes, exit *Node, count int) (selected Nodes)
-
-func (n Nodes) Select(selector Selector, exit *Node, count int) (selected Nodes) {
-	if selector == nil {
-		log.E.Ln("no selector function given")
-		return
-	}
-	return selector(n, exit, count)
 }

@@ -17,16 +17,14 @@ func TestSplitJoin(t *testing.T) {
 	var e error
 	var payload []byte
 	var pHash sha256.Hash
-
 	if payload, pHash, e = testutils.GenerateTestMessage(msgSize); check(e) {
 		t.FailNow()
 	}
-	var sp, rp, Rp *prv.Key
-	var sP, rP, RP *pub.Key
-	if sp, rp, sP, rP, e = testutils.GenerateTestKeyPairs(); check(e) {
+	var sp, rp *prv.Key
+	var rP *pub.Key
+	if sp, rp, _, rP, e = testutils.GenerateTestKeyPairs(); check(e) {
 		t.FailNow()
 	}
-	_, _, _, _ = sP, Rp, RP, rp
 	addr := rP
 	params := EP{
 		To:     addr,
@@ -77,17 +75,14 @@ func BenchmarkSplit(b *testing.B) {
 	segSize := 1382
 	var e error
 	var payload []byte
-	var hash sha256.Hash
-	if payload, hash, e = testutils.GenerateTestMessage(msgSize); check(e) {
+	if payload, _, e = testutils.GenerateTestMessage(msgSize); check(e) {
 		b.Error(e)
 	}
-	_ = hash
-	var sp, rp, Rp *prv.Key
-	var sP, rP *pub.Key
-	if sp, rp, sP, rP, e = testutils.GenerateTestKeyPairs(); check(e) {
+	var sp *prv.Key
+	var rP *pub.Key
+	if sp, _, _, rP, e = testutils.GenerateTestKeyPairs(); check(e) {
 		b.FailNow()
 	}
-	_, _, _ = sP, Rp, rp
 	addr := rP
 	for n := 0; n < b.N; n++ {
 		params := EP{
@@ -103,6 +98,17 @@ func BenchmarkSplit(b *testing.B) {
 		}
 		_ = splitted
 	}
+
+	// Example benchmark results show about 10Mb/s/thread throughput
+	// handling 64Kb messages.
+	//
+	// goos: linux
+	// goarch: amd64
+	// pkg: github.com/indra-labs/indra/pkg/packet
+	// cpu: AMD Ryzen 7 5800H with Radeon Graphics
+	// BenchmarkSplit
+	// BenchmarkSplit-16    	     157	   7670080 ns/op
+	// PASS
 }
 
 func TestRemovePacket(t *testing.T) {
@@ -144,7 +150,9 @@ func TestSplitJoinFEC(t *testing.T) {
 		var payload []byte
 		var pHash sha256.Hash
 
-		if payload, pHash, e = testutils.GenerateTestMessage(msgSize); check(e) {
+		if payload, pHash, e = testutils.GenerateTestMessage(
+			msgSize); check(e) {
+
 			t.FailNow()
 		}
 		var punctures []int
@@ -173,9 +181,11 @@ func TestSplitJoinFEC(t *testing.T) {
 				t.FailNow()
 			}
 			overhead := ep.GetOverhead()
-			segMap := NewSegments(len(ep.Data), segSize, overhead, ep.Parity)
+			segMap := NewSegments(len(ep.Data), segSize, overhead,
+				ep.Parity)
 			for segs := range segMap {
-				start, end := segMap[segs].DStart, segMap[segs].PEnd
+				start := segMap[segs].DStart
+				end := segMap[segs].PEnd
 				cnt := end - start
 				par := segMap[segs].PEnd - segMap[segs].DEnd
 				a := make([][]byte, cnt)
