@@ -209,7 +209,7 @@ func TestOnionSkins_Layer(t *testing.T) {
 	prv1, prv2 := GetTwoPrvKeys(t)
 	pub1 := pub.Derive(prv1)
 	on := OnionSkins{}.
-		OnionSkin(pub1, prv2, n1).
+		Layer(pub1, prv2, n1).
 		Confirmation(n).
 		Assemble()
 	onb := EncodeOnion(on)

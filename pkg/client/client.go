@@ -97,16 +97,18 @@ func (cl *Client) FindCloaked(clk cloak.PubKey) (hdr *prv.Key, pld *prv.Key,
 	copy(b[:], clk[:cloak.BlindLen])
 	hash := cloak.Cloak(b, cl.Node.IdentityBytes)
 	if hash == clk {
+		log.T.Ln("encrypted to identity key")
 		hdr = cl.Node.IdentityPrv
 		// there is no payload key for the node, only in sessions.
 		return
 	}
 	for i := range cl.Sessions {
-		hash = cloak.Cloak(b, cl.Circuit[i].HeaderBytes)
+		hash = cloak.Cloak(b, cl.Sessions[i].HeaderBytes)
 		if hash == clk {
+			log.T.F("found in session %d", i)
 			hdr = cl.Sessions[i].HeaderPrv
 			pld = cl.Sessions[i].PayloadPrv
-			sess = cl.Circuit[i]
+			sess = cl.Sessions[i]
 			return
 		}
 	}

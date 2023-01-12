@@ -8,6 +8,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/key/ecdh"
 	"github.com/indra-labs/indra/pkg/key/prv"
@@ -26,6 +27,7 @@ var (
 // keys using ECDH.
 func GetBlock(from *prv.Key, to *pub.Key) (block cipher.Block) {
 	secret := ecdh.Compute(from, to)
+	log.T.C(func() string { return "\n" + spew.Sdump(secret) })
 	block, _ = aes.NewCipher(secret[:])
 	return
 }

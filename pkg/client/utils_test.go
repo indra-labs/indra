@@ -23,14 +23,14 @@ func CreateMockCircuitClients() (clients []*Client, e error) {
 		transports[i] = transport.NewSim(nTotal)
 	}
 	for i := range nodes {
-		var hdrPrv *prv.Key
-		if hdrPrv, e = prv.GenerateKey(); check(e) {
+		var idPrv *prv.Key
+		if idPrv, e = prv.GenerateKey(); check(e) {
 			return
 		}
-		hdrPub := pub.Derive(hdrPrv)
+		idPub := pub.Derive(idPrv)
 		addr := slice.GenerateRandomAddrPortIPv4()
-		nodes[i], _ = node.New(addr, hdrPub, hdrPrv, transports[i])
-		if clients[i], e = New(transports[i], hdrPrv, nodes[i],
+		nodes[i], _ = node.New(addr, idPub, idPrv, transports[i])
+		if clients[i], e = New(transports[i], idPrv, nodes[i],
 			nil); check(e) {
 			return
 		}
@@ -42,6 +42,8 @@ func CreateMockCircuitClients() (clients []*Client, e error) {
 			// Add session to node, so it will be able to relay if
 			// it gets a message with the key.
 			nodes[i].Sessions = append(nodes[i].Sessions,
+				sessions[i-1])
+			nodes[0].Sessions = append(nodes[0].Sessions,
 				sessions[i-1])
 			// Normally only the client would have this in its
 			// nodes, but we are sharing them for simple circuit
@@ -63,6 +65,5 @@ func CreateMockCircuitClients() (clients []*Client, e error) {
 			clients[i].Nodes = append(clients[i].Nodes, nodes[j])
 		}
 	}
-
 	return
 }

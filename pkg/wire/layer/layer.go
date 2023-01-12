@@ -73,6 +73,7 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	// Then we can encrypt the message segment
 	var e error
 	var blk cipher.Block
+	log.T.Ln("encrypting layer")
 	if blk = ciph.GetBlock(x.From, x.To); check(e) {
 		panic(e)
 	}

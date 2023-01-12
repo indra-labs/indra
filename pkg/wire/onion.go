@@ -21,17 +21,17 @@ func Ping(id nonce.ID, client *node.Node, s node.Circuit, ks *signer.KeySet) Oni
 	n := GenPingNonces()
 	return OnionSkins{}.
 		Forward(s[0].AddrPort).
-		OnionSkin(s[0].HeaderPub, ks.Next(), n[0]).
+		Layer(s[0].HeaderPub, ks.Next(), n[0]).
 		Forward(s[1].AddrPort).
-		OnionSkin(s[1].HeaderPub, ks.Next(), n[1]).
+		Layer(s[1].HeaderPub, ks.Next(), n[1]).
 		Forward(s[2].AddrPort).
-		OnionSkin(s[2].HeaderPub, ks.Next(), n[2]).
+		Layer(s[2].HeaderPub, ks.Next(), n[2]).
 		Forward(s[3].AddrPort).
-		OnionSkin(s[3].HeaderPub, ks.Next(), n[3]).
+		Layer(s[3].HeaderPub, ks.Next(), n[3]).
 		Forward(s[4].AddrPort).
-		OnionSkin(s[4].HeaderPub, ks.Next(), n[3]).
+		Layer(s[4].HeaderPub, ks.Next(), n[4]).
 		Forward(client.AddrPort).
-		OnionSkin(client.Sessions[0].HeaderPub, ks.Next(), n[3]).
+		Layer(client.Sessions[0].HeaderPub, ks.Next(), n[5]).
 		Confirmation(id)
 }
 
@@ -53,22 +53,22 @@ func SendKeys(id nonce.ID, hdr, pld []*prv.Key,
 	n := GenNonces(6)
 	return OnionSkins{}.
 		Forward(hop[0].AddrPort).
-		OnionSkin(hop[0].IdentityPub, set.Next(), n[0]).
+		Layer(hop[0].IdentityPub, set.Next(), n[0]).
 		Cipher(hdr[0], pld[0]).
 		Forward(hop[1].AddrPort).
-		OnionSkin(hop[1].IdentityPub, set.Next(), n[1]).
+		Layer(hop[1].IdentityPub, set.Next(), n[1]).
 		Cipher(hdr[1], pld[1]).
 		Forward(hop[2].AddrPort).
-		OnionSkin(hop[2].IdentityPub, set.Next(), n[2]).
+		Layer(hop[2].IdentityPub, set.Next(), n[2]).
 		Cipher(hdr[2], pld[2]).
 		Forward(hop[3].AddrPort).
-		OnionSkin(hop[3].IdentityPub, set.Next(), n[3]).
+		Layer(hop[3].IdentityPub, set.Next(), n[3]).
 		Cipher(hdr[3], pld[3]).
 		Forward(hop[4].AddrPort).
-		OnionSkin(hop[4].IdentityPub, set.Next(), n[4]).
+		Layer(hop[4].IdentityPub, set.Next(), n[4]).
 		Cipher(hdr[4], pld[4]).
 		Forward(client.AddrPort).
-		OnionSkin(client.IdentityPub, set.Next(), n[5]).
+		Layer(client.IdentityPub, set.Next(), n[5]).
 		Confirmation(id)
 }
 
@@ -103,16 +103,16 @@ func SendExit(payload slice.Bytes, port uint16, client *node.Node,
 	pubs[2] = sess[2].PayloadPub
 	return OnionSkins{}.
 		Forward(hop[0].AddrPort).
-		OnionSkin(hop[0].IdentityPub, set.Next(), n0[0]).
+		Layer(hop[0].IdentityPub, set.Next(), n0[0]).
 		Forward(hop[1].AddrPort).
-		OnionSkin(hop[1].IdentityPub, set.Next(), n0[1]).
+		Layer(hop[1].IdentityPub, set.Next(), n0[1]).
 		Forward(hop[2].AddrPort).
-		OnionSkin(hop[2].IdentityPub, set.Next(), n0[2]).
+		Layer(hop[2].IdentityPub, set.Next(), n0[2]).
 		Exit(port, prvs, pubs, n1, payload).
 		Reverse(hop[3].AddrPort).
-		OnionSkin(sess[0].HeaderPub, prvs[0], n1[0]).
+		Layer(sess[0].HeaderPub, prvs[0], n1[0]).
 		Reverse(hop[4].AddrPort).
-		OnionSkin(sess[1].HeaderPub, prvs[1], n1[1]).
+		Layer(sess[1].HeaderPub, prvs[1], n1[1]).
 		Reverse(client.AddrPort).
-		OnionSkin(sess[2].HeaderPub, prvs[2], n1[2])
+		Layer(sess[2].HeaderPub, prvs[2], n1[2])
 }

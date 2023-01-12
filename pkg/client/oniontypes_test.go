@@ -25,11 +25,8 @@ func TestPing(t *testing.T) {
 	}
 	conf := nonce.NewID()
 	var sessions node.Circuit
-	for i, v := range clients {
-		if i == 0 {
-			continue
-		}
-		sessions[i-1] = v.Node.Circuit[i-1]
+	for i := range sessions {
+		sessions[i] = clients[i+1].Sessions[1]
 	}
 	os := wire.Ping(conf, clients[0].Node, sessions, clients[0].KeySet)
 	quit := qu.T()
@@ -44,7 +41,7 @@ func TestPing(t *testing.T) {
 	go func() {
 		select {
 		case <-time.After(time.Second):
-			// t.Error("ping got stuck")
+			t.Error("ping got stuck")
 		case <-quit:
 		}
 		time.Sleep(time.Second)

@@ -64,7 +64,7 @@ func (o OnionSkins) Forward(addr *netip.AddrPort) OnionSkins {
 	return append(o, &forward.OnionSkin{AddrPort: addr, Onion: &noop.OnionSkin{}})
 }
 
-func (o OnionSkins) OnionSkin(to *pub.Key, from *prv.Key,
+func (o OnionSkins) Layer(to *pub.Key, from *prv.Key,
 	n nonce.IV) OnionSkins {
 
 	return append(o, &layer.OnionSkin{
