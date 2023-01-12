@@ -2,12 +2,12 @@ package client
 
 import (
 	"fmt"
-	"math"
 	"net/netip"
 	"sync"
 	"time"
 
 	"github.com/cybriq/qu"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/ifc"
 	"github.com/indra-labs/indra/pkg/key/cloak"
@@ -17,7 +17,6 @@ import (
 	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/indra-labs/indra/pkg/node"
 	"github.com/indra-labs/indra/pkg/nonce"
-	"github.com/indra-labs/indra/pkg/session"
 	"github.com/indra-labs/indra/pkg/slice"
 	"github.com/indra-labs/indra/pkg/wire/confirm"
 	"github.com/indra-labs/indra/pkg/wire/layer"
@@ -40,7 +39,6 @@ var (
 type Client struct {
 	*node.Node
 	node.Nodes
-	session.Sessions
 	PendingSessions []nonce.ID
 	*confirm.Confirms
 	ExitHooks response.Hooks
@@ -67,10 +65,6 @@ func New(tpt ifc.Transport, hdrPrv *prv.Key, no *node.Node,
 		KeySet:   ks,
 		C:        qu.T(),
 	}
-	// A new client requires a Session for receiving responses. This session
-	// should have its keys changed periodically, or at least once on
-	// startup.
-	c.Sessions = c.Sessions.Add(session.New(no.ID, no, math.MaxUint64, 0, 0))
 	return
 }
 
@@ -97,7 +91,7 @@ func (cl *Client) RegisterConfirmation(hook confirm.Hook,
 // returns the session as well, though not all users of this function will need
 // this.
 func (cl *Client) FindCloaked(clk cloak.PubKey) (hdr *prv.Key, pld *prv.Key,
-	sess *session.Session) {
+	sess *node.Session) {
 
 	var b cloak.Blinder
 	copy(b[:], clk[:cloak.BlindLen])
@@ -108,11 +102,11 @@ func (cl *Client) FindCloaked(clk cloak.PubKey) (hdr *prv.Key, pld *prv.Key,
 		return
 	}
 	for i := range cl.Sessions {
-		hash = cloak.Cloak(b, cl.Sessions[i].HeaderBytes)
+		hash = cloak.Cloak(b, cl.Circuit[i].HeaderBytes)
 		if hash == clk {
 			hdr = cl.Sessions[i].HeaderPrv
 			pld = cl.Sessions[i].PayloadPrv
-			sess = cl.Sessions[i]
+			sess = cl.Circuit[i]
 			return
 		}
 	}
@@ -192,7 +186,9 @@ func (cl *Client) Shutdown() {
 	if cl.Bool.Load() {
 		return
 	}
-	log.I.Ln("shutting down client", cl.Node.AddrPort.String())
+	log.T.C(func() string {
+		return "shutting down client " + cl.Node.AddrPort.String()
+	})
 	cl.Bool.Store(true)
 	cl.C.Q()
 }
@@ -204,11 +200,19 @@ func (cl *Client) Send(addr *netip.AddrPort, b slice.Bytes) {
 	as := addr.String()
 	for i := range cl.Nodes {
 		if as == cl.Nodes[i].Addr {
+			log.T.C(func() string {
+				return cl.AddrPort.String() +
+					" sending to " +
+					addr.String() +
+					"\n" +
+					spew.Sdump(b.ToBytes())
+			})
 			cl.Nodes[i].Transport.Send(b)
 			return
 		}
 	}
 	// If we got to here none of the addresses matched, and we need to
-	// establish a new peer connection to them.
+	// establish a new peer connection to them, if we know of them (this
+	// would usually be the reason this happens).
 
 }

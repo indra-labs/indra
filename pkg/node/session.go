@@ -1,19 +1,9 @@
-package session
+package node
 
 import (
-	"time"
-
-	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/key/pub"
-	log2 "github.com/indra-labs/indra/pkg/log"
-	"github.com/indra-labs/indra/pkg/node"
 	"github.com/indra-labs/indra/pkg/nonce"
-)
-
-var (
-	log   = log2.GetLogger(indra.PathBase)
-	check = log.E.Chk
 )
 
 // A Session keeps track of a connection session. It specifically maintains the
@@ -21,33 +11,27 @@ var (
 // with new credit, and the current state of the encryption.
 type Session struct {
 	nonce.ID
-	*node.Node
+	*Node
 	Remaining                 uint64
+	HeaderPrv, PayloadPrv     *prv.Key
 	HeaderPub, PayloadPub     *pub.Key
 	HeaderBytes, PayloadBytes pub.Bytes
-	HeaderPrv, PayloadPrv     *prv.Key
-	Depth                     int8
-	Deadline                  time.Time
 }
 
-// New creates a new Session.
+// NewSession creates a new Session.
 //
 // Purchasing a session the seller returns a token, based on a requested data
 // allocation.
-func New(id nonce.ID, node *node.Node, rem uint64, deadline time.Duration,
-	depth int8) (s *Session) {
+func NewSession(id nonce.ID, node *Node, rem uint64) (s *Session) {
 
 	var e error
 	var hdrPrv, pldPrv *prv.Key
 	if hdrPrv, e = prv.GenerateKey(); check(e) {
 	}
 	hdrPub := pub.Derive(hdrPrv)
-	// hdrSend := address.NewSendEntry(hdrPub)
 	if pldPrv, e = prv.GenerateKey(); check(e) {
 	}
 	pldPub := pub.Derive(pldPrv)
-	// pldSend := address.NewSendEntry(pldPub)
-
 	s = &Session{
 		ID:           id,
 		Node:         node,
@@ -58,8 +42,6 @@ func New(id nonce.ID, node *node.Node, rem uint64, deadline time.Duration,
 		PayloadBytes: pldPub.ToBytes(),
 		HeaderPrv:    hdrPrv,
 		PayloadPrv:   pldPrv,
-		Deadline:     time.Now().Add(deadline),
-		Depth:        depth,
 	}
 	return
 }
@@ -79,44 +61,6 @@ func (s *Session) SubtractBytes(b uint64) bool {
 	return true
 }
 
+type Circuit [5]*Session
+
 type Sessions []*Session
-
-func (s Sessions) Len() int { return len(s) }
-
-func (s Sessions) Add(se *Session) Sessions { return append(s, se) }
-
-func (s Sessions) Delete(se *Session) Sessions {
-	for i := range s {
-		if s[i] == se {
-			return append(s[:i], s[i+1:]...)
-		}
-	}
-	return s
-}
-
-func (s Sessions) DeleteByID(id nonce.ID) Sessions {
-	for i := range s {
-		if s[i].ID == id {
-			return append(s[:i], s[i+1:]...)
-		}
-	}
-	return s
-}
-
-func (s Sessions) Find(t nonce.ID) (se *Session) {
-	for i := range s {
-		if s[i].ID == t {
-			return s[i]
-		}
-	}
-	return
-}
-
-func (s Sessions) FindPub(pubKey *pub.Key) (se *Session) {
-	for i := range s {
-		if s[i].HeaderPub.Equals(pubKey) {
-			return s[i]
-		}
-	}
-	return
-}

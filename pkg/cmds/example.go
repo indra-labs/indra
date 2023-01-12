@@ -747,6 +747,7 @@ func GetExampleCommands() (c *Command) {
 						Label:         "UUID",
 						Description:   "instance unique id (32bit random value) (json mangles big 64 bit integers due to float64 numbers)",
 						Documentation: lorem,
+						Default:       "5",
 					}),
 					"Whitelists": list.New(meta.Data{
 						Aliases:       Tags("WL"),
@@ -800,6 +801,7 @@ func GetExampleCommands() (c *Command) {
 							Label:         "Legacy RPC Max Clients",
 							Description:   "maximum number of RPC clients allowed for wallet RPC",
 							Documentation: lorem,
+							Default:       "5",
 						}),
 					"RPCMaxWebsockets": integer.New(meta.Data{
 						Aliases:       Tags("WRMWS"),

@@ -1,8 +1,11 @@
 package client
 
 import (
+	"fmt"
+	"reflect"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/indra-labs/indra/pkg/ciph"
 	"github.com/indra-labs/indra/pkg/sha256"
 	"github.com/indra-labs/indra/pkg/slice"
@@ -22,6 +25,10 @@ import (
 )
 
 func (cl *Client) runner() (out bool) {
+	log.T.C(func() string {
+		return cl.AddrPort.String() +
+			" awaiting message"
+	})
 	select {
 	case <-cl.C.Wait():
 		cl.Cleanup()
@@ -37,26 +44,92 @@ func (cl *Client) runner() (out bool) {
 		}
 		switch on := onion.(type) {
 		case *cipher.OnionSkin:
+			log.T.C(func() string {
+				return cl.AddrPort.String() +
+					" received\n" +
+					fmt.Sprint(reflect.TypeOf(on)) +
+					spew.Sdump(b.ToBytes())
+			})
 			cl.cipher(on, b, c)
 		case *confirm.OnionSkin:
+			log.T.C(func() string {
+				return cl.AddrPort.String() +
+					" received\n" +
+					fmt.Sprint(reflect.TypeOf(on)) +
+					spew.Sdump(b.ToBytes())
+			})
 			cl.confirm(on, b, c)
 		case *delay.OnionSkin:
+			log.T.C(func() string {
+				return cl.AddrPort.String() +
+					" received\n" +
+					fmt.Sprint(reflect.TypeOf(on)) +
+					spew.Sdump(b.ToBytes())
+			})
 			cl.delay(on, b, c)
 		case *exit.OnionSkin:
+			log.T.C(func() string {
+				return cl.AddrPort.String() +
+					" received\n" +
+					fmt.Sprint(reflect.TypeOf(on)) +
+					spew.Sdump(b.ToBytes())
+			})
 			cl.exit(on, b, c)
 		case *forward.OnionSkin:
+			log.T.C(func() string {
+				return cl.AddrPort.String() +
+					" received\n" +
+					fmt.Sprint(reflect.TypeOf(on)) +
+					spew.Sdump(b.ToBytes())
+			})
 			cl.forward(on, b, c)
 		case *layer.OnionSkin:
+			log.T.C(func() string {
+				return cl.AddrPort.String() +
+					" received\n" +
+					fmt.Sprint(reflect.TypeOf(on)) +
+					spew.Sdump(b.ToBytes())
+			})
 			cl.layer(on, b, c)
 		case *noop.OnionSkin:
+			log.T.C(func() string {
+				return cl.AddrPort.String() +
+					" received\n" +
+					fmt.Sprint(reflect.TypeOf(on)) +
+					spew.Sdump(b.ToBytes())
+			})
 			cl.noop(on, b, c)
 		case *reverse.OnionSkin:
+			log.T.C(func() string {
+				return cl.AddrPort.String() +
+					" received\n" +
+					fmt.Sprint(reflect.TypeOf(on)) +
+					spew.Sdump(b.ToBytes())
+			})
 			cl.reverse(on, b, c)
 		case *response.OnionSkin:
+			log.T.C(func() string {
+				return cl.AddrPort.String() +
+					" received\n" +
+					fmt.Sprint(reflect.TypeOf(on)) +
+					spew.Sdump(b.ToBytes())
+			})
 			cl.response(on, b, c)
 		case *session.OnionSkin:
+			log.T.C(func() string {
+				return cl.AddrPort.String() +
+					" received\n" +
+					fmt.Sprint(reflect.TypeOf(on)) +
+					spew.Sdump(b.ToBytes())
+			})
 			cl.session(on, b, c)
 		case *token.OnionSkin:
+			log.T.C(func() string {
+				return cl.AddrPort.String() +
+					" received\n" +
+					fmt.Sprint(reflect.TypeOf(on)) +
+					spew.Sdump(b.ToBytes())
+			})
 			cl.token(on, b, c)
 		default:
 			log.I.S("unrecognised packet", b)

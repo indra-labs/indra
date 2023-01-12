@@ -194,7 +194,8 @@ func Init(c *Command, p path.Path) (cmd *Command, err error) {
 	for i := range c.Commands {
 		c.Commands[i].Parent = c
 		c.Commands[i].Path = p.Child(c.Commands[i].Name)
-		_, _ = Init(c.Commands[i], p.Child(c.Commands[i].Name))
+		_, err = Init(c.Commands[i], p.Child(c.Commands[i].Name))
+		check(err)
 	}
 	c.ForEach(func(cmd *Command, _ int) bool {
 		for i := range cmd.Configs {

@@ -6,25 +6,18 @@ import (
 	"github.com/indra-labs/indra/pkg/key/signer"
 	"github.com/indra-labs/indra/pkg/node"
 	"github.com/indra-labs/indra/pkg/nonce"
-	"github.com/indra-labs/indra/pkg/session"
 	"github.com/indra-labs/indra/pkg/slice"
 )
 
 // Ping is a message which checks the liveness of relays by ensuring they are
-// correctly relaying messages. Pending pings are stored in a table with the
-// last hop as the key to narrow the number of elements to search through to
-// find the matching cipher and reveal the contained ID inside it.
+// correctly relaying messages.
 //
 // The pending ping records keep the identifiers of the 5 nodes that were in
 // a ping onion and when the Confirmation is correctly received these nodes get
 // an increment of their liveness score. By using this scheme, when nodes are
 // offline their scores will fall to zero after a time whereas live nodes will
 // have steadily increasing scores from successful pings.
-func Ping(id nonce.ID, s session.Sessions, ks *signer.KeySet) OnionSkins {
-	if len(s) != 6 {
-		log.E.F("Ping requires 6 sessions, received %d", len(s))
-		return nil
-	}
+func Ping(id nonce.ID, client *node.Node, s node.Circuit, ks *signer.KeySet) OnionSkins {
 	n := GenPingNonces()
 	return OnionSkins{}.
 		Forward(s[0].AddrPort).
@@ -37,8 +30,8 @@ func Ping(id nonce.ID, s session.Sessions, ks *signer.KeySet) OnionSkins {
 		OnionSkin(s[3].HeaderPub, ks.Next(), n[3]).
 		Forward(s[4].AddrPort).
 		OnionSkin(s[4].HeaderPub, ks.Next(), n[3]).
-		Forward(s[5].AddrPort).
-		OnionSkin(s[5].HeaderPub, ks.Next(), n[3]).
+		Forward(client.AddrPort).
+		OnionSkin(client.Sessions[0].HeaderPub, ks.Next(), n[3]).
 		Confirmation(id)
 }
 
@@ -97,7 +90,7 @@ func SendKeys(id nonce.ID, hdr, pld []*prv.Key,
 // their section at the top, moves the next layer header to the top and pads the
 // remainder with noise, so it always looks like the first hop.
 func SendExit(payload slice.Bytes, port uint16, client *node.Node,
-	hop [5]*node.Node, sess [3]*session.Session, set *signer.KeySet) OnionSkins {
+	hop [5]*node.Node, sess [3]*node.Session, set *signer.KeySet) OnionSkins {
 
 	var prvs [3]*prv.Key
 	for i := range prvs {

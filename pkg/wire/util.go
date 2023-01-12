@@ -30,7 +30,7 @@ func GenNonces(count int) (n []nonce.IV) {
 	return
 }
 
-func GenPingNonces() (n [4]nonce.IV) {
+func GenPingNonces() (n [6]nonce.IV) {
 	for i := range n {
 		n[i] = nonce.New()
 	}

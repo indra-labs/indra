@@ -3,6 +3,7 @@ package wire
 import (
 	"fmt"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/indra-labs/indra"
 	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/indra-labs/indra/pkg/slice"
@@ -97,8 +98,9 @@ func PeelOnion(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 		on = o
 	default:
 		e = fmt.Errorf("message magic not found")
-		check(e)
-		log.I.S(b.ToBytes())
+		log.T.C(func() string {
+			return fmt.Sprintln(e) + spew.Sdump(b.ToBytes())
+		})
 		return
 	}
 	return

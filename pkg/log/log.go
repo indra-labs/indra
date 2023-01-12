@@ -324,7 +324,7 @@ func logPrint(
 func sortSubsystemsList() { sort.Strings(allSubsystems) }
 
 // Add adds a subsystem to the list of known subsystems and returns the
-// string so it is nice and neat in the package logg.go file
+// string.
 func Add(pathBase string) (subsystem string) {
 	var ok bool
 	var fh string
