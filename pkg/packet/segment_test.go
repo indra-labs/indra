@@ -17,7 +17,7 @@ func TestSplitJoin(t *testing.T) {
 	var e error
 	var payload []byte
 	var pHash sha256.Hash
-	if payload, pHash, e = testutils.GenerateTestMessage(msgSize); check(e) {
+	if payload, pHash, e = testutils.GenerateTestMessage(msgSize, ""); check(e) {
 		t.FailNow()
 	}
 	var sp, rp *prv.Key
@@ -75,7 +75,7 @@ func BenchmarkSplit(b *testing.B) {
 	segSize := 1382
 	var e error
 	var payload []byte
-	if payload, _, e = testutils.GenerateTestMessage(msgSize); check(e) {
+	if payload, _, e = testutils.GenerateTestMessage(msgSize, ""); check(e) {
 		b.Error(e)
 	}
 	var sp *prv.Key
@@ -150,8 +150,7 @@ func TestSplitJoinFEC(t *testing.T) {
 		var payload []byte
 		var pHash sha256.Hash
 
-		if payload, pHash, e = testutils.GenerateTestMessage(
-			msgSize); check(e) {
+		if payload, pHash, e = testutils.GenerateTestMessage(msgSize, ""); check(e) {
 
 			t.FailNow()
 		}

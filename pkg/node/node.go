@@ -79,7 +79,7 @@ func (n *Node) SendTo(port uint16, b slice.Bytes) (e error) {
 func (n *Node) ReceiveFrom(port uint16) (b <-chan slice.Bytes) {
 	for i := range n.Services {
 		if n.Services[i].Port == port {
-			log.I.Ln("receivefrom")
+			log.T.Ln("receivefrom")
 			b = n.Services[i].Receive()
 			return
 		}

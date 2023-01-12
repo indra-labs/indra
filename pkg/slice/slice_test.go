@@ -24,7 +24,7 @@ func TestSegment(t *testing.T) {
 	var msg []byte
 	var hash sha256.Hash
 	var e error
-	if msg, hash, e = testutils.GenerateTestMessage(msgSize); check(e) {
+	if msg, hash, e = testutils.GenerateTestMessage(msgSize, ""); check(e) {
 		t.Error(e)
 	}
 	segs := Segment(msg, segSize)

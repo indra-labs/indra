@@ -237,7 +237,13 @@ func (cl *Client) reverse(on *reverse.OnionSkin, b slice.Bytes,
 			first := *c
 			second := first + ReverseLayerLen
 			last := second + ReverseLayerLen
+			log.T.Ln("searching for reverse layer keys")
 			hdr, pld, _ := cl.FindCloaked(on1.Cloak)
+			if hdr == nil || pld == nil {
+				log.E.F("failed to find key for %s",
+					cl.Node.AddrPort.String())
+				return
+			}
 			// We need to find the PayloadPub to match.
 			hdrPrv := hdr
 			hdrPub := on1.FromPub
@@ -269,8 +275,7 @@ func (cl *Client) reverse(on *reverse.OnionSkin, b slice.Bytes,
 
 func (cl *Client) response(on *response.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
 	// Response is a payload from an exit message.
-	// log.I.S(on.Hash, on.Bytes.ToBytes())
-	cl.ExitHooks.Find(on.Hash)
+	cl.ExitHooks.Find(on.Hash, on.Bytes)
 }
 
 func (cl *Client) session(s *session.OnionSkin, b slice.Bytes,

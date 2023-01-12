@@ -114,7 +114,7 @@ func TestOnionSkins_Exit(t *testing.T) {
 	ciphers := GenCiphers(prvs, pubs)
 	var msg slice.Bytes
 	var hash sha256.Hash
-	if msg, hash, e = testutils.GenerateTestMessage(512); check(e) {
+	if msg, hash, e = testutils.GenerateTestMessage(512, ""); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -290,7 +290,7 @@ func TestOnionSkins_Response(t *testing.T) {
 	var e error
 	var msg slice.Bytes
 	var hash sha256.Hash
-	if msg, hash, e = testutils.GenerateTestMessage(10000); check(e) {
+	if msg, hash, e = testutils.GenerateTestMessage(10000, ""); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}

@@ -35,6 +35,51 @@ func Ping(id nonce.ID, client *node.Node, s node.Circuit, ks *signer.KeySet) Oni
 		Confirmation(id)
 }
 
+// SendExit constructs a message containing an arbitrary payload to a node (3rd
+// hop) with a set of 3 ciphers derived from the hidden PayloadPub of the return
+// hops that are layered progressively after the Exit message.
+//
+// The Exit node forwards the packet it receives to the local port specified in
+// the Exit message, and then uses the ciphers to encrypt the reply with the
+// three ciphers provided, which don't enable it to decrypt the header, only to
+// encrypt the payload.
+//
+// The response is encrypted with the given layers, the ciphers are already
+// given in reverse order, so they are decoded in given order to create the
+// correct payload encryption to match the PayloadPub combined with the header's
+// given public From key.
+//
+// The header remains a constant size and each node in the Reverse trims off
+// their section at the top, moves the next layer header to the top and pads the
+// remainder with noise, so it always looks like the first hop.
+func SendExit(payload slice.Bytes, port uint16, client *node.Node,
+	s node.Circuit, set *signer.KeySet) OnionSkins {
+
+	var prvs [3]*prv.Key
+	for i := range prvs {
+		prvs[i] = set.Next()
+	}
+	n0, n1 := Gen3Nonces(), Gen3Nonces()
+	var pubs [3]*pub.Key
+	pubs[0] = s[3].PayloadPub
+	pubs[1] = s[4].PayloadPub
+	pubs[2] = client.Sessions[0].PayloadPub
+	return OnionSkins{}.
+		Forward(s[0].AddrPort).
+		Layer(s[0].HeaderPub, set.Next(), n0[0]).
+		Forward(s[1].AddrPort).
+		Layer(s[1].HeaderPub, set.Next(), n0[1]).
+		Forward(s[2].AddrPort).
+		Layer(s[2].HeaderPub, set.Next(), n0[2]).
+		Exit(port, prvs, pubs, n1, payload).
+		Reverse(s[3].AddrPort).
+		Layer(s[3].HeaderPub, prvs[0], n1[0]).
+		Reverse(s[4].AddrPort).
+		Layer(s[4].HeaderPub, prvs[1], n1[1]).
+		Reverse(client.AddrPort).
+		Layer(client.Sessions[0].HeaderPub, prvs[2], n1[2])
+}
+
 // SendKeys provides a pair of private keys that will be used to generate the
 // Purchase header bytes and to generate the ciphers provided in the Purchase
 // message to encrypt the Session that is returned.
@@ -70,49 +115,4 @@ func SendKeys(id nonce.ID, hdr, pld []*prv.Key,
 		Forward(client.AddrPort).
 		Layer(client.IdentityPub, set.Next(), n[5]).
 		Confirmation(id)
-}
-
-// SendExit constructs a message containing an arbitrary payload to a node (3rd
-// hop) with a set of 3 ciphers derived from the hidden PayloadPub of the return
-// hops that are layered progressively after the Exit message.
-//
-// The Exit node forwards the packet it receives to the local port specified in
-// the Exit message, and then uses the ciphers to encrypt the reply with the
-// three ciphers provided, which don't enable it to decrypt the header, only to
-// encrypt the payload.
-//
-// The response is encrypted with the given layers, the ciphers are already
-// given in reverse order, so they are decoded in given order to create the
-// correct payload encryption to match the PayloadPub combined with the header's
-// given public From key.
-//
-// The header remains a constant size and each node in the Reverse trims off
-// their section at the top, moves the next layer header to the top and pads the
-// remainder with noise, so it always looks like the first hop.
-func SendExit(payload slice.Bytes, port uint16, client *node.Node,
-	hop [5]*node.Node, sess [3]*node.Session, set *signer.KeySet) OnionSkins {
-
-	var prvs [3]*prv.Key
-	for i := range prvs {
-		prvs[i] = set.Next()
-	}
-	n0, n1 := Gen3Nonces(), Gen3Nonces()
-	var pubs [3]*pub.Key
-	pubs[0] = sess[0].PayloadPub
-	pubs[1] = sess[1].PayloadPub
-	pubs[2] = sess[2].PayloadPub
-	return OnionSkins{}.
-		Forward(hop[0].AddrPort).
-		Layer(hop[0].IdentityPub, set.Next(), n0[0]).
-		Forward(hop[1].AddrPort).
-		Layer(hop[1].IdentityPub, set.Next(), n0[1]).
-		Forward(hop[2].AddrPort).
-		Layer(hop[2].IdentityPub, set.Next(), n0[2]).
-		Exit(port, prvs, pubs, n1, payload).
-		Reverse(hop[3].AddrPort).
-		Layer(sess[0].HeaderPub, prvs[0], n1[0]).
-		Reverse(hop[4].AddrPort).
-		Layer(sess[1].HeaderPub, prvs[1], n1[1]).
-		Reverse(client.AddrPort).
-		Layer(sess[2].HeaderPub, prvs[2], n1[2])
 }

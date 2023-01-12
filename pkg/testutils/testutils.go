@@ -15,13 +15,16 @@ var (
 	check = log.E.Chk
 )
 
-func GenerateTestMessage(msgSize int) (msg []byte, hash sha256.Hash, e error) {
+func GenerateTestMessage(msgSize int, hrp string) (msg []byte, hash sha256.Hash, e error) {
 	msg = make([]byte, msgSize)
 	var n int
 	if n, e = rand.Read(msg); check(e) && n != msgSize {
 		return
 	}
-	copy(msg, "payload")
+	if hrp == "" {
+		hrp = "payload"
+	}
+	copy(msg, hrp)
 	hash = sha256.Single(msg)
 	return
 }

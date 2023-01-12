@@ -35,6 +35,7 @@ func CreateMockCircuitClients() (clients []*Client, e error) {
 			return
 		}
 		clients[i].AddrPort = nodes[i].AddrPort
+		clients[i].Node = nodes[i]
 		// create a session for all but the first
 		if i > 0 {
 			sessions[i-1] = node.NewSession(nonce.NewID(),
