@@ -19,12 +19,12 @@ RUN addgroup ${GROUP} --gid ${GID} \
 # Pass a tag, branch or a commit using build-arg.  This allows a docker
 # image to be built from a specified Git state.  The default image
 # will use the Git tip of master by default.
-ARG lnd_version="master"
+ARG git_tag="master"
 
 # Install dependencies and build the binaries.
 RUN git clone "https://github.com/lightningnetwork/lnd" /go/src/github.com/lightningnetwork/lnd \
 &&  cd /go/src/github.com/lightningnetwork/lnd \
-&&  git checkout ${lnd_version}
+&&  git checkout ${git_tag}
 
 # Source/Target release defaults
 ARG ARCH=amd64

@@ -26,9 +26,9 @@ func init() {
 }
 
 var (
-	timeout = 240 * time.Second
-
-	defaultRepositoryName = "indralabs"
+	defaultBuildingTimeout = 800 * time.Second
+	defaultRepositoryName  = "indralabs"
+	defaultBuildContainer  = "golang:1.19.4"
 )
 
 func strPtr(str string) *string { return &str }
@@ -62,7 +62,27 @@ var buildConfigurations = []docker.BuildConfiguration{
 			BuildArgs: map[string]*string{
 				// This argument is the tag fetched by git
 				// It MUST be updated alongside the tag above
-				"lnd_version": strPtr("v0.15.5-beta"),
+				"git_tag": strPtr("v0.15.5-beta"),
+			},
+			SuppressOutput: false,
+			Remove:         true,
+			ForceRemove:    true,
+			PullParent:     true,
+		},
+	},
+	docker.BuildConfiguration{
+		Name:            defaultRepositoryName + "/" + "btcd",
+		ContextFilePath: "/tmp/btcd.tar",
+		BuildOpts: types.ImageBuildOptions{
+			Dockerfile: "docker/btcd/Dockerfile",
+			Tags: []string{
+				"v0.23.4",
+				"latest",
+			},
+			BuildArgs: map[string]*string{
+				// This argument is the tag fetched by git
+				// It MUST be updated alongside the tag above
+				"git_tag": strPtr("v0.23.4"),
 			},
 			SuppressOutput: false,
 			Remove:         true,
@@ -104,7 +124,7 @@ var commands = &cmds.Command{
 		}
 
 		// Set a Timeout for 120 seconds
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		ctx, cancel := context.WithTimeout(context.Background(), defaultBuildingTimeout)
 		defer cancel()
 
 		// Setup a new instance of the docker client
