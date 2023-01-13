@@ -40,11 +40,14 @@ type Node struct {
 	*Circuit
 	Sessions
 	Services
+	PaymentChan
+	PendingPayments
 	ifc.Transport
 }
 
 // New creates a new Node. netip.AddrPort is optional if the counterparty is not
-// in direct connection.
+// in direct connection. Also, the idPrv node private key can be nil, as only
+// the node embedded in a client and not the peer node list has one available.
 func New(addr *netip.AddrPort, idPub *pub.Key, idPrv *prv.Key,
 	tpt ifc.Transport) (n *Node, id nonce.ID) {
 
@@ -57,6 +60,7 @@ func New(addr *netip.AddrPort, idPub *pub.Key, idPrv *prv.Key,
 		IdentityPub:   idPub,
 		IdentityBytes: idPub.ToBytes(),
 		IdentityPrv:   idPrv,
+		PaymentChan:   make(PaymentChan),
 	}
 	n.Sessions = append(n.Sessions, NewSession(id, n, 0))
 	return

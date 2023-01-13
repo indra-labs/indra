@@ -26,7 +26,6 @@ import (
 )
 
 const (
-	DefaultDeadline  = 10 * time.Minute
 	ReverseLayerLen  = reverse.Len + layer.Len
 	ReverseHeaderLen = 3 * ReverseLayerLen
 )
