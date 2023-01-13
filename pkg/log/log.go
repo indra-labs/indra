@@ -314,7 +314,7 @@ func logPrint(
 		)
 		writerMx.Lock()
 		defer writerMx.Unlock()
-		fmt.Fprintf(writer, s)
+		fmt.Fprint(writer, s)
 	}
 }
 
