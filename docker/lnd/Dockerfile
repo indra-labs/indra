@@ -35,7 +35,8 @@ ENV GO111MODULE=on GOOS=linux
 WORKDIR $GOPATH/src/github.com/lightningnetwork/lnd
 
 RUN set -ex \
-  #&& go install -v ./cmd/indra/. \
+  && cp /go/src/github.com/lightningnetwork/lnd/sample-lnd.conf /var/lnd/.lnd/lnd.conf \
+  && chown -R lnd:lnd /var/lnd \
   && CGO_ENABLED=0 go build --ldflags '-w -s' -o /bin/lnd ./cmd/lnd/. \
   && CGO_ENABLED=0 go build --ldflags '-w -s' -o /bin/lncli ./cmd/lncli/.
 
@@ -50,7 +51,7 @@ COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /etc/group /etc/group
 
 # Migrate the binaries and storage folder
-COPY --from=builder --chown=lnd:lnd /bin /bin
+COPY --from=builder /bin /bin
 COPY --from=builder --chown=lnd:lnd /var/lnd /var/lnd
 
 # Enable the indra user
@@ -67,3 +68,5 @@ USER lnd:lnd
 EXPOSE 9735 10009
 
 ENTRYPOINT ["/bin/lnd"]
+
+# docker run -it --rm --entrypoint="/bin/lncli" -v ~/rpc.cert:/var/lnd/.lnd/rpc.cert indralabs/lnd --skipverify -s <host>:<port> -u <username> -P <password> <function>
