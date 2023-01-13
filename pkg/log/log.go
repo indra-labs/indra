@@ -290,17 +290,17 @@ func logPrint(
 		if level <= Off && level > logLevel {
 			return
 		}
-		formatString := "%v%s%s%-6v %s\n"
+		formatString := "%v%s%s%-6v %s"
 		loc := ""
 		tsf := timeStampFormat
 		if codeLoc {
-			formatString = "%-58v%s%s%-6v %s\n"
+			formatString = "%-58v%s%s%-6v %s"
 			loc = GetLoc(3, subsystem)
 			tsf = LocTimeStampFormat
 		}
 		var app string
 		if len(App) > 0 {
-			fmt.Sprint(" [" + App + "]")
+			app = fmt.Sprint(" [" + App + "]")
 		}
 		s := fmt.Sprintf(
 			formatString,
@@ -312,9 +312,10 @@ func logPrint(
 			),
 			printFunc(),
 		)
+		s = strings.TrimSuffix(s, "\n")
 		writerMx.Lock()
 		defer writerMx.Unlock()
-		fmt.Fprint(writer, s)
+		fmt.Fprintln(writer, s)
 	}
 }
 
@@ -363,7 +364,7 @@ func GetLogger(pathBase string) (l *Logger) {
 
 func _ln(l LogLevel, ss string) Println {
 	return func(a ...interface{}) {
-		logPrint(l, ss, joinStrings(" ", a...))()
+		logPrint(l, ss, joinStrings(" ", a...))
 	}
 }
 func _f(level LogLevel, subsystem string) Printf {
@@ -379,7 +380,7 @@ func _s(level LogLevel, subsystem string) Prints {
 	return func(a ...interface{}) {
 		logPrint(
 			level, subsystem, func() string {
-				return fmt.Sprint("spew:\n\n" + spew.Sdump(a...))
+				return fmt.Sprint("spew:\n" + spew.Sdump(a...))
 			},
 		)()
 	}
