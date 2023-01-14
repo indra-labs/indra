@@ -100,11 +100,11 @@ RUN set -ex && echo "building root-fs tarball" \
     && rm -rf /tmp/root-fs \
     && ls -hal /tmp
 
-RUN set -ex && tar -xzvf /tmp/root-fs.tgz \
-    && ls -hal /tmp \
-    && ls -hal /tmp/root-fs \
-    && ls -hal /tmp/root-fs/etc \
-    && ls -hal /tmp/root-fs/etc/btcd \
+#RUN set -ex && tar -xzvf /tmp/root-fs.tgz \
+#    && ls -hal /tmp \
+#    && ls -hal /tmp/root-fs \
+#    && ls -hal /tmp/root-fs/etc \
+#    && ls -hal /tmp/root-fs/etc/btcd \
 
 ##
 ## Base Image
