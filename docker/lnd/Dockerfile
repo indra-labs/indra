@@ -1,30 +1,23 @@
-FROM golang:1.19.4 AS builder
 
-# User/Group definition
-ENV USER=lnd GROUP=lnd UID=9735 GID=9735
+ARG base_image="golang"
+ARG target_image="indralabs/scratch"
 
-## Create a user/group for indra, to be migrated to the target container
-RUN addgroup ${GROUP} --gid ${GID} \
- && adduser \
-    --disabled-password \
-    --gecos "" \
-    --home "/var/lnd" \
-    --shell "/sbin/nologin" \
-    #--no-create-home \
-    --uid "${UID}" \
-    --gid "${GID}" \
-    "${USER}" \
- && mkdir -pv /var/lnd/.lnd && chown -R lnd:lnd /var/lnd
+# ---
+# Build Process
+# ---
 
-# Pass a tag, branch or a commit using build-arg.  This allows a docker
-# image to be built from a specified Git state.  The default image
-# will use the Git tip of master by default.
+FROM ${base_image} AS builder
+
+# Get the repo and build
+ARG git_repository="github.com/indra-labs/lnd"
 ARG git_tag="master"
 
 # Install dependencies and build the binaries.
-RUN git clone "https://github.com/lightningnetwork/lnd" /go/src/github.com/lightningnetwork/lnd \
-&&  cd /go/src/github.com/lightningnetwork/lnd \
-&&  git checkout ${git_tag}
+RUN git clone "https://"${git_repository} /go/src/${git_repository}
+
+WORKDIR $GOPATH/src/${git_repository}
+
+RUN git checkout ${git_tag}
 
 # Source/Target release defaults
 ARG ARCH=amd64
@@ -32,27 +25,23 @@ ARG GOARCH=amd64
 
 ENV GO111MODULE=on GOOS=linux
 
-WORKDIR $GOPATH/src/github.com/lightningnetwork/lnd
+WORKDIR $GOPATH/src/${git_repository}
+
+RUN cp sample-lnd.conf /tmp/lnd.conf
 
 RUN set -ex \
-  && cp /go/src/github.com/lightningnetwork/lnd/sample-lnd.conf /var/lnd/.lnd/lnd.conf \
-  && chown -R lnd:lnd /var/lnd \
-  && CGO_ENABLED=0 go build --ldflags '-w -s' -o /bin/lnd ./cmd/lnd/. \
-  && CGO_ENABLED=0 go build --ldflags '-w -s' -o /bin/lncli ./cmd/lncli/.
+  && CGO_ENABLED=0 go build --ldflags '-w -s' -o /tmp/bin/lnd ./cmd/lnd/. \
+  && CGO_ENABLED=0 go build --ldflags '-w -s' -o /tmp/bin/lncli ./cmd/lncli/.
 
 # ---
 # Configure and Build the target container
 # ---
 
-FROM scratch
+FROM indralabs/scratch:latest
 
-# Migrate User/Group to target
-COPY --from=builder /etc/passwd /etc/passwd
-COPY --from=builder /etc/group /etc/group
-
-# Migrate the binaries and storage folder
-COPY --from=builder /bin /bin
-COPY --from=builder --chown=lnd:lnd /var/lnd /var/lnd
+## Migrate the binaries and storage folder
+COPY --from=builder /tmp/lnd.conf /etc/lnd/lnd.conf
+COPY --from=builder /tmp/bin /bin
 
 # Enable the indra user
 USER lnd:lnd
@@ -61,12 +50,14 @@ USER lnd:lnd
 # ENV IND_LOGFILEPATH=""
 
 # Set the data volume
-#VOLUME ["/var/lnd"]
+# VOLUME ["/etc/lnd"]
+# VOLUME ["/var/lnd"]
 
 # :9735  lnd peer-to-peer port
 # :10009  lnd RPC port
 EXPOSE 9735 10009
 
-ENTRYPOINT ["/bin/lnd"]
+ENTRYPOINT ["/bin/lnd", "--lnddir=/var/lnd", "--configfile=/etc/lnd/lnd.conf", "--datadir=/var/lnd", "--tlskeypath=/etc/lnd/keys/", "--tlscertpath=/etc/lnd/keys/", "--btcd.rpccert=/etc/btcd/keys/rpc.cert", "--bitcoin.active"]
+CMD ["--bitcoin.mainnet"]
 
 # docker run -it --rm --entrypoint="/bin/lncli" -v ~/rpc.cert:/var/lnd/.lnd/rpc.cert indralabs/lnd --skipverify -s <host>:<port> -u <username> -P <password> <function>

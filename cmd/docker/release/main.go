@@ -35,16 +35,21 @@ func strPtr(str string) *string { return &str }
 
 var buildConfigurations = []docker.BuildConfiguration{
 	//docker.BuildConfiguration{
-	//	Name:            defaultRepositoryName + "/" + "scratch",
-	//	ContextFilePath: "/tmp/scratch.tar",
+	//	Name:            defaultRepositoryName + "/" + "btcd",
+	//	ContextFilePath: "/tmp/btcd.tar",
 	//	BuildOpts: types.ImageBuildOptions{
-	//		Dockerfile: "docker/scratch/Dockerfile",
+	//		Dockerfile: "docker/btcd/Dockerfile",
 	//		Tags: []string{
-	//			indra.SemVer,
+	//			"v0.23.4",
 	//			"latest",
 	//		},
 	//		BuildArgs: map[string]*string{
-	//			"base_image": strPtr("busybox"),
+	//			"base_image":   strPtr(defaultBuildContainer),
+	//			"target_image": strPtr("indralabs/scratch:latest"),
+	//			// This argument is the tag fetched by git
+	//			// It MUST be updated alongside the tag above
+	//			"git_repository": strPtr("github.com/btcsuite/btcd"),
+	//			"git_tag":        strPtr("v0.23.4"),
 	//		},
 	//		SuppressOutput: false,
 	//		Remove:         true,
@@ -53,12 +58,12 @@ var buildConfigurations = []docker.BuildConfiguration{
 	//	},
 	//},
 	docker.BuildConfiguration{
-		Name:            defaultRepositoryName + "/" + "btcd",
-		ContextFilePath: "/tmp/btcd.tar",
+		Name:            defaultRepositoryName + "/" + "lnd",
+		ContextFilePath: "/tmp/lnd.tar",
 		BuildOpts: types.ImageBuildOptions{
-			Dockerfile: "docker/btcd/Dockerfile",
+			Dockerfile: "docker/lnd/Dockerfile",
 			Tags: []string{
-				"v0.23.4",
+				"v0.15.5-beta",
 				"latest",
 			},
 			BuildArgs: map[string]*string{
@@ -66,8 +71,8 @@ var buildConfigurations = []docker.BuildConfiguration{
 				"target_image": strPtr("indralabs/scratch:latest"),
 				// This argument is the tag fetched by git
 				// It MUST be updated alongside the tag above
-				"git_repository": strPtr("github.com/btcsuite/btcd"),
-				"git_tag":        strPtr("v0.23.4"),
+				"git_repository": strPtr("github.com/lightningnetwork/lnd"),
+				"git_tag":        strPtr("v0.15.5-beta"),
 			},
 			SuppressOutput: false,
 			Remove:         true,
@@ -75,26 +80,6 @@ var buildConfigurations = []docker.BuildConfiguration{
 			PullParent:     true,
 		},
 	},
-	//docker.BuildConfiguration{
-	//	Name:            defaultRepositoryName + "/" + "lnd",
-	//	ContextFilePath: "/tmp/lnd.tar",
-	//	BuildOpts: types.ImageBuildOptions{
-	//		Dockerfile: "docker/lnd/Dockerfile",
-	//		Tags: []string{
-	//			"v0.15.5-beta",
-	//			"latest",
-	//		},
-	//		BuildArgs: map[string]*string{
-	//			// This argument is the tag fetched by git
-	//			// It MUST be updated alongside the tag above
-	//			"git_tag": strPtr("v0.15.5-beta"),
-	//		},
-	//		SuppressOutput: false,
-	//		Remove:         true,
-	//		ForceRemove:    true,
-	//		PullParent:     true,
-	//	},
-	//},
 	//docker.BuildConfiguration{
 	//	Name:            defaultRepositoryName + "/" + "indra",
 	//	ContextFilePath: "/tmp/indra-" + indra.SemVer + ".tar",
