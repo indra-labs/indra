@@ -7,6 +7,7 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/indra-labs/indra/pkg/ciph"
+	"github.com/indra-labs/indra/pkg/node"
 	"github.com/indra-labs/indra/pkg/sha256"
 	"github.com/indra-labs/indra/pkg/slice"
 	"github.com/indra-labs/indra/pkg/types"
@@ -85,6 +86,7 @@ func (cl *Client) runner() (out bool) {
 			log.I.S("unrecognised packet", b)
 		}
 	case p := <-cl.PaymentChan:
+		log.T.S("incoming payment", p)
 		cl.PendingPayments = cl.PendingPayments.Add(p)
 	}
 	return
@@ -93,11 +95,17 @@ func (cl *Client) runner() (out bool) {
 func (cl *Client) session(on *session.OnionSkin, b slice.Bytes,
 	c *slice.Cursor) {
 
-	// This either is in a forward only SendKeys message or we are the buyer
-	// and these are our session keys.
-	// log.I.S(on)
-	b = append(b[*c:], slice.NoisePad(int(*c))...)
-	cl.Node.Send(b)
+	log.T.S("incoming session", on.PreimageHash())
+	pi := cl.PendingPayments.FindPreimage(on.PreimageHash())
+	if pi != nil {
+		log.T.F("Adding session %x", pi.ID)
+		cl.Sessions = append(cl.Sessions, node.NewSession(pi.ID,
+			cl.Node, pi.Amount, on.Header, on.Payload))
+		cl.PendingPayments = cl.PendingPayments.Delete(pi.Preimage)
+		b = append(b[*c:], slice.NoisePad(int(*c))...)
+		cl.Node.Send(b)
+		return
+	}
 }
 
 func (cl *Client) confirm(on *confirm.OnionSkin, b slice.Bytes,

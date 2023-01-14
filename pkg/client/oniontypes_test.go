@@ -137,14 +137,14 @@ func TestSendKeys(t *testing.T) {
 	}
 	quit := qu.T()
 	go func() {
-		<-time.After(time.Second)
+		<-time.After(time.Second * 2)
 		quit.Q()
-		// t.Error("SendKeys got stuck")
+		t.Error("SendKeys got stuck")
 	}()
 	// Create a new payment and drop on the payment channel.
 	sess := session.New()
 	pmt := sess.ToPayment(1000000)
-	clients[0].PaymentChan <- pmt
+	clients[1].PaymentChan <- pmt
 	// Send the keys.
 	var circuit node.Circuit
 	for i := range circuit {
@@ -156,27 +156,11 @@ func TestSendKeys(t *testing.T) {
 		circuit, clients[0].KeySet)
 	clients[0].RegisterConfirmation(func(cf nonce.ID) {
 		log.T.S("received payment confirmation ID", cf)
-		pp := clients[0].PendingPayments.Find(cf)
-		log.T.F("\nexpected %x\nreceived %x\nfrom\nhdr: %x\npld: %x",
-			sess.PreimageHash(),
-			pp.Preimage,
-			sess.Header.ToBytes(),
-			sess.Payload.ToBytes(),
-		)
-		if pp.Preimage != sess.PreimageHash() {
-			t.Errorf("did not find expected preimage: got"+
-				" %x expected %x",
-				pp.Preimage, sess.PreimageHash())
+		if cf != pmt.ID {
+			t.Errorf("did not receive expected confirmation, got:"+
+				" %x expected: %x", cf, pmt.ID)
 			t.FailNow()
 		}
-		_ = pp
-		// if pp == nil {
-		// 	t.Errorf("did not find expected confirmation ID: got"+
-		// 		" %x expected %x", cf, pmt.ID)
-		// 	t.FailNow()
-		// }
-		log.T.F("SendKeys confirmed %x", cf)
-		time.Sleep(time.Second)
 		quit.Q()
 	}, pmt.ID)
 	o := sk.Assemble()

@@ -42,3 +42,12 @@ func (p PendingPayments) Find(id nonce.ID) (pp *Payment) {
 	}
 	return
 }
+
+func (p PendingPayments) FindPreimage(pi sha256.Hash) (pp *Payment) {
+	for i := range p {
+		if p[i].Preimage == pi {
+			return p[i]
+		}
+	}
+	return
+}

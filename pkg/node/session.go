@@ -3,6 +3,7 @@ package node
 import (
 	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/key/pub"
+	"github.com/indra-labs/indra/pkg/lnwire"
 	"github.com/indra-labs/indra/pkg/nonce"
 )
 
@@ -12,7 +13,7 @@ import (
 type Session struct {
 	nonce.ID
 	*Node
-	Remaining                 uint64
+	Remaining                 lnwire.MilliSatoshi
 	HeaderPrv, PayloadPrv     *prv.Key
 	HeaderPub, PayloadPub     *pub.Key
 	HeaderBytes, PayloadBytes pub.Bytes
@@ -22,7 +23,7 @@ type Session struct {
 //
 // Purchasing a session the seller returns a token, based on a requested data
 // allocation.
-func NewSession(id nonce.ID, node *Node, rem uint64,
+func NewSession(id nonce.ID, node *Node, rem lnwire.MilliSatoshi,
 	hdrPrv *prv.Key, pldPrv *prv.Key) (s *Session) {
 
 	var e error
@@ -50,12 +51,12 @@ func NewSession(id nonce.ID, node *Node, rem uint64,
 
 // AddBytes adds to the Remaining counter, used when new data allowance has been
 // purchased.
-func (s *Session) AddBytes(b uint64) { s.Remaining += b }
+func (s *Session) AddBytes(b lnwire.MilliSatoshi) { s.Remaining += b }
 
 // SubtractBytes reduces the amount Remaining, if the requested amount would put
 // the total below zero it returns false, signalling that new data allowance
 // needs to be purchased before any further messages can be sent.
-func (s *Session) SubtractBytes(b uint64) bool {
+func (s *Session) SubtractBytes(b lnwire.MilliSatoshi) bool {
 	if s.Remaining < b {
 		return false
 	}
