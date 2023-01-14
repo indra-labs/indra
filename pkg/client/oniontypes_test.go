@@ -5,12 +5,11 @@ import (
 	"time"
 
 	"github.com/cybriq/qu"
-	"github.com/indra-labs/indra/pkg/key/signer"
 	"github.com/indra-labs/indra/pkg/node"
 	"github.com/indra-labs/indra/pkg/nonce"
 	"github.com/indra-labs/indra/pkg/sha256"
 	"github.com/indra-labs/indra/pkg/slice"
-	"github.com/indra-labs/indra/pkg/testutils"
+	"github.com/indra-labs/indra/pkg/tests"
 	"github.com/indra-labs/indra/pkg/transport"
 	"github.com/indra-labs/indra/pkg/wire"
 	"github.com/indra-labs/indra/pkg/wire/confirm"
@@ -36,7 +35,7 @@ func TestPing(t *testing.T) {
 	os := wire.Ping(conf, clients[0].Node, circuit, clients[0].KeySet)
 	quit := qu.T()
 	clients[0].RegisterConfirmation(func(cf nonce.ID) {
-		log.I.S("received ping confirmation ID", cf)
+		log.T.S("received ping confirmation ID", cf)
 		quit.Q()
 	}, os[len(os)-1].(*confirm.OnionSkin).ID)
 	o := os.Assemble()
@@ -47,10 +46,9 @@ func TestPing(t *testing.T) {
 		select {
 		case <-time.After(time.Second):
 			t.Error("ping got stuck")
+			quit.Q()
 		case <-quit:
 		}
-		time.Sleep(time.Second)
-		quit.Q()
 	}()
 	<-quit.Wait()
 	for _, v := range clients {
@@ -63,11 +61,6 @@ func TestSendExit(t *testing.T) {
 	clients := make([]*Client, nTotal)
 	var e error
 	if clients, e = CreateMockCircuitClients(); check(e) {
-		t.Error(e)
-		t.FailNow()
-	}
-	var ks *signer.KeySet
-	if _, ks, e = signer.New(); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -85,26 +78,25 @@ func TestSendExit(t *testing.T) {
 	for i := range circuit {
 		circuit[i] = clients[0].Sessions[i+1]
 	}
-	var message slice.Bytes
-	var hash sha256.Hash
-	if message, hash, e = testutils.GenerateTestMessage(32, "request"); check(e) {
+	var msg slice.Bytes
+	var msgHash sha256.Hash
+	if msg, msgHash, e = tests.GenMessage(32, "request"); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
-	var responseMessage slice.Bytes
-	var responseHash sha256.Hash
-	if responseMessage, responseHash, e =
-		testutils.GenerateTestMessage(32, "response"); check(e) {
-
+	var respMsg slice.Bytes
+	var respHash sha256.Hash
+	if respMsg, respHash, e = tests.GenMessage(32, "response"); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
 	quit := qu.T()
-	os := wire.SendExit(message, port, clients[0].Node, circuit, ks)
-	clients[0].ExitHooks = clients[0].ExitHooks.Add(hash,
+	os := wire.SendExit(msg, port, clients[0].Node, circuit,
+		clients[0].KeySet)
+	clients[0].ExitHooks = clients[0].ExitHooks.Add(msgHash,
 		func(b slice.Bytes) {
 			log.T.S(b.ToBytes())
-			if sha256.Single(b) != responseHash {
+			if sha256.Single(b) != respHash {
 				t.Error("failed to receive expected message")
 			}
 			quit.Q()
@@ -120,7 +112,7 @@ func TestSendExit(t *testing.T) {
 	}()
 	bb := <-clients[3].Services[0].Receive()
 	log.T.S(bb.ToBytes())
-	if e = clients[3].SendTo(port, responseMessage); check(e) {
+	if e = clients[3].SendTo(port, respMsg); check(e) {
 		t.Error("fail send")
 	}
 	log.T.Ln("response sent")
@@ -130,25 +122,26 @@ func TestSendExit(t *testing.T) {
 	}
 }
 
-// func TestSendKeys(t *testing.T) {
-// 	const nTotal = 6
-// 	clients := make([]*Client, nTotal)
-// 	var e error
-// 	if clients, e = CreateMockCircuitClients(nTotal); check(e) {
-// 		t.Error(e)
-// 		t.FailNow()
-// 	}
-// 	// Start up the clients.
-// 	for _, v := range clients {
-// 		go v.Start()
-// 	}
-// 	quit := qu.T()
-// 	clients[0].SendKeys(clients[0].Nodes[0].ID, func(cf nonce.ID) {
-// 		log.I.S("received sendkeys confirmation ID", cf)
-// 		quit.Q()
-// 	})
-// 	<-quit.Wait()
-// 	for _, v := range clients {
-// 		v.Shutdown()
-// 	}
-// }
+func TestSendKeys(t *testing.T) {
+	var clients []*Client
+	var e error
+	if clients, e = CreateMockCircuitClients(); check(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	// Start up the clients.
+	for _, v := range clients {
+		go v.Start()
+	}
+	quit := qu.T()
+	go func() {
+		<-time.After(time.Second)
+		quit.Q()
+		// t.Error("SendKeys got stuck")
+	}()
+
+	<-quit.Wait()
+	for _, v := range clients {
+		v.Shutdown()
+	}
+}

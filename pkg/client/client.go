@@ -1,7 +1,6 @@
 package client
 
 import (
-	"fmt"
 	"net/netip"
 	"sync"
 	"time"
@@ -43,7 +42,7 @@ type Client struct {
 	ExitHooks response.Hooks
 	sync.Mutex
 	*signer.KeySet
-	atomic.Bool
+	ShuttingDown atomic.Bool
 	qu.C
 }
 
@@ -114,67 +113,6 @@ func (cl *Client) FindCloaked(clk cloak.PubKey) (hdr *prv.Key, pld *prv.Key,
 	return
 }
 
-// SendKeys is the delivery of a ...
-//
-// todo: this function should be requiring input of keys, and a related prior
-//
-//	function that generates the preimage for an LN AMP, from the hash of the
-//	keys.
-func (cl *Client) SendKeys(nodeID []nonce.ID, hook confirm.Hook) (conf nonce.ID,
-	e error) {
-
-	var n []*node.Node
-	for i := range nodeID {
-		no := cl.Nodes.FindByID(nodeID[i])
-		if no != nil {
-			n = append(n, no)
-		}
-	}
-	if len(n) > 5 {
-		e = fmt.Errorf("SendKeys maximum 5 keys %d given", len(nodeID))
-	}
-	ln := len(n)
-	hdrPrv, pldPrv := make([]*prv.Key, ln), make([]*prv.Key, ln)
-	hdrPub, pldPub := make([]*pub.Key, ln), make([]*pub.Key, ln)
-	for i := range n {
-		if hdrPrv[i], e = prv.GenerateKey(); check(e) {
-			return
-		}
-		hdrPub[i] = pub.Derive(hdrPrv[i])
-		if pldPrv[i], e = prv.GenerateKey(); check(e) {
-			return
-		}
-		pldPub[i] = pub.Derive(pldPrv[i])
-	}
-
-	// selected := cl.Nodes.Select(SimpleSelector, n, 4)
-	// if len(selected) < 4 {
-	// 	e = fmt.Errorf("not enough nodes known to form circuit")
-	// 	return
-	// }
-	// hop := [5]*node.Node{
-	// 	selected[0], selected[1], n, selected[2], selected[3],
-	// }
-	// conf = nonce.NewID()
-	// os := wire.SendKeys(conf, hdrPrv, pldPrv, cl.Node, hop, cl.KeySet)
-	// cl.RegisterConfirmation(hook, os[len(os)-1].(*confirm.OnionSkin).ID)
-	// cl.Sessions.Add(&session.Session{
-	// 	ID:           n.ID,
-	// 	Remaining:    1 << 16,
-	// 	IdentityPub:    hdrPub,
-	// 	IdentityBytes:  hdrPub.ToBytes(),
-	// 	PayloadPub:   pldPub,
-	// 	PayloadBytes: pldPub.ToBytes(),
-	// 	IdentityPrv:    hdrPrv,
-	// 	PayloadPrv:   pldPrv,
-	// 	Deadline:     time.Now().Add(DefaultDeadline),
-	// })
-	// o := os.Assemble()
-	// b := wire.EncodeOnion(o)
-	// cl.Send(hop[0].AddrPort, b)
-	return
-}
-
 // Cleanup closes and flushes any resources the client opened that require sync
 // in order to reopen correctly.
 func (cl *Client) Cleanup() {
@@ -184,13 +122,13 @@ func (cl *Client) Cleanup() {
 // Shutdown triggers the shutdown of the client and the Cleanup before
 // finishing.
 func (cl *Client) Shutdown() {
-	if cl.Bool.Load() {
+	if cl.ShuttingDown.Load() {
 		return
 	}
 	log.T.C(func() string {
 		return "shutting down client " + cl.Node.AddrPort.String()
 	})
-	cl.Bool.Store(true)
+	cl.ShuttingDown.Store(true)
 	cl.C.Q()
 }
 

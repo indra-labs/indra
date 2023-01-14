@@ -13,7 +13,7 @@ import (
 	"github.com/indra-labs/indra/pkg/nonce"
 	"github.com/indra-labs/indra/pkg/sha256"
 	"github.com/indra-labs/indra/pkg/slice"
-	"github.com/indra-labs/indra/pkg/testutils"
+	"github.com/indra-labs/indra/pkg/tests"
 	"github.com/indra-labs/indra/pkg/types"
 	"github.com/indra-labs/indra/pkg/wire/cipher"
 	"github.com/indra-labs/indra/pkg/wire/confirm"
@@ -23,7 +23,6 @@ import (
 	"github.com/indra-labs/indra/pkg/wire/layer"
 	"github.com/indra-labs/indra/pkg/wire/response"
 	"github.com/indra-labs/indra/pkg/wire/reverse"
-	"github.com/indra-labs/indra/pkg/wire/session"
 	"github.com/indra-labs/indra/pkg/wire/token"
 )
 
@@ -114,7 +113,7 @@ func TestOnionSkins_Exit(t *testing.T) {
 	ciphers := GenCiphers(prvs, pubs)
 	var msg slice.Bytes
 	var hash sha256.Hash
-	if msg, hash, e = testutils.GenerateTestMessage(512, ""); check(e) {
+	if msg, hash, e = tests.GenMessage(512, ""); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -290,7 +289,7 @@ func TestOnionSkins_Response(t *testing.T) {
 	var e error
 	var msg slice.Bytes
 	var hash sha256.Hash
-	if msg, hash, e = testutils.GenerateTestMessage(10000, ""); check(e) {
+	if msg, hash, e = tests.GenMessage(10000, ""); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -312,37 +311,6 @@ func TestOnionSkins_Response(t *testing.T) {
 	plH := sha256.Single(ex.Bytes)
 	if plH != hash {
 		t.Errorf("exit message did not unwrap correctly")
-		t.FailNow()
-	}
-
-}
-
-func TestOnionSkins_Session(t *testing.T) {
-
-	var e error
-	hdrP, pldP := GetTwoPrvKeys(t)
-	hdr, pld := pub.Derive(hdrP), pub.Derive(pldP)
-	on := OnionSkins{}.
-		Session(hdr, pld).
-		Assemble()
-	onb := EncodeOnion(on)
-	c := slice.NewCursor()
-	var oncn types.Onion
-	if oncn, e = PeelOnion(onb, c); check(e) {
-		t.FailNow()
-	}
-	var cf *session.OnionSkin
-	var ok bool
-	if cf, ok = oncn.(*session.OnionSkin); !ok {
-		t.Error("did not unwrap expected type", reflect.TypeOf(oncn))
-		t.FailNow()
-	}
-	if !cf.HeaderKey.Equals(hdr) {
-		t.Error("header key mismatch")
-		t.FailNow()
-	}
-	if !cf.PayloadKey.Equals(pld) {
-		t.Error("payload key mismatch")
 		t.FailNow()
 	}
 

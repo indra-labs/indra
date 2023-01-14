@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/indra-labs/indra/pkg/sha256"
-	"github.com/indra-labs/indra/pkg/testutils"
+	"github.com/indra-labs/indra/pkg/tests"
 )
 
 func TestSize24(t *testing.T) {
@@ -24,7 +24,7 @@ func TestSegment(t *testing.T) {
 	var msg []byte
 	var hash sha256.Hash
 	var e error
-	if msg, hash, e = testutils.GenerateTestMessage(msgSize, ""); check(e) {
+	if msg, hash, e = tests.GenMessage(msgSize, ""); check(e) {
 		t.Error(e)
 	}
 	segs := Segment(msg, segSize)

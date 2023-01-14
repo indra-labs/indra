@@ -1,4 +1,4 @@
-package testutils
+package tests
 
 import (
 	"crypto/rand"
@@ -15,7 +15,7 @@ var (
 	check = log.E.Chk
 )
 
-func GenerateTestMessage(msgSize int, hrp string) (msg []byte, hash sha256.Hash, e error) {
+func GenMessage(msgSize int, hrp string) (msg []byte, hash sha256.Hash, e error) {
 	msg = make([]byte, msgSize)
 	var n int
 	if n, e = rand.Read(msg); check(e) && n != msgSize {

@@ -9,7 +9,7 @@ import (
 	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/key/pub"
 	"github.com/indra-labs/indra/pkg/sha256"
-	"github.com/indra-labs/indra/pkg/testutils"
+	"github.com/indra-labs/indra/pkg/tests"
 )
 
 func TestEncode_Decode(t *testing.T) {
@@ -24,7 +24,7 @@ func TestEncode_Decode(t *testing.T) {
 	pHash := sha256.Single(payload)
 	var sp, rp *prv.Key
 	var sP, rP *pub.Key
-	if sp, rp, sP, rP, e = testutils.GenerateTestKeyPairs(); check(e) {
+	if sp, rp, sP, rP, e = tests.GenerateTestKeyPairs(); check(e) {
 		t.FailNow()
 	}
 	addr := rP

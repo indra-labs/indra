@@ -1,12 +1,13 @@
 package node
 
 import (
+	"github.com/indra-labs/indra/pkg/lnwire"
 	"github.com/indra-labs/indra/pkg/sha256"
 )
 
 type Payment struct {
 	Preimage sha256.Hash
-	// Amount   lnwire.MilliSatoshi
+	Amount   lnwire.MilliSatoshi
 }
 
 type PaymentChan chan *Payment

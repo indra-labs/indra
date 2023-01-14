@@ -19,7 +19,6 @@ import (
 	"github.com/indra-labs/indra/pkg/wire/noop"
 	"github.com/indra-labs/indra/pkg/wire/response"
 	"github.com/indra-labs/indra/pkg/wire/reverse"
-	"github.com/indra-labs/indra/pkg/wire/session"
 	"github.com/indra-labs/indra/pkg/wire/token"
 )
 
@@ -82,14 +81,6 @@ func (o OnionSkins) Reverse(ip *netip.AddrPort) OnionSkins {
 func (o OnionSkins) Response(hash sha256.Hash, res slice.Bytes) OnionSkins {
 	rs := response.OnionSkin{Hash: hash, Bytes: res}
 	return append(o, &rs)
-}
-
-func (o OnionSkins) Session(hdr, pld *pub.Key) OnionSkins {
-	return append(o, &session.OnionSkin{
-		HeaderKey:  hdr,
-		PayloadKey: pld,
-		Onion:      os,
-	})
 }
 
 func (o OnionSkins) Token(tok sha256.Hash) OnionSkins {

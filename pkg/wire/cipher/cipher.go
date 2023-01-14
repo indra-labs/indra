@@ -40,8 +40,8 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	hdr := x.Header.ToBytes()
 	pld := x.Payload.ToBytes()
-	copy(b[*c:c.Inc(pub.KeyLen)], hdr[:])
-	copy(b[*c:c.Inc(pub.KeyLen)], pld[:])
+	copy(b[*c:c.Inc(prv.KeyLen)], hdr[:])
+	copy(b[*c:c.Inc(prv.KeyLen)], pld[:])
 	x.Onion.Encode(b, c)
 }
 func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
@@ -49,7 +49,7 @@ func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 		return magicbytes.TooShort(len(b[*c:]),
 			Len-magicbytes.Len, string(Magic))
 	}
-	x.Header = prv.PrivkeyFromBytes(b[*c:c.Inc(pub.KeyLen)])
-	x.Payload = prv.PrivkeyFromBytes(b[*c:c.Inc(pub.KeyLen)])
+	x.Header = prv.PrivkeyFromBytes(b[*c:c.Inc(prv.KeyLen)])
+	x.Payload = prv.PrivkeyFromBytes(b[*c:c.Inc(prv.KeyLen)])
 	return
 }

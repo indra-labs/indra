@@ -20,9 +20,17 @@ import (
 	"github.com/indra-labs/indra/pkg/wire/noop"
 	"github.com/indra-labs/indra/pkg/wire/response"
 	"github.com/indra-labs/indra/pkg/wire/reverse"
-	"github.com/indra-labs/indra/pkg/wire/session"
 	"github.com/indra-labs/indra/pkg/wire/token"
 )
+
+func recLog(on types.Onion, b slice.Bytes, cl *Client) {
+	log.T.C(func() string {
+		return cl.AddrPort.String() +
+			" received " +
+			fmt.Sprint(reflect.TypeOf(on)) + "\n" +
+			spew.Sdump(b.ToBytes())
+	})
+}
 
 func (cl *Client) runner() (out bool) {
 	log.T.C(func() string {
@@ -44,92 +52,34 @@ func (cl *Client) runner() (out bool) {
 		}
 		switch on := onion.(type) {
 		case *cipher.OnionSkin:
-			log.T.C(func() string {
-				return cl.AddrPort.String() +
-					" received\n" +
-					fmt.Sprint(reflect.TypeOf(on)) +
-					spew.Sdump(b.ToBytes())
-			})
+			recLog(on, b, cl)
 			cl.cipher(on, b, c)
 		case *confirm.OnionSkin:
-			log.T.C(func() string {
-				return cl.AddrPort.String() +
-					" received\n" +
-					fmt.Sprint(reflect.TypeOf(on)) +
-					spew.Sdump(b.ToBytes())
-			})
+			recLog(on, b, cl)
 			cl.confirm(on, b, c)
 		case *delay.OnionSkin:
-			log.T.C(func() string {
-				return cl.AddrPort.String() +
-					" received\n" +
-					fmt.Sprint(reflect.TypeOf(on)) +
-					spew.Sdump(b.ToBytes())
-			})
+			recLog(on, b, cl)
 			cl.delay(on, b, c)
 		case *exit.OnionSkin:
-			log.T.C(func() string {
-				return cl.AddrPort.String() +
-					" received\n" +
-					fmt.Sprint(reflect.TypeOf(on)) +
-					spew.Sdump(b.ToBytes())
-			})
+			recLog(on, b, cl)
 			cl.exit(on, b, c)
 		case *forward.OnionSkin:
-			log.T.C(func() string {
-				return cl.AddrPort.String() +
-					" received\n" +
-					fmt.Sprint(reflect.TypeOf(on)) +
-					spew.Sdump(b.ToBytes())
-			})
+			recLog(on, b, cl)
 			cl.forward(on, b, c)
 		case *layer.OnionSkin:
-			log.T.C(func() string {
-				return cl.AddrPort.String() +
-					" received\n" +
-					fmt.Sprint(reflect.TypeOf(on)) +
-					spew.Sdump(b.ToBytes())
-			})
+			recLog(on, b, cl)
 			cl.layer(on, b, c)
 		case *noop.OnionSkin:
-			log.T.C(func() string {
-				return cl.AddrPort.String() +
-					" received\n" +
-					fmt.Sprint(reflect.TypeOf(on)) +
-					spew.Sdump(b.ToBytes())
-			})
+			recLog(on, b, cl)
 			cl.noop(on, b, c)
 		case *reverse.OnionSkin:
-			log.T.C(func() string {
-				return cl.AddrPort.String() +
-					" received\n" +
-					fmt.Sprint(reflect.TypeOf(on)) +
-					spew.Sdump(b.ToBytes())
-			})
+			recLog(on, b, cl)
 			cl.reverse(on, b, c)
 		case *response.OnionSkin:
-			log.T.C(func() string {
-				return cl.AddrPort.String() +
-					" received\n" +
-					fmt.Sprint(reflect.TypeOf(on)) +
-					spew.Sdump(b.ToBytes())
-			})
+			recLog(on, b, cl)
 			cl.response(on, b, c)
-		case *session.OnionSkin:
-			log.T.C(func() string {
-				return cl.AddrPort.String() +
-					" received\n" +
-					fmt.Sprint(reflect.TypeOf(on)) +
-					spew.Sdump(b.ToBytes())
-			})
-			cl.session(on, b, c)
 		case *token.OnionSkin:
-			log.T.C(func() string {
-				return cl.AddrPort.String() +
-					" received\n" +
-					fmt.Sprint(reflect.TypeOf(on)) +
-					spew.Sdump(b.ToBytes())
-			})
+			recLog(on, b, cl)
 			cl.token(on, b, c)
 		default:
 			log.I.S("unrecognised packet", b)
@@ -276,27 +226,6 @@ func (cl *Client) reverse(on *reverse.OnionSkin, b slice.Bytes,
 func (cl *Client) response(on *response.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
 	// Response is a payload from an exit message.
 	cl.ExitHooks.Find(on.Hash, on.Bytes)
-}
-
-func (cl *Client) session(s *session.OnionSkin, b slice.Bytes,
-	cur *slice.Cursor) {
-
-	// Session is returned from a Purchase message in the reverse layers.
-	//
-	// Session has a nonce.ID that is given in the last layer of a LN sphinx
-	// Bolt 4 onion routed payment path that will cause the seller to
-	// activate the accounting onion the two keys it sent back with the
-	// nonce, so long as it has not yet expired.
-	for i := range cl.PendingSessions {
-		if cl.PendingSessions[i] == s.ID {
-			// we would make payment and move session to running
-			// sessions list.
-			log.I.S("session received, now to pay", s)
-		}
-	}
-	// So now we want to pay. For now we are just going to shut down the
-	// client as this finishes the test correctly.
-	cl.C.Q()
 }
 
 func (cl *Client) token(t *token.OnionSkin, b slice.Bytes, cur *slice.Cursor) {

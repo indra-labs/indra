@@ -5,7 +5,7 @@ import (
 	"net/netip"
 	"testing"
 
-	"github.com/indra-labs/indra/pkg/testutils"
+	"github.com/indra-labs/indra/pkg/tests"
 	"github.com/indra-labs/indra/pkg/transport"
 )
 
@@ -13,7 +13,7 @@ var testAddrPort, _ = netip.ParseAddrPort("1.1.1.1:20000")
 
 func TestNodes_Add(t *testing.T) {
 	n := NewNodes()
-	pubKey, prvKey, e := testutils.GenerateTestKeyPair()
+	pubKey, prvKey, e := tests.GenerateTestKeyPair()
 	if check(e) {
 		t.Error(e)
 		t.FailNow()
@@ -32,7 +32,7 @@ func TestNodes_Add(t *testing.T) {
 func TestNodes_DeleteByID(t *testing.T) {
 	n := NewNodes()
 	const nNodes = 10000
-	pubKey, prvKey, e := testutils.GenerateTestKeyPair()
+	pubKey, prvKey, e := tests.GenerateTestKeyPair()
 	if check(e) {
 		t.Error(e)
 		t.FailNow()
@@ -52,7 +52,7 @@ func TestNodes_DeleteByID(t *testing.T) {
 func TestNodes_DeleteByAddrPort(t *testing.T) {
 	n := NewNodes()
 	const nNodes = 10000
-	pubKey, prvKey, e := testutils.GenerateTestKeyPair()
+	pubKey, prvKey, e := tests.GenerateTestKeyPair()
 	if check(e) {
 		t.Error(e)
 		t.FailNow()
@@ -72,7 +72,7 @@ func TestNodes_DeleteByAddrPort(t *testing.T) {
 func TestNodes_FindByID(t *testing.T) {
 	n := NewNodes()
 	const nNodes = 10000
-	pubKey, prvKey, e := testutils.GenerateTestKeyPair()
+	pubKey, prvKey, e := tests.GenerateTestKeyPair()
 	if check(e) {
 		t.Error(e)
 		t.FailNow()
@@ -93,7 +93,7 @@ func TestNodes_FindByID(t *testing.T) {
 func TestNodes_FindByAddrPort(t *testing.T) {
 	n := NewNodes()
 	const nNodes = 10000
-	pubKey, prvKey, e := testutils.GenerateTestKeyPair()
+	pubKey, prvKey, e := tests.GenerateTestKeyPair()
 	if check(e) {
 		t.Error(e)
 		t.FailNow()

@@ -8,7 +8,7 @@ import (
 	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/key/pub"
 	"github.com/indra-labs/indra/pkg/sha256"
-	"github.com/indra-labs/indra/pkg/testutils"
+	"github.com/indra-labs/indra/pkg/tests"
 )
 
 func TestSplitJoin(t *testing.T) {
@@ -17,12 +17,12 @@ func TestSplitJoin(t *testing.T) {
 	var e error
 	var payload []byte
 	var pHash sha256.Hash
-	if payload, pHash, e = testutils.GenerateTestMessage(msgSize, ""); check(e) {
+	if payload, pHash, e = tests.GenMessage(msgSize, ""); check(e) {
 		t.FailNow()
 	}
 	var sp, rp *prv.Key
 	var rP *pub.Key
-	if sp, rp, _, rP, e = testutils.GenerateTestKeyPairs(); check(e) {
+	if sp, rp, _, rP, e = tests.GenerateTestKeyPairs(); check(e) {
 		t.FailNow()
 	}
 	addr := rP
@@ -75,12 +75,12 @@ func BenchmarkSplit(b *testing.B) {
 	segSize := 1382
 	var e error
 	var payload []byte
-	if payload, _, e = testutils.GenerateTestMessage(msgSize, ""); check(e) {
+	if payload, _, e = tests.GenMessage(msgSize, ""); check(e) {
 		b.Error(e)
 	}
 	var sp *prv.Key
 	var rP *pub.Key
-	if sp, _, _, rP, e = testutils.GenerateTestKeyPairs(); check(e) {
+	if sp, _, _, rP, e = tests.GenerateTestKeyPairs(); check(e) {
 		b.FailNow()
 	}
 	addr := rP
@@ -138,7 +138,7 @@ func TestSplitJoinFEC(t *testing.T) {
 	var e error
 	var sp, rp, Rp *prv.Key
 	var sP, rP, RP *pub.Key
-	if sp, rp, sP, rP, e = testutils.GenerateTestKeyPairs(); check(e) {
+	if sp, rp, sP, rP, e = tests.GenerateTestKeyPairs(); check(e) {
 		t.FailNow()
 	}
 	_, _, _, _ = sP, Rp, RP, rp
@@ -150,7 +150,7 @@ func TestSplitJoinFEC(t *testing.T) {
 		var payload []byte
 		var pHash sha256.Hash
 
-		if payload, pHash, e = testutils.GenerateTestMessage(msgSize, ""); check(e) {
+		if payload, pHash, e = tests.GenMessage(msgSize, ""); check(e) {
 
 			t.FailNow()
 		}
