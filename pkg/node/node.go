@@ -62,7 +62,7 @@ func New(addr *netip.AddrPort, idPub *pub.Key, idPrv *prv.Key,
 		IdentityPrv:   idPrv,
 		PaymentChan:   make(PaymentChan),
 	}
-	n.Sessions = append(n.Sessions, NewSession(id, n, 0))
+	n.Sessions = append(n.Sessions, NewSession(id, n, 0, nil, nil))
 	return
 }
 

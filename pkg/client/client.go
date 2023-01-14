@@ -88,8 +88,8 @@ func (cl *Client) RegisterConfirmation(hook confirm.Hook,
 // FindCloaked searches the client identity key and the Sessions for a match. It
 // returns the session as well, though not all users of this function will need
 // this.
-func (cl *Client) FindCloaked(clk cloak.PubKey) (hdr *prv.Key, pld *prv.Key,
-	sess *node.Session) {
+func (cl *Client) FindCloaked(clk cloak.PubKey) (hdr *prv.Key,
+	pld *prv.Key, sess *node.Session) {
 
 	var b cloak.Blinder
 	copy(b[:], clk[:cloak.BlindLen])
@@ -103,7 +103,7 @@ func (cl *Client) FindCloaked(clk cloak.PubKey) (hdr *prv.Key, pld *prv.Key,
 	for i := range cl.Sessions {
 		hash = cloak.Cloak(b, cl.Sessions[i].HeaderBytes)
 		if hash == clk {
-			log.T.F("found in session %d", i)
+			log.T.F("found cloaked key in session %d", i)
 			hdr = cl.Sessions[i].HeaderPrv
 			pld = cl.Sessions[i].PayloadPrv
 			sess = cl.Sessions[i]

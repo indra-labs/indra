@@ -22,15 +22,17 @@ type Session struct {
 //
 // Purchasing a session the seller returns a token, based on a requested data
 // allocation.
-func NewSession(id nonce.ID, node *Node, rem uint64) (s *Session) {
+func NewSession(id nonce.ID, node *Node, rem uint64,
+	hdrPrv *prv.Key, pldPrv *prv.Key) (s *Session) {
 
 	var e error
-	var hdrPrv, pldPrv *prv.Key
-	if hdrPrv, e = prv.GenerateKey(); check(e) {
+	if hdrPrv == nil || pldPrv == nil {
+		if hdrPrv, e = prv.GenerateKey(); check(e) {
+		}
+		if pldPrv, e = prv.GenerateKey(); check(e) {
+		}
 	}
 	hdrPub := pub.Derive(hdrPrv)
-	if pldPrv, e = prv.GenerateKey(); check(e) {
-	}
 	pldPub := pub.Derive(pldPrv)
 	s = &Session{
 		ID:           id,

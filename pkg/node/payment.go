@@ -2,10 +2,12 @@ package node
 
 import (
 	"github.com/indra-labs/indra/pkg/lnwire"
+	"github.com/indra-labs/indra/pkg/nonce"
 	"github.com/indra-labs/indra/pkg/sha256"
 )
 
 type Payment struct {
+	nonce.ID
 	Preimage sha256.Hash
 	Amount   lnwire.MilliSatoshi
 }
@@ -32,9 +34,9 @@ func (p PendingPayments) Delete(preimage sha256.Hash) (pp PendingPayments) {
 	return
 }
 
-func (p PendingPayments) Find(preimage sha256.Hash) (pp *Payment) {
+func (p PendingPayments) Find(id nonce.ID) (pp *Payment) {
 	for i := range p {
-		if p[i].Preimage == preimage {
+		if p[i].ID == id {
 			return p[i]
 		}
 	}

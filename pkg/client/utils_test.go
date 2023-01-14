@@ -38,8 +38,7 @@ func CreateMockCircuitClients() (clients []*Client, e error) {
 		clients[i].Node = nodes[i]
 		// create a session for all but the first
 		if i > 0 {
-			sessions[i-1] = node.NewSession(nonce.NewID(),
-				nodes[i], math.MaxUint64)
+			sessions[i-1] = node.NewSession(nonce.NewID(), nodes[i], math.MaxUint64, nil, nil)
 			// Add session to node, so it will be able to relay if
 			// it gets a message with the key.
 			nodes[i].Sessions = append(nodes[i].Sessions,

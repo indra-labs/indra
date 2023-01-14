@@ -92,8 +92,8 @@ func SendExit(payload slice.Bytes, port uint16, client *node.Node,
 //
 // This message's last layer is a Confirmation, which allows the client to know
 // that the keys were successfully delivered.
-func SendKeys(id nonce.ID, hdr, pld []*prv.Key,
-	client *node.Node, hop []*node.Node, set *signer.KeySet) OnionSkins {
+func SendKeys(id nonce.ID, hdr, pld [5]*prv.Key,
+	client *node.Node, hop node.Circuit, set *signer.KeySet) OnionSkins {
 
 	n := GenNonces(6)
 	return OnionSkins{}.

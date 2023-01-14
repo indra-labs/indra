@@ -10,7 +10,6 @@ import (
 	"github.com/indra-labs/indra/pkg/sha256"
 	"github.com/indra-labs/indra/pkg/slice"
 	"github.com/indra-labs/indra/pkg/types"
-	"github.com/indra-labs/indra/pkg/wire/cipher"
 	"github.com/indra-labs/indra/pkg/wire/confirm"
 	"github.com/indra-labs/indra/pkg/wire/delay"
 	"github.com/indra-labs/indra/pkg/wire/exit"
@@ -19,6 +18,7 @@ import (
 	"github.com/indra-labs/indra/pkg/wire/noop"
 	"github.com/indra-labs/indra/pkg/wire/response"
 	"github.com/indra-labs/indra/pkg/wire/reverse"
+	"github.com/indra-labs/indra/pkg/wire/session"
 	"github.com/indra-labs/indra/pkg/wire/token"
 )
 
@@ -32,7 +32,7 @@ func (o OnionSkins) Cipher(hdr, pld *prv.Key) OnionSkins {
 	if hdr == nil || pld == nil {
 		return o
 	}
-	return append(o, &cipher.OnionSkin{
+	return append(o, &session.OnionSkin{
 		Header:  hdr,
 		Payload: pld,
 		Onion:   &noop.OnionSkin{},

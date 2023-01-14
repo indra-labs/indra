@@ -15,7 +15,6 @@ import (
 	"github.com/indra-labs/indra/pkg/slice"
 	"github.com/indra-labs/indra/pkg/tests"
 	"github.com/indra-labs/indra/pkg/types"
-	"github.com/indra-labs/indra/pkg/wire/cipher"
 	"github.com/indra-labs/indra/pkg/wire/confirm"
 	"github.com/indra-labs/indra/pkg/wire/delay"
 	"github.com/indra-labs/indra/pkg/wire/exit"
@@ -23,6 +22,7 @@ import (
 	"github.com/indra-labs/indra/pkg/wire/layer"
 	"github.com/indra-labs/indra/pkg/wire/response"
 	"github.com/indra-labs/indra/pkg/wire/reverse"
+	"github.com/indra-labs/indra/pkg/wire/session"
 	"github.com/indra-labs/indra/pkg/wire/token"
 )
 
@@ -40,9 +40,9 @@ func TestOnionSkins_Cipher(t *testing.T) {
 	if onc, e = PeelOnion(onb, c); check(e) {
 		t.FailNow()
 	}
-	var ci *cipher.OnionSkin
+	var ci *session.OnionSkin
 	var ok bool
-	if ci, ok = onc.(*cipher.OnionSkin); !ok {
+	if ci, ok = onc.(*session.OnionSkin); !ok {
 		t.Error("did not unwrap expected type")
 		t.FailNow()
 	}

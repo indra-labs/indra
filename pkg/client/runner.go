@@ -11,7 +11,6 @@ import (
 	"github.com/indra-labs/indra/pkg/slice"
 	"github.com/indra-labs/indra/pkg/types"
 	"github.com/indra-labs/indra/pkg/wire"
-	"github.com/indra-labs/indra/pkg/wire/cipher"
 	"github.com/indra-labs/indra/pkg/wire/confirm"
 	"github.com/indra-labs/indra/pkg/wire/delay"
 	"github.com/indra-labs/indra/pkg/wire/exit"
@@ -20,6 +19,7 @@ import (
 	"github.com/indra-labs/indra/pkg/wire/noop"
 	"github.com/indra-labs/indra/pkg/wire/response"
 	"github.com/indra-labs/indra/pkg/wire/reverse"
+	"github.com/indra-labs/indra/pkg/wire/session"
 	"github.com/indra-labs/indra/pkg/wire/token"
 )
 
@@ -51,9 +51,9 @@ func (cl *Client) runner() (out bool) {
 			break
 		}
 		switch on := onion.(type) {
-		case *cipher.OnionSkin:
+		case *session.OnionSkin:
 			recLog(on, b, cl)
-			cl.cipher(on, b, c)
+			cl.session(on, b, c)
 		case *confirm.OnionSkin:
 			recLog(on, b, cl)
 			cl.confirm(on, b, c)
@@ -84,11 +84,15 @@ func (cl *Client) runner() (out bool) {
 		default:
 			log.I.S("unrecognised packet", b)
 		}
+	case p := <-cl.PaymentChan:
+		cl.PendingPayments = cl.PendingPayments.Add(p)
 	}
 	return
 }
 
-func (cl *Client) cipher(on *cipher.OnionSkin, b slice.Bytes, c *slice.Cursor) {
+func (cl *Client) session(on *session.OnionSkin, b slice.Bytes,
+	c *slice.Cursor) {
+
 	// This either is in a forward only SendKeys message or we are the buyer
 	// and these are our session keys.
 	// log.I.S(on)
@@ -98,19 +102,25 @@ func (cl *Client) cipher(on *cipher.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 
 func (cl *Client) confirm(on *confirm.OnionSkin, b slice.Bytes,
 	c *slice.Cursor) {
+
 	// When a confirm arrives check if it is registered for and run
 	// the hook that was registered with it.
+	log.T.S(cl.Confirms)
 	cl.Confirms.Confirm(on.ID)
 }
 
-func (cl *Client) delay(on *delay.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
+func (cl *Client) delay(on *delay.OnionSkin, b slice.Bytes,
+	cur *slice.Cursor) {
+
 	// this is a message to hold the message in the buffer until a duration
 	// elapses. The accounting for the remainder of the message adds a
 	// factor to the effective byte consumption in accordance with the time
 	// to be stored.
 }
 
-func (cl *Client) exit(on *exit.OnionSkin, b slice.Bytes, c *slice.Cursor) {
+func (cl *Client) exit(on *exit.OnionSkin, b slice.Bytes,
+	c *slice.Cursor) {
+
 	// payload is forwarded to a local port and the result is forwarded
 	// back with a reverse header.
 	var e error
@@ -156,7 +166,9 @@ func (cl *Client) forward(on *forward.OnionSkin, b slice.Bytes,
 	}
 }
 
-func (cl *Client) layer(on *layer.OnionSkin, b slice.Bytes, c *slice.Cursor) {
+func (cl *Client) layer(on *layer.OnionSkin, b slice.Bytes,
+	c *slice.Cursor) {
+
 	// this is probably an encrypted layer for us.
 	hdr, _, _ := cl.FindCloaked(on.Cloak)
 	if hdr == nil {
@@ -168,7 +180,9 @@ func (cl *Client) layer(on *layer.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	cl.Node.Send(b)
 }
 
-func (cl *Client) noop(on *noop.OnionSkin, b slice.Bytes, c *slice.Cursor) {
+func (cl *Client) noop(on *noop.OnionSkin, b slice.Bytes,
+	c *slice.Cursor) {
+
 	// this won't happen normally
 }
 
@@ -214,6 +228,8 @@ func (cl *Client) reverse(on *reverse.OnionSkin, b slice.Bytes,
 			}
 			cl.Node.Send(b[start:])
 		default:
+			// If a reverse is not followed by an onion layer the
+			// message is incorrectly formed, just drop it.
 			return
 		}
 	} else {
@@ -223,12 +239,16 @@ func (cl *Client) reverse(on *reverse.OnionSkin, b slice.Bytes,
 
 }
 
-func (cl *Client) response(on *response.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
+func (cl *Client) response(on *response.OnionSkin, b slice.Bytes,
+	cur *slice.Cursor) {
+
 	// Response is a payload from an exit message.
 	cl.ExitHooks.Find(on.Hash, on.Bytes)
 }
 
-func (cl *Client) token(t *token.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
+func (cl *Client) token(t *token.OnionSkin, b slice.Bytes,
+	cur *slice.Cursor) {
+
 	// not really sure if we are using these.
 	return
 }

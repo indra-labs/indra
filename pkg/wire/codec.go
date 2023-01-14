@@ -8,7 +8,6 @@ import (
 	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/indra-labs/indra/pkg/slice"
 	"github.com/indra-labs/indra/pkg/types"
-	"github.com/indra-labs/indra/pkg/wire/cipher"
 	"github.com/indra-labs/indra/pkg/wire/confirm"
 	"github.com/indra-labs/indra/pkg/wire/delay"
 	"github.com/indra-labs/indra/pkg/wire/exit"
@@ -17,6 +16,7 @@ import (
 	"github.com/indra-labs/indra/pkg/wire/magicbytes"
 	"github.com/indra-labs/indra/pkg/wire/response"
 	"github.com/indra-labs/indra/pkg/wire/reverse"
+	"github.com/indra-labs/indra/pkg/wire/session"
 	"github.com/indra-labs/indra/pkg/wire/token"
 )
 
@@ -35,8 +35,8 @@ func EncodeOnion(on types.Onion) (b slice.Bytes) {
 
 func PeelOnion(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 	switch b[*c:c.Inc(magicbytes.Len)].String() {
-	case cipher.MagicString:
-		o := &cipher.OnionSkin{}
+	case session.MagicString:
+		o := &session.OnionSkin{}
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
