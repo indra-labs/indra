@@ -26,8 +26,92 @@ func init() {
 }
 
 var (
-	timeout = 120 * time.Second
+	defaultBuildingTimeout = 800 * time.Second
+	defaultRepositoryName  = "indralabs"
+	defaultBuildContainer  = "golang:1.19.4"
 )
+
+func strPtr(str string) *string { return &str }
+
+var buildConfigurations = []docker.BuildConfiguration{
+	//docker.BuildConfiguration{
+	//	Name:            defaultRepositoryName + "/" + "scratch",
+	//	ContextFilePath: "/tmp/scratch.tar",
+	//	BuildOpts: types.ImageBuildOptions{
+	//		Dockerfile: "docker/scratch/Dockerfile",
+	//		Tags: []string{
+	//			indra.SemVer,
+	//			"latest",
+	//		},
+	//		BuildArgs: map[string]*string{
+	//			"base_image": strPtr("busybox"),
+	//		},
+	//		SuppressOutput: false,
+	//		Remove:         true,
+	//		ForceRemove:    true,
+	//		PullParent:     true,
+	//	},
+	//},
+	docker.BuildConfiguration{
+		Name:            defaultRepositoryName + "/" + "btcd",
+		ContextFilePath: "/tmp/btcd.tar",
+		BuildOpts: types.ImageBuildOptions{
+			Dockerfile: "docker/btcd/Dockerfile",
+			Tags: []string{
+				"v0.23.4",
+				"latest",
+			},
+			BuildArgs: map[string]*string{
+				"base_image":   strPtr(defaultBuildContainer),
+				"target_image": strPtr("indralabs/scratch:latest"),
+				// This argument is the tag fetched by git
+				// It MUST be updated alongside the tag above
+				"git_repository": strPtr("github.com/btcsuite/btcd"),
+				"git_tag":        strPtr("v0.23.4"),
+			},
+			SuppressOutput: false,
+			Remove:         true,
+			ForceRemove:    true,
+			PullParent:     true,
+		},
+	},
+	//docker.BuildConfiguration{
+	//	Name:            defaultRepositoryName + "/" + "lnd",
+	//	ContextFilePath: "/tmp/lnd.tar",
+	//	BuildOpts: types.ImageBuildOptions{
+	//		Dockerfile: "docker/lnd/Dockerfile",
+	//		Tags: []string{
+	//			"v0.15.5-beta",
+	//			"latest",
+	//		},
+	//		BuildArgs: map[string]*string{
+	//			// This argument is the tag fetched by git
+	//			// It MUST be updated alongside the tag above
+	//			"git_tag": strPtr("v0.15.5-beta"),
+	//		},
+	//		SuppressOutput: false,
+	//		Remove:         true,
+	//		ForceRemove:    true,
+	//		PullParent:     true,
+	//	},
+	//},
+	//docker.BuildConfiguration{
+	//	Name:            defaultRepositoryName + "/" + "indra",
+	//	ContextFilePath: "/tmp/indra-" + indra.SemVer + ".tar",
+	//	BuildOpts: types.ImageBuildOptions{
+	//		Dockerfile: "docker/indra/Dockerfile",
+	//		Tags: []string{
+	//			indra.SemVer,
+	//			"latest",
+	//		},
+	//		BuildArgs:      map[string]*string{},
+	//		SuppressOutput: false,
+	//		Remove:         true,
+	//		ForceRemove:    true,
+	//		PullParent:     true,
+	//	},
+	//},
+}
 
 var commands = &cmds.Command{
 	Name:          "release",
@@ -61,7 +145,7 @@ var commands = &cmds.Command{
 		}
 
 		// Set a Timeout for 120 seconds
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		ctx, cancel := context.WithTimeout(context.Background(), defaultBuildingTimeout)
 		defer cancel()
 
 		// Setup a new instance of the docker client
@@ -75,15 +159,14 @@ var commands = &cmds.Command{
 
 		defer cli.Close()
 
-		// Get ready to submit a build
-
-		var builder = docker.NewBuilder(ctx, cli)
+		// Get ready to submit the builds
+		var builder = docker.NewBuilder(ctx, cli, buildConfigurations)
 
 		if err = builder.Build(); check(err) {
 			return err
 		}
 
-		if err = builder.Push(types.ImagePushOptions{}); check(err) {
+		if err = builder.Push(); check(err) {
 			return err
 		}
 
