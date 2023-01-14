@@ -31,7 +31,7 @@ var (
 // OnionSkin message is the generic top level wrapper for an OnionSkin. All
 // following messages are wrapped inside this. This type provides the encryption
 // for each layer, and a header which a relay uses to determine what cipher to
-// use.
+// use. Everything in a message after this message is encrypted as specified.
 type OnionSkin struct {
 	To   *pub.Key
 	From *prv.Key
@@ -58,7 +58,6 @@ func (x *OnionSkin) Insert(o types.Onion) { x.Onion = o }
 func (x *OnionSkin) Len() int {
 	return Len + x.Onion.Len()
 }
-
 func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	copy(b[*c:c.Inc(nonce.IVLen)], x.Nonce[:])
@@ -79,9 +78,6 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	}
 	ciph.Encipher(blk, x.Nonce, b[start:])
 }
-
-// Decode decodes a received OnionSkin. The entire remainder of the message is
-// encrypted by this layer.
 func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < Len-magicbytes.Len {
 		return magicbytes.TooShort(len(b[*c:]), Len-magicbytes.Len, "message")

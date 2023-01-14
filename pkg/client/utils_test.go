@@ -31,7 +31,7 @@ func CreateMockCircuitClients(nTotal int) (clients []*Client, e error) {
 		clients[i].AddrPort = nodes[i].AddrPort
 	}
 	// add each node to each other's Nodes except itself.
-	for i := range nodes {
+	for i := range clients {
 		for j := range nodes {
 			if i == j {
 				continue
@@ -39,5 +39,6 @@ func CreateMockCircuitClients(nTotal int) (clients []*Client, e error) {
 			clients[i].Nodes = append(clients[i].Nodes, nodes[j])
 		}
 	}
+
 	return
 }

@@ -13,7 +13,7 @@ type Callback struct {
 	nonce.ID
 	time.Time
 	Onion *OnionSkin
-	Hook  Hook
+	Hook
 }
 
 type Confirms struct {
@@ -21,12 +21,7 @@ type Confirms struct {
 	Cnf []Callback
 }
 
-func NewConfirms() *Confirms {
-	cn := Confirms{
-		Cnf: make([]Callback, 0),
-	}
-	return &cn
-}
+func NewConfirms() *Confirms { return &Confirms{Cnf: make([]Callback, 0)} }
 
 func (cn *Confirms) Add(cb *Callback) {
 	cn.Lock()

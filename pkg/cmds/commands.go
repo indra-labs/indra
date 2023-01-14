@@ -187,7 +187,7 @@ func Init(c *Command, p path.Path) (cmd *Command, err error) {
 	if p == nil {
 		p = path.Path{c.Name}
 	}
-	c.Path = p // .Parent()
+	c.Path = p
 	for i := range c.Configs {
 		c.Configs[i].SetPath(p)
 	}
@@ -208,7 +208,7 @@ func Init(c *Command, p path.Path) (cmd *Command, err error) {
 	return c, err
 }
 
-// GetOpt returns the option at a requested path
+// GetOpt returns the option at a requested path.
 func (c *Command) GetOpt(path path.Path) (o config.Option) {
 	p := make([]string, len(path))
 	for i := range path {
@@ -239,24 +239,6 @@ func (c *Command) GetOpt(path path.Path) (o config.Option) {
 	return nil
 }
 
-func (c *Command) GetCommand(p string) (o *Command) {
-	pp := strings.Split(p, " ")
-	path := path.Path(pp)
-	// log.I.F("%v == %v", path, c.Path)
-	if path.Equal(c.Path) {
-		// log.I.Ln("found", c.Path)
-		return c
-	}
-	for i := range c.Commands {
-		// log.I.Ln(c.Commands[i].Path)
-		o = c.Commands[i].GetCommand(p)
-		if o != nil {
-			return
-		}
-	}
-	return
-}
-
 func (c *Command) GetValue(key string) config.Concrete {
 	return c.Configs[key].Value()
 }
@@ -270,7 +252,7 @@ func (c *Command) GetTextValue(key string) string {
 }
 
 // ForEach runs a closure on every node in the Commands tree, stopping if the
-// closure returns false
+// closure returns false.
 func (c *Command) ForEach(cl func(*Command, int) bool, hereDepth,
 	hereDist int, cmd *Command) (ocl func(*Command, int) bool, depth,
 	dist int, cm *Command) {

@@ -3,7 +3,14 @@ package path
 import (
 	"strings"
 
+	"github.com/indra-labs/indra"
+	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/indra-labs/indra/pkg/util"
+)
+
+var (
+	log   = log2.GetLogger(indra.PathBase)
+	check = log.E.Chk
 )
 
 type Path []string
@@ -15,14 +22,9 @@ func (p Path) TrimPrefix() Path {
 	return p[:0]
 }
 
-func (p Path) String() string {
-	return strings.Join(p, " ")
-}
+func (p Path) String() string { return strings.Join(p, " ") }
 
-func From(s string) (p Path) {
-	p = strings.Split(s, " ")
-	return
-}
+func From(s string) (p Path) { return strings.Split(s, " ") }
 
 func (p Path) Parent() (p1 Path) {
 	if len(p) > 0 {
@@ -31,11 +33,7 @@ func (p Path) Parent() (p1 Path) {
 	return
 }
 
-func (p Path) Child(child string) (p1 Path) {
-	p1 = append(p, child)
-	// log.I.Ln(p, p1)
-	return
-}
+func (p Path) Child(child string) (p1 Path) { return append(p, child) }
 
 func (p Path) Common(p2 Path) (o Path) {
 	for i := range p {
@@ -61,6 +59,4 @@ func (p Path) Equal(p2 Path) bool {
 	return false
 }
 
-func GetIndent(d int) string {
-	return strings.Repeat("\t", d)
-}
+func GetIndent(d int) string { return strings.Repeat("\t", d) }

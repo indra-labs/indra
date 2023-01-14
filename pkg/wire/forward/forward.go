@@ -38,7 +38,6 @@ func (x *OnionSkin) String() string {
 func (x *OnionSkin) Inner() types.Onion   { return x.Onion }
 func (x *OnionSkin) Insert(o types.Onion) { x.Onion = o }
 func (x *OnionSkin) Len() int             { return Len + x.Onion.Len() }
-
 func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	var ap []byte
@@ -50,7 +49,6 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[c.Inc(1):c.Inc(Len-magicbytes.Len-1)], ap)
 	x.Onion.Encode(b, c)
 }
-
 func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < Len-magicbytes.Len {
 		return magicbytes.TooShort(len(b[*c:]), Len-magicbytes.Len, string(Magic))

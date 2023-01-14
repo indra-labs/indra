@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/indra-labs/indra/pkg/ciph"
-	session2 "github.com/indra-labs/indra/pkg/session"
 	"github.com/indra-labs/indra/pkg/sha256"
 	"github.com/indra-labs/indra/pkg/slice"
 	"github.com/indra-labs/indra/pkg/types"
@@ -16,7 +15,6 @@ import (
 	"github.com/indra-labs/indra/pkg/wire/forward"
 	"github.com/indra-labs/indra/pkg/wire/layer"
 	"github.com/indra-labs/indra/pkg/wire/noop"
-	"github.com/indra-labs/indra/pkg/wire/purchase"
 	"github.com/indra-labs/indra/pkg/wire/response"
 	"github.com/indra-labs/indra/pkg/wire/reverse"
 	"github.com/indra-labs/indra/pkg/wire/session"
@@ -52,8 +50,6 @@ func (cl *Client) runner() (out bool) {
 			cl.layer(on, b, c)
 		case *noop.OnionSkin:
 			cl.noop(on, b, c)
-		case *purchase.OnionSkin:
-			cl.purchase(on, b, c)
 		case *reverse.OnionSkin:
 			cl.reverse(on, b, c)
 		case *response.OnionSkin:
@@ -139,7 +135,7 @@ func (cl *Client) forward(on *forward.OnionSkin, b slice.Bytes,
 
 func (cl *Client) layer(on *layer.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	// this is probably an encrypted layer for us.
-	hdr, _ := cl.FindCloaked(on.Cloak)
+	hdr, _, _ := cl.FindCloaked(on.Cloak)
 	if hdr == nil {
 		log.I.Ln("no matching key found from cloaked key")
 		return
@@ -151,31 +147,6 @@ func (cl *Client) layer(on *layer.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 
 func (cl *Client) noop(on *noop.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	// this won't happen normally
-}
-
-func (cl *Client) purchase(on *purchase.OnionSkin, b slice.Bytes, c *slice.Cursor) {
-	// Create a new Session.
-	s := session2.NewSession(on.ID, on.NBytes, DefaultDeadline)
-	se := &session.OnionSkin{
-		ID:         s.ID,
-		HeaderKey:  s.HeaderPub,
-		PayloadKey: s.PayloadPub,
-		Onion:      &noop.OnionSkin{},
-	}
-	cl.Mutex.Lock()
-	cl.Sessions.Add(s)
-	cl.Mutex.Unlock()
-	header := b[*c:c.Inc(ReverseHeaderLen)]
-	rb := make(slice.Bytes, ReverseHeaderLen+session.Len)
-	cur := slice.NewCursor()
-	copy(rb[*cur:cur.Inc(ReverseHeaderLen)], header[:ReverseHeaderLen])
-	start := *cur
-	se.Encode(rb, cur)
-	for i := range on.Ciphers {
-		blk := ciph.BlockFromHash(on.Ciphers[i])
-		ciph.Encipher(blk, on.Nonces[2-i], rb[start:])
-	}
-	cl.Node.Send(rb)
 }
 
 func (cl *Client) reverse(on *reverse.OnionSkin, b slice.Bytes,
@@ -193,9 +164,8 @@ func (cl *Client) reverse(on *reverse.OnionSkin, b slice.Bytes,
 			first := *c
 			second := first + ReverseLayerLen
 			last := second + ReverseLayerLen
-			hdr, pld := cl.FindCloaked(on1.Cloak)
+			hdr, pld, _ := cl.FindCloaked(on1.Cloak)
 			// We need to find the PayloadPub to match.
-			// ses := cl.Sessions.FindPub(hdr.Pub)
 			hdrPrv := hdr
 			hdrPub := on1.FromPub
 			blk := ciph.GetBlock(hdrPrv, hdrPub)
@@ -230,7 +200,9 @@ func (cl *Client) response(on *response.OnionSkin, b slice.Bytes, cur *slice.Cur
 	cl.ExitHooks.Find(on.Hash)
 }
 
-func (cl *Client) session(s *session.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
+func (cl *Client) session(s *session.OnionSkin, b slice.Bytes,
+	cur *slice.Cursor) {
+
 	// Session is returned from a Purchase message in the reverse layers.
 	//
 	// Session has a nonce.ID that is given in the last layer of a LN sphinx

@@ -16,28 +16,26 @@ var (
 )
 
 // ParseCLIArgs reads a command line argument slice (presumably from os.Args),
-// identifies the command to run and
+// identifies the command to run and sets options provided.
 //
 // Rules for constructing CLI args:
 //
-//   - Commands are identified by name, and must appear in their hierarchic
-//     order to invoke subcommands. They are matched as normalised to lower
-//     case.
+// Commands are identified by name, and must appear in their hierarchic order to
+// invoke subcommands. They are matched as normalised to lower case.
 //
-//   - Options can be preceded by "--" or "-", and the full name, or the
-//     alias, normalised to lower case for matching, and if there is an "=" after
-//     it, the value is after this, otherwise, the next element in the args is the
-//     value, except booleans, which default to true unless set to false. For these,
-//     the prefix "no" or similar indicates the semantics of the true value.
+// Options can be preceded by "--" or "-", and the full name, or the alias,
+// normalised to lower case for matching, and if there is an "=" after it, the
+// value is after this, otherwise, the next element in the args is the value,
+// except booleans, which default to true unless set to false. For these, the
+// prefix "no" or similar indicates the semantics of the true value.
 //
-//   - Options only match when preceded by their relevant Command, except for
-//     the root Command, and these options must precede any other command
-//     options.
+// Options only match when preceded by their relevant Command, except for the
+// root Command, and these options must precede any other Command.
 //
-//   - If no command is selected, the root Command.Default is selected. This
-//     can optionally be used for subcommands as well, though it is unlikely
-//     needed, if found, the Default of the tip of the Command branch selected
-//     by the CLI if there is one, otherwise the Command itself.
+// If no command is selected, the root Command.Default is selected. This can
+// optionally be used for subcommands as well, though it is unlikely needed, if
+// found, the Default of the tip of the Command branch selected by the CLI if
+// there is one, otherwise the Command itself.
 func (c *Command) ParseCLIArgs(a []string) (run *Command, runArgs []string,
 	e error) {
 

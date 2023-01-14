@@ -26,49 +26,16 @@ type Session struct {
 	HeaderPub, PayloadPub     *pub.Key
 	HeaderBytes, PayloadBytes pub.Bytes
 	HeaderPrv, PayloadPrv     *prv.Key
+	Depth                     int8
 	Deadline                  time.Time
 }
 
-type Sessions []*Session
-
-func (s Sessions) Len() int { return len(s) }
-
-func (s Sessions) Add(se *Session) Sessions { return append(s, se) }
-
-func (s Sessions) Delete(se *Session) Sessions {
-	for i := range s {
-		if s[i] == se {
-			return append(s[:i], s[i:]...)
-		}
-	}
-	return s
-}
-
-func (s Sessions) Find(t nonce.ID) (se *Session) {
-	for i := range s {
-		if s[i].ID == t {
-			se = s[i]
-			return
-		}
-	}
-	return
-}
-
-func (s Sessions) FindPub(pubKey *pub.Key) (se *Session) {
-	for i := range s {
-		if s[i].HeaderPub.Equals(pubKey) {
-			se = s[i]
-			return
-		}
-	}
-	return
-}
-
-// NewSession creates a new Session.
+// New creates a new Session.
 //
 // Purchasing a session the seller returns a token, based on a requested data
 // allocation.
-func NewSession(id nonce.ID, rem uint64, deadline time.Duration) (s *Session) {
+func New(id nonce.ID, node *node.Node, rem uint64, deadline time.Duration,
+	depth int8) (s *Session) {
 
 	var e error
 	var hdrPrv, pldPrv *prv.Key
@@ -83,6 +50,7 @@ func NewSession(id nonce.ID, rem uint64, deadline time.Duration) (s *Session) {
 
 	s = &Session{
 		ID:           id,
+		Node:         node,
 		Remaining:    rem,
 		HeaderPub:    hdrPub,
 		HeaderBytes:  hdrPub.ToBytes(),
@@ -91,6 +59,7 @@ func NewSession(id nonce.ID, rem uint64, deadline time.Duration) (s *Session) {
 		HeaderPrv:    hdrPrv,
 		PayloadPrv:   pldPrv,
 		Deadline:     time.Now().Add(deadline),
+		Depth:        depth,
 	}
 	return
 }
@@ -108,4 +77,46 @@ func (s *Session) SubtractBytes(b uint64) bool {
 	}
 	s.Remaining -= b
 	return true
+}
+
+type Sessions []*Session
+
+func (s Sessions) Len() int { return len(s) }
+
+func (s Sessions) Add(se *Session) Sessions { return append(s, se) }
+
+func (s Sessions) Delete(se *Session) Sessions {
+	for i := range s {
+		if s[i] == se {
+			return append(s[:i], s[i+1:]...)
+		}
+	}
+	return s
+}
+
+func (s Sessions) DeleteByID(id nonce.ID) Sessions {
+	for i := range s {
+		if s[i].ID == id {
+			return append(s[:i], s[i+1:]...)
+		}
+	}
+	return s
+}
+
+func (s Sessions) Find(t nonce.ID) (se *Session) {
+	for i := range s {
+		if s[i].ID == t {
+			return s[i]
+		}
+	}
+	return
+}
+
+func (s Sessions) FindPub(pubKey *pub.Key) (se *Session) {
+	for i := range s {
+		if s[i].HeaderPub.Equals(pubKey) {
+			return s[i]
+		}
+	}
+	return
 }

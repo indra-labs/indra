@@ -4,7 +4,6 @@ import (
 	"net/netip"
 	"time"
 
-	"github.com/indra-labs/indra/pkg/key/ecdh"
 	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/key/pub"
 	"github.com/indra-labs/indra/pkg/nonce"
@@ -18,39 +17,22 @@ import (
 	"github.com/indra-labs/indra/pkg/wire/forward"
 	"github.com/indra-labs/indra/pkg/wire/layer"
 	"github.com/indra-labs/indra/pkg/wire/noop"
-	"github.com/indra-labs/indra/pkg/wire/purchase"
 	"github.com/indra-labs/indra/pkg/wire/response"
 	"github.com/indra-labs/indra/pkg/wire/reverse"
 	"github.com/indra-labs/indra/pkg/wire/session"
 	"github.com/indra-labs/indra/pkg/wire/token"
 )
 
-func GenCiphers(prvs [3]*prv.Key, pubs [3]*pub.Key) (ciphers [3]sha256.Hash) {
-	for i := range prvs {
-		ciphers[2-i] = ecdh.Compute(prvs[i], pubs[i])
-	}
-	return
-}
-
-func Gen3Nonces() (n [3]nonce.IV) {
-	for i := range n {
-		n[i] = nonce.New()
-	}
-	return
-}
-
-func GenPingNonces() (n [4]nonce.IV) {
-	for i := range n {
-		n[i] = nonce.New()
-	}
-	return
-}
-
 type OnionSkins []types.Onion
 
 var os = &noop.OnionSkin{}
 
 func (o OnionSkins) Cipher(hdr, pld *prv.Key) OnionSkins {
+	// SendKeys can apply to from 1 to 5 nodes, if either key is nil then
+	// this layer just doesn't get added in the serialization process.
+	if hdr == nil || pld == nil {
+		return o
+	}
 	return append(o, &cipher.OnionSkin{
 		Header:  hdr,
 		Payload: pld,
@@ -92,26 +74,16 @@ func (o OnionSkins) OnionSkin(to *pub.Key, from *prv.Key,
 		Onion: os,
 	})
 }
-func (o OnionSkins) Purchase(id nonce.ID, nBytes uint64, prvs [3]*prv.Key,
-	pubs [3]*pub.Key, n [3]nonce.IV) OnionSkins {
 
-	oo := append(o, &purchase.OnionSkin{
-		ID:      id,
-		NBytes:  nBytes,
-		Ciphers: GenCiphers(prvs, pubs),
-		Nonces:  n,
-		Onion:   os,
-	})
-
-	return oo
-}
 func (o OnionSkins) Reverse(ip *netip.AddrPort) OnionSkins {
 	return append(o, &reverse.OnionSkin{AddrPort: ip, Onion: os})
 }
+
 func (o OnionSkins) Response(hash sha256.Hash, res slice.Bytes) OnionSkins {
 	rs := response.OnionSkin{Hash: hash, Bytes: res}
 	return append(o, &rs)
 }
+
 func (o OnionSkins) Session(hdr, pld *pub.Key) OnionSkins {
 	return append(o, &session.OnionSkin{
 		HeaderKey:  hdr,
@@ -119,6 +91,7 @@ func (o OnionSkins) Session(hdr, pld *pub.Key) OnionSkins {
 		Onion:      os,
 	})
 }
+
 func (o OnionSkins) Token(tok sha256.Hash) OnionSkins {
 	return append(o, (*token.OnionSkin)(&tok))
 }

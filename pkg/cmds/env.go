@@ -16,6 +16,8 @@ type Env struct {
 
 type Envs []Env
 
+// ForEach runs a closure on each element of an Env item in an Envs and halts if
+// one returns an error.
 func (e Envs) ForEach(fn func(env string, opt config.Option) (err error)) (err error) {
 	for i := range e {
 		var name []string
@@ -30,6 +32,8 @@ func (e Envs) ForEach(fn func(env string, opt config.Option) (err error)) (err e
 	return
 }
 
+// LoadFromEnvironment walks the Envs and reads the values found in the
+// environment variables.
 func (e Envs) LoadFromEnvironment() (err error) {
 	err = e.ForEach(func(env string, opt config.Option) (err error) {
 		v, exists := os.LookupEnv(env)
@@ -44,10 +48,12 @@ func (e Envs) LoadFromEnvironment() (err error) {
 	return
 }
 
-func (e Envs) Len() int {
-	return len(e)
-}
+// Len returns the number items in an Envs. This is a sort.Sorter interface
+// implementation.
+func (e Envs) Len() int { return len(e) }
 
+// Less compares two items and returns whether the first is lesser than the
+// second. This is a sort.Sorter interface implementation.
 func (e Envs) Less(i, j int) (res bool) {
 	li, lj := len(e[i].Name), len(e[j].Name)
 	if li < lj {
@@ -68,9 +74,9 @@ func (e Envs) Less(i, j int) (res bool) {
 	return
 }
 
-func (e Envs) Swap(i, j int) {
-	e[i], e[j] = e[j], e[i]
-}
+// Swap switches the position of two elements of an Envs. This is a sort.Sorter
+// interface implementation.
+func (e Envs) Swap(i, j int) { e[i], e[j] = e[j], e[i] }
 
 // GetEnvs walks a Command tree and returns a slice containing all environment
 // variable names and the related config.Option.

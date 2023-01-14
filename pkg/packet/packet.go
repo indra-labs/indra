@@ -105,7 +105,8 @@ func Encode(ep EP) (pkt []byte, e error) {
 	slice.EncodeUint32(Length, ep.Length)
 	Deadline := slice.NewUint64()
 	slice.EncodeUint64(Deadline, uint64(ep.Deadline.Unix()))
-	pkt = make([]byte, slice.SumLen(Seq, Length, Deadline, ep.Data)+1+Overhead)
+	pkt = make([]byte, slice.SumLen(Seq, Length, Deadline,
+		ep.Data)+1+Overhead)
 	// Append pubkey used for encryption key derivation.
 	k := pub.Derive(ep.From).ToBytes()
 	// Copy nonce, address and key over top of the header.
@@ -136,8 +137,8 @@ func Encode(ep EP) (pkt []byte, e error) {
 func GetKeys(d []byte) (from *pub.Key, e error) {
 	pktLen := len(d)
 	if pktLen < Overhead {
-		// If this isn't checked the slice operations later can
-		// hit bounds errors.
+		// If this isn't checked the slice operations later can hit
+		// bounds errors.
 		e = fmt.Errorf("packet too small, min %d, got %d",
 			Overhead, pktLen)
 		log.E.Ln(e)
@@ -167,8 +168,8 @@ func GetKeys(d []byte) (from *pub.Key, e error) {
 func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Packet, e error) {
 	pktLen := len(d)
 	if pktLen < Overhead {
-		// If this isn't checked the slice operations later can
-		// hit bounds errors.
+		// If this isn't checked the slice operations later can hit
+		// bounds errors.
 		e = fmt.Errorf("packet too small, min %d, got %d",
 			Overhead, pktLen)
 		log.E.Ln(e)
