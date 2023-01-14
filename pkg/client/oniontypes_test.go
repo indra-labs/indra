@@ -141,28 +141,35 @@ func TestSendKeys(t *testing.T) {
 		quit.Q()
 		t.Error("SendKeys got stuck")
 	}()
-	// Create a new payment and drop on the payment channel.
-	sess := session.New()
-	pmt := sess.ToPayment(1000000)
-	clients[1].PaymentChan <- pmt
+	var sess [5]*session.OnionSkin
+	var pmt [5]*node.Payment
+	for i := range clients[1:] {
+		// Create a new payment and drop on the payment channel.
+		sess[i] = session.New()
+		pmt[i] = sess[i].ToPayment(1000000)
+		clients[i+1].PaymentChan <- pmt[i]
+	}
 	// Send the keys.
 	var circuit node.Circuit
 	for i := range circuit {
 		circuit[i] = clients[0].Sessions[i+1]
 	}
 	var hdr, pld [5]*prv.Key
-	hdr[0], pld[0] = sess.Header, sess.Payload
-	sk := wire.SendKeys(pmt.ID, hdr, pld, clients[0].Node,
+	for i := range hdr {
+		hdr[i], pld[i] = sess[i].Header, sess[i].Payload
+	}
+	cnf := nonce.NewID()
+	sk := wire.SendKeys(cnf, hdr, pld, clients[0].Node,
 		circuit, clients[0].KeySet)
 	clients[0].RegisterConfirmation(func(cf nonce.ID) {
 		log.T.S("received payment confirmation ID", cf)
-		if cf != pmt.ID {
+		if cf != cnf {
 			t.Errorf("did not receive expected confirmation, got:"+
-				" %x expected: %x", cf, pmt.ID)
+				" %x expected: %x", cf, cnf)
 			t.FailNow()
 		}
 		quit.Q()
-	}, pmt.ID)
+	}, cnf)
 	o := sk.Assemble()
 	b := wire.EncodeOnion(o)
 	clients[0].Send(clients[0].Nodes[0].AddrPort, b)
@@ -170,4 +177,5 @@ func TestSendKeys(t *testing.T) {
 	for _, v := range clients {
 		v.Shutdown()
 	}
+
 }

@@ -86,7 +86,7 @@ func (cl *Client) runner() (out bool) {
 			log.I.S("unrecognised packet", b)
 		}
 	case p := <-cl.PaymentChan:
-		log.T.S("incoming payment", p)
+		log.T.S("incoming payment", cl.AddrPort.String(), p)
 		cl.PendingPayments = cl.PendingPayments.Add(p)
 	}
 	return
@@ -98,9 +98,10 @@ func (cl *Client) session(on *session.OnionSkin, b slice.Bytes,
 	log.T.S("incoming session", on.PreimageHash())
 	pi := cl.PendingPayments.FindPreimage(on.PreimageHash())
 	if pi != nil {
-		log.T.F("Adding session %x", pi.ID)
-		cl.Sessions = append(cl.Sessions, node.NewSession(pi.ID,
-			cl.Node, pi.Amount, on.Header, on.Payload))
+		ss := node.NewSession(pi.ID,
+			cl.Node, pi.Amount, on.Header, on.Payload)
+		cl.Sessions = append(cl.Sessions, ss)
+		log.T.F("Adding session %x\n", pi.ID)
 		cl.PendingPayments = cl.PendingPayments.Delete(pi.Preimage)
 		b = append(b[*c:], slice.NoisePad(int(*c))...)
 		cl.Node.Send(b)
