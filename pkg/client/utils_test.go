@@ -14,7 +14,9 @@ import (
 
 const nTotal = 6
 
-func CreateMockCircuitClients() (clients []*Client, e error) {
+func CreateMockCircuitClients(inclSessions bool) (clients []*Client,
+	e error) {
+
 	clients = make([]*Client, nTotal)
 	nodes := make([]*node.Node, nTotal)
 	transports := make([]ifc.Transport, nTotal)
@@ -36,21 +38,23 @@ func CreateMockCircuitClients() (clients []*Client, e error) {
 		}
 		clients[i].AddrPort = nodes[i].AddrPort
 		clients[i].Node = nodes[i]
-		// create a session for all but the first
-		if i > 0 {
-			sessions[i-1] = node.NewSession(nonce.NewID(), nodes[i], math.MaxUint64, nil, nil)
-			// Add session to node, so it will be able to relay if
-			// it gets a message with the key.
-			nodes[i].Sessions = append(nodes[i].Sessions,
-				sessions[i-1])
-			nodes[0].Sessions = append(nodes[0].Sessions,
-				sessions[i-1])
-			// Normally only the client would have this in its
-			// nodes, but we are sharing them for simple circuit
-			// tests. Relays don't use this field, though clients
-			// can be relays.
-			nodes[i].Circuit = &node.Circuit{}
-			nodes[i].Circuit[i-1] = sessions[i-1]
+		if inclSessions {
+			// create a session for all but the first
+			if i > 0 {
+				sessions[i-1] = node.NewSession(nonce.NewID(), nodes[i], math.MaxUint64, nil, nil)
+				// Add session to node, so it will be able to relay if
+				// it gets a message with the key.
+				nodes[i].Sessions = append(nodes[i].Sessions,
+					sessions[i-1])
+				nodes[0].Sessions = append(nodes[0].Sessions,
+					sessions[i-1])
+				// Normally only the client would have this in its
+				// nodes, but we are sharing them for simple circuit
+				// tests. Relays don't use this field, though clients
+				// can be relays.
+				nodes[i].Circuit = &node.Circuit{}
+				nodes[i].Circuit[i-1] = sessions[i-1]
+			}
 		}
 	}
 	// Add each node to each other's Nodes except itself, this enables them

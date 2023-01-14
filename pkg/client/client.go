@@ -37,7 +37,7 @@ var (
 type Client struct {
 	*node.Node
 	node.Nodes
-	PendingSessions []nonce.ID
+	PendingSessions []*node.Session
 	*confirm.Confirms
 	ExitHooks response.Hooks
 	sync.Mutex
@@ -111,6 +111,10 @@ func (cl *Client) FindCloaked(clk cloak.PubKey) (hdr *prv.Key,
 		}
 	}
 	return
+}
+
+func (cl *Client) GenerateCircuit() {
+
 }
 
 // Cleanup closes and flushes any resources the client opened that require sync

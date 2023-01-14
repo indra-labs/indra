@@ -21,7 +21,7 @@ func TestPing(t *testing.T) {
 	const nTotal = 6
 	clients := make([]*Client, nTotal)
 	var e error
-	if clients, e = CreateMockCircuitClients(); check(e) {
+	if clients, e = CreateMockCircuitClients(true); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -62,7 +62,7 @@ func TestSendExit(t *testing.T) {
 	const nTotal = 6
 	clients := make([]*Client, nTotal)
 	var e error
-	if clients, e = CreateMockCircuitClients(); check(e) {
+	if clients, e = CreateMockCircuitClients(true); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -127,7 +127,7 @@ func TestSendExit(t *testing.T) {
 func TestSendKeys(t *testing.T) {
 	var clients []*Client
 	var e error
-	if clients, e = CreateMockCircuitClients(); check(e) {
+	if clients, e = CreateMockCircuitClients(false); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -141,24 +141,31 @@ func TestSendKeys(t *testing.T) {
 		quit.Q()
 		t.Error("SendKeys got stuck")
 	}()
+	cnf := nonce.NewID()
 	var sess [5]*session.OnionSkin
 	var pmt [5]*node.Payment
-	for i := range clients[1:] {
+	for i, v := range clients[1:] {
 		// Create a new payment and drop on the payment channel.
 		sess[i] = session.New()
 		pmt[i] = sess[i].ToPayment(1000000)
 		clients[i+1].PaymentChan <- pmt[i]
+		clients[0].PendingSessions = append(
+			clients[0].PendingSessions,
+			node.NewSession(cnf, v.Node, pmt[i].Amount,
+				sess[i].Header, sess[i].Payload),
+		)
 	}
 	// Send the keys.
 	var circuit node.Circuit
 	for i := range circuit {
-		circuit[i] = clients[0].Sessions[i+1]
+		circuit[i] = node.NewSession(pmt[i].ID,
+			clients[i+1].Node, pmt[i].Amount,
+			sess[i].Header, sess[i].Payload)
 	}
 	var hdr, pld [5]*prv.Key
 	for i := range hdr {
 		hdr[i], pld[i] = sess[i].Header, sess[i].Payload
 	}
-	cnf := nonce.NewID()
 	sk := wire.SendKeys(cnf, hdr, pld, clients[0].Node,
 		circuit, clients[0].KeySet)
 	clients[0].RegisterConfirmation(func(cf nonce.ID) {
