@@ -34,29 +34,11 @@ var (
 func strPtr(str string) *string { return &str }
 
 var buildConfigurations = []docker.BuildConfiguration{
-	//docker.BuildConfiguration{
-	//	Name:            defaultRepositoryName + "/" + "scratch",
-	//	ContextFilePath: "/tmp/scratch.tar",
-	//	BuildOpts: types.ImageBuildOptions{
-	//		Dockerfile: "docker/scratch/Dockerfile",
-	//		Tags: []string{
-	//			indra.SemVer,
-	//			"latest",
-	//		},
-	//		BuildArgs: map[string]*string{
-	//			"base_image": strPtr("busybox"),
-	//		},
-	//		SuppressOutput: false,
-	//		Remove:         true,
-	//		ForceRemove:    true,
-	//		PullParent:     true,
-	//	},
-	//},
 	docker.BuildConfiguration{
 		Name:            defaultRepositoryName + "/" + "btcd",
 		ContextFilePath: "/tmp/btcd.tar",
 		BuildOpts: types.ImageBuildOptions{
-			Dockerfile: "docker/btcd/Dockerfile",
+			Dockerfile: "docker/btcd/btcd.Dockerfile",
 			Tags: []string{
 				"v0.23.4",
 				"latest",
@@ -75,6 +57,25 @@ var buildConfigurations = []docker.BuildConfiguration{
 			PullParent:     true,
 		},
 	},
+
+	docker.BuildConfiguration{
+		Name:            defaultRepositoryName + "/" + "btcctl",
+		ContextFilePath: "/tmp/btcctl.tar",
+		BuildOpts: types.ImageBuildOptions{
+			Dockerfile: "docker/btcd/btcctl.Dockerfile",
+			Tags: []string{
+				"v0.23.4",
+				"latest",
+			},
+			BuildArgs: map[string]*string{
+				"semver": strPtr("v0.23.4"),
+			},
+			SuppressOutput: false,
+			Remove:         true,
+			ForceRemove:    true,
+			PullParent:     false,
+		},
+	},
 	//docker.BuildConfiguration{
 	//	Name:            defaultRepositoryName + "/" + "lnd",
 	//	ContextFilePath: "/tmp/lnd.tar",
@@ -85,9 +86,12 @@ var buildConfigurations = []docker.BuildConfiguration{
 	//			"latest",
 	//		},
 	//		BuildArgs: map[string]*string{
+	//			"base_image":   strPtr(defaultBuildContainer),
+	//			"target_image": strPtr("indralabs/scratch:latest"),
 	//			// This argument is the tag fetched by git
 	//			// It MUST be updated alongside the tag above
-	//			"git_tag": strPtr("v0.15.5-beta"),
+	//			"git_repository": strPtr("github.com/lightningnetwork/lnd"),
+	//			"git_tag":        strPtr("v0.15.5-beta"),
 	//		},
 	//		SuppressOutput: false,
 	//		Remove:         true,

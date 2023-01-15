@@ -40,7 +40,6 @@ RUN set -ex \
 FROM indralabs/scratch:latest
 
 ## Migrate the binaries and storage folder
-
 COPY --from=builder /tmp/btcd.conf /etc/btcd/btcd.conf
 COPY --from=builder /tmp/bin /bin
 
