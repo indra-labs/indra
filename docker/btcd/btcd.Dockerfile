@@ -19,19 +19,14 @@ WORKDIR $GOPATH/src/${git_repository}
 
 RUN git checkout ${git_tag}
 
-# Source/Target release defaults
-ARG ARCH=amd64
-ARG GOARCH=amd64
-
-ENV GO111MODULE=on GOOS=linux
-
-WORKDIR $GOPATH/src/${git_repository}
-
+# We should bake this into scratch as some point.
 RUN cp sample-btcd.conf /tmp/btcd.conf
 
+ARG ARCH=amd64
+ARG GOARCH=amd64
 RUN set -ex \
-  && CGO_ENABLED=0 go build --ldflags '-w -s' -o /tmp/bin/btcd . \
-  && CGO_ENABLED=0 go build --ldflags '-w -s' -o /tmp/bin/ ./cmd/...
+  && GO111MODULE=on GOOS=linux CGO_ENABLED=0 go build --ldflags '-w -s' -o /tmp/bin/btcd . \
+  && GO111MODULE=on GOOS=linux CGO_ENABLED=0 go build --ldflags '-w -s' -o /tmp/bin/ ./cmd/...
 
 # ---
 # Target Configuration
