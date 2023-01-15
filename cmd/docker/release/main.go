@@ -57,7 +57,6 @@ var buildConfigurations = []docker.BuildConfiguration{
 			PullParent:     true,
 		},
 	},
-
 	docker.BuildConfiguration{
 		Name:            defaultRepositoryName + "/" + "btcctl",
 		ContextFilePath: "/tmp/btcctl.tar",

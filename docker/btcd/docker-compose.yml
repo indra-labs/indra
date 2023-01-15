@@ -1,0 +1,49 @@
+version: '3'
+services:
+  btcd:
+    sysctls:
+      - "net.ipv6.conf.all.disable_ipv6=0"
+    image: indralabs/btcd
+    volumes:
+      - config:/etc/btcd
+      - data:/var/btcd
+    networks:
+      indranet:
+        ipv4_address: 172.16.42.2
+    command:
+      - "--rpcuser=simnet"
+      - "--rpcpass=simnet"
+      - "--simnet"
+  btcctl:
+    sysctls:
+      - "net.ipv6.conf.all.disable_ipv6=0"
+    image: indralabs/btcctl
+    volumes:
+      - config:/etc/btcd:ro
+    networks:
+      indranet:
+    depends_on:
+      - btcd
+    command:
+      - "--rpcserver=172.16.42.2:8333"
+      - "--rpcuser=simnet"
+      - "--rpcpass=simnet"
+      - "--simnet"
+      - "getinfo"
+volumes:
+  config:
+  data:
+networks:
+  indranet:
+    driver: bridge
+    driver_opts:
+      com.docker.network.enable_ipv6: "true"
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.42.0/24
+          gateway: 172.16.42.1
+        - subnet: 2001:3984:8333::/64
+          gateway: 2001:3984:8333::1
+
+# docker-compose -f docker/btcd/docker-compose.yml up
