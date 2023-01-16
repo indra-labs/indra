@@ -19,9 +19,6 @@ WORKDIR $GOPATH/src/${git_repository}
 
 RUN git checkout ${git_tag}
 
-# We should bake this into scratch as some point.
-RUN cp sample-btcd.conf /tmp/btcd.conf
-
 ARG ARCH=amd64
 ARG GOARCH=amd64
 RUN set -ex \
@@ -35,7 +32,6 @@ RUN set -ex \
 FROM indralabs/scratch:latest
 
 ## Migrate the binaries and storage folder
-COPY --from=builder /tmp/btcd.conf /etc/btcd/btcd.conf
 COPY --from=builder /tmp/bin /bin
 
 # Enable the btcd user
@@ -49,4 +45,4 @@ USER btcd:btcd
 # :8334  btcd RPC port
 EXPOSE 8333 8334
 
-ENTRYPOINT ["/bin/btcd", "--configfile=/etc/btcd/btcd.conf", "--datadir=/var/btcd", "--logdir=/var/btcd", "--rpckey=/etc/btcd/keys/rpc.key", "--rpccert=/etc/btcd/keys/rpc.cert", "--listen=0.0.0.0:8333", "--rpclisten=0.0.0.0:8334"]
+ENTRYPOINT ["/bin/btcd", "--configfile=/etc/btcd/btcd.conf"]
