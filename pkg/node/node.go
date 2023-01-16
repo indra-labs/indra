@@ -5,7 +5,7 @@ package node
 import (
 	"fmt"
 	"net/netip"
-	"sync"
+	sync "sync"
 	"time"
 
 	"github.com/indra-labs/indra"
@@ -162,14 +162,14 @@ func (n *Node) AddPendingPayment(
 
 	n.Lock()
 	defer n.Unlock()
-	n.PendingPayments.Add(np)
+	n.PendingPayments = n.PendingPayments.Add(np)
 }
 func (n *Node) DeletePendingPayment(
 	preimage sha256.Hash) {
 
 	n.Lock()
 	defer n.Unlock()
-	n.PendingPayments.Delete(preimage)
+	n.PendingPayments = n.PendingPayments.Delete(preimage)
 }
 func (n *Node) FindPendingPayment(
 	id nonce.ID) (pp *Payment) {

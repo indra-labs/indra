@@ -41,8 +41,7 @@ func TestPing(t *testing.T) {
 		log.T.S("received ping confirmation ID", cf)
 		quit.Q()
 	}, os[len(os)-1].(*confirm.OnionSkin).ID)
-	o := os.Assemble()
-	b := wire.EncodeOnion(o)
+	b := wire.EncodeOnion(os.Assemble())
 	log.T.S("sending ping with ID", os[len(os)-1].(*confirm.OnionSkin))
 	clients[0].Send(clients[0].Nodes[0].AddrPort, b)
 	go func() {
@@ -104,8 +103,7 @@ func TestSendExit(t *testing.T) {
 			}
 			quit.Q()
 		})
-	o := os.Assemble()
-	b := wire.EncodeOnion(o)
+	b := wire.EncodeOnion(os.Assemble())
 	log.T.Ln(clients[0].Node.AddrPort.String())
 	clients[0].Node.Send(b)
 	go func() {
@@ -173,8 +171,7 @@ func TestSendKeys(t *testing.T) {
 		}
 		quit.Q()
 	}, cnf)
-	o := sk.Assemble()
-	b := wire.EncodeOnion(o)
+	b := wire.EncodeOnion(sk.Assemble())
 	clients[0].Send(clients[0].Nodes[0].AddrPort, b)
 	<-quit.Wait()
 	for _, v := range clients {

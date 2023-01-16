@@ -109,7 +109,7 @@ func (cl *Client) runner() (out bool) {
 			return false
 		})
 		if !topUp {
-			cl.PendingPayments = cl.PendingPayments.Add(p)
+			cl.AddPendingPayment(p)
 			log.T.F("awaiting session keys for preimage %x",
 				p.Preimage)
 		}
@@ -333,13 +333,12 @@ func (cl *Client) session(on *session.OnionSkin, b slice.Bytes,
 		return fmt.Sprint("incoming session",
 			spew.Sdump(on.PreimageHash()))
 	})
-	pi := cl.PendingPayments.FindPreimage(on.PreimageHash())
+	pi := cl.FindPendingPreimage(on.PreimageHash())
 	if pi != nil {
-		ss := node.NewSession(pi.ID,
-			cl.Node, pi.Amount, on.Header, on.Payload, on.Hop)
-		cl.AddSession(ss)
+		cl.DeletePendingPayment(pi.Preimage)
 		log.T.F("Adding session %x\n", pi.ID)
-		cl.PendingPayments = cl.PendingPayments.Delete(pi.Preimage)
+		cl.AddSession(node.NewSession(pi.ID,
+			cl.Node, pi.Amount, on.Header, on.Payload, on.Hop))
 		cl.Node.Send(BudgeUp(b, *c))
 	} else {
 		log.T.Ln("dropping session message without payment")
