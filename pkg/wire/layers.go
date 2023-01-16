@@ -6,14 +6,18 @@ import (
 
 	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/key/pub"
+	"github.com/indra-labs/indra/pkg/lnwire"
+	"github.com/indra-labs/indra/pkg/node"
 	"github.com/indra-labs/indra/pkg/nonce"
 	"github.com/indra-labs/indra/pkg/sha256"
 	"github.com/indra-labs/indra/pkg/slice"
 	"github.com/indra-labs/indra/pkg/types"
+	"github.com/indra-labs/indra/pkg/wire/balance"
 	"github.com/indra-labs/indra/pkg/wire/confirm"
 	"github.com/indra-labs/indra/pkg/wire/delay"
 	"github.com/indra-labs/indra/pkg/wire/exit"
 	"github.com/indra-labs/indra/pkg/wire/forward"
+	"github.com/indra-labs/indra/pkg/wire/getbalance"
 	"github.com/indra-labs/indra/pkg/wire/layer"
 	"github.com/indra-labs/indra/pkg/wire/noop"
 	"github.com/indra-labs/indra/pkg/wire/response"
@@ -26,16 +30,36 @@ type OnionSkins []types.Onion
 
 var os = &noop.OnionSkin{}
 
-func (o OnionSkins) Cipher(hdr, pld *prv.Key) OnionSkins {
-	// SendKeys can apply to from 1 to 5 nodes, if either key is nil then
-	// this layer just doesn't get added in the serialization process.
+func (o OnionSkins) ForwardLayer(s *node.Session, k *prv.Key,
+	n nonce.IV) OnionSkins {
+
+	return o.Forward(s.AddrPort).Layer(s.HeaderPub, k, n)
+}
+
+func (o OnionSkins) ReverseLayer(s *node.Session, k *prv.Key,
+	n nonce.IV) OnionSkins {
+
+	return o.Reverse(s.AddrPort).Layer(s.HeaderPub, k, n)
+}
+
+func (o OnionSkins) ForwardSession(s *node.Session,
+	k *prv.Key, n nonce.IV, hdr, pld *prv.Key) OnionSkins {
+
 	if hdr == nil || pld == nil {
-		return o
+		return o.Forward(s.AddrPort).Layer(s.HeaderPub, k, n)
+	} else {
+		return o.Forward(s.AddrPort).
+			Layer(s.IdentityPub, k, n).
+			Session(hdr, pld)
 	}
-	return append(o, &session.OnionSkin{
-		Header:  hdr,
-		Payload: pld,
-		Onion:   &noop.OnionSkin{},
+}
+
+func (o OnionSkins) Balance(id nonce.ID,
+	amt lnwire.MilliSatoshi) OnionSkins {
+
+	return append(o, &balance.OnionSkin{
+		ID:           id,
+		MilliSatoshi: amt,
 	})
 }
 
@@ -60,7 +84,22 @@ func (o OnionSkins) Exit(port uint16, prvs [3]*prv.Key, pubs [3]*pub.Key,
 }
 
 func (o OnionSkins) Forward(addr *netip.AddrPort) OnionSkins {
-	return append(o, &forward.OnionSkin{AddrPort: addr, Onion: &noop.OnionSkin{}})
+	return append(o,
+		&forward.OnionSkin{
+			AddrPort: addr,
+			Onion:    &noop.OnionSkin{},
+		})
+}
+
+func (o OnionSkins) GetBalance(id nonce.ID, prvs [3]*prv.Key,
+	pubs [3]*pub.Key, nonces [3]nonce.IV) OnionSkins {
+
+	return append(o, &getbalance.OnionSkin{
+		ID:      id,
+		Ciphers: GenCiphers(prvs, pubs),
+		Nonces:  nonces,
+		Onion:   os,
+	})
 }
 
 func (o OnionSkins) Layer(to *pub.Key, from *prv.Key,
@@ -81,6 +120,19 @@ func (o OnionSkins) Reverse(ip *netip.AddrPort) OnionSkins {
 func (o OnionSkins) Response(hash sha256.Hash, res slice.Bytes) OnionSkins {
 	rs := response.OnionSkin{Hash: hash, Bytes: res}
 	return append(o, &rs)
+}
+
+func (o OnionSkins) Session(hdr, pld *prv.Key) OnionSkins {
+	// SendKeys can apply to from 1 to 5 nodes, if either key is nil then
+	// this layer just doesn't get added in the serialization process.
+	if hdr == nil || pld == nil {
+		return o
+	}
+	return append(o, &session.OnionSkin{
+		Header:  hdr,
+		Payload: pld,
+		Onion:   &noop.OnionSkin{},
+	})
 }
 
 func (o OnionSkins) Token(tok sha256.Hash) OnionSkins {

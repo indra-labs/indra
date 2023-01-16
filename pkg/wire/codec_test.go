@@ -32,7 +32,7 @@ func TestOnionSkins_Cipher(t *testing.T) {
 	hdrP, pldP := GetTwoPrvKeys(t)
 	// hdr, pld := pub.Derive(hdrP), pub.Derive(pldP)
 	on := OnionSkins{}.
-		Cipher(hdrP, pldP).
+		Session(hdrP, pldP).
 		Assemble()
 	onb := EncodeOnion(on)
 	c := slice.NewCursor()

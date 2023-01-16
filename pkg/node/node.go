@@ -14,6 +14,7 @@ import (
 	"github.com/indra-labs/indra/pkg/key/pub"
 	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/indra-labs/indra/pkg/nonce"
+	"github.com/indra-labs/indra/pkg/sha256"
 	"github.com/indra-labs/indra/pkg/slice"
 )
 
@@ -37,11 +38,10 @@ type Node struct {
 	IdentityPrv   *prv.Key
 	PingCount     int
 	LastSeen      time.Time
-	*Circuit
-	Sessions
+	Sessions      Sessions
 	Services
 	PaymentChan
-	PendingPayments
+	PendingPayments PendingPayments
 	ifc.Transport
 }
 
@@ -62,7 +62,6 @@ func New(addr *netip.AddrPort, idPub *pub.Key, idPrv *prv.Key,
 		IdentityPrv:   idPrv,
 		PaymentChan:   make(PaymentChan),
 	}
-	n.Sessions = append(n.Sessions, NewSession(id, n, 0, nil, nil))
 	return
 }
 
@@ -89,4 +88,101 @@ func (n *Node) ReceiveFrom(port uint16) (b <-chan slice.Bytes) {
 		}
 	}
 	return
+}
+
+// Session management functions
+//
+// In order to enable scaling client processing the session data will be
+// accessed by multiple goroutines, and thus we use the node's mutex to prevent
+// race conditions on this data. This is the only mutable data. A relay's
+// identity is its keys so a different key is a different relay, even if it is
+// on the same IP address. Because we use netip.AddrPort as network addresses
+// there can be more than one relay at an IP address, though hop selection will
+// consider the IP address as the unique identifier and not select more than one
+// relay on the same IP address. (todo:)
+
+func (n *Node) AddSession(s *Session) {
+	n.Lock()
+	defer n.Unlock()
+	n.Sessions = append(n.Sessions, s)
+}
+func (n *Node) FindSession(id nonce.ID) *Session {
+	n.Lock()
+	defer n.Unlock()
+	for i := range n.Sessions {
+		if n.Sessions[i].ID == id {
+			return n.Sessions[i]
+		}
+	}
+	return nil
+}
+func (n *Node) GetSessionsAtHop(hop byte) (s Sessions) {
+	n.Lock()
+	defer n.Unlock()
+	for i := range n.Sessions {
+		if n.Sessions[i].Hop == hop {
+			s = append(s, n.Sessions[i])
+		}
+	}
+	return
+}
+func (n *Node) DeleteSession(id nonce.ID) {
+	n.Lock()
+	defer n.Unlock()
+	for i := range n.Sessions {
+		if n.Sessions[i].ID == id {
+			n.Sessions = append(n.Sessions[:i], n.Sessions[i+1:]...)
+		}
+	}
+
+}
+func (n *Node) IterateSessions(fn func(s *Session) bool) {
+	n.Lock()
+	defer n.Unlock()
+	for i := range n.Sessions {
+		if fn(n.Sessions[i]) {
+			break
+		}
+	}
+}
+
+func (n *Node) GetSessionByIndex(i int) (s *Session) {
+	n.Lock()
+	defer n.Unlock()
+	if len(n.Sessions) > i {
+		s = n.Sessions[i]
+	}
+	return
+}
+
+// PendingPayment accessors
+
+func (n *Node) AddPendingPayment(
+	np *Payment) {
+
+	n.Lock()
+	defer n.Unlock()
+	n.PendingPayments.Add(np)
+}
+func (n *Node) DeletePendingPayment(
+	preimage sha256.Hash) {
+
+	n.Lock()
+	defer n.Unlock()
+	n.PendingPayments.Delete(preimage)
+}
+func (n *Node) FindPendingPayment(
+	id nonce.ID) (pp *Payment) {
+
+	n.Lock()
+	defer n.Unlock()
+	return n.PendingPayments.Find(id)
+}
+func (n *Node) FindPendingPreimage(
+	pi sha256.Hash) (pp *Payment) {
+
+	log.T.F("searching preimage %x", pi)
+	n.Lock()
+	defer n.Unlock()
+	return n.PendingPayments.FindPreimage(pi)
 }

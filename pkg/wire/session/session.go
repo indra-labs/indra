@@ -46,6 +46,7 @@ var (
 // is concealed to the hops except for the encryption layer they decrypt using
 // their Payload key, delivered in this message.
 type OnionSkin struct {
+	Hop             byte
 	Header, Payload *prv.Key
 	types.Onion
 }

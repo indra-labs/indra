@@ -37,9 +37,8 @@ var (
 type Client struct {
 	*node.Node
 	node.Nodes
-	PendingSessions []*node.Session
 	*confirm.Confirms
-	ExitHooks response.Hooks
+	response.Hooks
 	sync.Mutex
 	*signer.KeySet
 	ShuttingDown atomic.Bool
@@ -56,6 +55,8 @@ func New(tpt ifc.Transport, hdrPrv *prv.Key, no *node.Node,
 	if _, ks, e = signer.New(); check(e) {
 		return
 	}
+	// Add our first return session.
+	no.AddSession(node.NewSession(nonce.NewID(), no, 0, nil, nil, 5))
 	c = &Client{
 		Confirms: confirm.NewConfirms(),
 		Node:     no,
@@ -89,7 +90,7 @@ func (cl *Client) RegisterConfirmation(hook confirm.Hook,
 // returns the session as well, though not all users of this function will need
 // this.
 func (cl *Client) FindCloaked(clk cloak.PubKey) (hdr *prv.Key,
-	pld *prv.Key, sess *node.Session) {
+	pld *prv.Key, sess *node.Session, identity bool) {
 
 	var b cloak.Blinder
 	copy(b[:], clk[:cloak.BlindLen])
@@ -98,23 +99,23 @@ func (cl *Client) FindCloaked(clk cloak.PubKey) (hdr *prv.Key,
 		log.T.Ln("encrypted to identity key")
 		hdr = cl.Node.IdentityPrv
 		// there is no payload key for the node, only in sessions.
+		identity = true
 		return
 	}
-	for i := range cl.Sessions {
-		hash = cloak.Cloak(b, cl.Sessions[i].HeaderBytes)
+	var i int
+	cl.Node.IterateSessions(func(s *node.Session) (stop bool) {
+		hash = cloak.Cloak(b, s.HeaderBytes)
 		if hash == clk {
 			log.T.F("found cloaked key in session %d", i)
-			hdr = cl.Sessions[i].HeaderPrv
-			pld = cl.Sessions[i].PayloadPrv
-			sess = cl.Sessions[i]
-			return
+			hdr = s.HeaderPrv
+			pld = s.PayloadPrv
+			sess = s
+			return true
 		}
-	}
+		i++
+		return
+	})
 	return
-}
-
-func (cl *Client) GenerateCircuit() {
-
 }
 
 // Cleanup closes and flushes any resources the client opened that require sync

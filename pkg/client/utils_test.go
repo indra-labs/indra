@@ -14,10 +14,10 @@ import (
 
 const nTotal = 6
 
-func CreateMockCircuitClients(inclSessions bool) (clients []*Client,
+func CreateMockCircuitClients(inclSessions bool) (cl []*Client,
 	e error) {
 
-	clients = make([]*Client, nTotal)
+	cl = make([]*Client, nTotal)
 	nodes := make([]*node.Node, nTotal)
 	transports := make([]ifc.Transport, nTotal)
 	sessions := make(node.Sessions, nTotal-1)
@@ -32,41 +32,31 @@ func CreateMockCircuitClients(inclSessions bool) (clients []*Client,
 		idPub := pub.Derive(idPrv)
 		addr := slice.GenerateRandomAddrPortIPv4()
 		nodes[i], _ = node.New(addr, idPub, idPrv, transports[i])
-		if clients[i], e = New(transports[i], idPrv, nodes[i],
+		if cl[i], e = New(transports[i], idPrv, nodes[i],
 			nil); check(e) {
 			return
 		}
-		clients[i].AddrPort = nodes[i].AddrPort
-		clients[i].Node = nodes[i]
+		cl[i].AddrPort = nodes[i].AddrPort
+		cl[i].Node = nodes[i]
 		if inclSessions {
 			// create a session for all but the first
 			if i > 0 {
-				sessions[i-1] = node.NewSession(nonce.NewID(), nodes[i], math.MaxUint64, nil, nil)
-				// Add session to node, so it will be able to relay if
-				// it gets a message with the key.
-				nodes[i].Sessions = append(nodes[i].Sessions,
-					sessions[i-1])
-				nodes[0].Sessions = append(nodes[0].Sessions,
-					sessions[i-1])
-				// Normally only the client would have this in its
-				// nodes, but we are sharing them for simple circuit
-				// tests. Relays don't use this field, though clients
-				// can be relays.
-				nodes[i].Circuit = &node.Circuit{}
-				nodes[i].Circuit[i-1] = sessions[i-1]
+				sessions[i-1] = node.NewSession(nonce.NewID(), nodes[i], math.MaxUint64, nil, nil, byte(i-1))
+				// Add session to node, so it will be able to
+				// relay if it gets a message with the key.
+				nodes[i].AddSession(sessions[i-1])
+				nodes[0].AddSession(sessions[i-1])
 			}
 		}
 	}
 	// Add each node to each other's Nodes except itself, this enables them
-	// to send messages across their transports to each other, as well as,
-	// in the case of our simulation, providing the circuit which was added
-	// to them just before.
-	for i := range clients {
+	// to send messages across their transports to each other.
+	for i := range cl {
 		for j := range nodes {
 			if i == j {
 				continue
 			}
-			clients[i].Nodes = append(clients[i].Nodes, nodes[j])
+			cl[i].Nodes = append(cl[i].Nodes, nodes[j])
 		}
 	}
 	return

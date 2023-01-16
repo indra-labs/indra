@@ -5,6 +5,7 @@ import (
 	"github.com/indra-labs/indra/pkg/key/pub"
 	"github.com/indra-labs/indra/pkg/lnwire"
 	"github.com/indra-labs/indra/pkg/nonce"
+	"github.com/indra-labs/indra/pkg/sha256"
 )
 
 // A Session keeps track of a connection session. It specifically maintains the
@@ -17,14 +18,22 @@ type Session struct {
 	HeaderPrv, PayloadPrv     *prv.Key
 	HeaderPub, PayloadPub     *pub.Key
 	HeaderBytes, PayloadBytes pub.Bytes
+	Preimage                  sha256.Hash
+	Hop                       byte
 }
 
 // NewSession creates a new Session.
 //
 // Purchasing a session the seller returns a token, based on a requested data
 // allocation.
-func NewSession(id nonce.ID, node *Node, rem lnwire.MilliSatoshi,
-	hdrPrv *prv.Key, pldPrv *prv.Key) (s *Session) {
+func NewSession(
+	id nonce.ID,
+	node *Node,
+	rem lnwire.MilliSatoshi,
+	hdrPrv *prv.Key,
+	pldPrv *prv.Key,
+	hop byte,
+) (s *Session) {
 
 	var e error
 	if hdrPrv == nil || pldPrv == nil {
@@ -35,6 +44,7 @@ func NewSession(id nonce.ID, node *Node, rem lnwire.MilliSatoshi,
 	}
 	hdrPub := pub.Derive(hdrPrv)
 	pldPub := pub.Derive(pldPrv)
+	h, p := hdrPrv.ToBytes(), pldPrv.ToBytes()
 	s = &Session{
 		ID:           id,
 		Node:         node,
@@ -45,6 +55,8 @@ func NewSession(id nonce.ID, node *Node, rem lnwire.MilliSatoshi,
 		PayloadBytes: pldPub.ToBytes(),
 		HeaderPrv:    hdrPrv,
 		PayloadPrv:   pldPrv,
+		Preimage:     sha256.Single(append(h[:], p[:]...)),
+		Hop:          hop,
 	}
 	return
 }

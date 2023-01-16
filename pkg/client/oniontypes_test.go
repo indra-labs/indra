@@ -32,9 +32,10 @@ func TestPing(t *testing.T) {
 	conf := nonce.NewID()
 	var circuit node.Circuit
 	for i := range circuit {
-		circuit[i] = clients[i+1].Sessions[1]
+		circuit[i] = clients[i+1].GetSessionByIndex(1)
 	}
-	os := wire.Ping(conf, clients[0].Node, circuit, clients[0].KeySet)
+	os := wire.Ping(conf, clients[0].GetSessionByIndex(0),
+		circuit, clients[0].KeySet)
 	quit := qu.T()
 	clients[0].RegisterConfirmation(func(cf nonce.ID) {
 		log.T.S("received ping confirmation ID", cf)
@@ -78,7 +79,7 @@ func TestSendExit(t *testing.T) {
 	}
 	var circuit node.Circuit
 	for i := range circuit {
-		circuit[i] = clients[0].Sessions[i+1]
+		circuit[i] = clients[0].GetSessionByIndex(i + 1)
 	}
 	var msg slice.Bytes
 	var msgHash sha256.Hash
@@ -93,9 +94,9 @@ func TestSendExit(t *testing.T) {
 		t.FailNow()
 	}
 	quit := qu.T()
-	os := wire.SendExit(msg, port, clients[0].Node, circuit,
+	os := wire.SendExit(msg, port, clients[0].GetSessionByIndex(0), circuit,
 		clients[0].KeySet)
-	clients[0].ExitHooks = clients[0].ExitHooks.Add(msgHash,
+	clients[0].Hooks = clients[0].Hooks.Add(msgHash,
 		func(b slice.Bytes) {
 			log.T.S(b.ToBytes())
 			if sha256.Single(b) != respHash {
@@ -144,29 +145,24 @@ func TestSendKeys(t *testing.T) {
 	cnf := nonce.NewID()
 	var sess [5]*session.OnionSkin
 	var pmt [5]*node.Payment
-	for i, v := range clients[1:] {
+	for i := range clients[1:] {
 		// Create a new payment and drop on the payment channel.
 		sess[i] = session.New()
 		pmt[i] = sess[i].ToPayment(1000000)
 		clients[i+1].PaymentChan <- pmt[i]
-		clients[0].PendingSessions = append(
-			clients[0].PendingSessions,
-			node.NewSession(cnf, v.Node, pmt[i].Amount,
-				sess[i].Header, sess[i].Payload),
-		)
 	}
 	// Send the keys.
 	var circuit node.Circuit
 	for i := range circuit {
 		circuit[i] = node.NewSession(pmt[i].ID,
 			clients[i+1].Node, pmt[i].Amount,
-			sess[i].Header, sess[i].Payload)
+			sess[i].Header, sess[i].Payload, byte(i))
 	}
 	var hdr, pld [5]*prv.Key
 	for i := range hdr {
 		hdr[i], pld[i] = sess[i].Header, sess[i].Payload
 	}
-	sk := wire.SendKeys(cnf, hdr, pld, clients[0].Node,
+	sk := wire.SendKeys(cnf, hdr, pld, clients[0].GetSessionByIndex(0),
 		circuit, clients[0].KeySet)
 	clients[0].RegisterConfirmation(func(cf nonce.ID) {
 		log.T.S("received payment confirmation ID", cf)
