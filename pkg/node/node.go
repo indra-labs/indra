@@ -104,6 +104,13 @@ func (n *Node) ReceiveFrom(port uint16) (b <-chan slice.Bytes) {
 func (n *Node) AddSession(s *Session) {
 	n.Lock()
 	defer n.Unlock()
+	// check for dupes
+	for i := range n.sessions {
+		if n.sessions[i].ID == s.ID {
+			log.D.Ln("refusing to add duplicate session ID")
+			return
+		}
+	}
 	n.sessions = append(n.sessions, s)
 }
 func (n *Node) FindSession(id nonce.ID) *Session {

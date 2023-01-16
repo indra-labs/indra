@@ -335,6 +335,9 @@ func (cl *Client) session(on *session.OnionSkin, b slice.Bytes,
 	})
 	pi := cl.FindPendingPreimage(on.PreimageHash())
 	if pi != nil {
+		// We need to delete this first in case somehow two such
+		// messages arrive at the same time, and we end up with
+		// duplicate sessions.
 		cl.DeletePendingPayment(pi.Preimage)
 		log.T.F("Adding session %x\n", pi.ID)
 		cl.AddSession(node.NewSession(pi.ID,
