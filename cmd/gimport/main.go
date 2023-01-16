@@ -64,7 +64,7 @@ func main() {
 	check(e)
 	e = os.Remove(filepath.Join(dir, "go.sum"))
 	check(e)
-	filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
+	e = filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
 		file, e := os.ReadFile(path)
 		if e != nil {
 			return nil
@@ -90,20 +90,11 @@ func main() {
 		}
 		return nil
 	})
-	runCmdWithOutput("go", "mod", "tidy")
+	check(e)
+	runCmdWithoutOutput("go", "mod", "tidy")
 }
 
-func runCmdWithOutput(cmd ...string) (out string, err error) {
+func runCmdWithoutOutput(cmd ...string) {
 	c := exec.Command(cmd[0], cmd[1:]...)
-	var output []byte
-	output, err = c.CombinedOutput()
-	if err == nil && string(output) != "" {
-		errPrintln(string(output))
-	}
-	out = string(output)
-	return
-}
-
-func errPrintln(a ...interface{}) {
-	_, _ = fmt.Fprintln(os.Stderr, a...)
+	check(c.Run())
 }
