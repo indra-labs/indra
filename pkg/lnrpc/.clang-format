@@ -1,7 +1,0 @@
----
-Language: Proto
-BasedOnStyle: Google
-IndentWidth: 4
-AllowShortFunctionsOnASingleLine: None
-SpaceBeforeParens: Always
-CompactNamespaces: false

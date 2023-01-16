@@ -3,7 +3,7 @@ package session
 import (
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/key/prv"
-	"github.com/indra-labs/indra/pkg/lnwire"
+	"github.com/indra-labs/indra/pkg/lnd/lnwire"
 	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/indra-labs/indra/pkg/node"
 	"github.com/indra-labs/indra/pkg/nonce"
