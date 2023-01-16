@@ -86,7 +86,7 @@ func (cl *Client) RegisterConfirmation(hook confirm.Hook,
 	})
 }
 
-// FindCloaked searches the client identity key and the Sessions for a match. It
+// FindCloaked searches the client identity key and the sessions for a match. It
 // returns the session as well, though not all users of this function will need
 // this.
 func (cl *Client) FindCloaked(clk cloak.PubKey) (hdr *prv.Key,

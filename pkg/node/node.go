@@ -31,17 +31,17 @@ var (
 type Node struct {
 	nonce.ID
 	sync.Mutex
-	Addr          string
-	AddrPort      *netip.AddrPort
-	IdentityPub   *pub.Key
-	IdentityBytes pub.Bytes
-	IdentityPrv   *prv.Key
-	PingCount     int
-	LastSeen      time.Time
-	Sessions      Sessions
+	Addr            string
+	AddrPort        *netip.AddrPort
+	IdentityPub     *pub.Key
+	IdentityBytes   pub.Bytes
+	IdentityPrv     *prv.Key
+	PingCount       int
+	LastSeen        time.Time
+	pendingPayments PendingPayments
+	sessions        Sessions
 	Services
 	PaymentChan
-	PendingPayments PendingPayments
 	ifc.Transport
 }
 
@@ -104,14 +104,14 @@ func (n *Node) ReceiveFrom(port uint16) (b <-chan slice.Bytes) {
 func (n *Node) AddSession(s *Session) {
 	n.Lock()
 	defer n.Unlock()
-	n.Sessions = append(n.Sessions, s)
+	n.sessions = append(n.sessions, s)
 }
 func (n *Node) FindSession(id nonce.ID) *Session {
 	n.Lock()
 	defer n.Unlock()
-	for i := range n.Sessions {
-		if n.Sessions[i].ID == id {
-			return n.Sessions[i]
+	for i := range n.sessions {
+		if n.sessions[i].ID == id {
+			return n.sessions[i]
 		}
 	}
 	return nil
@@ -119,9 +119,9 @@ func (n *Node) FindSession(id nonce.ID) *Session {
 func (n *Node) GetSessionsAtHop(hop byte) (s Sessions) {
 	n.Lock()
 	defer n.Unlock()
-	for i := range n.Sessions {
-		if n.Sessions[i].Hop == hop {
-			s = append(s, n.Sessions[i])
+	for i := range n.sessions {
+		if n.sessions[i].Hop == hop {
+			s = append(s, n.sessions[i])
 		}
 	}
 	return
@@ -129,9 +129,9 @@ func (n *Node) GetSessionsAtHop(hop byte) (s Sessions) {
 func (n *Node) DeleteSession(id nonce.ID) {
 	n.Lock()
 	defer n.Unlock()
-	for i := range n.Sessions {
-		if n.Sessions[i].ID == id {
-			n.Sessions = append(n.Sessions[:i], n.Sessions[i+1:]...)
+	for i := range n.sessions {
+		if n.sessions[i].ID == id {
+			n.sessions = append(n.sessions[:i], n.sessions[i+1:]...)
 		}
 	}
 
@@ -139,8 +139,8 @@ func (n *Node) DeleteSession(id nonce.ID) {
 func (n *Node) IterateSessions(fn func(s *Session) bool) {
 	n.Lock()
 	defer n.Unlock()
-	for i := range n.Sessions {
-		if fn(n.Sessions[i]) {
+	for i := range n.sessions {
+		if fn(n.sessions[i]) {
 			break
 		}
 	}
@@ -149,34 +149,35 @@ func (n *Node) IterateSessions(fn func(s *Session) bool) {
 func (n *Node) GetSessionByIndex(i int) (s *Session) {
 	n.Lock()
 	defer n.Unlock()
-	if len(n.Sessions) > i {
-		s = n.Sessions[i]
+	if len(n.sessions) > i {
+		s = n.sessions[i]
 	}
 	return
 }
 
-// PendingPayment accessors
+// PendingPayment accessors. For the same reason as the sessions, pending
+// payments need to be accessed only with the node's mutex locked.
 
 func (n *Node) AddPendingPayment(
 	np *Payment) {
 
 	n.Lock()
 	defer n.Unlock()
-	n.PendingPayments = n.PendingPayments.Add(np)
+	n.pendingPayments = n.pendingPayments.Add(np)
 }
 func (n *Node) DeletePendingPayment(
 	preimage sha256.Hash) {
 
 	n.Lock()
 	defer n.Unlock()
-	n.PendingPayments = n.PendingPayments.Delete(preimage)
+	n.pendingPayments = n.pendingPayments.Delete(preimage)
 }
 func (n *Node) FindPendingPayment(
 	id nonce.ID) (pp *Payment) {
 
 	n.Lock()
 	defer n.Unlock()
-	return n.PendingPayments.Find(id)
+	return n.pendingPayments.Find(id)
 }
 func (n *Node) FindPendingPreimage(
 	pi sha256.Hash) (pp *Payment) {
@@ -184,5 +185,5 @@ func (n *Node) FindPendingPreimage(
 	log.T.F("searching preimage %x", pi)
 	n.Lock()
 	defer n.Unlock()
-	return n.PendingPayments.FindPreimage(pi)
+	return n.pendingPayments.FindPreimage(pi)
 }
