@@ -63,6 +63,12 @@ RUN set -ex && echo "adding keys to verify btcd releases" \
     && chmod 555 guggero.asc \
     && mv guggero.asc /etc/btcd/keys/
 
+ADD ./defaults/btcd.conf .
+
+RUN set -ex & echo "adding default btcd.conf" \
+    && chmod 755 btcd.conf \
+    && mv btcd.conf /etc/btcd/
+
 RUN set -ex && echo "copying /etc directories to root filesystem" \
     && cp -rp /etc/btcd /tmp/root-fs/etc/btcd \
     && cp -rp /etc/lnd /tmp/root-fs/etc/lnd \
