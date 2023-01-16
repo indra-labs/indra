@@ -3,7 +3,7 @@ package node
 import (
 	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/key/pub"
-	"github.com/indra-labs/indra/pkg/lnwire"
+	"github.com/indra-labs/indra/pkg/lnd/lnwire"
 	"github.com/indra-labs/indra/pkg/nonce"
 	"github.com/indra-labs/indra/pkg/sha256"
 )
