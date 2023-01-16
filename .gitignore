@@ -13,7 +13,7 @@ indra
 *.out
 
 # Dependency directories (remove the comment below to include it)
-# vendor/
+vendor/
 /.idea/vcs.xml
 /.idea/modules.xml
 /.idea/indranet.iml
