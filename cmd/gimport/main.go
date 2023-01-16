@@ -58,8 +58,8 @@ func main() {
 	check(e)
 	e = os.RemoveAll(filepath.Join(dir, ".vscode"))
 	check(e)
-	e = os.RemoveAll(filepath.Join(dir, "cmd"))
-	check(e)
+	// e = os.RemoveAll(filepath.Join(dir, "cmd"))
+	// check(e)
 	e = os.Remove(filepath.Join(dir, "go.mod"))
 	check(e)
 	e = os.Remove(filepath.Join(dir, "go.sum"))
@@ -70,7 +70,8 @@ func main() {
 			return nil
 		}
 		_, filename := filepath.Split(path)
-		if filename == "go.mod" || filename == "go.sum" ||
+		if filename == "go.mod" ||
+			filename == "go.sum" ||
 			strings.HasSuffix(filename, "_test.go") ||
 			strings.HasSuffix(filename, ".md") {
 			e = os.Remove(path)
