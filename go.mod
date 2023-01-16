@@ -25,6 +25,7 @@ require (
 	github.com/dvyukov/go-fuzz v0.0.0-20220726122315-1d375ef9f9f6
 	github.com/fergusstrange/embedded-postgres v1.19.0
 	github.com/go-errors/errors v1.0.1
+	github.com/golang/protobuf v1.5.2
 	github.com/golangci/golangci-lint v1.50.1
 	github.com/google/btree v1.0.1
 	github.com/gookit/color v1.5.2
@@ -35,6 +36,7 @@ require (
 	github.com/jackc/pgx/v4 v4.17.2
 	github.com/jackpal/gateway v1.0.7
 	github.com/jackpal/go-nat-pmp v1.0.2
+	github.com/jedib0t/go-pretty/v6 v6.4.4
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/jrick/logrotate v1.0.0
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
@@ -42,6 +44,7 @@ require (
 	github.com/libp2p/go-libp2p v0.24.1
 	github.com/libp2p/go-libp2p-kad-dht v0.20.0
 	github.com/lightninglabs/neutrino v0.14.2
+	github.com/lightninglabs/protobuf-hex-display v1.3.2-hex-display
 	github.com/lightningnetwork/lightning-onion v1.2.0
 	github.com/ltcsuite/ltcd v0.22.1-beta
 	github.com/miekg/dns v1.1.50
@@ -55,6 +58,7 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/templexxx/reedsolomon v1.1.3
 	github.com/tv42/zbase32 v0.0.0-20220222190657-f76a9fc892fa
+	github.com/urfave/cli v1.22.2
 	go.etcd.io/bbolt v1.3.6
 	go.etcd.io/etcd/api/v3 v3.5.6
 	go.etcd.io/etcd/client/pkg/v3 v3.5.6
@@ -65,6 +69,7 @@ require (
 	golang.org/x/net v0.5.0
 	golang.org/x/sync v0.1.0
 	golang.org/x/sys v0.4.0
+	golang.org/x/term v0.4.0
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
 	google.golang.org/grpc v1.51.0
 	google.golang.org/protobuf v1.28.1
@@ -114,6 +119,7 @@ require (
 	github.com/containerd/containerd v1.6.14 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/curioswitch/go-reassign v0.2.0 // indirect
 	github.com/daixiang0/gci v0.8.1 // indirect
 	github.com/davidlazar/go-crypto v0.0.0-20200604182044-b73af7476f6c // indirect
@@ -158,7 +164,6 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0 // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/golangci/check v0.0.0-20180506172741-cfe4005ccda2 // indirect
 	github.com/golangci/dupl v0.0.0-20180902072040-3e9179ac440a // indirect
@@ -255,7 +260,7 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/mattn/go-pointer v0.0.1 // indirect
-	github.com/mattn/go-runewidth v0.0.9 // indirect
+	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mbilski/exhaustivestruct v1.2.0 // indirect
 	github.com/mgechev/revive v1.2.4 // indirect
@@ -309,7 +314,9 @@ require (
 	github.com/quasilyte/regex/syntax v0.0.0-20200407221936-30656e2c4a95 // indirect
 	github.com/quasilyte/stdinfo v0.0.0-20220114132959-f7386bf02567 // indirect
 	github.com/raulk/go-watchdog v1.3.0 // indirect
+	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/rogpeppe/fastuuid v1.2.0 // indirect
+	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/ryancurrah/gomodguard v1.2.4 // indirect
 	github.com/ryanrolds/sqlclosecheck v0.3.0 // indirect
 	github.com/sanposhiho/wastedassign/v2 v2.0.6 // indirect
@@ -382,7 +389,6 @@ require (
 	golang.org/x/exp v0.0.0-20221205204356-47842c84f3db // indirect
 	golang.org/x/exp/typeparams v0.0.0-20220827204233-334a2380cb91 // indirect
 	golang.org/x/mod v0.7.0 // indirect
-	golang.org/x/term v0.4.0 // indirect
 	golang.org/x/text v0.6.0 // indirect
 	golang.org/x/tools v0.5.0 // indirect
 	google.golang.org/genproto v0.0.0-20221207170731-23e4bf6bdc37 // indirect
