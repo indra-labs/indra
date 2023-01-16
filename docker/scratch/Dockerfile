@@ -58,6 +58,11 @@ RUN set -ex && echo "adding and permissioning /etc directories" \
     && mkdir -pv /etc/lnd/keys && chmod 750 /etc/lnd/keys && chown lnd:lnd /etc/lnd/keys \
     && mkdir -pv /etc/indra && chmod 755 /etc/indra
 
+RUN set -ex && echo "adding keys to verify btcd releases" \
+    && wget https://raw.githubusercontent.com/lightningnetwork/lnd/master/scripts/keys/guggero.asc \
+    && chmod 555 guggero.asc \
+    && mv guggero.asc /etc/btcd/keys/
+
 RUN set -ex && echo "copying /etc directories to root filesystem" \
     && cp -rp /etc/btcd /tmp/root-fs/etc/btcd \
     && cp -rp /etc/lnd /tmp/root-fs/etc/lnd \
