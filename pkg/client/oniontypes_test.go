@@ -21,7 +21,7 @@ func TestPing(t *testing.T) {
 	const nTotal = 6
 	clients := make([]*Client, nTotal)
 	var e error
-	if clients, e = CreateMockCircuitClients(true); check(e) {
+	if clients, e = CreateNMockCircuits(true, 1); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -62,7 +62,7 @@ func TestSendExit(t *testing.T) {
 	const nTotal = 6
 	clients := make([]*Client, nTotal)
 	var e error
-	if clients, e = CreateMockCircuitClients(true); check(e) {
+	if clients, e = CreateNMockCircuits(true, 1); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -107,9 +107,12 @@ func TestSendExit(t *testing.T) {
 	log.T.Ln(clients[0].Node.AddrPort.String())
 	clients[0].Node.Send(b)
 	go func() {
-		time.Sleep(time.Second * 6)
-		quit.Q()
-		t.Error("SendExit got stuck")
+		select {
+		case <-time.After(time.Second):
+			t.Error("sendexit got stuck")
+			quit.Q()
+		case <-quit:
+		}
 	}()
 	bb := <-clients[3].Services[0].Receive()
 	log.T.S(bb.ToBytes())
@@ -126,7 +129,7 @@ func TestSendExit(t *testing.T) {
 func TestSendKeys(t *testing.T) {
 	var clients []*Client
 	var e error
-	if clients, e = CreateMockCircuitClients(false); check(e) {
+	if clients, e = CreateNMockCircuits(false, 1); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -136,9 +139,12 @@ func TestSendKeys(t *testing.T) {
 	}
 	quit := qu.T()
 	go func() {
-		<-time.After(time.Second * 2)
-		quit.Q()
-		t.Error("SendKeys got stuck")
+		select {
+		case <-time.After(time.Second):
+			t.Error("sendkeys got stuck")
+			quit.Q()
+		case <-quit:
+		}
 	}()
 	cnf := nonce.NewID()
 	var sess [5]*session.OnionSkin
@@ -177,5 +183,30 @@ func TestSendKeys(t *testing.T) {
 	for _, v := range clients {
 		v.Shutdown()
 	}
+}
 
+func TestGetBalance(t *testing.T) {
+	var clients []*Client
+	var e error
+	if clients, e = CreateNMockCircuits(false, 2); check(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	// Start up the clients.
+	for _, v := range clients {
+		go v.Start()
+	}
+	quit := qu.T()
+	go func() {
+		select {
+		case <-time.After(time.Second):
+			// t.Error("ping got stuck")
+			quit.Q()
+		case <-quit:
+		}
+	}()
+	<-quit.Wait()
+	for _, v := range clients {
+		v.Shutdown()
+	}
 }

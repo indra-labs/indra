@@ -12,11 +12,10 @@ import (
 	"github.com/indra-labs/indra/pkg/transport"
 )
 
-const nTotal = 6
+func CreateNMockCircuits(inclSessions bool,
+	nCircuits int) (cl []*Client, e error) {
 
-func CreateMockCircuitClients(inclSessions bool) (cl []*Client,
-	e error) {
-
+	nTotal := 1 + nCircuits*5
 	cl = make([]*Client, nTotal)
 	nodes := make([]*node.Node, nTotal)
 	transports := make([]ifc.Transport, nTotal)
@@ -41,7 +40,10 @@ func CreateMockCircuitClients(inclSessions bool) (cl []*Client,
 		if inclSessions {
 			// create a session for all but the first
 			if i > 0 {
-				sessions[i-1] = node.NewSession(nonce.NewID(), nodes[i], math.MaxUint64, nil, nil, byte(i-1))
+				sessions[i-1] = node.NewSession(
+					nonce.NewID(), nodes[i],
+					math.MaxUint64, nil, nil,
+					byte(i/nCircuits-1))
 				// Add session to node, so it will be able to
 				// relay if it gets a message with the key.
 				nodes[i].AddSession(sessions[i-1])
@@ -49,8 +51,6 @@ func CreateMockCircuitClients(inclSessions bool) (cl []*Client,
 			}
 		}
 	}
-	// Add each node to each other's Nodes except itself, this enables them
-	// to send messages across their transports to each other.
 	for i := range cl {
 		for j := range nodes {
 			if i == j {
