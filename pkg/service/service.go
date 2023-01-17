@@ -1,4 +1,4 @@
-package node
+package service
 
 import (
 	"github.com/indra-labs/indra/pkg/ifc"

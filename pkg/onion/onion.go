@@ -1,4 +1,4 @@
-package node
+package onion
 
 import (
 	"github.com/indra-labs/indra/pkg/key/prv"
@@ -6,6 +6,7 @@ import (
 	"github.com/indra-labs/indra/pkg/key/signer"
 	"github.com/indra-labs/indra/pkg/nonce"
 	"github.com/indra-labs/indra/pkg/slice"
+	"github.com/indra-labs/indra/pkg/traffic"
 )
 
 // Ping is a message which checks the liveness of relays by ensuring they are
@@ -16,11 +17,11 @@ import (
 // an increment of their liveness score. By using this scheme, when nodes are
 // offline their scores will fall to zero after a time whereas live nodes will
 // have steadily increasing scores from successful pings.
-func Ping(id nonce.ID, client *Session, s Circuit,
-	ks *signer.KeySet) OnionSkins {
+func Ping(id nonce.ID, client *traffic.Session, s traffic.Circuit,
+	ks *signer.KeySet) Skins {
 
 	n := GenPingNonces()
-	return OnionSkins{}.
+	return Skins{}.
 		ForwardLayer(s[0], ks.Next(), n[0]).
 		ForwardLayer(s[1], ks.Next(), n[1]).
 		ForwardLayer(s[2], ks.Next(), n[2]).
@@ -48,7 +49,7 @@ func Ping(id nonce.ID, client *Session, s Circuit,
 // their section at the top, moves the next layer header to the top and pads the
 // remainder with noise, so it always looks like the first hop.
 func SendExit(payload slice.Bytes, port uint16,
-	client *Session, s Circuit, ks *signer.KeySet) OnionSkins {
+	client *traffic.Session, s traffic.Circuit, ks *signer.KeySet) Skins {
 
 	var prvs [3]*prv.Key
 	for i := range prvs {
@@ -61,7 +62,7 @@ func SendExit(payload slice.Bytes, port uint16,
 	pubs[0] = s[3].PayloadPub
 	pubs[1] = s[4].PayloadPub
 	pubs[2] = client.PayloadPub
-	return OnionSkins{}.
+	return Skins{}.
 		ForwardLayer(s[0], ks.Next(), n[0]).
 		ForwardLayer(s[1], ks.Next(), n[1]).
 		ForwardLayer(s[2], ks.Next(), n[2]).
@@ -94,10 +95,10 @@ func SendExit(payload slice.Bytes, port uint16,
 // set of sessions. This is by way of indicating to not use the IdentityPub but
 // the HeaderPub instead. Not allowing free relay at all prevents spam attacks.
 func SendKeys(id nonce.ID, hdr, pld [5]*prv.Key,
-	client *Session, hop Circuit, ks *signer.KeySet) OnionSkins {
+	client *traffic.Session, hop traffic.Circuit, ks *signer.KeySet) Skins {
 
 	n := GenNonces(6)
-	return OnionSkins{}.
+	return Skins{}.
 		ForwardSession(hop[0], ks.Next(), n[0], hdr[0], pld[0]).
 		ForwardSession(hop[1], ks.Next(), n[1], hdr[1], pld[1]).
 		ForwardSession(hop[2], ks.Next(), n[2], hdr[2], pld[2]).
@@ -112,8 +113,8 @@ func SendKeys(id nonce.ID, hdr, pld [5]*prv.Key,
 // hops until the client.
 //
 // The third returns Session should be the client's return session, index 0.
-func GetBalance(s Circuit, target int,
-	returns [3]*Session, ks *signer.KeySet) (o OnionSkins) {
+func GetBalance(s traffic.Circuit, target int,
+	returns [3]*traffic.Session, ks *signer.KeySet) (o Skins) {
 
 	n := GenNonces(target + 1 + 3)
 	var returnNonces [3]nonce.IV

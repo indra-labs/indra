@@ -1,14 +1,22 @@
-package node
+package traffic
 
 import (
 	"sync"
 
+	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/pkg/identity"
 	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/key/pub"
 	"github.com/indra-labs/indra/pkg/lnd/lnwire"
+	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/indra-labs/indra/pkg/nonce"
 	"github.com/indra-labs/indra/pkg/sha256"
 	"github.com/indra-labs/indra/pkg/wire/session"
+)
+
+var (
+	log   = log2.GetLogger(indra.PathBase)
+	check = log.E.Chk
 )
 
 // A Session keeps track of a connection session. It specifically maintains the
@@ -16,7 +24,7 @@ import (
 // with new credit, and the current state of the encryption.
 type Session struct {
 	nonce.ID
-	*Node
+	*identity.Peer
 	Remaining                 lnwire.MilliSatoshi
 	HeaderPrv, PayloadPrv     *prv.Key
 	HeaderPub, PayloadPub     *pub.Key
@@ -31,7 +39,7 @@ type Session struct {
 // allocation.
 func NewSession(
 	id nonce.ID,
-	node *Node,
+	node *identity.Peer,
 	rem lnwire.MilliSatoshi,
 	hdrPrv *prv.Key,
 	pldPrv *prv.Key,
@@ -50,7 +58,7 @@ func NewSession(
 	h, p := hdrPrv.ToBytes(), pldPrv.ToBytes()
 	s = &Session{
 		ID:           id,
-		Node:         node,
+		Peer:         node,
 		Remaining:    rem,
 		HeaderPub:    hdrPub,
 		HeaderBytes:  hdrPub.ToBytes(),

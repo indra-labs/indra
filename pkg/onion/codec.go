@@ -1,11 +1,16 @@
-package node
+package onion
 
 import (
 	"fmt"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/pkg/key/ecdh"
+	"github.com/indra-labs/indra/pkg/key/prv"
+	"github.com/indra-labs/indra/pkg/key/pub"
 	log2 "github.com/indra-labs/indra/pkg/log"
+	"github.com/indra-labs/indra/pkg/nonce"
+	"github.com/indra-labs/indra/pkg/sha256"
 	"github.com/indra-labs/indra/pkg/slice"
 	"github.com/indra-labs/indra/pkg/types"
 	"github.com/indra-labs/indra/pkg/wire/confirm"
@@ -25,7 +30,7 @@ var (
 	check = log.E.Chk
 )
 
-func EncodeOnion(on types.Onion) (b slice.Bytes) {
+func Encode(on types.Onion) (b slice.Bytes) {
 	b = make(slice.Bytes, on.Len())
 	var sc slice.Cursor
 	c := &sc
@@ -33,7 +38,7 @@ func EncodeOnion(on types.Onion) (b slice.Bytes) {
 	return
 }
 
-func PeelOnion(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
+func Peel(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 	switch b[*c:c.Inc(magicbytes.Len)].String() {
 	case session.MagicString:
 		o := &session.OnionSkin{}
@@ -95,6 +100,35 @@ func PeelOnion(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 			return fmt.Sprintln(e) + spew.Sdump(b.ToBytes())
 		})
 		return
+	}
+	return
+}
+
+func GenCiphers(prvs [3]*prv.Key, pubs [3]*pub.Key) (ciphers [3]sha256.Hash) {
+	for i := range prvs {
+		ciphers[2-i] = ecdh.Compute(prvs[i], pubs[i])
+	}
+	return
+}
+
+func Gen3Nonces() (n [3]nonce.IV) {
+	for i := range n {
+		n[i] = nonce.New()
+	}
+	return
+}
+
+func GenNonces(count int) (n []nonce.IV) {
+	n = make([]nonce.IV, count)
+	for i := range n {
+		n[i] = nonce.New()
+	}
+	return
+}
+
+func GenPingNonces() (n [6]nonce.IV) {
+	for i := range n {
+		n[i] = nonce.New()
 	}
 	return
 }

@@ -1,4 +1,4 @@
-package node
+package onion
 
 import (
 	"math/rand"
@@ -31,13 +31,13 @@ func TestOnionSkins_Cipher(t *testing.T) {
 	var e error
 	hdrP, pldP := GetTwoPrvKeys(t)
 	// hdr, pld := pub.Derive(hdrP), pub.Derive(pldP)
-	on := OnionSkins{}.
+	on := Skins{}.
 		Session(hdrP, pldP).
 		Assemble()
-	onb := EncodeOnion(on)
+	onb := Encode(on)
 	c := slice.NewCursor()
 	var onc types.Onion
-	if onc, e = PeelOnion(onb, c); check(e) {
+	if onc, e = Peel(onb, c); check(e) {
 		t.FailNow()
 	}
 	var ci *session.OnionSkin
@@ -60,13 +60,13 @@ func TestOnionSkins_Confirmation(t *testing.T) {
 
 	var e error
 	n := nonce.NewID()
-	on := OnionSkins{}.
+	on := Skins{}.
 		Confirmation(n).
 		Assemble()
-	onb := EncodeOnion(on)
+	onb := Encode(on)
 	c := slice.NewCursor()
 	var oncn types.Onion
-	if oncn, e = PeelOnion(onb, c); check(e) {
+	if oncn, e = Peel(onb, c); check(e) {
 		t.FailNow()
 	}
 	var cf *confirm.OnionSkin
@@ -85,13 +85,13 @@ func TestOnionSkins_Delay(t *testing.T) {
 
 	var e error
 	del := time.Duration(rand.Uint64())
-	on := OnionSkins{}.
+	on := Skins{}.
 		Delay(del).
 		Assemble()
-	onb := EncodeOnion(on)
+	onb := Encode(on)
 	c := slice.NewCursor()
 	var ond types.Onion
-	if ond, e = PeelOnion(onb, c); check(e) {
+	if ond, e = Peel(onb, c); check(e) {
 		t.FailNow()
 	}
 	var dl *delay.OnionSkin
@@ -119,13 +119,13 @@ func TestOnionSkins_Exit(t *testing.T) {
 	}
 	n3 := Gen3Nonces()
 	p := uint16(rand.Uint32())
-	on := OnionSkins{}.
+	on := Skins{}.
 		Exit(p, prvs, pubs, n3, msg).
 		Assemble()
-	onb := EncodeOnion(on)
+	onb := Encode(on)
 	c := slice.NewCursor()
 	var onex types.Onion
-	if onex, e = PeelOnion(onb, c); check(e) {
+	if onex, e = Peel(onb, c); check(e) {
 		t.FailNow()
 	}
 	var ex *exit.OnionSkin
@@ -178,13 +178,13 @@ func TestOnionSkins_Forward(t *testing.T) {
 		}
 		port := uint16(rand.Uint32())
 		ap := netip.AddrPortFrom(adr, port)
-		on := OnionSkins{}.
+		on := Skins{}.
 			Forward(&ap).
 			Assemble()
-		onb := EncodeOnion(on)
+		onb := Encode(on)
 		c := slice.NewCursor()
 		var onf types.Onion
-		if onf, e = PeelOnion(onb, c); check(e) {
+		if onf, e = Peel(onb, c); check(e) {
 			t.FailNow()
 		}
 		var cf *forward.OnionSkin
@@ -207,14 +207,14 @@ func TestOnionSkins_Layer(t *testing.T) {
 	n1 := nonce.New()
 	prv1, prv2 := GetTwoPrvKeys(t)
 	pub1 := pub.Derive(prv1)
-	on := OnionSkins{}.
+	on := Skins{}.
 		Layer(pub1, prv2, n1).
 		Confirmation(n).
 		Assemble()
-	onb := EncodeOnion(on)
+	onb := Encode(on)
 	c := slice.NewCursor()
 	var onos, onc types.Onion
-	if onos, e = PeelOnion(onb, c); check(e) {
+	if onos, e = Peel(onb, c); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -226,7 +226,7 @@ func TestOnionSkins_Layer(t *testing.T) {
 	}
 	os.Decrypt(prv1, onb, c)
 	// unwrap the confirmation
-	if onc, e = PeelOnion(onb, c); check(e) {
+	if onc, e = Peel(onb, c); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -262,13 +262,13 @@ func TestOnionSkins_Reply(t *testing.T) {
 		}
 		port := uint16(rand.Uint32())
 		ap := netip.AddrPortFrom(adr, port)
-		on := OnionSkins{}.
+		on := Skins{}.
 			Reverse(&ap).
 			Assemble()
-		onb := EncodeOnion(on)
+		onb := Encode(on)
 		c := slice.NewCursor()
 		var onf types.Onion
-		if onf, e = PeelOnion(onb, c); check(e) {
+		if onf, e = Peel(onb, c); check(e) {
 			t.FailNow()
 		}
 		var cf *reverse.OnionSkin
@@ -293,13 +293,13 @@ func TestOnionSkins_Response(t *testing.T) {
 		t.Error(e)
 		t.FailNow()
 	}
-	on := OnionSkins{}.
+	on := Skins{}.
 		Response(hash, msg).
 		Assemble()
-	onb := EncodeOnion(on)
+	onb := Encode(on)
 	c := slice.NewCursor()
 	var onex types.Onion
-	if onex, e = PeelOnion(onb, c); check(e) {
+	if onex, e = Peel(onb, c); check(e) {
 		t.FailNow()
 	}
 	ex := &response.OnionSkin{}
@@ -321,13 +321,13 @@ func TestOnionSkins_Token(t *testing.T) {
 	var e error
 	ni := nonce.NewID()
 	n := sha256.Single(ni[:])
-	on := OnionSkins{}.
+	on := Skins{}.
 		Token(n).
 		Assemble()
-	onb := EncodeOnion(on)
+	onb := Encode(on)
 	c := slice.NewCursor()
 	var oncn types.Onion
-	if oncn, e = PeelOnion(onb, c); check(e) {
+	if oncn, e = Peel(onb, c); check(e) {
 		t.FailNow()
 	}
 	var cf *token.OnionSkin
