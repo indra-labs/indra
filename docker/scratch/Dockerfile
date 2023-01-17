@@ -3,6 +3,8 @@ ARG base_image=busybox
 
 FROM ${base_image} as base
 
+RUN set -ex && echo "indraOS - Network Freedom."
+
 RUN set -ex && echo "creating root filesystem" \
     && mkdir -pv /tmp/root-fs \
     && mkdir -pv /tmp/root-fs/etc \
@@ -56,6 +58,7 @@ RUN set -ex && echo "adding and permissioning /etc directories" \
     && mkdir -pv /etc/btcd/keys && chmod 750 /etc/btcd/keys && chown btcd:btcd /etc/btcd/keys \
     && mkdir -pv /etc/lnd  && chmod 755 /etc/lnd \
     && mkdir -pv /etc/lnd/keys && chmod 750 /etc/lnd/keys && chown lnd:lnd /etc/lnd/keys \
+    && mkdir -pv /etc/lnd/macaroons && chmod 750 /etc/lnd/macaroons && chown lnd:lnd /etc/lnd/macaroons \
     && mkdir -pv /etc/indra && chmod 755 /etc/indra
 
 RUN set -ex && echo "adding keys to verify btcd/lnd releases" \
