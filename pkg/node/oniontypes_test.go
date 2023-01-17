@@ -1,4 +1,4 @@
-package client
+package node
 
 import (
 	"testing"
@@ -6,13 +6,11 @@ import (
 
 	"github.com/cybriq/qu"
 	"github.com/indra-labs/indra/pkg/key/prv"
-	"github.com/indra-labs/indra/pkg/node"
 	"github.com/indra-labs/indra/pkg/nonce"
 	"github.com/indra-labs/indra/pkg/sha256"
 	"github.com/indra-labs/indra/pkg/slice"
 	"github.com/indra-labs/indra/pkg/tests"
 	"github.com/indra-labs/indra/pkg/transport"
-	"github.com/indra-labs/indra/pkg/wire"
 	"github.com/indra-labs/indra/pkg/wire/confirm"
 	"github.com/indra-labs/indra/pkg/wire/session"
 )
@@ -30,18 +28,18 @@ func TestPing(t *testing.T) {
 		go v.Start()
 	}
 	conf := nonce.NewID()
-	var circuit node.Circuit
+	var circuit Circuit
 	for i := range circuit {
 		circuit[i] = clients[i+1].GetSessionByIndex(1)
 	}
-	os := wire.Ping(conf, clients[0].GetSessionByIndex(0),
+	os := Ping(conf, clients[0].GetSessionByIndex(0),
 		circuit, clients[0].KeySet)
 	quit := qu.T()
 	clients[0].RegisterConfirmation(func(cf nonce.ID) {
 		log.T.S("received ping confirmation ID", cf)
 		quit.Q()
 	}, os[len(os)-1].(*confirm.OnionSkin).ID)
-	b := wire.EncodeOnion(os.Assemble())
+	b := EncodeOnion(os.Assemble())
 	log.T.S("sending ping with ID", os[len(os)-1].(*confirm.OnionSkin))
 	clients[0].Send(clients[0].Nodes[0].AddrPort, b)
 	go func() {
@@ -68,7 +66,7 @@ func TestSendExit(t *testing.T) {
 	}
 	// set up forwarding port service
 	const port = 3455
-	clients[3].Services = append(clients[3].Services, &node.Service{
+	clients[3].Services = append(clients[3].Services, &Service{
 		Port:      port,
 		Transport: transport.NewSim(0),
 	})
@@ -76,7 +74,7 @@ func TestSendExit(t *testing.T) {
 	for _, v := range clients {
 		go v.Start()
 	}
-	var circuit node.Circuit
+	var circuit Circuit
 	for i := range circuit {
 		circuit[i] = clients[0].GetSessionByIndex(i + 1)
 	}
@@ -93,7 +91,7 @@ func TestSendExit(t *testing.T) {
 		t.FailNow()
 	}
 	quit := qu.T()
-	os := wire.SendExit(msg, port, clients[0].GetSessionByIndex(0), circuit,
+	os := SendExit(msg, port, clients[0].GetSessionByIndex(0), circuit,
 		clients[0].KeySet)
 	clients[0].Hooks = clients[0].Hooks.Add(msgHash,
 		func(b slice.Bytes) {
@@ -103,7 +101,7 @@ func TestSendExit(t *testing.T) {
 			}
 			quit.Q()
 		})
-	b := wire.EncodeOnion(os.Assemble())
+	b := EncodeOnion(os.Assemble())
 	log.T.Ln(clients[0].Node.AddrPort.String())
 	clients[0].Node.Send(b)
 	go func() {
@@ -148,7 +146,7 @@ func TestSendKeys(t *testing.T) {
 	}()
 	cnf := nonce.NewID()
 	var sess [5]*session.OnionSkin
-	var pmt [5]*node.Payment
+	var pmt [5]*session.Payment
 	for i := range clients[1:] {
 		// Create a new payment and drop on the payment channel.
 		sess[i] = session.New()
@@ -156,9 +154,9 @@ func TestSendKeys(t *testing.T) {
 		clients[i+1].PaymentChan <- pmt[i]
 	}
 	// Send the keys.
-	var circuit node.Circuit
+	var circuit Circuit
 	for i := range circuit {
-		circuit[i] = node.NewSession(pmt[i].ID,
+		circuit[i] = NewSession(pmt[i].ID,
 			clients[i+1].Node, pmt[i].Amount,
 			sess[i].Header, sess[i].Payload, byte(i))
 	}
@@ -166,7 +164,7 @@ func TestSendKeys(t *testing.T) {
 	for i := range hdr {
 		hdr[i], pld[i] = sess[i].Header, sess[i].Payload
 	}
-	sk := wire.SendKeys(cnf, hdr, pld, clients[0].GetSessionByIndex(0),
+	sk := SendKeys(cnf, hdr, pld, clients[0].GetSessionByIndex(0),
 		circuit, clients[0].KeySet)
 	clients[0].RegisterConfirmation(func(cf nonce.ID) {
 		log.T.S("received payment confirmation ID", cf)
@@ -177,7 +175,7 @@ func TestSendKeys(t *testing.T) {
 		}
 		quit.Q()
 	}, cnf)
-	b := wire.EncodeOnion(sk.Assemble())
+	b := EncodeOnion(sk.Assemble())
 	clients[0].Send(clients[0].Nodes[0].AddrPort, b)
 	<-quit.Wait()
 	for _, v := range clients {
@@ -200,11 +198,12 @@ func TestGetBalance(t *testing.T) {
 	go func() {
 		select {
 		case <-time.After(time.Second):
-			// t.Error("ping got stuck")
+			// t.Error("getbalance got stuck")
 			quit.Q()
 		case <-quit:
 		}
 	}()
+
 	<-quit.Wait()
 	for _, v := range clients {
 		v.Shutdown()

@@ -1,4 +1,4 @@
-package wire
+package node
 
 import (
 	"math/rand"

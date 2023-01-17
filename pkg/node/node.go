@@ -5,22 +5,13 @@ package node
 import (
 	"fmt"
 	"net/netip"
-	sync "sync"
 	"time"
 
-	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/ifc"
 	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/key/pub"
-	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/indra-labs/indra/pkg/nonce"
-	"github.com/indra-labs/indra/pkg/sha256"
 	"github.com/indra-labs/indra/pkg/slice"
-)
-
-var (
-	log   = log2.GetLogger(indra.PathBase)
-	check = log.E.Chk
 )
 
 // Node is a representation of a messaging counterparty. The netip.AddrPort can
@@ -30,18 +21,14 @@ var (
 // known via the packet sender address.
 type Node struct {
 	nonce.ID
-	sync.Mutex
-	Addr            string
-	AddrPort        *netip.AddrPort
-	IdentityPub     *pub.Key
-	IdentityBytes   pub.Bytes
-	IdentityPrv     *prv.Key
-	PingCount       int
-	LastSeen        time.Time
-	pendingPayments PendingPayments
-	sessions        Sessions
+	AddrPort      *netip.AddrPort
+	IdentityPub   *pub.Key
+	IdentityBytes pub.Bytes
+	IdentityPrv   *prv.Key
+	PingCount     int
+	LastSeen      time.Time
+	*Payments
 	Services
-	PaymentChan
 	ifc.Transport
 }
 
@@ -54,13 +41,12 @@ func New(addr *netip.AddrPort, idPub *pub.Key, idPrv *prv.Key,
 	id = nonce.NewID()
 	n = &Node{
 		ID:            id,
-		Addr:          addr.String(),
 		AddrPort:      addr,
 		Transport:     tpt,
 		IdentityPub:   idPub,
 		IdentityBytes: idPub.ToBytes(),
 		IdentityPrv:   idPrv,
-		PaymentChan:   make(PaymentChan),
+		Payments:      NewPayments(),
 	}
 	return
 }
@@ -90,107 +76,59 @@ func (n *Node) ReceiveFrom(port uint16) (b <-chan slice.Bytes) {
 	return
 }
 
-// Session management functions
-//
-// In order to enable scaling client processing the session data will be
-// accessed by multiple goroutines, and thus we use the node's mutex to prevent
-// race conditions on this data. This is the only mutable data. A relay's
-// identity is its keys so a different key is a different relay, even if it is
-// on the same IP address. Because we use netip.AddrPort as network addresses
-// there can be more than one relay at an IP address, though hop selection will
-// consider the IP address as the unique identifier and not select more than one
-// relay on the same IP address. (todo:)
+type Nodes []*Node
 
-func (n *Node) AddSession(s *Session) {
-	n.Lock()
-	defer n.Unlock()
-	// check for dupes
-	for i := range n.sessions {
-		if n.sessions[i].ID == s.ID {
-			log.D.Ln("refusing to add duplicate session ID")
-			return
-		}
-	}
-	n.sessions = append(n.sessions, s)
-}
-func (n *Node) FindSession(id nonce.ID) *Session {
-	n.Lock()
-	defer n.Unlock()
-	for i := range n.sessions {
-		if n.sessions[i].ID == id {
-			return n.sessions[i]
-		}
-	}
-	return nil
-}
-func (n *Node) GetSessionsAtHop(hop byte) (s Sessions) {
-	n.Lock()
-	defer n.Unlock()
-	for i := range n.sessions {
-		if n.sessions[i].Hop == hop {
-			s = append(s, n.sessions[i])
-		}
-	}
-	return
-}
-func (n *Node) DeleteSession(id nonce.ID) {
-	n.Lock()
-	defer n.Unlock()
-	for i := range n.sessions {
-		if n.sessions[i].ID == id {
-			n.sessions = append(n.sessions[:i], n.sessions[i+1:]...)
-		}
-	}
+// NewNodes creates an empty Nodes
+func NewNodes() (n Nodes) { return Nodes{} }
 
-}
-func (n *Node) IterateSessions(fn func(s *Session) bool) {
-	n.Lock()
-	defer n.Unlock()
-	for i := range n.sessions {
-		if fn(n.sessions[i]) {
+// Len returns the length of a Nodes.
+func (n Nodes) Len() int { return len(n) }
+
+// Add a Node to a Nodes.
+func (n Nodes) Add(nn *Node) Nodes { return append(n, nn) }
+
+// FindByID searches for a Node by ID.
+func (n Nodes) FindByID(i nonce.ID) (no *Node) {
+	for _, nn := range n {
+		if nn.ID == i {
+			no = nn
 			break
 		}
 	}
+	return
 }
 
-func (n *Node) GetSessionByIndex(i int) (s *Session) {
-	n.Lock()
-	defer n.Unlock()
-	if len(n.sessions) > i {
-		s = n.sessions[i]
+// FindByAddrPort searches for a Node by netip.AddrPort.
+func (n Nodes) FindByAddrPort(id *netip.AddrPort) (no *Node) {
+	for _, nn := range n {
+		if nn.AddrPort.String() == id.String() {
+			no = nn
+			break
+		}
 	}
 	return
 }
 
-// PendingPayment accessors. For the same reason as the sessions, pending
-// payments need to be accessed only with the node's mutex locked.
-
-func (n *Node) AddPendingPayment(
-	np *Payment) {
-
-	n.Lock()
-	defer n.Unlock()
-	n.pendingPayments = n.pendingPayments.Add(np)
+// DeleteByID deletes a node identified by an ID.
+func (n Nodes) DeleteByID(ii nonce.ID) (nn Nodes, e error) {
+	e, nn = fmt.Errorf("id %x not found", ii), n
+	for i := range n {
+		if n[i].ID == ii {
+			return append(n[:i], n[i+1:]...), nil
+		}
+	}
+	return
 }
-func (n *Node) DeletePendingPayment(
-	preimage sha256.Hash) {
 
-	n.Lock()
-	defer n.Unlock()
-	n.pendingPayments = n.pendingPayments.Delete(preimage)
-}
-func (n *Node) FindPendingPayment(
-	id nonce.ID) (pp *Payment) {
-
-	n.Lock()
-	defer n.Unlock()
-	return n.pendingPayments.Find(id)
-}
-func (n *Node) FindPendingPreimage(
-	pi sha256.Hash) (pp *Payment) {
-
-	log.T.F("searching preimage %x", pi)
-	n.Lock()
-	defer n.Unlock()
-	return n.pendingPayments.FindPreimage(pi)
+// DeleteByAddrPort deletes a node identified by a netip.AddrPort.
+func (n Nodes) DeleteByAddrPort(ip *netip.AddrPort) (nn Nodes, e error) {
+	e, nn = fmt.Errorf("node with ip %v not found", ip), n
+	for i := range n {
+		if n[i].AddrPort.String() == ip.String() {
+			nn = append(n[:i], n[i+1:]...)
+			e = nil
+			break
+		}
+	}
+	return
 }
