@@ -5,13 +5,13 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/key/prv"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
-	"github.com/indra-labs/indra/pkg/lnd/lnwire"
 	"github.com/indra-labs/indra/pkg/payment"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/types"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/wire/magicbytes"
 	"github.com/indra-labs/indra/pkg/wire/noop"
+	"github.com/indra-labs/lnd/lnd/lnwire"
 )
 
 const (
@@ -74,7 +74,7 @@ func (x *OnionSkin) PreimageHash() sha256.Hash {
 }
 
 func (x *OnionSkin) ToPayment(amount lnwire.
-	MilliSatoshi) (p *payment.Payment) {
+MilliSatoshi) (p *payment.Payment) {
 
 	p = &payment.Payment{
 		ID:       nonce.NewID(),

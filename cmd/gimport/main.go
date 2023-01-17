@@ -80,12 +80,12 @@ func main() {
 			if filename == "Makefile" {
 				file = []byte(strings.ReplaceAll(string(file),
 					"github.com/lightningnetwork/lnd",
-					"github.com/indra-labs/indra/pkg/lnd"))
+					"github.com/indra-labs/lnd/lnd"))
 			}
 			e = os.WriteFile(path,
 				[]byte(strings.ReplaceAll(string(file),
 					"\"github.com/lightningnetwork/lnd",
-					"\"github.com/indra-labs/indra/pkg/lnd")), 0755)
+					"\"github.com/indra-labs/lnd/lnd")), 0755)
 			check(e)
 		}
 		return nil

@@ -3,11 +3,11 @@ package balance
 import (
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/lnd/lnwire"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/types"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/wire/magicbytes"
+	"github.com/indra-labs/lnd/lnd/lnwire"
 )
 
 const (

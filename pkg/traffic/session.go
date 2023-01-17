@@ -9,9 +9,9 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/identity"
-	"github.com/indra-labs/indra/pkg/lnd/lnwire"
 	"github.com/indra-labs/indra/pkg/payment"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/lnd/lnd/lnwire"
 )
 
 var (

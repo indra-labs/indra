@@ -8,7 +8,6 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/key/pub"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
-	"github.com/indra-labs/indra/pkg/lnd/lnwire"
 	"github.com/indra-labs/indra/pkg/traffic"
 	"github.com/indra-labs/indra/pkg/types"
 	"github.com/indra-labs/indra/pkg/util/slice"
@@ -24,6 +23,7 @@ import (
 	"github.com/indra-labs/indra/pkg/wire/reverse"
 	"github.com/indra-labs/indra/pkg/wire/session"
 	"github.com/indra-labs/indra/pkg/wire/token"
+	"github.com/indra-labs/lnd/lnd/lnwire"
 )
 
 type Skins []types.Onion
