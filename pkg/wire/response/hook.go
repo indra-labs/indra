@@ -3,8 +3,8 @@ package response
 import (
 	"time"
 
-	"github.com/indra-labs/indra/pkg/sha256"
-	"github.com/indra-labs/indra/pkg/slice"
+	"github.com/indra-labs/indra/pkg/crypto/sha256"
+	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
 type Hook struct {

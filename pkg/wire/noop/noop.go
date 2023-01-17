@@ -1,8 +1,8 @@
 package noop
 
 import (
-	"github.com/indra-labs/indra/pkg/slice"
 	"github.com/indra-labs/indra/pkg/types"
+	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
 type OnionSkin struct {

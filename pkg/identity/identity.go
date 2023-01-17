@@ -3,9 +3,9 @@ package identity
 import (
 	"net/netip"
 
-	"github.com/indra-labs/indra/pkg/ifc"
-	"github.com/indra-labs/indra/pkg/key/prv"
-	"github.com/indra-labs/indra/pkg/key/pub"
+	"github.com/indra-labs/indra/pkg/crypto/key/prv"
+	"github.com/indra-labs/indra/pkg/crypto/key/pub"
+	"github.com/indra-labs/indra/pkg/types"
 )
 
 type Peer struct {
@@ -13,5 +13,5 @@ type Peer struct {
 	IdentityPub   *pub.Key
 	IdentityBytes pub.Bytes
 	IdentityPrv   *prv.Key
-	ifc.Transport
+	types.Transport
 }

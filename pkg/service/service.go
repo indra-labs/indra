@@ -1,12 +1,12 @@
 package service
 
 import (
-	"github.com/indra-labs/indra/pkg/ifc"
+	"github.com/indra-labs/indra/pkg/types"
 )
 
 type Service struct {
 	Port uint16
-	ifc.Transport
+	types.Transport
 }
 
 type Services []*Service

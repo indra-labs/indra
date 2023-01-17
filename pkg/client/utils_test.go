@@ -3,14 +3,14 @@ package client
 import (
 	"math"
 
-	"github.com/indra-labs/indra/pkg/ifc"
-	"github.com/indra-labs/indra/pkg/key/prv"
-	"github.com/indra-labs/indra/pkg/key/pub"
+	"github.com/indra-labs/indra/pkg/crypto/key/prv"
+	"github.com/indra-labs/indra/pkg/crypto/key/pub"
+	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/node"
-	"github.com/indra-labs/indra/pkg/nonce"
-	"github.com/indra-labs/indra/pkg/slice"
 	"github.com/indra-labs/indra/pkg/traffic"
 	"github.com/indra-labs/indra/pkg/transport"
+	"github.com/indra-labs/indra/pkg/types"
+	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
 func CreateNMockCircuits(inclSessions bool,
@@ -19,7 +19,7 @@ func CreateNMockCircuits(inclSessions bool,
 	nTotal := 1 + nCircuits*5
 	cl = make([]*Client, nTotal)
 	nodes := make([]*node.Node, nTotal)
-	transports := make([]ifc.Transport, nTotal)
+	transports := make([]types.Transport, nTotal)
 	sessions := make(traffic.Sessions, nTotal-1)
 	for i := range transports {
 		transports[i] = transport.NewSim(nTotal)

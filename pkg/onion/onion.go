@@ -1,12 +1,12 @@
 package onion
 
 import (
-	"github.com/indra-labs/indra/pkg/key/prv"
-	"github.com/indra-labs/indra/pkg/key/pub"
-	"github.com/indra-labs/indra/pkg/key/signer"
-	"github.com/indra-labs/indra/pkg/nonce"
-	"github.com/indra-labs/indra/pkg/slice"
+	"github.com/indra-labs/indra/pkg/crypto/key/prv"
+	"github.com/indra-labs/indra/pkg/crypto/key/pub"
+	"github.com/indra-labs/indra/pkg/crypto/key/signer"
+	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/traffic"
+	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
 // Ping is a message which checks the liveness of relays by ensuring they are

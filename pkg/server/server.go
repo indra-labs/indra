@@ -2,16 +2,17 @@ package server
 
 import (
 	"context"
+	"time"
+
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/cfg"
 	"github.com/indra-labs/indra/pkg/interrupt"
-	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/indra-labs/indra/pkg/p2p/introducer"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/server/metrics"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/multiformats/go-multiaddr"
-	"time"
 )
 
 var (
@@ -69,9 +70,9 @@ func (srv *Server) Serve() (err error) {
 	go introducer.Bootstrap(ctx, srv.host, srv.config.SeedAddresses)
 
 	// Get some basic metrics for the host
-	//metrics.Init()
-	//metrics.Set('indra.host.status.reporting.interval', 30 * time.Second)
-	//metrics.Enable('indra.host.status')
+	// metrics.Init()
+	// metrics.Set('indra.host.status.reporting.interval', 30 * time.Second)
+	// metrics.Enable('indra.host.status')
 	metrics.SetInterval(30 * time.Second)
 
 	go metrics.HostStatus(ctx, srv.host)
