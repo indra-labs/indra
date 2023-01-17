@@ -8,7 +8,7 @@
 
 Lightning powered distributed virtual private network for anonymising traffic on decentralised protocol networks.
 
-[White Paper](doc/whitepaper.md)
+[White Paper](https://github.com/indra-labs/docs/blob/main/whitepaper.md)
 
 ## About
 
