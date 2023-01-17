@@ -6,6 +6,7 @@ import (
 	"github.com/indra-labs/indra/pkg/lnd/lnwire"
 	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/indra-labs/indra/pkg/nonce"
+	"github.com/indra-labs/indra/pkg/payment"
 	"github.com/indra-labs/indra/pkg/sha256"
 	"github.com/indra-labs/indra/pkg/slice"
 	"github.com/indra-labs/indra/pkg/types"
@@ -50,12 +51,6 @@ type OnionSkin struct {
 	types.Onion
 }
 
-type Payment struct {
-	nonce.ID
-	Preimage sha256.Hash
-	Amount   lnwire.MilliSatoshi
-}
-
 func New() (x *OnionSkin) {
 	var e error
 	var hdrPrv, pldPrv *prv.Key
@@ -79,9 +74,9 @@ func (x *OnionSkin) PreimageHash() sha256.Hash {
 }
 
 func (x *OnionSkin) ToPayment(amount lnwire.
-	MilliSatoshi) (p *Payment) {
+	MilliSatoshi) (p *payment.Payment) {
 
-	p = &Payment{
+	p = &payment.Payment{
 		ID:       nonce.NewID(),
 		Preimage: x.PreimageHash(),
 		Amount:   amount,
