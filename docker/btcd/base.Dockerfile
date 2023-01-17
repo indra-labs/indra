@@ -20,7 +20,7 @@ WORKDIR /tmp
 RUN set -ex echo "downloading source and binaries with manifest and signature." \
     && wget ${source_release_url_prefix}/releases/download/${target_version}/manifest-${target_version}.txt  \
     && wget ${source_release_url_prefix}/releases/download/${target_version}/manifest-guggero-${target_version}.sig  \
-    && wget ${source_release_url_prefix}/releases/download/${target_version}/btcd-${target_os}-${target_platform}-${target_version}.tar.gz \
+#    && wget ${source_release_url_prefix}/releases/download/${target_version}/btcd-${target_os}-${target_platform}-${target_version}.tar.gz \
     && wget ${source_release_url_prefix}/releases/download/${target_version}/btcd-source-${target_version}.tar.gz
 
 # Importing keys from scratch
@@ -32,8 +32,8 @@ RUN set -ex echo "importing keys" \
 RUN set -ex echo "running signature verification on manifest" \
     && gpg --verify manifest-guggero-${target_version}.sig manifest-${target_version}.txt
 
-RUN set -ex echo "verifying checksum on btcd-${target_os}-${target_platform}-${target_version}.tar.gz" \
-    && cat manifest-${target_version}.txt | grep btcd-${target_os}-${target_platform}-${target_version}.tar.gz | shasum -a 256 -c
+#RUN set -ex echo "verifying checksum on btcd-${target_os}-${target_platform}-${target_version}.tar.gz" \
+#    && cat manifest-${target_version}.txt | grep btcd-${target_os}-${target_platform}-${target_version}.tar.gz | shasum -a 256 -c
 
 #RUN set -ex echo "DEBUG: verifying a checksum failure stops the build" \
 #    && mv btcd-${target_os}-${target_platform}-${target_version}.tar.gz btcd-source-${target_version}.tar.gz
@@ -42,8 +42,8 @@ RUN set -ex echo "verifying checksum on btcd-source-${target_version}.tar.gz" \
     && cat manifest-${target_version}.txt | grep btcd-source-${target_version}.tar.gz | shasum -a 256 -c
 
 RUN set -ex echo "untarring binaries and source code" \
-    && mkdir -pv /tmp/btcd-${target_os}-${target_platform}-${target_version} \
-    && tar -xzvf btcd-${target_os}-${target_platform}-${target_version}.tar.gz --directory /tmp/btcd-${target_os}-${target_platform}-${target_version} \
+#    && mkdir -pv /tmp/btcd-${target_os}-${target_platform}-${target_version} \
+#    && tar -xzvf btcd-${target_os}-${target_platform}-${target_version}.tar.gz --directory /tmp/btcd-${target_os}-${target_platform}-${target_version} \
     && mkdir -pv /tmp/btcd-source-${target_version} \
     && tar -xzvf btcd-source-${target_version}.tar.gz --directory /tmp/btcd-source-${target_version}
 
