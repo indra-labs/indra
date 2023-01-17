@@ -49,8 +49,6 @@ RUN set -ex echo "untarring binaries and source code" \
 
 WORKDIR /tmp/btcd-source-${target_version}
 
-RUN set -ex ls -hal /tmp
-
 RUN set -ex echo "building binaries for ${GOOS}/${GOARCH}" \
     && mkdir -pv /tmp/bin \
     && GO111MODULE=on GOOS=${target_os} CGO_ENABLED=0 go build --ldflags '-w -s' -o /tmp/bin/btcd . \
