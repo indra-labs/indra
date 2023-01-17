@@ -1,4 +1,4 @@
-![Indra Routing Protocol Logo](doc/logo.png)
+![Indra Routing Protocol Logo](https://github.com/indra-labs/docs/blob/main//logo.png)
 
 # Indranet
 
