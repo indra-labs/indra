@@ -6,4 +6,4 @@ docker run --rm -it --volume=${PWD}/docker/scratch/tmp:/output indralabs/scratch
 
 docker image import ${PWD}/docker/scratch/tmp/root-fs.tgz indralabs/scratch
 
-docker push indralabs/scratch:latest
+docker build -t indralabs/btcd-base -f ./docker/btcd/base.Dockerfile .
