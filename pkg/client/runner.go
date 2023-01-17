@@ -1,4 +1,4 @@
-package node
+package client
 
 import (
 	"fmt"
@@ -8,8 +8,10 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/indra-labs/indra/pkg/ciph"
 	"github.com/indra-labs/indra/pkg/nonce"
+	"github.com/indra-labs/indra/pkg/onion"
 	"github.com/indra-labs/indra/pkg/sha256"
 	"github.com/indra-labs/indra/pkg/slice"
+	"github.com/indra-labs/indra/pkg/traffic"
 	"github.com/indra-labs/indra/pkg/types"
 	"github.com/indra-labs/indra/pkg/wire/balance"
 	"github.com/indra-labs/indra/pkg/wire/confirm"
@@ -47,13 +49,13 @@ func (cl *Client) runner() (out bool) {
 		break
 	case b := <-cl.Node.Receive():
 		// process received message
-		var onion types.Onion
+		var on types.Onion
 		var e error
 		c := slice.NewCursor()
-		if onion, e = PeelOnion(b, c); check(e) {
+		if on, e = onion.Peel(b, c); check(e) {
 			break
 		}
-		switch on := onion.(type) {
+		switch on := on.(type) {
 		case *balance.OnionSkin:
 			log.T.C(recLog(on, b, cl))
 			cl.balance(on, b, c)
@@ -96,7 +98,7 @@ func (cl *Client) runner() (out bool) {
 	case p := <-cl.PaymentChan:
 		log.T.S("incoming payment", cl.AddrPort.String(), p)
 		topUp := false
-		cl.IterateSessions(func(s *Session) bool {
+		cl.IterateSessions(func(s *traffic.Session) bool {
 			if s.Preimage == p.Preimage {
 				s.AddBytes(p.Amount)
 				topUp = true
@@ -134,7 +136,7 @@ func (cl *Client) confirm(on *confirm.OnionSkin,
 func (cl *Client) balance(on *balance.OnionSkin,
 	b slice.Bytes, c *slice.Cursor) {
 
-	cl.IterateSessions(func(s *Session) bool {
+	cl.IterateSessions(func(s *traffic.Session) bool {
 		if s.ID == on.ID {
 			log.T.F("received balance %x for session %x",
 				on.MilliSatoshi, on.ID)
@@ -175,7 +177,7 @@ func (cl *Client) exit(on *exit.OnionSkin, b slice.Bytes,
 	case <-timer.C:
 	}
 	// We need to wrap the result in a message layer.
-	res := EncodeOnion(&response.OnionSkin{
+	res := onion.Encode(&response.OnionSkin{
 		Hash:  sha256.Single(on.Bytes),
 		Bytes: result,
 	})
@@ -191,7 +193,7 @@ func (cl *Client) forward(on *forward.OnionSkin, b slice.Bytes,
 	// layer.OnionSkin under this which will be unwrapped by the receiver.
 	if on.AddrPort.String() == cl.Node.AddrPort.String() {
 		// it is for us, we want to unwrap the next part.
-		// cl.Node.Send(append(b[*c:], slice.NoisePad(int(*c))...))
+		// cl.Peer.Send(append(b[*c:], slice.NoisePad(int(*c))...))
 		cl.Node.Send(BudgeUp(b, *c))
 	} else {
 		// we need to forward this message onion.
@@ -204,7 +206,7 @@ func (cl *Client) getBalance(on *getbalance.OnionSkin,
 
 	var found bool
 	var bal *balance.OnionSkin
-	cl.IterateSessions(func(s *Session) bool {
+	cl.IterateSessions(func(s *traffic.Session) bool {
 		if s.ID == on.ID {
 			bal = &balance.OnionSkin{
 				ID:           on.ID,
@@ -219,7 +221,7 @@ func (cl *Client) getBalance(on *getbalance.OnionSkin,
 		return
 	}
 	rb := FormatReply(b[*c:c.Inc(ReverseHeaderLen)],
-		EncodeOnion(bal), on.Ciphers, on.Nonces)
+		onion.Encode(bal), on.Ciphers, on.Nonces)
 	cl.Node.Send(rb)
 }
 
@@ -268,12 +270,12 @@ func (cl *Client) reverse(on *reverse.OnionSkin, b slice.Bytes,
 	c *slice.Cursor) {
 
 	var e error
-	var onion types.Onion
+	var on2 types.Onion
 	if on.AddrPort.String() == cl.Node.AddrPort.String() {
-		if onion, e = PeelOnion(b, c); check(e) {
+		if on2, e = onion.Peel(b, c); check(e) {
 			return
 		}
-		switch on1 := onion.(type) {
+		switch on1 := on2.(type) {
 		case *layer.OnionSkin:
 			start := *c - ReverseLayerLen
 			first := *c
@@ -338,8 +340,8 @@ func (cl *Client) session(on *session.OnionSkin, b slice.Bytes,
 		// duplicate sessions.
 		cl.DeletePendingPayment(pi.Preimage)
 		log.T.F("Adding session %x\n", pi.ID)
-		cl.AddSession(NewSession(pi.ID,
-			cl.Node, pi.Amount, on.Header, on.Payload, on.Hop))
+		cl.AddSession(traffic.NewSession(pi.ID,
+			cl.Node.Peer, pi.Amount, on.Header, on.Payload, on.Hop))
 		cl.Node.Send(BudgeUp(b, *c))
 	} else {
 		log.T.Ln("dropping session message without payment")

@@ -7,11 +7,21 @@ import (
 	"net/netip"
 	"time"
 
+	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/pkg/identity"
 	"github.com/indra-labs/indra/pkg/ifc"
 	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/key/pub"
+	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/indra-labs/indra/pkg/nonce"
+	"github.com/indra-labs/indra/pkg/service"
 	"github.com/indra-labs/indra/pkg/slice"
+	"github.com/indra-labs/indra/pkg/traffic"
+)
+
+var (
+	log   = log2.GetLogger(indra.PathBase)
+	check = log.E.Chk
 )
 
 // Node is a representation of a messaging counterparty. The netip.AddrPort can
@@ -21,15 +31,11 @@ import (
 // known via the packet sender address.
 type Node struct {
 	nonce.ID
-	AddrPort      *netip.AddrPort
-	IdentityPub   *pub.Key
-	IdentityBytes pub.Bytes
-	IdentityPrv   *prv.Key
-	PingCount     int
-	LastSeen      time.Time
-	*Payments
-	Services
-	ifc.Transport
+	*identity.Peer
+	PingCount int
+	LastSeen  time.Time
+	*traffic.Payments
+	service.Services
 }
 
 // New creates a new Node. netip.AddrPort is optional if the counterparty is not
@@ -40,13 +46,15 @@ func New(addr *netip.AddrPort, idPub *pub.Key, idPrv *prv.Key,
 
 	id = nonce.NewID()
 	n = &Node{
-		ID:            id,
-		AddrPort:      addr,
-		Transport:     tpt,
-		IdentityPub:   idPub,
-		IdentityBytes: idPub.ToBytes(),
-		IdentityPrv:   idPrv,
-		Payments:      NewPayments(),
+		ID: id,
+		Peer: &identity.Peer{
+			AddrPort:      addr,
+			IdentityPub:   idPub,
+			IdentityBytes: idPub.ToBytes(),
+			IdentityPrv:   idPrv,
+			Transport:     tpt,
+		},
+		Payments: traffic.NewPayments(),
 	}
 	return
 }

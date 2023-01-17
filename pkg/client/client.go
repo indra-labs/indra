@@ -1,4 +1,4 @@
-package node
+package client
 
 import (
 	"net/netip"
@@ -7,18 +7,27 @@ import (
 
 	"github.com/cybriq/qu"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/ifc"
 	"github.com/indra-labs/indra/pkg/key/cloak"
 	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/key/pub"
 	"github.com/indra-labs/indra/pkg/key/signer"
+	log2 "github.com/indra-labs/indra/pkg/log"
+	"github.com/indra-labs/indra/pkg/node"
 	"github.com/indra-labs/indra/pkg/nonce"
 	"github.com/indra-labs/indra/pkg/slice"
+	"github.com/indra-labs/indra/pkg/traffic"
 	"github.com/indra-labs/indra/pkg/wire/confirm"
 	"github.com/indra-labs/indra/pkg/wire/layer"
 	"github.com/indra-labs/indra/pkg/wire/response"
 	"github.com/indra-labs/indra/pkg/wire/reverse"
 	"go.uber.org/atomic"
+)
+
+var (
+	log   = log2.GetLogger(indra.PathBase)
+	check = log.E.Chk
 )
 
 const (
@@ -27,8 +36,8 @@ const (
 )
 
 type Client struct {
-	*Node
-	Nodes
+	*node.Node
+	node.Nodes
 	sync.Mutex
 	*confirm.Confirms
 	response.Hooks
@@ -37,8 +46,8 @@ type Client struct {
 	qu.C
 }
 
-func NewClient(tpt ifc.Transport, hdrPrv *prv.Key, no *Node,
-	nodes Nodes) (c *Client, e error) {
+func NewClient(tpt ifc.Transport, hdrPrv *prv.Key, no *node.Node,
+	nodes node.Nodes) (c *Client, e error) {
 
 	no.Transport = tpt
 	no.IdentityPrv = hdrPrv
@@ -48,7 +57,7 @@ func NewClient(tpt ifc.Transport, hdrPrv *prv.Key, no *Node,
 		return
 	}
 	// Add our first return session.
-	no.AddSession(NewSession(nonce.NewID(), no, 0, nil, nil, 5))
+	no.AddSession(traffic.NewSession(nonce.NewID(), no.Peer, 0, nil, nil, 5))
 	c = &Client{
 		Confirms: confirm.NewConfirms(),
 		Node:     no,
@@ -82,7 +91,7 @@ func (cl *Client) RegisterConfirmation(hook confirm.Hook,
 // returns the session as well, though not all users of this function will need
 // this.
 func (cl *Client) FindCloaked(clk cloak.PubKey) (hdr *prv.Key,
-	pld *prv.Key, sess *Session, identity bool) {
+	pld *prv.Key, sess *traffic.Session, identity bool) {
 
 	var b cloak.Blinder
 	copy(b[:], clk[:cloak.BlindLen])
@@ -95,7 +104,7 @@ func (cl *Client) FindCloaked(clk cloak.PubKey) (hdr *prv.Key,
 		return
 	}
 	var i int
-	cl.Node.IterateSessions(func(s *Session) (stop bool) {
+	cl.Node.IterateSessions(func(s *traffic.Session) (stop bool) {
 		hash = cloak.Cloak(b, s.HeaderBytes)
 		if hash == clk {
 			log.T.F("found cloaked key in session %d", i)
