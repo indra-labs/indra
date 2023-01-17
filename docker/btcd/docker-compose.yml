@@ -1,0 +1,41 @@
+version: '3'
+services:
+  btcd:
+    image: indralabs/btcd
+    volumes:
+      - config:/etc/btcd
+      - data:/var/btcd
+    networks:
+      indranet:
+        ipv4_address: 172.16.42.2
+    command:
+      - "--rpcuser=simnet"
+      - "--rpcpass=simnet"
+      - "--simnet"
+  btcctl:
+    image: indralabs/btcctl
+    volumes:
+      - config:/etc/btcd:ro
+    networks:
+      indranet:
+    depends_on:
+      - btcd
+    command:
+      - "--rpcserver=172.16.42.2:8333"
+      - "--rpcuser=simnet"
+      - "--rpcpass=simnet"
+      - "--simnet"
+      - "getinfo"
+volumes:
+  config:
+  data:
+networks:
+  indranet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.42.0/24
+          gateway: 172.16.42.1
+
+# docker-compose -f docker/btcd/docker-compose.yml up
