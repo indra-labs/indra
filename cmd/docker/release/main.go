@@ -83,7 +83,7 @@ var buildConfigurations = []docker.BuildConfiguration{
 		BuildOpts: types.ImageBuildOptions{
 			Dockerfile: "docker/btcd/btcctl.Dockerfile",
 			Tags: []string{
-				"v0.23.4",
+				"v0.23.3",
 				"latest",
 			},
 			BuildArgs: map[string]*string{
