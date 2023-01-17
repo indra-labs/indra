@@ -12,18 +12,18 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/key/pub"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
-	"github.com/indra-labs/indra/pkg/tests"
+	"github.com/indra-labs/indra/pkg/onion/layers/confirm"
+	"github.com/indra-labs/indra/pkg/onion/layers/crypt"
+	"github.com/indra-labs/indra/pkg/onion/layers/delay"
+	"github.com/indra-labs/indra/pkg/onion/layers/exit"
+	"github.com/indra-labs/indra/pkg/onion/layers/forward"
+	"github.com/indra-labs/indra/pkg/onion/layers/response"
+	"github.com/indra-labs/indra/pkg/onion/layers/reverse"
+	"github.com/indra-labs/indra/pkg/onion/layers/session"
+	"github.com/indra-labs/indra/pkg/onion/layers/token"
 	"github.com/indra-labs/indra/pkg/types"
 	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/indra/pkg/wire/confirm"
-	"github.com/indra-labs/indra/pkg/wire/delay"
-	"github.com/indra-labs/indra/pkg/wire/exit"
-	"github.com/indra-labs/indra/pkg/wire/forward"
-	"github.com/indra-labs/indra/pkg/wire/layer"
-	"github.com/indra-labs/indra/pkg/wire/response"
-	"github.com/indra-labs/indra/pkg/wire/reverse"
-	"github.com/indra-labs/indra/pkg/wire/session"
-	"github.com/indra-labs/indra/pkg/wire/token"
+	"github.com/indra-labs/indra/pkg/util/tests"
 )
 
 func TestOnionSkins_Cipher(t *testing.T) {
@@ -40,9 +40,9 @@ func TestOnionSkins_Cipher(t *testing.T) {
 	if onc, e = Peel(onb, c); check(e) {
 		t.FailNow()
 	}
-	var ci *session.OnionSkin
+	var ci *session.Layer
 	var ok bool
-	if ci, ok = onc.(*session.OnionSkin); !ok {
+	if ci, ok = onc.(*session.Layer); !ok {
 		t.Error("did not unwrap expected type")
 		t.FailNow()
 	}
@@ -69,9 +69,9 @@ func TestOnionSkins_Confirmation(t *testing.T) {
 	if oncn, e = Peel(onb, c); check(e) {
 		t.FailNow()
 	}
-	var cf *confirm.OnionSkin
+	var cf *confirm.Layer
 	var ok bool
-	if cf, ok = oncn.(*confirm.OnionSkin); !ok {
+	if cf, ok = oncn.(*confirm.Layer); !ok {
 		t.Error("did not unwrap expected type")
 		t.FailNow()
 	}
@@ -94,9 +94,9 @@ func TestOnionSkins_Delay(t *testing.T) {
 	if ond, e = Peel(onb, c); check(e) {
 		t.FailNow()
 	}
-	var dl *delay.OnionSkin
+	var dl *delay.Layer
 	var ok bool
-	if dl, ok = ond.(*delay.OnionSkin); !ok {
+	if dl, ok = ond.(*delay.Layer); !ok {
 		t.Error("did not unwrap expected type")
 		t.FailNow()
 	}
@@ -128,9 +128,9 @@ func TestOnionSkins_Exit(t *testing.T) {
 	if onex, e = Peel(onb, c); check(e) {
 		t.FailNow()
 	}
-	var ex *exit.OnionSkin
+	var ex *exit.Layer
 	var ok bool
-	if ex, ok = onex.(*exit.OnionSkin); !ok {
+	if ex, ok = onex.(*exit.Layer); !ok {
 		t.Error("did not unwrap expected type")
 		t.FailNow()
 	}
@@ -187,8 +187,8 @@ func TestOnionSkins_Forward(t *testing.T) {
 		if onf, e = Peel(onb, c); check(e) {
 			t.FailNow()
 		}
-		var cf *forward.OnionSkin
-		if cf, ok = onf.(*forward.OnionSkin); !ok {
+		var cf *forward.Layer
+		if cf, ok = onf.(*forward.Layer); !ok {
 			t.Error("did not unwrap expected type", reflect.TypeOf(onf))
 			t.FailNow()
 		}
@@ -208,7 +208,7 @@ func TestOnionSkins_Layer(t *testing.T) {
 	prv1, prv2 := GetTwoPrvKeys(t)
 	pub1 := pub.Derive(prv1)
 	on := Skins{}.
-		Layer(pub1, prv2, n1).
+		Crypt(pub1, prv2, n1).
 		Confirmation(n).
 		Assemble()
 	onb := Encode(on)
@@ -218,9 +218,9 @@ func TestOnionSkins_Layer(t *testing.T) {
 		t.Error(e)
 		t.FailNow()
 	}
-	os := &layer.OnionSkin{}
+	os := &crypt.Layer{}
 	var ok bool
-	if os, ok = onos.(*layer.OnionSkin); !ok {
+	if os, ok = onos.(*crypt.Layer); !ok {
 		t.Error("did not unwrap expected type")
 		t.FailNow()
 	}
@@ -230,8 +230,8 @@ func TestOnionSkins_Layer(t *testing.T) {
 		t.Error(e)
 		t.FailNow()
 	}
-	oc := &confirm.OnionSkin{}
-	if oc, ok = onc.(*confirm.OnionSkin); !ok {
+	oc := &confirm.Layer{}
+	if oc, ok = onc.(*confirm.Layer); !ok {
 		t.Error("did not unwrap expected type")
 		t.FailNow()
 	}
@@ -271,8 +271,8 @@ func TestOnionSkins_Reply(t *testing.T) {
 		if onf, e = Peel(onb, c); check(e) {
 			t.FailNow()
 		}
-		var cf *reverse.OnionSkin
-		if cf, ok = onf.(*reverse.OnionSkin); !ok {
+		var cf *reverse.Layer
+		if cf, ok = onf.(*reverse.Layer); !ok {
 			t.Error("did not unwrap expected type", reflect.TypeOf(onf))
 			t.FailNow()
 		}
@@ -302,9 +302,9 @@ func TestOnionSkins_Response(t *testing.T) {
 	if onex, e = Peel(onb, c); check(e) {
 		t.FailNow()
 	}
-	ex := &response.OnionSkin{}
+	ex := &response.Layer{}
 	var ok bool
-	if ex, ok = onex.(*response.OnionSkin); !ok {
+	if ex, ok = onex.(*response.Layer); !ok {
 		t.Error("did not unwrap expected type")
 		t.FailNow()
 	}
@@ -330,9 +330,9 @@ func TestOnionSkins_Token(t *testing.T) {
 	if oncn, e = Peel(onb, c); check(e) {
 		t.FailNow()
 	}
-	var cf *token.OnionSkin
+	var cf *token.Layer
 	var ok bool
-	if cf, ok = oncn.(*token.OnionSkin); !ok {
+	if cf, ok = oncn.(*token.Layer); !ok {
 		t.Error("did not unwrap expected type", reflect.TypeOf(oncn))
 		t.FailNow()
 	}

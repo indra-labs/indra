@@ -13,3 +13,8 @@ type Onion interface {
 	Inner() Onion
 	Insert(on Onion)
 }
+
+type Transport interface {
+	Send(b slice.Bytes)
+	Receive() <-chan slice.Bytes
+}

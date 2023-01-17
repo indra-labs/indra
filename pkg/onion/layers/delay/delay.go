@@ -4,10 +4,10 @@ import (
 	"time"
 
 	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/pkg/onion/layers/magicbytes"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/types"
 	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/indra/pkg/wire/magicbytes"
 )
 
 const (
@@ -19,26 +19,26 @@ var (
 	log               = log2.GetLogger(indra.PathBase)
 	check             = log.E.Chk
 	Magic             = slice.Bytes(MagicString)
-	_     types.Onion = &OnionSkin{}
+	_     types.Onion = &Layer{}
 )
 
-// A OnionSkin is a 32 byte value.
-type OnionSkin struct {
+// A Layer delay is a message to hold for a period of time before relaying.
+type Layer struct {
 	time.Duration
 	types.Onion
 }
 
-func (x *OnionSkin) Inner() types.Onion   { return nil }
-func (x *OnionSkin) Insert(_ types.Onion) {}
-func (x *OnionSkin) Len() int             { return Len }
+func (x *Layer) Inner() types.Onion   { return nil }
+func (x *Layer) Insert(_ types.Onion) {}
+func (x *Layer) Len() int             { return Len }
 
-func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
+func (x *Layer) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	slice.EncodeUint64(b[*c:c.Inc(slice.Uint64Len)], uint64(x.Duration))
 	x.Onion.Encode(b, c)
 }
 
-func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
+func (x *Layer) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < Len-magicbytes.Len {
 		return magicbytes.TooShort(len(b[*c:]), Len-magicbytes.Len,
 			string(Magic))

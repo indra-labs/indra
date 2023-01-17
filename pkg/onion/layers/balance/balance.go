@@ -3,10 +3,10 @@ package balance
 import (
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	"github.com/indra-labs/indra/pkg/onion/layers/magicbytes"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/types"
 	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/indra/pkg/wire/magicbytes"
 	"github.com/indra-labs/lnd/lnd/lnwire"
 )
 
@@ -20,22 +20,22 @@ var (
 	log               = log2.GetLogger(indra.PathBase)
 	check             = log.E.Chk
 	Magic             = slice.Bytes(MagicString)
-	_     types.Onion = &OnionSkin{}
+	_     types.Onion = &Layer{}
 )
 
-// OnionSkin balance messages are the response replying to a GetBalance message.
-type OnionSkin struct {
+// Layer balance messages are the response replying to a GetBalance message.
+type Layer struct {
 	nonce.ID
 	lnwire.MilliSatoshi
 }
 
-func (x *OnionSkin) Inner() types.Onion   { return nil }
-func (x *OnionSkin) Insert(o types.Onion) {}
-func (x *OnionSkin) Len() int {
+func (x *Layer) Inner() types.Onion   { return nil }
+func (x *Layer) Insert(o types.Onion) {}
+func (x *Layer) Len() int {
 	return Len
 }
 
-func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
+func (x *Layer) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	copy(b[*c:c.Inc(nonce.IDLen)], x.ID[:])
 	s := slice.NewUint64()
@@ -43,7 +43,7 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:slice.Uint64Len], s)
 }
 
-func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
+func (x *Layer) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < Len-magicbytes.Len {
 		return magicbytes.TooShort(len(b[*c:]), Len-magicbytes.Len,
 			string(Magic))

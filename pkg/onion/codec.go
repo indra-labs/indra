@@ -10,19 +10,19 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/key/pub"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
+	"github.com/indra-labs/indra/pkg/onion/layers/confirm"
+	"github.com/indra-labs/indra/pkg/onion/layers/crypt"
+	"github.com/indra-labs/indra/pkg/onion/layers/delay"
+	"github.com/indra-labs/indra/pkg/onion/layers/exit"
+	"github.com/indra-labs/indra/pkg/onion/layers/forward"
+	"github.com/indra-labs/indra/pkg/onion/layers/magicbytes"
+	"github.com/indra-labs/indra/pkg/onion/layers/response"
+	"github.com/indra-labs/indra/pkg/onion/layers/reverse"
+	"github.com/indra-labs/indra/pkg/onion/layers/session"
+	"github.com/indra-labs/indra/pkg/onion/layers/token"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/types"
 	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/indra/pkg/wire/confirm"
-	"github.com/indra-labs/indra/pkg/wire/delay"
-	"github.com/indra-labs/indra/pkg/wire/exit"
-	"github.com/indra-labs/indra/pkg/wire/forward"
-	"github.com/indra-labs/indra/pkg/wire/layer"
-	"github.com/indra-labs/indra/pkg/wire/magicbytes"
-	"github.com/indra-labs/indra/pkg/wire/response"
-	"github.com/indra-labs/indra/pkg/wire/reverse"
-	"github.com/indra-labs/indra/pkg/wire/session"
-	"github.com/indra-labs/indra/pkg/wire/token"
 )
 
 var (
@@ -41,43 +41,43 @@ func Encode(on types.Onion) (b slice.Bytes) {
 func Peel(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 	switch b[*c:c.Inc(magicbytes.Len)].String() {
 	case session.MagicString:
-		o := &session.OnionSkin{}
+		o := &session.Layer{}
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
 		on = o
 	case confirm.MagicString:
-		o := &confirm.OnionSkin{}
+		o := &confirm.Layer{}
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
 		on = o
 	case delay.MagicString:
-		o := &delay.OnionSkin{}
+		o := &delay.Layer{}
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
 		on = o
 	case exit.MagicString:
-		o := &exit.OnionSkin{}
+		o := &exit.Layer{}
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
 		on = o
 	case forward.MagicString:
-		o := &forward.OnionSkin{}
+		o := &forward.Layer{}
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
 		on = o
-	case layer.MagicString:
-		var o layer.OnionSkin
+	case crypt.MagicString:
+		var o crypt.Layer
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
 		on = &o
 	case reverse.MagicString:
-		o := &reverse.OnionSkin{}
+		o := &reverse.Layer{}
 		if e = o.Decode(b, c); check(e) {
 			return
 		}

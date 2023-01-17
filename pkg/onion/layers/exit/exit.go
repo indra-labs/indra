@@ -5,10 +5,10 @@ import (
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
+	"github.com/indra-labs/indra/pkg/onion/layers/magicbytes"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/types"
 	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/indra/pkg/wire/magicbytes"
 )
 
 const (
@@ -21,12 +21,12 @@ var (
 	log               = log2.GetLogger(indra.PathBase)
 	check             = log.E.Chk
 	Magic             = slice.Bytes(MagicString)
-	_     types.Onion = &OnionSkin{}
+	_     types.Onion = &Layer{}
 )
 
-// OnionSkin exit messages are the layer of a message after two Forward packets
+// Layer exit messages are the crypt of a message after two Forward packets
 // that provides an exit address and
-type OnionSkin struct {
+type Layer struct {
 	// Port identifies the type of service as well as being the port used by
 	// the service to be relayed to. Notice there is no IP address, this is
 	// because Indranet only forwards to exits of decentralised services
@@ -46,17 +46,17 @@ type OnionSkin struct {
 	types.Onion
 }
 
-func (x *OnionSkin) String() string {
+func (x *Layer) String() string {
 	return spew.Sdump(x.Port, x.Ciphers, x.Nonces, x.Bytes.ToBytes())
 }
 
-func (x *OnionSkin) Inner() types.Onion   { return x.Onion }
-func (x *OnionSkin) Insert(o types.Onion) { x.Onion = o }
-func (x *OnionSkin) Len() int {
+func (x *Layer) Inner() types.Onion   { return x.Onion }
+func (x *Layer) Insert(o types.Onion) { x.Onion = o }
+func (x *Layer) Len() int {
 	return Len + x.Bytes.Len() + x.Onion.Len()
 }
 
-func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
+func (x *Layer) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	port := slice.NewUint16()
 	slice.EncodeUint16(port, int(x.Port))
@@ -74,7 +74,7 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	x.Onion.Encode(b, c)
 }
 
-func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
+func (x *Layer) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < Len-magicbytes.Len {
 		return magicbytes.TooShort(len(b[*c:]), Len-magicbytes.Len, string(Magic))
 	}

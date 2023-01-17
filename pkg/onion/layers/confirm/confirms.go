@@ -12,7 +12,7 @@ type Hook func(cf nonce.ID)
 type Callback struct {
 	nonce.ID
 	time.Time
-	Onion *OnionSkin
+	Onion *Layer
 	Hook
 }
 

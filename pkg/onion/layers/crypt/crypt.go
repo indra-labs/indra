@@ -1,4 +1,4 @@
-package layer
+package crypt
 
 import (
 	"crypto/cipher"
@@ -10,10 +10,10 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/key/prv"
 	"github.com/indra-labs/indra/pkg/crypto/key/pub"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	"github.com/indra-labs/indra/pkg/onion/layers/magicbytes"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/types"
 	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/indra/pkg/wire/magicbytes"
 )
 
 const (
@@ -25,14 +25,14 @@ var (
 	log               = log2.GetLogger(indra.PathBase)
 	check             = log.E.Chk
 	Magic             = slice.Bytes(MagicString)
-	_     types.Onion = &OnionSkin{}
+	_     types.Onion = &Layer{}
 )
 
-// OnionSkin message is the generic top level wrapper for an OnionSkin. All
+// Layer message is the generic top level wrapper for an Layer. All
 // following messages are wrapped inside this. This type provides the encryption
-// for each layer, and a header which a relay uses to determine what cipher to
+// for each crypt, and a header which a relay uses to determine what cipher to
 // use. Everything in a message after this message is encrypted as specified.
-type OnionSkin struct {
+type Layer struct {
 	To   *pub.Key
 	From *prv.Key
 	// The remainder here are for Decode.
@@ -40,7 +40,7 @@ type OnionSkin struct {
 	Cloak   cloak.PubKey
 	ToPriv  *prv.Key
 	FromPub *pub.Key
-	// The following field is only populated in the outermost layer, and
+	// The following field is only populated in the outermost crypt, and
 	// passed in the `b slice.Bytes` parameter in both encode and decode,
 	// this is created after first getting the Len of everything and
 	// pre-allocating.
@@ -48,17 +48,17 @@ type OnionSkin struct {
 	types.Onion
 }
 
-func (x *OnionSkin) String() string {
+func (x *Layer) String() string {
 	return fmt.Sprintf("\n\tnonce: %x\n\tto: %x,\n\tfrom: %x,\n",
 		x.Nonce, x.To.ToBytes(), x.From.ToBytes())
 }
 
-func (x *OnionSkin) Inner() types.Onion   { return x.Onion }
-func (x *OnionSkin) Insert(o types.Onion) { x.Onion = o }
-func (x *OnionSkin) Len() int {
+func (x *Layer) Inner() types.Onion   { return x.Onion }
+func (x *Layer) Insert(o types.Onion) { x.Onion = o }
+func (x *Layer) Len() int {
 	return Len + x.Onion.Len()
 }
-func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
+func (x *Layer) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	copy(b[*c:c.Inc(nonce.IVLen)], x.Nonce[:])
 	// Derive the cloaked key and copy it in.
@@ -73,13 +73,13 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	// Then we can encrypt the message segment
 	var e error
 	var blk cipher.Block
-	log.T.Ln("encrypting layer")
+	log.T.Ln("encrypting crypt")
 	if blk = ciph.GetBlock(x.From, x.To); check(e) {
 		panic(e)
 	}
 	ciph.Encipher(blk, x.Nonce, b[start:])
 }
-func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
+func (x *Layer) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < Len-magicbytes.Len {
 		return magicbytes.TooShort(len(b[*c:]), Len-magicbytes.Len, "message")
 	}
@@ -95,6 +95,6 @@ func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 
 // Decrypt requires the prv.Key to be located from the Cloak, using the FromPub
 // key to derive the shared secret, and then decrypts the rest of the message.
-func (x *OnionSkin) Decrypt(prk *prv.Key, b slice.Bytes, c *slice.Cursor) {
+func (x *Layer) Decrypt(prk *prv.Key, b slice.Bytes, c *slice.Cursor) {
 	ciph.Encipher(ciph.GetBlock(prk, x.FromPub), x.Nonce, b[*c:])
 }

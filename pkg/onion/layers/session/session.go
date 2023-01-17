@@ -5,12 +5,12 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/key/prv"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
+	"github.com/indra-labs/indra/pkg/onion/layers/magicbytes"
+	"github.com/indra-labs/indra/pkg/onion/layers/noop"
 	"github.com/indra-labs/indra/pkg/payment"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/types"
 	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/indra/pkg/wire/magicbytes"
-	"github.com/indra-labs/indra/pkg/wire/noop"
 	"github.com/indra-labs/lnd/lnd/lnwire"
 )
 
@@ -23,10 +23,10 @@ var (
 	log               = log2.GetLogger(indra.PathBase)
 	check             = log.E.Chk
 	Magic             = slice.Bytes(MagicString)
-	_     types.Onion = &OnionSkin{}
+	_     types.Onion = &Layer{}
 )
 
-// OnionSkin session delivers a pair of private keys to a relay that represent
+// Layer session delivers a pair of private keys to a relay that represent
 // the preimage referred to in a Lightning payment for a session.
 //
 // The preimage is hashed by the buyer to use in the payment, and when the relay
@@ -43,15 +43,15 @@ var (
 // Thus, they cannot decrypt the header, but they can encrypt the payload with
 // the three layers of encryption that the reverse path hops have the private
 // keys to decrypt. By this, the path in the header is concealed and the payload
-// is concealed to the hops except for the encryption layer they decrypt using
+// is concealed to the hops except for the encryption crypt they decrypt using
 // their Payload key, delivered in this message.
-type OnionSkin struct {
+type Layer struct {
 	Hop             byte
 	Header, Payload *prv.Key
 	types.Onion
 }
 
-func New() (x *OnionSkin) {
+func New() (x *Layer) {
 	var e error
 	var hdrPrv, pldPrv *prv.Key
 	if hdrPrv, e = prv.GenerateKey(); check(e) {
@@ -61,20 +61,20 @@ func New() (x *OnionSkin) {
 		return
 	}
 
-	return &OnionSkin{
+	return &Layer{
 		Header:  hdrPrv,
 		Payload: pldPrv,
-		Onion:   &noop.OnionSkin{},
+		Onion:   &noop.Layer{},
 	}
 }
 
-func (x *OnionSkin) PreimageHash() sha256.Hash {
+func (x *Layer) PreimageHash() sha256.Hash {
 	h, p := x.Header.ToBytes(), x.Payload.ToBytes()
 	return sha256.Single(append(h[:], p[:]...))
 }
 
-func (x *OnionSkin) ToPayment(amount lnwire.
-MilliSatoshi) (p *payment.Payment) {
+func (x *Layer) ToPayment(amount lnwire.
+	MilliSatoshi) (p *payment.Payment) {
 
 	p = &payment.Payment{
 		ID:       nonce.NewID(),
@@ -84,10 +84,10 @@ MilliSatoshi) (p *payment.Payment) {
 	return
 }
 
-func (x *OnionSkin) Inner() types.Onion   { return x.Onion }
-func (x *OnionSkin) Insert(o types.Onion) { x.Onion = o }
-func (x *OnionSkin) Len() int             { return Len + x.Onion.Len() }
-func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
+func (x *Layer) Inner() types.Onion   { return x.Onion }
+func (x *Layer) Insert(o types.Onion) { x.Onion = o }
+func (x *Layer) Len() int             { return Len + x.Onion.Len() }
+func (x *Layer) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	hdr := x.Header.ToBytes()
 	pld := x.Payload.ToBytes()
@@ -95,7 +95,7 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(prv.KeyLen)], pld[:])
 	x.Onion.Encode(b, c)
 }
-func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
+func (x *Layer) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < Len-magicbytes.Len {
 		return magicbytes.TooShort(len(b[*c:]),
 			Len-magicbytes.Len, string(Magic))

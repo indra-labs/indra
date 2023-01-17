@@ -9,7 +9,7 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/key/prv"
 	"github.com/indra-labs/indra/pkg/crypto/key/pub"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
-	"github.com/indra-labs/indra/pkg/tests"
+	"github.com/indra-labs/indra/pkg/util/tests"
 )
 
 func TestEncode_Decode(t *testing.T) {

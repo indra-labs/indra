@@ -5,10 +5,10 @@ import (
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
+	"github.com/indra-labs/indra/pkg/onion/layers/magicbytes"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/types"
 	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/indra/pkg/wire/magicbytes"
 )
 
 const (
@@ -21,12 +21,12 @@ var (
 	log               = log2.GetLogger(indra.PathBase)
 	check             = log.E.Chk
 	Magic             = slice.Bytes(MagicString)
-	_     types.Onion = &OnionSkin{}
+	_     types.Onion = &Layer{}
 )
 
-// OnionSkin getbalance messages are a request to return the sats balance of the
+// Layer getbalance messages are a request to return the sats balance of the
 // session the message is embedded in.
-type OnionSkin struct {
+type Layer struct {
 	nonce.ID
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
@@ -37,17 +37,17 @@ type OnionSkin struct {
 	types.Onion
 }
 
-func (x *OnionSkin) String() string {
+func (x *Layer) String() string {
 	return spew.Sdump(x.Ciphers, x.Nonces)
 }
 
-func (x *OnionSkin) Inner() types.Onion   { return x.Onion }
-func (x *OnionSkin) Insert(o types.Onion) { x.Onion = o }
-func (x *OnionSkin) Len() int {
+func (x *Layer) Inner() types.Onion   { return x.Onion }
+func (x *Layer) Insert(o types.Onion) { x.Onion = o }
+func (x *Layer) Len() int {
 	return Len + x.Onion.Len()
 }
 
-func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
+func (x *Layer) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	copy(b[*c:c.Inc(nonce.IDLen)], x.ID[:])
 	copy(b[*c:c.Inc(sha256.Len)], x.Ciphers[0][:])
@@ -59,7 +59,7 @@ func (x *OnionSkin) Encode(b slice.Bytes, c *slice.Cursor) {
 	x.Onion.Encode(b, c)
 }
 
-func (x *OnionSkin) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
+func (x *Layer) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < Len-magicbytes.Len {
 		return magicbytes.TooShort(len(b[*c:]), Len-magicbytes.Len,
 			string(Magic))

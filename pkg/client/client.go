@@ -14,14 +14,14 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/key/signer"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/node"
+	"github.com/indra-labs/indra/pkg/onion/layers/confirm"
+	"github.com/indra-labs/indra/pkg/onion/layers/crypt"
+	"github.com/indra-labs/indra/pkg/onion/layers/response"
+	"github.com/indra-labs/indra/pkg/onion/layers/reverse"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/traffic"
 	"github.com/indra-labs/indra/pkg/types"
 	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/indra/pkg/wire/confirm"
-	"github.com/indra-labs/indra/pkg/wire/layer"
-	"github.com/indra-labs/indra/pkg/wire/response"
-	"github.com/indra-labs/indra/pkg/wire/reverse"
 	"go.uber.org/atomic"
 )
 
@@ -31,7 +31,7 @@ var (
 )
 
 const (
-	ReverseLayerLen  = reverse.Len + layer.Len
+	ReverseLayerLen  = reverse.Len + crypt.Len
 	ReverseHeaderLen = 3 * ReverseLayerLen
 )
 

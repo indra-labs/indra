@@ -22,12 +22,12 @@ func Ping(id nonce.ID, client *traffic.Session, s traffic.Circuit,
 
 	n := GenPingNonces()
 	return Skins{}.
-		ForwardLayer(s[0], ks.Next(), n[0]).
-		ForwardLayer(s[1], ks.Next(), n[1]).
-		ForwardLayer(s[2], ks.Next(), n[2]).
-		ForwardLayer(s[3], ks.Next(), n[3]).
-		ForwardLayer(s[4], ks.Next(), n[4]).
-		ForwardLayer(client, ks.Next(), n[5]).
+		ForwardCrypt(s[0], ks.Next(), n[0]).
+		ForwardCrypt(s[1], ks.Next(), n[1]).
+		ForwardCrypt(s[2], ks.Next(), n[2]).
+		ForwardCrypt(s[3], ks.Next(), n[3]).
+		ForwardCrypt(s[4], ks.Next(), n[4]).
+		ForwardCrypt(client, ks.Next(), n[5]).
 		Confirmation(id)
 }
 
@@ -46,7 +46,7 @@ func Ping(id nonce.ID, client *traffic.Session, s traffic.Circuit,
 // given public From key.
 //
 // The header remains a constant size and each node in the Reverse trims off
-// their section at the top, moves the next layer header to the top and pads the
+// their section at the top, moves the next crypt header to the top and pads the
 // remainder with noise, so it always looks like the first hop.
 func SendExit(payload slice.Bytes, port uint16,
 	client *traffic.Session, s traffic.Circuit, ks *signer.KeySet) Skins {
@@ -63,13 +63,13 @@ func SendExit(payload slice.Bytes, port uint16,
 	pubs[1] = s[4].PayloadPub
 	pubs[2] = client.PayloadPub
 	return Skins{}.
-		ForwardLayer(s[0], ks.Next(), n[0]).
-		ForwardLayer(s[1], ks.Next(), n[1]).
-		ForwardLayer(s[2], ks.Next(), n[2]).
+		ForwardCrypt(s[0], ks.Next(), n[0]).
+		ForwardCrypt(s[1], ks.Next(), n[1]).
+		ForwardCrypt(s[2], ks.Next(), n[2]).
 		Exit(port, prvs, pubs, returnNonces, payload).
-		ReverseLayer(s[3], prvs[0], n[3]).
-		ReverseLayer(s[4], prvs[1], n[4]).
-		ReverseLayer(client, prvs[2], n[5])
+		ReverseCrypt(s[3], prvs[0], n[3]).
+		ReverseCrypt(s[4], prvs[1], n[4]).
+		ReverseCrypt(client, prvs[2], n[5])
 }
 
 // SendKeys provides a pair of private keys that will be used to generate the
@@ -79,10 +79,10 @@ func SendExit(payload slice.Bytes, port uint16,
 // The OnionSkin key, its cloaked public key counterpart used in the To field of
 // the Purchase message preformed header bytes, but the Ciphers provided in the
 // Purchase message, for encrypting the Session to be returned, uses the Payload
-// key, along with the public key found in the encrypted layer of the header for
+// key, along with the public key found in the encrypted crypt of the header for
 // the Reverse relay.
 //
-// This message's last layer is a Confirmation, which allows the client to know
+// This message's last crypt is a Confirmation, which allows the client to know
 // that the keys were successfully delivered.
 //
 // This is the only onion that uses the node identity keys. The payment preimage
@@ -104,7 +104,7 @@ func SendKeys(id nonce.ID, hdr, pld [5]*prv.Key,
 		ForwardSession(hop[2], ks.Next(), n[2], hdr[2], pld[2]).
 		ForwardSession(hop[3], ks.Next(), n[3], hdr[3], pld[3]).
 		ForwardSession(hop[4], ks.Next(), n[4], hdr[4], pld[4]).
-		ForwardLayer(client, ks.Next(), n[5]).
+		ForwardCrypt(client, ks.Next(), n[5]).
 		Confirmation(id)
 }
 
@@ -129,12 +129,12 @@ func GetBalance(s traffic.Circuit, target int,
 	}
 
 	for i := 0; i < target; i++ {
-		o = o.ForwardLayer(s[i], ks.Next(), n[i])
+		o = o.ForwardCrypt(s[i], ks.Next(), n[i])
 	}
 	reqNonce := nonce.NewID()
 	o = o.GetBalance(reqNonce, prvs, pubs, returnNonces)
 	for i := range returns {
-		o = o.ReverseLayer(returns[i], prvs[i], n[i+target])
+		o = o.ReverseCrypt(returns[i], prvs[i], n[i+target])
 	}
 	o = o.Confirmation(reqNonce)
 	return

@@ -9,14 +9,14 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/onion"
+	"github.com/indra-labs/indra/pkg/onion/layers/confirm"
+	"github.com/indra-labs/indra/pkg/onion/layers/session"
 	"github.com/indra-labs/indra/pkg/payment"
 	"github.com/indra-labs/indra/pkg/service"
-	"github.com/indra-labs/indra/pkg/tests"
 	"github.com/indra-labs/indra/pkg/traffic"
 	"github.com/indra-labs/indra/pkg/transport"
 	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/indra/pkg/wire/confirm"
-	"github.com/indra-labs/indra/pkg/wire/session"
+	"github.com/indra-labs/indra/pkg/util/tests"
 )
 
 func TestPing(t *testing.T) {
@@ -42,9 +42,9 @@ func TestPing(t *testing.T) {
 	clients[0].RegisterConfirmation(func(cf nonce.ID) {
 		log.T.S("received ping confirmation ID", cf)
 		quit.Q()
-	}, os[len(os)-1].(*confirm.OnionSkin).ID)
+	}, os[len(os)-1].(*confirm.Layer).ID)
 	b := onion.Encode(os.Assemble())
-	log.T.S("sending ping with ID", os[len(os)-1].(*confirm.OnionSkin))
+	log.T.S("sending ping with ID", os[len(os)-1].(*confirm.Layer))
 	clients[0].Send(clients[0].Nodes[0].AddrPort, b)
 	go func() {
 		select {
@@ -149,7 +149,7 @@ func TestSendKeys(t *testing.T) {
 		}
 	}()
 	cnf := nonce.NewID()
-	var sess [5]*session.OnionSkin
+	var sess [5]*session.Layer
 	var pmt [5]*payment.Payment
 	for i := range clients[1:] {
 		// Create a new payment and drop on the payment channel.
@@ -190,7 +190,7 @@ func TestSendKeys(t *testing.T) {
 func TestGetBalance(t *testing.T) {
 	var clients []*Client
 	var e error
-	if clients, e = CreateNMockCircuits(false, 2); check(e) {
+	if clients, e = CreateNMockCircuits(true, 2); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
