@@ -8,6 +8,7 @@ import (
 	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/nonce"
 	"github.com/indra-labs/indra/pkg/onion"
+	"github.com/indra-labs/indra/pkg/payment"
 	"github.com/indra-labs/indra/pkg/service"
 	"github.com/indra-labs/indra/pkg/sha256"
 	"github.com/indra-labs/indra/pkg/slice"
@@ -149,7 +150,7 @@ func TestSendKeys(t *testing.T) {
 	}()
 	cnf := nonce.NewID()
 	var sess [5]*session.OnionSkin
-	var pmt [5]*session.Payment
+	var pmt [5]*payment.Payment
 	for i := range clients[1:] {
 		// Create a new payment and drop on the payment channel.
 		sess[i] = session.New()

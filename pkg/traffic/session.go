@@ -10,8 +10,8 @@ import (
 	"github.com/indra-labs/indra/pkg/lnd/lnwire"
 	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/indra-labs/indra/pkg/nonce"
+	"github.com/indra-labs/indra/pkg/payment"
 	"github.com/indra-labs/indra/pkg/sha256"
-	"github.com/indra-labs/indra/pkg/wire/session"
 )
 
 var (
@@ -174,11 +174,11 @@ func (n *Payments) GetSessionByIndex(i int) (s *Session) {
 	return
 }
 
-type PaymentChan chan *session.Payment
+type PaymentChan chan *payment.Payment
 
-type PendingPayments []*session.Payment
+type PendingPayments []*payment.Payment
 
-func (p PendingPayments) Add(np *session.Payment) (pp PendingPayments) {
+func (p PendingPayments) Add(np *payment.Payment) (pp PendingPayments) {
 	return append(p, np)
 }
 
@@ -196,7 +196,7 @@ func (p PendingPayments) Delete(preimage sha256.Hash) (pp PendingPayments) {
 	return
 }
 
-func (p PendingPayments) Find(id nonce.ID) (pp *session.Payment) {
+func (p PendingPayments) Find(id nonce.ID) (pp *payment.Payment) {
 	for i := range p {
 		if p[i].ID == id {
 			return p[i]
@@ -205,7 +205,7 @@ func (p PendingPayments) Find(id nonce.ID) (pp *session.Payment) {
 	return
 }
 
-func (p PendingPayments) FindPreimage(pi sha256.Hash) (pp *session.Payment) {
+func (p PendingPayments) FindPreimage(pi sha256.Hash) (pp *payment.Payment) {
 	for i := range p {
 		if p[i].Preimage == pi {
 			return p[i]
@@ -218,7 +218,7 @@ func (p PendingPayments) FindPreimage(pi sha256.Hash) (pp *session.Payment) {
 // payments need to be accessed only with the node's mutex locked.
 
 func (n *Payments) AddPendingPayment(
-	np *session.Payment) {
+	np *payment.Payment) {
 
 	n.Lock()
 	defer n.Unlock()
@@ -232,14 +232,14 @@ func (n *Payments) DeletePendingPayment(
 	n.pendingPayments = n.pendingPayments.Delete(preimage)
 }
 func (n *Payments) FindPendingPayment(
-	id nonce.ID) (pp *session.Payment) {
+	id nonce.ID) (pp *payment.Payment) {
 
 	n.Lock()
 	defer n.Unlock()
 	return n.pendingPayments.Find(id)
 }
 func (n *Payments) FindPendingPreimage(
-	pi sha256.Hash) (pp *session.Payment) {
+	pi sha256.Hash) (pp *payment.Payment) {
 
 	log.T.F("searching preimage %x", pi)
 	n.Lock()
