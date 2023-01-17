@@ -34,27 +34,45 @@ var (
 func strPtr(str string) *string { return &str }
 
 var buildConfigurations = []docker.BuildConfiguration{
+	//docker.BuildConfiguration{
+	//	Name:            defaultRepositoryName + "/" + "btcd-base",
+	//	ContextFilePath: "/tmp/btcd-base.tar",
+	//	BuildOpts: types.ImageBuildOptions{
+	//		Dockerfile: "docker/btcd/base.Dockerfile",
+	//		Tags: []string{
+	//			"v0.23.3",
+	//			"latest",
+	//		},
+	//		BuildArgs: map[string]*string{
+	//			"builder_image":             strPtr(defaultBuildContainer),
+	//			"source_release_url_prefix": strPtr("https://github.com/btcsuite/btcd"),
+	//			"target_os":                 strPtr("linux"),
+	//			"target_platform":           strPtr("amd64"),
+	//			"target_version":            strPtr("v0.23.3"),
+	//		},
+	//		SuppressOutput: false,
+	//		Remove:         false,
+	//		ForceRemove:    false,
+	//		PullParent:     false,
+	//	},
+	//},
 	docker.BuildConfiguration{
 		Name:            defaultRepositoryName + "/" + "btcd",
 		ContextFilePath: "/tmp/btcd.tar",
 		BuildOpts: types.ImageBuildOptions{
 			Dockerfile: "docker/btcd/btcd.Dockerfile",
 			Tags: []string{
-				"v0.23.4",
+				"v0.23.3",
 				"latest",
 			},
 			BuildArgs: map[string]*string{
-				"base_image":   strPtr(defaultBuildContainer),
-				"target_image": strPtr("indralabs/scratch:latest"),
-				// This argument is the tag fetched by git
-				// It MUST be updated alongside the tag above
-				"git_repository": strPtr("github.com/btcsuite/btcd"),
-				"git_tag":        strPtr("v0.23.4"),
+				"btcd_version":    strPtr("v0.23.3"),
+				"scratch_version": strPtr("latest"),
 			},
 			SuppressOutput: false,
-			Remove:         true,
-			ForceRemove:    true,
-			PullParent:     true,
+			Remove:         false,
+			ForceRemove:    false,
+			PullParent:     false,
 		},
 	},
 	docker.BuildConfiguration{
@@ -67,11 +85,12 @@ var buildConfigurations = []docker.BuildConfiguration{
 				"latest",
 			},
 			BuildArgs: map[string]*string{
-				"semver": strPtr("v0.23.4"),
+				"btcd_version":    strPtr("v0.23.3"),
+				"scratch_version": strPtr("latest"),
 			},
 			SuppressOutput: false,
-			Remove:         true,
-			ForceRemove:    true,
+			Remove:         false,
+			ForceRemove:    false,
 			PullParent:     false,
 		},
 	},
