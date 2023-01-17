@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/indra-labs/indra"
-	log2 "github.com/indra-labs/indra/pkg/log"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/libp2p/go-libp2p/core/host"
 )
 

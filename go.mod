@@ -1,17 +1,18 @@
 module github.com/indra-labs/indra
 
-go 1.19
+go 1.18
 
 require (
-	github.com/btcsuite/btcutil v1.0.2
+	github.com/btcsuite/btcd/btcutil v1.1.3
 	github.com/cybriq/qu v0.1.2
 	github.com/davecgh/go-spew v1.1.1
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0
-	github.com/docker/cli v0.0.0-20191017083524-a8ff7f821017
+	github.com/docker/cli v20.10.22+incompatible
 	github.com/docker/docker v20.10.22+incompatible
 	github.com/gookit/color v1.5.2
+	github.com/indra-labs/lnd v0.15.5-beta
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
-	github.com/libp2p/go-libp2p v0.24.1
+	github.com/libp2p/go-libp2p v0.24.2
 	github.com/libp2p/go-libp2p-kad-dht v0.20.0
 	github.com/minio/sha256-simd v1.0.0
 	github.com/moby/term v0.0.0-20221205130635-1aeaba878587
@@ -24,23 +25,40 @@ require (
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
-	github.com/Microsoft/go-winio v0.6.0 // indirect
+	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/Microsoft/hcsshim v0.9.6 // indirect
+	github.com/aead/siphash v1.0.1 // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/btcsuite/btcd v0.23.4 // indirect
+	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
+	github.com/btcsuite/btcd/btcutil/psbt v1.1.6 // indirect
+	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1 // indirect
+	github.com/btcsuite/btclog v0.0.0-20170628155309-84c8d2346e9f // indirect
+	github.com/btcsuite/btcwallet v0.16.5 // indirect
+	github.com/btcsuite/btcwallet/wallet/txauthor v1.3.3 // indirect
+	github.com/btcsuite/btcwallet/wallet/txrules v1.2.0 // indirect
+	github.com/btcsuite/btcwallet/wallet/txsizes v1.2.3 // indirect
+	github.com/btcsuite/btcwallet/walletdb v1.4.0 // indirect
+	github.com/btcsuite/btcwallet/wtxmgr v1.5.0 // indirect
+	github.com/btcsuite/go-socks v0.0.0-20170105172521-4720035b7bfd // indirect
+	github.com/btcsuite/websocket v0.0.0-20150119174127-31079b680792 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/containerd/cgroups v1.0.4 // indirect
-	github.com/containerd/containerd v1.6.14 // indirect
+	github.com/containerd/containerd v1.6.15 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/davidlazar/go-crypto v0.0.0-20200604182044-b73af7476f6c // indirect
+	github.com/decred/dcrd/crypto/blake256 v1.0.0 // indirect
+	github.com/decred/dcrd/lru v1.0.0 // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
-	github.com/docker/docker-credential-helpers v0.6.3 // indirect
+	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/elastic/gosigar v0.14.2 // indirect
 	github.com/emirpasic/gods v1.12.0 // indirect
 	github.com/flynn/noise v1.0.0 // indirect
 	github.com/francoispqt/gojay v1.2.13 // indirect
+	github.com/go-errors/errors v1.0.1 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -67,6 +85,7 @@ require (
 	github.com/jbenet/go-temp-err-catcher v0.1.0 // indirect
 	github.com/jbenet/goprocess v0.1.4 // indirect
 	github.com/kevinburke/ssh_config v0.0.0-20190725054713-01f96b0aa0cd // indirect
+	github.com/kkdai/bstream v1.0.0 // indirect
 	github.com/klauspost/compress v1.15.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.1 // indirect
 	github.com/koron/go-ssdp v0.0.3 // indirect
@@ -83,6 +102,12 @@ require (
 	github.com/libp2p/go-openssl v0.1.0 // indirect
 	github.com/libp2p/go-reuseport v0.2.0 // indirect
 	github.com/libp2p/go-yamux/v4 v4.0.0 // indirect
+	github.com/lightninglabs/gozmq v0.0.0-20191113021534-d20a764486bf // indirect
+	github.com/lightninglabs/neutrino v0.14.2 // indirect
+	github.com/lightningnetwork/lnd/clock v1.0.1 // indirect
+	github.com/lightningnetwork/lnd/queue v1.0.1 // indirect
+	github.com/lightningnetwork/lnd/ticker v1.0.0 // indirect
+	github.com/lightningnetwork/lnd/tlv v1.0.2 // indirect
 	github.com/lucas-clemente/quic-go v0.31.1 // indirect
 	github.com/marten-seemann/qtls-go1-18 v0.1.3 // indirect
 	github.com/marten-seemann/qtls-go1-19 v0.1.1 // indirect
@@ -123,7 +148,7 @@ require (
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/raulk/go-watchdog v1.3.0 // indirect
 	github.com/sergi/go-diff v1.0.0 // indirect
-	github.com/sirupsen/logrus v1.8.1 // indirect
+	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/spacemonkeygo/spacelog v0.0.0-20180420211403-2296661a0572 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/src-d/gcfg v1.4.0 // indirect
@@ -140,10 +165,11 @@ require (
 	golang.org/x/crypto v0.3.0 // indirect
 	golang.org/x/exp v0.0.0-20221205204356-47842c84f3db // indirect
 	golang.org/x/mod v0.7.0 // indirect
-	golang.org/x/net v0.3.0 // indirect
+	golang.org/x/net v0.5.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.3.0 // indirect
-	golang.org/x/tools v0.3.0 // indirect
+	golang.org/x/sys v0.4.0 // indirect
+	golang.org/x/term v0.4.0 // indirect
+	golang.org/x/tools v0.5.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/src-d/go-billy.v4 v4.3.2 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect

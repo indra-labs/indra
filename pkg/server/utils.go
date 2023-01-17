@@ -1,10 +1,10 @@
 package server
 
 import (
-	"github.com/btcsuite/btcutil/base58"
+	"github.com/btcsuite/btcd/btcutil/base58"
+	"github.com/btcsuite/btcd/btcutil/bech32"
 	"github.com/libp2p/go-libp2p/core/crypto"
 )
-import "github.com/btcsuite/btcutil/bech32"
 
 var hnd = "ind"
 
@@ -31,7 +31,7 @@ func bech32encode(key crypto.PrivKey) (keyStr string, err error) {
 
 func bech32decode(keyStr string) (privKey crypto.PrivKey, err error) {
 
-	//var hnd string
+	// var hnd string
 	var key []byte
 
 	if _, key, err = bech32.Decode(keyStr); check(err) {

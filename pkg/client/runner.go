@@ -1,27 +1,47 @@
 package client
 
 import (
+	"fmt"
+	"reflect"
 	"time"
 
-	"github.com/indra-labs/indra/pkg/ciph"
-	"github.com/indra-labs/indra/pkg/sha256"
-	"github.com/indra-labs/indra/pkg/slice"
+	"github.com/davecgh/go-spew/spew"
+	"github.com/indra-labs/indra/pkg/crypto/ciph"
+	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	"github.com/indra-labs/indra/pkg/crypto/sha256"
+	"github.com/indra-labs/indra/pkg/onion"
+	"github.com/indra-labs/indra/pkg/onion/layers/balance"
+	"github.com/indra-labs/indra/pkg/onion/layers/confirm"
+	"github.com/indra-labs/indra/pkg/onion/layers/crypt"
+	"github.com/indra-labs/indra/pkg/onion/layers/delay"
+	"github.com/indra-labs/indra/pkg/onion/layers/exit"
+	"github.com/indra-labs/indra/pkg/onion/layers/forward"
+	"github.com/indra-labs/indra/pkg/onion/layers/getbalance"
+	"github.com/indra-labs/indra/pkg/onion/layers/magicbytes"
+	"github.com/indra-labs/indra/pkg/onion/layers/noop"
+	"github.com/indra-labs/indra/pkg/onion/layers/response"
+	"github.com/indra-labs/indra/pkg/onion/layers/reverse"
+	"github.com/indra-labs/indra/pkg/onion/layers/session"
+	"github.com/indra-labs/indra/pkg/onion/layers/token"
+	"github.com/indra-labs/indra/pkg/traffic"
 	"github.com/indra-labs/indra/pkg/types"
-	"github.com/indra-labs/indra/pkg/wire"
-	"github.com/indra-labs/indra/pkg/wire/cipher"
-	"github.com/indra-labs/indra/pkg/wire/confirm"
-	"github.com/indra-labs/indra/pkg/wire/delay"
-	"github.com/indra-labs/indra/pkg/wire/exit"
-	"github.com/indra-labs/indra/pkg/wire/forward"
-	"github.com/indra-labs/indra/pkg/wire/layer"
-	"github.com/indra-labs/indra/pkg/wire/noop"
-	"github.com/indra-labs/indra/pkg/wire/response"
-	"github.com/indra-labs/indra/pkg/wire/reverse"
-	"github.com/indra-labs/indra/pkg/wire/session"
-	"github.com/indra-labs/indra/pkg/wire/token"
+	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
+func recLog(on types.Onion, b slice.Bytes, cl *Client) func() string {
+	return func() string {
+		return cl.AddrPort.String() +
+			" received " +
+			fmt.Sprint(reflect.TypeOf(on)) + "\n" +
+			spew.Sdump(b.ToBytes())
+	}
+}
+
 func (cl *Client) runner() (out bool) {
+	log.T.C(func() string {
+		return cl.AddrPort.String() +
+			" awaiting message"
+	})
 	select {
 	case <-cl.C.Wait():
 		cl.Cleanup()
@@ -29,65 +49,121 @@ func (cl *Client) runner() (out bool) {
 		break
 	case b := <-cl.Node.Receive():
 		// process received message
-		var onion types.Onion
+		var on types.Onion
 		var e error
 		c := slice.NewCursor()
-		if onion, e = wire.PeelOnion(b, c); check(e) {
+		if on, e = onion.Peel(b, c); check(e) {
 			break
 		}
-		switch on := onion.(type) {
-		case *cipher.OnionSkin:
-			cl.cipher(on, b, c)
-		case *confirm.OnionSkin:
+		switch on := on.(type) {
+		case *balance.Layer:
+			log.T.C(recLog(on, b, cl))
+			cl.balance(on, b, c)
+		case *confirm.Layer:
+			log.T.C(recLog(on, b, cl))
 			cl.confirm(on, b, c)
-		case *delay.OnionSkin:
+		case *delay.Layer:
+			log.T.C(recLog(on, b, cl))
 			cl.delay(on, b, c)
-		case *exit.OnionSkin:
+		case *exit.Layer:
+			log.T.C(recLog(on, b, cl))
 			cl.exit(on, b, c)
-		case *forward.OnionSkin:
+		case *forward.Layer:
+			log.T.C(recLog(on, b, cl))
 			cl.forward(on, b, c)
-		case *layer.OnionSkin:
+		case *getbalance.Layer:
+			log.T.C(recLog(on, b, cl))
+			cl.getBalance(on, b, c)
+		case *crypt.Layer:
+			log.T.C(recLog(on, b, cl))
 			cl.layer(on, b, c)
-		case *noop.OnionSkin:
+		case *noop.Layer:
+			log.T.C(recLog(on, b, cl))
 			cl.noop(on, b, c)
-		case *reverse.OnionSkin:
+		case *reverse.Layer:
+			log.T.C(recLog(on, b, cl))
 			cl.reverse(on, b, c)
-		case *response.OnionSkin:
+		case *response.Layer:
+			log.T.C(recLog(on, b, cl))
 			cl.response(on, b, c)
-		case *session.OnionSkin:
+		case *session.Layer:
+			log.T.C(recLog(on, b, cl))
 			cl.session(on, b, c)
-		case *token.OnionSkin:
+		case *token.Layer:
+			log.T.C(recLog(on, b, cl))
 			cl.token(on, b, c)
 		default:
 			log.I.S("unrecognised packet", b)
+		}
+	case p := <-cl.PaymentChan:
+		log.T.S("incoming payment", cl.AddrPort.String(), p)
+		topUp := false
+		cl.IterateSessions(func(s *traffic.Session) bool {
+			if s.Preimage == p.Preimage {
+				s.AddBytes(p.Amount)
+				topUp = true
+				log.T.F("topping up %x with %d mSat",
+					s.ID, p.Amount)
+				return true
+			}
+			return false
+		})
+		if !topUp {
+			cl.AddPendingPayment(p)
+			log.T.F("awaiting session keys for preimage %x",
+				p.Preimage)
 		}
 	}
 	return
 }
 
-func (cl *Client) cipher(on *cipher.OnionSkin, b slice.Bytes, c *slice.Cursor) {
-	// This either is in a forward only SendKeys message or we are the buyer
-	// and these are our session keys.
-	// log.I.S(on)
-	b = append(b[*c:], slice.NoisePad(int(*c))...)
-	cl.Node.Send(b)
+func BudgeUp(b slice.Bytes, start slice.Cursor) (o slice.Bytes) {
+	o = b
+	copy(o, o[start:])
+	copy(o[len(o)-int(start):], slice.NoisePad(int(start)))
+	return
 }
 
-func (cl *Client) confirm(on *confirm.OnionSkin, b slice.Bytes,
-	c *slice.Cursor) {
+func (cl *Client) confirm(on *confirm.Layer,
+	b slice.Bytes, c *slice.Cursor) {
+
 	// When a confirm arrives check if it is registered for and run
 	// the hook that was registered with it.
+	log.T.S(cl.Confirms)
 	cl.Confirms.Confirm(on.ID)
 }
 
-func (cl *Client) delay(on *delay.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
+func (cl *Client) balance(on *balance.Layer,
+	b slice.Bytes, c *slice.Cursor) {
+
+	cl.IterateSessions(func(s *traffic.Session) bool {
+		if s.ID == on.ID {
+			log.T.F("received balance %x for session %x",
+				on.MilliSatoshi, on.ID)
+			s.Remaining = on.MilliSatoshi
+			return true
+		}
+		return false
+	})
+}
+
+func (cl *Client) delay(on *delay.Layer, b slice.Bytes,
+	c *slice.Cursor) {
+
 	// this is a message to hold the message in the buffer until a duration
 	// elapses. The accounting for the remainder of the message adds a
 	// factor to the effective byte consumption in accordance with the time
 	// to be stored.
+	// todo: accounting
+	select {
+	case <-time.After(on.Duration):
+	}
+	cl.Node.Send(BudgeUp(b, *c))
 }
 
-func (cl *Client) exit(on *exit.OnionSkin, b slice.Bytes, c *slice.Cursor) {
+func (cl *Client) exit(on *exit.Layer, b slice.Bytes,
+	c *slice.Cursor) {
+
 	// payload is forwarded to a local port and the result is forwarded
 	// back with a reverse header.
 	var e error
@@ -100,71 +176,118 @@ func (cl *Client) exit(on *exit.OnionSkin, b slice.Bytes, c *slice.Cursor) {
 	case result = <-cl.ReceiveFrom(on.Port):
 	case <-timer.C:
 	}
-	// We need to wrap the result in a message layer.
-	res := wire.EncodeOnion(&response.OnionSkin{
+	// We need to wrap the result in a message crypt.
+	res := onion.Encode(&response.Layer{
 		Hash:  sha256.Single(on.Bytes),
 		Bytes: result,
 	})
-	header := b[*c:c.Inc(ReverseHeaderLen)]
-	rb := make(slice.Bytes, ReverseHeaderLen+len(res))
-	cur := slice.NewCursor()
-	copy(rb[*cur:cur.Inc(ReverseHeaderLen)], header[:ReverseHeaderLen])
-	copy(rb[ReverseHeaderLen:], res)
-	start := *cur
-	for i := range on.Ciphers {
-		blk := ciph.BlockFromHash(on.Ciphers[i])
-		ciph.Encipher(blk, on.Nonces[2-i], rb[start:])
-	}
+	rb := FormatReply(b[*c:c.Inc(ReverseHeaderLen)],
+		res, on.Ciphers, on.Nonces)
 	cl.Node.Send(rb)
 }
 
-func (cl *Client) forward(on *forward.OnionSkin, b slice.Bytes,
+func (cl *Client) forward(on *forward.Layer, b slice.Bytes,
 	c *slice.Cursor) {
 
 	// forward the whole buffer received onwards. Usually there will be a
-	// layer.OnionSkin under this which will be unwrapped by the receiver.
+	// crypt.Layer under this which will be unwrapped by the receiver.
 	if on.AddrPort.String() == cl.Node.AddrPort.String() {
 		// it is for us, we want to unwrap the next part.
-		b = append(b[*c:], slice.NoisePad(int(*c))...)
-		cl.Node.Send(b)
+		// cl.Peer.Send(append(b[*c:], slice.NoisePad(int(*c))...))
+		cl.Node.Send(BudgeUp(b, *c))
 	} else {
 		// we need to forward this message onion.
 		cl.Send(on.AddrPort, b)
 	}
 }
 
-func (cl *Client) layer(on *layer.OnionSkin, b slice.Bytes, c *slice.Cursor) {
-	// this is probably an encrypted layer for us.
-	hdr, _, _ := cl.FindCloaked(on.Cloak)
+func (cl *Client) getBalance(on *getbalance.Layer,
+	b slice.Bytes, c *slice.Cursor) {
+
+	var found bool
+	var bal *balance.Layer
+	cl.IterateSessions(func(s *traffic.Session) bool {
+		if s.ID == on.ID {
+			bal = &balance.Layer{
+				ID:           on.ID,
+				MilliSatoshi: s.Remaining,
+			}
+			found = true
+			return true
+		}
+		return false
+	})
+	if !found {
+		return
+	}
+	rb := FormatReply(b[*c:c.Inc(ReverseHeaderLen)],
+		onion.Encode(bal), on.Ciphers, on.Nonces)
+	cl.Node.Send(rb)
+}
+
+func FormatReply(header, res slice.Bytes, ciphers [3]sha256.Hash,
+	nonces [3]nonce.IV) (rb slice.Bytes) {
+
+	rb = make(slice.Bytes, ReverseHeaderLen+len(res))
+	cur := slice.NewCursor()
+	copy(rb[*cur:cur.Inc(ReverseHeaderLen)], header[:ReverseHeaderLen])
+	copy(rb[ReverseHeaderLen:], res)
+	start := *cur
+	for i := range ciphers {
+		blk := ciph.BlockFromHash(ciphers[i])
+		ciph.Encipher(blk, nonces[2-i], rb[start:])
+	}
+	return
+}
+
+func (cl *Client) layer(on *crypt.Layer, b slice.Bytes,
+	c *slice.Cursor) {
+
+	// this is probably an encrypted crypt for us.
+	hdr, _, _, identity := cl.FindCloaked(on.Cloak)
 	if hdr == nil {
-		log.I.Ln("no matching key found from cloaked key")
+		log.T.Ln("no matching key found from cloaked key")
 		return
 	}
 	on.Decrypt(hdr, b, c)
-	b = append(b[*c:], slice.NoisePad(int(*c))...)
-	cl.Node.Send(b)
+	if identity {
+		if string(b[*c:][:magicbytes.Len]) != session.MagicString {
+			log.T.Ln("dropping message due to identity key with" +
+				" no following session")
+			return
+		}
+	}
+	cl.Node.Send(BudgeUp(b, *c))
 }
 
-func (cl *Client) noop(on *noop.OnionSkin, b slice.Bytes, c *slice.Cursor) {
+func (cl *Client) noop(on *noop.Layer, b slice.Bytes,
+	c *slice.Cursor) {
+
 	// this won't happen normally
 }
 
-func (cl *Client) reverse(on *reverse.OnionSkin, b slice.Bytes,
+func (cl *Client) reverse(on *reverse.Layer, b slice.Bytes,
 	c *slice.Cursor) {
 
 	var e error
-	var onion types.Onion
+	var on2 types.Onion
 	if on.AddrPort.String() == cl.Node.AddrPort.String() {
-		if onion, e = wire.PeelOnion(b, c); check(e) {
+		if on2, e = onion.Peel(b, c); check(e) {
 			return
 		}
-		switch on1 := onion.(type) {
-		case *layer.OnionSkin:
+		switch on1 := on2.(type) {
+		case *crypt.Layer:
 			start := *c - ReverseLayerLen
 			first := *c
 			second := first + ReverseLayerLen
 			last := second + ReverseLayerLen
-			hdr, pld, _ := cl.FindCloaked(on1.Cloak)
+			log.T.Ln("searching for reverse crypt keys")
+			hdr, pld, _, _ := cl.FindCloaked(on1.Cloak)
+			if hdr == nil || pld == nil {
+				log.E.F("failed to find key for %s",
+					cl.Node.AddrPort.String())
+				return
+			}
 			// We need to find the PayloadPub to match.
 			hdrPrv := hdr
 			hdrPub := on1.FromPub
@@ -183,8 +306,10 @@ func (cl *Client) reverse(on *reverse.OnionSkin, b slice.Bytes,
 				cl.Node.Send(b[last:])
 				break
 			}
-			cl.Node.Send(b[start:])
+			cl.Node.Send(BudgeUp(b, start))
 		default:
+			// If a reverse is not followed by an onion crypt the
+			// message is incorrectly formed, just drop it.
 			return
 		}
 	} else {
@@ -194,34 +319,38 @@ func (cl *Client) reverse(on *reverse.OnionSkin, b slice.Bytes,
 
 }
 
-func (cl *Client) response(on *response.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
-	// Response is a payload from an exit message.
-	// log.I.S(on.Hash, on.Bytes.ToBytes())
-	cl.ExitHooks.Find(on.Hash)
-}
-
-func (cl *Client) session(s *session.OnionSkin, b slice.Bytes,
+func (cl *Client) response(on *response.Layer, b slice.Bytes,
 	cur *slice.Cursor) {
 
-	// Session is returned from a Purchase message in the reverse layers.
-	//
-	// Session has a nonce.ID that is given in the last layer of a LN sphinx
-	// Bolt 4 onion routed payment path that will cause the seller to
-	// activate the accounting onion the two keys it sent back with the
-	// nonce, so long as it has not yet expired.
-	for i := range cl.PendingSessions {
-		if cl.PendingSessions[i] == s.ID {
-			// we would make payment and move session to running
-			// sessions list.
-			log.I.S("session received, now to pay", s)
-		}
-	}
-	// So now we want to pay. For now we are just going to shut down the
-	// client as this finishes the test correctly.
-	cl.C.Q()
+	// Response is a payload from an exit message.
+	cl.Hooks.Find(on.Hash, on.Bytes)
 }
 
-func (cl *Client) token(t *token.OnionSkin, b slice.Bytes, cur *slice.Cursor) {
+func (cl *Client) session(on *session.Layer, b slice.Bytes,
+	c *slice.Cursor) {
+
+	log.T.C(func() string {
+		return fmt.Sprint("incoming session",
+			spew.Sdump(on.PreimageHash()))
+	})
+	pi := cl.FindPendingPreimage(on.PreimageHash())
+	if pi != nil {
+		// We need to delete this first in case somehow two such
+		// messages arrive at the same time, and we end up with
+		// duplicate sessions.
+		cl.DeletePendingPayment(pi.Preimage)
+		log.T.F("Adding session %x\n", pi.ID)
+		cl.AddSession(traffic.NewSession(pi.ID,
+			cl.Node.Peer, pi.Amount, on.Header, on.Payload, on.Hop))
+		cl.Node.Send(BudgeUp(b, *c))
+	} else {
+		log.T.Ln("dropping session message without payment")
+	}
+}
+
+func (cl *Client) token(t *token.Layer, b slice.Bytes,
+	cur *slice.Cursor) {
+
 	// not really sure if we are using these.
 	return
 }

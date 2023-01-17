@@ -3,14 +3,15 @@ package introducer
 import (
 	"context"
 	"errors"
+	"sync"
+
 	"github.com/indra-labs/indra"
-	log2 "github.com/indra-labs/indra/pkg/log"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/protocol"
 	"github.com/multiformats/go-multiaddr"
-	"sync"
 )
 
 var (
@@ -71,7 +72,7 @@ func Bootstrap(ctx context.Context, host host.Host, seeds []multiaddr.Multiaddr)
 		dht.BootstrapPeers(bootstrapPeers...),
 		dht.DisableValues(),
 		dht.DisableProviders(),
-		//dht.Validator(),
+		// dht.Validator(),
 	}
 
 	if kadht, err = dht.New(ctx, h, options...); check(err) {

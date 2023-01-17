@@ -1,35 +1,28 @@
 package client
 
 import (
-	"fmt"
-	"math"
 	"net/netip"
 	"sync"
 	"time"
 
 	"github.com/cybriq/qu"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/indra-labs/indra"
-	"github.com/indra-labs/indra/pkg/ifc"
-	"github.com/indra-labs/indra/pkg/key/cloak"
-	"github.com/indra-labs/indra/pkg/key/prv"
-	"github.com/indra-labs/indra/pkg/key/pub"
-	"github.com/indra-labs/indra/pkg/key/signer"
-	log2 "github.com/indra-labs/indra/pkg/log"
+	"github.com/indra-labs/indra/pkg/crypto/key/cloak"
+	"github.com/indra-labs/indra/pkg/crypto/key/prv"
+	"github.com/indra-labs/indra/pkg/crypto/key/pub"
+	"github.com/indra-labs/indra/pkg/crypto/key/signer"
+	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/node"
-	"github.com/indra-labs/indra/pkg/nonce"
-	"github.com/indra-labs/indra/pkg/session"
-	"github.com/indra-labs/indra/pkg/slice"
-	"github.com/indra-labs/indra/pkg/wire/confirm"
-	"github.com/indra-labs/indra/pkg/wire/layer"
-	"github.com/indra-labs/indra/pkg/wire/response"
-	"github.com/indra-labs/indra/pkg/wire/reverse"
+	"github.com/indra-labs/indra/pkg/onion/layers/confirm"
+	"github.com/indra-labs/indra/pkg/onion/layers/crypt"
+	"github.com/indra-labs/indra/pkg/onion/layers/response"
+	"github.com/indra-labs/indra/pkg/onion/layers/reverse"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/traffic"
+	"github.com/indra-labs/indra/pkg/types"
+	"github.com/indra-labs/indra/pkg/util/slice"
 	"go.uber.org/atomic"
-)
-
-const (
-	DefaultDeadline  = 10 * time.Minute
-	ReverseLayerLen  = reverse.Len + layer.Len
-	ReverseHeaderLen = 3 * ReverseLayerLen
 )
 
 var (
@@ -37,20 +30,23 @@ var (
 	check = log.E.Chk
 )
 
+const (
+	ReverseLayerLen  = reverse.Len + crypt.Len
+	ReverseHeaderLen = 3 * ReverseLayerLen
+)
+
 type Client struct {
 	*node.Node
 	node.Nodes
-	session.Sessions
-	PendingSessions []nonce.ID
-	*confirm.Confirms
-	ExitHooks response.Hooks
 	sync.Mutex
+	*confirm.Confirms
+	response.Hooks
 	*signer.KeySet
-	atomic.Bool
+	ShuttingDown atomic.Bool
 	qu.C
 }
 
-func New(tpt ifc.Transport, hdrPrv *prv.Key, no *node.Node,
+func NewClient(tpt types.Transport, hdrPrv *prv.Key, no *node.Node,
 	nodes node.Nodes) (c *Client, e error) {
 
 	no.Transport = tpt
@@ -60,6 +56,8 @@ func New(tpt ifc.Transport, hdrPrv *prv.Key, no *node.Node,
 	if _, ks, e = signer.New(); check(e) {
 		return
 	}
+	// Add our first return session.
+	no.AddSession(traffic.NewSession(nonce.NewID(), no.Peer, 0, nil, nil, 5))
 	c = &Client{
 		Confirms: confirm.NewConfirms(),
 		Node:     no,
@@ -67,10 +65,6 @@ func New(tpt ifc.Transport, hdrPrv *prv.Key, no *node.Node,
 		KeySet:   ks,
 		C:        qu.T(),
 	}
-	// A new client requires a Session for receiving responses. This session
-	// should have its keys changed periodically, or at least once on
-	// startup.
-	c.Sessions = c.Sessions.Add(session.New(no.ID, no, math.MaxUint64, 0, 0))
 	return
 }
 
@@ -93,90 +87,35 @@ func (cl *Client) RegisterConfirmation(hook confirm.Hook,
 	})
 }
 
-// FindCloaked searches the client identity key and the Sessions for a match. It
+// FindCloaked searches the client identity key and the sessions for a match. It
 // returns the session as well, though not all users of this function will need
 // this.
-func (cl *Client) FindCloaked(clk cloak.PubKey) (hdr *prv.Key, pld *prv.Key,
-	sess *session.Session) {
+func (cl *Client) FindCloaked(clk cloak.PubKey) (hdr *prv.Key,
+	pld *prv.Key, sess *traffic.Session, identity bool) {
 
 	var b cloak.Blinder
 	copy(b[:], clk[:cloak.BlindLen])
 	hash := cloak.Cloak(b, cl.Node.IdentityBytes)
 	if hash == clk {
+		log.T.Ln("encrypted to identity key")
 		hdr = cl.Node.IdentityPrv
 		// there is no payload key for the node, only in sessions.
+		identity = true
 		return
 	}
-	for i := range cl.Sessions {
-		hash = cloak.Cloak(b, cl.Sessions[i].HeaderBytes)
+	var i int
+	cl.Node.IterateSessions(func(s *traffic.Session) (stop bool) {
+		hash = cloak.Cloak(b, s.HeaderBytes)
 		if hash == clk {
-			hdr = cl.Sessions[i].HeaderPrv
-			pld = cl.Sessions[i].PayloadPrv
-			sess = cl.Sessions[i]
-			return
+			log.T.F("found cloaked key in session %d", i)
+			hdr = s.HeaderPrv
+			pld = s.PayloadPrv
+			sess = s
+			return true
 		}
-	}
-	return
-}
-
-// SendKeys is the delivery of a ...
-//
-// todo: this function should be requiring input of keys, and a related prior
-//
-//	function that generates the preimage for an LN AMP, from the hash of the
-//	keys.
-func (cl *Client) SendKeys(nodeID []nonce.ID, hook confirm.Hook) (conf nonce.ID,
-	e error) {
-
-	var n []*node.Node
-	for i := range nodeID {
-		no := cl.Nodes.FindByID(nodeID[i])
-		if no != nil {
-			n = append(n, no)
-		}
-	}
-	if len(n) > 5 {
-		e = fmt.Errorf("SendKeys maximum 5 keys %d given", len(nodeID))
-	}
-	ln := len(n)
-	hdrPrv, pldPrv := make([]*prv.Key, ln), make([]*prv.Key, ln)
-	hdrPub, pldPub := make([]*pub.Key, ln), make([]*pub.Key, ln)
-	for i := range n {
-		if hdrPrv[i], e = prv.GenerateKey(); check(e) {
-			return
-		}
-		hdrPub[i] = pub.Derive(hdrPrv[i])
-		if pldPrv[i], e = prv.GenerateKey(); check(e) {
-			return
-		}
-		pldPub[i] = pub.Derive(pldPrv[i])
-	}
-
-	// selected := cl.Nodes.Select(SimpleSelector, n, 4)
-	// if len(selected) < 4 {
-	// 	e = fmt.Errorf("not enough nodes known to form circuit")
-	// 	return
-	// }
-	// hop := [5]*node.Node{
-	// 	selected[0], selected[1], n, selected[2], selected[3],
-	// }
-	// conf = nonce.NewID()
-	// os := wire.SendKeys(conf, hdrPrv, pldPrv, cl.Node, hop, cl.KeySet)
-	// cl.RegisterConfirmation(hook, os[len(os)-1].(*confirm.OnionSkin).ID)
-	// cl.Sessions.Add(&session.Session{
-	// 	ID:           n.ID,
-	// 	Remaining:    1 << 16,
-	// 	IdentityPub:    hdrPub,
-	// 	IdentityBytes:  hdrPub.ToBytes(),
-	// 	PayloadPub:   pldPub,
-	// 	PayloadBytes: pldPub.ToBytes(),
-	// 	IdentityPrv:    hdrPrv,
-	// 	PayloadPrv:   pldPrv,
-	// 	Deadline:     time.Now().Add(DefaultDeadline),
-	// })
-	// o := os.Assemble()
-	// b := wire.EncodeOnion(o)
-	// cl.Send(hop[0].AddrPort, b)
+		i++
+		return
+	})
 	return
 }
 
@@ -189,11 +128,13 @@ func (cl *Client) Cleanup() {
 // Shutdown triggers the shutdown of the client and the Cleanup before
 // finishing.
 func (cl *Client) Shutdown() {
-	if cl.Bool.Load() {
+	if cl.ShuttingDown.Load() {
 		return
 	}
-	log.I.Ln("shutting down client", cl.Node.AddrPort.String())
-	cl.Bool.Store(true)
+	log.T.C(func() string {
+		return "shutting down client " + cl.Node.AddrPort.String()
+	})
+	cl.ShuttingDown.Store(true)
 	cl.C.Q()
 }
 
@@ -203,12 +144,20 @@ func (cl *Client) Send(addr *netip.AddrPort, b slice.Bytes) {
 	// open.
 	as := addr.String()
 	for i := range cl.Nodes {
-		if as == cl.Nodes[i].Addr {
+		if as == cl.Nodes[i].AddrPort.String() {
+			log.T.C(func() string {
+				return cl.AddrPort.String() +
+					" sending to " +
+					addr.String() +
+					"\n" +
+					spew.Sdump(b.ToBytes())
+			})
 			cl.Nodes[i].Transport.Send(b)
 			return
 		}
 	}
 	// If we got to here none of the addresses matched, and we need to
-	// establish a new peer connection to them.
+	// establish a new peer connection to them, if we know of them (this
+	// would usually be the reason this happens).
 
 }

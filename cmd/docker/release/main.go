@@ -2,16 +2,18 @@ package main
 
 import (
 	"context"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/indra-labs/indra"
-	"github.com/indra-labs/indra/pkg/app"
-	"github.com/indra-labs/indra/pkg/cmds"
 	"github.com/indra-labs/indra/pkg/docker"
-	log2 "github.com/indra-labs/indra/pkg/log"
-	"github.com/indra-labs/indra/pkg/opts/config"
-	"github.com/indra-labs/indra/pkg/opts/meta"
-	"github.com/indra-labs/indra/pkg/opts/toggle"
+	"github.com/indra-labs/indra/pkg/proc/app"
+	"github.com/indra-labs/indra/pkg/proc/cmds"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/proc/opts/config"
+	"github.com/indra-labs/indra/pkg/proc/opts/meta"
+	"github.com/indra-labs/indra/pkg/proc/opts/toggle"
+
 	"os"
 	"time"
 )
@@ -94,7 +96,7 @@ var buildConfigurations = []docker.BuildConfiguration{
 			PullParent:     false,
 		},
 	},
-	//docker.BuildConfiguration{
+	// docker.BuildConfiguration{
 	//	Name:            defaultRepositoryName + "/" + "lnd",
 	//	ContextFilePath: "/tmp/lnd.tar",
 	//	BuildOpts: types.ImageBuildOptions{
@@ -116,8 +118,8 @@ var buildConfigurations = []docker.BuildConfiguration{
 	//		ForceRemove:    true,
 	//		PullParent:     true,
 	//	},
-	//},
-	//docker.BuildConfiguration{
+	// },
+	// docker.BuildConfiguration{
 	//	Name:            defaultRepositoryName + "/" + "indra",
 	//	ContextFilePath: "/tmp/indra-" + indra.SemVer + ".tar",
 	//	BuildOpts: types.ImageBuildOptions{
@@ -132,7 +134,7 @@ var buildConfigurations = []docker.BuildConfiguration{
 	//		ForceRemove:    true,
 	//		PullParent:     true,
 	//	},
-	//},
+	// },
 }
 
 var commands = &cmds.Command{

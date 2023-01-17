@@ -10,7 +10,7 @@ import (
 	"syscall"
 
 	"github.com/indra-labs/indra"
-	log2 "github.com/indra-labs/indra/pkg/log"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"go.uber.org/atomic"
 
 	"github.com/kardianos/osext"

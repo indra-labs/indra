@@ -8,12 +8,15 @@ import (
 	"time"
 
 	"github.com/indra-labs/indra"
-	"github.com/indra-labs/indra/pkg/ifc"
-	"github.com/indra-labs/indra/pkg/key/prv"
-	"github.com/indra-labs/indra/pkg/key/pub"
-	log2 "github.com/indra-labs/indra/pkg/log"
-	"github.com/indra-labs/indra/pkg/nonce"
-	"github.com/indra-labs/indra/pkg/slice"
+	"github.com/indra-labs/indra/pkg/crypto/key/prv"
+	"github.com/indra-labs/indra/pkg/crypto/key/pub"
+	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	"github.com/indra-labs/indra/pkg/identity"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/service"
+	"github.com/indra-labs/indra/pkg/traffic"
+	"github.com/indra-labs/indra/pkg/types"
+	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
 var (
@@ -22,36 +25,36 @@ var (
 )
 
 // Node is a representation of a messaging counterparty. The netip.AddrPort can
-// be nil for the case of a client node that is not in a direct open connection.
-// For this reason all nodes are assigned an ID and will normally be handled by
-// this except when the netip.AddrPort is known via the packet sender address.
+// be nil for the case of a client node that is not in a direct open connection,
+// or for the special node in a client. For this reason all nodes are assigned
+// an ID and will normally be handled by this except when the netip.AddrPort is
+// known via the packet sender address.
 type Node struct {
 	nonce.ID
-	Addr          string
-	AddrPort      *netip.AddrPort
-	IdentityPub   *pub.Key
-	IdentityBytes pub.Bytes
-	IdentityPrv   *prv.Key
-	PingCount     int
-	LastSeen      time.Time
-	Services
-	ifc.Transport
+	*identity.Peer
+	PingCount int
+	LastSeen  time.Time
+	*traffic.Payments
+	service.Services
 }
 
 // New creates a new Node. netip.AddrPort is optional if the counterparty is not
-// in direct connection.
-func New(addr *netip.AddrPort, hdr *pub.Key, hdrPrv *prv.Key,
-	tpt ifc.Transport) (n *Node, id nonce.ID) {
+// in direct connection. Also, the idPrv node private key can be nil, as only
+// the node embedded in a client and not the peer node list has one available.
+func New(addr *netip.AddrPort, idPub *pub.Key, idPrv *prv.Key,
+	tpt types.Transport) (n *Node, id nonce.ID) {
 
 	id = nonce.NewID()
 	n = &Node{
-		ID:            id,
-		Addr:          addr.String(),
-		AddrPort:      addr,
-		Transport:     tpt,
-		IdentityPub:   hdr,
-		IdentityBytes: hdr.ToBytes(),
-		IdentityPrv:   hdrPrv,
+		ID: id,
+		Peer: &identity.Peer{
+			AddrPort:      addr,
+			IdentityPub:   idPub,
+			IdentityBytes: idPub.ToBytes(),
+			IdentityPrv:   idPrv,
+			Transport:     tpt,
+		},
+		Payments: traffic.NewPayments(),
 	}
 	return
 }
@@ -73,7 +76,7 @@ func (n *Node) SendTo(port uint16, b slice.Bytes) (e error) {
 func (n *Node) ReceiveFrom(port uint16) (b <-chan slice.Bytes) {
 	for i := range n.Services {
 		if n.Services[i].Port == port {
-			log.I.Ln("receivefrom")
+			log.T.Ln("receivefrom")
 			b = n.Services[i].Receive()
 			return
 		}

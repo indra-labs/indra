@@ -16,7 +16,7 @@ import (
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/indra-labs/indra"
-	log2 "github.com/indra-labs/indra/pkg/log"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/moby/term"
 )
 

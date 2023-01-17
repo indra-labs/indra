@@ -10,13 +10,13 @@ import (
 	"time"
 
 	"github.com/indra-labs/indra"
-	"github.com/indra-labs/indra/pkg/ciph"
-	"github.com/indra-labs/indra/pkg/key/prv"
-	"github.com/indra-labs/indra/pkg/key/pub"
-	log2 "github.com/indra-labs/indra/pkg/log"
-	"github.com/indra-labs/indra/pkg/nonce"
-	"github.com/indra-labs/indra/pkg/sha256"
-	"github.com/indra-labs/indra/pkg/slice"
+	"github.com/indra-labs/indra/pkg/crypto/ciph"
+	"github.com/indra-labs/indra/pkg/crypto/key/prv"
+	"github.com/indra-labs/indra/pkg/crypto/key/pub"
+	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	"github.com/indra-labs/indra/pkg/crypto/sha256"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
 var (

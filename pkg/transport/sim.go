@@ -2,8 +2,8 @@ package transport
 
 import (
 	"github.com/indra-labs/indra"
-	log2 "github.com/indra-labs/indra/pkg/log"
-	"github.com/indra-labs/indra/pkg/slice"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
 var (

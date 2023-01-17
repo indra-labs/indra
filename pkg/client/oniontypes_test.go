@@ -5,23 +5,25 @@ import (
 	"time"
 
 	"github.com/cybriq/qu"
-	"github.com/indra-labs/indra/pkg/key/signer"
-	"github.com/indra-labs/indra/pkg/node"
-	"github.com/indra-labs/indra/pkg/nonce"
-	"github.com/indra-labs/indra/pkg/session"
-	"github.com/indra-labs/indra/pkg/sha256"
-	"github.com/indra-labs/indra/pkg/slice"
-	"github.com/indra-labs/indra/pkg/testutils"
+	"github.com/indra-labs/indra/pkg/crypto/key/prv"
+	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	"github.com/indra-labs/indra/pkg/crypto/sha256"
+	"github.com/indra-labs/indra/pkg/onion"
+	"github.com/indra-labs/indra/pkg/onion/layers/confirm"
+	"github.com/indra-labs/indra/pkg/onion/layers/session"
+	"github.com/indra-labs/indra/pkg/payment"
+	"github.com/indra-labs/indra/pkg/service"
+	"github.com/indra-labs/indra/pkg/traffic"
 	"github.com/indra-labs/indra/pkg/transport"
-	"github.com/indra-labs/indra/pkg/wire"
-	"github.com/indra-labs/indra/pkg/wire/confirm"
+	"github.com/indra-labs/indra/pkg/util/slice"
+	"github.com/indra-labs/indra/pkg/util/tests"
 )
 
 func TestPing(t *testing.T) {
 	const nTotal = 6
 	clients := make([]*Client, nTotal)
 	var e error
-	if clients, e = CreateMockCircuitClients(nTotal); check(e) {
+	if clients, e = CreateNMockCircuits(true, 1); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -30,34 +32,27 @@ func TestPing(t *testing.T) {
 		go v.Start()
 	}
 	conf := nonce.NewID()
-	var ks *signer.KeySet
-	if _, ks, e = signer.New(); check(e) {
-		t.Error(e)
-		t.FailNow()
+	var circuit traffic.Circuit
+	for i := range circuit {
+		circuit[i] = clients[i+1].GetSessionByIndex(1)
 	}
-	var sessions session.Sessions
-	for _, v := range clients[1:] {
-		sessions = append(sessions, v.Sessions[0])
-	}
-	sessions = append(sessions, clients[0].Sessions[0])
-	os := wire.Ping(conf, sessions, ks)
+	os := onion.Ping(conf, clients[0].GetSessionByIndex(0),
+		circuit, clients[0].KeySet)
 	quit := qu.T()
-	log.I.S("sending ping with ID", os[len(os)-1].(*confirm.OnionSkin))
 	clients[0].RegisterConfirmation(func(cf nonce.ID) {
-		log.I.S("received ping confirmation ID", cf)
+		log.T.S("received ping confirmation ID", cf)
 		quit.Q()
-	}, os[len(os)-1].(*confirm.OnionSkin).ID)
-	o := os.Assemble()
-	b := wire.EncodeOnion(o)
-	clients[0].Send(clients[1].AddrPort, b)
+	}, os[len(os)-1].(*confirm.Layer).ID)
+	b := onion.Encode(os.Assemble())
+	log.T.S("sending ping with ID", os[len(os)-1].(*confirm.Layer))
+	clients[0].Send(clients[0].Nodes[0].AddrPort, b)
 	go func() {
 		select {
 		case <-time.After(time.Second):
 			t.Error("ping got stuck")
+			quit.Q()
 		case <-quit:
 		}
-		time.Sleep(time.Second)
-		quit.Q()
 	}()
 	<-quit.Wait()
 	for _, v := range clients {
@@ -65,52 +60,17 @@ func TestPing(t *testing.T) {
 	}
 }
 
-// func TestSendKeys(t *testing.T) {
-// 	const nTotal = 6
-// 	clients := make([]*Client, nTotal)
-// 	var e error
-// 	if clients, e = CreateMockCircuitClients(nTotal); check(e) {
-// 		t.Error(e)
-// 		t.FailNow()
-// 	}
-// 	// Start up the clients.
-// 	for _, v := range clients {
-// 		go v.Start()
-// 	}
-// 	quit := qu.T()
-// 	clients[0].SendKeys(clients[0].Nodes[0].ID, func(cf nonce.ID) {
-// 		log.I.S("received sendkeys confirmation ID", cf)
-// 		quit.Q()
-// 	})
-// 	<-quit.Wait()
-// 	for _, v := range clients {
-// 		v.Shutdown()
-// 	}
-// }
-
 func TestSendExit(t *testing.T) {
 	const nTotal = 6
 	clients := make([]*Client, nTotal)
 	var e error
-	if clients, e = CreateMockCircuitClients(nTotal); check(e) {
+	if clients, e = CreateNMockCircuits(true, 1); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
-	var ks *signer.KeySet
-	if _, ks, e = signer.New(); check(e) {
-		t.Error(e)
-		t.FailNow()
-	}
-	var sess [3]*session.Session
-	sess[0] = clients[4].Sessions.Find(clients[4].ID)
-	sess[1] = clients[5].Sessions.Find(clients[5].ID)
-	sess[2] = clients[0].Sessions.Find(clients[0].ID)
-	clients[4].Sessions = clients[4].Sessions.Add(sess[0])
-	clients[5].Sessions = clients[5].Sessions.Add(sess[1])
-	clients[0].Sessions = clients[0].Sessions.Add(sess[2])
 	// set up forwarding port service
 	const port = 3455
-	clients[3].Services = append(clients[3].Services, &node.Service{
+	clients[3].Services = append(clients[3].Services, &service.Service{
 		Port:      port,
 		Transport: transport.NewSim(0),
 	})
@@ -118,37 +78,136 @@ func TestSendExit(t *testing.T) {
 	for _, v := range clients {
 		go v.Start()
 	}
-	var hop [nTotal - 1]*node.Node
-	for i := range clients[0].Nodes {
-		hop[i] = clients[0].Nodes[i]
+	var circuit traffic.Circuit
+	for i := range circuit {
+		circuit[i] = clients[0].GetSessionByIndex(i + 1)
 	}
-	// id := nonce.NewID()
-	var message slice.Bytes
-	var hash sha256.Hash
-	if message, hash, e = testutils.GenerateTestMessage(32); check(e) {
+	var msg slice.Bytes
+	var msgHash sha256.Hash
+	if msg, msgHash, e = tests.GenMessage(32, "request"); check(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	var respMsg slice.Bytes
+	var respHash sha256.Hash
+	if respMsg, respHash, e = tests.GenMessage(32, "response"); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
 	quit := qu.T()
-	os := wire.SendExit(message, port, clients[0].Node, hop, sess, ks)
-	clients[0].ExitHooks = clients[0].ExitHooks.Add(hash, func() {
-		log.I.S("finished")
-		quit.Q()
-	})
-	o := os.Assemble()
-	b := wire.EncodeOnion(o)
-	hop[0].Send(b)
+	os := onion.SendExit(msg, port, clients[0].GetSessionByIndex(0), circuit,
+		clients[0].KeySet)
+	clients[0].Hooks = clients[0].Hooks.Add(msgHash,
+		func(b slice.Bytes) {
+			log.T.S(b.ToBytes())
+			if sha256.Single(b) != respHash {
+				t.Error("failed to receive expected message")
+			}
+			quit.Q()
+		})
+	b := onion.Encode(os.Assemble())
+	log.T.Ln(clients[0].Node.AddrPort.String())
+	clients[0].Node.Send(b)
 	go func() {
-		time.Sleep(time.Second * 6)
-		quit.Q()
-		t.Error("SendExit got stuck")
+		select {
+		case <-time.After(time.Second):
+			t.Error("sendexit got stuck")
+			quit.Q()
+		case <-quit:
+		}
 	}()
 	bb := <-clients[3].Services[0].Receive()
-	log.I.S(bb.ToBytes())
-	if e = clients[3].SendTo(port, bb); check(e) {
+	log.T.S(bb.ToBytes())
+	if e = clients[3].SendTo(port, respMsg); check(e) {
 		t.Error("fail send")
 	}
-	log.I.S("response sent")
+	log.T.Ln("response sent")
+	<-quit.Wait()
+	for _, v := range clients {
+		v.Shutdown()
+	}
+}
+
+func TestSendKeys(t *testing.T) {
+	var clients []*Client
+	var e error
+	if clients, e = CreateNMockCircuits(false, 1); check(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	// Start up the clients.
+	for _, v := range clients {
+		go v.Start()
+	}
+	quit := qu.T()
+	go func() {
+		select {
+		case <-time.After(time.Second):
+			t.Error("sendkeys got stuck")
+			quit.Q()
+		case <-quit:
+		}
+	}()
+	cnf := nonce.NewID()
+	var sess [5]*session.Layer
+	var pmt [5]*payment.Payment
+	for i := range clients[1:] {
+		// Create a new payment and drop on the payment channel.
+		sess[i] = session.New()
+		pmt[i] = sess[i].ToPayment(1000000)
+		clients[i+1].PaymentChan <- pmt[i]
+	}
+	// Send the keys.
+	var circuit traffic.Circuit
+	for i := range circuit {
+		circuit[i] = traffic.NewSession(pmt[i].ID,
+			clients[i+1].Node.Peer, pmt[i].Amount,
+			sess[i].Header, sess[i].Payload, byte(i))
+	}
+	var hdr, pld [5]*prv.Key
+	for i := range hdr {
+		hdr[i], pld[i] = sess[i].Header, sess[i].Payload
+	}
+	sk := onion.SendKeys(cnf, hdr, pld, clients[0].GetSessionByIndex(0),
+		circuit, clients[0].KeySet)
+	clients[0].RegisterConfirmation(func(cf nonce.ID) {
+		log.T.S("received payment confirmation ID", cf)
+		if cf != cnf {
+			t.Errorf("did not receive expected confirmation, got:"+
+				" %x expected: %x", cf, cnf)
+			t.FailNow()
+		}
+		quit.Q()
+	}, cnf)
+	b := onion.Encode(sk.Assemble())
+	clients[0].Send(clients[0].Nodes[0].AddrPort, b)
+	<-quit.Wait()
+	for _, v := range clients {
+		v.Shutdown()
+	}
+}
+
+func TestGetBalance(t *testing.T) {
+	var clients []*Client
+	var e error
+	if clients, e = CreateNMockCircuits(true, 2); check(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	// Start up the clients.
+	for _, v := range clients {
+		go v.Start()
+	}
+	quit := qu.T()
+	go func() {
+		select {
+		case <-time.After(time.Second):
+			// t.Error("getbalance got stuck")
+			quit.Q()
+		case <-quit:
+		}
+	}()
+
 	<-quit.Wait()
 	for _, v := range clients {
 		v.Shutdown()
