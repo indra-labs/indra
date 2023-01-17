@@ -1,10 +1,9 @@
-package wire
+package node
 
 import (
 	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/key/pub"
 	"github.com/indra-labs/indra/pkg/key/signer"
-	"github.com/indra-labs/indra/pkg/node"
 	"github.com/indra-labs/indra/pkg/nonce"
 	"github.com/indra-labs/indra/pkg/slice"
 )
@@ -17,7 +16,9 @@ import (
 // an increment of their liveness score. By using this scheme, when nodes are
 // offline their scores will fall to zero after a time whereas live nodes will
 // have steadily increasing scores from successful pings.
-func Ping(id nonce.ID, client *node.Session, s node.Circuit, ks *signer.KeySet) OnionSkins {
+func Ping(id nonce.ID, client *Session, s Circuit,
+	ks *signer.KeySet) OnionSkins {
+
 	n := GenPingNonces()
 	return OnionSkins{}.
 		ForwardLayer(s[0], ks.Next(), n[0]).
@@ -47,7 +48,7 @@ func Ping(id nonce.ID, client *node.Session, s node.Circuit, ks *signer.KeySet) 
 // their section at the top, moves the next layer header to the top and pads the
 // remainder with noise, so it always looks like the first hop.
 func SendExit(payload slice.Bytes, port uint16,
-	client *node.Session, s node.Circuit, ks *signer.KeySet) OnionSkins {
+	client *Session, s Circuit, ks *signer.KeySet) OnionSkins {
 
 	var prvs [3]*prv.Key
 	for i := range prvs {
@@ -93,7 +94,7 @@ func SendExit(payload slice.Bytes, port uint16,
 // set of sessions. This is by way of indicating to not use the IdentityPub but
 // the HeaderPub instead. Not allowing free relay at all prevents spam attacks.
 func SendKeys(id nonce.ID, hdr, pld [5]*prv.Key,
-	client *node.Session, hop node.Circuit, ks *signer.KeySet) OnionSkins {
+	client *Session, hop Circuit, ks *signer.KeySet) OnionSkins {
 
 	n := GenNonces(6)
 	return OnionSkins{}.
@@ -111,8 +112,8 @@ func SendKeys(id nonce.ID, hdr, pld [5]*prv.Key,
 // hops until the client.
 //
 // The third returns Session should be the client's return session, index 0.
-func GetBalance(s node.Circuit, target int,
-	returns [3]*node.Session, ks *signer.KeySet) (o OnionSkins) {
+func GetBalance(s Circuit, target int,
+	returns [3]*Session, ks *signer.KeySet) (o OnionSkins) {
 
 	n := GenNonces(target + 1 + 3)
 	var returnNonces [3]nonce.IV

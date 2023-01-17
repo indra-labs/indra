@@ -3,7 +3,7 @@ package cfg
 import (
 	"github.com/indra-labs/indra"
 	log2 "github.com/indra-labs/indra/pkg/log"
-	"github.com/indra-labs/indra/pkg/wire"
+	"github.com/indra-labs/indra/pkg/node"
 	"github.com/multiformats/go-multiaddr"
 )
 
@@ -18,7 +18,7 @@ type Params struct {
 	Name string
 
 	// Net is a uint32 magic byte identifier for the network
-	Net wire.IndraNet
+	Net node.IndraNet
 
 	// DefaultPort is the default port for p2p listening
 	DefaultPort string
@@ -49,7 +49,7 @@ var MainNetServerParams = &Params{
 
 	Name: "mainnet",
 
-	Net: wire.MainNet,
+	Net: node.MainNet,
 
 	DefaultPort: "8337",
 
@@ -69,7 +69,7 @@ var TestNetServerParams = &Params{
 
 	Name: "testnet",
 
-	Net: wire.TestNet,
+	Net: node.TestNet,
 
 	DefaultPort: "58337",
 
@@ -89,7 +89,7 @@ var SimnetServerParams = &Params{
 
 	Name: "simnet",
 
-	Net: wire.SimNet,
+	Net: node.SimNet,
 
 	DefaultPort: "62134",
 

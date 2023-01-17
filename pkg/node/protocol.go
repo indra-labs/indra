@@ -1,4 +1,4 @@
-package wire
+package node
 
 type IndraNet uint32
 

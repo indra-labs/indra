@@ -1,4 +1,4 @@
-package wire
+package node
 
 import (
 	"github.com/indra-labs/indra/pkg/key/ecdh"

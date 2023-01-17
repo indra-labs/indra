@@ -1,4 +1,4 @@
-package client
+package node
 
 import (
 	"math"
@@ -6,7 +6,6 @@ import (
 	"github.com/indra-labs/indra/pkg/ifc"
 	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/key/pub"
-	"github.com/indra-labs/indra/pkg/node"
 	"github.com/indra-labs/indra/pkg/nonce"
 	"github.com/indra-labs/indra/pkg/slice"
 	"github.com/indra-labs/indra/pkg/transport"
@@ -17,9 +16,9 @@ func CreateNMockCircuits(inclSessions bool,
 
 	nTotal := 1 + nCircuits*5
 	cl = make([]*Client, nTotal)
-	nodes := make([]*node.Node, nTotal)
+	nodes := make([]*Node, nTotal)
 	transports := make([]ifc.Transport, nTotal)
-	sessions := make(node.Sessions, nTotal-1)
+	sessions := make(Sessions, nTotal-1)
 	for i := range transports {
 		transports[i] = transport.NewSim(nTotal)
 	}
@@ -30,8 +29,8 @@ func CreateNMockCircuits(inclSessions bool,
 		}
 		idPub := pub.Derive(idPrv)
 		addr := slice.GenerateRandomAddrPortIPv4()
-		nodes[i], _ = node.New(addr, idPub, idPrv, transports[i])
-		if cl[i], e = New(transports[i], idPrv, nodes[i],
+		nodes[i], _ = New(addr, idPub, idPrv, transports[i])
+		if cl[i], e = NewClient(transports[i], idPrv, nodes[i],
 			nil); check(e) {
 			return
 		}
@@ -40,7 +39,7 @@ func CreateNMockCircuits(inclSessions bool,
 		if inclSessions {
 			// create a session for all but the first
 			if i > 0 {
-				sessions[i-1] = node.NewSession(
+				sessions[i-1] = NewSession(
 					nonce.NewID(), nodes[i],
 					math.MaxUint64, nil, nil,
 					byte(i/nCircuits-1))

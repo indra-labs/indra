@@ -1,11 +1,14 @@
 package node
 
 import (
+	"sync"
+
 	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/key/pub"
 	"github.com/indra-labs/indra/pkg/lnd/lnwire"
 	"github.com/indra-labs/indra/pkg/nonce"
 	"github.com/indra-labs/indra/pkg/sha256"
+	"github.com/indra-labs/indra/pkg/wire/session"
 )
 
 // A Session keeps track of a connection session. It specifically maintains the
@@ -79,3 +82,159 @@ func (s *Session) SubtractBytes(b lnwire.MilliSatoshi) bool {
 type Circuit [5]*Session
 
 type Sessions []*Session
+
+// Session management functions
+//
+// In order to enable scaling client processing the session data will be
+// accessed by multiple goroutines, and thus we use the node's mutex to prevent
+// race conditions on this data. This is the only mutable data. A relay's
+// identity is its keys so a different key is a different relay, even if it is
+// on the same IP address. Because we use netip.AddrPort as network addresses
+// there can be more than one relay at an IP address, though hop selection will
+// consider the IP address as the unique identifier and not select more than one
+// relay on the same IP address. (todo:)
+
+type Payments struct {
+	pendingPayments PendingPayments
+	sessions        Sessions
+	PaymentChan
+	sync.Mutex
+}
+
+func NewPayments() *Payments {
+	return &Payments{PaymentChan: make(PaymentChan)}
+}
+
+func (n *Payments) AddSession(s *Session) {
+	n.Lock()
+	defer n.Unlock()
+	// check for dupes
+	for i := range n.sessions {
+		if n.sessions[i].ID == s.ID {
+			log.D.Ln("refusing to add duplicate session ID")
+			return
+		}
+	}
+	n.sessions = append(n.sessions, s)
+}
+func (n *Payments) FindSession(id nonce.ID) *Session {
+	n.Lock()
+	defer n.Unlock()
+	for i := range n.sessions {
+		if n.sessions[i].ID == id {
+			return n.sessions[i]
+		}
+	}
+	return nil
+}
+func (n *Payments) GetSessionsAtHop(hop byte) (s Sessions) {
+	n.Lock()
+	defer n.Unlock()
+	for i := range n.sessions {
+		if n.sessions[i].Hop == hop {
+			s = append(s, n.sessions[i])
+		}
+	}
+	return
+}
+func (n *Payments) DeleteSession(id nonce.ID) {
+	n.Lock()
+	defer n.Unlock()
+	for i := range n.sessions {
+		if n.sessions[i].ID == id {
+			n.sessions = append(n.sessions[:i], n.sessions[i+1:]...)
+		}
+	}
+
+}
+func (n *Payments) IterateSessions(fn func(s *Session) bool) {
+	n.Lock()
+	defer n.Unlock()
+	for i := range n.sessions {
+		if fn(n.sessions[i]) {
+			break
+		}
+	}
+}
+
+func (n *Payments) GetSessionByIndex(i int) (s *Session) {
+	n.Lock()
+	defer n.Unlock()
+	if len(n.sessions) > i {
+		s = n.sessions[i]
+	}
+	return
+}
+
+type PaymentChan chan *session.Payment
+
+type PendingPayments []*session.Payment
+
+func (p PendingPayments) Add(np *session.Payment) (pp PendingPayments) {
+	return append(p, np)
+}
+
+func (p PendingPayments) Delete(preimage sha256.Hash) (pp PendingPayments) {
+	pp = p
+	for i := range p {
+		if p[i].Preimage == preimage {
+			if i == len(p)-1 {
+				pp = p[:i]
+			} else {
+				pp = append(p[:i], p[i+1:]...)
+			}
+		}
+	}
+	return
+}
+
+func (p PendingPayments) Find(id nonce.ID) (pp *session.Payment) {
+	for i := range p {
+		if p[i].ID == id {
+			return p[i]
+		}
+	}
+	return
+}
+
+func (p PendingPayments) FindPreimage(pi sha256.Hash) (pp *session.Payment) {
+	for i := range p {
+		if p[i].Preimage == pi {
+			return p[i]
+		}
+	}
+	return
+}
+
+// PendingPayment accessors. For the same reason as the sessions, pending
+// payments need to be accessed only with the node's mutex locked.
+
+func (n *Payments) AddPendingPayment(
+	np *session.Payment) {
+
+	n.Lock()
+	defer n.Unlock()
+	n.pendingPayments = n.pendingPayments.Add(np)
+}
+func (n *Payments) DeletePendingPayment(
+	preimage sha256.Hash) {
+
+	n.Lock()
+	defer n.Unlock()
+	n.pendingPayments = n.pendingPayments.Delete(preimage)
+}
+func (n *Payments) FindPendingPayment(
+	id nonce.ID) (pp *session.Payment) {
+
+	n.Lock()
+	defer n.Unlock()
+	return n.pendingPayments.Find(id)
+}
+func (n *Payments) FindPendingPreimage(
+	pi sha256.Hash) (pp *session.Payment) {
+
+	log.T.F("searching preimage %x", pi)
+	n.Lock()
+	defer n.Unlock()
+	return n.pendingPayments.FindPreimage(pi)
+}

@@ -1,4 +1,4 @@
-package wire
+package node
 
 import (
 	"net/netip"
@@ -7,7 +7,6 @@ import (
 	"github.com/indra-labs/indra/pkg/key/prv"
 	"github.com/indra-labs/indra/pkg/key/pub"
 	"github.com/indra-labs/indra/pkg/lnd/lnwire"
-	"github.com/indra-labs/indra/pkg/node"
 	"github.com/indra-labs/indra/pkg/nonce"
 	"github.com/indra-labs/indra/pkg/sha256"
 	"github.com/indra-labs/indra/pkg/slice"
@@ -30,19 +29,19 @@ type OnionSkins []types.Onion
 
 var os = &noop.OnionSkin{}
 
-func (o OnionSkins) ForwardLayer(s *node.Session, k *prv.Key,
+func (o OnionSkins) ForwardLayer(s *Session, k *prv.Key,
 	n nonce.IV) OnionSkins {
 
 	return o.Forward(s.AddrPort).Layer(s.HeaderPub, k, n)
 }
 
-func (o OnionSkins) ReverseLayer(s *node.Session, k *prv.Key,
+func (o OnionSkins) ReverseLayer(s *Session, k *prv.Key,
 	n nonce.IV) OnionSkins {
 
 	return o.Reverse(s.AddrPort).Layer(s.HeaderPub, k, n)
 }
 
-func (o OnionSkins) ForwardSession(s *node.Session,
+func (o OnionSkins) ForwardSession(s *Session,
 	k *prv.Key, n nonce.IV, hdr, pld *prv.Key) OnionSkins {
 
 	if hdr == nil || pld == nil {
