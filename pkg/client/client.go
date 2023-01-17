@@ -8,16 +8,16 @@ import (
 	"github.com/cybriq/qu"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/indra-labs/indra"
-	"github.com/indra-labs/indra/pkg/ifc"
-	"github.com/indra-labs/indra/pkg/key/cloak"
-	"github.com/indra-labs/indra/pkg/key/prv"
-	"github.com/indra-labs/indra/pkg/key/pub"
-	"github.com/indra-labs/indra/pkg/key/signer"
-	log2 "github.com/indra-labs/indra/pkg/log"
+	"github.com/indra-labs/indra/pkg/crypto/key/cloak"
+	"github.com/indra-labs/indra/pkg/crypto/key/prv"
+	"github.com/indra-labs/indra/pkg/crypto/key/pub"
+	"github.com/indra-labs/indra/pkg/crypto/key/signer"
+	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/node"
-	"github.com/indra-labs/indra/pkg/nonce"
-	"github.com/indra-labs/indra/pkg/slice"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/traffic"
+	"github.com/indra-labs/indra/pkg/types"
+	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/wire/confirm"
 	"github.com/indra-labs/indra/pkg/wire/layer"
 	"github.com/indra-labs/indra/pkg/wire/response"
@@ -46,7 +46,7 @@ type Client struct {
 	qu.C
 }
 
-func NewClient(tpt ifc.Transport, hdrPrv *prv.Key, no *node.Node,
+func NewClient(tpt types.Transport, hdrPrv *prv.Key, no *node.Node,
 	nodes node.Nodes) (c *Client, e error) {
 
 	no.Transport = tpt

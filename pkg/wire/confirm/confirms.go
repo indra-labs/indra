@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/indra-labs/indra/pkg/nonce"
+	"github.com/indra-labs/indra/pkg/crypto/nonce"
 )
 
 type Hook func(cf nonce.ID)

@@ -2,8 +2,8 @@ package cfg
 
 import (
 	"github.com/indra-labs/indra"
-	log2 "github.com/indra-labs/indra/pkg/log"
 	"github.com/indra-labs/indra/pkg/node"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/multiformats/go-multiaddr"
 )
 

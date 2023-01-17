@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/indra-labs/indra"
-	log2 "github.com/indra-labs/indra/pkg/log"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
 )
 
 var (

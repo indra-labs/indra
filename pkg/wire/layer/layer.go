@@ -5,14 +5,14 @@ import (
 	"fmt"
 
 	"github.com/indra-labs/indra"
-	"github.com/indra-labs/indra/pkg/ciph"
-	"github.com/indra-labs/indra/pkg/key/cloak"
-	"github.com/indra-labs/indra/pkg/key/prv"
-	"github.com/indra-labs/indra/pkg/key/pub"
-	log2 "github.com/indra-labs/indra/pkg/log"
-	"github.com/indra-labs/indra/pkg/nonce"
-	"github.com/indra-labs/indra/pkg/slice"
+	"github.com/indra-labs/indra/pkg/crypto/ciph"
+	"github.com/indra-labs/indra/pkg/crypto/key/cloak"
+	"github.com/indra-labs/indra/pkg/crypto/key/prv"
+	"github.com/indra-labs/indra/pkg/crypto/key/pub"
+	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/types"
+	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/wire/magicbytes"
 )
 

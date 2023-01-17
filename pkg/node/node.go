@@ -8,15 +8,15 @@ import (
 	"time"
 
 	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/pkg/crypto/key/prv"
+	"github.com/indra-labs/indra/pkg/crypto/key/pub"
+	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/identity"
-	"github.com/indra-labs/indra/pkg/ifc"
-	"github.com/indra-labs/indra/pkg/key/prv"
-	"github.com/indra-labs/indra/pkg/key/pub"
-	log2 "github.com/indra-labs/indra/pkg/log"
-	"github.com/indra-labs/indra/pkg/nonce"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/service"
-	"github.com/indra-labs/indra/pkg/slice"
 	"github.com/indra-labs/indra/pkg/traffic"
+	"github.com/indra-labs/indra/pkg/types"
+	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
 var (
@@ -42,7 +42,7 @@ type Node struct {
 // in direct connection. Also, the idPrv node private key can be nil, as only
 // the node embedded in a client and not the peer node list has one available.
 func New(addr *netip.AddrPort, idPub *pub.Key, idPrv *prv.Key,
-	tpt ifc.Transport) (n *Node, id nonce.ID) {
+	tpt types.Transport) (n *Node, id nonce.ID) {
 
 	id = nonce.NewID()
 	n = &Node{

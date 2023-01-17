@@ -5,9 +5,9 @@ import (
 	"net/netip"
 
 	"github.com/indra-labs/indra"
-	log2 "github.com/indra-labs/indra/pkg/log"
-	"github.com/indra-labs/indra/pkg/slice"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/types"
+	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/wire/magicbytes"
 )
 
