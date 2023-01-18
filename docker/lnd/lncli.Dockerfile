@@ -35,4 +35,4 @@ USER lnd:lnd
 # :8334  btcd RPC port
 EXPOSE 8333 8334
 
-ENTRYPOINT ["/bin/lnd", "--configfile=/etc/lnd/lnd.conf"]
+ENTRYPOINT ["/bin/lncli"]
