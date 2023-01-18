@@ -25,8 +25,8 @@ COPY --from=scratch /etc/indra/keys/lyowhs.asc /tmp/lyowhs.asc
 RUN set -ex echo "importing keys" \
     && cat lyowhs.asc | gpg --import
 
-#RUN set -ex echo "running signature verification on manifest" \
-#    && gpg --verify manifest-lyowhs-${source_version}.sig manifest-${source_version}.txt
+RUN set -ex echo "running signature verification on manifest" \
+    && gpg --verify manifest-lyowhs-${source_version}.sig manifest-${source_version}.txt
 
 RUN set -ex echo "verifying checksum on indra-source-${source_version}.tar.gz" \
     && cat manifest-${source_version}.txt | grep indra-source-${source_version}.tar.gz | shasum -a 256 -c
