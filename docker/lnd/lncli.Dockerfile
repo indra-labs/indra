@@ -29,10 +29,6 @@ USER lnd:lnd
 
 # Set the data volumes
 #VOLUME ["/etc/btcd"]
-#VOLUME ["/var/btcd"]
-
-# :8333  btcd peer-to-peer port
-# :8334  btcd RPC port
-EXPOSE 8333 8334
+#VOLUME ["/var/btcd"]d
 
 ENTRYPOINT ["/bin/lncli"]
