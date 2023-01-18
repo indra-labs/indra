@@ -1,0 +1,1 @@
+See here for [White Paper](https://github.com/indra-labs/docs/blob/main/whitepaper.md)
