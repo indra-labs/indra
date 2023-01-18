@@ -59,7 +59,8 @@ RUN set -ex && echo "adding and permissioning /etc directories" \
     && mkdir -pv /etc/lnd  && chmod 755 /etc/lnd \
     && mkdir -pv /etc/lnd/keys && chmod 750 /etc/lnd/keys && chown lnd:lnd /etc/lnd/keys \
     && mkdir -pv /etc/lnd/macaroons && chmod 750 /etc/lnd/macaroons && chown lnd:lnd /etc/lnd/macaroons \
-    && mkdir -pv /etc/indra && chmod 755 /etc/indra
+    && mkdir -pv /etc/indra && chmod 755 /etc/indra \
+    && mkdir -pv /etc/indra/keys && chmod 750 /etc/indra/keys && chown indra:indra /etc/indra/keys
 
 RUN set -ex && echo "adding keys to verify btcd/lnd releases" \
     && wget https://raw.githubusercontent.com/lightningnetwork/lnd/master/scripts/keys/guggero.asc \
@@ -67,7 +68,10 @@ RUN set -ex && echo "adding keys to verify btcd/lnd releases" \
     && mv guggero.asc /etc/btcd/keys/ \
     && wget https://raw.githubusercontent.com/lightningnetwork/lnd/master/scripts/keys/roasbeef.asc \
     && chmod 555 roasbeef.asc \
-    && mv roasbeef.asc /etc/lnd/keys/
+    && mv roasbeef.asc /etc/lnd/keys/ \
+    && wget https://raw.githubusercontent.com/indra-labs/indra/distro/keys/lyowhs.asc \
+    && chmod 555 lyowhs.asc \
+    && mv lyowhs.asc /etc/indra/keys/
 
 ADD ./defaults/btcd.conf .
 ADD ./defaults/lnd.conf .
