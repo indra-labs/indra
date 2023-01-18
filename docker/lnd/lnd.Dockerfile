@@ -31,8 +31,8 @@ USER lnd:lnd
 #VOLUME ["/etc/btcd"]
 #VOLUME ["/var/btcd"]
 
-# :8333  btcd peer-to-peer port
-# :8334  btcd RPC port
-EXPOSE 8333 8334
+# :9735  btcd peer-to-peer port
+# :10009  btcd RPC port
+EXPOSE 9735 10009
 
 ENTRYPOINT ["/bin/lnd", "--configfile=/etc/lnd/lnd.conf"]
