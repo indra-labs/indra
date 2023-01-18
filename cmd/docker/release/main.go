@@ -40,7 +40,7 @@ var sourceConfigurations = []docker.BuildConfiguration{
 		Name:            defaultRepositoryName + "/" + "btcd-source",
 		ContextFilePath: "/tmp/btcd-source.tar",
 		BuildOpts: types.ImageBuildOptions{
-			Dockerfile: "docker/btcd/intermediate/source.Dockerfile",
+			Dockerfile: "docker/btcd/intermediate/source-official.Dockerfile",
 			Tags: []string{
 				"v0.23.3",
 			},
@@ -59,7 +59,7 @@ var sourceConfigurations = []docker.BuildConfiguration{
 		Name:            defaultRepositoryName + "/" + "lnd-source",
 		ContextFilePath: "/tmp/lnd-source.tar",
 		BuildOpts: types.ImageBuildOptions{
-			Dockerfile: "docker/lnd/intermediate/source.Dockerfile",
+			Dockerfile: "docker/lnd/intermediate/source-official.Dockerfile",
 			Tags: []string{
 				"v0.15.5-beta",
 			},
