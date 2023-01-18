@@ -35,47 +35,6 @@ var (
 
 func strPtr(str string) *string { return &str }
 
-var sourceConfigurations = []docker.BuildConfiguration{
-	docker.BuildConfiguration{
-		Name:            defaultRepositoryName + "/" + "btcd-source",
-		ContextFilePath: "/tmp/btcd-source.tar",
-		BuildOpts: types.ImageBuildOptions{
-			Dockerfile: "docker/btcd/intermediate/source/official.Dockerfile",
-			Tags: []string{
-				"v0.23.3",
-			},
-			BuildArgs: map[string]*string{
-				"sourcing_image":            strPtr(defaultBuildContainer),
-				"source_release_url_prefix": strPtr("https://github.com/btcsuite/btcd/releases/download"),
-				"source_version":            strPtr("v0.23.3"),
-			},
-			SuppressOutput: false,
-			Remove:         false,
-			ForceRemove:    false,
-			PullParent:     false,
-		},
-	},
-	docker.BuildConfiguration{
-		Name:            defaultRepositoryName + "/" + "lnd-source",
-		ContextFilePath: "/tmp/lnd-source.tar",
-		BuildOpts: types.ImageBuildOptions{
-			Dockerfile: "docker/lnd/intermediate/source/official.Dockerfile",
-			Tags: []string{
-				"v0.15.5-beta",
-			},
-			BuildArgs: map[string]*string{
-				"sourcing_image":            strPtr(defaultBuildContainer),
-				"source_release_url_prefix": strPtr("https://github.com/lightningnetwork/lnd/releases/download"),
-				"source_version":            strPtr("v0.15.5-beta"),
-			},
-			SuppressOutput: false,
-			Remove:         false,
-			ForceRemove:    false,
-			PullParent:     false,
-		},
-	},
-}
-
 var buildConfigurations = []docker.BuildConfiguration{
 	docker.BuildConfiguration{
 		Name:            defaultRepositoryName + "/" + "btcd",
