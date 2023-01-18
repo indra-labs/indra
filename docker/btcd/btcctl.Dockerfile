@@ -13,7 +13,7 @@ ARG target_arch="amd64"
 ARG target_arm_version=""
 
 RUN set -ex echo "building binaries for ${target_os}/${target_arch}" \
-    && CGO_ENABLED=0 GOOS=${target_os} GOARCH=${target_arch} GOARM=${target_arm_version} go build --ldflags '-w -s' -o /tmp/bin/btcctl .
+    && CGO_ENABLED=0 GOOS=${target_os} GOARCH=${target_arch} GOARM=${target_arm_version} go build --ldflags '-w -s' -o /tmp/bin/btcctl ./cmd/btcctl/.
 
 # ---
 # Target Configuration
