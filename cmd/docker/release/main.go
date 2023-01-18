@@ -55,6 +55,25 @@ var sourceConfigurations = []docker.BuildConfiguration{
 			PullParent:     false,
 		},
 	},
+	docker.BuildConfiguration{
+		Name:            defaultRepositoryName + "/" + "lnd-source",
+		ContextFilePath: "/tmp/lnd-source.tar",
+		BuildOpts: types.ImageBuildOptions{
+			Dockerfile: "docker/lnd/intermediate/source.Dockerfile",
+			Tags: []string{
+				"v0.15.5-beta",
+			},
+			BuildArgs: map[string]*string{
+				"sourcing_image":            strPtr(defaultBuildContainer),
+				"source_release_url_prefix": strPtr("https://github.com/lightningnetwork/lnd/releases/download"),
+				"source_version":            strPtr("v0.15.5-beta"),
+			},
+			SuppressOutput: false,
+			Remove:         false,
+			ForceRemove:    false,
+			PullParent:     false,
+		},
+	},
 }
 
 var buildConfigurations = []docker.BuildConfiguration{
