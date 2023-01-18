@@ -121,7 +121,51 @@ var buildConfigurations = []docker.BuildConfiguration{
 			PullParent:     false,
 		},
 	},
-	// docker.BuildConfiguration{
+	docker.BuildConfiguration{
+		Name:            defaultRepositoryName + "/" + "lnd",
+		ContextFilePath: "/tmp/lnd.tar",
+		BuildOpts: types.ImageBuildOptions{
+			Dockerfile: "docker/lnd/lnd.Dockerfile",
+			Tags: []string{
+				"v0.15.5-beta",
+				"latest",
+			},
+			BuildArgs: map[string]*string{
+				"source_version":     strPtr("v0.15.5-beta"),
+				"scratch_version":    strPtr("latest"),
+				"target_os":          strPtr("linux"),
+				"target_arch":        strPtr("amd64"),
+				"target_arm_version": strPtr(""),
+			},
+			SuppressOutput: false,
+			Remove:         true,
+			ForceRemove:    true,
+			PullParent:     false,
+		},
+	},
+	docker.BuildConfiguration{
+		Name:            defaultRepositoryName + "/" + "lncli",
+		ContextFilePath: "/tmp/lncli.tar",
+		BuildOpts: types.ImageBuildOptions{
+			Dockerfile: "docker/lnd/lncli.Dockerfile",
+			Tags: []string{
+				"v0.15.5-beta",
+				"latest",
+			},
+			BuildArgs: map[string]*string{
+				"source_version":     strPtr("v0.15.5-beta"),
+				"scratch_version":    strPtr("latest"),
+				"target_os":          strPtr("linux"),
+				"target_arch":        strPtr("amd64"),
+				"target_arm_version": strPtr(""),
+			},
+			SuppressOutput: false,
+			Remove:         true,
+			ForceRemove:    true,
+			PullParent:     false,
+		},
+	},
+	//docker.BuildConfiguration{
 	//	Name:            defaultRepositoryName + "/" + "lnd",
 	//	ContextFilePath: "/tmp/lnd.tar",
 	//	BuildOpts: types.ImageBuildOptions{
@@ -143,7 +187,7 @@ var buildConfigurations = []docker.BuildConfiguration{
 	//		ForceRemove:    true,
 	//		PullParent:     true,
 	//	},
-	// },
+	//},
 	// docker.BuildConfiguration{
 	//	Name:            defaultRepositoryName + "/" + "indra",
 	//	ContextFilePath: "/tmp/indra-" + indra.SemVer + ".tar",
