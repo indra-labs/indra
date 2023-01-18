@@ -12,6 +12,7 @@ import (
 	"github.com/indra-labs/indra/pkg/onion/layers/confirm"
 	"github.com/indra-labs/indra/pkg/onion/layers/crypt"
 	"github.com/indra-labs/indra/pkg/onion/layers/delay"
+	"github.com/indra-labs/indra/pkg/onion/layers/directbalance"
 	"github.com/indra-labs/indra/pkg/onion/layers/exit"
 	"github.com/indra-labs/indra/pkg/onion/layers/forward"
 	"github.com/indra-labs/indra/pkg/onion/layers/getbalance"
@@ -69,6 +70,10 @@ func (o Skins) Confirmation(id nonce.ID) Skins {
 
 func (o Skins) Delay(d time.Duration) Skins {
 	return append(o, &delay.Layer{Duration: d, Onion: os})
+}
+
+func (o Skins) DirectBalance(id nonce.ID) Skins {
+	return append(o, &directbalance.Layer{ID: id, Onion: os})
 }
 
 func (o Skins) Exit(port uint16, prvs [3]*prv.Key, pubs [3]*pub.Key,

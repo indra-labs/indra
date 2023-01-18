@@ -7,6 +7,7 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/indra-labs/indra/pkg/crypto/ciph"
+	"github.com/indra-labs/indra/pkg/crypto/key/pub"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/onion"
@@ -14,6 +15,7 @@ import (
 	"github.com/indra-labs/indra/pkg/onion/layers/confirm"
 	"github.com/indra-labs/indra/pkg/onion/layers/crypt"
 	"github.com/indra-labs/indra/pkg/onion/layers/delay"
+	"github.com/indra-labs/indra/pkg/onion/layers/directbalance"
 	"github.com/indra-labs/indra/pkg/onion/layers/exit"
 	"github.com/indra-labs/indra/pkg/onion/layers/forward"
 	"github.com/indra-labs/indra/pkg/onion/layers/getbalance"
@@ -62,6 +64,9 @@ func (cl *Client) runner() (out bool) {
 		case *confirm.Layer:
 			log.T.C(recLog(on, b, cl))
 			cl.confirm(on, b, c)
+		case *crypt.Layer:
+			log.T.C(recLog(on, b, cl))
+			cl.crypt(on, b, c)
 		case *delay.Layer:
 			log.T.C(recLog(on, b, cl))
 			cl.delay(on, b, c)
@@ -74,9 +79,6 @@ func (cl *Client) runner() (out bool) {
 		case *getbalance.Layer:
 			log.T.C(recLog(on, b, cl))
 			cl.getBalance(on, b, c)
-		case *crypt.Layer:
-			log.T.C(recLog(on, b, cl))
-			cl.layer(on, b, c)
 		case *noop.Layer:
 			log.T.C(recLog(on, b, cl))
 			cl.noop(on, b, c)
@@ -140,11 +142,71 @@ func (cl *Client) balance(on *balance.Layer,
 		if s.ID == on.ID {
 			log.T.F("received balance %x for session %x",
 				on.MilliSatoshi, on.ID)
+			// todo: check for close match client's running estimate
+			//  based on the outbound packet send volume.
 			s.Remaining = on.MilliSatoshi
+			// change the session ID for the next.
+			s.ID = nonce.NewID()
 			return true
 		}
 		return false
 	})
+}
+
+func (cl *Client) crypt(on *crypt.Layer, b slice.Bytes,
+	c *slice.Cursor) {
+
+	// this is probably an encrypted crypt for us.
+	hdr, _, sess, identity := cl.FindCloaked(on.Cloak)
+	if hdr == nil {
+		log.T.Ln("no matching key found from cloaked key")
+		return
+	}
+	on.Decrypt(hdr, b, c)
+	if identity {
+		log.T.F("identity")
+		if string(b[*c:][:magicbytes.Len]) != session.MagicString {
+			log.T.Ln("dropping message due to identity key with" +
+				" no following session")
+			return
+		}
+		cl.Node.Send(BudgeUp(b, *c))
+		return
+	}
+	if string(b[*c:][:magicbytes.Len]) == directbalance.MagicString {
+		var on1, on2 types.Onion
+		var e error
+		if on1, e = onion.Peel(b, c); check(e) {
+			return
+		}
+		var balID nonce.ID
+		switch db := on1.(type) {
+		case *directbalance.Layer:
+			log.T.S(db)
+			balID = db.ID
+		default:
+			log.T.Ln("malformed/truncated onion")
+			return
+		}
+		if on2, e = onion.Peel(b, c); check(e) {
+			return
+		}
+		switch fwd := on2.(type) {
+		case *forward.Layer:
+			o := (&onion.Skins{}).
+				Forward(fwd.AddrPort).
+				Crypt(pub.Derive(hdr), cl.KeySet.Next(), nonce.New()).
+				Balance(balID, sess.Remaining)
+			rb := onion.Encode(o.Assemble())
+			cl.Node.Send(rb)
+			return
+		default:
+			log.T.Ln("dropping directbalance without following " +
+				"forward")
+			return
+		}
+	}
+	cl.Node.Send(BudgeUp(b, *c))
 }
 
 func (cl *Client) delay(on *delay.Layer, b slice.Bytes,
@@ -176,7 +238,8 @@ func (cl *Client) exit(on *exit.Layer, b slice.Bytes,
 	case result = <-cl.ReceiveFrom(on.Port):
 	case <-timer.C:
 	}
-	// We need to wrap the result in a message crypt.
+	// We need to wrap the result in a message crypt. The client recognises
+	// the context of the response by the hash of the request message.
 	res := onion.Encode(&response.Layer{
 		Hash:  sha256.Single(on.Bytes),
 		Bytes: result,
@@ -204,9 +267,11 @@ func (cl *Client) forward(on *forward.Layer, b slice.Bytes,
 func (cl *Client) getBalance(on *getbalance.Layer,
 	b slice.Bytes, c *slice.Cursor) {
 
+	log.T.S(on)
 	var found bool
 	var bal *balance.Layer
 	cl.IterateSessions(func(s *traffic.Session) bool {
+		log.T.S(s.ID, on.ID)
 		if s.ID == on.ID {
 			bal = &balance.Layer{
 				ID:           on.ID,
@@ -218,6 +283,7 @@ func (cl *Client) getBalance(on *getbalance.Layer,
 		return false
 	})
 	if !found {
+		fmt.Println("session not found")
 		return
 	}
 	rb := FormatReply(b[*c:c.Inc(ReverseHeaderLen)],
@@ -238,26 +304,6 @@ func FormatReply(header, res slice.Bytes, ciphers [3]sha256.Hash,
 		ciph.Encipher(blk, nonces[2-i], rb[start:])
 	}
 	return
-}
-
-func (cl *Client) layer(on *crypt.Layer, b slice.Bytes,
-	c *slice.Cursor) {
-
-	// this is probably an encrypted crypt for us.
-	hdr, _, _, identity := cl.FindCloaked(on.Cloak)
-	if hdr == nil {
-		log.T.Ln("no matching key found from cloaked key")
-		return
-	}
-	on.Decrypt(hdr, b, c)
-	if identity {
-		if string(b[*c:][:magicbytes.Len]) != session.MagicString {
-			log.T.Ln("dropping message due to identity key with" +
-				" no following session")
-			return
-		}
-	}
-	cl.Node.Send(BudgeUp(b, *c))
 }
 
 func (cl *Client) noop(on *noop.Layer, b slice.Bytes,
@@ -303,6 +349,7 @@ func (cl *Client) reverse(on *reverse.Layer, b slice.Bytes,
 			copy(b[first:second], b[second:last])
 			copy(b[second:last], slice.NoisePad(ReverseLayerLen))
 			if b[start:start+2].String() != reverse.MagicString {
+				// It's for us!
 				cl.Node.Send(b[last:])
 				break
 			}

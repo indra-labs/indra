@@ -112,10 +112,23 @@ func SendKeys(id nonce.ID, hdr, pld [5]*prv.Key,
 // being queried can be any of the 5 and the return path is always a further two
 // hops until the client.
 //
-// The third returns Session should be the client's return session, index 0.
+// First and last hop sessions are just directly queried, and the rest the path
+// goes to them and then through two return hops in the second last and last
+// positions, because it cannot be concealed that the client is not a relay.
+//
+// The first and last hops already have a payload session key ready to use and
+// all that is then sent back is a crypt with the query ID and session balance
+// addressed to the Header key.
 func GetBalance(s traffic.Circuit, target int,
 	returns [3]*traffic.Session, ks *signer.KeySet) (o Skins) {
 
+	if target == 0 || target == 4 {
+		n := GenNonces(1)
+		o = o.ForwardCrypt(s[target], ks.Next(), n[0]).
+			DirectBalance(s[target].ID).
+			Forward(returns[2].AddrPort)
+		return
+	}
 	n := GenNonces(target + 1 + 3)
 	var returnNonces [3]nonce.IV
 	copy(returnNonces[:], n[len(n)-1-3:])
@@ -128,14 +141,13 @@ func GetBalance(s traffic.Circuit, target int,
 		pubs[i] = returns[i].PayloadPub
 	}
 
-	for i := 0; i < target; i++ {
+	for i := 0; i <= target; i++ {
 		o = o.ForwardCrypt(s[i], ks.Next(), n[i])
 	}
-	reqNonce := nonce.NewID()
-	o = o.GetBalance(reqNonce, prvs, pubs, returnNonces)
+	o = o.GetBalance(s[target].ID, prvs, pubs, returnNonces)
 	for i := range returns {
 		o = o.ReverseCrypt(returns[i], prvs[i], n[i+target])
 	}
-	o = o.Confirmation(reqNonce)
+	// o = o.Confirmation(reqNonce)
 	return
 }

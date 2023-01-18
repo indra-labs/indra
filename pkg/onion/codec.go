@@ -10,11 +10,14 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/key/pub"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
+	"github.com/indra-labs/indra/pkg/onion/layers/balance"
 	"github.com/indra-labs/indra/pkg/onion/layers/confirm"
 	"github.com/indra-labs/indra/pkg/onion/layers/crypt"
 	"github.com/indra-labs/indra/pkg/onion/layers/delay"
+	"github.com/indra-labs/indra/pkg/onion/layers/directbalance"
 	"github.com/indra-labs/indra/pkg/onion/layers/exit"
 	"github.com/indra-labs/indra/pkg/onion/layers/forward"
+	"github.com/indra-labs/indra/pkg/onion/layers/getbalance"
 	"github.com/indra-labs/indra/pkg/onion/layers/magicbytes"
 	"github.com/indra-labs/indra/pkg/onion/layers/response"
 	"github.com/indra-labs/indra/pkg/onion/layers/reverse"
@@ -40,8 +43,8 @@ func Encode(on types.Onion) (b slice.Bytes) {
 
 func Peel(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 	switch b[*c:c.Inc(magicbytes.Len)].String() {
-	case session.MagicString:
-		o := &session.Layer{}
+	case balance.MagicString:
+		o := &balance.Layer{}
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
@@ -52,8 +55,20 @@ func Peel(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 			return
 		}
 		on = o
+	case crypt.MagicString:
+		var o crypt.Layer
+		if e = o.Decode(b, c); check(e) {
+			return
+		}
+		on = &o
 	case delay.MagicString:
 		o := &delay.Layer{}
+		if e = o.Decode(b, c); check(e) {
+			return
+		}
+		on = o
+	case directbalance.MagicString:
+		o := &directbalance.Layer{}
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
@@ -70,12 +85,12 @@ func Peel(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 			return
 		}
 		on = o
-	case crypt.MagicString:
-		var o crypt.Layer
+	case getbalance.MagicString:
+		o := &getbalance.Layer{}
 		if e = o.Decode(b, c); check(e) {
 			return
 		}
-		on = &o
+		on = o
 	case reverse.MagicString:
 		o := &reverse.Layer{}
 		if e = o.Decode(b, c); check(e) {
@@ -84,6 +99,12 @@ func Peel(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 		on = o
 	case response.MagicString:
 		o := response.New()
+		if e = o.Decode(b, c); check(e) {
+			return
+		}
+		on = o
+	case session.MagicString:
+		o := &session.Layer{}
 		if e = o.Decode(b, c); check(e) {
 			return
 		}

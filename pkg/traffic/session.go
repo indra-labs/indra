@@ -23,7 +23,7 @@ var (
 // account of available bandwidth allocation before it needs to be recharged
 // with new credit, and the current state of the encryption.
 type Session struct {
-	nonce.ID
+	ID nonce.ID
 	*identity.Peer
 	Remaining                 lnwire.MilliSatoshi
 	HeaderPrv, PayloadPrv     *prv.Key
@@ -104,7 +104,7 @@ type Sessions []*Session
 
 type Payments struct {
 	pendingPayments PendingPayments
-	sessions        Sessions
+	Sessions        Sessions
 	PaymentChan
 	sync.Mutex
 }
@@ -117,20 +117,20 @@ func (n *Payments) AddSession(s *Session) {
 	n.Lock()
 	defer n.Unlock()
 	// check for dupes
-	for i := range n.sessions {
-		if n.sessions[i].ID == s.ID {
+	for i := range n.Sessions {
+		if n.Sessions[i].ID == s.ID {
 			log.D.Ln("refusing to add duplicate session ID")
 			return
 		}
 	}
-	n.sessions = append(n.sessions, s)
+	n.Sessions = append(n.Sessions, s)
 }
 func (n *Payments) FindSession(id nonce.ID) *Session {
 	n.Lock()
 	defer n.Unlock()
-	for i := range n.sessions {
-		if n.sessions[i].ID == id {
-			return n.sessions[i]
+	for i := range n.Sessions {
+		if n.Sessions[i].ID == id {
+			return n.Sessions[i]
 		}
 	}
 	return nil
@@ -138,9 +138,9 @@ func (n *Payments) FindSession(id nonce.ID) *Session {
 func (n *Payments) GetSessionsAtHop(hop byte) (s Sessions) {
 	n.Lock()
 	defer n.Unlock()
-	for i := range n.sessions {
-		if n.sessions[i].Hop == hop {
-			s = append(s, n.sessions[i])
+	for i := range n.Sessions {
+		if n.Sessions[i].Hop == hop {
+			s = append(s, n.Sessions[i])
 		}
 	}
 	return
@@ -148,9 +148,9 @@ func (n *Payments) GetSessionsAtHop(hop byte) (s Sessions) {
 func (n *Payments) DeleteSession(id nonce.ID) {
 	n.Lock()
 	defer n.Unlock()
-	for i := range n.sessions {
-		if n.sessions[i].ID == id {
-			n.sessions = append(n.sessions[:i], n.sessions[i+1:]...)
+	for i := range n.Sessions {
+		if n.Sessions[i].ID == id {
+			n.Sessions = append(n.Sessions[:i], n.Sessions[i+1:]...)
 		}
 	}
 
@@ -158,8 +158,8 @@ func (n *Payments) DeleteSession(id nonce.ID) {
 func (n *Payments) IterateSessions(fn func(s *Session) bool) {
 	n.Lock()
 	defer n.Unlock()
-	for i := range n.sessions {
-		if fn(n.sessions[i]) {
+	for i := range n.Sessions {
+		if fn(n.Sessions[i]) {
 			break
 		}
 	}
@@ -168,8 +168,8 @@ func (n *Payments) IterateSessions(fn func(s *Session) bool) {
 func (n *Payments) GetSessionByIndex(i int) (s *Session) {
 	n.Lock()
 	defer n.Unlock()
-	if len(n.sessions) > i {
-		s = n.sessions[i]
+	if len(n.Sessions) > i {
+		s = n.Sessions[i]
 	}
 	return
 }

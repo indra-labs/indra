@@ -44,7 +44,8 @@ func CreateNMockCircuits(inclSessions bool,
 				sessions[i-1] = traffic.NewSession(
 					nonce.NewID(), nodes[i].Peer,
 					math.MaxUint64, nil, nil,
-					byte(i/nCircuits-1))
+					byte((i-1)/nCircuits))
+				// log.I.S(sessions[i-1].Hop)
 				// Add session to node, so it will be able to
 				// relay if it gets a message with the key.
 				nodes[i].AddSession(sessions[i-1])
@@ -52,6 +53,9 @@ func CreateNMockCircuits(inclSessions bool,
 			}
 		}
 	}
+	// for i := range nodes[0].Sessions {
+	// 	log.T.S(i, nodes[0].Sessions[i].Hop)
+	// }
 	for i := range cl {
 		for j := range nodes {
 			if i == j {
