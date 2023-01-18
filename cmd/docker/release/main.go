@@ -35,29 +35,29 @@ var (
 
 func strPtr(str string) *string { return &str }
 
+var sourceConfigurations = []docker.BuildConfiguration{
+	docker.BuildConfiguration{
+		Name:            defaultRepositoryName + "/" + "btcd-source",
+		ContextFilePath: "/tmp/btcd-source.tar",
+		BuildOpts: types.ImageBuildOptions{
+			Dockerfile: "docker/btcd/intermediate/source.Dockerfile",
+			Tags: []string{
+				"v0.23.3",
+			},
+			BuildArgs: map[string]*string{
+				"sourcing_image":            strPtr(defaultBuildContainer),
+				"source_release_url_prefix": strPtr("https://github.com/btcsuite/btcd/releases/download"),
+				"source_version":            strPtr("v0.23.3"),
+			},
+			SuppressOutput: false,
+			Remove:         false,
+			ForceRemove:    false,
+			PullParent:     false,
+		},
+	},
+}
+
 var buildConfigurations = []docker.BuildConfiguration{
-	//docker.BuildConfiguration{
-	//	Name:            defaultRepositoryName + "/" + "btcd-base",
-	//	ContextFilePath: "/tmp/btcd-base.tar",
-	//	BuildOpts: types.ImageBuildOptions{
-	//		Dockerfile: "docker/btcd/base.Dockerfile",
-	//		Tags: []string{
-	//			"v0.23.3",
-	//			"latest",
-	//		},
-	//		BuildArgs: map[string]*string{
-	//			"builder_image":             strPtr(defaultBuildContainer),
-	//			"source_release_url_prefix": strPtr("https://github.com/btcsuite/btcd"),
-	//			"target_os":                 strPtr("linux"),
-	//			"target_platform":           strPtr("amd64"),
-	//			"target_version":            strPtr("v0.23.3"),
-	//		},
-	//		SuppressOutput: false,
-	//		Remove:         false,
-	//		ForceRemove:    false,
-	//		PullParent:     false,
-	//	},
-	//},
 	docker.BuildConfiguration{
 		Name:            defaultRepositoryName + "/" + "btcd",
 		ContextFilePath: "/tmp/btcd.tar",
@@ -68,12 +68,15 @@ var buildConfigurations = []docker.BuildConfiguration{
 				"latest",
 			},
 			BuildArgs: map[string]*string{
-				"btcd_version":    strPtr("v0.23.3"),
-				"scratch_version": strPtr("latest"),
+				"source_version":     strPtr("v0.23.3"),
+				"scratch_version":    strPtr("latest"),
+				"target_os":          strPtr("linux"),
+				"target_arch":        strPtr("amd64"),
+				"target_arm_version": strPtr(""),
 			},
 			SuppressOutput: false,
-			Remove:         false,
-			ForceRemove:    false,
+			Remove:         true,
+			ForceRemove:    true,
 			PullParent:     false,
 		},
 	},
@@ -87,12 +90,15 @@ var buildConfigurations = []docker.BuildConfiguration{
 				"latest",
 			},
 			BuildArgs: map[string]*string{
-				"btcd_version":    strPtr("v0.23.3"),
-				"scratch_version": strPtr("latest"),
+				"source_version":     strPtr("v0.23.3"),
+				"scratch_version":    strPtr("latest"),
+				"target_os":          strPtr("linux"),
+				"target_arch":        strPtr("amd64"),
+				"target_arm_version": strPtr(""),
 			},
 			SuppressOutput: false,
-			Remove:         false,
-			ForceRemove:    false,
+			Remove:         true,
+			ForceRemove:    true,
 			PullParent:     false,
 		},
 	},
@@ -184,7 +190,7 @@ var commands = &cmds.Command{
 		defer cli.Close()
 
 		// Get ready to submit the builds
-		var builder = docker.NewBuilder(ctx, cli, buildConfigurations)
+		var builder = docker.NewBuilder(ctx, cli, sourceConfigurations, buildConfigurations)
 
 		if err = builder.Build(); check(err) {
 			return err
