@@ -9,7 +9,7 @@ FROM indralabs/scratch:latest as scratch
 
 FROM ${sourcing_image}
 
-ARG source_url="https://github.com/lightningnetwork/lnd/releases/download/"
+ARG source_url="https://github.com/lightningnetwork/lnd/releases/download"
 ARG source_version="v0.15.5-beta"
 
 WORKDIR /tmp
