@@ -24,12 +24,16 @@ services:
         ipv4_address: 172.16.42.3
     depends_on:
       - btcd
+    entrypoint: "/bin/lnd --lnddir=/var/lnd --configfile=/etc/lnd/lnd.conf --debuglevel=debug"
     command:
       - "--bitcoin.active"
       - "--bitcoin.simnet"
       - "--btcd.rpchost=172.16.42.2:8334"
       - "--btcd.rpcuser=simnet"
       - "--btcd.rpcpass=simnet"
+#      - "--rpclisten=0.0.0.0:10009"
+#      - "--listen=0.0.0.0:9735"
+      - "--adminmacaroonpath=/etc/lnd/keys/admin.macaroon"
 #  btcctl:
 #    image: indralabs/btcctl
 #    volumes:
