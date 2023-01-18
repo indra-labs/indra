@@ -44,6 +44,23 @@ var sourceConfigurations = []docker.BuildConfiguration{
 			PullParent:     false,
 		},
 	},
+	docker.BuildConfiguration{
+		Name:            defaultRepositoryName + "/" + "indra-source-local",
+		ContextFilePath: "/tmp/indra-source-local.tar",
+		BuildOpts: types.ImageBuildOptions{
+			Dockerfile: "docker/indra/source/local.Dockerfile",
+			Tags: []string{
+				"dev",
+			},
+			BuildArgs: map[string]*string{
+				"sourcing_image": strPtr(defaultBuildContainer),
+			},
+			SuppressOutput: false,
+			Remove:         false,
+			ForceRemove:    false,
+			PullParent:     false,
+		},
+	},
 	//docker.BuildConfiguration{
 	//	Name:            defaultRepositoryName + "/" + "indra-source",
 	//	ContextFilePath: "/tmp/indra-source.tar",
