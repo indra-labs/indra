@@ -88,7 +88,6 @@ var commands = &cmds.Command{
 				}, multiAddrSanitizer),
 			},
 			Entrypoint: func(c *cmds.Command, args []string) error {
-
 				var err error
 				var params = cfg.SimnetServerParams
 
@@ -138,7 +137,6 @@ func multiAddrSanitizer(opt *list.Opt) error {
 }
 
 func main() {
-
 	var err error
 	var application *app.App
 

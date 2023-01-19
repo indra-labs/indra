@@ -21,13 +21,17 @@ type App struct {
 func New(c *cmds2.Command, args []string) (a *App, e error) {
 	log2.App = c.Name
 	// Add the default configuration items for datadir/configfile
+	log.T.Ln("test")
 	cmds2.GetConfigBase(c.Configs, c.Name, false)
+	log.T.Ln("test")
 	// Add the help function
 	c.AddCommand(cmds2.Help())
 	a = &App{Command: c}
+	log.T.Ln("test")
 	if a.Command, e = cmds2.Init(c, nil); check(e) {
 		return
 	}
+	log.T.Ln("test")
 	// We first parse the CLI args, in case config file location has been
 	// specified
 	if a.launch, _, e = a.Command.ParseCLIArgs(args); check(e) {
