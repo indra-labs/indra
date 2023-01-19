@@ -40,8 +40,9 @@ func SetPush() {
 
 type Builder struct {
 	*client.Client
-	ctx     context.Context
-	configs []BuildConfiguration
+	ctx            context.Context
+	configs        []BuildConfiguration
+	source_configs []BuildConfiguration
 }
 
 func (self *Builder) build(buildConfig BuildConfiguration) (err error) {
@@ -103,6 +104,13 @@ func (self *Builder) build(buildConfig BuildConfiguration) (err error) {
 }
 
 func (self *Builder) Build() (err error) {
+
+	for _, buildConfig := range self.source_configs {
+
+		if err = self.build(buildConfig); check(err) {
+			return
+		}
+	}
 
 	for _, buildConfig := range self.configs {
 
@@ -190,11 +198,12 @@ func (self *Builder) Push() (err error) {
 	return nil
 }
 
-func NewBuilder(ctx context.Context, cli *client.Client, buildConfigs []BuildConfiguration) (builder *Builder) {
+func NewBuilder(ctx context.Context, cli *client.Client, sourceConfigs []BuildConfiguration, buildConfigs []BuildConfiguration) (builder *Builder) {
 
 	return &Builder{
 		cli,
 		ctx,
 		buildConfigs,
+		sourceConfigs,
 	}
 }
