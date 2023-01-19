@@ -3,13 +3,13 @@ package relay
 import (
 	"net"
 
-	"github.com/Indra-Labs/indra"
-	"github.com/Indra-Labs/indra/pkg/ifc"
-	"github.com/Indra-Labs/indra/pkg/key/prv"
-	"github.com/Indra-Labs/indra/pkg/key/pub"
-	"github.com/Indra-Labs/indra/pkg/node"
-	log2 "github.com/cybriq/proc/pkg/log"
 	"github.com/cybriq/qu"
+	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/pkg/crypto/key/prv"
+	"github.com/indra-labs/indra/pkg/crypto/key/pub"
+	"github.com/indra-labs/indra/pkg/node"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/types"
 )
 
 var (
@@ -22,15 +22,15 @@ type Relay struct {
 	PubKey pub.Key
 	*node.Node
 	node.Nodes
-	ifc.Transport
+	types.Transport
 	qu.C
 }
 
-func New(ip net.IP, tpt ifc.Transport) (r *Relay) {
-	r = &Relay{Node: node.New(ip),
-		Nodes:     node.NewNodes(),
-		Transport: tpt,
-		C:         qu.T()}
+func New(ip net.IP, tpt types.Transport) (r *Relay) {
+	// r = &Relay{Node: node.New(ip),
+	// 	Nodes:     node.NewNodes(),
+	// 	Transport: tpt,
+	// 	C:         qu.T()}
 	return
 }
 
