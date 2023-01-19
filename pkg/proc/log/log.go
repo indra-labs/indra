@@ -287,7 +287,7 @@ func logPrint(
 	printFunc func() string,
 ) func() {
 	return func() {
-		if level <= Off && level > logLevel {
+		if level > Off && level > logLevel {
 			return
 		}
 		formatString := "%v%s%s%-6v %s"
@@ -364,7 +364,7 @@ func GetLogger(pathBase string) (l *Logger) {
 
 func _ln(l LogLevel, ss string) Println {
 	return func(a ...interface{}) {
-		logPrint(l, ss, joinStrings(" ", a...))
+		logPrint(l, ss, joinStrings(" ", a...))()
 	}
 }
 func _f(level LogLevel, subsystem string) Printf {
