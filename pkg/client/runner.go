@@ -44,59 +44,14 @@ func (cl *Client) runner() (out bool) {
 		return cl.AddrPort.String() +
 			" awaiting message"
 	})
+	var prev types.Onion
 	select {
 	case <-cl.C.Wait():
 		cl.Cleanup()
 		out = true
 		break
 	case b := <-cl.Node.Receive():
-		// process received message
-		var on types.Onion
-		var e error
-		c := slice.NewCursor()
-		if on, e = onion.Peel(b, c); check(e) {
-			break
-		}
-		switch on := on.(type) {
-		case *balance.Layer:
-			log.T.C(recLog(on, b, cl))
-			cl.balance(on, b, c)
-		case *confirm.Layer:
-			log.T.C(recLog(on, b, cl))
-			cl.confirm(on, b, c)
-		case *crypt.Layer:
-			log.T.C(recLog(on, b, cl))
-			cl.crypt(on, b, c)
-		case *delay.Layer:
-			log.T.C(recLog(on, b, cl))
-			cl.delay(on, b, c)
-		case *exit.Layer:
-			log.T.C(recLog(on, b, cl))
-			cl.exit(on, b, c)
-		case *forward.Layer:
-			log.T.C(recLog(on, b, cl))
-			cl.forward(on, b, c)
-		case *getbalance.Layer:
-			log.T.C(recLog(on, b, cl))
-			cl.getBalance(on, b, c)
-		case *noop.Layer:
-			log.T.C(recLog(on, b, cl))
-			cl.noop(on, b, c)
-		case *reverse.Layer:
-			log.T.C(recLog(on, b, cl))
-			cl.reverse(on, b, c)
-		case *response.Layer:
-			log.T.C(recLog(on, b, cl))
-			cl.response(on, b, c)
-		case *session.Layer:
-			log.T.C(recLog(on, b, cl))
-			cl.session(on, b, c)
-		case *token.Layer:
-			log.T.C(recLog(on, b, cl))
-			cl.token(on, b, c)
-		default:
-			log.I.S("unrecognised packet", b)
-		}
+		cl.handleMessage(b, prev)
 	case p := <-cl.PaymentChan:
 		log.T.S("incoming payment", cl.AddrPort.String(), p)
 		topUp := false
@@ -119,10 +74,76 @@ func (cl *Client) runner() (out bool) {
 	return
 }
 
+func (cl *Client) handleMessage(b slice.Bytes, prev types.Onion) {
+	// process received message
+	var on types.Onion
+	var e error
+	c := slice.NewCursor()
+	if on, e = onion.Peel(b, c); check(e) {
+		return
+	}
+	switch on := on.(type) {
+	case *balance.Layer:
+		log.T.C(recLog(on, b, cl))
+		cl.balance(on, b, c)
+	case *confirm.Layer:
+		log.T.C(recLog(on, b, cl))
+		cl.confirm(on, b, c)
+	case *crypt.Layer:
+		log.T.C(recLog(on, b, cl))
+		cl.crypt(on, b, c)
+	case *delay.Layer:
+		log.T.C(recLog(on, b, cl))
+		cl.delay(on, b, c)
+	case *exit.Layer:
+		log.T.C(recLog(on, b, cl))
+		cl.exit(on, b, c)
+	case *forward.Layer:
+		log.T.C(recLog(on, b, cl))
+		cl.forward(on, b, c)
+	case *getbalance.Layer:
+		log.T.C(recLog(on, b, cl))
+		cl.getBalance(on, b, c)
+	case *noop.Layer:
+		log.T.C(recLog(on, b, cl))
+		cl.noop(on, b, c)
+	case *reverse.Layer:
+		log.T.C(recLog(on, b, cl))
+		cl.reverse(on, b, c)
+	case *response.Layer:
+		log.T.C(recLog(on, b, cl))
+		cl.response(on, b, c)
+	case *session.Layer:
+		log.T.C(recLog(on, b, cl))
+		cl.session(on, b, c)
+	case *token.Layer:
+		log.T.C(recLog(on, b, cl))
+		cl.token(on, b, c)
+	default:
+		log.I.S("unrecognised packet", b)
+	}
+
+}
+
 func BudgeUp(b slice.Bytes, start slice.Cursor) (o slice.Bytes) {
 	o = b
 	copy(o, o[start:])
 	copy(o[len(o)-int(start):], slice.NoisePad(int(start)))
+	return
+}
+
+func FormatReply(header, res slice.Bytes, ciphers [3]sha256.Hash,
+	nonces [3]nonce.IV) (rb slice.Bytes) {
+
+	rb = make(slice.Bytes, ReverseHeaderLen+len(res))
+	cur := slice.NewCursor()
+	copy(rb[*cur:cur.Inc(ReverseHeaderLen)], header[:ReverseHeaderLen])
+	copy(rb[ReverseHeaderLen:], res)
+	start := *cur
+	for i := range ciphers {
+		blk := ciph.BlockFromHash(ciphers[i])
+		ciph.Encipher(blk, nonces[2-i], rb[start:])
+	}
 	return
 }
 
@@ -271,7 +292,6 @@ func (cl *Client) getBalance(on *getbalance.Layer,
 	var found bool
 	var bal *balance.Layer
 	cl.IterateSessions(func(s *traffic.Session) bool {
-		log.T.S(s.ID, on.ID)
 		if s.ID == on.ID {
 			bal = &balance.Layer{
 				ID:           on.ID,
@@ -288,27 +308,10 @@ func (cl *Client) getBalance(on *getbalance.Layer,
 	}
 	rb := FormatReply(b[*c:c.Inc(ReverseHeaderLen)],
 		onion.Encode(bal), on.Ciphers, on.Nonces)
-	cl.Node.Send(rb)
+	cl.Node.Send(append(rb, slice.NoisePad(714-len(rb))...))
 }
 
-func FormatReply(header, res slice.Bytes, ciphers [3]sha256.Hash,
-	nonces [3]nonce.IV) (rb slice.Bytes) {
-
-	rb = make(slice.Bytes, ReverseHeaderLen+len(res))
-	cur := slice.NewCursor()
-	copy(rb[*cur:cur.Inc(ReverseHeaderLen)], header[:ReverseHeaderLen])
-	copy(rb[ReverseHeaderLen:], res)
-	start := *cur
-	for i := range ciphers {
-		blk := ciph.BlockFromHash(ciphers[i])
-		ciph.Encipher(blk, nonces[2-i], rb[start:])
-	}
-	return
-}
-
-func (cl *Client) noop(on *noop.Layer, b slice.Bytes,
-	c *slice.Cursor) {
-
+func (cl *Client) noop(on *noop.Layer, b slice.Bytes, c *slice.Cursor) {
 	// this won't happen normally
 }
 

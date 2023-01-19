@@ -148,6 +148,5 @@ func GetBalance(s traffic.Circuit, target int,
 	for i := range returns {
 		o = o.ReverseCrypt(returns[i], prvs[i], n[i+target])
 	}
-	// o = o.Confirmation(reqNonce)
 	return
 }

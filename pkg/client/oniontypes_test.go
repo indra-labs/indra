@@ -241,6 +241,10 @@ func TestGetBalance(t *testing.T) {
 				clients[0].KeySet)
 
 			b := onion.Encode(o.Assemble())
+			// max getbalance length is 714, so all should be the
+			// same. todo: replies should be too then?
+			b = append(b, slice.NoisePad(714-len(b))...)
+			log.T.F("onion len %d", len(b))
 			clients[0].Send(circuit[0].AddrPort, b)
 		}
 	}
