@@ -68,13 +68,13 @@ RUN set -ex && echo "adding keys to verify btcd/lnd releases" \
     && mv guggero.asc /etc/btcd/keys/ \
     && wget https://raw.githubusercontent.com/lightningnetwork/lnd/master/scripts/keys/roasbeef.asc \
     && chmod 555 roasbeef.asc \
-    && mv roasbeef.asc /etc/lnd/keys/ \
-    && wget https://raw.githubusercontent.com/indra-labs/indra/master/keys/greg.stone.asc \
-    && chmod 555 greg.stone.asc \
-    && mv greg.stone.asc /etc/indra/keys/ \
-    && wget https://raw.githubusercontent.com/indra-labs/indra/master/keys/херетик.asc \
-    && chmod 555 херетик.asc \
-    && mv херетик.asc /etc/indra/keys/
+    && mv roasbeef.asc /etc/lnd/keys/
+#    && wget https://raw.githubusercontent.com/indra-labs/indra/master/keys/greg.stone.asc \
+#    && chmod 555 greg.stone.asc \
+#    && mv greg.stone.asc /etc/indra/keys/ \
+#    && wget https://raw.githubusercontent.com/indra-labs/indra/master/keys/херетик.asc \
+#    && chmod 555 херетик.asc \
+#    && mv херетик.asc /etc/indra/keys/
 
 ADD ./docker/scratch/defaults/btcd.conf .
 ADD ./docker/scratch/defaults/lnd.conf .

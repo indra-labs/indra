@@ -8,7 +8,7 @@ ARG scratch_version="latest"
 FROM indralabs/scratch-multi-arch:${scratch_version}
 
 ARG platform
-ARG version=
+ARG version
 
 ## We can't use 'COPY --from=...' here. Using ADD will enable multi-architecture releases
 ADD ./release/btcd-${version}/bin/${platform}/btcctl /bin
