@@ -12,11 +12,11 @@ import (
 type Hook func(cf sha256.Hash)
 
 type PendingResponse struct {
-	sha256.Hash
+	nonce.ID
 	Port                uint16
 	Billable, Accounted []nonce.ID
 	Return              nonce.ID
-	Callback            func(b slice.Bytes)
+	Callback            func(id nonce.ID, b slice.Bytes)
 	time.Time
 }
 
@@ -33,14 +33,14 @@ func (p *PendingResponses) GetOldestPending() (pr *PendingResponse) {
 	return p.oldestPending
 }
 
-func (p *PendingResponses) Add(h sha256.Hash, billable, accounted []nonce.ID,
-	ret nonce.ID, port uint16, callback func(b slice.Bytes)) {
+func (p *PendingResponses) Add(id nonce.ID, billable, accounted []nonce.ID,
+	ret nonce.ID, port uint16, callback func(id nonce.ID, b slice.Bytes)) {
 
 	p.Lock()
 	defer p.Unlock()
-	log.T.F("adding response hook %x", h)
+	log.T.F("adding response hook %x", id)
 	p.responses = append(p.responses, &PendingResponse{
-		Hash:      h,
+		ID:        id,
 		Time:      time.Now(),
 		Billable:  billable,
 		Accounted: accounted,
@@ -61,11 +61,11 @@ func (p *PendingResponses) FindOlder(t time.Time) (r []*PendingResponse) {
 	return
 }
 
-func (p *PendingResponses) Find(h sha256.Hash) (pr *PendingResponse) {
+func (p *PendingResponses) Find(id nonce.ID) (pr *PendingResponse) {
 	p.Lock()
 	defer p.Unlock()
 	for i := range p.responses {
-		if p.responses[i].Hash == h {
+		if p.responses[i].ID == id {
 
 			return p.responses[i]
 		}
@@ -73,11 +73,11 @@ func (p *PendingResponses) Find(h sha256.Hash) (pr *PendingResponse) {
 	return
 }
 
-func (p *PendingResponses) Delete(h sha256.Hash) {
+func (p *PendingResponses) Delete(id nonce.ID) {
 	p.Lock()
 	defer p.Unlock()
 	for i := range p.responses {
-		if p.responses[i].Hash == h {
+		if p.responses[i].ID == id {
 			if i < 1 {
 				p.responses = p.responses[1:]
 			} else {

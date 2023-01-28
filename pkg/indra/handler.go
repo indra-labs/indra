@@ -58,7 +58,7 @@ func (en *Engine) handler() (out bool) {
 }
 
 func (en *Engine) handleMessage(b slice.Bytes, prev types.Onion) {
-	// process received message
+	log.T.Ln("process received message")
 	var on types.Onion
 	var e error
 	c := slice.NewCursor()

@@ -23,6 +23,7 @@ func (en *Engine) exit(ex *exit.Layer, b slice.Bytes,
 	var result slice.Bytes
 	h := sha256.Single(ex.Bytes)
 	log.T.S(h)
+	log.T.F("received exit id %x", ex.ID)
 	if e = en.SendTo(ex.Port, ex.Bytes); check(e) {
 		return
 	}
@@ -35,8 +36,7 @@ func (en *Engine) exit(ex *exit.Layer, b slice.Bytes,
 	// the context of the response by the hash of the request message.
 	en.Lock()
 	res := onion.Encode(&response.Layer{
-		Hash:  h,
-		ID:    en.ID,
+		ID:    ex.ID,
 		Load:  en.Load,
 		Bytes: result,
 	})

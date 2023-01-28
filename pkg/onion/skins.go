@@ -9,7 +9,6 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/key/prv"
 	"github.com/indra-labs/indra/pkg/crypto/key/pub"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/node"
 	"github.com/indra-labs/indra/pkg/onion/layers/balance"
 	"github.com/indra-labs/indra/pkg/onion/layers/confirm"
@@ -122,8 +121,8 @@ func (o Skins) Reverse(ip *netip.AddrPort) Skins {
 	return append(o, &reverse.Layer{AddrPort: ip, Onion: os})
 }
 
-func (o Skins) Response(hash sha256.Hash, res slice.Bytes) Skins {
-	rs := response.Layer{Hash: hash, Bytes: res}
+func (o Skins) Response(id nonce.ID, res slice.Bytes) Skins {
+	rs := response.Layer{ID: id, Bytes: res}
 	return append(o, &rs)
 }
 

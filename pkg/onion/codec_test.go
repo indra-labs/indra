@@ -292,13 +292,14 @@ func TestOnionSkins_Response(t *testing.T) {
 
 	var e error
 	var msg slice.Bytes
+	var id nonce.ID
 	var hash sha256.Hash
 	if msg, hash, e = tests.GenMessage(10000, ""); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
 	on := Skins{}.
-		Response(hash, msg).
+		Response(id, msg).
 		Assemble()
 	onb := Encode(on)
 	c := slice.NewCursor()

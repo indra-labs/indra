@@ -8,7 +8,7 @@ import (
 )
 
 func (en *Engine) SendExit(port uint16, message slice.Bytes, id nonce.ID,
-	target *traffic.Session, hook func(b slice.Bytes)) {
+	target *traffic.Session, hook func(id nonce.ID, b slice.Bytes)) {
 
 	hops := []byte{0, 1, 2, 3, 4, 5}
 	s := make(traffic.Sessions, len(hops))

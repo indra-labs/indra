@@ -6,7 +6,6 @@ import (
 	"github.com/indra-labs/lnd/lnd/lnwire"
 
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/onion"
 	"github.com/indra-labs/indra/pkg/onion/layers/crypt"
 	"github.com/indra-labs/indra/pkg/onion/layers/directbalance"
@@ -18,11 +17,11 @@ import (
 )
 
 func (en *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
-	responseHook func(b slice.Bytes)) {
+	responseHook func(id nonce.ID, b slice.Bytes)) {
 	b := onion.Encode(o.Assemble())
 	var billable, accounted []nonce.ID
 	var ret nonce.ID
-	var last sha256.Hash
+	var last nonce.ID
 	var port uint16
 	// do client accounting
 	skip := false
@@ -66,13 +65,13 @@ func (en *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 					break
 				}
 				billable = append(billable, s.ID)
-				last = sha256.Single(on2.Bytes)
+				last = on2.ID
 				skip = true
 			case *getbalance.Layer:
 				log.D.Ln("sender: getbalance layer")
 				en.DecSession(s.ID,
 					s.RelayRate*lnwire.MilliSatoshi(len(b)/2)/1024/1024)
-				last = sha256.Single(s.ID[:])
+				last = s.ID
 				billable = append(billable, s.ID)
 				skip = true
 			}
@@ -91,7 +90,7 @@ func (en *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 		}
 	}
 	if responseHook == nil {
-		responseHook = func(_ slice.Bytes) {}
+		responseHook = func(_ nonce.ID, _ slice.Bytes) {}
 	}
 	en.Pending.Add(last, billable, accounted, ret, port, responseHook)
 	log.T.Ln("sending out onion")

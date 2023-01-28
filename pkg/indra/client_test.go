@@ -115,7 +115,7 @@ out:
 }
 
 func TestClient_SendExit(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+	log2.SetLogLevel(log2.Trace)
 	var clients []*Engine
 	var e error
 	if clients, e = CreateNMockCircuits(true, 2, DefaultTimeout); check(e) {
@@ -169,9 +169,12 @@ out:
 		c[sess.Hop] = clients[0].Sessions[i]
 		id := nonce.NewID()
 		clients[0].SendExit(port, msg, id, clients[0].Sessions[i],
-			func(b slice.Bytes) {
+			func(idd nonce.ID, b slice.Bytes) {
 				if sha256.Single(b) != respHash {
 					t.Error("failed to receive expected message")
+				}
+				if id != idd {
+					t.Error("failed to receive expected message ID")
 				}
 				log.I.Ln("success")
 				wg.Done()

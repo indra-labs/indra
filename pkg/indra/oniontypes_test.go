@@ -105,10 +105,14 @@ func TestSendExit(t *testing.T) {
 	os := onion.SendExit(port, msg, id, clients[0].GetSessionByIndex(0),
 		circuit, clients[0].KeySet)
 
-	hook := func(b slice.Bytes) {
+	hook := func(idd nonce.ID, b slice.Bytes) {
 		log.T.S(b.ToBytes())
 		if sha256.Single(b) != respHash {
 			t.Error("failed to receive expected message")
+		}
+		if id != idd {
+			t.Errorf("failed to receive expected message ID got %x, "+
+				"received %x", idd, id)
 		}
 		quit.Q()
 	}

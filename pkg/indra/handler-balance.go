@@ -3,7 +3,6 @@ package indra
 import (
 	"github.com/indra-labs/lnd/lnd/lnwire"
 
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/onion/layers/balance"
 	"github.com/indra-labs/indra/pkg/traffic"
 	"github.com/indra-labs/indra/pkg/types"
@@ -26,7 +25,7 @@ func (en *Engine) balance(on *balance.Layer,
 		}
 		return false
 	})
-	pending := en.Pending.Find(sha256.Single(on.ID[:]))
+	pending := en.Pending.Find(on.ID)
 	if pending != nil {
 		for i := range pending.Billable {
 			s := en.FindSession(pending.Billable[i])
@@ -41,7 +40,7 @@ func (en *Engine) balance(on *balance.Layer,
 				}
 			}
 		}
-		en.Pending.Delete(pending.Hash)
+		en.Pending.Delete(pending.ID)
 	}
 	en.Confirms.Confirm(on.ConfID)
 }
