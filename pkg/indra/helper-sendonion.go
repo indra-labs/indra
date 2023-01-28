@@ -17,7 +17,7 @@ import (
 	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
-func (cl *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
+func (en *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 	responseHook func(b slice.Bytes)) {
 	b := onion.Encode(o.Assemble())
 	var billable, accounted []nonce.ID
@@ -33,7 +33,7 @@ func (cl *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 		}
 		switch on := o[i].(type) {
 		case *crypt.Layer:
-			s := cl.FindSessionByHeaderPub(on.ToHeaderPub)
+			s := en.FindSessionByHeaderPub(on.ToHeaderPub)
 			// The last hop needs no accounting as it's us!
 			if i == len(o)-1 {
 				// The session used for the last hop is stored, however.
@@ -46,8 +46,8 @@ func (cl *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 			switch on2 := o[i+1].(type) {
 			case *forward.Layer:
 				log.D.Ln("sender:",
-					cl.AddrPort.String(), "send forward")
-				cl.DecSession(s.ID,
+					en.AddrPort.String(), "send forward")
+				en.DecSession(s.ID,
 					s.RelayRate*lnwire.MilliSatoshi(len(b))/1024/1024)
 				accounted = append(accounted, s.ID)
 			case *reverse.Layer:
@@ -60,7 +60,7 @@ func (cl *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 					port = on2.Port
 					log.D.Ln("sender:",
 						s.AddrPort.String(), "exit receive")
-					cl.DecSession(s.ID,
+					en.DecSession(s.ID,
 						s.Services[i].RelayRate*lnwire.MilliSatoshi(len(b)/2)/1024/1024)
 					accounted = append(accounted, s.ID)
 					break
@@ -70,7 +70,7 @@ func (cl *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 				skip = true
 			case *getbalance.Layer:
 				log.D.Ln("sender: getbalance layer")
-				cl.DecSession(s.ID,
+				en.DecSession(s.ID,
 					s.RelayRate*lnwire.MilliSatoshi(len(b)/2)/1024/1024)
 				last = sha256.Single(s.ID[:])
 				billable = append(billable, s.ID)
@@ -80,12 +80,12 @@ func (cl *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 			// the immediate previous layer session needs to be accounted.
 			switch on3 := o[i-1].(type) {
 			case *crypt.Layer:
-				s := cl.FindSessionByHeaderPub(on3.ToHeaderPub)
+				s := en.FindSessionByHeaderPub(on3.ToHeaderPub)
 				if s == nil {
 					return
 				}
 				log.D.Ln("sender: directbalance layer")
-				cl.DecSession(s.ID,
+				en.DecSession(s.ID,
 					s.RelayRate*lnwire.MilliSatoshi(len(b))/1024/1024)
 			}
 		}
@@ -93,8 +93,8 @@ func (cl *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 	if responseHook == nil {
 		responseHook = func(_ slice.Bytes) {}
 	}
-	cl.PendingResponses.Add(last, billable, accounted, ret, port, responseHook)
+	en.PendingResponses.Add(last, billable, accounted, ret, port, responseHook)
 	log.T.Ln("sending out onion")
-	cl.Send(ap, b)
+	en.Send(ap, b)
 
 }

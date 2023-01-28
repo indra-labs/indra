@@ -14,7 +14,7 @@ import (
 	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
-func (cl *Engine) exit(ex *exit.Layer, b slice.Bytes,
+func (en *Engine) exit(ex *exit.Layer, b slice.Bytes,
 	c *slice.Cursor, prev types.Onion) {
 
 	// payload is forwarded to a local port and the result is forwarded
@@ -23,28 +23,28 @@ func (cl *Engine) exit(ex *exit.Layer, b slice.Bytes,
 	var result slice.Bytes
 	h := sha256.Single(ex.Bytes)
 	log.T.S(h)
-	if e = cl.SendTo(ex.Port, ex.Bytes); check(e) {
+	if e = en.SendTo(ex.Port, ex.Bytes); check(e) {
 		return
 	}
 	timer := time.NewTicker(time.Second * 5) // todo: timeout/retries etc
 	select {
-	case result = <-cl.ReceiveFrom(ex.Port):
+	case result = <-en.ReceiveFrom(ex.Port):
 	case <-timer.C:
 	}
 	// We need to wrap the result in a message crypt. The client recognises
 	// the context of the response by the hash of the request message.
-	cl.Lock()
+	en.Lock()
 	res := onion.Encode(&response.Layer{
 		Hash:  h,
-		Load:  cl.Load,
+		Load:  en.Load,
 		Bytes: result,
 	})
-	cl.Unlock()
+	en.Unlock()
 	rb := FormatReply(b[*c:c.Inc(crypt.ReverseHeaderLen)],
 		res, ex.Ciphers, ex.Nonces)
 	switch on := prev.(type) {
 	case *crypt.Layer:
-		sess := cl.FindSessionByHeader(on.ToPriv)
+		sess := en.FindSessionByHeader(on.ToPriv)
 		if sess == nil {
 			break
 		}
@@ -57,9 +57,9 @@ func (cl *Engine) exit(ex *exit.Layer, b slice.Bytes,
 			out := sess.Services[i].RelayRate *
 				lnwire.MilliSatoshi(len(rb)) / 2 / 1024 / 1024
 			log.D.Ln(sess.AddrPort.String(), "exit send")
-			cl.DecSession(sess.ID, in+out)
+			en.DecSession(sess.ID, in+out)
 			break
 		}
 	}
-	cl.handleMessage(rb, ex)
+	en.handleMessage(rb, ex)
 }

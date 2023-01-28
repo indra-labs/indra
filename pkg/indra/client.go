@@ -59,21 +59,21 @@ func NewClient(tpt types.Transport, hdrPrv *prv.Key, no *node.Node,
 }
 
 // Start a single thread of the Engine.
-func (cl *Engine) Start() {
+func (en *Engine) Start() {
 	for {
-		if cl.handler() {
+		if en.handler() {
 			break
 		}
 	}
 }
 
-func (cl *Engine) RegisterConfirmation(hook confirm.Hook,
+func (en *Engine) RegisterConfirmation(hook confirm.Hook,
 	cnf nonce.ID) {
 
 	if hook == nil {
 		return
 	}
-	cl.Confirms.Add(&confirm.Callback{
+	en.Confirms.Add(&confirm.Callback{
 		ID:   cnf,
 		Time: time.Now(),
 		Hook: hook,
@@ -82,19 +82,19 @@ func (cl *Engine) RegisterConfirmation(hook confirm.Hook,
 
 // Cleanup closes and flushes any resources the client opened that require sync
 // in order to reopen correctly.
-func (cl *Engine) Cleanup() {
+func (en *Engine) Cleanup() {
 	// Do cleanup stuff before shutdown.
 }
 
 // Shutdown triggers the shutdown of the client and the Cleanup before
 // finishing.
-func (cl *Engine) Shutdown() {
-	if cl.ShuttingDown.Load() {
+func (en *Engine) Shutdown() {
+	if en.ShuttingDown.Load() {
 		return
 	}
 	log.T.C(func() string {
-		return "shutting down client " + cl.Node.AddrPort.String()
+		return "shutting down client " + en.Node.AddrPort.String()
 	})
-	cl.ShuttingDown.Store(true)
-	cl.C.Q()
+	en.ShuttingDown.Store(true)
+	en.C.Q()
 }

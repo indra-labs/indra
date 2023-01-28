@@ -10,12 +10,12 @@ import (
 	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
-func (cl *Engine) balance(on *balance.Layer,
+func (en *Engine) balance(on *balance.Layer,
 	b slice.Bytes, c *slice.Cursor, prev types.Onion) {
 
 	log.T.S(on.ConfID)
 
-	cl.IterateSessions(func(s *traffic.Session) bool {
+	en.IterateSessions(func(s *traffic.Session) bool {
 		if s.ID == on.ID {
 			log.D.F("received balance %x for session %x",
 				on.MilliSatoshi, on.ID)
@@ -26,22 +26,22 @@ func (cl *Engine) balance(on *balance.Layer,
 		}
 		return false
 	})
-	pending := cl.PendingResponses.Find(sha256.Single(on.ID[:]))
+	pending := en.PendingResponses.Find(sha256.Single(on.ID[:]))
 	if pending != nil {
 		for i := range pending.Billable {
-			s := cl.FindSession(pending.Billable[i])
+			s := en.FindSession(pending.Billable[i])
 			if s != nil {
-				log.D.Ln(cl.AddrPort.String(), "post acct")
+				log.D.Ln(en.AddrPort.String(), "post acct")
 				if i == 0 {
-					cl.DecSession(s.ID,
+					en.DecSession(s.ID,
 						s.RelayRate*lnwire.MilliSatoshi(len(b)/2)/1024/1024)
 				} else {
-					cl.DecSession(s.ID,
+					en.DecSession(s.ID,
 						s.RelayRate*lnwire.MilliSatoshi(len(b))/1024/1024)
 				}
 			}
 		}
-		cl.PendingResponses.Delete(pending.Hash)
+		en.PendingResponses.Delete(pending.Hash)
 	}
-	cl.Confirms.Confirm(on.ConfID)
+	en.Confirms.Confirm(on.ConfID)
 }

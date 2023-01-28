@@ -8,7 +8,7 @@ import (
 	"github.com/indra-labs/indra/pkg/payment"
 )
 
-func (cl *Engine) BuySessions(
+func (en *Engine) BuySessions(
 	s ...*SessionBuy) (sess []*session.Layer,
 	pmt []*payment.Payment) {
 

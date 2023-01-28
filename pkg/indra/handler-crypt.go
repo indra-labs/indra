@@ -15,11 +15,11 @@ import (
 	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
-func (cl *Engine) crypt(on *crypt.Layer, b slice.Bytes,
+func (en *Engine) crypt(on *crypt.Layer, b slice.Bytes,
 	c *slice.Cursor, prev types.Onion) {
 
 	// this is probably an encrypted crypt for us.
-	hdr, _, sess, identity := cl.FindCloaked(on.Cloak)
+	hdr, _, sess, identity := en.FindCloaked(on.Cloak)
 	if hdr == nil {
 		log.T.Ln("no matching key found from cloaked key")
 		return
@@ -34,7 +34,7 @@ func (cl *Engine) crypt(on *crypt.Layer, b slice.Bytes,
 			return
 		}
 
-		cl.handleMessage(BudgeUp(b, *c), on)
+		en.handleMessage(BudgeUp(b, *c), on)
 		return
 	}
 	if string(b[*c:][:magicbytes.Len]) == directbalance.MagicString {
@@ -47,7 +47,7 @@ func (cl *Engine) crypt(on *crypt.Layer, b slice.Bytes,
 		var balID, confID nonce.ID
 		switch db := on1.(type) {
 		case *directbalance.Layer:
-			log.T.S(cl.AddrPort.String(), db, b[*c:].ToBytes())
+			log.T.S(en.AddrPort.String(), db, b[*c:].ToBytes())
 			balID = db.ID
 			confID = db.ConfID
 		default:
@@ -59,17 +59,17 @@ func (cl *Engine) crypt(on *crypt.Layer, b slice.Bytes,
 		}
 		switch fwd := on2.(type) {
 		case *forward.Layer:
-			log.T.S(cl.AddrPort.String(), fwd)
+			log.T.S(en.AddrPort.String(), fwd)
 			o := (&onion.Skins{}).
 				Forward(fwd.AddrPort).
-				Crypt(pub.Derive(hdr), nil, cl.KeySet.Next(), nonce.New(), 0).
+				Crypt(pub.Derive(hdr), nil, en.KeySet.Next(), nonce.New(), 0).
 				Balance(balID, confID, sess.Remaining)
 			rb := onion.Encode(o.Assemble())
-			cl.Send(fwd.AddrPort, rb)
-			// cl.SendOnion(fwd.AddrPort, o)
-			log.D.Ln(cl.AddrPort.String(), "directbalance reply")
-			cl.DecSession(sess.ID,
-				cl.RelayRate*lnwire.MilliSatoshi(len(b)/2+len(rb)/2)/1024/1024)
+			en.Send(fwd.AddrPort, rb)
+			// en.SendOnion(fwd.AddrPort, o)
+			log.D.Ln(en.AddrPort.String(), "directbalance reply")
+			en.DecSession(sess.ID,
+				en.RelayRate*lnwire.MilliSatoshi(len(b)/2+len(rb)/2)/1024/1024)
 			return
 		default:
 			log.T.Ln("dropping directbalance without following " +
@@ -78,5 +78,5 @@ func (cl *Engine) crypt(on *crypt.Layer, b slice.Bytes,
 		}
 		return
 	}
-	cl.handleMessage(BudgeUp(b, *c), on)
+	en.handleMessage(BudgeUp(b, *c), on)
 }

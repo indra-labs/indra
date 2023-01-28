@@ -6,11 +6,11 @@ import (
 	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
-func (cl *Engine) confirm(on *confirm.Layer,
+func (en *Engine) confirm(on *confirm.Layer,
 	b slice.Bytes, c *slice.Cursor, prev types.Onion) {
 
 	// When a confirm arrives check if it is registered for and run
 	// the hook that was registered with it.
-	log.T.S(cl.Confirms)
-	cl.Confirms.Confirm(on.ID)
+	log.T.S(en.Confirms)
+	en.Confirms.Confirm(on.ID)
 }

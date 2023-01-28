@@ -11,12 +11,12 @@ import (
 	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
-func (cl *Engine) reverse(on *reverse.Layer, b slice.Bytes,
+func (en *Engine) reverse(on *reverse.Layer, b slice.Bytes,
 	c *slice.Cursor, prev types.Onion) {
 
 	var e error
 	var on2 types.Onion
-	if on.AddrPort.String() == cl.Node.AddrPort.String() {
+	if on.AddrPort.String() == en.Node.AddrPort.String() {
 		if on2, e = onion.Peel(b, c); check(e) {
 			return
 		}
@@ -27,10 +27,10 @@ func (cl *Engine) reverse(on *reverse.Layer, b slice.Bytes,
 			second := first + crypt.ReverseLayerLen
 			last := second + crypt.ReverseLayerLen
 			log.T.Ln("searching for reverse crypt keys")
-			hdr, pld, _, _ := cl.FindCloaked(on1.Cloak)
+			hdr, pld, _, _ := en.FindCloaked(on1.Cloak)
 			if hdr == nil || pld == nil {
 				log.E.F("failed to find key for %s",
-					cl.Node.AddrPort.String())
+					en.Node.AddrPort.String())
 				return
 			}
 			// We need to find the PayloadPub to match.
@@ -50,16 +50,16 @@ func (cl *Engine) reverse(on *reverse.Layer, b slice.Bytes,
 			if b[start:start+2].String() != reverse.MagicString {
 				// It's for us!
 				log.D.Ln("handling response")
-				cl.handleMessage(BudgeUp(b, last), on)
+				en.handleMessage(BudgeUp(b, last), on)
 				break
 			}
-			sess := cl.FindSessionByHeader(hdr)
+			sess := en.FindSessionByHeader(hdr)
 			if sess != nil {
 				log.D.Ln(on.AddrPort.String(), "reverse receive")
-				cl.DecSession(sess.ID,
-					cl.RelayRate*lnwire.MilliSatoshi(len(b))/1024/1024)
+				en.DecSession(sess.ID,
+					en.RelayRate*lnwire.MilliSatoshi(len(b))/1024/1024)
 			}
-			cl.handleMessage(BudgeUp(b, start), on)
+			en.handleMessage(BudgeUp(b, start), on)
 		default:
 			// If a reverse is not followed by an onion crypt the
 			// message is incorrectly formed, just drop it.
@@ -68,7 +68,7 @@ func (cl *Engine) reverse(on *reverse.Layer, b slice.Bytes,
 	} else {
 		// we need to forward this message onion.
 		log.D.Ln("forwarding reverse")
-		cl.Send(on.AddrPort, b)
+		en.Send(on.AddrPort, b)
 	}
 
 }

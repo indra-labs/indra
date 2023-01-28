@@ -8,7 +8,7 @@ import (
 	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
-func (cl *Engine) delay(on *delay.Layer, b slice.Bytes,
+func (en *Engine) delay(on *delay.Layer, b slice.Bytes,
 	c *slice.Cursor, prev types.Onion) {
 
 	// this is a message to hold the message in the buffer until a duration
@@ -19,5 +19,5 @@ func (cl *Engine) delay(on *delay.Layer, b slice.Bytes,
 	select {
 	case <-time.After(on.Duration):
 	}
-	cl.handleMessage(BudgeUp(b, *c), on)
+	en.handleMessage(BudgeUp(b, *c), on)
 }

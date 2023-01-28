@@ -9,7 +9,7 @@ import (
 	"github.com/indra-labs/indra/pkg/traffic"
 )
 
-func (cl *Engine) SendKeys(sb []*SessionBuy, sess []*session.Layer,
+func (en *Engine) SendKeys(sb []*SessionBuy, sess []*session.Layer,
 	pmt []*payment.Payment, hook func(hops []*traffic.Session)) {
 
 	if len(sb) != len(sess) || len(sess) != len(pmt) {
@@ -39,7 +39,7 @@ func (cl *Engine) SendKeys(sb []*SessionBuy, sess []*session.Layer,
 				s[bu][i].Header, s[bu][i].Payload, byte(i))
 		}
 		// Fill the gaps.
-		se := cl.Select([]byte{5}, make(traffic.Sessions, 1))
+		se := en.Select([]byte{5}, make(traffic.Sessions, 1))
 		cnf := nonce.NewID()
 		// Send the keys.
 		var circuit node.Nodes
@@ -53,8 +53,8 @@ func (cl *Engine) SendKeys(sb []*SessionBuy, sess []*session.Layer,
 		}
 		// FIRE!
 		sk := onion.SendKeys(cnf, ss, se[0],
-			circuit, cl.KeySet)
-		cl.RegisterConfirmation(func(cf nonce.ID) {
+			circuit, en.KeySet)
+		en.RegisterConfirmation(func(cf nonce.ID) {
 			log.T.F("confirmed sendkeys id %x", cf)
 			var h []*traffic.Session
 			for i := range circuit {
@@ -65,6 +65,6 @@ func (cl *Engine) SendKeys(sb []*SessionBuy, sess []*session.Layer,
 			hook(h)
 		}, cnf)
 		log.T.F("sending out %d session keys", len(buys[bu]))
-		cl.SendOnion(circuit[0].AddrPort, sk, nil)
+		en.SendOnion(circuit[0].AddrPort, sk, nil)
 	}
 }

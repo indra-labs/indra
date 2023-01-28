@@ -6,7 +6,7 @@ import (
 	"github.com/indra-labs/indra/pkg/traffic"
 )
 
-func (cl *Engine) SendGetBalance(s *traffic.Session, conf func(cf nonce.ID)) {
+func (en *Engine) SendGetBalance(s *traffic.Session, conf func(cf nonce.ID)) {
 	var c traffic.Circuit
 	var returns [3]*traffic.Session
 	hops := make([]byte, 0)
@@ -15,12 +15,12 @@ func (cl *Engine) SendGetBalance(s *traffic.Session, conf func(cf nonce.ID)) {
 		c[s.Hop] = s
 		hops = append(hops, 5)
 		se := make(traffic.Sessions, len(hops))
-		ss := cl.Payments.Select(hops, se)
+		ss := en.Payments.Select(hops, se)
 		returns[2] = ss[1]
 		confID := nonce.NewID()
-		o := onion.GetBalance(c, int(s.Hop), returns, cl.KeySet, confID)
-		cl.RegisterConfirmation(conf, confID)
-		cl.SendOnion(c[s.Hop].AddrPort, o, nil)
+		o := onion.GetBalance(c, int(s.Hop), returns, en.KeySet, confID)
+		en.RegisterConfirmation(conf, confID)
+		en.SendOnion(c[s.Hop].AddrPort, o, nil)
 		return
 	}
 	var cur byte
@@ -34,7 +34,7 @@ func (cl *Engine) SendGetBalance(s *traffic.Session, conf func(cf nonce.ID)) {
 	}
 	se := make(traffic.Sessions, len(hops))
 	se[s.Hop] = s
-	ss := cl.Payments.Select(hops, se)
+	ss := en.Payments.Select(hops, se)
 	// Construct the circuit parameter.
 	for i := range ss {
 		if i > int(s.Hop) {
@@ -47,7 +47,7 @@ func (cl *Engine) SendGetBalance(s *traffic.Session, conf func(cf nonce.ID)) {
 		returns[i] = ss[lastIndex+i]
 	}
 	confID := nonce.NewID()
-	o := onion.GetBalance(c, int(s.Hop), returns, cl.KeySet, confID)
-	cl.RegisterConfirmation(conf, confID)
-	cl.SendOnion(c[0].AddrPort, o, nil)
+	o := onion.GetBalance(c, int(s.Hop), returns, en.KeySet, confID)
+	en.RegisterConfirmation(conf, confID)
+	en.SendOnion(c[0].AddrPort, o, nil)
 }
