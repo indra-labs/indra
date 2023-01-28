@@ -50,7 +50,7 @@ func Ping(id nonce.ID, client *traffic.Session, s traffic.Circuit,
 // The header remains a constant size and each node in the Reverse trims off
 // their section at the top, moves the next crypt header to the top and pads the
 // remainder with noise, so it always looks like the first hop.
-func SendExit(port uint16, payload slice.Bytes,
+func SendExit(port uint16, payload slice.Bytes, id nonce.ID,
 	client *traffic.Session, s traffic.Circuit, ks *signer.KeySet) Skins {
 
 	var prvs [3]*prv.Key
@@ -68,7 +68,7 @@ func SendExit(port uint16, payload slice.Bytes,
 		ReverseCrypt(s[0], ks.Next(), n[0], 3).
 		ReverseCrypt(s[1], ks.Next(), n[1], 2).
 		ReverseCrypt(s[2], ks.Next(), n[2], 1).
-		Exit(port, prvs, pubs, returnNonces, payload).
+		Exit(port, prvs, pubs, returnNonces, id, payload).
 		ReverseCrypt(s[3], prvs[0], n[3], 0).
 		ReverseCrypt(s[4], prvs[1], n[4], 0).
 		ReverseCrypt(client, prvs[2], n[5], 0)

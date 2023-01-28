@@ -101,8 +101,9 @@ func TestSendExit(t *testing.T) {
 		t.FailNow()
 	}
 	quit := qu.T()
-	os := onion.SendExit(port, msg, clients[0].GetSessionByIndex(0), circuit,
-		clients[0].KeySet)
+	id := nonce.NewID()
+	os := onion.SendExit(port, msg, id, clients[0].GetSessionByIndex(0),
+		circuit, clients[0].KeySet)
 
 	hook := func(b slice.Bytes) {
 		log.T.S(b.ToBytes())

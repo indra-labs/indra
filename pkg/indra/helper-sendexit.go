@@ -1,12 +1,13 @@
 package indra
 
 import (
+	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/onion"
 	"github.com/indra-labs/indra/pkg/traffic"
 	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
-func (en *Engine) SendExit(port uint16, message slice.Bytes,
+func (en *Engine) SendExit(port uint16, message slice.Bytes, id nonce.ID,
 	target *traffic.Session, hook func(b slice.Bytes)) {
 
 	hops := []byte{0, 1, 2, 3, 4, 5}
@@ -15,6 +16,6 @@ func (en *Engine) SendExit(port uint16, message slice.Bytes,
 	se := en.Select(hops, s)
 	var c traffic.Circuit
 	copy(c[:], se)
-	o := onion.SendExit(port, message, se[len(se)-1], c, en.KeySet)
+	o := onion.SendExit(port, message, id, se[len(se)-1], c, en.KeySet)
 	en.SendOnion(c[0].AddrPort, o, hook)
 }

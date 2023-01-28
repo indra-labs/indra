@@ -4,6 +4,8 @@ import (
 	"net/netip"
 	"time"
 
+	"github.com/indra-labs/lnd/lnd/lnwire"
+
 	"github.com/indra-labs/indra/pkg/crypto/key/prv"
 	"github.com/indra-labs/indra/pkg/crypto/key/pub"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
@@ -24,7 +26,6 @@ import (
 	"github.com/indra-labs/indra/pkg/traffic"
 	"github.com/indra-labs/indra/pkg/types"
 	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/lnd/lnd/lnwire"
 )
 
 type Skins []types.Onion
@@ -73,12 +74,13 @@ func (o Skins) DirectBalance(id, confID nonce.ID) Skins {
 }
 
 func (o Skins) Exit(port uint16, prvs [3]*prv.Key, pubs [3]*pub.Key,
-	nonces [3]nonce.IV, payload slice.Bytes) Skins {
+	nonces [3]nonce.IV, id nonce.ID, payload slice.Bytes) Skins {
 
 	return append(o, &exit.Layer{
 		Port:    port,
 		Ciphers: GenCiphers(prvs, pubs),
 		Nonces:  nonces,
+		ID:      id,
 		Bytes:   payload,
 		Onion:   os,
 	})

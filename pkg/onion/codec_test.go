@@ -117,8 +117,9 @@ func TestOnionSkins_Exit(t *testing.T) {
 	}
 	n3 := Gen3Nonces()
 	p := uint16(rand.Uint32())
+	id := nonce.NewID()
 	on := Skins{}.
-		Exit(p, prvs, pubs, n3, msg).
+		Exit(p, prvs, pubs, n3, id, msg).
 		Assemble()
 	onb := Encode(on)
 	c := slice.NewCursor()
@@ -147,6 +148,11 @@ func TestOnionSkins_Exit(t *testing.T) {
 			t.Errorf("nonce %d did not unwrap correctly", i)
 			t.FailNow()
 		}
+	}
+	if ex.ID != id {
+		t.Errorf("exit message ID did not unwrap correctly, got %x expected %x",
+			ex.ID, id)
+		t.FailNow()
 	}
 	plH := sha256.Single(ex.Bytes)
 	if plH != hash {

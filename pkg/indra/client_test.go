@@ -167,7 +167,8 @@ out:
 		}
 		sess := clients[0].Sessions[i]
 		c[sess.Hop] = clients[0].Sessions[i]
-		clients[0].SendExit(port, msg, clients[0].Sessions[i],
+		id := nonce.NewID()
+		clients[0].SendExit(port, msg, id, clients[0].Sessions[i],
 			func(b slice.Bytes) {
 				if sha256.Single(b) != respHash {
 					t.Error("failed to receive expected message")

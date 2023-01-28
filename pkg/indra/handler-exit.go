@@ -36,6 +36,7 @@ func (en *Engine) exit(ex *exit.Layer, b slice.Bytes,
 	en.Lock()
 	res := onion.Encode(&response.Layer{
 		Hash:  h,
+		ID:    en.ID,
 		Load:  en.Load,
 		Bytes: result,
 	})
