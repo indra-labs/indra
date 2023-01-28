@@ -30,14 +30,14 @@ type Engine struct {
 	sync.Mutex
 	Load byte
 	*confirm.Confirms
-	PendingResponses
+	Pending PendingResponses
 	*signer.KeySet
 	ShuttingDown atomic.Bool
 	qu.C
 }
 
-func NewClient(tpt types.Transport, hdrPrv *prv.Key, no *node.Node,
-	nodes node.Nodes) (c *Engine, e error) {
+func NewEngine(tpt types.Transport, hdrPrv *prv.Key, no *node.Node,
+	nodes node.Nodes, timeout time.Duration) (c *Engine, e error) {
 
 	no.Transport = tpt
 	no.IdentityPrv = hdrPrv
@@ -55,6 +55,7 @@ func NewClient(tpt types.Transport, hdrPrv *prv.Key, no *node.Node,
 		KeySet:   ks,
 		C:        qu.T(),
 	}
+	c.Pending.Timeout = timeout
 	return
 }
 

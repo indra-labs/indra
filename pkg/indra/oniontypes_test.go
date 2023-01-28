@@ -27,7 +27,7 @@ func TestPing(t *testing.T) {
 	const nTotal = 6
 	clients := make([]*Engine, nTotal)
 	var e error
-	if clients, e = CreateNMockCircuits(true, 1); check(e) {
+	if clients, e = CreateNMockCircuits(true, 1, DefaultTimeout); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -70,7 +70,7 @@ func TestSendExit(t *testing.T) {
 	const nTotal = 6
 	clients := make([]*Engine, nTotal)
 	var e error
-	if clients, e = CreateNMockCircuits(true, 1); check(e) {
+	if clients, e = CreateNMockCircuits(true, 1, DefaultTimeout); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -136,7 +136,7 @@ func TestSendKeys(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuits(false, 1); check(e) {
+	if clients, e = CreateNMockCircuits(false, 1, DefaultTimeout); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -190,7 +190,7 @@ func TestGetBalance(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuits(true, 2); check(e) {
+	if clients, e = CreateNMockCircuits(true, 2, DefaultTimeout); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}

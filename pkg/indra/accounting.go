@@ -24,6 +24,7 @@ type PendingResponses struct {
 	sync.Mutex
 	responses     []*PendingResponse
 	oldestPending *PendingResponse
+	Timeout       time.Duration
 }
 
 func (p *PendingResponses) GetOldestPending() (pr *PendingResponse) {
@@ -94,6 +95,7 @@ func (p *PendingResponses) Delete(h sha256.Hash) {
 				p.oldestPending = p.responses[i]
 			}
 		}
+		// Add handler to trigger after timeout.
 	} else {
 		p.oldestPending = nil
 	}

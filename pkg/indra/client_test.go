@@ -19,11 +19,13 @@ import (
 	"github.com/indra-labs/indra/pkg/util/tests"
 )
 
+const DefaultTimeout = time.Second
+
 func TestClient_SendKeys(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuits(false, 2); check(e) {
+	if clients, e = CreateNMockCircuits(false, 2, DefaultTimeout); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -69,7 +71,7 @@ func TestClient_SendPing(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuits(true, 2); check(e) {
+	if clients, e = CreateNMockCircuits(true, 2, DefaultTimeout); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -116,7 +118,7 @@ func TestClient_SendExit(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuits(true, 2); check(e) {
+	if clients, e = CreateNMockCircuits(true, 2, DefaultTimeout); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -196,7 +198,7 @@ func TestClient_SendGetBalance(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuits(true, 2); check(e) {
+	if clients, e = CreateNMockCircuits(true, 2, DefaultTimeout); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}

@@ -2,6 +2,7 @@ package indra
 
 import (
 	"math"
+	"time"
 
 	"github.com/indra-labs/indra/pkg/crypto/key/prv"
 	"github.com/indra-labs/indra/pkg/crypto/key/pub"
@@ -13,8 +14,7 @@ import (
 	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
-func CreateNMockCircuits(inclSessions bool,
-	nCircuits int) (cl []*Engine, e error) {
+func CreateNMockCircuits(inclSessions bool, nCircuits int, timeout time.Duration) (cl []*Engine, e error) {
 
 	nTotal := 1 + nCircuits*5
 	cl = make([]*Engine, nTotal)
@@ -36,8 +36,8 @@ func CreateNMockCircuits(inclSessions bool,
 			local = true
 		}
 		nodes[i], _ = node.New(addr, idPub, idPrv, transports[i], 18000, local)
-		if cl[i], e = NewClient(transports[i], idPrv, nodes[i],
-			nil); check(e) {
+		if cl[i], e = NewEngine(transports[i], idPrv, nodes[i],
+			nil, timeout); check(e) {
 			return
 		}
 		cl[i].AddrPort = nodes[i].AddrPort

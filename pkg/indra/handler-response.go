@@ -12,7 +12,7 @@ import (
 func (en *Engine) response(on *response.Layer, b slice.Bytes,
 	cur *slice.Cursor, prev types.Onion) {
 
-	pending := en.PendingResponses.Find(on.Hash)
+	pending := en.Pending.Find(on.Hash)
 	first := true
 	var rr lnwire.MilliSatoshi
 	if pending != nil {
@@ -40,6 +40,6 @@ func (en *Engine) response(on *response.Layer, b slice.Bytes,
 			}
 		}
 		pending.Callback(on.Bytes)
-		en.PendingResponses.Delete(on.Hash)
+		en.Pending.Delete(on.Hash)
 	}
 }

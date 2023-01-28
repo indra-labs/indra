@@ -93,7 +93,7 @@ func (en *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 	if responseHook == nil {
 		responseHook = func(_ slice.Bytes) {}
 	}
-	en.PendingResponses.Add(last, billable, accounted, ret, port, responseHook)
+	en.Pending.Add(last, billable, accounted, ret, port, responseHook)
 	log.T.Ln("sending out onion")
 	en.Send(ap, b)
 

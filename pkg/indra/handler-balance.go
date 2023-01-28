@@ -26,7 +26,7 @@ func (en *Engine) balance(on *balance.Layer,
 		}
 		return false
 	})
-	pending := en.PendingResponses.Find(sha256.Single(on.ID[:]))
+	pending := en.Pending.Find(sha256.Single(on.ID[:]))
 	if pending != nil {
 		for i := range pending.Billable {
 			s := en.FindSession(pending.Billable[i])
@@ -41,7 +41,7 @@ func (en *Engine) balance(on *balance.Layer,
 				}
 			}
 		}
-		en.PendingResponses.Delete(pending.Hash)
+		en.Pending.Delete(pending.Hash)
 	}
 	en.Confirms.Confirm(on.ConfID)
 }
