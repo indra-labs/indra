@@ -1,15 +1,16 @@
-package client
+package indra
 
 import (
+	"github.com/indra-labs/lnd/lnd/lnwire"
+
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/onion/layers/balance"
 	"github.com/indra-labs/indra/pkg/traffic"
 	"github.com/indra-labs/indra/pkg/types"
 	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/lnd/lnd/lnwire"
 )
 
-func (cl *Client) balance(on *balance.Layer,
+func (cl *Engine) balance(on *balance.Layer,
 	b slice.Bytes, c *slice.Cursor, prev types.Onion) {
 
 	log.T.S(on.ConfID)

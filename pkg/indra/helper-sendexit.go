@@ -1,4 +1,4 @@
-package client
+package indra
 
 import (
 	"github.com/indra-labs/indra/pkg/onion"
@@ -6,7 +6,7 @@ import (
 	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
-func (cl *Client) SendExit(port uint16, message slice.Bytes,
+func (cl *Engine) SendExit(port uint16, message slice.Bytes,
 	target *traffic.Session, hook func(b slice.Bytes)) {
 
 	hops := []byte{0, 1, 2, 3, 4, 5}

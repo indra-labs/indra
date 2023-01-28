@@ -1,7 +1,9 @@
-package client
+package indra
 
 import (
 	"net/netip"
+
+	"github.com/indra-labs/lnd/lnd/lnwire"
 
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
@@ -13,10 +15,9 @@ import (
 	"github.com/indra-labs/indra/pkg/onion/layers/getbalance"
 	"github.com/indra-labs/indra/pkg/onion/layers/reverse"
 	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/lnd/lnd/lnwire"
 )
 
-func (cl *Client) SendOnion(ap *netip.AddrPort, o onion.Skins,
+func (cl *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 	responseHook func(b slice.Bytes)) {
 	b := onion.Encode(o.Assemble())
 	var billable, accounted []nonce.ID

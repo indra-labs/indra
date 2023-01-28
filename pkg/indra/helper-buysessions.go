@@ -1,13 +1,14 @@
-package client
+package indra
 
 import (
+	"github.com/indra-labs/lnd/lnd/lnwire"
+
 	"github.com/indra-labs/indra/pkg/node"
 	"github.com/indra-labs/indra/pkg/onion/layers/session"
 	"github.com/indra-labs/indra/pkg/payment"
-	"github.com/indra-labs/lnd/lnd/lnwire"
 )
 
-func (cl *Client) BuySessions(
+func (cl *Engine) BuySessions(
 	s ...*SessionBuy) (sess []*session.Layer,
 	pmt []*payment.Payment) {
 

@@ -1,10 +1,12 @@
-package client
+package indra
 
 import (
 	"sync"
 	"time"
 
 	"github.com/cybriq/qu"
+	"go.uber.org/atomic"
+
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto/key/prv"
 	"github.com/indra-labs/indra/pkg/crypto/key/pub"
@@ -15,7 +17,6 @@ import (
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/traffic"
 	"github.com/indra-labs/indra/pkg/types"
-	"go.uber.org/atomic"
 )
 
 var (
@@ -23,7 +24,7 @@ var (
 	check = log.E.Chk
 )
 
-type Client struct {
+type Engine struct {
 	*node.Node
 	node.Nodes
 	sync.Mutex
@@ -36,7 +37,7 @@ type Client struct {
 }
 
 func NewClient(tpt types.Transport, hdrPrv *prv.Key, no *node.Node,
-	nodes node.Nodes) (c *Client, e error) {
+	nodes node.Nodes) (c *Engine, e error) {
 
 	no.Transport = tpt
 	no.IdentityPrv = hdrPrv
@@ -47,7 +48,7 @@ func NewClient(tpt types.Transport, hdrPrv *prv.Key, no *node.Node,
 	}
 	// Add our first return session.
 	no.AddSession(traffic.NewSession(nonce.NewID(), no.Peer, 0, nil, nil, 5))
-	c = &Client{
+	c = &Engine{
 		Confirms: confirm.NewConfirms(),
 		Node:     no,
 		Nodes:    nodes,
@@ -57,8 +58,8 @@ func NewClient(tpt types.Transport, hdrPrv *prv.Key, no *node.Node,
 	return
 }
 
-// Start a single thread of the Client.
-func (cl *Client) Start() {
+// Start a single thread of the Engine.
+func (cl *Engine) Start() {
 	for {
 		if cl.handler() {
 			break
@@ -66,7 +67,7 @@ func (cl *Client) Start() {
 	}
 }
 
-func (cl *Client) RegisterConfirmation(hook confirm.Hook,
+func (cl *Engine) RegisterConfirmation(hook confirm.Hook,
 	cnf nonce.ID) {
 
 	if hook == nil {
@@ -81,13 +82,13 @@ func (cl *Client) RegisterConfirmation(hook confirm.Hook,
 
 // Cleanup closes and flushes any resources the client opened that require sync
 // in order to reopen correctly.
-func (cl *Client) Cleanup() {
+func (cl *Engine) Cleanup() {
 	// Do cleanup stuff before shutdown.
 }
 
 // Shutdown triggers the shutdown of the client and the Cleanup before
 // finishing.
-func (cl *Client) Shutdown() {
+func (cl *Engine) Shutdown() {
 	if cl.ShuttingDown.Load() {
 		return
 	}

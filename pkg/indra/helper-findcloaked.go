@@ -1,4 +1,4 @@
-package client
+package indra
 
 import (
 	"github.com/indra-labs/indra/pkg/crypto/key/cloak"
@@ -9,7 +9,7 @@ import (
 // FindCloaked searches the client identity key and the sessions for a match. It
 // returns the session as well, though not all users of this function will need
 // this.
-func (cl *Client) FindCloaked(clk cloak.PubKey) (hdr *prv.Key,
+func (cl *Engine) FindCloaked(clk cloak.PubKey) (hdr *prv.Key,
 	pld *prv.Key, sess *traffic.Session, identity bool) {
 
 	var b cloak.Blinder

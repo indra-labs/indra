@@ -1,4 +1,4 @@
-package client
+package indra
 
 import (
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
@@ -9,7 +9,7 @@ import (
 	"github.com/indra-labs/indra/pkg/traffic"
 )
 
-func (cl *Client) SendKeys(sb []*SessionBuy, sess []*session.Layer,
+func (cl *Engine) SendKeys(sb []*SessionBuy, sess []*session.Layer,
 	pmt []*payment.Payment, hook func(hops []*traffic.Session)) {
 
 	if len(sb) != len(sess) || len(sess) != len(pmt) {

@@ -1,4 +1,4 @@
-package client
+package indra
 
 import (
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
@@ -6,7 +6,7 @@ import (
 	"github.com/indra-labs/indra/pkg/traffic"
 )
 
-func (cl *Client) SendGetBalance(s *traffic.Session, conf func(cf nonce.ID)) {
+func (cl *Engine) SendGetBalance(s *traffic.Session, conf func(cf nonce.ID)) {
 	var c traffic.Circuit
 	var returns [3]*traffic.Session
 	hops := make([]byte, 0)

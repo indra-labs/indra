@@ -1,4 +1,4 @@
-package client
+package indra
 
 import (
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
@@ -6,7 +6,7 @@ import (
 	"github.com/indra-labs/indra/pkg/traffic"
 )
 
-func (cl *Client) SendPing(c traffic.Circuit, conf func(cf nonce.ID)) {
+func (cl *Engine) SendPing(c traffic.Circuit, conf func(cf nonce.ID)) {
 
 	hops := []byte{0, 1, 2, 3, 4, 5}
 	s := make(traffic.Sessions, len(hops))

@@ -1,4 +1,4 @@
-package client
+package indra
 
 import (
 	"math"
@@ -14,10 +14,10 @@ import (
 )
 
 func CreateNMockCircuits(inclSessions bool,
-	nCircuits int) (cl []*Client, e error) {
+	nCircuits int) (cl []*Engine, e error) {
 
 	nTotal := 1 + nCircuits*5
-	cl = make([]*Client, nTotal)
+	cl = make([]*Engine, nTotal)
 	nodes := make([]*node.Node, nTotal)
 	transports := make([]types.Transport, nTotal)
 	sessions := make(traffic.Sessions, nTotal-1)

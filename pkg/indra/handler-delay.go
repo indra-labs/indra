@@ -1,4 +1,4 @@
-package client
+package indra
 
 import (
 	"time"
@@ -8,7 +8,7 @@ import (
 	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
-func (cl *Client) delay(on *delay.Layer, b slice.Bytes,
+func (cl *Engine) delay(on *delay.Layer, b slice.Bytes,
 	c *slice.Cursor, prev types.Onion) {
 
 	// this is a message to hold the message in the buffer until a duration

@@ -1,16 +1,17 @@
-package client
+package indra
 
 import (
+	"github.com/indra-labs/lnd/lnd/lnwire"
+
 	"github.com/indra-labs/indra/pkg/crypto/ciph"
 	"github.com/indra-labs/indra/pkg/onion"
 	"github.com/indra-labs/indra/pkg/onion/layers/crypt"
 	"github.com/indra-labs/indra/pkg/onion/layers/reverse"
 	"github.com/indra-labs/indra/pkg/types"
 	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/lnd/lnd/lnwire"
 )
 
-func (cl *Client) reverse(on *reverse.Layer, b slice.Bytes,
+func (cl *Engine) reverse(on *reverse.Layer, b slice.Bytes,
 	c *slice.Cursor, prev types.Onion) {
 
 	var e error

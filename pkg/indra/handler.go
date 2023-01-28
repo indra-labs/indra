@@ -1,10 +1,11 @@
-package client
+package indra
 
 import (
 	"fmt"
 	"reflect"
 
 	"github.com/davecgh/go-spew/spew"
+
 	"github.com/indra-labs/indra/pkg/onion"
 	"github.com/indra-labs/indra/pkg/onion/layers/balance"
 	"github.com/indra-labs/indra/pkg/onion/layers/confirm"
@@ -21,7 +22,7 @@ import (
 	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
-func (cl *Client) handler() (out bool) {
+func (cl *Engine) handler() (out bool) {
 	log.T.C(func() string {
 		return cl.AddrPort.String() +
 			" awaiting message"
@@ -56,7 +57,7 @@ func (cl *Client) handler() (out bool) {
 	return
 }
 
-func (cl *Client) handleMessage(b slice.Bytes, prev types.Onion) {
+func (cl *Engine) handleMessage(b slice.Bytes, prev types.Onion) {
 	// process received message
 	var on types.Onion
 	var e error
@@ -102,7 +103,7 @@ func (cl *Client) handleMessage(b slice.Bytes, prev types.Onion) {
 
 // utility functions
 
-func recLog(on types.Onion, b slice.Bytes, cl *Client) func() string {
+func recLog(on types.Onion, b slice.Bytes, cl *Engine) func() string {
 	return func() string {
 		return cl.AddrPort.String() +
 			" received " +

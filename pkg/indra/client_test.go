@@ -1,4 +1,4 @@
-package client
+package indra
 
 import (
 	"os"
@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/cybriq/qu"
+	"go.uber.org/atomic"
+
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
@@ -15,12 +17,11 @@ import (
 	"github.com/indra-labs/indra/pkg/transport"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/tests"
-	"go.uber.org/atomic"
 )
 
 func TestClient_SendKeys(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
-	var clients []*Client
+	var clients []*Engine
 	var e error
 	if clients, e = CreateNMockCircuits(false, 2); check(e) {
 		t.Error(e)
@@ -66,7 +67,7 @@ func TestClient_SendKeys(t *testing.T) {
 
 func TestClient_SendPing(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
-	var clients []*Client
+	var clients []*Engine
 	var e error
 	if clients, e = CreateNMockCircuits(true, 2); check(e) {
 		t.Error(e)
@@ -113,7 +114,7 @@ out:
 
 func TestClient_SendExit(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
-	var clients []*Client
+	var clients []*Engine
 	var e error
 	if clients, e = CreateNMockCircuits(true, 2); check(e) {
 		t.Error(e)
@@ -193,7 +194,7 @@ out:
 
 func TestClient_SendGetBalance(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
-	var clients []*Client
+	var clients []*Engine
 	var e error
 	if clients, e = CreateNMockCircuits(true, 2); check(e) {
 		t.Error(e)

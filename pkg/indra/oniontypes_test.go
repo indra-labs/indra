@@ -1,4 +1,4 @@
-package client
+package indra
 
 import (
 	"sync"
@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/cybriq/qu"
+
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/node"
@@ -24,7 +25,7 @@ import (
 func TestPing(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	const nTotal = 6
-	clients := make([]*Client, nTotal)
+	clients := make([]*Engine, nTotal)
 	var e error
 	if clients, e = CreateNMockCircuits(true, 1); check(e) {
 		t.Error(e)
@@ -67,7 +68,7 @@ func TestPing(t *testing.T) {
 func TestSendExit(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	const nTotal = 6
-	clients := make([]*Client, nTotal)
+	clients := make([]*Engine, nTotal)
 	var e error
 	if clients, e = CreateNMockCircuits(true, 1); check(e) {
 		t.Error(e)
@@ -133,7 +134,7 @@ func TestSendExit(t *testing.T) {
 
 func TestSendKeys(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
-	var clients []*Client
+	var clients []*Engine
 	var e error
 	if clients, e = CreateNMockCircuits(false, 1); check(e) {
 		t.Error(e)
@@ -187,7 +188,7 @@ func TestSendKeys(t *testing.T) {
 
 func TestGetBalance(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
-	var clients []*Client
+	var clients []*Engine
 	var e error
 	if clients, e = CreateNMockCircuits(true, 2); check(e) {
 		t.Error(e)

@@ -1,7 +1,9 @@
-package client
+package indra
 
 import (
 	"fmt"
+
+	"github.com/indra-labs/lnd/lnd/lnwire"
 
 	"github.com/indra-labs/indra/pkg/onion"
 	"github.com/indra-labs/indra/pkg/onion/layers/balance"
@@ -10,10 +12,9 @@ import (
 	"github.com/indra-labs/indra/pkg/traffic"
 	"github.com/indra-labs/indra/pkg/types"
 	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/lnd/lnd/lnwire"
 )
 
-func (cl *Client) getBalance(on *getbalance.Layer,
+func (cl *Engine) getBalance(on *getbalance.Layer,
 	b slice.Bytes, c *slice.Cursor, prev types.Onion) {
 
 	log.T.S(on)

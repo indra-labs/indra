@@ -1,6 +1,8 @@
-package client
+package indra
 
 import (
+	"github.com/indra-labs/lnd/lnd/lnwire"
+
 	"github.com/indra-labs/indra/pkg/crypto/key/pub"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/onion"
@@ -11,10 +13,9 @@ import (
 	"github.com/indra-labs/indra/pkg/onion/layers/session"
 	"github.com/indra-labs/indra/pkg/types"
 	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/lnd/lnd/lnwire"
 )
 
-func (cl *Client) crypt(on *crypt.Layer, b slice.Bytes,
+func (cl *Engine) crypt(on *crypt.Layer, b slice.Bytes,
 	c *slice.Cursor, prev types.Onion) {
 
 	// this is probably an encrypted crypt for us.

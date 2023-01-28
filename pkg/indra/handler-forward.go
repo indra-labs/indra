@@ -1,14 +1,15 @@
-package client
+package indra
 
 import (
+	"github.com/indra-labs/lnd/lnd/lnwire"
+
 	"github.com/indra-labs/indra/pkg/onion/layers/crypt"
 	"github.com/indra-labs/indra/pkg/onion/layers/forward"
 	"github.com/indra-labs/indra/pkg/types"
 	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/lnd/lnd/lnwire"
 )
 
-func (cl *Client) forward(on *forward.Layer, b slice.Bytes,
+func (cl *Engine) forward(on *forward.Layer, b slice.Bytes,
 	c *slice.Cursor, prev types.Onion) {
 
 	// forward the whole buffer received onwards. Usually there will be a

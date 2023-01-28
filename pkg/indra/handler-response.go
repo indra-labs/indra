@@ -1,14 +1,15 @@
-package client
+package indra
 
 import (
+	"github.com/indra-labs/lnd/lnd/lnwire"
+
 	"github.com/indra-labs/indra/pkg/onion/layers/response"
 	"github.com/indra-labs/indra/pkg/types"
 	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/lnd/lnd/lnwire"
 )
 
 // response is a payload from an exit message.
-func (cl *Client) response(on *response.Layer, b slice.Bytes,
+func (cl *Engine) response(on *response.Layer, b slice.Bytes,
 	cur *slice.Cursor, prev types.Onion) {
 
 	pending := cl.PendingResponses.Find(on.Hash)

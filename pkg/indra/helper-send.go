@@ -1,14 +1,15 @@
-package client
+package indra
 
 import (
 	"net/netip"
 
 	"github.com/davecgh/go-spew/spew"
+
 	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
 // Send a message to a peer via their AddrPort.
-func (cl *Client) Send(addr *netip.AddrPort, b slice.Bytes) {
+func (cl *Engine) Send(addr *netip.AddrPort, b slice.Bytes) {
 	// first search if we already have the node available with connection
 	// open.
 	as := addr.String()

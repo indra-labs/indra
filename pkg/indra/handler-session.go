@@ -1,16 +1,17 @@
-package client
+package indra
 
 import (
 	"fmt"
 
 	"github.com/davecgh/go-spew/spew"
+
 	"github.com/indra-labs/indra/pkg/onion/layers/session"
 	"github.com/indra-labs/indra/pkg/traffic"
 	"github.com/indra-labs/indra/pkg/types"
 	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
-func (cl *Client) session(on *session.Layer, b slice.Bytes,
+func (cl *Engine) session(on *session.Layer, b slice.Bytes,
 	c *slice.Cursor, prev types.Onion) {
 
 	log.T.C(func() string {

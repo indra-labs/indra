@@ -1,7 +1,9 @@
-package client
+package indra
 
 import (
 	"time"
+
+	"github.com/indra-labs/lnd/lnd/lnwire"
 
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/onion"
@@ -10,10 +12,9 @@ import (
 	"github.com/indra-labs/indra/pkg/onion/layers/response"
 	"github.com/indra-labs/indra/pkg/types"
 	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/lnd/lnd/lnwire"
 )
 
-func (cl *Client) exit(ex *exit.Layer, b slice.Bytes,
+func (cl *Engine) exit(ex *exit.Layer, b slice.Bytes,
 	c *slice.Cursor, prev types.Onion) {
 
 	// payload is forwarded to a local port and the result is forwarded
