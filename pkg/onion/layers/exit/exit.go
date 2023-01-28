@@ -2,6 +2,7 @@ package exit
 
 import (
 	"github.com/davecgh/go-spew/spew"
+
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
@@ -14,7 +15,7 @@ import (
 const (
 	MagicString = "ex"
 	Len         = magicbytes.Len + slice.Uint16Len + 3*sha256.Len +
-		slice.Uint32Len + nonce.IVLen*3
+		slice.Uint32Len + nonce.IVLen*3 + nonce.IDLen
 )
 
 var (
@@ -41,6 +42,7 @@ type Layer struct {
 	// Nonces are the nonces to use with the cipher when creating the
 	// encryption for the reply message.
 	Nonces [3]nonce.IV
+	nonce.ID
 	// Bytes are the message to be passed to the exit service.
 	slice.Bytes
 	types.Onion
@@ -67,6 +69,7 @@ func (x *Layer) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(nonce.IVLen)], x.Nonces[0][:])
 	copy(b[*c:c.Inc(nonce.IVLen)], x.Nonces[1][:])
 	copy(b[*c:c.Inc(nonce.IVLen)], x.Nonces[2][:])
+	copy(b[*c:c.Inc(nonce.IDLen)], x.ID[:])
 	bytesLen := slice.NewUint32()
 	slice.EncodeUint32(bytesLen, len(x.Bytes))
 	copy(b[*c:c.Inc(slice.Uint32Len)], bytesLen)
@@ -89,6 +92,7 @@ func (x *Layer) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 		copy(x.Nonces[i][:], bytes)
 		bytes.Zero()
 	}
+	copy(x.ID[:], b[*c:c.Inc(nonce.IDLen)])
 	bytesLen := slice.DecodeUint32(b[*c:c.Inc(slice.Uint32Len)])
 	x.Bytes = b[*c:c.Inc(bytesLen)]
 	return
