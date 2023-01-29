@@ -40,7 +40,6 @@ func (en *Engine) response(on *response.Layer, b slice.Bytes,
 					MilliSatoshi(len(b))/1024/1024)
 			}
 		}
-		pending.Callback(on.ID, on.Bytes)
-		en.Pending.Delete(on.ID)
+		en.Pending.Delete(on.ID, on.Bytes)
 	}
 }

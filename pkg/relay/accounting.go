@@ -5,18 +5,17 @@ import (
 	"time"
 
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
-type Hook func(cf sha256.Hash)
+type Callback func(id nonce.ID, b slice.Bytes)
 
 type PendingResponse struct {
 	nonce.ID
 	Port                uint16
 	Billable, Accounted []nonce.ID
 	Return              nonce.ID
-	Callback            func(id nonce.ID, b slice.Bytes)
+	Callback
 	time.Time
 }
 
@@ -66,24 +65,26 @@ func (p *PendingResponses) Find(id nonce.ID) (pr *PendingResponse) {
 	defer p.Unlock()
 	for i := range p.responses {
 		if p.responses[i].ID == id {
-
 			return p.responses[i]
 		}
 	}
 	return
 }
 
-func (p *PendingResponses) Delete(id nonce.ID) {
+func (p *PendingResponses) Delete(id nonce.ID, b slice.Bytes) {
 	p.Lock()
 	defer p.Unlock()
+	log.T.F("deleting response %x", id)
 	for i := range p.responses {
 		if p.responses[i].ID == id {
+			p.responses[i].Callback(id, b)
 			if i < 1 {
 				p.responses = p.responses[1:]
 			} else {
 				p.responses = append(p.responses[:i],
 					p.responses[i+1:]...)
 			}
+			break
 		}
 	}
 	// Update the oldest pending response entry.

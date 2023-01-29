@@ -6,7 +6,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/traffic"
 )
 
-func (en *Engine) SendPing(c traffic.Circuit, conf func(cf nonce.ID)) {
+func (en *Engine) SendPing(c traffic.Circuit, conf Callback) {
 
 	hops := []byte{0, 1, 2, 3, 4, 5}
 	s := make(traffic.Sessions, len(hops))
@@ -14,7 +14,6 @@ func (en *Engine) SendPing(c traffic.Circuit, conf func(cf nonce.ID)) {
 	se := en.Select(hops, s)
 	copy(c[:], se)
 	confID := nonce.NewID()
-	en.RegisterConfirmation(conf, confID)
 	o := onion.Ping(confID, se[len(se)-1], c, en.KeySet)
-	en.SendOnion(c[0].AddrPort, o, nil)
+	en.SendOnion(c[0].AddrPort, o, conf)
 }

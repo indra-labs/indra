@@ -6,7 +6,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/traffic"
 )
 
-func (en *Engine) SendGetBalance(s *traffic.Session, conf func(cf nonce.ID)) {
+func (en *Engine) SendGetBalance(s *traffic.Session, conf Callback) {
 	var c traffic.Circuit
 	var returns [3]*traffic.Session
 	hops := make([]byte, 0)
@@ -19,8 +19,7 @@ func (en *Engine) SendGetBalance(s *traffic.Session, conf func(cf nonce.ID)) {
 		returns[2] = ss[1]
 		confID := nonce.NewID()
 		o := onion.GetBalance(c, int(s.Hop), returns, en.KeySet, confID)
-		en.RegisterConfirmation(conf, confID)
-		en.SendOnion(c[s.Hop].AddrPort, o, nil)
+		en.SendOnion(c[s.Hop].AddrPort, o, conf)
 		return
 	}
 	var cur byte
@@ -48,6 +47,5 @@ func (en *Engine) SendGetBalance(s *traffic.Session, conf func(cf nonce.ID)) {
 	}
 	confID := nonce.NewID()
 	o := onion.GetBalance(c, int(s.Hop), returns, en.KeySet, confID)
-	en.RegisterConfirmation(conf, confID)
-	en.SendOnion(c[0].AddrPort, o, nil)
+	en.SendOnion(c[0].AddrPort, o, conf)
 }

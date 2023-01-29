@@ -7,6 +7,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/session"
 	"git-indra.lan/indra-labs/indra/pkg/payment"
 	"git-indra.lan/indra-labs/indra/pkg/traffic"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 func (en *Engine) SendKeys(sb []*SessionBuy, sess []*session.Layer,
@@ -52,9 +53,9 @@ func (en *Engine) SendKeys(sb []*SessionBuy, sess []*session.Layer,
 			ss[i] = s[bu][i]
 		}
 		// FIRE!
-		sk := onion.SendKeys(cnf, ss, se[0],
-			circuit, en.KeySet)
-		en.RegisterConfirmation(func(cf nonce.ID) {
+		sk := onion.SendKeys(cnf, ss, se[0], circuit, en.KeySet)
+		log.T.F("sending out %d session keys", len(buys[bu]))
+		en.SendOnion(circuit[0].AddrPort, sk, func(cf nonce.ID, b slice.Bytes) {
 			log.T.F("confirmed sendkeys id %x", cf)
 			var h []*traffic.Session
 			for i := range circuit {
@@ -63,8 +64,6 @@ func (en *Engine) SendKeys(sb []*SessionBuy, sess []*session.Layer,
 				}
 			}
 			hook(h)
-		}, cnf)
-		log.T.F("sending out %d session keys", len(buys[bu]))
-		en.SendOnion(circuit[0].AddrPort, sk, nil)
+		})
 	}
 }

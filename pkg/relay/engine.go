@@ -13,7 +13,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/node"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/confirm"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/types"
@@ -28,8 +27,7 @@ type Engine struct {
 	*node.Node
 	node.Nodes
 	sync.Mutex
-	Load byte
-	*confirm.Confirms
+	Load    byte
 	Pending PendingResponses
 	*signer.KeySet
 	ShuttingDown atomic.Bool
@@ -49,11 +47,10 @@ func NewEngine(tpt types.Transport, hdrPrv *prv.Key, no *node.Node,
 	// Add our first return session.
 	no.AddSession(traffic.NewSession(nonce.NewID(), no.Peer, 0, nil, nil, 5))
 	c = &Engine{
-		Confirms: confirm.NewConfirms(),
-		Node:     no,
-		Nodes:    nodes,
-		KeySet:   ks,
-		C:        qu.T(),
+		Node:   no,
+		Nodes:  nodes,
+		KeySet: ks,
+		C:      qu.T(),
 	}
 	c.Pending.Timeout = timeout
 	return
@@ -66,19 +63,6 @@ func (en *Engine) Start() {
 			break
 		}
 	}
-}
-
-func (en *Engine) RegisterConfirmation(hook confirm.Hook,
-	cnf nonce.ID) {
-
-	if hook == nil {
-		return
-	}
-	en.Confirms.Add(&confirm.Callback{
-		ID:   cnf,
-		Time: time.Now(),
-		Hook: hook,
-	})
 }
 
 // Cleanup closes and flushes any resources the client opened that require sync

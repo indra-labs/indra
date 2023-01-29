@@ -7,6 +7,8 @@ import (
 
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/onion"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/balance"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/confirm"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/crypt"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/directbalance"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/exit"
@@ -86,11 +88,18 @@ func (en *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 				log.D.Ln("sender: directbalance layer")
 				en.DecSession(s.ID,
 					s.RelayRate*lnwire.MilliSatoshi(len(b))/1024/1024)
+				last = on.ID
 			}
+		case *confirm.Layer:
+			last = on.ID
+		case *balance.Layer:
+			last = on.ID
 		}
 	}
 	if responseHook == nil {
-		responseHook = func(_ nonce.ID, _ slice.Bytes) {}
+		responseHook = func(_ nonce.ID, _ slice.Bytes) {
+			log.T.Ln("nil response hook")
+		}
 	}
 	en.Pending.Add(last, billable, accounted, ret, port, responseHook)
 	log.T.Ln("sending out onion")

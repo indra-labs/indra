@@ -68,7 +68,7 @@ func TestClient_SendKeys(t *testing.T) {
 }
 
 func TestClient_SendPing(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+	log2.SetLogLevel(log2.Trace)
 	var clients []*Engine
 	var e error
 	if clients, e = CreateNMockCircuits(true, 2, DefaultTimeout); check(e) {
@@ -97,7 +97,7 @@ out:
 		sess := clients[0].Sessions[i]
 		c[sess.Hop] = clients[0].Sessions[i]
 		clients[0].SendPing(c,
-			func(b nonce.ID) {
+			func(id nonce.ID, b slice.Bytes) {
 				log.I.Ln("success")
 				wg.Done()
 			})
@@ -199,7 +199,7 @@ out:
 }
 
 func TestClient_SendGetBalance(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+	log2.SetLogLevel(log2.Trace)
 	var clients []*Engine
 	var e error
 	if clients, e = CreateNMockCircuits(true, 2, DefaultTimeout); check(e) {
@@ -224,10 +224,11 @@ func TestClient_SendGetBalance(t *testing.T) {
 out:
 	for i := 1; i < len(clients[0].Sessions)-1; i++ {
 		wg.Add(1)
-		clients[0].SendGetBalance(clients[0].Sessions[i], func(cf nonce.ID) {
-			log.I.Ln("success")
-			wg.Done()
-		})
+		clients[0].SendGetBalance(clients[0].Sessions[i],
+			func(cf nonce.ID, b slice.Bytes) {
+				log.I.Ln("success")
+				wg.Done()
+			})
 		select {
 		case <-quit:
 			break out

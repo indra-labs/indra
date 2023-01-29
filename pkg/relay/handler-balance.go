@@ -40,7 +40,6 @@ func (en *Engine) balance(on *balance.Layer,
 				}
 			}
 		}
-		en.Pending.Delete(pending.ID)
+		en.Pending.Delete(pending.ID, nil)
 	}
-	en.Confirms.Confirm(on.ConfID)
 }
