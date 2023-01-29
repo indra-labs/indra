@@ -1,4 +1,4 @@
-package indra
+package relay
 
 import (
 	"os"

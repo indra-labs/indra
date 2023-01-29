@@ -1,4 +1,4 @@
-package indra
+package relay
 
 import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
