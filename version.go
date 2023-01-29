@@ -10,11 +10,11 @@ var (
 	// GitRef is the gitref, as in refs/heads/branchname.
 	GitRef = "refs/heads/main"
 	// ParentGitCommit is the commit hash of the parent HEAD.
-	ParentGitCommit = "907e50a6e03155b5ec546685d2b4df35326ba09c"
+	ParentGitCommit = "4c044ca4db090eb38d44d2b42998b1a16e87fd98"
 	// BuildTime stores the time when the current binary was built.
-	BuildTime = "2023-01-29T11:44:40Z"
+	BuildTime = "2023-01-29T11:46:42Z"
 	// SemVer lists the (latest) git tag on the release.
-	SemVer = "v0.0.5"
+	SemVer = "v0.0.6"
 	// PathBase is the path base returned from runtime caller.
 	PathBase = "/opt/indra-labs/indra/"
 	// Major is the major number from the tag.
@@ -22,7 +22,7 @@ var (
 	// Minor is the minor number from the tag.
 	Minor = 0
 	// Patch is the patch version number from the tag.
-	Patch = 5
+	Patch = 6
 )
 
 // Version returns a pretty printed version information string.
