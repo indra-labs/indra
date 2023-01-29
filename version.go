@@ -6,7 +6,7 @@ import (
 
 var (
 	// URL is the git URL for the repository.
-	URL = ""
+	URL = "git-indra.lan/indra-labs/indra"
 	// GitRef is the gitref, as in refs/heads/branchname.
 	GitRef = "refs/heads/main"
 	// ParentGitCommit is the commit hash of the parent HEAD.
