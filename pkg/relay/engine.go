@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger(indrabase.PathBase)
 	check = log.E.Chk
 )
 

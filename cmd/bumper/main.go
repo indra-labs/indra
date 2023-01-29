@@ -33,6 +33,7 @@ var (
 	Major, Minor, Patch int
 	PathBase            string
 )
+
 var (
 	log   = log2.GetLogger(indra.PathBase)
 	check = log.E.Chk
@@ -179,7 +180,7 @@ func main() {
 	var dir string
 	if dir, e = os.Getwd(); check(e) {
 	}
-	name := filepath.Base(dir) + "base"
+	name := filepath.Base(dir)
 	versionFile := `package ` + name + `
 
 import (
