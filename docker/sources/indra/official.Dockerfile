@@ -9,7 +9,7 @@ FROM indralabs/scratch:latest as scratch
 
 FROM ${sourcing_image} as source
 
-ARG source_url="https://github.com/indra-labs/indra/releases/download"
+ARG source_url="https://git-indra.lan/indra-labs/indra/releases/download"
 ARG source_version="v0.1.10"
 
 WORKDIR /tmp

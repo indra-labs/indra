@@ -1,9 +1,9 @@
 package indra
 
 import (
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/onion"
-	"github.com/indra-labs/indra/pkg/traffic"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/onion"
+	"git-indra.lan/indra-labs/indra/pkg/traffic"
 )
 
 func (en *Engine) SendPing(c traffic.Circuit, conf func(cf nonce.ID)) {

@@ -8,9 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/indra-labs/indra"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"gopkg.in/src-d/go-git.v4"
+
+	"git-indra.lan/indra-labs/indra"
+	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 )
 
 var (
@@ -80,12 +81,12 @@ func main() {
 			if filename == "Makefile" {
 				file = []byte(strings.ReplaceAll(string(file),
 					"github.com/lightningnetwork/lnd",
-					"github.com/indra-labs/lnd/lnd"))
+					"git-indra.lan/indra-labs/lnd/lnd"))
 			}
 			e = os.WriteFile(path,
 				[]byte(strings.ReplaceAll(string(file),
 					"\"github.com/lightningnetwork/lnd",
-					"\"github.com/indra-labs/lnd/lnd")), 0755)
+					"\"git-indra.lan/indra-labs/lnd/lnd")), 0755)
 			check(e)
 		}
 		return nil

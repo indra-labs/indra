@@ -3,7 +3,7 @@ package traffic
 import (
 	"math/rand"
 
-	"github.com/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 func (pm *Payments) Select(hops []byte, alreadyHave Sessions) (so Sessions) {

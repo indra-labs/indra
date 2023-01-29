@@ -1,12 +1,12 @@
 package indra
 
 import (
-	"github.com/indra-labs/lnd/lnd/lnwire"
+	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 
-	"github.com/indra-labs/indra/pkg/onion/layers/crypt"
-	"github.com/indra-labs/indra/pkg/onion/layers/forward"
-	"github.com/indra-labs/indra/pkg/types"
-	"github.com/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/crypt"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/forward"
+	"git-indra.lan/indra-labs/indra/pkg/types"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 func (en *Engine) forward(on *forward.Layer, b slice.Bytes,

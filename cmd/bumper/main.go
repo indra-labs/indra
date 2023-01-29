@@ -16,9 +16,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/indra-labs/indra"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"gopkg.in/src-d/go-git.v4"
+	"git-indra.lan/indra-labs/indra"
+	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 )
@@ -178,7 +177,7 @@ func main() {
 	var dir string
 	if dir, e = os.Getwd(); check(e) {
 	}
-	name := filepath.Base(dir)
+	name := filepath.Base(dir) + "base"
 	versionFile := `package ` + name + `
 
 import (

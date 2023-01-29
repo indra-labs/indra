@@ -3,9 +3,9 @@ package indra
 import (
 	"time"
 
-	"github.com/indra-labs/indra/pkg/onion/layers/delay"
-	"github.com/indra-labs/indra/pkg/types"
-	"github.com/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/delay"
+	"git-indra.lan/indra-labs/indra/pkg/types"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 func (en *Engine) delay(on *delay.Layer, b slice.Bytes,

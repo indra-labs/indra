@@ -3,15 +3,15 @@ package indra
 import (
 	"time"
 
-	"github.com/indra-labs/lnd/lnd/lnwire"
+	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
-	"github.com/indra-labs/indra/pkg/onion"
-	"github.com/indra-labs/indra/pkg/onion/layers/crypt"
-	"github.com/indra-labs/indra/pkg/onion/layers/exit"
-	"github.com/indra-labs/indra/pkg/onion/layers/response"
-	"github.com/indra-labs/indra/pkg/types"
-	"github.com/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/onion"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/crypt"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/exit"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/response"
+	"git-indra.lan/indra-labs/indra/pkg/types"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 func (en *Engine) exit(ex *exit.Layer, b slice.Bytes,

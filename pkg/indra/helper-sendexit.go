@@ -1,10 +1,10 @@
 package indra
 
 import (
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/onion"
-	"github.com/indra-labs/indra/pkg/traffic"
-	"github.com/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/onion"
+	"git-indra.lan/indra-labs/indra/pkg/traffic"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 func (en *Engine) SendExit(port uint16, message slice.Bytes, id nonce.ID,

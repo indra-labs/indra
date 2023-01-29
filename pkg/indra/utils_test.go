@@ -4,14 +4,14 @@ import (
 	"math"
 	"time"
 
-	"github.com/indra-labs/indra/pkg/crypto/key/prv"
-	"github.com/indra-labs/indra/pkg/crypto/key/pub"
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/node"
-	"github.com/indra-labs/indra/pkg/traffic"
-	"github.com/indra-labs/indra/pkg/transport"
-	"github.com/indra-labs/indra/pkg/types"
-	"github.com/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/node"
+	"git-indra.lan/indra-labs/indra/pkg/traffic"
+	"git-indra.lan/indra-labs/indra/pkg/transport"
+	"git-indra.lan/indra-labs/indra/pkg/types"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 func CreateNMockCircuits(inclSessions bool, nCircuits int, timeout time.Duration) (cl []*Engine, e error) {

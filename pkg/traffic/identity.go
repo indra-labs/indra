@@ -3,13 +3,14 @@ package traffic
 import (
 	"net/netip"
 
-	"github.com/indra-labs/indra/pkg/crypto/key/prv"
-	"github.com/indra-labs/indra/pkg/crypto/key/pub"
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/ring"
-	"github.com/indra-labs/indra/pkg/service"
-	"github.com/indra-labs/indra/pkg/types"
-	"github.com/indra-labs/lnd/lnd/lnwire"
+	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
+
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/ring"
+	"git-indra.lan/indra-labs/indra/pkg/service"
+	"git-indra.lan/indra-labs/indra/pkg/types"
 )
 
 type Peer struct {

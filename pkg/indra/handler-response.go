@@ -1,11 +1,11 @@
 package indra
 
 import (
-	"github.com/indra-labs/lnd/lnd/lnwire"
+	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 
-	"github.com/indra-labs/indra/pkg/onion/layers/response"
-	"github.com/indra-labs/indra/pkg/types"
-	"github.com/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/response"
+	"git-indra.lan/indra-labs/indra/pkg/types"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 // response is a payload from an exit message.

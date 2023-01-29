@@ -1,7 +1,7 @@
 package transport
 
 import (
-	"github.com/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 type Dispatcher chan slice.Bytes

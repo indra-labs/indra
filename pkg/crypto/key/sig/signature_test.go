@@ -6,9 +6,9 @@ import (
 	mrand "math/rand"
 	"testing"
 
-	"github.com/indra-labs/indra/pkg/crypto/key/prv"
-	"github.com/indra-labs/indra/pkg/crypto/key/pub"
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 )
 
 func TestSignRecover(t *testing.T) {

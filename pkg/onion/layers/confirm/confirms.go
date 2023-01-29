@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 )
 
 type Hook func(cf nonce.ID)
@@ -37,8 +37,7 @@ func (cn *Confirms) Confirm(id nonce.ID) bool {
 			(*cn).Cnf[i].Hook(id)
 			// delete Callback.
 			end := i + 1
-			// if this is the last one, the end is the last one
-			// also.
+			// if this is the last one, the end is the last one also.
 			if end > len((*cn).Cnf)-1 {
 				end = len((*cn).Cnf) - 1
 			}

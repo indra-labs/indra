@@ -1,12 +1,12 @@
 package indra
 
 import (
-	"github.com/indra-labs/lnd/lnd/lnwire"
+	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 
-	"github.com/indra-labs/indra/pkg/onion/layers/balance"
-	"github.com/indra-labs/indra/pkg/traffic"
-	"github.com/indra-labs/indra/pkg/types"
-	"github.com/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/balance"
+	"git-indra.lan/indra-labs/indra/pkg/traffic"
+	"git-indra.lan/indra-labs/indra/pkg/types"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 func (en *Engine) balance(on *balance.Layer,

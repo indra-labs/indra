@@ -1,11 +1,11 @@
 package indra
 
 import (
-	"github.com/indra-labs/lnd/lnd/lnwire"
+	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 
-	"github.com/indra-labs/indra/pkg/node"
-	"github.com/indra-labs/indra/pkg/onion/layers/session"
-	"github.com/indra-labs/indra/pkg/payment"
+	"git-indra.lan/indra-labs/indra/pkg/node"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/session"
+	"git-indra.lan/indra-labs/indra/pkg/payment"
 )
 
 func (en *Engine) BuySessions(

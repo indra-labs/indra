@@ -9,14 +9,14 @@ import (
 	"github.com/cybriq/qu"
 	"go.uber.org/atomic"
 
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/service"
-	"github.com/indra-labs/indra/pkg/traffic"
-	"github.com/indra-labs/indra/pkg/transport"
-	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/indra/pkg/util/tests"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"git-indra.lan/indra-labs/indra/pkg/service"
+	"git-indra.lan/indra-labs/indra/pkg/traffic"
+	"git-indra.lan/indra-labs/indra/pkg/transport"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/util/tests"
 )
 
 const DefaultTimeout = time.Second

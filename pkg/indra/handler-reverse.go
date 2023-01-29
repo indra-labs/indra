@@ -1,14 +1,14 @@
 package indra
 
 import (
-	"github.com/indra-labs/lnd/lnd/lnwire"
+	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 
-	"github.com/indra-labs/indra/pkg/crypto/ciph"
-	"github.com/indra-labs/indra/pkg/onion"
-	"github.com/indra-labs/indra/pkg/onion/layers/crypt"
-	"github.com/indra-labs/indra/pkg/onion/layers/reverse"
-	"github.com/indra-labs/indra/pkg/types"
-	"github.com/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
+	"git-indra.lan/indra-labs/indra/pkg/onion"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/crypt"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/reverse"
+	"git-indra.lan/indra-labs/indra/pkg/types"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 func (en *Engine) reverse(on *reverse.Layer, b slice.Bytes,

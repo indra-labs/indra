@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/indra-labs/indra/pkg/proc/opts/config"
-	"github.com/indra-labs/indra/pkg/proc/opts/duration"
-	"github.com/indra-labs/indra/pkg/proc/opts/float"
-	"github.com/indra-labs/indra/pkg/proc/opts/integer"
-	"github.com/indra-labs/indra/pkg/proc/opts/list"
-	"github.com/indra-labs/indra/pkg/proc/opts/meta"
-	"github.com/indra-labs/indra/pkg/proc/opts/text"
-	"github.com/indra-labs/indra/pkg/proc/opts/toggle"
+	"git-indra.lan/indra-labs/indra/pkg/proc/opts/config"
+	"git-indra.lan/indra-labs/indra/pkg/proc/opts/duration"
+	"git-indra.lan/indra-labs/indra/pkg/proc/opts/float"
+	"git-indra.lan/indra-labs/indra/pkg/proc/opts/integer"
+	"git-indra.lan/indra-labs/indra/pkg/proc/opts/list"
+	"git-indra.lan/indra-labs/indra/pkg/proc/opts/meta"
+	"git-indra.lan/indra-labs/indra/pkg/proc/opts/text"
+	"git-indra.lan/indra-labs/indra/pkg/proc/opts/toggle"
 )
 
 const lorem = `

@@ -7,16 +7,16 @@ import (
 	"github.com/cybriq/qu"
 	"go.uber.org/atomic"
 
-	"github.com/indra-labs/indra"
-	"github.com/indra-labs/indra/pkg/crypto/key/prv"
-	"github.com/indra-labs/indra/pkg/crypto/key/pub"
-	"github.com/indra-labs/indra/pkg/crypto/key/signer"
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/node"
-	"github.com/indra-labs/indra/pkg/onion/layers/confirm"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/traffic"
-	"github.com/indra-labs/indra/pkg/types"
+	"git-indra.lan/indra-labs/indra"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/node"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/confirm"
+	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"git-indra.lan/indra-labs/indra/pkg/traffic"
+	"git-indra.lan/indra-labs/indra/pkg/types"
 )
 
 var (

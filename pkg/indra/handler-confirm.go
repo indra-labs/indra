@@ -1,9 +1,9 @@
 package indra
 
 import (
-	"github.com/indra-labs/indra/pkg/onion/layers/confirm"
-	"github.com/indra-labs/indra/pkg/types"
-	"github.com/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/confirm"
+	"git-indra.lan/indra-labs/indra/pkg/types"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 func (en *Engine) confirm(on *confirm.Layer,

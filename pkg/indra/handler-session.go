@@ -5,10 +5,10 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 
-	"github.com/indra-labs/indra/pkg/onion/layers/session"
-	"github.com/indra-labs/indra/pkg/traffic"
-	"github.com/indra-labs/indra/pkg/types"
-	"github.com/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/session"
+	"git-indra.lan/indra-labs/indra/pkg/traffic"
+	"git-indra.lan/indra-labs/indra/pkg/types"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 func (en *Engine) session(on *session.Layer, b slice.Bytes,

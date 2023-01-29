@@ -3,17 +3,17 @@ package indra
 import (
 	"net/netip"
 
-	"github.com/indra-labs/lnd/lnd/lnwire"
+	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/onion"
-	"github.com/indra-labs/indra/pkg/onion/layers/crypt"
-	"github.com/indra-labs/indra/pkg/onion/layers/directbalance"
-	"github.com/indra-labs/indra/pkg/onion/layers/exit"
-	"github.com/indra-labs/indra/pkg/onion/layers/forward"
-	"github.com/indra-labs/indra/pkg/onion/layers/getbalance"
-	"github.com/indra-labs/indra/pkg/onion/layers/reverse"
-	"github.com/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/onion"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/crypt"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/directbalance"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/exit"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/forward"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/getbalance"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/reverse"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 func (en *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,

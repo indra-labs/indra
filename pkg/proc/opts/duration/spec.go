@@ -5,11 +5,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/indra-labs/indra"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/proc/opts/config"
-	"github.com/indra-labs/indra/pkg/proc/opts/meta"
-	"github.com/indra-labs/indra/pkg/util/path/path"
+	"git-indra.lan/indra-labs/indra"
+	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"git-indra.lan/indra-labs/indra/pkg/proc/opts/config"
+	"git-indra.lan/indra-labs/indra/pkg/proc/opts/meta"
+	"git-indra.lan/indra-labs/indra/pkg/util/path/path"
 	"go.uber.org/atomic"
 )
 

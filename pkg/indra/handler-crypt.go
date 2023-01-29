@@ -1,18 +1,18 @@
 package indra
 
 import (
-	"github.com/indra-labs/lnd/lnd/lnwire"
+	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 
-	"github.com/indra-labs/indra/pkg/crypto/key/pub"
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/onion"
-	"github.com/indra-labs/indra/pkg/onion/layers/crypt"
-	"github.com/indra-labs/indra/pkg/onion/layers/directbalance"
-	"github.com/indra-labs/indra/pkg/onion/layers/forward"
-	"github.com/indra-labs/indra/pkg/onion/layers/magicbytes"
-	"github.com/indra-labs/indra/pkg/onion/layers/session"
-	"github.com/indra-labs/indra/pkg/types"
-	"github.com/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/onion"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/crypt"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/directbalance"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/forward"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/magicbytes"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/session"
+	"git-indra.lan/indra-labs/indra/pkg/types"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 func (en *Engine) crypt(on *crypt.Layer, b slice.Bytes,

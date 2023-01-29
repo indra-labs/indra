@@ -1,6 +1,6 @@
-module github.com/indra-labs/indra
+module git-indra.lan/indra-labs/indra
 
-go 1.18
+go 1.19
 
 require (
 	github.com/btcsuite/btcd/btcutil v1.1.3
@@ -10,7 +10,7 @@ require (
 	github.com/docker/cli v20.10.22+incompatible
 	github.com/docker/docker v20.10.22+incompatible
 	github.com/gookit/color v1.5.2
-	github.com/indra-labs/lnd v0.15.5-beta
+	git-indra.lan/indra-labs/lnd v0.15.5-beta
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
 	github.com/libp2p/go-libp2p v0.24.2
 	github.com/libp2p/go-libp2p-kad-dht v0.20.0
@@ -181,6 +181,6 @@ replace crypto/sha256 => github.com/minio/sha256-simd v1.0.0
 
 replace math/rand => github.com/lukechampine/frand v1.4.2
 
-replace github.com/indra-labs/indra => ./
+//replace git-indra.lan/indra-labs/indra => ./
 
-replace github.com/indra-labs/lnd => ../lnd
+//replace git-indra.lan/indra-labs/lnd => ../lnd

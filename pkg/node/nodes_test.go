@@ -5,8 +5,8 @@ import (
 	"net/netip"
 	"testing"
 
-	"github.com/indra-labs/indra/pkg/transport"
-	"github.com/indra-labs/indra/pkg/util/tests"
+	"git-indra.lan/indra-labs/indra/pkg/transport"
+	"git-indra.lan/indra-labs/indra/pkg/util/tests"
 )
 
 var testAddrPort, _ = netip.ParseAddrPort("1.1.1.1:20000")

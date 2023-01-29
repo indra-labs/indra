@@ -5,10 +5,10 @@ package cloak
 import (
 	"crypto/rand"
 
-	"github.com/indra-labs/indra"
-	"github.com/indra-labs/indra/pkg/crypto/key/pub"
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"git-indra.lan/indra-labs/indra"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 )
 
 var (

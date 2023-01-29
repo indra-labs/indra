@@ -4,18 +4,19 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/indra-labs/indra"
-	"github.com/indra-labs/indra/pkg/cfg"
-	"github.com/indra-labs/indra/pkg/proc/app"
-	"github.com/indra-labs/indra/pkg/proc/cmds"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/proc/opts/config"
-	"github.com/indra-labs/indra/pkg/proc/opts/list"
-	"github.com/indra-labs/indra/pkg/proc/opts/meta"
-	"github.com/indra-labs/indra/pkg/proc/opts/text"
-	"github.com/indra-labs/indra/pkg/server"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/multiformats/go-multiaddr"
+
+	"git-indra.lan/indra-labs/indra"
+	"git-indra.lan/indra-labs/indra/pkg/cfg"
+	"git-indra.lan/indra-labs/indra/pkg/proc/app"
+	"git-indra.lan/indra-labs/indra/pkg/proc/cmds"
+	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"git-indra.lan/indra-labs/indra/pkg/proc/opts/config"
+	"git-indra.lan/indra-labs/indra/pkg/proc/opts/list"
+	"git-indra.lan/indra-labs/indra/pkg/proc/opts/meta"
+	"git-indra.lan/indra-labs/indra/pkg/proc/opts/text"
+	"git-indra.lan/indra-labs/indra/pkg/server"
 )
 
 var (

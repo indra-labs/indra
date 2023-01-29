@@ -3,7 +3,7 @@ package nonce
 import (
 	"crypto/rand"
 
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 )
 
 const IDLen = 8

@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/indra-labs/indra/pkg/crypto/key/prv"
-	"github.com/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 )
 
 func TestAddress(t *testing.T) {

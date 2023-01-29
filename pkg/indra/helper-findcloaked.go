@@ -1,9 +1,9 @@
 package indra
 
 import (
-	"github.com/indra-labs/indra/pkg/crypto/key/cloak"
-	"github.com/indra-labs/indra/pkg/crypto/key/prv"
-	"github.com/indra-labs/indra/pkg/traffic"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/cloak"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
+	"git-indra.lan/indra-labs/indra/pkg/traffic"
 )
 
 // FindCloaked searches the client identity key and the sessions for a match. It

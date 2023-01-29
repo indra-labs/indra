@@ -1,8 +1,8 @@
 package main
 
 import (
+	"git-indra.lan/indra-labs/indra/pkg/docker"
 	"github.com/docker/docker/api/types"
-	"github.com/indra-labs/indra/pkg/docker"
 )
 
 var (
@@ -10,7 +10,7 @@ var (
 )
 
 var buildConfigurations = []docker.BuildConfiguration{
-	//docker.BuildConfiguration{
+	// docker.BuildConfiguration{
 	//	Name:            defaultRepositoryName + "/" + "btcd-build",
 	//	ContextFilePath: "/tmp/btcd-build.tar",
 	//	BuildOpts: types.ImageBuildOptions{
@@ -30,7 +30,7 @@ var buildConfigurations = []docker.BuildConfiguration{
 	//		ForceRemove:    true,
 	//		PullParent:     false,
 	//	},
-	//},
+	// },
 	docker.BuildConfiguration{
 		Name:            defaultRepositoryName + "/" + "lnd-build",
 		ContextFilePath: "/tmp/lnd-build.tar",
@@ -52,7 +52,7 @@ var buildConfigurations = []docker.BuildConfiguration{
 			PullParent:     false,
 		},
 	},
-	//docker.BuildConfiguration{
+	// docker.BuildConfiguration{
 	//	Name:            defaultRepositoryName + "/" + "indra-build",
 	//	ContextFilePath: "/tmp/indra-build.tar",
 	//	BuildOpts: types.ImageBuildOptions{
@@ -72,5 +72,5 @@ var buildConfigurations = []docker.BuildConfiguration{
 	//		ForceRemove:    true,
 	//		PullParent:     false,
 	//	},
-	//},
+	// },
 }
