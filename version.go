@@ -1,4 +1,4 @@
-package indra
+package indrabase
 
 import (
 	"fmt"
@@ -10,11 +10,11 @@ var (
 	// GitRef is the gitref, as in refs/heads/branchname.
 	GitRef = "refs/heads/main"
 	// ParentGitCommit is the commit hash of the parent HEAD.
-	ParentGitCommit = "50e206779500ba1f3203a80f770fe6906267d3e8"
+	ParentGitCommit = "a14e7883dcadd7a3df691ba8c0e6dabf6e39564c"
 	// BuildTime stores the time when the current binary was built.
-	BuildTime = "2023-01-29T11:19:35Z"
+	BuildTime = "2023-01-29T11:34:33Z"
 	// SemVer lists the (latest) git tag on the release.
-	SemVer = "v0.0.2"
+	SemVer = "v0.0.3"
 	// PathBase is the path base returned from runtime caller.
 	PathBase = "/opt/indra-labs/indra/"
 	// Major is the major number from the tag.
@@ -22,7 +22,7 @@ var (
 	// Minor is the minor number from the tag.
 	Minor = 0
 	// Patch is the patch version number from the tag.
-	Patch = 2
+	Patch = 3
 )
 
 // Version returns a pretty printed version information string.
