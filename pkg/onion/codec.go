@@ -3,6 +3,8 @@ package onion
 import (
 	"fmt"
 
+	"github.com/davecgh/go-spew/spew"
+
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/ecdh"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
@@ -24,7 +26,6 @@ import (
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
-	"github.com/davecgh/go-spew/spew"
 )
 
 var (

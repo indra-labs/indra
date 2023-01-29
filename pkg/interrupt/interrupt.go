@@ -9,9 +9,10 @@ import (
 	"strings"
 	"syscall"
 
+	"go.uber.org/atomic"
+
 	"git-indra.lan/indra-labs/indra"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	"go.uber.org/atomic"
 
 	"github.com/kardianos/osext"
 )

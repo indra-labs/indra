@@ -1,10 +1,11 @@
 package cfg
 
 import (
+	"github.com/multiformats/go-multiaddr"
+
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/node"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	"github.com/multiformats/go-multiaddr"
 )
 
 var (

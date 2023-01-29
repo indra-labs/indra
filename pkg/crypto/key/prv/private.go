@@ -3,9 +3,10 @@
 package prv
 
 import (
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+
 	"git-indra.lan/indra-labs/indra"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 
 var (

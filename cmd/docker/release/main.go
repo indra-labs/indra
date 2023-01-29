@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 
+	"github.com/docker/docker/client"
+
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/docker"
 	"git-indra.lan/indra-labs/indra/pkg/proc/app"
@@ -11,7 +13,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/proc/opts/config"
 	"git-indra.lan/indra-labs/indra/pkg/proc/opts/meta"
 	"git-indra.lan/indra-labs/indra/pkg/proc/opts/toggle"
-	"github.com/docker/docker/client"
 
 	"os"
 	"time"

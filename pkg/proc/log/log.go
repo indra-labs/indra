@@ -11,9 +11,10 @@ import (
 	"sync"
 	"time"
 
-	"git-indra.lan/indra-labs/indra"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gookit/color"
+
+	"git-indra.lan/indra-labs/indra"
 )
 
 // log is your generic Logger creation invocation that uses the version data

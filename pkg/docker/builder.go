@@ -9,8 +9,6 @@ import (
 	"io/ioutil"
 	"os"
 
-	"git-indra.lan/indra-labs/indra"
-	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
@@ -18,6 +16,9 @@ import (
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/moby/term"
+
+	"git-indra.lan/indra-labs/indra"
+	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 )
 
 var (

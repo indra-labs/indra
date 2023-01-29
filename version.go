@@ -1,4 +1,4 @@
-package indrabase
+package indra
 
 import (
 	"fmt"

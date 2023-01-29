@@ -4,9 +4,10 @@
 package sha256
 
 import (
+	"github.com/minio/sha256-simd"
+
 	"git-indra.lan/indra-labs/indra"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	"github.com/minio/sha256-simd"
 )
 
 const (
