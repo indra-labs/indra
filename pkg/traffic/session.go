@@ -76,7 +76,10 @@ func NewSession(
 
 // IncSats adds to the Remaining counter, used when new data allowance has been
 // purchased.
-func (s *Session) IncSats(b lnwire.MilliSatoshi) { s.Remaining += b }
+func (s *Session) IncSats(sats lnwire.MilliSatoshi) {
+	log.D.F("session %x current %v incrementing by %v", s.ID, s.Remaining, sats)
+	s.Remaining += sats
+}
 
 // DecSats reduces the amount Remaining, if the requested amount would put
 // the total below zero it returns false, signalling that new data allowance

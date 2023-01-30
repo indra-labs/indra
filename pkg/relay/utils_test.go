@@ -1,7 +1,6 @@
 package relay
 
 import (
-	"math"
 	"time"
 
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
@@ -35,7 +34,8 @@ func CreateNMockCircuits(inclSessions bool, nCircuits int, timeout time.Duration
 		if i == 0 {
 			local = true
 		}
-		nodes[i], _ = node.New(addr, idPub, idPrv, transports[i], 18000, local)
+		nodes[i], _ = node.New(addr, idPub, idPrv, transports[i], 180000,
+			local)
 		if cl[i], e = NewEngine(transports[i], idPrv, nodes[i],
 			nil, timeout); check(e) {
 			return
@@ -47,7 +47,7 @@ func CreateNMockCircuits(inclSessions bool, nCircuits int, timeout time.Duration
 			if i > 0 {
 				sessions[i-1] = traffic.NewSession(
 					nonce.NewID(), nodes[i].Peer,
-					math.MaxUint64, nil, nil,
+					1<<16, nil, nil,
 					byte((i-1)/nCircuits))
 				// Add session to node, so it will be able to
 				// relay if it gets a message with the key.

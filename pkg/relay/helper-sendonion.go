@@ -83,9 +83,6 @@ func (en *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 				if s == nil {
 					return
 				}
-				en.DecSession(s.ID,
-					s.RelayRate*lnwire.MilliSatoshi(len(b))/1024/1024, true,
-					"directbalance")
 				last = on.ID
 			}
 		case *confirm.Layer:

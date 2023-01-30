@@ -128,7 +128,6 @@ func GetBalance(s traffic.Circuit, target int, returns [3]*traffic.Session,
 		o = o.ForwardCrypt(s[target], ks.Next(), n[0]).
 			DirectBalance(s[target].ID, id).
 			Forward(returns[2].AddrPort)
-		log.T.S(o)
 		return
 	}
 	n := GenNonces(target + 1 + 3)

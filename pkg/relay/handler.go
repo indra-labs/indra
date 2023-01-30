@@ -36,9 +36,11 @@ func (en *Engine) handler() (out bool) {
 	case b := <-en.Node.Receive():
 		en.handleMessage(b, prev)
 	case p := <-en.PaymentChan:
-		log.T.S("incoming payment", en.AddrPort.String(), p)
+		log.D.F("incoming payment for %x: %v", p.ID, p.Amount)
 		topUp := false
 		en.IterateSessions(func(s *traffic.Session) bool {
+			log.D.F("session preimage %x payment preimage %x", s.Preimage,
+				p.Preimage)
 			if s.Preimage == p.Preimage {
 				s.IncSats(p.Amount)
 				topUp = true
