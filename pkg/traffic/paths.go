@@ -33,7 +33,6 @@ out:
 	rand.Shuffle(len(ws), func(i, j int) {
 		ws[i], ws[j] = ws[j], ws[i]
 	})
-	// log.T.S(ws)
 	// Iterate the available sessions picking the first matching hop, then
 	// prune it from the temporary slice and advance the cursor, wrapping
 	// around at end.

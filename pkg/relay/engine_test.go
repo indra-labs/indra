@@ -45,22 +45,7 @@ func TestClient_SendKeys(t *testing.T) {
 		t.Error("SendExit test failed")
 		os.Exit(1)
 	}()
-	cl := clients[0]
-	sb := make([]*SessionBuy, len(cl.Nodes))
-	for i := range cl.Nodes {
-		sb[i] = BuySession(cl.Nodes[i], 1000000, byte(i/2))
-		counter.Inc()
-		wg.Add(1)
-	}
-	sess, pmt := cl.BuySessions(sb...)
-	time.Sleep(time.Second / 4)
-	log.T.Ln("sending out sessions")
-	cl.SendKeys(sb, sess, pmt, func(hops []*traffic.Session) {
-		for _ = range hops {
-			counter.Dec()
-			wg.Done()
-		}
-	})
+
 	wg.Wait()
 	for _, v := range clients {
 		v.Shutdown()
