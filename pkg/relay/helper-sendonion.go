@@ -46,23 +46,21 @@ func (en *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 			}
 			switch on2 := o[i+1].(type) {
 			case *forward.Layer:
-				log.D.Ln("sender:",
-					en.AddrPort.String(), "send forward")
 				en.DecSession(s.ID,
-					s.RelayRate*lnwire.MilliSatoshi(len(b))/1024/1024)
+					s.RelayRate*lnwire.MilliSatoshi(len(b))/1024/1024, true,
+					"forward")
 				accounted = append(accounted, s.ID)
 			case *reverse.Layer:
 				billable = append(billable, s.ID)
 			case *exit.Layer:
-				for i := range s.Services {
-					if s.Services[i].Port != on2.Port {
+				for j := range s.Services {
+					if s.Services[j].Port != on2.Port {
 						continue
 					}
 					port = on2.Port
-					log.D.Ln("sender:",
-						s.AddrPort.String(), "exit receive")
 					en.DecSession(s.ID,
-						s.Services[i].RelayRate*lnwire.MilliSatoshi(len(b)/2)/1024/1024)
+						s.Services[j].RelayRate*lnwire.
+							MilliSatoshi(len(b)/2)/1024/1024, true, "exit")
 					accounted = append(accounted, s.ID)
 					break
 				}
@@ -70,9 +68,9 @@ func (en *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 				last = on2.ID
 				skip = true
 			case *getbalance.Layer:
-				log.D.Ln("sender: getbalance layer")
 				en.DecSession(s.ID,
-					s.RelayRate*lnwire.MilliSatoshi(len(b)/2)/1024/1024)
+					s.RelayRate*lnwire.MilliSatoshi(len(b)/2)/1024/1024, true,
+					"getbalance")
 				last = s.ID
 				billable = append(billable, s.ID)
 				skip = true
@@ -85,9 +83,9 @@ func (en *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 				if s == nil {
 					return
 				}
-				log.D.Ln("sender: directbalance layer")
 				en.DecSession(s.ID,
-					s.RelayRate*lnwire.MilliSatoshi(len(b))/1024/1024)
+					s.RelayRate*lnwire.MilliSatoshi(len(b))/1024/1024, true,
+					"directbalance")
 				last = on.ID
 			}
 		case *confirm.Layer:
@@ -101,7 +99,7 @@ func (en *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 			log.T.Ln("nil response hook")
 		}
 	}
-	en.Pending.Add(last, billable, accounted, ret, port, responseHook)
+	en.Pending.Add(last, len(b), billable, accounted, ret, port, responseHook)
 	log.T.Ln("sending out onion")
 	en.Send(ap, b)
 

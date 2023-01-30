@@ -33,10 +33,12 @@ func (en *Engine) balance(on *balance.Layer,
 				log.D.Ln(en.AddrPort.String(), "post acct")
 				if i == 0 {
 					en.DecSession(s.ID,
-						s.RelayRate*lnwire.MilliSatoshi(len(b)/2)/1024/1024)
+						s.RelayRate*lnwire.MilliSatoshi(len(b)/2)/1024/1024,
+						true, "balance")
 				} else {
 					en.DecSession(s.ID,
-						s.RelayRate*lnwire.MilliSatoshi(len(b))/1024/1024)
+						s.RelayRate*lnwire.MilliSatoshi(len(b))/1024/1024,
+						true, "balance")
 				}
 			}
 		}

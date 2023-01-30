@@ -34,13 +34,12 @@ func (en *Engine) reverse(on *reverse.Layer, b slice.Bytes,
 				return
 			}
 			// We need to find the PayloadPub to match.
-			hdrPrv := hdr
-			hdrPub := on1.FromPub
-			blk := ciph.GetBlock(hdrPrv, hdrPub)
+			on1.ToPriv = hdr
+			blk := ciph.GetBlock(on1.ToPriv, on1.FromPub)
 			// Decrypt using the Payload key and header nonce.
 			ciph.Encipher(blk, on1.Nonce,
 				b[*c:c.Inc(2*crypt.ReverseLayerLen)])
-			blk = ciph.GetBlock(pld, hdrPub)
+			blk = ciph.GetBlock(pld, on1.FromPub)
 			ciph.Encipher(blk, on1.Nonce, b[*c:])
 			// shift the header segment upwards and pad the
 			// remainder.
@@ -49,17 +48,17 @@ func (en *Engine) reverse(on *reverse.Layer, b slice.Bytes,
 			copy(b[second:last], slice.NoisePad(crypt.ReverseLayerLen))
 			if b[start:start+2].String() != reverse.MagicString {
 				// It's for us!
-				log.D.Ln("handling response")
-				en.handleMessage(BudgeUp(b, last), on)
+				log.T.Ln("handling response")
+				en.handleMessage(BudgeUp(b, last), on1)
 				break
 			}
 			sess := en.FindSessionByHeader(hdr)
 			if sess != nil {
-				log.D.Ln(on.AddrPort.String(), "reverse receive")
 				en.DecSession(sess.ID,
-					en.RelayRate*lnwire.MilliSatoshi(len(b))/1024/1024)
+					en.RelayRate*lnwire.
+						MilliSatoshi(len(b))/1024/1024, false, "reverse")
+				en.handleMessage(BudgeUp(b, start), on1)
 			}
-			en.handleMessage(BudgeUp(b, start), on)
 		default:
 			// If a reverse is not followed by an onion crypt the
 			// message is incorrectly formed, just drop it.
@@ -67,7 +66,7 @@ func (en *Engine) reverse(on *reverse.Layer, b slice.Bytes,
 		}
 	} else {
 		// we need to forward this message onion.
-		log.D.Ln("forwarding reverse")
+		log.T.Ln("forwarding reverse")
 		en.Send(on.AddrPort, b)
 	}
 

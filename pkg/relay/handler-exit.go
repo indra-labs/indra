@@ -32,11 +32,11 @@ func (en *Engine) exit(ex *exit.Layer, b slice.Bytes,
 	case result = <-en.ReceiveFrom(ex.Port):
 	case <-timer.C:
 	}
-	// We need to wrap the result in a message crypt. The client recognises
-	// the context of the response by the hash of the request message.
+	// We need to wrap the result in a message crypt.
 	en.Lock()
 	res := onion.Encode(&response.Layer{
 		ID:    ex.ID,
+		Port:  ex.Port,
 		Load:  en.Load,
 		Bytes: result,
 	})
@@ -57,8 +57,7 @@ func (en *Engine) exit(ex *exit.Layer, b slice.Bytes,
 				lnwire.MilliSatoshi(len(b)) / 2 / 1024 / 1024
 			out := sess.Services[i].RelayRate *
 				lnwire.MilliSatoshi(len(rb)) / 2 / 1024 / 1024
-			log.D.Ln(sess.AddrPort.String(), "exit send")
-			en.DecSession(sess.ID, in+out)
+			en.DecSession(sess.ID, in+out, false, "exit")
 			break
 		}
 	}

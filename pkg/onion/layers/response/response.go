@@ -11,7 +11,7 @@ import (
 
 const (
 	MagicString = "rs"
-	Len         = magicbytes.Len + slice.Uint32Len +
+	Len         = magicbytes.Len + slice.Uint32Len + slice.Uint16Len +
 		nonce.IDLen + 1
 )
 
@@ -25,6 +25,7 @@ var (
 // Layer messages are what are carried back via Reverse messages from an Exit.
 type Layer struct {
 	nonce.ID
+	Port uint16
 	Load byte
 	slice.Bytes
 }
@@ -40,6 +41,9 @@ func (x *Layer) Len() int             { return Len + len(x.Bytes) }
 func (x *Layer) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
 	copy(b[*c:c.Inc(nonce.IDLen)], x.ID[:])
+	port := slice.NewUint16()
+	slice.EncodeUint16(port, int(x.Port))
+	copy(b[*c:c.Inc(slice.Uint16Len)], port)
 	b[*c] = x.Load
 	c.Inc(1)
 	bytesLen := slice.NewUint32()
@@ -53,6 +57,8 @@ func (x *Layer) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 			Len-magicbytes.Len, string(Magic))
 	}
 	copy(x.ID[:], b[*c:c.Inc(nonce.IDLen)])
+	port := slice.DecodeUint16(b[*c:c.Inc(slice.Uint16Len)])
+	x.Port = uint16(port)
 	x.Load = b[*c]
 	c.Inc(1)
 	responseLen := slice.DecodeUint32(b[*c:c.Inc(slice.Uint32Len)])

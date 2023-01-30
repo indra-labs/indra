@@ -1,6 +1,8 @@
 package traffic
 
 import (
+	"runtime"
+	"strings"
 	"sync"
 
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
@@ -123,10 +125,18 @@ func (pm *Payments) IncSession(id nonce.ID, sats lnwire.MilliSatoshi) {
 		sess.IncSats(sats)
 	}
 }
-func (pm *Payments) DecSession(id nonce.ID, sats lnwire.MilliSatoshi) bool {
+func (pm *Payments) DecSession(id nonce.ID, sats lnwire.MilliSatoshi,
+	sender bool, typ string) bool {
 	sess := pm.FindSession(id)
 	if sess != nil {
-		log.D.F("decrementing session %x by %v", sess.ID, sats)
+		dir := "relay "
+		if sender {
+			dir = "sender"
+		}
+		_, file, line, _ := runtime.Caller(1)
+		split := strings.Split(file, "/opt/indra-labs/indra/")
+		log.D.F("%s %s %x %v\n%s:%d ", dir, typ,
+			sess.ID, sats, split[1], line)
 		pm.Lock()
 		defer pm.Unlock()
 		return sess.DecSats(sats)

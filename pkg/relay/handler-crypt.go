@@ -38,7 +38,6 @@ func (en *Engine) crypt(on *crypt.Layer, b slice.Bytes,
 		return
 	}
 	if string(b[*c:][:magicbytes.Len]) == directbalance.MagicString {
-		log.D.Ln("directbalance")
 		var on1, on2 types.Onion
 		var e error
 		if on1, e = onion.Peel(b, c); check(e) {
@@ -67,9 +66,9 @@ func (en *Engine) crypt(on *crypt.Layer, b slice.Bytes,
 			rb := onion.Encode(o.Assemble())
 			en.Send(fwd.AddrPort, rb)
 			// en.SendOnion(fwd.AddrPort, o)
-			log.D.Ln(en.AddrPort.String(), "directbalance reply")
 			en.DecSession(sess.ID,
-				en.RelayRate*lnwire.MilliSatoshi(len(b)/2+len(rb)/2)/1024/1024)
+				en.RelayRate*lnwire.MilliSatoshi(len(b)+len(
+					rb)/2)/1024/1024, false, "directbalance")
 			return
 		default:
 			log.T.Ln("dropping directbalance without following " +

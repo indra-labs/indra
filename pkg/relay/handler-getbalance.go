@@ -43,12 +43,11 @@ func (en *Engine) getBalance(on *getbalance.Layer,
 	case *crypt.Layer:
 		sess := en.FindSessionByHeader(on1.ToPriv)
 		if sess != nil {
-			log.D.Ln("getbalance reply")
 			in := sess.RelayRate *
 				lnwire.MilliSatoshi(len(b)) / 2 / 1024 / 1024
 			out := sess.RelayRate *
 				lnwire.MilliSatoshi(len(rb)) / 2 / 1024 / 1024
-			en.DecSession(sess.ID, in+out)
+			en.DecSession(sess.ID, in+out, false, "getbalance")
 		}
 	}
 	en.handleMessage(rb, on)

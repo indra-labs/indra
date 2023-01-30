@@ -12,6 +12,7 @@ type Callback func(id nonce.ID, b slice.Bytes)
 
 type PendingResponse struct {
 	nonce.ID
+	SentSize            int
 	Port                uint16
 	Billable, Accounted []nonce.ID
 	Return              nonce.ID
@@ -32,14 +33,16 @@ func (p *PendingResponses) GetOldestPending() (pr *PendingResponse) {
 	return p.oldestPending
 }
 
-func (p *PendingResponses) Add(id nonce.ID, billable, accounted []nonce.ID,
-	ret nonce.ID, port uint16, callback func(id nonce.ID, b slice.Bytes)) {
+func (p *PendingResponses) Add(id nonce.ID, sentSize int, billable,
+	accounted []nonce.ID, ret nonce.ID, port uint16,
+	callback func(id nonce.ID, b slice.Bytes)) {
 
 	p.Lock()
 	defer p.Unlock()
 	log.T.F("adding response hook %x", id)
 	p.responses = append(p.responses, &PendingResponse{
 		ID:        id,
+		SentSize:  sentSize,
 		Time:      time.Now(),
 		Billable:  billable,
 		Accounted: accounted,

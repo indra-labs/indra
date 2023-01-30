@@ -68,7 +68,7 @@ func TestClient_SendKeys(t *testing.T) {
 }
 
 func TestClient_SendPing(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	log2.SetLogLevel(log2.Debug)
 	var clients []*Engine
 	var e error
 	if clients, e = CreateNMockCircuits(true, 2, DefaultTimeout); check(e) {
@@ -115,7 +115,7 @@ out:
 }
 
 func TestClient_SendExit(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	log2.SetLogLevel(log2.Debug)
 	var clients []*Engine
 	var e error
 	if clients, e = CreateNMockCircuits(true, 2, DefaultTimeout); check(e) {
@@ -155,7 +155,7 @@ out:
 		wg.Add(1)
 		var c traffic.Circuit
 		var msg slice.Bytes
-		if msg, _, e = tests.GenMessage(32, "request"); check(e) {
+		if msg, _, e = tests.GenMessage(64, "request"); check(e) {
 			t.Error(e)
 			t.FailNow()
 		}
@@ -176,7 +176,7 @@ out:
 				if id != idd {
 					t.Error("failed to receive expected message ID")
 				}
-				log.I.Ln("success")
+				log.I.F("success\n\n")
 				wg.Done()
 			})
 		bb := <-clients[3].Services[0].Receive()
@@ -199,7 +199,7 @@ out:
 }
 
 func TestClient_SendGetBalance(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	log2.SetLogLevel(log2.Debug)
 	var clients []*Engine
 	var e error
 	if clients, e = CreateNMockCircuits(true, 2, DefaultTimeout); check(e) {
@@ -226,7 +226,7 @@ out:
 		wg.Add(1)
 		clients[0].SendGetBalance(clients[0].Sessions[i],
 			func(cf nonce.ID, b slice.Bytes) {
-				log.I.Ln("success")
+				log.I.F("success\n\n")
 				wg.Done()
 			})
 		select {

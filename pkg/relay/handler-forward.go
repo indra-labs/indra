@@ -22,9 +22,9 @@ func (en *Engine) forward(on *forward.Layer, b slice.Bytes,
 		case *crypt.Layer:
 			sess := en.FindSessionByHeader(on1.ToPriv)
 			if sess != nil {
-				log.D.Ln(on.AddrPort.String(), "forward forward")
 				en.DecSession(sess.ID,
-					en.RelayRate*lnwire.MilliSatoshi(len(b))/1024/1024)
+					en.RelayRate*lnwire.MilliSatoshi(len(b))/1024/1024,
+					false, "forward")
 			}
 		}
 		// we need to forward this message onion.

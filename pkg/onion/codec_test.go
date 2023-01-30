@@ -299,7 +299,7 @@ func TestOnionSkins_Response(t *testing.T) {
 		t.FailNow()
 	}
 	on := Skins{}.
-		Response(id, msg).
+		Response(id, msg, 0).
 		Assemble()
 	onb := Encode(on)
 	c := slice.NewCursor()

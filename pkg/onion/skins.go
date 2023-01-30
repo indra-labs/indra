@@ -121,8 +121,8 @@ func (o Skins) Reverse(ip *netip.AddrPort) Skins {
 	return append(o, &reverse.Layer{AddrPort: ip, Onion: os})
 }
 
-func (o Skins) Response(id nonce.ID, res slice.Bytes) Skins {
-	rs := response.Layer{ID: id, Bytes: res}
+func (o Skins) Response(id nonce.ID, res slice.Bytes, port uint16) Skins {
+	rs := response.Layer{ID: id, Port: port, Bytes: res}
 	return append(o, &rs)
 }
 

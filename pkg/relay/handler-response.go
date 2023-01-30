@@ -14,30 +14,26 @@ func (en *Engine) response(on *response.Layer, b slice.Bytes,
 
 	pending := en.Pending.Find(on.ID)
 	log.T.F("searching for pending ID %x", on.ID)
-	first := true
-	var rr lnwire.MilliSatoshi
 	if pending != nil {
 		for i := range pending.Billable {
-			if first {
-				first = false
-				s := en.FindSession(pending.Billable[i])
-				for i := range s.Services {
-					if s.Services[i].Port == pending.Port {
-						rr = s.Services[i].RelayRate
-					}
-				}
-				if s != nil {
-					log.D.Ln(en.AddrPort.String(), "exit send", i)
-					en.DecSession(s.ID, rr*lnwire.
-						MilliSatoshi(len(b)/2)/1024/1024)
-				}
-				continue
-			}
 			s := en.FindSession(pending.Billable[i])
 			if s != nil {
-				log.D.Ln(en.AddrPort.String(), "reverse")
-				en.DecSession(s.ID, s.RelayRate*lnwire.
-					MilliSatoshi(len(b))/1024/1024)
+				typ := "response"
+				relayRate := s.Peer.RelayRate
+				dataSize := len(b)
+				switch i {
+				case 0, 1:
+					dataSize = pending.SentSize
+				case 2:
+					for j := range s.Peer.Services {
+						if s.Peer.Services[j].Port == on.Port {
+							relayRate = s.Peer.Services[j].RelayRate / 2
+							typ = "exit"
+						}
+					}
+				}
+				en.DecSession(s.ID, relayRate*lnwire.
+					MilliSatoshi(dataSize)/1024/1024, true, typ)
 			}
 		}
 		en.Pending.Delete(on.ID, on.Bytes)
