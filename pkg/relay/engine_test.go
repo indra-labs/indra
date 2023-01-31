@@ -21,7 +21,7 @@ import (
 
 const DefaultTimeout = time.Second
 
-func TestClient_SendKeys(t *testing.T) {
+func TestClient_SendSessionKeys(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	var clients []*Engine
 	var e error

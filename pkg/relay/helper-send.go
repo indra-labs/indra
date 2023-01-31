@@ -9,20 +9,20 @@ import (
 )
 
 // Send a message to a peer via their AddrPort.
-func (en *Engine) Send(addr *netip.AddrPort, b slice.Bytes) {
+func (eng *Engine) Send(addr *netip.AddrPort, b slice.Bytes) {
 	// first search if we already have the node available with connection
 	// open.
 	as := addr.String()
-	for i := range en.Nodes {
-		if as == en.Nodes[i].AddrPort.String() {
+	for i := range eng.Nodes {
+		if as == eng.Nodes[i].AddrPort.String() {
 			log.T.C(func() string {
-				return en.AddrPort.String() +
+				return eng.AddrPort.String() +
 					" sending to " +
 					addr.String() +
 					"\n" +
 					spew.Sdump(b.ToBytes())
 			})
-			en.Nodes[i].Transport.Send(b)
+			eng.Nodes[i].Transport.Send(b)
 			return
 		}
 	}

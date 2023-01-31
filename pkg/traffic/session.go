@@ -1,24 +1,15 @@
 package traffic
 
 import (
-	"runtime"
-	"strings"
 	"sync"
 
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 
-	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/payment"
-	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-)
-
-var (
-	log   = log2.GetLogger(indra.PathBase)
-	check = log.E.Chk
 )
 
 // A Session keeps track of a connection session. It specifically maintains the
@@ -26,7 +17,7 @@ var (
 // with new credit, and the current state of the encryption.
 type Session struct {
 	ID nonce.ID
-	*Peer
+	*Node
 	Remaining                 lnwire.MilliSatoshi
 	HeaderPrv, PayloadPrv     *prv.Key
 	HeaderPub, PayloadPub     *pub.Key
@@ -36,12 +27,9 @@ type Session struct {
 }
 
 // NewSession creates a new Session.
-//
-// Purchasing a session the seller returns a token, based on a requested data
-// allocation.
 func NewSession(
 	id nonce.ID,
-	node *Peer,
+	node *Node,
 	rem lnwire.MilliSatoshi,
 	hdrPrv *prv.Key,
 	pldPrv *prv.Key,
@@ -60,7 +48,7 @@ func NewSession(
 	h, p := hdrPrv.ToBytes(), pldPrv.ToBytes()
 	s = &Session{
 		ID:           id,
-		Peer:         node,
+		Node:         node,
 		Remaining:    rem,
 		HeaderPub:    hdrPub,
 		HeaderBytes:  hdrPub.ToBytes(),
@@ -76,19 +64,32 @@ func NewSession(
 
 // IncSats adds to the Remaining counter, used when new data allowance has been
 // purchased.
-func (s *Session) IncSats(sats lnwire.MilliSatoshi) {
-	log.D.F("session %x current %v incrementing by %v", s.ID, s.Remaining, sats)
+func (s *Session) IncSats(sats lnwire.MilliSatoshi,
+	sender bool, typ string) {
+	who := "relay"
+	if sender {
+		who = "client"
+	}
+	log.D.F("%s session %d %x current %v incrementing by %v", who, typ, s.ID,
+		s.Remaining, sats)
 	s.Remaining += sats
 }
 
 // DecSats reduces the amount Remaining, if the requested amount would put
 // the total below zero it returns false, signalling that new data allowance
 // needs to be purchased before any further messages can be sent.
-func (s *Session) DecSats(b lnwire.MilliSatoshi) bool {
-	if s.Remaining < b {
+func (s *Session) DecSats(sats lnwire.MilliSatoshi,
+	sender bool, typ string) bool {
+	if s.Remaining < sats {
 		return false
 	}
-	s.Remaining -= b
+	who := "relay"
+	if sender {
+		who = "client"
+	}
+	log.D.F("%s session %s %x current %v decrementing by %v", who, typ, s.ID,
+		s.Remaining, sats)
+	s.Remaining -= sats
 	return true
 }
 
@@ -118,31 +119,22 @@ func NewPayments() *Payments {
 	return &Payments{PaymentChan: make(PaymentChan)}
 }
 
-func (pm *Payments) IncSession(id nonce.ID, sats lnwire.MilliSatoshi) {
+func (pm *Payments) IncSession(id nonce.ID, sats lnwire.MilliSatoshi,
+	sender bool, typ string) {
 	sess := pm.FindSession(id)
-	log.I.S(sess)
 	if sess != nil {
-		log.D.F("incrementing session %x by %v", sess.ID, sats)
 		pm.Lock()
 		defer pm.Unlock()
-		sess.IncSats(sats)
+		sess.IncSats(sats, sender, typ)
 	}
 }
 func (pm *Payments) DecSession(id nonce.ID, sats lnwire.MilliSatoshi,
 	sender bool, typ string) bool {
 	sess := pm.FindSession(id)
 	if sess != nil {
-		dir := "relay "
-		if sender {
-			dir = "sender"
-		}
-		_, file, line, _ := runtime.Caller(1)
-		split := strings.Split(file, "/opt/indra-labs/indra/")
-		log.D.F("%s %s %x %v\n%s:%d ", dir, typ,
-			sess.ID, sats, split[1], line)
 		pm.Lock()
 		defer pm.Unlock()
-		return sess.DecSats(sats)
+		return sess.DecSats(sats, sender, typ)
 	}
 	return false
 }

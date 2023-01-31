@@ -1,11 +1,10 @@
-// Package node maintains information about peers on the network and associated
-// connection sessions.
-package node
+// Package traffic maintains information about peers on the network and
+// associated connection sessions.
+package traffic
 
 import (
 	"fmt"
 	"net/netip"
-	"time"
 
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 
@@ -15,7 +14,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/ring"
-	"git-indra.lan/indra-labs/indra/pkg/traffic"
+	"git-indra.lan/indra-labs/indra/pkg/service"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -25,15 +24,20 @@ var (
 	check = log.E.Chk
 )
 
-// Node is a representation of a messaging counterparty. The netip.AddrPort can
-// be nil for the case of a client node that is not in a direct open connection.
-// For this reason all nodes are assigned an ID and will normally be handled by
-// this except when the netip.AddrPort is known via the packet sender address.
+// Node is a representation of a messaging counterparty.
 type Node struct {
-	nonce.ID
-	*traffic.Peer
-	PingCount int
-	LastSeen  time.Time
+	nonce.ID      // matches node ID
+	AddrPort      *netip.AddrPort
+	IdentityPub   *pub.Key
+	IdentityBytes pub.Bytes
+	IdentityPrv   *prv.Key
+	RelayRate     lnwire.MilliSatoshi // Base relay price/Mb.
+	Services      service.Services    // Services offered by this peer.
+	Load          *ring.BufferLoad    // Relay load.
+	Latency       *ring.BufferLatency // Latency to peer.
+	Failure       *ring.BufferFailure // Times of tx failure.
+	*Payments
+	types.Transport
 }
 
 const DefaultSampleBufferSize = 64
@@ -49,17 +53,14 @@ func New(addr *netip.AddrPort, idPub *pub.Key, idPrv *prv.Key,
 
 	id = nonce.NewID()
 	n = &Node{
-		ID: id,
-		Peer: &traffic.Peer{
-			ID:            id,
-			AddrPort:      addr,
-			IdentityPub:   idPub,
-			IdentityBytes: idPub.ToBytes(),
-			IdentityPrv:   idPrv,
-			RelayRate:     relayRate,
-			Transport:     tpt,
-			Payments:      traffic.NewPayments(),
-		},
+		ID:            id,
+		AddrPort:      addr,
+		IdentityPub:   idPub,
+		IdentityBytes: idPub.ToBytes(),
+		IdentityPrv:   idPrv,
+		RelayRate:     relayRate,
+		Transport:     tpt,
+		Payments:      NewPayments(),
 	}
 	if !local {
 		n.Load = ring.NewBufferLoad(DefaultSampleBufferSize)

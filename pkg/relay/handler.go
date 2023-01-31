@@ -22,27 +22,27 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
-func (en *Engine) handler() (out bool) {
+func (eng *Engine) handler() (out bool) {
 	log.T.C(func() string {
-		return en.AddrPort.String() +
+		return eng.AddrPort.String() +
 			" awaiting message"
 	})
 	var prev types.Onion
 	select {
-	case <-en.C.Wait():
-		en.Cleanup()
+	case <-eng.C.Wait():
+		eng.Cleanup()
 		out = true
 		break
-	case b := <-en.Node.Receive():
-		en.handleMessage(b, prev)
-	case p := <-en.PaymentChan:
+	case b := <-eng.Node.Receive():
+		eng.handleMessage(b, prev)
+	case p := <-eng.PaymentChan:
 		log.D.F("incoming payment for %x: %v", p.ID, p.Amount)
 		topUp := false
-		en.IterateSessions(func(s *traffic.Session) bool {
+		eng.IterateSessions(func(s *traffic.Session) bool {
 			log.D.F("session preimage %x payment preimage %x", s.Preimage,
 				p.Preimage)
 			if s.Preimage == p.Preimage {
-				s.IncSats(p.Amount)
+				s.IncSats(p.Amount, false, "top-up")
 				topUp = true
 				log.T.F("topping up %x with %d mSat",
 					s.ID, p.Amount)
@@ -51,7 +51,7 @@ func (en *Engine) handler() (out bool) {
 			return false
 		})
 		if !topUp {
-			en.AddPendingPayment(p)
+			eng.AddPendingPayment(p)
 			log.T.F("awaiting session keys for preimage %x",
 				p.Preimage)
 		}
@@ -59,7 +59,7 @@ func (en *Engine) handler() (out bool) {
 	return
 }
 
-func (en *Engine) handleMessage(b slice.Bytes, prev types.Onion) {
+func (eng *Engine) handleMessage(b slice.Bytes, prev types.Onion) {
 	log.T.Ln("process received message")
 	var on types.Onion
 	var e error
@@ -69,35 +69,35 @@ func (en *Engine) handleMessage(b slice.Bytes, prev types.Onion) {
 	}
 	switch on := on.(type) {
 	case *balance.Layer:
-		log.T.C(recLog(on, b, en))
-		en.balance(on, b, c, prev)
+		log.T.C(recLog(on, b, eng))
+		eng.balance(on, b, c, prev)
 	case *confirm.Layer:
-		log.T.C(recLog(on, b, en))
-		en.confirm(on, b, c, prev)
+		log.T.C(recLog(on, b, eng))
+		eng.confirm(on, b, c, prev)
 	case *crypt.Layer:
-		log.T.C(recLog(on, b, en))
-		en.crypt(on, b, c, prev)
+		log.T.C(recLog(on, b, eng))
+		eng.crypt(on, b, c, prev)
 	case *delay.Layer:
-		log.T.C(recLog(on, b, en))
-		en.delay(on, b, c, prev)
+		log.T.C(recLog(on, b, eng))
+		eng.delay(on, b, c, prev)
 	case *exit.Layer:
-		log.T.C(recLog(on, b, en))
-		en.exit(on, b, c, prev)
+		log.T.C(recLog(on, b, eng))
+		eng.exit(on, b, c, prev)
 	case *forward.Layer:
-		log.T.C(recLog(on, b, en))
-		en.forward(on, b, c, prev)
+		log.T.C(recLog(on, b, eng))
+		eng.forward(on, b, c, prev)
 	case *getbalance.Layer:
-		log.T.C(recLog(on, b, en))
-		en.getBalance(on, b, c, prev)
+		log.T.C(recLog(on, b, eng))
+		eng.getBalance(on, b, c, prev)
 	case *reverse.Layer:
-		log.T.C(recLog(on, b, en))
-		en.reverse(on, b, c, prev)
+		log.T.C(recLog(on, b, eng))
+		eng.reverse(on, b, c, prev)
 	case *response.Layer:
-		log.T.C(recLog(on, b, en))
-		en.response(on, b, c, prev)
+		log.T.C(recLog(on, b, eng))
+		eng.response(on, b, c, prev)
 	case *session.Layer:
-		log.T.C(recLog(on, b, en))
-		en.session(on, b, c, prev)
+		log.T.C(recLog(on, b, eng))
+		eng.session(on, b, c, prev)
 	default:
 		log.I.S("unrecognised packet", b)
 	}

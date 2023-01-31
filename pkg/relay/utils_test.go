@@ -6,7 +6,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/node"
 	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/transport"
 	"git-indra.lan/indra-labs/indra/pkg/types"
@@ -17,7 +16,7 @@ func CreateNMockCircuits(inclSessions bool, nCircuits int, timeout time.Duration
 
 	nTotal := 1 + nCircuits*5
 	cl = make([]*Engine, nTotal)
-	nodes := make([]*node.Node, nTotal)
+	nodes := make([]*traffic.Node, nTotal)
 	transports := make([]types.Transport, nTotal)
 	sessions := make(traffic.Sessions, nTotal-1)
 	for i := range transports {
@@ -34,7 +33,7 @@ func CreateNMockCircuits(inclSessions bool, nCircuits int, timeout time.Duration
 		if i == 0 {
 			local = true
 		}
-		nodes[i], _ = node.New(addr, idPub, idPrv, transports[i], 180000,
+		nodes[i], _ = traffic.New(addr, idPub, idPrv, transports[i], 180000,
 			local)
 		if cl[i], e = NewEngine(transports[i], idPrv, nodes[i],
 			nil, timeout); check(e) {
@@ -46,7 +45,7 @@ func CreateNMockCircuits(inclSessions bool, nCircuits int, timeout time.Duration
 			// create a session for all but the first
 			if i > 0 {
 				sessions[i-1] = traffic.NewSession(
-					nonce.NewID(), nodes[i].Peer,
+					nonce.NewID(), nodes[i],
 					1<<16, nil, nil,
 					byte((i-1)/nCircuits))
 				// Add session to node, so it will be able to
@@ -59,6 +58,7 @@ func CreateNMockCircuits(inclSessions bool, nCircuits int, timeout time.Duration
 			}
 		}
 	}
+	// Add all the nodes to each other so they can pass messages.
 	for i := range cl {
 		for j := range nodes {
 			if i == j {

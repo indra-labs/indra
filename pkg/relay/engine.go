@@ -12,7 +12,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/node"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/types"
@@ -24,18 +23,19 @@ var (
 )
 
 type Engine struct {
-	*node.Node
-	node.Nodes
 	sync.Mutex
-	Load    byte
-	Pending PendingResponses
+	*traffic.Node
+	traffic.Nodes
+	SessionCache map[nonce.ID]SessionCacheEntry
+	Load         byte
+	Pending      PendingResponses
 	*signer.KeySet
 	ShuttingDown atomic.Bool
 	qu.C
 }
 
-func NewEngine(tpt types.Transport, hdrPrv *prv.Key, no *node.Node,
-	nodes node.Nodes, timeout time.Duration) (c *Engine, e error) {
+func NewEngine(tpt types.Transport, hdrPrv *prv.Key, no *traffic.Node,
+	nodes traffic.Nodes, timeout time.Duration) (c *Engine, e error) {
 
 	no.Transport = tpt
 	no.IdentityPrv = hdrPrv
@@ -45,7 +45,7 @@ func NewEngine(tpt types.Transport, hdrPrv *prv.Key, no *node.Node,
 		return
 	}
 	// Add our first return session.
-	no.AddSession(traffic.NewSession(nonce.NewID(), no.Peer, 0, nil, nil, 5))
+	no.AddSession(traffic.NewSession(nonce.NewID(), no, 0, nil, nil, 5))
 	c = &Engine{
 		Node:   no,
 		Nodes:  nodes,
@@ -57,9 +57,9 @@ func NewEngine(tpt types.Transport, hdrPrv *prv.Key, no *node.Node,
 }
 
 // Start a single thread of the Engine.
-func (en *Engine) Start() {
+func (eng *Engine) Start() {
 	for {
-		if en.handler() {
+		if eng.handler() {
 			break
 		}
 	}
@@ -67,19 +67,19 @@ func (en *Engine) Start() {
 
 // Cleanup closes and flushes any resources the client opened that require sync
 // in order to reopen correctly.
-func (en *Engine) Cleanup() {
+func (eng *Engine) Cleanup() {
 	// Do cleanup stuff before shutdown.
 }
 
 // Shutdown triggers the shutdown of the client and the Cleanup before
 // finishing.
-func (en *Engine) Shutdown() {
-	if en.ShuttingDown.Load() {
+func (eng *Engine) Shutdown() {
+	if eng.ShuttingDown.Load() {
 		return
 	}
 	log.T.C(func() string {
-		return "shutting down client " + en.Node.AddrPort.String()
+		return "shutting down client " + eng.Node.AddrPort.String()
 	})
-	en.ShuttingDown.Store(true)
-	en.C.Q()
+	eng.ShuttingDown.Store(true)
+	eng.C.Q()
 }

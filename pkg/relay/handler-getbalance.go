@@ -14,13 +14,13 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
-func (en *Engine) getBalance(on *getbalance.Layer,
+func (eng *Engine) getBalance(on *getbalance.Layer,
 	b slice.Bytes, c *slice.Cursor, prev types.Onion) {
 
 	log.T.S(on)
 	var found bool
 	var bal *balance.Layer
-	en.IterateSessions(func(s *traffic.Session) bool {
+	eng.IterateSessions(func(s *traffic.Session) bool {
 		if s.ID == on.ID {
 			bal = &balance.Layer{
 				ID:           on.ID,
@@ -41,14 +41,14 @@ func (en *Engine) getBalance(on *getbalance.Layer,
 	rb = append(rb, slice.NoisePad(714-len(rb))...)
 	switch on1 := prev.(type) {
 	case *crypt.Layer:
-		sess := en.FindSessionByHeader(on1.ToPriv)
+		sess := eng.FindSessionByHeader(on1.ToPriv)
 		if sess != nil {
 			in := sess.RelayRate *
 				lnwire.MilliSatoshi(len(b)) / 2 / 1024 / 1024
 			out := sess.RelayRate *
 				lnwire.MilliSatoshi(len(rb)) / 2 / 1024 / 1024
-			en.DecSession(sess.ID, in+out, false, "getbalance")
+			eng.DecSession(sess.ID, in+out, false, "getbalance")
 		}
 	}
-	en.handleMessage(rb, on)
+	eng.handleMessage(rb, on)
 }

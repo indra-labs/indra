@@ -1,4 +1,4 @@
-package node
+package traffic
 
 type IndraNet uint32
 

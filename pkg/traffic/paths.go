@@ -6,11 +6,10 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
-func (pm *Payments) Select(hops []byte, alreadyHave Sessions) (so Sessions) {
+func (pm *Payments) SelectHops(hops []byte, alreadyHave Sessions) (so Sessions) {
 	pm.Lock()
 	defer pm.Unlock()
 	ws := make(Sessions, 0)
-	// todo: later on we want to pre-thin this according to configuration.
 out:
 	for i := range pm.Sessions {
 		if pm.Sessions[i] == nil {

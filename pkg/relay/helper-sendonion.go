@@ -18,7 +18,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
-func (en *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
+func (eng *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 	responseHook func(id nonce.ID, b slice.Bytes)) {
 	b := onion.Encode(o.Assemble())
 	var billable, accounted []nonce.ID
@@ -34,7 +34,7 @@ func (en *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 		}
 		switch on := o[i].(type) {
 		case *crypt.Layer:
-			s := en.FindSessionByHeaderPub(on.ToHeaderPub)
+			s := eng.FindSessionByHeaderPub(on.ToHeaderPub)
 			// The last hop needs no accounting as it's us!
 			if i == len(o)-1 {
 				// The session used for the last hop is stored, however.
@@ -46,7 +46,7 @@ func (en *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 			}
 			switch on2 := o[i+1].(type) {
 			case *forward.Layer:
-				en.DecSession(s.ID,
+				eng.DecSession(s.ID,
 					s.RelayRate*lnwire.MilliSatoshi(len(b))/1024/1024, true,
 					"forward")
 				accounted = append(accounted, s.ID)
@@ -58,7 +58,7 @@ func (en *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 						continue
 					}
 					port = on2.Port
-					en.DecSession(s.ID,
+					eng.DecSession(s.ID,
 						s.Services[j].RelayRate*lnwire.
 							MilliSatoshi(len(b)/2)/1024/1024, true, "exit")
 					accounted = append(accounted, s.ID)
@@ -68,7 +68,7 @@ func (en *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 				last = on2.ID
 				skip = true
 			case *getbalance.Layer:
-				en.DecSession(s.ID,
+				eng.DecSession(s.ID,
 					s.RelayRate*lnwire.MilliSatoshi(len(b)/2)/1024/1024, true,
 					"getbalance")
 				last = s.ID
@@ -79,7 +79,7 @@ func (en *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 			// the immediate previous layer session needs to be accounted.
 			switch on3 := o[i-1].(type) {
 			case *crypt.Layer:
-				s := en.FindSessionByHeaderPub(on3.ToHeaderPub)
+				s := eng.FindSessionByHeaderPub(on3.ToHeaderPub)
 				if s == nil {
 					return
 				}
@@ -96,8 +96,8 @@ func (en *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 			log.T.Ln("nil response hook")
 		}
 	}
-	en.Pending.Add(last, len(b), billable, accounted, ret, port, responseHook)
+	eng.Pending.Add(last, len(b), billable, accounted, ret, port, responseHook)
 	log.T.Ln("sending out onion")
-	en.Send(ap, b)
+	eng.Send(ap, b)
 
 }

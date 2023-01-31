@@ -4,8 +4,8 @@ import (
 	"github.com/multiformats/go-multiaddr"
 
 	"git-indra.lan/indra-labs/indra"
-	"git-indra.lan/indra-labs/indra/pkg/node"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"git-indra.lan/indra-labs/indra/pkg/traffic"
 )
 
 var (
@@ -19,7 +19,7 @@ type Params struct {
 	Name string
 
 	// Net is a uint32 magic byte identifier for the network
-	Net node.IndraNet
+	Net traffic.IndraNet
 
 	// DefaultPort is the default port for p2p listening
 	DefaultPort string
@@ -50,7 +50,7 @@ var MainNetServerParams = &Params{
 
 	Name: "mainnet",
 
-	Net: node.MainNet,
+	Net: traffic.MainNet,
 
 	DefaultPort: "8337",
 
@@ -70,7 +70,7 @@ var TestNetServerParams = &Params{
 
 	Name: "testnet",
 
-	Net: node.TestNet,
+	Net: traffic.TestNet,
 
 	DefaultPort: "58337",
 
@@ -90,7 +90,7 @@ var SimnetServerParams = &Params{
 
 	Name: "simnet",
 
-	Net: node.SimNet,
+	Net: traffic.SimNet,
 
 	DefaultPort: "62134",
 

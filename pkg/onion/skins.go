@@ -9,7 +9,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/node"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/balance"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/confirm"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/crypt"
@@ -34,19 +33,19 @@ var os = &noop.Layer{}
 func (o Skins) ForwardCrypt(s *traffic.Session, k *prv.Key,
 	n nonce.IV) Skins {
 
-	return o.Forward(s.Peer.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, 0)
+	return o.Forward(s.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, 0)
 }
 
 func (o Skins) ReverseCrypt(s *traffic.Session, k *prv.Key, n nonce.IV, seq int) Skins {
 
-	return o.Reverse(s.Peer.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, seq)
+	return o.Reverse(s.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, seq)
 }
 
-func (o Skins) ForwardSession(s *node.Node,
+func (o Skins) ForwardSession(s *traffic.Node,
 	k *prv.Key, n nonce.IV, sess *session.Layer) Skins {
 
-	return o.Forward(s.Peer.AddrPort).
-		Crypt(s.Peer.IdentityPub, nil, k, n, 0).
+	return o.Forward(s.AddrPort).
+		Crypt(s.IdentityPub, nil, k, n, 0).
 		Session(sess)
 }
 

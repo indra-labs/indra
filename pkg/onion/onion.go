@@ -5,7 +5,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/node"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/session"
 	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -97,7 +96,7 @@ func SendExit(port uint16, payload slice.Bytes, id nonce.ID,
 // set of sessions. This is by way of indicating to not use the IdentityPub but
 // the HeaderPub instead. Not allowing free relay at all prevents spam attacks.
 func SendKeys(id nonce.ID, s [5]*session.Layer,
-	client *traffic.Session, hop node.Nodes, ks *signer.KeySet) Skins {
+	client *traffic.Session, hop traffic.Nodes, ks *signer.KeySet) Skins {
 
 	n := GenNonces(6)
 	sk := Skins{}

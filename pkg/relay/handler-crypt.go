@@ -16,11 +16,11 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
-func (en *Engine) crypt(on *crypt.Layer, b slice.Bytes,
+func (eng *Engine) crypt(on *crypt.Layer, b slice.Bytes,
 	c *slice.Cursor, prev types.Onion) {
 
 	// this is probably an encrypted crypt for us.
-	hdr, _, sess, identity := en.FindCloaked(on.Cloak)
+	hdr, _, sess, identity := eng.FindCloaked(on.Cloak)
 	if hdr == nil {
 		log.T.Ln("no matching key found from cloaked key")
 		return
@@ -35,7 +35,7 @@ func (en *Engine) crypt(on *crypt.Layer, b slice.Bytes,
 			return
 		}
 
-		en.handleMessage(BudgeUp(b, *c), on)
+		eng.handleMessage(BudgeUp(b, *c), on)
 		return
 	}
 	if string(b[*c:][:magicbytes.Len]) == directbalance.MagicString {
@@ -60,18 +60,18 @@ func (en *Engine) crypt(on *crypt.Layer, b slice.Bytes,
 		case *forward.Layer:
 			o := (&onion.Skins{}).
 				Forward(fwd.AddrPort).
-				Crypt(pub.Derive(hdr), nil, en.KeySet.Next(), nonce.New(), 0).
+				Crypt(pub.Derive(hdr), nil, eng.KeySet.Next(), nonce.New(), 0).
 				Balance(balID, confID, sess.Remaining)
 			oo := o.Assemble()
 			// This is a little more complicated as we need to decrement the
 			// amount before sending out the balance.
-			en.DecSession(sess.ID,
-				(en.RelayRate*lnwire.MilliSatoshi(len(b)+oo.Len())/2)/1024/1024,
+			eng.DecSession(sess.ID,
+				(eng.RelayRate*lnwire.MilliSatoshi(len(b)+oo.Len())/2)/1024/1024,
 				false, "directbalance")
 			o[2].(*balance.Layer).MilliSatoshi = sess.Remaining
 			rb := onion.Encode(oo)
-			en.Send(fwd.AddrPort, rb)
-			// en.SendOnion(fwd.AddrPort, o)
+			eng.Send(fwd.AddrPort, rb)
+			// eng.SendOnion(fwd.AddrPort, o)
 			return
 		default:
 			log.T.Ln("dropping directbalance without following " +
@@ -80,5 +80,5 @@ func (en *Engine) crypt(on *crypt.Layer, b slice.Bytes,
 		}
 		return
 	}
-	en.handleMessage(BudgeUp(b, *c), on)
+	eng.handleMessage(BudgeUp(b, *c), on)
 }
