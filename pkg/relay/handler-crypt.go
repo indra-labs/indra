@@ -66,7 +66,7 @@ func (eng *Engine) crypt(on *crypt.Layer, b slice.Bytes,
 			// This is a little more complicated as we need to decrement the
 			// amount before sending out the balance.
 			eng.DecSession(sess.ID,
-				(eng.GetLocalNode().RelayRate*lnwire.MilliSatoshi(len(b)+oo.
+				(eng.GetLocalNodeRelayRate()*lnwire.MilliSatoshi(len(b)+oo.
 					Len())/2)/1024/1024,
 				false, "directbalance")
 			o[2].(*balance.Layer).MilliSatoshi = sess.Remaining

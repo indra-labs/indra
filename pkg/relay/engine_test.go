@@ -115,7 +115,7 @@ func TestClient_SendExit(t *testing.T) {
 		if i == 0 {
 			continue
 		}
-		_ = clients[i].GetLocalNode().AddService(&service.Service{
+		_ = clients[i].AddServiceToLocalNode(&service.Service{
 			Port:      port,
 			Transport: sim,
 			RelayRate: 18000 * 4,
@@ -165,9 +165,9 @@ out:
 				log.I.F("success\n\n")
 				wg.Done()
 			})
-		bb := <-clients[3].GetLocalNode().Services[0].Receive()
+		bb := <-clients[3].ReceiveToLocalNode(port)
 		log.T.S(bb.ToBytes())
-		if e = clients[3].GetLocalNode().SendTo(port, respMsg); check(e) {
+		if e = clients[3].SendFromLocalNode(port, respMsg); check(e) {
 			t.Error("fail send")
 		}
 		log.T.Ln("response sent")

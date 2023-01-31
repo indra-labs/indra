@@ -76,7 +76,7 @@ func (eng *Engine) Shutdown() {
 		return
 	}
 	log.T.C(func() string {
-		return "shutting down client " + eng.GetLocalNode().AddrPort.String()
+		return "shutting down client " + eng.GetLocalNodeAddress().String()
 	})
 	eng.ShuttingDown.Store(true)
 	eng.C.Q()

@@ -24,12 +24,12 @@ func (eng *Engine) exit(ex *exit.Layer, b slice.Bytes,
 	h := sha256.Single(ex.Bytes)
 	log.T.S(h)
 	log.T.F("received exit id %x", ex.ID)
-	if e = eng.GetLocalNode().SendTo(ex.Port, ex.Bytes); check(e) {
+	if e = eng.SendFromLocalNode(ex.Port, ex.Bytes); check(e) {
 		return
 	}
 	timer := time.NewTicker(time.Second * 5) // todo: timeout/retries etc
 	select {
-	case result = <-eng.GetLocalNode().ReceiveFrom(ex.Port):
+	case result = <-eng.ReceiveToLocalNode(ex.Port):
 	case <-timer.C:
 	}
 	// We need to wrap the result in a message crypt.

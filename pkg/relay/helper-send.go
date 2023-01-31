@@ -17,7 +17,7 @@ func (eng *Engine) Send(addr *netip.AddrPort, b slice.Bytes) {
 	eng.ForEachNode(func(n *traffic.Node) bool {
 		if as == n.AddrPort.String() {
 			log.T.C(func() string {
-				return eng.GetLocalNode().AddrPort.String() +
+				return eng.GetLocalNodeAddress().String() +
 					" sending to " +
 					addr.String() +
 					"\n" +
