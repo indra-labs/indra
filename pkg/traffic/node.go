@@ -39,6 +39,8 @@ type Node struct {
 	types.Transport
 }
 
+// DefaultSampleBufferSize defines the number of samples for the Load, Latency
+// and Failure ring buffers.
 const DefaultSampleBufferSize = 64
 
 // New creates a new Node. A netip.AddrPort is optional if the counterparty is
@@ -61,6 +63,8 @@ func New(addr *netip.AddrPort, idPub *pub.Key, idPrv *prv.Key,
 		Transport:     tpt,
 	}
 	if !local {
+		// These ring buffers are needed to evaluate these metrics for remote
+		// peers only.
 		n.Load = ring.NewBufferLoad(DefaultSampleBufferSize)
 		n.Latency = ring.NewBufferLatency(DefaultSampleBufferSize)
 		n.Failure = ring.NewBufferFailure(DefaultSampleBufferSize)

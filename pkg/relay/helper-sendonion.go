@@ -20,6 +20,7 @@ import (
 
 func (eng *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 	responseHook func(id nonce.ID, b slice.Bytes)) {
+
 	b := onion.Encode(o.Assemble())
 	var billable, accounted []nonce.ID
 	var ret nonce.ID
