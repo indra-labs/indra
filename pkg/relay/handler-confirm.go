@@ -12,5 +12,5 @@ func (eng *Engine) confirm(on *confirm.Layer,
 	log.T.F("processing confirmation %x", on.ID)
 	// When a confirmation arrives check if it is registered for and run the
 	// hook that was registered with it.
-	eng.Pending.Delete(on.ID, nil)
+	eng.PendingResponses.Delete(on.ID, nil)
 }

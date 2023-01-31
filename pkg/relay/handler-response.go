@@ -12,7 +12,7 @@ import (
 func (eng *Engine) response(on *response.Layer, b slice.Bytes,
 	cur *slice.Cursor, prev types.Onion) {
 
-	pending := eng.Pending.Find(on.ID)
+	pending := eng.PendingResponses.Find(on.ID)
 	log.T.F("searching for pending ID %x", on.ID)
 	if pending != nil {
 		for i := range pending.Billable {
@@ -36,6 +36,6 @@ func (eng *Engine) response(on *response.Layer, b slice.Bytes,
 					MilliSatoshi(dataSize)/1024/1024, true, typ)
 			}
 		}
-		eng.Pending.Delete(on.ID, on.Bytes)
+		eng.PendingResponses.Delete(on.ID, on.Bytes)
 	}
 }

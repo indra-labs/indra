@@ -18,19 +18,23 @@ type PendingResponse struct {
 	Return              nonce.ID
 	Callback
 	time.Time
+	Timeout time.Duration
 }
 
 type PendingResponses struct {
 	sync.Mutex
-	responses     []*PendingResponse
-	oldestPending *PendingResponse
-	Timeout       time.Duration
+	responses []*PendingResponse
 }
 
 func (p *PendingResponses) GetOldestPending() (pr *PendingResponse) {
 	p.Lock()
 	defer p.Unlock()
-	return p.oldestPending
+	if len(p.responses) > 0 {
+		// Pending responses are added in chronological order to the end so the
+		// first one in the slice is the oldest.
+		return p.responses[0]
+	}
+	return
 }
 
 func (p *PendingResponses) Add(id nonce.ID, sentSize int, billable,
@@ -89,18 +93,6 @@ func (p *PendingResponses) Delete(id nonce.ID, b slice.Bytes) {
 			}
 			break
 		}
-	}
-	// Update the oldest pending response entry.
-	if len(p.responses) > 0 {
-		oldest := time.Now()
-		for i := range p.responses {
-			if p.responses[i].Time.Before(oldest) {
-				oldest = p.responses[i].Time
-				p.oldestPending = p.responses[i]
-			}
-		}
 		// Add handler to trigger after timeout.
-	} else {
-		p.oldestPending = nil
 	}
 }

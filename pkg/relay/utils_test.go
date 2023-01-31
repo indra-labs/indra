@@ -50,11 +50,11 @@ func CreateNMockCircuits(inclSessions bool, nCircuits int, timeout time.Duration
 					byte((i-1)/nCircuits))
 				// Add session to node, so it will be able to
 				// relay if it gets a message with the key.
-				nodes[i].AddSession(sessions[i-1])
+				cl[i].AddSession(sessions[i-1])
 				// we need a copy for the node so the balance
 				// adjustments don't double up.
 				s := *sessions[i-1]
-				nodes[0].AddSession(&s)
+				cl[0].AddSession(&s)
 			}
 		}
 	}

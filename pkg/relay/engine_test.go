@@ -21,6 +21,9 @@ import (
 
 const DefaultTimeout = time.Second
 
+// todo: add accounting validation to these tests where relevant
+//  (check relay and client see the same balance after the operations)
+
 func TestClient_SendSessionKeys(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	var clients []*Engine

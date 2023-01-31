@@ -23,7 +23,7 @@ func (eng *Engine) FindCloaked(clk cloak.PubKey) (hdr *prv.Key,
 		return
 	}
 	var i int
-	eng.Node.IterateSessions(func(s *traffic.Session) (stop bool) {
+	eng.IterateSessions(func(s *traffic.Session) (stop bool) {
 		hash = cloak.Cloak(b, s.HeaderBytes)
 		if hash == clk {
 			log.T.F("found cloaked key in session %d", i)

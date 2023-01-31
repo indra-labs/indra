@@ -26,7 +26,7 @@ var (
 
 // Node is a representation of a messaging counterparty.
 type Node struct {
-	nonce.ID      // matches node ID
+	nonce.ID
 	AddrPort      *netip.AddrPort
 	IdentityPub   *pub.Key
 	IdentityBytes pub.Bytes
@@ -36,15 +36,14 @@ type Node struct {
 	Load          *ring.BufferLoad    // Relay load.
 	Latency       *ring.BufferLatency // Latency to peer.
 	Failure       *ring.BufferFailure // Times of tx failure.
-	*Payments
 	types.Transport
 }
 
 const DefaultSampleBufferSize = 64
 
 // New creates a new Node. A netip.AddrPort is optional if the counterparty is
-// not in direct connection. Also, the idPrv node private key can be nil, as
-// only the node embedded in a client and not the peer node list has one
+// not in direct connection. Also, the IdentityPrv node private key can be nil,
+// as only the node embedded in a client and not the peer node list has one
 // available. The Node for a client's self should use true in the local
 // parameter to not initialise the peer state ring buffers as it won't use them.
 func New(addr *netip.AddrPort, idPub *pub.Key, idPrv *prv.Key,
@@ -60,7 +59,6 @@ func New(addr *netip.AddrPort, idPub *pub.Key, idPrv *prv.Key,
 		IdentityPrv:   idPrv,
 		RelayRate:     relayRate,
 		Transport:     tpt,
-		Payments:      NewPayments(),
 	}
 	if !local {
 		n.Load = ring.NewBufferLoad(DefaultSampleBufferSize)

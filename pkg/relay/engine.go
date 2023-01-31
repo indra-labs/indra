@@ -26,10 +26,11 @@ type Engine struct {
 	sync.Mutex
 	*traffic.Node
 	traffic.Nodes
-	SessionCache map[nonce.ID]SessionCacheEntry
-	Load         byte
-	Pending      PendingResponses
+	SessionCache
+	*PendingResponses
+	*traffic.Payments
 	*signer.KeySet
+	Load         byte
 	ShuttingDown atomic.Bool
 	qu.C
 }
@@ -44,15 +45,18 @@ func NewEngine(tpt types.Transport, hdrPrv *prv.Key, no *traffic.Node,
 	if _, ks, e = signer.New(); check(e) {
 		return
 	}
-	// Add our first return session.
-	no.AddSession(traffic.NewSession(nonce.NewID(), no, 0, nil, nil, 5))
 	c = &Engine{
-		Node:   no,
-		Nodes:  nodes,
-		KeySet: ks,
-		C:      qu.T(),
+		Node:             no,
+		Nodes:            nodes,
+		SessionCache:     make(SessionCache),
+		PendingResponses: &PendingResponses{},
+		KeySet:           ks,
+		Payments:         traffic.NewPayments(),
+		C:                qu.T(),
 	}
-	c.Pending.Timeout = timeout
+	// Add a return session for receiving responses, ideally more of these will
+	// be generated during operation and rotated out over time.
+	c.AddSession(traffic.NewSession(nonce.NewID(), no, 0, nil, nil, 5))
 	return
 }
 

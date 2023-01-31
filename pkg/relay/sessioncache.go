@@ -1,8 +1,11 @@
 package relay
 
 import (
+	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/traffic"
 )
+
+type SessionCache map[nonce.ID]SessionCacheEntry
 
 type SessionCacheEntry struct {
 	*traffic.Node

@@ -21,7 +21,7 @@ func (eng *Engine) balance(on *balance.Layer,
 		}
 		return false
 	})
-	pending := eng.Pending.Find(on.ID)
+	pending := eng.PendingResponses.Find(on.ID)
 	if pending != nil {
 		for i := range pending.Billable {
 			s := eng.FindSession(pending.Billable[i])
@@ -37,6 +37,6 @@ func (eng *Engine) balance(on *balance.Layer,
 				}
 			}
 		}
-		eng.Pending.Delete(pending.ID, nil)
+		eng.PendingResponses.Delete(pending.ID, nil)
 	}
 }

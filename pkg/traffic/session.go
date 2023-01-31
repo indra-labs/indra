@@ -110,7 +110,7 @@ type Sessions []*Session
 
 type Payments struct {
 	pendingPayments PendingPayments
-	Sessions        Sessions
+	Sessions
 	PaymentChan
 	sync.Mutex
 }
