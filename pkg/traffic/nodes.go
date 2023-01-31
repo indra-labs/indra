@@ -78,7 +78,7 @@ func (sm *SessionManager) GetLocalNodeIdentityPrv() (ident *prv.Key) {
 	return sm.GetLocalNode().IdentityPrv
 }
 
-// SetLocalNode returns the engine's local Node.
+// SetLocalNode sets the engine's local Node.
 func (sm *SessionManager) SetLocalNode(n *Node) {
 	sm.Lock()
 	defer sm.Unlock()
