@@ -15,7 +15,7 @@ func (eng *Engine) SendGetBalance(s *traffic.Session, conf Callback) {
 		c[s.Hop] = s
 		hops = append(hops, 5)
 		se := make(traffic.Sessions, len(hops))
-		ss := eng.Payments.SelectHops(hops, se)
+		ss := eng.SessionManager.SelectHops(hops, se)
 		returns[2] = ss[1]
 		confID := nonce.NewID()
 		o := onion.GetBalance(c, int(s.Hop), returns, eng.KeySet, confID)
@@ -33,7 +33,7 @@ func (eng *Engine) SendGetBalance(s *traffic.Session, conf Callback) {
 	}
 	se := make(traffic.Sessions, len(hops))
 	se[s.Hop] = s
-	ss := eng.Payments.SelectHops(hops, se)
+	ss := eng.SessionManager.SelectHops(hops, se)
 	// Construct the circuit parameter.
 	for i := range ss {
 		if i > int(s.Hop) {

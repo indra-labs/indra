@@ -5,6 +5,7 @@ package traffic
 import (
 	"fmt"
 	"net/netip"
+	"sync"
 
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 
@@ -27,6 +28,7 @@ var (
 // Node is a representation of a messaging counterparty.
 type Node struct {
 	nonce.ID
+	sync.Mutex
 	AddrPort      *netip.AddrPort
 	IdentityPub   *pub.Key
 	IdentityBytes pub.Bytes
@@ -72,8 +74,49 @@ func New(addr *netip.AddrPort, idPub *pub.Key, idPrv *prv.Key,
 	return
 }
 
+func (n *Node) AddService(s *service.Service) (e error) {
+	n.Lock()
+	defer n.Unlock()
+	for i := range n.Services {
+		if n.Services[i].Port == s.Port {
+			return fmt.Errorf("service already exists for port %d", s.Port)
+		}
+	}
+	n.Services = append(n.Services, s)
+	return
+}
+
+func (n *Node) DeleteService(port uint16) {
+	n.Lock()
+	defer n.Unlock()
+	for i := range n.Services {
+		if n.Services[i].Port == port {
+			if i < 1 {
+				n.Services = n.Services[1:]
+			} else {
+				n.Services = append(n.Services[:i],
+					n.Services[i+1:]...)
+			}
+			return
+		}
+	}
+}
+
+func (n *Node) FindService(port uint16) (service *service.Service) {
+	n.Lock()
+	defer n.Unlock()
+	for i := range n.Services {
+		if n.Services[i].Port == port {
+			return n.Services[i]
+		}
+	}
+	return
+}
+
 // SendTo delivers a message to a service identified by its port.
 func (n *Node) SendTo(port uint16, b slice.Bytes) (e error) {
+	n.Lock()
+	defer n.Unlock()
 	e = fmt.Errorf("port not registered %d", port)
 	for i := range n.Services {
 		if n.Services[i].Port == port {
@@ -87,6 +130,8 @@ func (n *Node) SendTo(port uint16, b slice.Bytes) (e error) {
 
 // ReceiveFrom returns the channel that receives messages for a given port.
 func (n *Node) ReceiveFrom(port uint16) (b <-chan slice.Bytes) {
+	n.Lock()
+	defer n.Unlock()
 	for i := range n.Services {
 		if n.Services[i].Port == port {
 			log.T.Ln("receive from")

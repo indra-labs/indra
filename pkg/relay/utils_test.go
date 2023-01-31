@@ -1,8 +1,6 @@
 package relay
 
 import (
-	"time"
-
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -12,7 +10,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
-func CreateNMockCircuits(inclSessions bool, nCircuits int, timeout time.Duration) (cl []*Engine, e error) {
+func CreateNMockCircuits(inclSessions bool, nCircuits int) (cl []*Engine, e error) {
 
 	nTotal := 1 + nCircuits*5
 	cl = make([]*Engine, nTotal)
@@ -35,8 +33,7 @@ func CreateNMockCircuits(inclSessions bool, nCircuits int, timeout time.Duration
 		}
 		nodes[i], _ = traffic.New(addr, idPub, idPrv, transports[i], 180000,
 			local)
-		if cl[i], e = NewEngine(transports[i], idPrv, nodes[i],
-			nil, timeout); check(e) {
+		if cl[i], e = NewEngine(transports[i], idPrv, nodes[i], nil); check(e) {
 			return
 		}
 		cl[i].AddrPort = nodes[i].AddrPort
@@ -64,7 +61,7 @@ func CreateNMockCircuits(inclSessions bool, nCircuits int, timeout time.Duration
 			if i == j {
 				continue
 			}
-			cl[i].Nodes = append(cl[i].Nodes, nodes[j])
+			cl[i].AddNodes(nodes[j])
 		}
 	}
 	return

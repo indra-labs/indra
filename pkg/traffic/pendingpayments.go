@@ -47,32 +47,32 @@ func (p PendingPayments) FindPreimage(pi sha256.Hash) (pp *payment.Payment) {
 // PendingPayment accessors. For the same reason as the sessions, pending
 // payments need to be accessed only with the node's mutex locked.
 
-func (pm *Payments) AddPendingPayment(
+func (sm *SessionManager) AddPendingPayment(
 	np *payment.Payment) {
 
-	pm.Lock()
-	defer pm.Unlock()
-	pm.pendingPayments = pm.pendingPayments.Add(np)
+	sm.Lock()
+	defer sm.Unlock()
+	sm.pendingPayments = sm.pendingPayments.Add(np)
 }
-func (pm *Payments) DeletePendingPayment(
+func (sm *SessionManager) DeletePendingPayment(
 	preimage sha256.Hash) {
 
-	pm.Lock()
-	defer pm.Unlock()
-	pm.pendingPayments = pm.pendingPayments.Delete(preimage)
+	sm.Lock()
+	defer sm.Unlock()
+	sm.pendingPayments = sm.pendingPayments.Delete(preimage)
 }
-func (pm *Payments) FindPendingPayment(
+func (sm *SessionManager) FindPendingPayment(
 	id nonce.ID) (pp *payment.Payment) {
 
-	pm.Lock()
-	defer pm.Unlock()
-	return pm.pendingPayments.Find(id)
+	sm.Lock()
+	defer sm.Unlock()
+	return sm.pendingPayments.Find(id)
 }
-func (pm *Payments) FindPendingPreimage(
+func (sm *SessionManager) FindPendingPreimage(
 	pi sha256.Hash) (pp *payment.Payment) {
 
 	log.T.F("searching preimage %x", pi)
-	pm.Lock()
-	defer pm.Unlock()
-	return pm.pendingPayments.FindPreimage(pi)
+	sm.Lock()
+	defer sm.Unlock()
+	return sm.pendingPayments.FindPreimage(pi)
 }

@@ -2,7 +2,6 @@ package relay
 
 import (
 	"sync"
-	"time"
 
 	"github.com/cybriq/qu"
 	"go.uber.org/atomic"
@@ -25,10 +24,8 @@ var (
 type Engine struct {
 	sync.Mutex
 	*traffic.Node
-	traffic.Nodes
-	SessionCache
 	*PendingResponses
-	*traffic.Payments
+	*traffic.SessionManager
 	*signer.KeySet
 	Load         byte
 	ShuttingDown atomic.Bool
@@ -36,7 +33,7 @@ type Engine struct {
 }
 
 func NewEngine(tpt types.Transport, hdrPrv *prv.Key, no *traffic.Node,
-	nodes traffic.Nodes, timeout time.Duration) (c *Engine, e error) {
+	nodes []*traffic.Node) (c *Engine, e error) {
 
 	no.Transport = tpt
 	no.IdentityPrv = hdrPrv
@@ -47,13 +44,12 @@ func NewEngine(tpt types.Transport, hdrPrv *prv.Key, no *traffic.Node,
 	}
 	c = &Engine{
 		Node:             no,
-		Nodes:            nodes,
-		SessionCache:     make(SessionCache),
 		PendingResponses: &PendingResponses{},
 		KeySet:           ks,
-		Payments:         traffic.NewPayments(),
+		SessionManager:   traffic.NewSessionManager(),
 		C:                qu.T(),
 	}
+	c.AddNodes(nodes...)
 	// Add a return session for receiving responses, ideally more of these will
 	// be generated during operation and rotated out over time.
 	c.AddSession(traffic.NewSession(nonce.NewID(), no, 0, nil, nil, 5))

@@ -19,8 +19,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/util/tests"
 )
 
-const DefaultTimeout = time.Second
-
 // todo: add accounting validation to these tests where relevant
 //  (check relay and client see the same balance after the operations)
 
@@ -28,7 +26,7 @@ func TestClient_SendSessionKeys(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuits(false, 2, DefaultTimeout); check(e) {
+	if clients, e = CreateNMockCircuits(false, 2); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -59,7 +57,7 @@ func TestClient_SendPing(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuits(true, 2, DefaultTimeout); check(e) {
+	if clients, e = CreateNMockCircuits(true, 2); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -106,7 +104,7 @@ func TestClient_SendExit(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuits(true, 2, DefaultTimeout); check(e) {
+	if clients, e = CreateNMockCircuits(true, 2); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -117,7 +115,7 @@ func TestClient_SendExit(t *testing.T) {
 		if i == 0 {
 			continue
 		}
-		clients[i].Services = append(clients[i].Services, &service.Service{
+		_ = clients[i].AddService(&service.Service{
 			Port:      port,
 			Transport: sim,
 			RelayRate: 18000 * 4,
@@ -190,7 +188,7 @@ func TestClient_SendGetBalance(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuits(true, 2, DefaultTimeout); check(e) {
+	if clients, e = CreateNMockCircuits(true, 2); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}

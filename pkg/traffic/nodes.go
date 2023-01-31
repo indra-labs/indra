@@ -7,20 +7,28 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 )
 
-type Nodes []*Node
+// NodesLen returns the length of a Nodes.
+func (sm *SessionManager) NodesLen() int {
+	sm.Lock()
+	defer sm.Unlock()
+	return len(sm.nodes)
+}
 
-// NewNodes creates an empty Nodes
-func NewNodes() (n Nodes) { return Nodes{} }
+// GetLocalNode returns the engine's local Node.
+func (sm *SessionManager) GetLocalNode() *Node { return sm.nodes[0] }
 
-// Len returns the length of a Nodes.
-func (n Nodes) Len() int { return len(n) }
+// AddNodes adds a Node to a Nodes.
+func (sm *SessionManager) AddNodes(nn ...*Node) {
+	sm.Lock()
+	defer sm.Unlock()
+	sm.nodes = append(sm.nodes, nn...)
+}
 
-// Add a Node to a Nodes.
-func (n Nodes) Add(nn *Node) Nodes { return append(n, nn) }
-
-// FindByID searches for a Node by ID.
-func (n Nodes) FindByID(i nonce.ID) (no *Node) {
-	for _, nn := range n {
+// FindNodeByID searches for a Node by ID.
+func (sm *SessionManager) FindNodeByID(i nonce.ID) (no *Node) {
+	sm.Lock()
+	defer sm.Unlock()
+	for _, nn := range sm.nodes {
 		if nn.ID == i {
 			no = nn
 			break
@@ -29,9 +37,11 @@ func (n Nodes) FindByID(i nonce.ID) (no *Node) {
 	return
 }
 
-// FindByAddrPort searches for a Node by netip.AddrPort.
-func (n Nodes) FindByAddrPort(id *netip.AddrPort) (no *Node) {
-	for _, nn := range n {
+// FindNodeByAddrPort searches for a Node by netip.AddrPort.
+func (sm *SessionManager) FindNodeByAddrPort(id *netip.AddrPort) (no *Node) {
+	sm.Lock()
+	defer sm.Unlock()
+	for _, nn := range sm.nodes {
 		if nn.AddrPort.String() == id.String() {
 			no = nn
 			break
@@ -40,26 +50,43 @@ func (n Nodes) FindByAddrPort(id *netip.AddrPort) (no *Node) {
 	return
 }
 
-// DeleteByID deletes a node identified by an ID.
-func (n Nodes) DeleteByID(ii nonce.ID) (nn Nodes, e error) {
-	e, nn = fmt.Errorf("id %x not found", ii), n
-	for i := range n {
-		if n[i].ID == ii {
-			return append(n[:i], n[i+1:]...), nil
+// DeleteNodeByID deletes a node identified by an ID.
+func (sm *SessionManager) DeleteNodeByID(ii nonce.ID) (e error) {
+	sm.Lock()
+	defer sm.Unlock()
+	e = fmt.Errorf("id %x not found", ii)
+	for i := range sm.nodes {
+		if sm.nodes[i].ID == ii {
+			sm.nodes = append(sm.nodes[:i], sm.nodes[i+1:]...)
+			return
 		}
 	}
 	return
 }
 
-// DeleteByAddrPort deletes a node identified by a netip.AddrPort.
-func (n Nodes) DeleteByAddrPort(ip *netip.AddrPort) (nn Nodes, e error) {
-	e, nn = fmt.Errorf("node with ip %v not found", ip), n
-	for i := range n {
-		if n[i].AddrPort.String() == ip.String() {
-			nn = append(n[:i], n[i+1:]...)
+// DeleteNodeByAddrPort deletes a node identified by a netip.AddrPort.
+func (sm *SessionManager) DeleteNodeByAddrPort(ip *netip.AddrPort) (e error) {
+	sm.Lock()
+	defer sm.Unlock()
+	e = fmt.Errorf("node with ip %v not found", ip)
+	for i := range sm.nodes {
+		if sm.nodes[i].AddrPort.String() == ip.String() {
+			sm.nodes = append(sm.nodes[:i], sm.nodes[i+1:]...)
 			e = nil
 			break
 		}
 	}
 	return
+}
+
+// ForEachNode runs a function over the slice of nodes with the mutex locked,
+// and terminates when the function returns true.
+func (sm *SessionManager) ForEachNode(fn func(n *Node) bool) {
+	sm.Lock()
+	defer sm.Unlock()
+	for i := range sm.nodes {
+		if fn(sm.nodes[i]) {
+			return
+		}
+	}
 }

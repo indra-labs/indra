@@ -96,7 +96,7 @@ func SendExit(port uint16, payload slice.Bytes, id nonce.ID,
 // set of sessions. This is by way of indicating to not use the IdentityPub but
 // the HeaderPub instead. Not allowing free relay at all prevents spam attacks.
 func SendKeys(id nonce.ID, s [5]*session.Layer,
-	client *traffic.Session, hop traffic.Nodes, ks *signer.KeySet) Skins {
+	client *traffic.Session, hop []*traffic.Node, ks *signer.KeySet) Skins {
 
 	n := GenNonces(6)
 	sk := Skins{}
