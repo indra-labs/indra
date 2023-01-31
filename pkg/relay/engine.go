@@ -23,7 +23,6 @@ var (
 
 type Engine struct {
 	sync.Mutex
-	*traffic.Node
 	*PendingResponses
 	*traffic.SessionManager
 	*signer.KeySet
@@ -43,13 +42,12 @@ func NewEngine(tpt types.Transport, hdrPrv *prv.Key, no *traffic.Node,
 		return
 	}
 	c = &Engine{
-		Node:             no,
 		PendingResponses: &PendingResponses{},
 		KeySet:           ks,
 		SessionManager:   traffic.NewSessionManager(),
 		C:                qu.T(),
 	}
-	c.AddNodes(nodes...)
+	c.AddNodes(append([]*traffic.Node{no}, nodes...)...)
 	// Add a return session for receiving responses, ideally more of these will
 	// be generated during operation and rotated out over time.
 	c.AddSession(traffic.NewSession(nonce.NewID(), no, 0, nil, nil, 5))
@@ -78,7 +76,7 @@ func (eng *Engine) Shutdown() {
 		return
 	}
 	log.T.C(func() string {
-		return "shutting down client " + eng.Node.AddrPort.String()
+		return "shutting down client " + eng.GetLocalNode().AddrPort.String()
 	})
 	eng.ShuttingDown.Store(true)
 	eng.C.Q()

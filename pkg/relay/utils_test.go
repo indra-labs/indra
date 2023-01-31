@@ -36,8 +36,8 @@ func CreateNMockCircuits(inclSessions bool, nCircuits int) (cl []*Engine, e erro
 		if cl[i], e = NewEngine(transports[i], idPrv, nodes[i], nil); check(e) {
 			return
 		}
-		cl[i].AddrPort = nodes[i].AddrPort
-		cl[i].Node = nodes[i]
+		cl[i].GetLocalNode().AddrPort = nodes[i].AddrPort
+		cl[i].SetLocalNode(nodes[i])
 		if inclSessions {
 			// create a session for all but the first
 			if i > 0 {

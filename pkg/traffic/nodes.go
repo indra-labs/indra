@@ -17,6 +17,9 @@ func (sm *SessionManager) NodesLen() int {
 // GetLocalNode returns the engine's local Node.
 func (sm *SessionManager) GetLocalNode() *Node { return sm.nodes[0] }
 
+// SetLocalNode returns the engine's local Node.
+func (sm *SessionManager) SetLocalNode(n *Node) { sm.nodes[0] = n }
+
 // AddNodes adds a Node to a Nodes.
 func (sm *SessionManager) AddNodes(nn ...*Node) {
 	sm.Lock()

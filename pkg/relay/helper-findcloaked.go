@@ -14,10 +14,10 @@ func (eng *Engine) FindCloaked(clk cloak.PubKey) (hdr *prv.Key,
 
 	var b cloak.Blinder
 	copy(b[:], clk[:cloak.BlindLen])
-	hash := cloak.Cloak(b, eng.Node.IdentityBytes)
+	hash := cloak.Cloak(b, eng.GetLocalNode().IdentityBytes)
 	if hash == clk {
 		log.T.F("encrypted to identity key")
-		hdr = eng.Node.IdentityPrv
+		hdr = eng.GetLocalNode().IdentityPrv
 		// there is no payload key for the node, only in sessions.
 		identity = true
 		return

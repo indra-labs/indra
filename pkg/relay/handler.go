@@ -24,7 +24,7 @@ import (
 
 func (eng *Engine) handler() (out bool) {
 	log.T.C(func() string {
-		return eng.AddrPort.String() +
+		return eng.GetLocalNode().AddrPort.String() +
 			" awaiting message"
 	})
 	var prev types.Onion
@@ -33,7 +33,7 @@ func (eng *Engine) handler() (out bool) {
 		eng.Cleanup()
 		out = true
 		break
-	case b := <-eng.Node.Receive():
+	case b := <-eng.GetLocalNode().Receive():
 		eng.handleMessage(b, prev)
 	case p := <-eng.PaymentChan:
 		log.D.F("incoming payment for %x: %v", p.ID, p.Amount)
@@ -107,7 +107,7 @@ func (eng *Engine) handleMessage(b slice.Bytes, prev types.Onion) {
 
 func recLog(on types.Onion, b slice.Bytes, cl *Engine) func() string {
 	return func() string {
-		return cl.AddrPort.String() +
+		return cl.GetLocalNode().AddrPort.String() +
 			" received " +
 			fmt.Sprint(reflect.TypeOf(on)) + "\n" +
 			spew.Sdump(b.ToBytes())

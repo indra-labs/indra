@@ -16,7 +16,7 @@ func (eng *Engine) reverse(on *reverse.Layer, b slice.Bytes,
 
 	var e error
 	var on2 types.Onion
-	if on.AddrPort.String() == eng.Node.AddrPort.String() {
+	if on.AddrPort.String() == eng.GetLocalNode().AddrPort.String() {
 		if on2, e = onion.Peel(b, c); check(e) {
 			return
 		}
@@ -30,7 +30,7 @@ func (eng *Engine) reverse(on *reverse.Layer, b slice.Bytes,
 			hdr, pld, _, _ := eng.FindCloaked(on1.Cloak)
 			if hdr == nil || pld == nil {
 				log.E.F("failed to find key for %s",
-					eng.Node.AddrPort.String())
+					eng.GetLocalNode().AddrPort.String())
 				return
 			}
 			// We need to find the PayloadPub to match.
@@ -55,7 +55,7 @@ func (eng *Engine) reverse(on *reverse.Layer, b slice.Bytes,
 			sess := eng.FindSessionByHeader(hdr)
 			if sess != nil {
 				eng.DecSession(sess.ID,
-					eng.RelayRate*lnwire.
+					eng.GetLocalNode().RelayRate*lnwire.
 						MilliSatoshi(len(b))/1024/1024, false, "reverse")
 				eng.handleMessage(BudgeUp(b, start), on1)
 			}

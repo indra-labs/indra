@@ -26,7 +26,7 @@ func (eng *Engine) session(on *session.Layer, b slice.Bytes,
 		eng.DeletePendingPayment(pi.Preimage)
 		log.T.F("Adding session %x\n", pi.ID)
 		eng.AddSession(traffic.NewSession(pi.ID,
-			eng.Node, pi.Amount, on.Header, on.Payload, on.Hop))
+			eng.GetLocalNode(), pi.Amount, on.Header, on.Payload, on.Hop))
 		eng.handleMessage(BudgeUp(b, *c), on)
 	} else {
 		log.T.Ln("dropping session message without payment")

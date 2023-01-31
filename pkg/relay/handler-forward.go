@@ -14,7 +14,7 @@ func (eng *Engine) forward(on *forward.Layer, b slice.Bytes,
 
 	// forward the whole buffer received onwards. Usually there will be a
 	// crypt.Layer under this which will be unwrapped by the receiver.
-	if on.AddrPort.String() == eng.Node.AddrPort.String() {
+	if on.AddrPort.String() == eng.GetLocalNode().AddrPort.String() {
 		// it is for us, we want to unwrap the next part.
 		eng.handleMessage(BudgeUp(b, *c), on)
 	} else {
@@ -23,7 +23,7 @@ func (eng *Engine) forward(on *forward.Layer, b slice.Bytes,
 			sess := eng.FindSessionByHeader(on1.ToPriv)
 			if sess != nil {
 				eng.DecSession(sess.ID,
-					eng.RelayRate*lnwire.MilliSatoshi(len(b))/1024/1024,
+					eng.GetLocalNode().RelayRate*lnwire.MilliSatoshi(len(b))/1024/1024,
 					false, "forward")
 			}
 		}
