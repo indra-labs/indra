@@ -25,12 +25,6 @@ import (
 
 type PaymentChan chan *payment.Payment
 
-type SessionCache map[nonce.ID]SessionCacheEntry
-
-type SessionCacheEntry struct {
-	Hops [5]*Session
-}
-
 type SessionManager struct {
 	nodes           []*Node
 	pendingPayments PendingPayments
@@ -47,12 +41,9 @@ func NewSessionManager() *SessionManager {
 	}
 }
 
-func (sm *SessionManager) UpdateSessionCache() {
-
-}
-
 func (sm *SessionManager) IncSession(id nonce.ID, sats lnwire.MilliSatoshi,
 	sender bool, typ string) {
+
 	sess := sm.FindSession(id)
 	if sess != nil {
 		sm.Lock()
@@ -62,6 +53,7 @@ func (sm *SessionManager) IncSession(id nonce.ID, sats lnwire.MilliSatoshi,
 }
 func (sm *SessionManager) DecSession(id nonce.ID, sats lnwire.MilliSatoshi,
 	sender bool, typ string) bool {
+
 	sess := sm.FindSession(id)
 	if sess != nil {
 		sm.Lock()
@@ -69,6 +61,13 @@ func (sm *SessionManager) DecSession(id nonce.ID, sats lnwire.MilliSatoshi,
 		return sess.DecSats(sats, sender, typ)
 	}
 	return false
+}
+
+func (sm *SessionManager) GetNodeCircuits(id nonce.ID) (sce *Circuit,
+	exists bool) {
+
+	sce, exists = sm.SessionCache[id]
+	return
 }
 
 func (sm *SessionManager) AddSession(s *Session) {
@@ -82,6 +81,7 @@ func (sm *SessionManager) AddSession(s *Session) {
 		}
 	}
 	sm.Sessions = append(sm.Sessions, s)
+	sm.SessionCache.Add(s)
 }
 func (sm *SessionManager) FindSession(id nonce.ID) *Session {
 	sm.Lock()
@@ -138,11 +138,14 @@ func (sm *SessionManager) DeleteSession(id nonce.ID) {
 	defer sm.Unlock()
 	for i := range sm.Sessions {
 		if sm.Sessions[i].ID == id {
+			// Delete from Session cache.
+			sm.SessionCache[sm.Sessions[i].Node.ID][sm.Sessions[i].Hop] = nil
+			// Delete from Sessions.
 			sm.Sessions = append(sm.Sessions[:i], sm.Sessions[i+1:]...)
 		}
 	}
-
 }
+
 func (sm *SessionManager) IterateSessions(fn func(s *Session) bool) {
 	sm.Lock()
 	defer sm.Unlock()
@@ -160,4 +163,41 @@ func (sm *SessionManager) GetSessionByIndex(i int) (s *Session) {
 		s = sm.Sessions[i]
 	}
 	return
+}
+
+func (sm *SessionManager) DeleteNodeAndSessions(id nonce.ID) {
+	sm.Lock()
+	defer sm.Unlock()
+	var exists bool
+	// If the node exists its ID is in the SessionCache.
+	if _, exists = sm.SessionCache[id]; !exists {
+		return
+	}
+	delete(sm.SessionCache, id)
+	// Delete from the nodes list.
+	for i := range sm.nodes {
+		if sm.nodes[i].ID == id {
+			sm.nodes = append(sm.nodes[:i], sm.nodes[i+1:]...)
+			break
+		}
+	}
+	var found []int
+	// Locate all the sessions with the node in them.
+	for i := range sm.Sessions {
+		if sm.Sessions[i].Node.ID == id {
+			found = append(found, i)
+		}
+	}
+	// Create a new Sessions slice and add the ones not in the found list.
+	temp := make(Sessions, 0, len(sm.Sessions)-len(found))
+	for i := range sm.Sessions {
+		for j := range found {
+			if i != found[j] {
+				temp = append(temp, sm.Sessions[i])
+				break
+			}
+		}
+	}
+	// Place the new Sessions slice in place of the old.
+	sm.Sessions = temp
 }
