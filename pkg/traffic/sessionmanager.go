@@ -81,7 +81,11 @@ func (sm *SessionManager) AddSession(s *Session) {
 		}
 	}
 	sm.Sessions = append(sm.Sessions, s)
-	sm.SessionCache.Add(s)
+	// Hop 5, the return session( s) are not added to the SessionCache as they
+	// are not billable and are only related to the node of the Engine.
+	if s.Hop < 5 {
+		sm.SessionCache.Add(s)
+	}
 }
 func (sm *SessionManager) FindSession(id nonce.ID) *Session {
 	sm.Lock()
@@ -146,12 +150,37 @@ func (sm *SessionManager) DeleteSession(id nonce.ID) {
 	}
 }
 
+// IterateSessions calls a function for each entry in the Sessions slice.
+//
+// Do not call SessionManager methods within this function.
 func (sm *SessionManager) IterateSessions(fn func(s *Session) bool) {
 	sm.Lock()
 	defer sm.Unlock()
 	for i := range sm.Sessions {
 		if fn(sm.Sessions[i]) {
 			break
+		}
+	}
+}
+
+// IterateSessionCache calls a function for each entry in the SessionCache
+// that provides also access to the related node.
+//
+// Do not call SessionManager methods within this function.
+func (sm *SessionManager) IterateSessionCache(fn func(n *Node,
+	c *Circuit) bool) {
+
+	sm.Lock()
+	defer sm.Unlock()
+out:
+	for i := range sm.SessionCache {
+		for j := range sm.nodes {
+			if sm.nodes[j].ID == i {
+				if fn(sm.nodes[j], sm.SessionCache[i]) {
+					break out
+				}
+				break
+			}
 		}
 	}
 }
