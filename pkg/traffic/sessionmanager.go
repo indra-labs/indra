@@ -66,6 +66,8 @@ func (sm *SessionManager) DecSession(id nonce.ID, sats lnwire.MilliSatoshi,
 func (sm *SessionManager) GetNodeCircuits(id nonce.ID) (sce *Circuit,
 	exists bool) {
 
+	sm.Lock()
+	defer sm.Unlock()
 	sce, exists = sm.SessionCache[id]
 	return
 }

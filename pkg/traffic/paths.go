@@ -1,12 +1,12 @@
 package traffic
 
 import (
-	"math/rand"
-
-	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 )
 
-func (sm *SessionManager) SelectHops(hops []byte, alreadyHave Sessions) (so Sessions) {
+func (sm *SessionManager) SelectHops(hops []byte,
+	alreadyHave Sessions) (so Sessions) {
+
 	sm.Lock()
 	defer sm.Unlock()
 	ws := make(Sessions, 0)
@@ -28,8 +28,7 @@ out:
 		ws = append(ws, sm.Sessions[i])
 	}
 	// Shuffle the copy of the sessions.
-	rand.Seed(slice.GetCryptoRandSeed())
-	rand.Shuffle(len(ws), func(i, j int) {
+	cryptorand.Shuffle(len(ws), func(i, j int) {
 		ws[i], ws[j] = ws[j], ws[i]
 	})
 	// Iterate the available sessions picking the first matching hop, then
@@ -60,6 +59,41 @@ out:
 			cur++
 			if cur == len(ws) {
 				cur = 0
+			}
+		}
+	}
+	return
+}
+
+// SelectUnusedCircuit accepts an array of 5 Node entries where all or some are
+// empty and picks nodes for the remainder that do not have a hop at that
+// position.
+func (sm *SessionManager) SelectUnusedCircuit(nodes [5]*Node) (c [5]*Node) {
+	defer sm.Unlock()
+	sm.Lock()
+	c = nodes
+	// Create a shuffled slice of Nodes to randomise the selection process.
+	nodeList := make([]*Node, len(sm.nodes))
+	copy(nodeList, sm.nodes)
+	cryptorand.Shuffle(len(nodeList), func(i, j int) {
+		nodeList[i], nodeList[j] = nodeList[j], nodeList[i]
+	})
+	for i := range c {
+		// We are only adding Node entries for spots that are not already
+		// filled.
+		if c[i] == nil {
+			for j := range nodeList {
+				if nodeList[j] == nil {
+					continue
+				}
+				if nodeCircuit, ok := sm.SessionCache[nodeList[j].ID]; ok {
+					if nodeCircuit[i] == nil {
+						c[i] = nodeList[j]
+						// nil the entry so it isn't selected again
+						nodeList[j] = nil
+						break
+					}
+				}
 			}
 		}
 	}
