@@ -68,7 +68,10 @@ RUN set -ex && echo "adding keys to verify btcd/lnd releases" \
     && mv guggero.asc /etc/btcd/keys/ \
     && wget https://raw.githubusercontent.com/lightningnetwork/lnd/master/scripts/keys/roasbeef.asc \
     && chmod 555 roasbeef.asc \
-    && mv roasbeef.asc /etc/lnd/keys/
+    && mv roasbeef.asc /etc/lnd/keys/ \
+    && wget https://opensource.conformal.com/GIT-GPG-KEY-conformal.txt \
+    && chmod 555 GIT-GPG-KEY-conformal.txt \
+    && mv GIT-GPG-KEY-conformal.txt /etc/btcd/keys/
 #    && wget https://raw.githubusercontent.com/indra-labs/indra/master/keys/greg.stone.asc \
 #    && chmod 555 greg.stone.asc \
 #    && mv greg.stone.asc /etc/indra/keys/ \

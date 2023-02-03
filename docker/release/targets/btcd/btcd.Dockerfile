@@ -25,4 +25,4 @@ USER btcd:btcd
 # :8334  btcd RPC port
 EXPOSE 8333 8334
 
-ENTRYPOINT ["/bin/btcd", "--configfile=/etc/btcd/btcd.conf"]
+ENTRYPOINT ["/bin/btcd", "--configfile=/etc/btcd/btcd.conf", "--datadir=/var/btcd"]

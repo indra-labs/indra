@@ -9,23 +9,26 @@ services:
       indranet:
         ipv4_address: 172.16.42.2
     command:
+      - "--listen=0.0.0.0:8333"
+      - "--rpclisten=0.0.0.0:8334"
       - "--rpcuser=simnet"
       - "--rpcpass=simnet"
       - "--simnet"
-  btcctl:
-    image: indralabs/btcctl
-    volumes:
-      - config:/etc/btcd:ro
-    networks:
-      indranet:
-    depends_on:
-      - btcd
-    command:
-      - "--rpcserver=172.16.42.2:8333"
-      - "--rpcuser=simnet"
-      - "--rpcpass=simnet"
-      - "--simnet"
-      - "getinfo"
+      - "--txindex"
+#  btcctl:
+#    image: indralabs/btcctl
+#    volumes:
+#      - config:/etc/btcd:ro
+#    networks:
+#      indranet:
+#    depends_on:
+#      - btcd
+#    command:
+#      - "--rpcserver=172.16.42.2:8333"
+#      - "--rpcuser=simnet"
+#      - "--rpcpass=simnet"
+#      - "--simnet"
+#      - "getinfo"
 volumes:
   config:
   data:
