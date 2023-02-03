@@ -1,3 +1,4 @@
+
 # ---
 # Build Process
 # ---
@@ -8,15 +9,13 @@ FROM indralabs/scratch:latest as scratch
 
 FROM ${sourcing_image} as source
 
-ARG source_url="https://github.com/btcsuite/btcd/releases/download"
-ARG source_version="v0.23.3"
+ARG source_url="https://github.com/btcsuite/btcwallet"
+ARG source_version="v0.16.5"
 
 WORKDIR /tmp
 
-RUN set -ex echo "downloading source and binaries with manifest and signature." \
-    && wget ${source_url}/${source_version}/manifest-${source_version}.txt  \
-    && wget ${source_url}/${source_version}/manifest-guggero-${source_version}.sig  \
-    && wget ${source_url}/${source_version}/btcd-source-${source_version}.tar.gz
+RUN set -ex echo "downloading source" \
+    && git clone ${source_url}
 
 # Importing keys from scratch
 COPY --from=scratch /etc/btcd/keys/guggero.asc /tmp/guggero.asc
@@ -24,23 +23,30 @@ COPY --from=scratch /etc/btcd/keys/guggero.asc /tmp/guggero.asc
 RUN set -ex echo "importing keys" \
     && cat guggero.asc | gpg --import
 
-RUN set -ex echo "running signature verification on manifest" \
-    && gpg --verify manifest-guggero-${source_version}.sig manifest-${source_version}.txt
+WORKDIR /tmp/btcwallet
 
-RUN set -ex echo "verifying checksum on btcd-source-${source_version}.tar.gz" \
-    && cat manifest-${source_version}.txt | grep btcd-source-${source_version}.tar.gz | shasum -a 256 -c
+RUN set -ex echo "checking out tag" \
+    && git checkout -b ${source_version}
 
-RUN set -ex echo "untarring binaries and source code" \
-    && mv btcd-source-${source_version}.tar.gz /tmp/btcd-source.tar.gz \
-    && mkdir -pv /tmp/btcd-source \
-    && tar -xzvf btcd-source.tar.gz --directory /tmp/btcd-source
+RUN set -ex echo "running signature verification on tag" \
+    && git verify-tag ${source_version}
 
-WORKDIR /tmp/btcd-source
+RUN set -ex "archiving indra source files" \
+    && git archive --format=tar.gz -o /tmp/btcwallet-source.tar.gz ${source_version}
+
+WORKDIR /tmp
+
+RUN set -ex echo "untarring archived source code" \
+    && rm -rf btcwallet \
+    && mkdir -pv btcwallet-source \
+    && tar -xzvf btcwallet-source.tar.gz --directory btcwallet-source
+
+WORKDIR /tmp/btcwallet-source
 
 RUN set -ex echo "downloading modules" \
     && go mod vendor
 
 FROM scratch
 
-COPY --from=source /tmp/btcd-source /source
-COPY --from=source /tmp/btcd-source.tar.gz /source.tar.gz
+COPY --from=source /tmp/btcwallet-source /source
+COPY --from=source /tmp/btcwallet-source.tar.gz /source.tar.gz

@@ -25,6 +25,25 @@ var sourceConfigurations = []docker.BuildConfiguration{
 	//	},
 	//},
 	//docker.BuildConfiguration{
+	//	Name:            defaultRepositoryName + "/" + "btcwallet-source",
+	//	ContextFilePath: "/tmp/btcwallet-source.tar",
+	//	BuildOpts: types.ImageBuildOptions{
+	//		Dockerfile: "docker/sources/btcwallet/official.Dockerfile",
+	//		Tags: []string{
+	//			"v0.16.5",
+	//		},
+	//		BuildArgs: map[string]*string{
+	//			"sourcing_image": strPtr(defaultBuilderContainer),
+	//			"source_url":     strPtr("https://github.com/btcsuite/btcwallet"),
+	//			"source_version": strPtr("v0.16.5"),
+	//		},
+	//		SuppressOutput: false,
+	//		Remove:         true,
+	//		ForceRemove:    true,
+	//		PullParent:     false,
+	//	},
+	//},
+	//docker.BuildConfiguration{
 	//	Name:            defaultRepositoryName + "/" + "lnd-source",
 	//	ContextFilePath: "/tmp/lnd-source.tar",
 	//	BuildOpts: types.ImageBuildOptions{

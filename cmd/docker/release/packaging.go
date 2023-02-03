@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/docker/docker/api/types"
 	"github.com/indra-labs/indra/pkg/docker"
 )
 
@@ -30,26 +29,46 @@ var packagingConfigurations = []docker.BuildConfiguration{
 	//		PullParent:     false,
 	//	},
 	//},
-	docker.BuildConfiguration{
-		Name:            defaultRepositoryName + "/" + "lnd-package",
-		ContextFilePath: "/tmp/lnd-package.tar",
-		BuildOpts: types.ImageBuildOptions{
-			Dockerfile: "docker/build/package.Dockerfile",
-			Tags: []string{
-				"v0.15.5-beta",
-			},
-			BuildArgs: map[string]*string{
-				"binaries_image":   strPtr("indralabs/lnd-build"),
-				"binaries_version": strPtr("v0.15.5-beta"),
-				"packaging_image":  strPtr(defaultPackagingContainer),
-				"target_name":      strPtr("lnd"),
-			},
-			SuppressOutput: false,
-			Remove:         true,
-			ForceRemove:    true,
-			PullParent:     false,
-		},
-	},
+	//docker.BuildConfiguration{
+	//	Name:            defaultRepositoryName + "/" + "btcwallet-package",
+	//	ContextFilePath: "/tmp/btcwallet-package.tar",
+	//	BuildOpts: types.ImageBuildOptions{
+	//		Dockerfile: "docker/build/package.Dockerfile",
+	//		Tags: []string{
+	//			"v0.16.5",
+	//		},
+	//		BuildArgs: map[string]*string{
+	//			"binaries_image":   strPtr("indralabs/btcwallet-build"),
+	//			"binaries_version": strPtr("v0.16.5"),
+	//			"packaging_image":  strPtr(defaultPackagingContainer),
+	//			"target_name":      strPtr("btcwallet"),
+	//		},
+	//		SuppressOutput: false,
+	//		Remove:         true,
+	//		ForceRemove:    true,
+	//		PullParent:     false,
+	//	},
+	//},
+	//docker.BuildConfiguration{
+	//	Name:            defaultRepositoryName + "/" + "lnd-package",
+	//	ContextFilePath: "/tmp/lnd-package.tar",
+	//	BuildOpts: types.ImageBuildOptions{
+	//		Dockerfile: "docker/build/package.Dockerfile",
+	//		Tags: []string{
+	//			"v0.15.5-beta",
+	//		},
+	//		BuildArgs: map[string]*string{
+	//			"binaries_image":   strPtr("indralabs/lnd-build"),
+	//			"binaries_version": strPtr("v0.15.5-beta"),
+	//			"packaging_image":  strPtr(defaultPackagingContainer),
+	//			"target_name":      strPtr("lnd"),
+	//		},
+	//		SuppressOutput: false,
+	//		Remove:         true,
+	//		ForceRemove:    true,
+	//		PullParent:     false,
+	//	},
+	//},
 	//docker.BuildConfiguration{
 	//	Name:            defaultRepositoryName + "/" + "indra-package",
 	//	ContextFilePath: "/tmp/indra-package.tar",
