@@ -38,19 +38,23 @@ type Node struct {
 	Load          *ring.BufferLoad    // Relay load.
 	Latency       *ring.BufferLatency // Latency to peer.
 	Failure       *ring.BufferFailure // Times of tx failure.
+	PaymentChan
 	types.Transport
 }
 
 // DefaultSampleBufferSize defines the number of samples for the Load, Latency
 // and Failure ring buffers.
-const DefaultSampleBufferSize = 64
+const (
+	DefaultSampleBufferSize = 64
+	PaymentChanBuffers      = 8
+)
 
-// New creates a new Node. A netip.AddrPort is optional if the counterparty is
+// NewNode creates a new Node. A netip.AddrPort is optional if the counterparty is
 // not in direct connection. Also, the IdentityPrv node private key can be nil,
 // as only the node embedded in a client and not the peer node list has one
 // available. The Node for a client's self should use true in the local
 // parameter to not initialise the peer state ring buffers as it won't use them.
-func New(addr *netip.AddrPort, idPub *pub.Key, idPrv *prv.Key,
+func NewNode(addr *netip.AddrPort, idPub *pub.Key, idPrv *prv.Key,
 	tpt types.Transport, relayRate lnwire.MilliSatoshi,
 	local bool) (n *Node, id nonce.ID) {
 
@@ -62,6 +66,7 @@ func New(addr *netip.AddrPort, idPub *pub.Key, idPrv *prv.Key,
 		IdentityBytes: idPub.ToBytes(),
 		IdentityPrv:   idPrv,
 		RelayRate:     relayRate,
+		PaymentChan:   make(PaymentChan, PaymentChanBuffers),
 		Transport:     tpt,
 	}
 	if !local {

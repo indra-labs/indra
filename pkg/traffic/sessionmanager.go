@@ -9,7 +9,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
-	"git-indra.lan/indra-labs/indra/pkg/payment"
 )
 
 // Session management functions
@@ -23,20 +22,16 @@ import (
 // consider the IP address as the unique identifier and not select more than one
 // relay on the same IP address. (todo:)
 
-type PaymentChan chan *payment.Payment
-
 type SessionManager struct {
 	nodes           []*Node
 	pendingPayments PendingPayments
 	Sessions
-	PaymentChan
 	SessionCache
 	sync.Mutex
 }
 
 func NewSessionManager() *SessionManager {
 	return &SessionManager{
-		PaymentChan:  make(PaymentChan),
 		SessionCache: make(SessionCache),
 	}
 }
@@ -63,7 +58,7 @@ func (sm *SessionManager) DecSession(id nonce.ID, sats lnwire.MilliSatoshi,
 	return false
 }
 
-func (sm *SessionManager) GetNodeCircuits(id nonce.ID) (sce *Circuit,
+func (sm *SessionManager) GetNodeCircuit(id nonce.ID) (sce *Circuit,
 	exists bool) {
 
 	sm.Lock()
@@ -129,6 +124,7 @@ func (sm *SessionManager) FindSessionPreimage(pr sha256.Hash) *Session {
 	}
 	return nil
 }
+
 func (sm *SessionManager) GetSessionsAtHop(hop byte) (s Sessions) {
 	sm.Lock()
 	defer sm.Unlock()

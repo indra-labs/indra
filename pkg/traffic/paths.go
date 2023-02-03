@@ -69,8 +69,8 @@ out:
 // empty and picks nodes for the remainder that do not have a hop at that
 // position.
 func (sm *SessionManager) SelectUnusedCircuit(nodes [5]*Node) (c [5]*Node) {
-	defer sm.Unlock()
 	sm.Lock()
+	defer sm.Unlock()
 	c = nodes
 	// Create a shuffled slice of Nodes to randomise the selection process.
 	nodeList := make([]*Node, len(sm.nodes))
@@ -86,13 +86,12 @@ func (sm *SessionManager) SelectUnusedCircuit(nodes [5]*Node) (c [5]*Node) {
 				if nodeList[j] == nil {
 					continue
 				}
-				if nodeCircuit, ok := sm.SessionCache[nodeList[j].ID]; ok {
-					if nodeCircuit[i] == nil {
-						c[i] = nodeList[j]
-						// nil the entry so it isn't selected again
-						nodeList[j] = nil
-						break
-					}
+				if _, ok := sm.SessionCache[nodeList[j].ID]; !ok {
+					log.D.Ln("adding node")
+					c[i] = nodeList[j]
+					// nil the entry so it isn't selected again
+					nodeList[j] = nil
+					break
 				}
 			}
 		}

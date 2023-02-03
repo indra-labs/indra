@@ -3,8 +3,6 @@ package relay
 import (
 	"net/netip"
 
-	"github.com/davecgh/go-spew/spew"
-
 	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -16,13 +14,6 @@ func (eng *Engine) Send(addr *netip.AddrPort, b slice.Bytes) {
 	as := addr.String()
 	eng.ForEachNode(func(n *traffic.Node) bool {
 		if as == n.AddrPort.String() {
-			log.T.C(func() string {
-				return eng.GetLocalNodeAddress().String() +
-					" sending to " +
-					addr.String() +
-					"\n" +
-					spew.Sdump(b.ToBytes())
-			})
 			n.Transport.Send(b)
 			return true
 		}

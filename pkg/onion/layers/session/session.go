@@ -1,15 +1,12 @@
 package session
 
 import (
-	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/magicbytes"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/noop"
-	"git-indra.lan/indra-labs/indra/pkg/payment"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -47,6 +44,7 @@ var (
 // is concealed to the hops except for the encryption crypt they decrypt using
 // their Payload key, delivered in this message.
 type Layer struct {
+	nonce.ID
 	Hop             byte // only used by a node
 	Header, Payload *prv.Key
 	types.Onion
@@ -63,6 +61,7 @@ func New(hop byte) (x *Layer) {
 	}
 
 	return &Layer{
+		ID:      nonce.NewID(),
 		Hop:     hop,
 		Header:  hdrPrv,
 		Payload: pldPrv,
@@ -73,17 +72,6 @@ func New(hop byte) (x *Layer) {
 func (x *Layer) PreimageHash() sha256.Hash {
 	h, p := x.Header.ToBytes(), x.Payload.ToBytes()
 	return sha256.Single(append(h[:], p[:]...))
-}
-
-func (x *Layer) ToPayment(amount lnwire.
-	MilliSatoshi) (p *payment.Payment) {
-
-	p = &payment.Payment{
-		ID:       nonce.NewID(),
-		Preimage: x.PreimageHash(),
-		Amount:   amount,
-	}
-	return
 }
 
 func (x *Layer) Inner() types.Onion   { return x.Onion }

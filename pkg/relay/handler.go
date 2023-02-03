@@ -35,7 +35,7 @@ func (eng *Engine) handler() (out bool) {
 		break
 	case b := <-eng.ReceiveToLocalNode(0):
 		eng.handleMessage(b, prev)
-	case p := <-eng.PaymentChan:
+	case p := <-eng.GetLocalNode().PaymentChan.Receive():
 		log.D.F("incoming payment for %x: %v", p.ID, p.Amount)
 		topUp := false
 		eng.IterateSessions(func(s *traffic.Session) bool {
@@ -44,7 +44,7 @@ func (eng *Engine) handler() (out bool) {
 			if s.Preimage == p.Preimage {
 				s.IncSats(p.Amount, false, "top-up")
 				topUp = true
-				log.T.F("topping up %x with %d mSat",
+				log.T.F("topping up %x with %v",
 					s.ID, p.Amount)
 				return true
 			}
@@ -55,6 +55,10 @@ func (eng *Engine) handler() (out bool) {
 			log.T.F("awaiting session keys for preimage %x",
 				p.Preimage)
 		}
+		// For now if we received this we return true.
+		// Later this will wait with a timeout on the lnd node returning the
+		// success to trigger this.
+		p.ConfirmChan <- true
 	}
 	return
 }

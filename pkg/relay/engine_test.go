@@ -46,8 +46,15 @@ func TestClient_SendSessionKeys(t *testing.T) {
 		t.Error("SendExit test failed")
 		os.Exit(1)
 	}()
-
+	wg.Add(1)
+	counter.Inc()
+	clients[0].BuyNewSessions(1000000, func() {
+		for i := 0; i < int(counter.Load()); i++ {
+			wg.Done()
+		}
+	})
 	wg.Wait()
+	time.Sleep(time.Second)
 	for _, v := range clients {
 		v.Shutdown()
 	}

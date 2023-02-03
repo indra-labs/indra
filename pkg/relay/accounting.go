@@ -93,6 +93,5 @@ func (p *PendingResponses) Delete(id nonce.ID, b slice.Bytes) {
 			}
 			break
 		}
-		// Add handler to trigger after timeout.
 	}
 }

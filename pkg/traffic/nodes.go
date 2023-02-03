@@ -23,6 +23,11 @@ func (sm *SessionManager) NodesLen() int {
 // GetLocalNode returns the engine's local Node.
 func (sm *SessionManager) GetLocalNode() *Node { return sm.nodes[0] }
 
+// GetLocalNodePaymentChan returns the engine's local Node PaymentChan.
+func (sm *SessionManager) GetLocalNodePaymentChan() PaymentChan {
+	return sm.nodes[0].PaymentChan
+}
+
 // Concurrent safe accessors.
 
 func (sm *SessionManager) GetLocalNodeAddress() (addr *netip.AddrPort) {
@@ -49,7 +54,7 @@ func (sm *SessionManager) ReceiveToLocalNode(port uint16) <-chan slice.Bytes {
 	sm.Lock()
 	defer sm.Unlock()
 	if port == 0 {
-		return sm.GetLocalNode().Receive()
+		return sm.GetLocalNode().Transport.Receive()
 	}
 	return sm.GetLocalNode().ReceiveFrom(port)
 }
