@@ -5,10 +5,10 @@ import (
 	"sync"
 	"testing"
 	"time"
-
+	
 	"github.com/cybriq/qu"
 	"go.uber.org/atomic"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
@@ -43,7 +43,7 @@ func TestClient_SendSessionKeys(t *testing.T) {
 		for i := 0; i < int(counter.Load()); i++ {
 			wg.Done()
 		}
-		t.Error("SendExit test failed")
+		t.Error("SendSessionKeys test failed")
 		os.Exit(1)
 	}()
 	wg.Add(1)
@@ -54,17 +54,16 @@ func TestClient_SendSessionKeys(t *testing.T) {
 		}
 	})
 	wg.Wait()
-	time.Sleep(time.Second)
 	for _, v := range clients {
 		v.Shutdown()
 	}
 }
 
-func TestClient_SendPing(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+func TestClient_ExitTxFailureDiagnostics(t *testing.T) {
+	log2.SetLogLevel(log2.Trace)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuits(true, 2); check(e) {
+	if clients, e = CreateNMockCircuits(false, 1); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -72,43 +71,72 @@ func TestClient_SendPing(t *testing.T) {
 	for _, v := range clients {
 		go v.Start()
 	}
-	quit := qu.T()
 	var wg sync.WaitGroup
+	var counter atomic.Int32
 	go func() {
 		select {
-		case <-time.After(time.Second):
-		case <-quit:
-			return
+		case <-time.After(time.Second * 2):
 		}
-		quit.Q()
-		t.Error("SendPing test failed")
+		for i := 0; i < int(counter.Load()); i++ {
+			wg.Done()
+		}
+		t.Error("TxFailureDiagnostics test failed")
+		os.Exit(1)
 	}()
-out:
-	for i := 1; i < len(clients[0].Sessions)-1; i++ {
-		wg.Add(1)
-		var c traffic.Circuit
-		sess := clients[0].Sessions[i]
-		c[sess.Hop] = clients[0].Sessions[i]
-		clients[0].SendPing(c,
-			func(id nonce.ID, b slice.Bytes) {
-				log.I.Ln("success")
-				wg.Done()
-			})
-		select {
-		case <-quit:
-			break out
-		default:
-		}
-		wg.Wait()
-	}
-	quit.Q()
+	wg.Add(1)
+	counter.Inc()
+	clients[0].BuyNewSessions(1000000, func() {
+		wg.Done()
+		counter.Dec()
+		log.D.Ln("session buy done")
+	})
+	wg.Wait()
+	log.D.Ln("starting fail test")
+	const port = 3455
+	// // Now we will disable each of the nodes one by one and run a discovery
+	// // process to find the "failed" node.
+	// for _, v := range clients[1:] {
+	// 	// Pause the node (also clearing its channels and caches).
+	// 	v.Pause.Signal()
+	// 	// Try to send out an Exit message.
+	// 	var msg slice.Bytes
+	// 	if msg, _, e = tests.GenMessage(64, "request"); check(e) {
+	// 		t.Error(e)
+	// 		t.FailNow()
+	// 	}
+	// 	var respMsg slice.Bytes
+	// 	var respHash sha256.Hash
+	// 	if respMsg, respHash, e = tests.GenMessage(32, "response"); check(e) {
+	// 		t.Error(e)
+	// 		t.FailNow()
+	// 	}
+	// 	_ = respHash
+	// 	sess := clients[0].Sessions[1]
+	// 	var c traffic.Circuit
+	// 	c[sess.Hop] = clients[0].Sessions[1]
+	// 	id := nonce.NewID()
+	// 	log.D.Ln("sending out onion that will fail")
+	// 	clients[0].SendExit(port, msg, id, clients[0].Sessions[1],
+	// 		func(idd nonce.ID, b slice.Bytes) {
+	// 			log.D.Ln("this shouldn't print!")
+	// 		})
+	// 	log.D.Ln("listening for message")
+	// 	bb := <-clients[3].ReceiveToLocalNode(port)
+	// 	log.T.S(bb.ToBytes())
+	// 	if e = clients[3].SendFromLocalNode(port, respMsg); check(e) {
+	// 		t.Error("fail send")
+	// 	}
+	// 	log.T.Ln("response sent")
+	// 	// Resume the node.
+	// 	v.Pause.Signal()
+	// }
 	for _, v := range clients {
 		v.Shutdown()
 	}
 }
 
 func TestClient_SendExit(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+	log2.SetLogLevel(log2.Trace)
 	var clients []*Engine
 	var e error
 	if clients, e = CreateNMockCircuits(true, 2); check(e) {
@@ -178,6 +206,53 @@ out:
 			t.Error("fail send")
 		}
 		log.T.Ln("response sent")
+		select {
+		case <-quit:
+			break out
+		default:
+		}
+		wg.Wait()
+	}
+	quit.Q()
+	for _, v := range clients {
+		v.Shutdown()
+	}
+}
+
+func TestClient_SendPing(t *testing.T) {
+	log2.SetLogLevel(log2.Debug)
+	var clients []*Engine
+	var e error
+	if clients, e = CreateNMockCircuits(true, 2); check(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	// Start up the clients.
+	for _, v := range clients {
+		go v.Start()
+	}
+	quit := qu.T()
+	var wg sync.WaitGroup
+	go func() {
+		select {
+		case <-time.After(time.Second):
+		case <-quit:
+			return
+		}
+		quit.Q()
+		t.Error("SendPing test failed")
+	}()
+out:
+	for i := 1; i < len(clients[0].Sessions)-1; i++ {
+		wg.Add(1)
+		var c traffic.Circuit
+		sess := clients[0].Sessions[i]
+		c[sess.Hop] = clients[0].Sessions[i]
+		clients[0].SendPing(c,
+			func(id nonce.ID, b slice.Bytes) {
+				log.I.Ln("success")
+				wg.Done()
+			})
 		select {
 		case <-quit:
 			break out

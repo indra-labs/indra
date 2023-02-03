@@ -6,7 +6,7 @@ import (
 
 func (sm *SessionManager) SelectHops(hops []byte,
 	alreadyHave Sessions) (so Sessions) {
-
+	
 	sm.Lock()
 	defer sm.Unlock()
 	ws := make(Sessions, 0)
@@ -87,7 +87,6 @@ func (sm *SessionManager) SelectUnusedCircuit(nodes [5]*Node) (c [5]*Node) {
 					continue
 				}
 				if _, ok := sm.SessionCache[nodeList[j].ID]; !ok {
-					log.D.Ln("adding node")
 					c[i] = nodeList[j]
 					// nil the entry so it isn't selected again
 					nodeList[j] = nil

@@ -2,7 +2,7 @@ package relay
 
 import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/onion"
@@ -18,7 +18,7 @@ import (
 
 func (eng *Engine) crypt(on *crypt.Layer, b slice.Bytes,
 	c *slice.Cursor, prev types.Onion) {
-
+	
 	// this is probably an encrypted crypt for us.
 	hdr, _, sess, identity := eng.FindCloaked(on.Cloak)
 	if hdr == nil {
@@ -28,13 +28,12 @@ func (eng *Engine) crypt(on *crypt.Layer, b slice.Bytes,
 	on.ToPriv = hdr
 	on.Decrypt(hdr, b, c)
 	if identity {
-		log.T.F("identity")
 		if string(b[*c:][:magicbytes.Len]) != session.MagicString {
 			log.T.Ln("dropping message due to identity key with" +
 				" no following session")
 			return
 		}
-
+		
 		eng.handleMessage(BudgeUp(b, *c), on)
 		return
 	}

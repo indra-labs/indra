@@ -20,7 +20,7 @@ import (
 // have steadily increasing scores from successful pings.
 func Ping(id nonce.ID, client *traffic.Session, s traffic.Circuit,
 	ks *signer.KeySet) Skins {
-
+	
 	n := GenPingNonces()
 	return Skins{}.
 		ForwardCrypt(s[0], ks.Next(), n[0]).
@@ -51,7 +51,7 @@ func Ping(id nonce.ID, client *traffic.Session, s traffic.Circuit,
 // remainder with noise, so it always looks like the first hop.
 func SendExit(port uint16, payload slice.Bytes, id nonce.ID,
 	client *traffic.Session, s traffic.Circuit, ks *signer.KeySet) Skins {
-
+	
 	var prvs [3]*prv.Key
 	for i := range prvs {
 		prvs[i] = ks.Next()
@@ -97,11 +97,11 @@ func SendExit(port uint16, payload slice.Bytes, id nonce.ID,
 // the HeaderPub instead. Not allowing free relay at all prevents spam attacks.
 func SendKeys(id nonce.ID, s [5]*session.Layer,
 	client *traffic.Session, hop []*traffic.Node, ks *signer.KeySet) Skins {
-
+	
 	n := GenNonces(6)
 	sk := Skins{}
 	for i := range s {
-		sk.ForwardSession(hop[i], ks.Next(), n[i], s[i])
+		sk = sk.ForwardSession(hop[i], ks.Next(), n[i], s[i])
 	}
 	return sk.
 		ForwardCrypt(client, ks.Next(), n[5]).
@@ -121,7 +121,7 @@ func SendKeys(id nonce.ID, s [5]*session.Layer,
 // addressed to the Header key.
 func GetBalance(s traffic.Circuit, target int, returns [3]*traffic.Session,
 	ks *signer.KeySet, id nonce.ID) (o Skins) {
-
+	
 	if target == 0 || target == 4 {
 		n := GenNonces(2)
 		o = o.ForwardCrypt(s[target], ks.Next(), n[0]).

@@ -2,7 +2,7 @@ package relay
 
 import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/onion"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/session"
@@ -16,6 +16,8 @@ import (
 // the sessions will be paid the amount specified, not divided up.
 func (eng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 	hook func()) {
+	
+	log.D.Ln("buying new sessions")
 	var nodes [5]*traffic.Node
 	nodes = eng.SessionManager.SelectUnusedCircuit(nodes)
 	// Get a random return hop session (index 5).
@@ -51,19 +53,19 @@ func (eng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 			if success {
 				pendingConfirms--
 			} else {
-
+			
 			}
 		case success = <-confirmChans[1]:
 			if success {
 				pendingConfirms--
 			} else {
-
+			
 			}
 		case success = <-confirmChans[2]:
 			if success {
 				pendingConfirms--
 			} else {
-
+			
 			}
 		case success = <-confirmChans[3]:
 			if success {
@@ -73,7 +75,7 @@ func (eng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 			if success {
 				pendingConfirms--
 			} else {
-
+			
 			}
 		}
 	}
@@ -86,6 +88,7 @@ func (eng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 			sessions[i] = traffic.NewSession(s[i].ID, nodes[i], amount,
 				s[i].Header, s[i].Payload, byte(i))
 			eng.SessionManager.Add(sessions[i])
+			eng.SessionManager.AddSession(sessions[i])
 			eng.SessionManager.DeletePendingPayment(s[i].PreimageHash())
 		}
 		hook()

@@ -27,6 +27,7 @@ type Engine struct {
 	*traffic.SessionManager
 	*signer.KeySet
 	Load         byte
+	Pause        qu.C
 	ShuttingDown atomic.Bool
 	qu.C
 }
@@ -45,6 +46,7 @@ func NewEngine(tpt types.Transport, hdrPrv *prv.Key, no *traffic.Node,
 		PendingResponses: &PendingResponses{},
 		KeySet:           ks,
 		SessionManager:   traffic.NewSessionManager(),
+		Pause:            qu.T(),
 		C:                qu.T(),
 	}
 	c.AddNodes(append([]*traffic.Node{no}, nodes...)...)
@@ -78,6 +80,7 @@ func (eng *Engine) Shutdown() {
 	log.T.C(func() string {
 		return "shutting down client " + eng.GetLocalNodeAddress().String()
 	})
+	eng.Cleanup()
 	eng.ShuttingDown.Store(true)
 	eng.C.Q()
 }

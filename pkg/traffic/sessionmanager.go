@@ -36,6 +36,20 @@ func NewSessionManager() *SessionManager {
 	}
 }
 
+// ClearPendingPayments is used only for debugging, removing all pending
+// payments, making the engine forget about payments it received.
+func (sm *SessionManager) ClearPendingPayments() {
+	log.D.Ln("clearing pending payments")
+	sm.pendingPayments = sm.pendingPayments[:0]
+}
+
+// ClearSessions is used only for debugging, removing all but the first session,
+// which is the engine's initial return session.
+func (sm *SessionManager) ClearSessions() {
+	log.D.Ln("clearing sessions")
+	sm.Sessions = sm.Sessions[:1]
+}
+
 func (sm *SessionManager) IncSession(id nonce.ID, sats lnwire.MilliSatoshi,
 	sender bool, typ string) {
 

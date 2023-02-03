@@ -3,9 +3,9 @@ package relay
 import (
 	"fmt"
 	"reflect"
-
+	
 	"github.com/davecgh/go-spew/spew"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/onion"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/balance"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/confirm"
@@ -59,12 +59,22 @@ func (eng *Engine) handler() (out bool) {
 		// Later this will wait with a timeout on the lnd node returning the
 		// success to trigger this.
 		p.ConfirmChan <- true
+	case <-eng.Pause:
+		log.D.Ln("pausing", eng.GetLocalNodeAddress())
+		// For testing purposes we need to halt this handler and clear
+		// all the channels after the resume signal.
+		select {
+		case <-eng.C.Wait():
+			break
+		case <-eng.Pause:
+			// This will then resume to the top level select.
+		}
 	}
 	return
 }
 
 func (eng *Engine) handleMessage(b slice.Bytes, prev types.Onion) {
-	log.T.Ln("process received message")
+	log.T.F("%v handling received message", eng.GetLocalNodeAddress())
 	var on types.Onion
 	var e error
 	c := slice.NewCursor()

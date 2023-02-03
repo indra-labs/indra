@@ -2,9 +2,9 @@ package relay
 
 import (
 	"net/netip"
-
+	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/onion"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/balance"
@@ -20,7 +20,7 @@ import (
 
 func (eng *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 	responseHook func(id nonce.ID, b slice.Bytes)) {
-
+	
 	b := onion.Encode(o.Assemble())
 	var billable, accounted []nonce.ID
 	var ret nonce.ID
@@ -100,5 +100,5 @@ func (eng *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 	eng.PendingResponses.Add(last, len(b), billable, accounted, ret, port, responseHook)
 	log.T.Ln("sending out onion")
 	eng.Send(ap, b)
-
+	
 }
