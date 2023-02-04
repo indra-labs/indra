@@ -39,8 +39,6 @@ func (eng *Engine) handler() (out bool) {
 		log.D.F("incoming payment for %x: %v", p.ID, p.Amount)
 		topUp := false
 		eng.IterateSessions(func(s *traffic.Session) bool {
-			log.D.F("session preimage %x payment preimage %x", s.Preimage,
-				p.Preimage)
 			if s.Preimage == p.Preimage {
 				s.IncSats(p.Amount, false, "top-up")
 				topUp = true
@@ -52,8 +50,8 @@ func (eng *Engine) handler() (out bool) {
 		})
 		if !topUp {
 			eng.AddPendingPayment(p)
-			log.T.F("awaiting session keys for preimage %x",
-				p.Preimage)
+			log.T.F("awaiting session keys for preimage %x session ID %x",
+				p.Preimage, p.ID)
 		}
 		// For now if we received this we return true.
 		// Later this will wait with a timeout on the lnd node returning the

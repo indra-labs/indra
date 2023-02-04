@@ -1,6 +1,8 @@
 package relay
 
 import (
+	"fmt"
+	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -15,11 +17,17 @@ import (
 // different hop numbers to relays with existing sessions. Note that all 5 of
 // the sessions will be paid the amount specified, not divided up.
 func (eng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
-	hook func()) {
+	hook func()) (e error) {
 	
 	log.D.Ln("buying new sessions")
 	var nodes [5]*traffic.Node
 	nodes = eng.SessionManager.SelectUnusedCircuit(nodes)
+	for i := range nodes {
+		if nodes[i] == nil {
+			e = fmt.Errorf("failed to find nodes %d", i)
+			return
+		}
+	}
 	// Get a random return hop session (index 5).
 	var returnSession *traffic.Session
 	returnHops := eng.SessionManager.GetSessionsAtHop(5)
@@ -45,9 +53,9 @@ func (eng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 	}
 	var success bool
 	for pendingConfirms > 0 {
-		// The confirm channels will signal upon success or failure according
-		// to the LN payment send protocol once either the HTLCs confirm on
-		// the way back or the path fails.
+		// The confirmation channels will signal upon success or failure
+		// according to the LN payment send protocol once either the HTLCs
+		// confirm on the way back or the path fails.
 		select {
 		case success = <-confirmChans[0]:
 			if success {
@@ -80,17 +88,18 @@ func (eng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 		}
 	}
 	o := onion.SendKeys(conf, s, returnSession, nodes[:], eng.KeySet)
-	eng.SendOnion(eng.GetLocalNodeAddress(), o, func(id nonce.ID, b slice.Bytes) {
+	eng.SendOnion(nodes[0].AddrPort, o, func(id nonce.ID, b slice.Bytes) {
 		var sessions [5]*traffic.Session
 		for i := range nodes {
-			log.D.F("confirming and storing session %x for %s with %v initial"+
-				" balance", s[i].ID, nodes[i].AddrPort.String(), amount)
+			log.D.F("confirming and storing session at hop %d %x for %s with"+
+				" %v initial"+
+				" balance", i, s[i].ID, nodes[i].AddrPort.String(), amount)
 			sessions[i] = traffic.NewSession(s[i].ID, nodes[i], amount,
 				s[i].Header, s[i].Payload, byte(i))
-			eng.SessionManager.Add(sessions[i])
 			eng.SessionManager.AddSession(sessions[i])
 			eng.SessionManager.DeletePendingPayment(s[i].PreimageHash())
 		}
 		hook()
 	})
+	return
 }

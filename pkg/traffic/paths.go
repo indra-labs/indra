@@ -73,8 +73,8 @@ func (sm *SessionManager) SelectUnusedCircuit(nodes [5]*Node) (c [5]*Node) {
 	defer sm.Unlock()
 	c = nodes
 	// Create a shuffled slice of Nodes to randomise the selection process.
-	nodeList := make([]*Node, len(sm.nodes))
-	copy(nodeList, sm.nodes)
+	nodeList := make([]*Node, len(sm.nodes)-1)
+	copy(nodeList, sm.nodes[1:])
 	cryptorand.Shuffle(len(nodeList), func(i, j int) {
 		nodeList[i], nodeList[j] = nodeList[j], nodeList[i]
 	})
@@ -86,12 +86,18 @@ func (sm *SessionManager) SelectUnusedCircuit(nodes [5]*Node) (c [5]*Node) {
 				if nodeList[j] == nil {
 					continue
 				}
-				if _, ok := sm.SessionCache[nodeList[j].ID]; !ok {
-					c[i] = nodeList[j]
-					// nil the entry so it isn't selected again
-					nodeList[j] = nil
-					break
+				if sc, ok := sm.SessionCache[nodeList[j].ID]; ok {
+					if sc[i] == nil {
+						c[i] = nodeList[j]
+						// nil the entry so it isn't selected again
+						nodeList[j] = nil
+						break
+					}
 				}
+				c[i] = nodeList[j]
+				// nil the entry so it isn't selected again
+				nodeList[j] = nil
+				break
 			}
 		}
 	}

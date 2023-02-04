@@ -11,7 +11,7 @@ import (
 )
 
 func CreateNMockCircuits(inclSessions bool, nCircuits int) (cl []*Engine, e error) {
-
+	
 	nTotal := 1 + nCircuits*5
 	cl = make([]*Engine, nTotal)
 	nodes := make([]*traffic.Node, nTotal)
@@ -55,7 +55,7 @@ func CreateNMockCircuits(inclSessions bool, nCircuits int) (cl []*Engine, e erro
 			}
 		}
 	}
-	// Add all the nodes to each other so they can pass messages.
+	// Add all the nodes to each other, so they can pass messages.
 	for i := range cl {
 		for j := range nodes {
 			if i == j {

@@ -1,6 +1,8 @@
 package traffic
 
-import "git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+import (
+	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+)
 
 // A SessionCache stores each of the 5 hops
 type SessionCache map[nonce.ID]*Circuit
@@ -21,7 +23,8 @@ func (sm *SessionManager) UpdateSessionCache() {
 	}
 }
 
-func (sc SessionCache) Add(s *Session) {
+func (sc SessionCache) Add(s *Session) SessionCache {
+	log.I.Ln("adding session", s.AddrPort.String(), s.Hop)
 	var sce *Circuit
 	var exists bool
 	if sce, exists = sc[s.Node.ID]; !exists {
@@ -29,4 +32,5 @@ func (sc SessionCache) Add(s *Session) {
 		sc[s.Node.ID] = sce
 	}
 	sce[s.Hop] = s
+	return sc
 }

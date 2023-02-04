@@ -23,10 +23,10 @@ import (
 //  (check relay and client see the same balance after the operations)
 
 func TestClient_SendSessionKeys(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	log2.SetLogLevel(log2.Debug)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuits(false, 2); check(e) {
+	if clients, e = CreateNMockCircuits(false, 1); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -46,14 +46,24 @@ func TestClient_SendSessionKeys(t *testing.T) {
 		t.Error("SendSessionKeys test failed")
 		os.Exit(1)
 	}()
-	wg.Add(1)
-	counter.Inc()
-	clients[0].BuyNewSessions(1000000, func() {
-		for i := 0; i < int(counter.Load()); i++ {
-			wg.Done()
+	log.I.Ln(clients[0].GetLocalNodeAddress())
+	for i := 0; i < 10; i++ {
+		log.D.Ln("buying sessions", i)
+		wg.Add(1)
+		counter.Inc()
+		for i := range clients[0].SessionCache {
+			log.I.F("%x %v", i, clients[0].SessionCache[i])
 		}
-	})
-	wg.Wait()
+		e = clients[0].BuyNewSessions(1000000, func() {
+			wg.Done()
+			counter.Dec()
+		})
+		if check(e) {
+			wg.Done()
+			counter.Dec()
+		}
+		wg.Wait()
+	}
 	for _, v := range clients {
 		v.Shutdown()
 	}
