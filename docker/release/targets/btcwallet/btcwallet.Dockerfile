@@ -14,7 +14,7 @@ ARG version
 ADD ./release/btcwallet-${version}/bin/${platform}/btcwallet /bin
 
 # Enable the btcd user
-USER btcd:btcd
+USER btcwallet:btcwallet
 
 # Set the data volumes
 #VOLUME ["/etc/btcd"]
@@ -23,4 +23,4 @@ USER btcd:btcd
 # :8332  btcwallet RPC port
 EXPOSE 8332
 
-ENTRYPOINT ["/bin/btcwallet"]
+ENTRYPOINT ["/bin/btcwallet", "--configfile=/dev/null", "--appdata=/var/btcwallet", "--logdir=/var/btcwallet", "--cafile=/etc/btcd/keys/rpc.cert", "--rpckey=/etc/btcwallet/rpc.key", "--rpccert=/etc/btcwallet/rpc.cert", "--rpclisten=0.0.0.0:8332"]

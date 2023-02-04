@@ -1,7 +1,7 @@
 version: '3'
 services:
   btcd:
-    image: indralabs/btcd
+    image: indralabs/btcd-multi-arch:linux-amd64-dev
     volumes:
       - config:/etc/btcd
       - data:/var/btcd
@@ -15,23 +15,40 @@ services:
       - "--rpcpass=simnet"
       - "--simnet"
       - "--txindex"
-#  btcctl:
-#    image: indralabs/btcctl
-#    volumes:
-#      - config:/etc/btcd:ro
-#    networks:
-#      indranet:
-#    depends_on:
-#      - btcd
-#    command:
-#      - "--rpcserver=172.16.42.2:8333"
-#      - "--rpcuser=simnet"
-#      - "--rpcpass=simnet"
-#      - "--simnet"
-#      - "getinfo"
+      - "--miningaddr=Sbw7oopnxsVkrJpox4HUrevwYsiFaLgWRW"
+  btcwallet:
+    image: indralabs/btcwallet-multi-arch:linux-amd64-dev
+    volumes:
+      - config:/etc/btcd:ro
+      - btcwallet_config:/etc/btcwallet
+      - btcwallet_data:/var/btcwallet
+    networks:
+      indranet:
+        ipv4_address: 172.16.42.3
+    command:
+      - "--simnet"
+      - "--rpcconnect=172.16.42.2:8334"
+      - "--username=simnet"
+      - "--password=simnet"
+  btcctl:
+    image: indralabs/btcctl-multi-arch:linux-amd64-dev
+    volumes:
+      - config:/etc/btcd:ro
+    networks:
+      indranet:
+    depends_on:
+      - btcwallet
+    command:
+      - "--rpcserver=172.16.42.2:8334"
+      - "--rpcuser=simnet"
+      - "--rpcpass=simnet"
+      - "--simnet"
+      - "generate 1"
 volumes:
   config:
   data:
+  btcwallet_config:
+  btcwallet_data:
 networks:
   indranet:
     driver: bridge

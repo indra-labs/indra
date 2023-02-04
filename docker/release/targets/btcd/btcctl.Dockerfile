@@ -20,4 +20,4 @@ USER btcd:btcd
 #VOLUME ["/etc/btcd"]
 #VOLUME ["/var/btcd"]
 
-ENTRYPOINT ["/bin/btcctl", "--configfile=/etc/btcd/btcd.conf"]
+ENTRYPOINT ["/bin/btcctl", "--configfile=/dev/null", "--rpccert=/etc/btcd/keys/rpc.cert"]

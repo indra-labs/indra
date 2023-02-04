@@ -14,6 +14,14 @@ DOCKERFILES=$(find ./docker/release/targets/$TARGET_NAME -maxdepth 1 -type f -in
 
 PLATFORMS=$(find release/$TARGET_NAME-$TARGET_TAG/bin -type d | grep -oP "(^.*/bin/\K).*" | cut -f1 -d/)
 
+if [ -z "${RELEASE}" ]; then
+    PLATFORMS=(
+        "linux-amd64"
+        "linux-arm64"
+        "linux-arm-v7"
+    )
+fi
+
 echo "-- assembling images for package ${TARGET_NAME}-${TARGET_TAG}"
 
 for DOCKERFILE in $DOCKERFILES; do
