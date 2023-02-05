@@ -1,0 +1,10 @@
+#!/bin/bash
+
+docker run --rm -it --network=btcd_indranet \                                                                                                                ✔
+  --volume=btcd_btcwallet_config:/etc/btcwallet:ro \
+  --volume=btcd_btcwallet_data:/var/btcwallet \
+  indralabs/btcctl-multi-arch:linux-amd64-dev \
+    --configfile=/dev/null \
+    --rpcserver=172.16.42.3:8332 --rpccert=/etc/btcwallet/rpc.cert \
+    --rpcuser=simnet --rpcpass=simnet \
+    --simnet --wallet $@

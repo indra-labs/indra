@@ -1,8 +1,7 @@
 package main
 
 import (
-	"git-indra.lan/indra-labs/indra/pkg/docker"
-	"github.com/docker/docker/api/types"
+	"github.com/indra-labs/indra/pkg/docker"
 )
 
 var (
@@ -10,7 +9,7 @@ var (
 )
 
 var buildConfigurations = []docker.BuildConfiguration{
-	// docker.BuildConfiguration{
+	//docker.BuildConfiguration{
 	//	Name:            defaultRepositoryName + "/" + "btcd-build",
 	//	ContextFilePath: "/tmp/btcd-build.tar",
 	//	BuildOpts: types.ImageBuildOptions{
@@ -30,29 +29,50 @@ var buildConfigurations = []docker.BuildConfiguration{
 	//		ForceRemove:    true,
 	//		PullParent:     false,
 	//	},
-	// },
-	docker.BuildConfiguration{
-		Name:            defaultRepositoryName + "/" + "lnd-build",
-		ContextFilePath: "/tmp/lnd-build.tar",
-		BuildOpts: types.ImageBuildOptions{
-			Dockerfile: "docker/build/build.Dockerfile",
-			Tags: []string{
-				"v0.15.5-beta",
-			},
-			BuildArgs: map[string]*string{
-				"source_image":        strPtr("indralabs/lnd-source"),
-				"source_version":      strPtr("v0.15.5-beta"),
-				"builder_image":       strPtr(defaultBuilderContainer),
-				"target_name":         strPtr("lnd"),
-				"target_build_script": strPtr("docker/build/targets/lnd.sh"),
-			},
-			SuppressOutput: false,
-			Remove:         true,
-			ForceRemove:    true,
-			PullParent:     false,
-		},
-	},
-	// docker.BuildConfiguration{
+	//},
+	//docker.BuildConfiguration{
+	//	Name:            defaultRepositoryName + "/" + "btcwallet-build",
+	//	ContextFilePath: "/tmp/btcwallet-build.tar",
+	//	BuildOpts: types.ImageBuildOptions{
+	//		Dockerfile: "docker/build/build.Dockerfile",
+	//		Tags: []string{
+	//			"v0.16.5",
+	//		},
+	//		BuildArgs: map[string]*string{
+	//			"source_image":        strPtr("indralabs/btcwallet-source"),
+	//			"source_version":      strPtr("v0.16.5"),
+	//			"builder_image":       strPtr(defaultBuilderContainer),
+	//			"target_name":         strPtr("btcwallet"),
+	//			"target_build_script": strPtr("docker/build/targets/btcwallet.sh"),
+	//		},
+	//		SuppressOutput: false,
+	//		Remove:         true,
+	//		ForceRemove:    true,
+	//		PullParent:     false,
+	//	},
+	//},
+	//docker.BuildConfiguration{
+	//	Name:            defaultRepositoryName + "/" + "lnd-build",
+	//	ContextFilePath: "/tmp/lnd-build.tar",
+	//	BuildOpts: types.ImageBuildOptions{
+	//		Dockerfile: "docker/build/build.Dockerfile",
+	//		Tags: []string{
+	//			"v0.15.5-beta",
+	//		},
+	//		BuildArgs: map[string]*string{
+	//			"source_image":        strPtr("indralabs/lnd-source"),
+	//			"source_version":      strPtr("v0.15.5-beta"),
+	//			"builder_image":       strPtr(defaultBuilderContainer),
+	//			"target_name":         strPtr("lnd"),
+	//			"target_build_script": strPtr("docker/build/targets/lnd.sh"),
+	//		},
+	//		SuppressOutput: false,
+	//		Remove:         true,
+	//		ForceRemove:    true,
+	//		PullParent:     false,
+	//	},
+	//},
+	//docker.BuildConfiguration{
 	//	Name:            defaultRepositoryName + "/" + "indra-build",
 	//	ContextFilePath: "/tmp/indra-build.tar",
 	//	BuildOpts: types.ImageBuildOptions{
@@ -72,5 +92,5 @@ var buildConfigurations = []docker.BuildConfiguration{
 	//		ForceRemove:    true,
 	//		PullParent:     false,
 	//	},
-	// },
+	//},
 }

@@ -22,8 +22,11 @@ RUN set -ex && echo "checking root filesystem" \
 ##
 
 RUN set -ex && echo "adding users and groups" \
+    && echo "btcwallet:*:::::::" >> /etc/shadow \
+    && echo "btcwallet:x:8332:" >> /etc/group \
+    && echo "btcwallet:x:8332:8332:btcwallet:/var/btcwallet:/sbin/false" >> /etc/passwd \
     && echo "btcd:*:::::::" >> /etc/shadow \
-    && echo "btcd:x:8333:" >> /etc/group \
+    && echo "btcd:x:8333:btcwallet" >> /etc/group \
     && echo "btcd:x:8333:8333:btcd:/var/btcd:/sbin/false" >> /etc/passwd \
     && echo "lnd:*:::::::" >> /etc/shadow \
     && echo "lnd:x:9735:" >> /etc/group \
@@ -54,6 +57,7 @@ RUN set -ex && echo "checking users and groups to root filesystem" \
 ##
 
 RUN set -ex && echo "adding and permissioning /etc directories" \
+    && mkdir -pv /etc/btcwallet && chmod 755 /etc/btcwallet && chown btcwallet:btcwallet /etc/btcwallet \
     && mkdir -pv /etc/btcd && chmod 755 /etc/btcd \
     && mkdir -pv /etc/btcd/keys && chmod 750 /etc/btcd/keys && chown btcd:btcd /etc/btcd/keys \
     && mkdir -pv /etc/lnd  && chmod 755 /etc/lnd \
@@ -84,6 +88,7 @@ RUN set -ex & echo "adding default .conf files" \
     && chmod 755 lnd.conf && mv lnd.conf /etc/lnd
 
 RUN set -ex && echo "copying /etc directories to root filesystem" \
+    && cp -rp /etc/btcwallet /tmp/root-fs/etc/btcwallet \
     && cp -rp /etc/btcd /tmp/root-fs/etc/btcd \
     && cp -rp /etc/lnd /tmp/root-fs/etc/lnd \
     && cp -rp /etc/indra /tmp/root-fs/etc/indra
@@ -91,6 +96,7 @@ RUN set -ex && echo "copying /etc directories to root filesystem" \
 # DEBUG
 RUN set -ex && echo "checking /etc directories on root filesystem" \
     && ls -hal /tmp/root-fs/etc \
+    && ls -hal /tmp/root-fs/etc/btcwallet \
     && ls -hal /tmp/root-fs/etc/btcd \
     && ls -hal /tmp/root-fs/etc/btcd/keys \
     && ls -hal /tmp/root-fs/etc/lnd \
@@ -98,6 +104,8 @@ RUN set -ex && echo "checking /etc directories on root filesystem" \
     && ls -hal /tmp/root-fs/etc/indra
 
 RUN set -ex && echo "adding and permissioning /var directories" \
+    && mkdir -pv /var/btcwallet && chmod 750 /var/btcwallet && chown btcwallet:btcwallet /var/btcwallet \
+    && mkdir -pv /var/btcwallet/.btcwallet && chmod 750 /var/btcwallet/.btcwallet && chown btcwallet:btcwallet /var/btcwallet/.btcwallet \
     && mkdir -pv /var/btcd && chmod 750 /var/btcd && chown btcd:btcd /var/btcd \
     && mkdir -pv /var/btcd/.btcd && chmod 750 /var/btcd/.btcd && chown btcd:btcd /var/btcd/.btcd \
     && mkdir -pv /var/lnd && chmod 750 /var/lnd && chown lnd:lnd /var/lnd \
@@ -105,6 +113,7 @@ RUN set -ex && echo "adding and permissioning /var directories" \
     && mkdir -pv /var/indra && chmod 750 /var/indra && chown indra:indra /var/indra
 
 RUN set -ex && echo "copying /var directories to root filesystem" \
+    && cp -rp /var/btcwallet /tmp/root-fs/var/btcwallet \
     && cp -rp /var/btcd /tmp/root-fs/var/btcd \
     && cp -rp /var/lnd /tmp/root-fs/var/lnd \
     && cp -rp /var/indra /tmp/root-fs/var/indra
@@ -112,6 +121,8 @@ RUN set -ex && echo "copying /var directories to root filesystem" \
 # DEBUG
 RUN set -ex && echo "checking /var directories on root filesystem" \
     && ls -hal /tmp/root-fs/var \
+    && ls -hal /tmp/root-fs/var/btcwallet \
+    && ls -hal /tmp/root-fs/var/btcwallet/.btcwallet \
     && ls -hal /tmp/root-fs/var/btcd \
     && ls -hal /tmp/root-fs/var/btcd/.btcd \
     && ls -hal /tmp/root-fs/var/lnd \
