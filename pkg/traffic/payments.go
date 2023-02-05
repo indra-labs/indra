@@ -2,7 +2,7 @@ package traffic
 
 import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/session"
@@ -20,7 +20,7 @@ type PaymentChan chan *Payment
 // Send a payment on the PaymentChan.
 func (pc PaymentChan) Send(amount lnwire.MilliSatoshi,
 	s *session.Layer) (confirmChan chan bool) {
-	
+
 	confirmChan = make(chan bool)
 	pc <- &Payment{
 		ID:          s.ID,
@@ -77,32 +77,33 @@ func (p PendingPayments) FindPreimage(pi sha256.Hash) (pp *Payment) {
 
 func (sm *SessionManager) AddPendingPayment(
 	np *Payment) {
-	
+
 	sm.Lock()
 	defer sm.Unlock()
-	log.D.F("%s adding pending payment %x for %v", sm.nodes[0].AddrPort.String(), np.ID,
+	log.D.F("%s adding pending payment %s for %v",
+		sm.nodes[0].AddrPort.String(), np.ID,
 		np.Amount)
-	sm.pendingPayments = sm.pendingPayments.Add(np)
+	sm.PendingPayments = sm.PendingPayments.Add(np)
 }
 func (sm *SessionManager) DeletePendingPayment(
 	preimage sha256.Hash) {
-	
+
 	sm.Lock()
 	defer sm.Unlock()
-	sm.pendingPayments = sm.pendingPayments.Delete(preimage)
+	sm.PendingPayments = sm.PendingPayments.Delete(preimage)
 }
 func (sm *SessionManager) FindPendingPayment(
 	id nonce.ID) (pp *Payment) {
-	
+
 	sm.Lock()
 	defer sm.Unlock()
-	return sm.pendingPayments.Find(id)
+	return sm.PendingPayments.Find(id)
 }
 func (sm *SessionManager) FindPendingPreimage(
 	pi sha256.Hash) (pp *Payment) {
-	
+
 	log.T.F("searching preimage %x", pi)
 	sm.Lock()
 	defer sm.Unlock()
-	return sm.pendingPayments.FindPreimage(pi)
+	return sm.PendingPayments.FindPreimage(pi)
 }

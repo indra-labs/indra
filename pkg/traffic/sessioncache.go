@@ -24,7 +24,7 @@ func (sm *SessionManager) UpdateSessionCache() {
 }
 
 func (sc SessionCache) Add(s *Session) SessionCache {
-	log.I.Ln("adding session", s.AddrPort.String(), s.Hop)
+	log.T.F("adding session %s %s %d", s.ID, s.AddrPort.String(), s.Hop)
 	var sce *Circuit
 	var exists bool
 	if sce, exists = sc[s.Node.ID]; !exists {

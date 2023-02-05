@@ -21,11 +21,9 @@ posting it, it became recognised that code, and encryption, are protected
 speech.
 
 With ubiquitous 128 and 256 bit AES encryption now in use by default, the
-content of
-messages is secure. However, the volume of messages and endpoints of signals are
-still
-useful intelligence data, enabling state level actors to attack internet
-users and violate their privacy and threaten their safety.
+content of messages is secure. However, the volume of messages and endpoints of
+signals are still useful intelligence data, enabling state level actors to 
+attack internet users and violate their privacy and threaten their safety.
 
 Protecting against this high level attack the main network currently doing
 this work is the [Tor network](https://torproject.org). However, this system
@@ -46,14 +44,14 @@ for retaliation when used to abuse such external systems.
 
 Indranet's purpose is to form an interconnect layer for decentralised network
 protocols. It requires Lightning Network, as a primary requirement, to enable
-the payment for bandwidth, and thus it also requires connectivity to the 
-Bitcoin network. Thus, all nodes, both relays and clients, will provide exit 
-traffic for these two protocols, especially Bitcoin, which has a very low 
+the payment for bandwidth, and thus it also requires connectivity to the
+Bitcoin network. Thus, all nodes, both relays and clients, will provide exit
+traffic for these two protocols, especially Bitcoin, which has a very low
 bandwidth requirement for simple transaction publishing.
 
 Users will potentially be able to set up arbitrary exit services, but the core
 project will only target connectivity with decentralised peer to peer services.
-Secondarily, it will be possible for users to set up private, non advertised 
+Secondarily, it will be possible for users to set up private, non advertised
 exit services, protected via certificate authentication, such as SSH and other
 remote access systems. This will serve to displace the use cases for Tor with
 SSH and web services.

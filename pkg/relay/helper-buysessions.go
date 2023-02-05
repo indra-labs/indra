@@ -2,9 +2,9 @@ package relay
 
 import (
 	"fmt"
-	
+
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/onion"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/session"
@@ -18,10 +18,10 @@ import (
 // the sessions will be paid the amount specified, not divided up.
 func (eng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 	hook func()) (e error) {
-	
+
 	log.D.Ln("buying new sessions")
 	var nodes [5]*traffic.Node
-	nodes = eng.SessionManager.SelectUnusedCircuit(nodes)
+	nodes = eng.SessionManager.SelectUnusedCircuit()
 	for i := range nodes {
 		if nodes[i] == nil {
 			e = fmt.Errorf("failed to find nodes %d", i)
@@ -60,20 +60,14 @@ func (eng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 		case success = <-confirmChans[0]:
 			if success {
 				pendingConfirms--
-			} else {
-			
 			}
 		case success = <-confirmChans[1]:
 			if success {
 				pendingConfirms--
-			} else {
-			
 			}
 		case success = <-confirmChans[2]:
 			if success {
 				pendingConfirms--
-			} else {
-			
 			}
 		case success = <-confirmChans[3]:
 			if success {
@@ -82,22 +76,22 @@ func (eng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 		case success = <-confirmChans[4]:
 			if success {
 				pendingConfirms--
-			} else {
-			
 			}
 		}
 	}
 	o := onion.SendKeys(conf, s, returnSession, nodes[:], eng.KeySet)
 	eng.SendOnion(nodes[0].AddrPort, o, func(id nonce.ID, b slice.Bytes) {
+		eng.SessionManager.Lock()
+		defer eng.SessionManager.Unlock()
 		var sessions [5]*traffic.Session
 		for i := range nodes {
-			log.D.F("confirming and storing session at hop %d %x for %s with"+
+			log.D.F("confirming and storing session at hop %d %s for %s with"+
 				" %v initial"+
 				" balance", i, s[i].ID, nodes[i].AddrPort.String(), amount)
 			sessions[i] = traffic.NewSession(s[i].ID, nodes[i], amount,
 				s[i].Header, s[i].Payload, byte(i))
-			eng.SessionManager.AddSession(sessions[i])
-			eng.SessionManager.DeletePendingPayment(s[i].PreimageHash())
+			eng.SessionManager.Add(sessions[i])
+			eng.SessionManager.PendingPayments.Delete(s[i].PreimageHash())
 		}
 		hook()
 	})

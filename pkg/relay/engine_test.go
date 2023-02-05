@@ -5,10 +5,10 @@ import (
 	"sync"
 	"testing"
 	"time"
-	
+
 	"github.com/cybriq/qu"
 	"go.uber.org/atomic"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
@@ -26,7 +26,7 @@ func TestClient_SendSessionKeys(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuits(false, 1); check(e) {
+	if clients, e = CreateNMockCircuits(false, 2); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -46,14 +46,10 @@ func TestClient_SendSessionKeys(t *testing.T) {
 		t.Error("SendSessionKeys test failed")
 		os.Exit(1)
 	}()
-	log.I.Ln(clients[0].GetLocalNodeAddress())
 	for i := 0; i < 10; i++ {
 		log.D.Ln("buying sessions", i)
 		wg.Add(1)
 		counter.Inc()
-		for i := range clients[0].SessionCache {
-			log.I.F("%x %v", i, clients[0].SessionCache[i])
-		}
 		e = clients[0].BuyNewSessions(1000000, func() {
 			wg.Done()
 			counter.Dec()
@@ -63,6 +59,9 @@ func TestClient_SendSessionKeys(t *testing.T) {
 			counter.Dec()
 		}
 		wg.Wait()
+		for j := range clients[0].SessionCache {
+			log.D.F("%d %s %v", i, j, clients[0].SessionCache[j])
+		}
 	}
 	for _, v := range clients {
 		v.Shutdown()

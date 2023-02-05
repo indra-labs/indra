@@ -3,9 +3,9 @@ package relay
 import (
 	"fmt"
 	"reflect"
-	
+
 	"github.com/davecgh/go-spew/spew"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/onion"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/balance"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/confirm"
@@ -36,7 +36,7 @@ func (eng *Engine) handler() (out bool) {
 	case b := <-eng.ReceiveToLocalNode(0):
 		eng.handleMessage(b, prev)
 	case p := <-eng.GetLocalNode().PaymentChan.Receive():
-		log.D.F("incoming payment for %x: %v", p.ID, p.Amount)
+		log.D.F("incoming payment for %s: %v", p.ID, p.Amount)
 		topUp := false
 		eng.IterateSessions(func(s *traffic.Session) bool {
 			if s.Preimage == p.Preimage {

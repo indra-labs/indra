@@ -2,9 +2,9 @@ package traffic
 
 import (
 	"sync"
-	
+
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -24,7 +24,7 @@ import (
 
 type SessionManager struct {
 	nodes           []*Node
-	pendingPayments PendingPayments
+	PendingPayments PendingPayments
 	Sessions
 	SessionCache
 	sync.Mutex
@@ -40,7 +40,7 @@ func NewSessionManager() *SessionManager {
 // payments, making the engine forget about payments it received.
 func (sm *SessionManager) ClearPendingPayments() {
 	log.D.Ln("clearing pending payments")
-	sm.pendingPayments = sm.pendingPayments[:0]
+	sm.PendingPayments = sm.PendingPayments[:0]
 }
 
 // ClearSessions is used only for debugging, removing all but the first session,
@@ -52,7 +52,7 @@ func (sm *SessionManager) ClearSessions() {
 
 func (sm *SessionManager) IncSession(id nonce.ID, sats lnwire.MilliSatoshi,
 	sender bool, typ string) {
-	
+
 	sess := sm.FindSession(id)
 	if sess != nil {
 		sm.Lock()
@@ -62,7 +62,7 @@ func (sm *SessionManager) IncSession(id nonce.ID, sats lnwire.MilliSatoshi,
 }
 func (sm *SessionManager) DecSession(id nonce.ID, sats lnwire.MilliSatoshi,
 	sender bool, typ string) bool {
-	
+
 	sess := sm.FindSession(id)
 	if sess != nil {
 		sm.Lock()
@@ -74,7 +74,7 @@ func (sm *SessionManager) DecSession(id nonce.ID, sats lnwire.MilliSatoshi,
 
 func (sm *SessionManager) GetNodeCircuit(id nonce.ID) (sce *Circuit,
 	exists bool) {
-	
+
 	sm.Lock()
 	defer sm.Unlock()
 	sce, exists = sm.SessionCache[id]
@@ -181,7 +181,7 @@ func (sm *SessionManager) IterateSessions(fn func(s *Session) bool) {
 // Do not call SessionManager methods within this function.
 func (sm *SessionManager) IterateSessionCache(fn func(n *Node,
 	c *Circuit) bool) {
-	
+
 	sm.Lock()
 	defer sm.Unlock()
 out:

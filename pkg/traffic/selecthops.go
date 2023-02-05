@@ -6,7 +6,7 @@ import (
 
 func (sm *SessionManager) SelectHops(hops []byte,
 	alreadyHave Sessions) (so Sessions) {
-	
+
 	sm.Lock()
 	defer sm.Unlock()
 	ws := make(Sessions, 0)
@@ -59,45 +59,6 @@ out:
 			cur++
 			if cur == len(ws) {
 				cur = 0
-			}
-		}
-	}
-	return
-}
-
-// SelectUnusedCircuit accepts an array of 5 Node entries where all or some are
-// empty and picks nodes for the remainder that do not have a hop at that
-// position.
-func (sm *SessionManager) SelectUnusedCircuit(nodes [5]*Node) (c [5]*Node) {
-	sm.Lock()
-	defer sm.Unlock()
-	c = nodes
-	// Create a shuffled slice of Nodes to randomise the selection process.
-	nodeList := make([]*Node, len(sm.nodes)-1)
-	copy(nodeList, sm.nodes[1:])
-	cryptorand.Shuffle(len(nodeList), func(i, j int) {
-		nodeList[i], nodeList[j] = nodeList[j], nodeList[i]
-	})
-	for i := range c {
-		// We are only adding Node entries for spots that are not already
-		// filled.
-		if c[i] == nil {
-			for j := range nodeList {
-				if nodeList[j] == nil {
-					continue
-				}
-				if sc, ok := sm.SessionCache[nodeList[j].ID]; ok {
-					if sc[i] == nil {
-						c[i] = nodeList[j]
-						// nil the entry so it isn't selected again
-						nodeList[j] = nil
-						break
-					}
-				}
-				c[i] = nodeList[j]
-				// nil the entry so it isn't selected again
-				nodeList[j] = nil
-				break
 			}
 		}
 	}

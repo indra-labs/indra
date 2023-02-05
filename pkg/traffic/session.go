@@ -1,6 +1,8 @@
 package traffic
 
 import (
+	"encoding/hex"
+
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
@@ -93,6 +95,19 @@ func (s *Session) DecSats(sats lnwire.MilliSatoshi,
 
 // A Circuit is the generic fixed length path used for most messages.
 type Circuit [5]*Session
+
+func (c Circuit) String() (o string) {
+	o += "[ "
+	for i := range c {
+		if c[i] == nil {
+			o += "                 "
+		} else {
+			o += hex.EncodeToString(c[i].ID[:]) + " "
+		}
+	}
+	o += "]"
+	return
+}
 
 // Sessions are arbitrary length lists of sessions.
 type Sessions []*Session
