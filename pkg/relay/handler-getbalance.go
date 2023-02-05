@@ -2,9 +2,9 @@ package relay
 
 import (
 	"fmt"
-
+	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/onion"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/balance"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/crypt"
@@ -16,7 +16,7 @@ import (
 
 func (eng *Engine) getBalance(on *getbalance.Layer,
 	b slice.Bytes, c *slice.Cursor, prev types.Onion) {
-
+	
 	log.T.S(on)
 	var found bool
 	var bal *balance.Layer
@@ -36,7 +36,8 @@ func (eng *Engine) getBalance(on *getbalance.Layer,
 		fmt.Println("session not found")
 		return
 	}
-	rb := FormatReply(b[*c:c.Inc(crypt.ReverseHeaderLen)],
+	header := b[*c:c.Inc(crypt.ReverseHeaderLen)]
+	rb := FormatReply(header,
 		onion.Encode(bal), on.Ciphers, on.Nonces)
 	rb = append(rb, slice.NoisePad(714-len(rb))...)
 	switch on1 := prev.(type) {
@@ -50,5 +51,20 @@ func (eng *Engine) getBalance(on *getbalance.Layer,
 			eng.DecSession(sess.ID, in+out, false, "getbalance")
 		}
 	}
+	eng.IterateSessions(func(s *traffic.Session) bool {
+		if s.ID == on.ID {
+			bal = &balance.Layer{
+				ID:           on.ID,
+				ConfID:       on.ConfID,
+				MilliSatoshi: s.Remaining,
+			}
+			found = true
+			return true
+		}
+		return false
+	})
+	rb = FormatReply(header,
+		onion.Encode(bal), on.Ciphers, on.Nonces)
+	rb = append(rb, slice.NoisePad(714-len(rb))...)
 	eng.handleMessage(rb, on)
 }

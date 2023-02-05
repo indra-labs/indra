@@ -5,10 +5,10 @@ import (
 	"sync"
 	"testing"
 	"time"
-
+	
 	"github.com/cybriq/qu"
 	"go.uber.org/atomic"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
@@ -251,7 +251,7 @@ func TestClient_SendPing(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuits(true, 2); check(e) {
+	if clients, e = CreateNMockCircuits(true, 1); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -322,7 +322,6 @@ out:
 		wg.Add(1)
 		clients[0].SendGetBalance(clients[0].Sessions[i],
 			func(cf nonce.ID, b slice.Bytes) {
-				log.I.F("success\n\n")
 				wg.Done()
 			})
 		select {

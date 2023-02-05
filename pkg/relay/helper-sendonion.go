@@ -22,10 +22,11 @@ func (eng *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 	responseHook func(id nonce.ID, b slice.Bytes)) {
 	
 	b := onion.Encode(o.Assemble())
-	var billable, accounted []nonce.ID
+	var billable []nonce.ID
 	var ret nonce.ID
 	var last nonce.ID
 	var port uint16
+	var postAcct []func()
 	// do client accounting
 	skip := false
 	for i := range o {
@@ -47,10 +48,12 @@ func (eng *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 			}
 			switch on2 := o[i+1].(type) {
 			case *forward.Layer:
-				eng.DecSession(s.ID,
-					s.RelayRate*lnwire.MilliSatoshi(len(b))/1024/1024, true,
-					"forward")
-				accounted = append(accounted, s.ID)
+				postAcct = append(postAcct,
+					func() {
+						eng.DecSession(s.ID,
+							s.RelayRate*lnwire.MilliSatoshi(len(b))/1024/1024, true,
+							"forward")
+					})
 			case *reverse.Layer:
 				billable = append(billable, s.ID)
 			case *exit.Layer:
@@ -59,19 +62,24 @@ func (eng *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 						continue
 					}
 					port = on2.Port
-					eng.DecSession(s.ID,
-						s.Services[j].RelayRate*lnwire.
-							MilliSatoshi(len(b)/2)/1024/1024, true, "exit")
-					accounted = append(accounted, s.ID)
+					postAcct = append(postAcct,
+						func() {
+							eng.DecSession(s.ID,
+								s.Services[j].RelayRate*lnwire.
+									MilliSatoshi(len(b)/2)/1024/1024, true, "exit")
+						})
 					break
 				}
 				billable = append(billable, s.ID)
 				last = on2.ID
 				skip = true
 			case *getbalance.Layer:
-				eng.DecSession(s.ID,
-					s.RelayRate*lnwire.MilliSatoshi(len(b)/2)/1024/1024, true,
-					"getbalance")
+				postAcct = append(postAcct,
+					func() {
+						eng.DecSession(s.ID,
+							s.RelayRate*lnwire.MilliSatoshi(len(b)/2)/1024/1024,
+							true, "getbalance")
+					})
 				last = s.ID
 				billable = append(billable, s.ID)
 				skip = true
@@ -84,6 +92,13 @@ func (eng *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 				if s == nil {
 					return
 				}
+				postAcct = append(postAcct,
+					func() {
+						eng.DecSession(s.ID,
+							s.RelayRate*lnwire.MilliSatoshi(len(b)/2)/1024/1024,
+							true, "directbalance")
+					})
+				billable = append(billable, s.ID)
 				last = on.ID
 			}
 		case *confirm.Layer:
@@ -94,10 +109,11 @@ func (eng *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 	}
 	if responseHook == nil {
 		responseHook = func(_ nonce.ID, _ slice.Bytes) {
-			log.T.Ln("nil response hook")
+			log.D.Ln("nil response hook")
 		}
 	}
-	eng.PendingResponses.Add(last, len(b), billable, accounted, ret, port, responseHook)
+	eng.PendingResponses.Add(last, len(b), billable, ret, port,
+		responseHook, postAcct)
 	log.T.Ln("sending out onion")
 	eng.Send(ap, b)
 	

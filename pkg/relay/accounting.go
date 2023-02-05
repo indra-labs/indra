@@ -3,7 +3,7 @@ package relay
 import (
 	"sync"
 	"time"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -12,10 +12,11 @@ type Callback func(id nonce.ID, b slice.Bytes)
 
 type PendingResponse struct {
 	nonce.ID
-	SentSize            int
-	Port                uint16
-	Billable, Accounted []nonce.ID
-	Return              nonce.ID
+	SentSize int
+	Port     uint16
+	Billable []nonce.ID
+	Return   nonce.ID
+	PostAcct []func()
 	Callback
 	time.Time
 	Timeout time.Duration
@@ -37,22 +38,22 @@ func (p *PendingResponses) GetOldestPending() (pr *PendingResponse) {
 	return
 }
 
-func (p *PendingResponses) Add(id nonce.ID, sentSize int, billable,
-	accounted []nonce.ID, ret nonce.ID, port uint16,
-	callback func(id nonce.ID, b slice.Bytes)) {
-
+func (p *PendingResponses) Add(id nonce.ID, sentSize int,
+	billable []nonce.ID, ret nonce.ID, port uint16,
+	callback func(id nonce.ID, b slice.Bytes), postAcct []func()) {
+	
 	p.Lock()
 	defer p.Unlock()
 	log.T.F("adding response hook %x", id)
 	p.responses = append(p.responses, &PendingResponse{
-		ID:        id,
-		SentSize:  sentSize,
-		Time:      time.Now(),
-		Billable:  billable,
-		Accounted: accounted,
-		Return:    ret,
-		Port:      port,
-		Callback:  callback,
+		ID:       id,
+		SentSize: sentSize,
+		Time:     time.Now(),
+		Billable: billable,
+		Return:   ret,
+		Port:     port,
+		PostAcct: postAcct,
+		Callback: callback,
 	})
 }
 
@@ -78,12 +79,17 @@ func (p *PendingResponses) Find(id nonce.ID) (pr *PendingResponse) {
 	return
 }
 
+// Delete runs the callback and post accounting function list and deletes the
+// pending response.
 func (p *PendingResponses) Delete(id nonce.ID, b slice.Bytes) {
 	p.Lock()
 	defer p.Unlock()
 	log.T.F("deleting response %s", id)
 	for i := range p.responses {
 		if p.responses[i].ID == id {
+			for _, fn := range p.responses[i].PostAcct {
+				fn()
+			}
 			p.responses[i].Callback(id, b)
 			if i < 1 {
 				p.responses = p.responses[1:]
