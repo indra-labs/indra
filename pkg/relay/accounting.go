@@ -81,7 +81,7 @@ func (p *PendingResponses) Find(id nonce.ID) (pr *PendingResponse) {
 func (p *PendingResponses) Delete(id nonce.ID, b slice.Bytes) {
 	p.Lock()
 	defer p.Unlock()
-	log.T.F("deleting response %x", id)
+	log.T.F("deleting response %s", id)
 	for i := range p.responses {
 		if p.responses[i].ID == id {
 			p.responses[i].Callback(id, b)

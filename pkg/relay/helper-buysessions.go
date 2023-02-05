@@ -19,7 +19,6 @@ import (
 func (eng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 	hook func()) (e error) {
 
-	log.D.Ln("buying new sessions")
 	var nodes [5]*traffic.Node
 	nodes = eng.SessionManager.SelectUnusedCircuit()
 	for i := range nodes {
@@ -91,6 +90,7 @@ func (eng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 			sessions[i] = traffic.NewSession(s[i].ID, nodes[i], amount,
 				s[i].Header, s[i].Payload, byte(i))
 			eng.SessionManager.Add(sessions[i])
+			eng.Sessions = append(eng.Sessions, sessions[i])
 			eng.SessionManager.PendingPayments.Delete(s[i].PreimageHash())
 		}
 		hook()
