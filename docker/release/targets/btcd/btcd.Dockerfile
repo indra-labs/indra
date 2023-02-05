@@ -25,4 +25,4 @@ USER btcd:btcd
 # :8334  btcd RPC port
 EXPOSE 8333 8334
 
-ENTRYPOINT ["/bin/btcd", "--configfile=/etc/btcd/btcd.conf", "--datadir=/var/btcd"]
+ENTRYPOINT ["/bin/btcd", "--configfile=/etc/btcd/btcd.conf", "--datadir=/var/btcd", "--logdir=/var/btcd", "--listen=0.0.0.0:8333", "--rpckey=/etc/btcd/keys/rpc.key", "--rpccert=/etc/btcd/keys/rpc.cert", "--rpclisten=0.0.0.0:8334"]
