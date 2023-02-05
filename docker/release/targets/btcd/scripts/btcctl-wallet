@@ -1,6 +1,6 @@
 #!/bin/bash
 
-docker run --rm -it --network=btcd_indranet \                                                                                                                ✔
+docker run --rm -it --network=btcd_indranet \
   --volume=btcd_btcwallet_config:/etc/btcwallet:ro \
   --volume=btcd_btcwallet_data:/var/btcwallet \
   indralabs/btcctl-multi-arch:linux-amd64-dev \
