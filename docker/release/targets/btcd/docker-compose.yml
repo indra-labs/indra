@@ -15,7 +15,7 @@ services:
       - "--rpcpass=simnet"
       - "--simnet"
       - "--txindex"
-      - "--miningaddr=Sbw7oopnxsVkrJpox4HUrevwYsiFaLgWRW"
+      - "--miningaddr=SgFsjcwvNg8iPD9HGSvzbzzymaGWVFXp6u"
   btcwallet:
     image: indralabs/btcwallet-multi-arch:linux-amd64-dev
     volumes:

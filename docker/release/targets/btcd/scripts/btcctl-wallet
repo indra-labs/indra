@@ -8,3 +8,4 @@ docker run --rm -it --network=btcd_indranet \
     --rpcserver=172.16.42.3:8332 --rpccert=/etc/btcwallet/rpc.cert \
     --rpcuser=simnet --rpcpass=simnet \
     --simnet --wallet $@
+
