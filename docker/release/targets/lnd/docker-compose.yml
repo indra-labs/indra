@@ -1,27 +1,64 @@
 version: '3'
 services:
-  lnd:
+  btcd:
+    image: indralabs/btcd-multi-arch:linux-amd64-dev
+    volumes:
+      - btcd_config:/etc/btcd
+      - btcd_data:/var/btcd
+    networks:
+      indranet:
+        ipv4_address: 172.16.42.2
+    command:
+      - "--rpcuser=simnet"
+      - "--rpcpass=simnet"
+      - "--simnet"
+      - "--txindex"
+      - "--miningaddr=SQWX48N37PFYbSrNqbZ8b4ZeYA3SPwwApR"
+  lnd-alice:
     image: indralabs/lnd-multi-arch:linux-amd64-dev
     volumes:
-      - lnd_config:/etc/lnd
-      - lnd_data:/var/lnd
+      - btcd_config:/etc/btcd:ro
+      - lnd_alice_config:/etc/lnd
+      - lnd_alice_data:/var/lnd
     networks:
       indranet:
         ipv4_address: 172.16.42.10
-#    depends_on:
-#      - btcd
+    depends_on:
+      - btcd
     command:
       - "--bitcoin.active"
       - "--bitcoin.simnet"
+      - "--bitcoin.node=btcd"
+      - "--btcd.rpccert=/etc/btcd/keys/rpc.cert"
       - "--btcd.rpchost=172.16.42.2:8334"
       - "--btcd.rpcuser=simnet"
       - "--btcd.rpcpass=simnet"
-      - "--rpclisten=0.0.0.0:10009"
-      - "--listen=0.0.0.0:9735"
-      - "--adminmacaroonpath=/etc/lnd/keys/admin.macaroon"
+  lnd-bob:
+    image: indralabs/lnd-multi-arch:linux-amd64-dev
+    volumes:
+      - btcd_config:/etc/btcd:ro
+      - lnd_bob_config:/etc/lnd
+      - lnd_bob_data:/var/lnd
+    networks:
+      indranet:
+        ipv4_address: 172.16.42.11
+    depends_on:
+      - btcd
+    command:
+      - "--bitcoin.active"
+      - "--bitcoin.simnet"
+      - "--bitcoin.node=btcd"
+      - "--btcd.rpccert=/etc/btcd/keys/rpc.cert"
+      - "--btcd.rpchost=172.16.42.2:8334"
+      - "--btcd.rpcuser=simnet"
+      - "--btcd.rpcpass=simnet"
 volumes:
-  lnd_config:
-  lnd_data:
+  btcd_config:
+  btcd_data:
+  lnd_alice_config:
+  lnd_alice_data:
+  lnd_bob_config:
+  lnd_bob_data:
 networks:
   indranet:
     driver: bridge

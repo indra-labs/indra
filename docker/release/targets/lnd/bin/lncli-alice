@@ -2,8 +2,8 @@
 
 docker run --rm -it \
     --network=btcd_indranet \
-    --volume=lnd_config:/etc/lnd:ro \
-    --volume=lnd_data:/var/lnd:ro \
+    --volume=lnd_lnd_alice_config:/etc/lnd:ro \
+    --volume=lnd_lnd_alice_data:/var/lnd:ro \
     indralabs/lncli-multi-arch:linux-amd64-dev \
         --rpcserver=172.16.42.10 \
         --tlscertpath=/etc/lnd/keys/rpc.cert \
