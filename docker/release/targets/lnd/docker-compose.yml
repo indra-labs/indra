@@ -1,17 +1,5 @@
 version: '3'
 services:
-#  btcd:
-#    image: indralabs/btcd
-#    volumes:
-#      - btcd_config:/etc/btcd
-#      - btcd_data:/var/btcd
-#    networks:
-#      indranet:
-#        ipv4_address: 172.16.42.2
-#    command:
-#      - "--rpcuser=simnet"
-#      - "--rpcpass=simnet"
-#      - "--simnet"
   lnd:
     image: indralabs/lnd-multi-arch:linux-amd64-dev
     volumes:
@@ -19,35 +7,19 @@ services:
       - lnd_data:/var/lnd
     networks:
       indranet:
-        ipv4_address: 172.16.42.3
+        ipv4_address: 172.16.42.10
 #    depends_on:
 #      - btcd
-#    command:
-#      - "--bitcoin.active"
-#      - "--bitcoin.simnet"
-#      - "--btcd.rpchost=172.16.42.2:8334"
-#      - "--btcd.rpcuser=simnet"
-#      - "--btcd.rpcpass=simnet"
-#      - "--rpclisten=0.0.0.0:10009"
-#      - "--listen=0.0.0.0:9735"
-#      - "--adminmacaroonpath=/etc/lnd/keys/admin.macaroon"
-#  btcctl:
-#    image: indralabs/btcctl
-#    volumes:
-#      - config:/etc/btcd:ro
-#    networks:
-#      indranet:
-#    depends_on:
-#      - btcd
-#    command:
-#      - "--rpcserver=172.16.42.2:8333"
-#      - "--rpcuser=simnet"
-#      - "--rpcpass=simnet"
-#      - "--simnet"
-#      - "getinfo"
+    command:
+      - "--bitcoin.active"
+      - "--bitcoin.simnet"
+      - "--btcd.rpchost=172.16.42.2:8334"
+      - "--btcd.rpcuser=simnet"
+      - "--btcd.rpcpass=simnet"
+      - "--rpclisten=0.0.0.0:10009"
+      - "--listen=0.0.0.0:9735"
+      - "--adminmacaroonpath=/etc/lnd/keys/admin.macaroon"
 volumes:
-#  btcd_config:
-#  btcd_data:
   lnd_config:
   lnd_data:
 networks:
