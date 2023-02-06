@@ -7,13 +7,13 @@ services:
       - btcd_data:/var/btcd
     networks:
       indranet:
-        ipv4_address: 172.16.42.2
+        ipv4_address: 172.16.43.2
     command:
       - "--rpcuser=simnet"
       - "--rpcpass=simnet"
       - "--simnet"
       - "--txindex"
-      - "--miningaddr=SQWX48N37PFYbSrNqbZ8b4ZeYA3SPwwApR"
+      - "--miningaddr=sb1qc7nsgcvk496af2yuds8fk72ehn288u9nhlf0dr"
   lnd-alice:
     image: indralabs/lnd-multi-arch:linux-amd64-dev
     volumes:
@@ -22,7 +22,7 @@ services:
       - lnd_alice_data:/var/lnd
     networks:
       indranet:
-        ipv4_address: 172.16.42.10
+        ipv4_address: 172.16.43.10
     depends_on:
       - btcd
     command:
@@ -30,7 +30,7 @@ services:
       - "--bitcoin.simnet"
       - "--bitcoin.node=btcd"
       - "--btcd.rpccert=/etc/btcd/keys/rpc.cert"
-      - "--btcd.rpchost=172.16.42.2:8334"
+      - "--btcd.rpchost=172.16.43.2:8334"
       - "--btcd.rpcuser=simnet"
       - "--btcd.rpcpass=simnet"
   lnd-bob:
@@ -41,7 +41,7 @@ services:
       - lnd_bob_data:/var/lnd
     networks:
       indranet:
-        ipv4_address: 172.16.42.11
+        ipv4_address: 172.16.43.11
     depends_on:
       - btcd
     command:
@@ -49,7 +49,7 @@ services:
       - "--bitcoin.simnet"
       - "--bitcoin.node=btcd"
       - "--btcd.rpccert=/etc/btcd/keys/rpc.cert"
-      - "--btcd.rpchost=172.16.42.2:8334"
+      - "--btcd.rpchost=172.16.43.2:8334"
       - "--btcd.rpcuser=simnet"
       - "--btcd.rpcpass=simnet"
 volumes:
@@ -65,7 +65,7 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: 172.16.42.0/24
-          gateway: 172.16.42.1
+        - subnet: 172.16.43.0/24
+          gateway: 172.16.43.1
 
 # docker-compose -f docker/lnd/docker-compose.yml up
