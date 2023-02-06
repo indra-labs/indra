@@ -2,9 +2,7 @@
 
 docker run --rm -it --network=btcd_indranet \
   --volume=btcd_config:/etc/btcd:ro \
-  --entrypoint="/bin/btcctl" \
- indralabs/btcctl:dev \
-  -C /etc/btcd/btcctl.conf \
+ indralabs/btcctl-multi-arch:linux-amd64-dev \
   --rpcserver=172.16.42.2:8334 \
   --rpcuser=simnet --rpcpass=simnet \
   --simnet $@

@@ -59,7 +59,7 @@ RUN set -ex && echo "checking users and groups to root filesystem" \
 RUN set -ex && echo "adding and permissioning /etc directories" \
     && mkdir -pv /etc/btcwallet && chmod 755 /etc/btcwallet && chown btcwallet:btcwallet /etc/btcwallet \
     && mkdir -pv /etc/btcd && chmod 755 /etc/btcd \
-    && mkdir -pv /etc/btcd/keys && chmod 750 /etc/btcd/keys && chown btcd:btcd /etc/btcd/keys \
+    && mkdir -pv /etc/btcd/keys && chmod 755 /etc/btcd/keys && chown btcd:btcd /etc/btcd/keys \
     && mkdir -pv /etc/lnd  && chmod 755 /etc/lnd \
     && mkdir -pv /etc/lnd/keys && chmod 750 /etc/lnd/keys && chown lnd:lnd /etc/lnd/keys \
     && mkdir -pv /etc/lnd/macaroons && chmod 750 /etc/lnd/macaroons && chown lnd:lnd /etc/lnd/macaroons \

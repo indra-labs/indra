@@ -12,6 +12,7 @@ ARG version
 
 ## We can't use 'COPY --from=...' here. Using ADD will enable multi-architecture releases
 ADD ./release/btcd-${version}/bin/${platform}/btcctl /bin
+ADD ./release/btcd-${version}/bin/${platform}/gencerts /bin
 
 # Enable the btcd user
 USER btcd:btcd
@@ -21,3 +22,4 @@ USER btcd:btcd
 #VOLUME ["/var/btcd"]
 
 ENTRYPOINT ["/bin/btcctl", "--configfile=/dev/null", "--rpccert=/etc/btcd/keys/rpc.cert"]
+
