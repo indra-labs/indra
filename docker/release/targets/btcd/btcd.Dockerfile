@@ -12,7 +12,6 @@ ARG version
 
 ## We can't use 'COPY --from=...' here. Using ADD will enable multi-architecture releases
 ADD ./release/btcd-${version}/bin/${platform}/btcd /bin
-ADD ./release/btcd-${version}/bin/${platform}/gencerts /bin
 
 # Enable the btcd user
 USER btcd:btcd
@@ -25,4 +24,4 @@ USER btcd:btcd
 # :8334  btcd RPC port
 EXPOSE 8333 8334
 
-ENTRYPOINT ["/bin/btcd", "--configfile=/etc/btcd/btcd.conf", "--datadir=/var/btcd", "--logdir=/var/btcd", "--listen=0.0.0.0:8333", "--rpckey=/etc/btcd/keys/rpc.key", "--rpccert=/etc/btcd/keys/rpc.cert", "--rpclisten=0.0.0.0:8334"]
+ENTRYPOINT ["/bin/btcd", "--configfile=/dev/null", "--datadir=/var/btcd", "--logdir=/var/btcd", "--listen=0.0.0.0:8333", "--rpckey=/etc/btcd/keys/rpc.key", "--rpccert=/etc/btcd/keys/rpc.cert", "--rpclisten=0.0.0.0:8334"]
