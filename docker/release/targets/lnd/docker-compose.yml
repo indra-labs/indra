@@ -33,6 +33,8 @@ services:
       - "--btcd.rpchost=172.16.43.2:8334"
       - "--btcd.rpcuser=simnet"
       - "--btcd.rpcpass=simnet"
+      - "--accept-amp"
+      - "--accept-keysend"
   lnd-bob:
     image: indralabs/lnd-multi-arch:linux-amd64-dev
     volumes:
@@ -52,6 +54,8 @@ services:
       - "--btcd.rpchost=172.16.43.2:8334"
       - "--btcd.rpcuser=simnet"
       - "--btcd.rpcpass=simnet"
+      - "--accept-amp"
+      - "--accept-keysend"
 volumes:
   btcd_config:
   btcd_data:
