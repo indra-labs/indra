@@ -2,10 +2,11 @@ package relay
 
 import (
 	"sync"
-
+	"time"
+	
 	"github.com/cybriq/qu"
 	"go.uber.org/atomic"
-
+	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
@@ -21,20 +22,23 @@ var (
 	check = log.E.Chk
 )
 
+const DefaultTimeout = time.Second
+
 type Engine struct {
 	sync.Mutex
 	*PendingResponses
 	*traffic.SessionManager
 	*signer.KeySet
-	Load         byte
-	Pause        qu.C
-	ShuttingDown atomic.Bool
+	Load          byte
+	TimeoutSignal qu.C
+	Pause         qu.C
+	ShuttingDown  atomic.Bool
 	qu.C
 }
 
 func NewEngine(tpt types.Transport, hdrPrv *prv.Key, no *traffic.Node,
 	nodes []*traffic.Node) (c *Engine, e error) {
-
+	
 	no.Transport = tpt
 	no.IdentityPrv = hdrPrv
 	no.IdentityPub = pub.Derive(hdrPrv)
@@ -46,6 +50,7 @@ func NewEngine(tpt types.Transport, hdrPrv *prv.Key, no *traffic.Node,
 		PendingResponses: &PendingResponses{},
 		KeySet:           ks,
 		SessionManager:   traffic.NewSessionManager(),
+		TimeoutSignal:    qu.T(),
 		Pause:            qu.T(),
 		C:                qu.T(),
 	}
@@ -77,10 +82,10 @@ func (eng *Engine) Shutdown() {
 	if eng.ShuttingDown.Load() {
 		return
 	}
+	eng.ShuttingDown.Store(true)
 	log.T.C(func() string {
 		return "shutting down client " + eng.GetLocalNodeAddress().String()
 	})
 	eng.Cleanup()
-	eng.ShuttingDown.Store(true)
 	eng.C.Q()
 }

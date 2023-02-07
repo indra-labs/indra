@@ -3,9 +3,9 @@ package relay
 import (
 	"fmt"
 	"reflect"
-
+	
 	"github.com/davecgh/go-spew/spew"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/onion"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/balance"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/confirm"
@@ -30,7 +30,7 @@ func (eng *Engine) handler() (out bool) {
 	var prev types.Onion
 	select {
 	case <-eng.C.Wait():
-		eng.Cleanup()
+		eng.Shutdown()
 		out = true
 		break
 	case b := <-eng.ReceiveToLocalNode(0):
@@ -59,13 +59,23 @@ func (eng *Engine) handler() (out bool) {
 		p.ConfirmChan <- true
 	case <-eng.Pause:
 		log.D.Ln("pausing", eng.GetLocalNodeAddress())
-		// For testing purposes we need to halt this handler and clear
-		// all the channels after the resume signal.
-		select {
-		case <-eng.C.Wait():
-			break
-		case <-eng.Pause:
-			// This will then resume to the top level select.
+		// For testing purposes we need to halt this handler and discard
+		// channel messages.
+	out:
+		for {
+			select {
+			case <-eng.GetLocalNode().PaymentChan.Receive():
+				log.D.Ln("discarding payments while in pause")
+			case <-eng.ReceiveToLocalNode(0):
+				log.D.Ln("discarding messages while in pause")
+			case <-eng.C.Wait():
+				break out
+			case <-eng.Pause:
+				// This will then resume to the top level select.
+				log.D.Ln("unpausing", eng.GetLocalNodeAddress())
+				break out
+			}
+			
 		}
 	}
 	return

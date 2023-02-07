@@ -19,7 +19,7 @@ func (eng *Engine) SendGetBalance(s *traffic.Session, conf Callback) {
 		returns[2] = ss[1]
 		confID := nonce.NewID()
 		o := onion.GetBalance(c, int(s.Hop), returns, eng.KeySet, confID)
-		eng.SendOnion(c[s.Hop].AddrPort, o, conf)
+		eng.SendOnion(c[s.Hop].AddrPort, o, conf, 0)
 		return
 	}
 	var cur byte
@@ -47,5 +47,5 @@ func (eng *Engine) SendGetBalance(s *traffic.Session, conf Callback) {
 	}
 	confID := nonce.NewID()
 	o := onion.GetBalance(c, int(s.Hop), returns, eng.KeySet, confID)
-	eng.SendOnion(c[0].AddrPort, o, conf)
+	eng.SendOnion(c[0].AddrPort, o, conf, 0)
 }

@@ -1,6 +1,8 @@
 package relay
 
 import (
+	"time"
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/onion"
 	"git-indra.lan/indra-labs/indra/pkg/traffic"
@@ -8,7 +10,8 @@ import (
 )
 
 func (eng *Engine) SendExit(port uint16, message slice.Bytes, id nonce.ID,
-	target *traffic.Session, hook func(id nonce.ID, b slice.Bytes)) {
+	target *traffic.Session, hook func(id nonce.ID, b slice.Bytes),
+	timeout time.Duration) {
 	
 	hops := []byte{0, 1, 2, 3, 4, 5}
 	s := make(traffic.Sessions, len(hops))
@@ -18,5 +21,5 @@ func (eng *Engine) SendExit(port uint16, message slice.Bytes, id nonce.ID,
 	copy(c[:], se)
 	o := onion.SendExit(port, message, id, se[len(se)-1], c, eng.KeySet)
 	log.D.Ln("sending out exit onion")
-	eng.SendOnion(c[0].AddrPort, o, hook)
+	eng.SendOnion(c[0].AddrPort, o, hook, timeout)
 }

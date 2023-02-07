@@ -2,6 +2,7 @@ package relay
 
 import (
 	"net/netip"
+	"time"
 	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	
@@ -15,18 +16,23 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/forward"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/getbalance"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/reverse"
+	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 func (eng *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
-	responseHook func(id nonce.ID, b slice.Bytes)) {
+	responseHook func(id nonce.ID, b slice.Bytes), timeout time.Duration) {
 	
+	if timeout == 0 {
+		timeout = DefaultTimeout
+	}
 	b := onion.Encode(o.Assemble())
 	var billable []nonce.ID
 	var ret nonce.ID
 	var last nonce.ID
 	var port uint16
 	var postAcct []func()
+	var sessions traffic.Sessions
 	// do client accounting
 	skip := false
 	for i := range o {
@@ -37,6 +43,7 @@ func (eng *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 		switch on := o[i].(type) {
 		case *crypt.Layer:
 			s := eng.FindSessionByHeaderPub(on.ToHeaderPub)
+			sessions = append(sessions, s)
 			// The last hop needs no accounting as it's us!
 			if i == len(o)-1 {
 				// The session used for the last hop is stored, however.
@@ -112,9 +119,8 @@ func (eng *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 			log.D.Ln("nil response hook")
 		}
 	}
-	eng.PendingResponses.Add(last, len(b), billable, ret, port,
-		responseHook, postAcct)
+	eng.PendingResponses.Add(last, len(b), sessions, billable, ret, port,
+		responseHook, postAcct, timeout)
 	log.T.Ln("sending out onion")
 	eng.Send(ap, b)
-	
 }

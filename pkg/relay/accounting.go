@@ -4,7 +4,11 @@ import (
 	"sync"
 	"time"
 	
+	"github.com/cybriq/qu"
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/traffic"
+	"git-indra.lan/indra-labs/indra/pkg/util/alarm"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -17,9 +21,10 @@ type PendingResponse struct {
 	Billable []nonce.ID
 	Return   nonce.ID
 	PostAcct []func()
+	traffic.Sessions
 	Callback
 	time.Time
-	Timeout time.Duration
+	Success qu.C
 }
 
 type PendingResponses struct {
@@ -38,14 +43,15 @@ func (p *PendingResponses) GetOldestPending() (pr *PendingResponse) {
 	return
 }
 
-func (p *PendingResponses) Add(id nonce.ID, sentSize int,
+func (p *PendingResponses) Add(id nonce.ID, sentSize int, s traffic.Sessions,
 	billable []nonce.ID, ret nonce.ID, port uint16,
-	callback func(id nonce.ID, b slice.Bytes), postAcct []func()) {
+	callback func(id nonce.ID, b slice.Bytes), postAcct []func(),
+	timeout time.Duration) {
 	
 	p.Lock()
 	defer p.Unlock()
-	log.T.F("adding response hook %x", id)
-	p.responses = append(p.responses, &PendingResponse{
+	log.T.F("adding response hook %s", id)
+	r := &PendingResponse{
 		ID:       id,
 		SentSize: sentSize,
 		Time:     time.Now(),
@@ -54,7 +60,10 @@ func (p *PendingResponses) Add(id nonce.ID, sentSize int,
 		Port:     port,
 		PostAcct: postAcct,
 		Callback: callback,
-	})
+		Success:  qu.T(),
+	}
+	p.responses = append(p.responses, r)
+	alarm.WakeAtTime(r.Time.Add(timeout), r.HandleTimeout, r.Success)
 }
 
 func (p *PendingResponses) FindOlder(t time.Time) (r []*PendingResponse) {
@@ -87,6 +96,8 @@ func (p *PendingResponses) Delete(id nonce.ID, b slice.Bytes) {
 	log.T.F("deleting response %s", id)
 	for i := range p.responses {
 		if p.responses[i].ID == id {
+			// Stop the timeout handler.
+			p.responses[i].Success.Q()
 			for _, fn := range p.responses[i].PostAcct {
 				fn()
 			}

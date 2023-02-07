@@ -112,13 +112,8 @@ func SendKeys(id nonce.ID, s [5]*session.Layer,
 // being queried can be any of the 5 and the return path is always a further two
 // hops until the client.
 //
-// First and last hop sessions are just directly queried, and the rest the path
-// goes to them and then through two return hops in the second last and last
-// positions, because it cannot be concealed that the client is not a relay.
-//
-// The first and last hops already have a payload session key ready to use and
-// all that is then sent back is a crypt with the query ID and session balance
-// addressed to the Header key.
+// First and last hop sessions are just directly queried, the second and exit
+// pass forwards, and if it's the second last one the hops are reverse.
 func GetBalance(s traffic.Circuit, target int, returns [3]*traffic.Session,
 	ks *signer.KeySet, id nonce.ID) (o Skins) {
 	
@@ -140,6 +135,12 @@ func GetBalance(s traffic.Circuit, target int, returns [3]*traffic.Session,
 	for i := range returns {
 		pubs[i] = returns[i].PayloadPub
 	}
+	if target == 3 {
+		// If it is the second last hop we can save on hops by reversing the
+		// path.
+	} else {
+	
+	}
 	for i := 0; i <= target; i++ {
 		o = o.ForwardCrypt(s[i], ks.Next(), n[i])
 	}
@@ -147,5 +148,24 @@ func GetBalance(s traffic.Circuit, target int, returns [3]*traffic.Session,
 	for i := range returns {
 		o = o.ReverseCrypt(returns[i], prvs[i], n[i+target], 0)
 	}
+	return
+}
+
+func NewGetBalance(id nonce.ID, circuit traffic.Circuit, ret *traffic.Session,
+	ks *signer.KeySet) (o Skins) {
+	
+	n := GenNonces(6)
+	retNonces := [3]nonce.IV{n[3], n[4], n[5]}
+	prvs := [3]*prv.Key{circuit[3].PayloadPrv, circuit[4].PayloadPrv,
+		ret.PayloadPrv}
+	pubs := [3]*pub.Key{circuit[3].PayloadPub, circuit[4].PayloadPub,
+		ret.PayloadPub}
+	
+	o = o.ForwardCrypt(circuit[0], ks.Next(), n[0]).
+		ForwardCrypt(circuit[1], ks.Next(), n[1]).
+		GetBalance(id, circuit[2].ID, prvs, pubs, retNonces).
+		ReverseCrypt(circuit[3], ks.Next(), n[0], 3).
+		ReverseCrypt(circuit[4], ks.Next(), n[0], 2).
+		ReverseCrypt(ret, ks.Next(), n[0], 1)
 	return
 }

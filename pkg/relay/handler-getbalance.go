@@ -1,8 +1,6 @@
 package relay
 
 import (
-	"fmt"
-	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	
 	"git-indra.lan/indra-labs/indra/pkg/onion"
@@ -33,7 +31,8 @@ func (eng *Engine) getBalance(on *getbalance.Layer,
 		return false
 	})
 	if !found {
-		fmt.Println("session not found")
+		log.E.Ln("session not found", on.ID)
+		log.D.S(eng.Sessions)
 		return
 	}
 	header := b[*c:c.Inc(crypt.ReverseHeaderLen)]
