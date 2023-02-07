@@ -13,7 +13,29 @@ services:
       - "--rpcpass=simnet"
       - "--simnet"
       - "--txindex"
-      - "--miningaddr=sb1qc7nsgcvk496af2yuds8fk72ehn288u9nhlf0dr"
+      - "--miningaddr=${MINER_ADDRESS:-SSBjQ58PsRmBtGZQ8ckXFRxijZFCBdeMMT}"
+  lnd-miner:
+    image: indralabs/lnd-multi-arch:linux-amd64-dev
+    volumes:
+      - btcd_config:/etc/btcd:ro
+      - lnd_miner_config:/etc/lnd
+      - lnd_miner_data:/var/lnd
+    networks:
+      indranet:
+        ipv4_address: 172.16.43.9
+    depends_on:
+      - btcd
+    command:
+      - "--bitcoin.active"
+      - "--bitcoin.simnet"
+      - "--bitcoin.node=btcd"
+      - "--btcd.rpccert=/etc/btcd/keys/rpc.cert"
+      - "--btcd.rpchost=172.16.43.2:8334"
+      - "--btcd.rpcuser=simnet"
+      - "--btcd.rpcpass=simnet"
+      - "--accept-amp"
+      - "--accept-keysend"
+      - "--noseedbackup" # Careful now, don't use this in production.
   lnd-alice:
     image: indralabs/lnd-multi-arch:linux-amd64-dev
     volumes:
@@ -35,6 +57,7 @@ services:
       - "--btcd.rpcpass=simnet"
       - "--accept-amp"
       - "--accept-keysend"
+      - "--noseedbackup" # Careful now, don't use this in production.
   lnd-bob:
     image: indralabs/lnd-multi-arch:linux-amd64-dev
     volumes:
@@ -56,9 +79,12 @@ services:
       - "--btcd.rpcpass=simnet"
       - "--accept-amp"
       - "--accept-keysend"
+      - "--noseedbackup" # Careful now, don't use this in production.
 volumes:
   btcd_config:
   btcd_data:
+  lnd_miner_config:
+  lnd_miner_data:
   lnd_alice_config:
   lnd_alice_data:
   lnd_bob_config:
