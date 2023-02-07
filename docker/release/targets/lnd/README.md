@@ -37,7 +37,7 @@ Navigate to your indra project root directory, and run the following:
     docker/release/targets/lnd/scripts/setup.sh
 ```
 
-When complete, it will produce an environment configuration file, located at `~/.lnsim.env`. It will be in the following format:
+When complete, it will produce an environment configuration file, located at `docker/release/targets/lnd/.env`. It will be in the following format:
 
 ```
     MINER_PUBKEY=<lightning_public_key>
@@ -54,7 +54,7 @@ The config file has two functions:
 - The MINER_ADDRESS is passed to the docker-compose.yml file, on start. This will ensure that any blocks mined will
 
 ```
-    source ~/.lndsim.env
+    source /opt/indra-labs/indra/docker/release/targets/lnd/.env
 ```
 
 This will take around 30 seconds to complete. Once complete, we can move on to using the simnet.
@@ -79,7 +79,7 @@ The following section will show you how to start and stop the network.
 To start the environment, run the following from your indra project root directory:
 
 ```
-    docker-compose --env-file=~/.lnsim.env --file=docker/release/targets/lnd/docker-compose.yml up
+    docker-compose --file=docker/release/targets/lnd/docker-compose.yml up
 ```
 
 #### Running in the background
@@ -87,7 +87,7 @@ To start the environment, run the following from your indra project root directo
 To start the environment *as a background process*, run the following (from your indra project root directory):
 
 ```
-    docker-compose --env-file=~/.lnsim.env --file=docker/release/targets/lnd/docker-compose.yml up --detach
+    docker-compose --file=docker/release/targets/lnd/docker-compose.yml up --detach
 ```
 
 ### Stopping
@@ -95,7 +95,7 @@ To start the environment *as a background process*, run the following (from your
 To stop the environment, run the following (from your indra project root directory):
 
 ```
-    docker-compose --env-file=~/.lnsim.env --file=docker/release/targets/lnd/docker-compose.yml down
+    docker-compose --file=docker/release/targets/lnd/docker-compose.yml down
 ```
 
 ## Running commands on the network
