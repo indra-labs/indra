@@ -26,14 +26,37 @@ Just to note:
 
 Bootstrapping is pretty straightforward, assuming that you have all of the requirements above installed. It can be done the following way:
 
+### Running Setup
+
 Navigate to your indra project root directory, and run the following: 
 
 - We will assume in the following example the directory is contained in `/opt/indra-labs/indra`.
 - BEWARE: This script must be run from the project root directory!
 
-```
+``` 
     docker/release/targets/lnd/scripts/setup.sh
 ```
+
+When complete, it will produce an environment configuration file, located at `~/.lnsim.env`. It will be in the following format:
+
+```
+    MINER_PUBKEY=<lightning_public_key>
+    MINER_ADDRESS=<bitcoin_address>
+    ALICE_PUBKEY=<lightning_public_key>
+    ALICE_ADDRESS=<bitcoin_address>
+    BOB_PUBKEY=<lightning_public_key>
+    BOB_ADDRESS=<bitcoin_address>
+```
+
+### Using the environment config
+
+The config file has two functions:
+- The MINER_ADDRESS is passed to the docker-compose.yml file, on start. This will ensure that any blocks mined will
+
+```
+    source ~/.lndsim.env
+```
+
 This will take around 30 seconds to complete. Once complete, we can move on to using the simnet.
 
 ### Adding the bin folder to your $PATH (recommended)
@@ -44,17 +67,9 @@ For example: (this will not persist, and assumes your indra project root as at /
     export PATH=$PATH:/opt/indra-labs/indra/docker/release/targets/lnd/bin
 ```
 
-#### Adding persistence
+#### Adding $PATH persistence
 
 If you would like to persist your path, check out this tutorial: https://linuxhint.com/add-path-permanently-linux/
-
-### Sourcing environment variables (recommended)
-
-```
-    source ~/.lndsim.env
-```
-
-Once complete, we can now move on to operating the network.
 
 ## Starting / Stopping the network
 
@@ -101,9 +116,8 @@ If you would like to generate many blocks, you can use the second argument. Here
     lnsim-btcctl generate 100
 ```
 
-#### Some small rules of thumb
+#### A small rule of thumb
 
-- Anything in the bin directory does not require an absolute path to function. You can add the directory to your PATH if you wish!
 - In order for a lightning channel to be opened, there is a requirement that 6 blocks must be generated to confirm the open.
 
 ### Interacting with the LND nodes
