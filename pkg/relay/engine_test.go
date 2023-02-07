@@ -36,9 +36,12 @@ func TestClient_SendSessionKeys(t *testing.T) {
 	}
 	var wg sync.WaitGroup
 	var counter atomic.Int32
+	quit := qu.T()
 	go func() {
 		select {
 		case <-time.After(time.Second * 2):
+		case <-quit:
+			return
 		}
 		for i := 0; i < int(counter.Load()); i++ {
 			wg.Done()
@@ -59,6 +62,7 @@ func TestClient_SendSessionKeys(t *testing.T) {
 			counter.Dec()
 		}
 		wg.Wait()
+		quit.Q()
 		for j := range clients[0].SessionCache {
 			log.D.F("%d %s %v", i, j, clients[0].SessionCache[j])
 		}
@@ -226,6 +230,7 @@ out:
 		wg.Add(1)
 		clients[0].SendGetBalance(clients[0].Sessions[i],
 			func(cf nonce.ID, b slice.Bytes) {
+				log.I.Ln("success")
 				wg.Done()
 			})
 		select {

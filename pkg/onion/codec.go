@@ -2,9 +2,9 @@ package onion
 
 import (
 	"fmt"
-
+	
 	"github.com/davecgh/go-spew/spew"
-
+	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/ecdh"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
@@ -15,7 +15,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/confirm"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/crypt"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/delay"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/directbalance"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/exit"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/forward"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/getbalance"
@@ -61,11 +60,6 @@ func Peel(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 		on = &o
 	case delay.MagicString:
 		on = &delay.Layer{}
-		if e = on.Decode(b, c); check(e) {
-			return
-		}
-	case directbalance.MagicString:
-		on = &directbalance.Layer{}
 		if e = on.Decode(b, c); check(e) {
 			return
 		}

@@ -18,14 +18,21 @@ func (eng *Engine) balance(on *balance.Layer,
 		for i := range pending.Billable {
 			s := eng.FindSession(pending.Billable[i])
 			if s != nil {
-				if i == 0 {
-					eng.DecSession(s.ID,
-						s.RelayRate*lnwire.MilliSatoshi(len(b)/2)/1024/1024,
-						true, "balance1")
-				} else {
-					eng.DecSession(s.ID,
-						s.RelayRate*lnwire.MilliSatoshi(len(b))/1024/1024,
-						true, "balance2")
+				switch {
+				case i < 2:
+					in := s.RelayRate * lnwire.MilliSatoshi(
+						pending.SentSize) / 1024 / 1024
+					eng.DecSession(s.ID, in, true, "reverse")
+				case i == 2:
+					in := s.RelayRate * lnwire.MilliSatoshi(
+						pending.SentSize/2) / 1024 / 1024
+					out := s.RelayRate * lnwire.MilliSatoshi(
+						len(b)/2) / 1024 / 1024
+					eng.DecSession(s.ID, in+out, true, "getbalance")
+				case i > 2:
+					out := s.RelayRate * lnwire.MilliSatoshi(
+						len(b)) / 1024 / 1024
+					eng.DecSession(s.ID, out, true, "reverse")
 				}
 			}
 		}

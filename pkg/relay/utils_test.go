@@ -31,7 +31,7 @@ func CreateNMockCircuits(inclSessions bool, nCircuits int) (cl []*Engine, e erro
 		if i == 0 {
 			local = true
 		}
-		nodes[i], _ = traffic.NewNode(addr, idPub, idPrv, transports[i], 180000,
+		nodes[i], _ = traffic.NewNode(addr, idPub, idPrv, transports[i], 20480,
 			local)
 		if cl[i], e = NewEngine(transports[i], idPrv, nodes[i], nil); check(e) {
 			return

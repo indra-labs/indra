@@ -6,46 +6,15 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/traffic"
 )
 
-func (eng *Engine) SendGetBalance(s *traffic.Session, conf Callback) {
+func (eng *Engine) SendGetBalance(target *traffic.Session, hook Callback) {
+	hops := []byte{0, 1, 2, 3, 4, 5}
+	s := make(traffic.Sessions, len(hops))
+	s[2] = target
+	se := eng.SelectHops(hops, s)
 	var c traffic.Circuit
-	var returns [3]*traffic.Session
-	hops := make([]byte, 0)
-	if s.Hop == 0 || s.Hop == 4 {
-		hops = append(hops, s.Hop)
-		c[s.Hop] = s
-		hops = append(hops, 5)
-		se := make(traffic.Sessions, len(hops))
-		ss := eng.SessionManager.SelectHops(hops, se)
-		returns[2] = ss[1]
-		confID := nonce.NewID()
-		o := onion.GetBalance(c, int(s.Hop), returns, eng.KeySet, confID)
-		eng.SendOnion(c[s.Hop].AddrPort, o, conf, 0)
-		return
-	}
-	var cur byte
-	for i := 0; i < int(s.Hop); i++ {
-		hops = append(hops, cur)
-		cur++
-	}
-	hops = append(hops, s.Hop)
-	for i := 3; i < 6; i++ {
-		hops = append(hops, byte(i))
-	}
-	se := make(traffic.Sessions, len(hops))
-	se[s.Hop] = s
-	ss := eng.SessionManager.SelectHops(hops, se)
-	// Construct the circuit parameter.
-	for i := range ss {
-		if i > int(s.Hop) {
-			break
-		}
-		c[i] = ss[i]
-	}
-	lastIndex := len(hops) - 3
-	for i := range returns {
-		returns[i] = ss[lastIndex+i]
-	}
+	copy(c[:], se)
 	confID := nonce.NewID()
-	o := onion.GetBalance(c, int(s.Hop), returns, eng.KeySet, confID)
-	eng.SendOnion(c[0].AddrPort, o, conf, 0)
+	o := onion.GetBalance(se[2].ID, confID, se[5], c, eng.KeySet)
+	log.D.Ln("sending out exit onion")
+	eng.SendOnion(c[0].AddrPort, o, hook, 0)
 }

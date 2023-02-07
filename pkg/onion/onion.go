@@ -77,11 +77,11 @@ func SendExit(port uint16, payload slice.Bytes, id nonce.ID,
 // Purchase header bytes and to generate the ciphers provided in the Purchase
 // message to encrypt the Session that is returned.
 //
-// The OnionSkin key, its cloaked public key counterpart used in the ToHeaderPub field of
-// the Purchase message preformed header bytes, but the Ciphers provided in the
-// Purchase message, for encrypting the Session to be returned, uses the Payload
-// key, along with the public key found in the encrypted crypt of the header for
-// the Reverse relay.
+// The OnionSkin key, its cloaked public key counterpart used in the ToHeaderPub
+// field of the Purchase message preformed header bytes, but the Ciphers
+// provided in the Purchase message, for encrypting the Session to be returned,
+// uses the Payload key, along with the public key found in the encrypted crypt
+// of the header for the Reverse relay.
 //
 // This message's last crypt is a Confirmation, which allows the client to know
 // that the keys were successfully delivered.
@@ -109,63 +109,27 @@ func SendKeys(id nonce.ID, s [5]*session.Layer,
 }
 
 // GetBalance sends out a request in a similar way to SendExit except the node
-// being queried can be any of the 5 and the return path is always a further two
-// hops until the client.
-//
-// First and last hop sessions are just directly queried, the second and exit
-// pass forwards, and if it's the second last one the hops are reverse.
-func GetBalance(s traffic.Circuit, target int, returns [3]*traffic.Session,
-	ks *signer.KeySet, id nonce.ID) (o Skins) {
+// being queried can be any of the 5.
+func GetBalance(id, confID nonce.ID, client *traffic.Session,
+	s traffic.Circuit, ks *signer.KeySet) Skins {
 	
-	if target == 0 || target == 4 {
-		n := GenNonces(2)
-		o = o.ForwardCrypt(s[target], ks.Next(), n[0]).
-			DirectBalance(s[target].ID, id).
-			Forward(returns[2].AddrPort)
-		return
-	}
-	n := GenNonces(target + 1 + 3)
-	var returnNonces [3]nonce.IV
-	copy(returnNonces[:], n[len(n)-1-3:])
 	var prvs [3]*prv.Key
 	for i := range prvs {
 		prvs[i] = ks.Next()
 	}
-	var pubs [3]*pub.Key
-	for i := range returns {
-		pubs[i] = returns[i].PayloadPub
-	}
-	if target == 3 {
-		// If it is the second last hop we can save on hops by reversing the
-		// path.
-	} else {
-	
-	}
-	for i := 0; i <= target; i++ {
-		o = o.ForwardCrypt(s[i], ks.Next(), n[i])
-	}
-	o = o.GetBalance(s[target].ID, id, prvs, pubs, returnNonces)
-	for i := range returns {
-		o = o.ReverseCrypt(returns[i], prvs[i], n[i+target], 0)
-	}
-	return
-}
-
-func NewGetBalance(id nonce.ID, circuit traffic.Circuit, ret *traffic.Session,
-	ks *signer.KeySet) (o Skins) {
-	
 	n := GenNonces(6)
-	retNonces := [3]nonce.IV{n[3], n[4], n[5]}
-	prvs := [3]*prv.Key{circuit[3].PayloadPrv, circuit[4].PayloadPrv,
-		ret.PayloadPrv}
-	pubs := [3]*pub.Key{circuit[3].PayloadPub, circuit[4].PayloadPub,
-		ret.PayloadPub}
-	
-	o = o.ForwardCrypt(circuit[0], ks.Next(), n[0]).
-		ForwardCrypt(circuit[1], ks.Next(), n[1]).
-		GetBalance(id, circuit[2].ID, prvs, pubs, retNonces).
-		ReverseCrypt(circuit[3], ks.Next(), n[0], 3).
-		ReverseCrypt(circuit[4], ks.Next(), n[0], 2).
-		ReverseCrypt(ret, ks.Next(), n[0], 1)
-	return
+	var retNonces [3]nonce.IV
+	copy(retNonces[:], n[3:])
+	var pubs [3]*pub.Key
+	pubs[0] = s[3].PayloadPub
+	pubs[1] = s[4].PayloadPub
+	pubs[2] = client.PayloadPub
+	return Skins{}.
+		ReverseCrypt(s[0], ks.Next(), n[0], 3).
+		ReverseCrypt(s[1], ks.Next(), n[1], 2).
+		ReverseCrypt(s[2], ks.Next(), n[2], 1).
+		GetBalance(id, confID, prvs, pubs, retNonces).
+		ReverseCrypt(s[3], prvs[0], n[3], 0).
+		ReverseCrypt(s[4], prvs[1], n[4], 0).
+		ReverseCrypt(client, prvs[2], n[5], 0)
 }

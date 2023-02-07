@@ -11,6 +11,7 @@ require (
 	github.com/docker/cli v20.10.22+incompatible
 	github.com/docker/docker v20.10.22+incompatible
 	github.com/gookit/color v1.5.2
+	github.com/indra-labs/indra v0.1.9
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
 	github.com/libp2p/go-libp2p v0.24.2
 	github.com/libp2p/go-libp2p-kad-dht v0.20.0
@@ -25,7 +26,7 @@ require (
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
-	github.com/Microsoft/go-winio v0.5.2 // indirect
+	github.com/Microsoft/go-winio v0.6.0 // indirect
 	github.com/Microsoft/hcsshim v0.9.6 // indirect
 	github.com/aead/siphash v1.0.1 // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect

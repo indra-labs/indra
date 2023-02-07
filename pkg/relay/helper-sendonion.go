@@ -11,7 +11,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/balance"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/confirm"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/crypt"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/directbalance"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/exit"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/forward"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/getbalance"
@@ -81,32 +80,9 @@ func (eng *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 				last = on2.ID
 				skip = true
 			case *getbalance.Layer:
-				postAcct = append(postAcct,
-					func() {
-						eng.DecSession(s.ID,
-							s.RelayRate*lnwire.MilliSatoshi(len(b)/2)/1024/1024,
-							true, "getbalance")
-					})
 				last = s.ID
 				billable = append(billable, s.ID)
 				skip = true
-			}
-		case *directbalance.Layer:
-			// the immediate previous layer session needs to be accounted.
-			switch on3 := o[i-1].(type) {
-			case *crypt.Layer:
-				s := eng.FindSessionByHeaderPub(on3.ToHeaderPub)
-				if s == nil {
-					return
-				}
-				postAcct = append(postAcct,
-					func() {
-						eng.DecSession(s.ID,
-							s.RelayRate*lnwire.MilliSatoshi(len(b)/2)/1024/1024,
-							true, "directbalance")
-					})
-				billable = append(billable, s.ID)
-				last = on.ID
 			}
 		case *confirm.Layer:
 			last = on.ID

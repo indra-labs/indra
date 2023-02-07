@@ -3,9 +3,9 @@ package onion
 import (
 	"net/netip"
 	"time"
-
+	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -13,7 +13,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/confirm"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/crypt"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/delay"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/directbalance"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/exit"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/forward"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/getbalance"
@@ -32,18 +31,18 @@ var os = &noop.Layer{}
 
 func (o Skins) ForwardCrypt(s *traffic.Session, k *prv.Key,
 	n nonce.IV) Skins {
-
+	
 	return o.Forward(s.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, 0)
 }
 
 func (o Skins) ReverseCrypt(s *traffic.Session, k *prv.Key, n nonce.IV, seq int) Skins {
-
+	
 	return o.Reverse(s.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, seq)
 }
 
 func (o Skins) ForwardSession(s *traffic.Node,
 	k *prv.Key, n nonce.IV, sess *session.Layer) Skins {
-
+	
 	return o.Forward(s.AddrPort).
 		Crypt(s.IdentityPub, nil, k, n, 0).
 		Session(sess)
@@ -51,7 +50,7 @@ func (o Skins) ForwardSession(s *traffic.Node,
 
 func (o Skins) Balance(id, confID nonce.ID,
 	amt lnwire.MilliSatoshi) Skins {
-
+	
 	return append(o, &balance.Layer{
 		ID:           id,
 		ConfID:       confID,
@@ -67,13 +66,9 @@ func (o Skins) Delay(d time.Duration) Skins {
 	return append(o, &delay.Layer{Duration: d, Onion: os})
 }
 
-func (o Skins) DirectBalance(id, confID nonce.ID) Skins {
-	return append(o, &directbalance.Layer{ID: id, ConfID: confID, Onion: os})
-}
-
 func (o Skins) Exit(port uint16, prvs [3]*prv.Key, pubs [3]*pub.Key,
 	nonces [3]nonce.IV, id nonce.ID, payload slice.Bytes) Skins {
-
+	
 	return append(o, &exit.Layer{
 		Port:    port,
 		Ciphers: GenCiphers(prvs, pubs),
@@ -94,7 +89,7 @@ func (o Skins) Forward(addr *netip.AddrPort) Skins {
 
 func (o Skins) GetBalance(id, confID nonce.ID, prvs [3]*prv.Key,
 	pubs [3]*pub.Key, nonces [3]nonce.IV) Skins {
-
+	
 	return append(o, &getbalance.Layer{
 		ID:      id,
 		ConfID:  confID,
@@ -105,7 +100,7 @@ func (o Skins) GetBalance(id, confID nonce.ID, prvs [3]*prv.Key,
 }
 
 func (o Skins) Crypt(toHdr, toPld *pub.Key, from *prv.Key, n nonce.IV, seq int) Skins {
-
+	
 	return append(o, &crypt.Layer{
 		Seq:          seq,
 		ToHeaderPub:  toHdr,
