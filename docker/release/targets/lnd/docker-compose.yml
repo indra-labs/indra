@@ -13,7 +13,7 @@ services:
       - "--rpcpass=simnet"
       - "--simnet"
       - "--txindex"
-      - "--miningaddr=${MINER_ADDRESS:-SSBjQ58PsRmBtGZQ8ckXFRxijZFCBdeMMT}"
+      - "--miningaddr=${MINER_ADDRESS:-SSBjQ58PsRmBtGZQ8ckXFRxijZFCBdeMMT}" # Using a random simnet address by default.
   lnd-miner:
     image: indralabs/lnd-multi-arch:linux-amd64-dev
     volumes:
