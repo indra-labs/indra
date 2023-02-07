@@ -24,6 +24,6 @@ USER lnd:lnd
 # :10009  lnd RPC port
 EXPOSE 9735 10009
 
-ENTRYPOINT ["/bin/lnd", "--configfile=/etc/lnd/lnd.conf", "--lnddir=/var/lnd", "--datadir=/var/lnd", "--feeurl=https://nodes.lightning.computer/fees/v1/btc-fee-estimates.json"]
+ENTRYPOINT ["/bin/lnd", "--configfile=/dev/null", "--lnddir=/var/lnd", "--datadir=/var/lnd", "--logdir=/var/lnd", "--tlscertpath=/etc/lnd/keys/tls.cert", "--tlskeypath=/etc/lnd/keys/tls.key", "--feeurl=https://nodes.lightning.computer/fees/v1/btc-fee-estimates.json", "--listen=0.0.0.0:9735", "--rpclisten=0.0.0.0:10009"]
 CMD ["--bitcoin.active", "--bitcoin.mainnet", "--bitcoin.node=neutrino"]
 

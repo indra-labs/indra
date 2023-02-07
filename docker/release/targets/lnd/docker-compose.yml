@@ -1,62 +1,101 @@
 version: '3'
 services:
-#  btcd:
-#    image: indralabs/btcd
-#    volumes:
-#      - btcd_config:/etc/btcd
-#      - btcd_data:/var/btcd
-#    networks:
-#      indranet:
-#        ipv4_address: 172.16.42.2
-#    command:
-#      - "--rpcuser=simnet"
-#      - "--rpcpass=simnet"
-#      - "--simnet"
-  lnd:
-    image: indralabs/lnd-multi-arch:linux-amd64-dev
+  btcd:
+    image: indralabs/btcd-multi-arch:linux-amd64-dev
     volumes:
-      - lnd_config:/etc/lnd
-      - lnd_data:/var/lnd
+      - btcd_config:/etc/btcd
+      - btcd_data:/var/btcd
     networks:
       indranet:
-        ipv4_address: 172.16.42.3
-#    depends_on:
-#      - btcd
-#    command:
-#      - "--bitcoin.active"
-#      - "--bitcoin.simnet"
-#      - "--btcd.rpchost=172.16.42.2:8334"
-#      - "--btcd.rpcuser=simnet"
-#      - "--btcd.rpcpass=simnet"
-#      - "--rpclisten=0.0.0.0:10009"
-#      - "--listen=0.0.0.0:9735"
-#      - "--adminmacaroonpath=/etc/lnd/keys/admin.macaroon"
-#  btcctl:
-#    image: indralabs/btcctl
-#    volumes:
-#      - config:/etc/btcd:ro
-#    networks:
-#      indranet:
-#    depends_on:
-#      - btcd
-#    command:
-#      - "--rpcserver=172.16.42.2:8333"
-#      - "--rpcuser=simnet"
-#      - "--rpcpass=simnet"
-#      - "--simnet"
-#      - "getinfo"
+        ipv4_address: 172.16.43.2
+    command:
+      - "--rpcuser=simnet"
+      - "--rpcpass=simnet"
+      - "--simnet"
+      - "--txindex"
+      - "--miningaddr=${MINER_ADDRESS:-SSBjQ58PsRmBtGZQ8ckXFRxijZFCBdeMMT}"
+  lnd-miner:
+    image: indralabs/lnd-multi-arch:linux-amd64-dev
+    volumes:
+      - btcd_config:/etc/btcd:ro
+      - lnd_miner_config:/etc/lnd
+      - lnd_miner_data:/var/lnd
+    networks:
+      indranet:
+        ipv4_address: 172.16.43.9
+    depends_on:
+      - btcd
+    command:
+      - "--bitcoin.active"
+      - "--bitcoin.simnet"
+      - "--bitcoin.node=btcd"
+      - "--btcd.rpccert=/etc/btcd/keys/rpc.cert"
+      - "--btcd.rpchost=172.16.43.2:8334"
+      - "--btcd.rpcuser=simnet"
+      - "--btcd.rpcpass=simnet"
+      - "--accept-amp"
+      - "--accept-keysend"
+      - "--noseedbackup" # Careful now, don't use this in production.
+  lnd-alice:
+    image: indralabs/lnd-multi-arch:linux-amd64-dev
+    volumes:
+      - btcd_config:/etc/btcd:ro
+      - lnd_alice_config:/etc/lnd
+      - lnd_alice_data:/var/lnd
+    networks:
+      indranet:
+        ipv4_address: 172.16.43.10
+    depends_on:
+      - btcd
+    command:
+      - "--bitcoin.active"
+      - "--bitcoin.simnet"
+      - "--bitcoin.node=btcd"
+      - "--btcd.rpccert=/etc/btcd/keys/rpc.cert"
+      - "--btcd.rpchost=172.16.43.2:8334"
+      - "--btcd.rpcuser=simnet"
+      - "--btcd.rpcpass=simnet"
+      - "--accept-amp"
+      - "--accept-keysend"
+      - "--noseedbackup" # Careful now, don't use this in production.
+  lnd-bob:
+    image: indralabs/lnd-multi-arch:linux-amd64-dev
+    volumes:
+      - btcd_config:/etc/btcd:ro
+      - lnd_bob_config:/etc/lnd
+      - lnd_bob_data:/var/lnd
+    networks:
+      indranet:
+        ipv4_address: 172.16.43.11
+    depends_on:
+      - btcd
+    command:
+      - "--bitcoin.active"
+      - "--bitcoin.simnet"
+      - "--bitcoin.node=btcd"
+      - "--btcd.rpccert=/etc/btcd/keys/rpc.cert"
+      - "--btcd.rpchost=172.16.43.2:8334"
+      - "--btcd.rpcuser=simnet"
+      - "--btcd.rpcpass=simnet"
+      - "--accept-amp"
+      - "--accept-keysend"
+      - "--noseedbackup" # Careful now, don't use this in production.
 volumes:
-#  btcd_config:
-#  btcd_data:
-  lnd_config:
-  lnd_data:
+  btcd_config:
+  btcd_data:
+  lnd_miner_config:
+  lnd_miner_data:
+  lnd_alice_config:
+  lnd_alice_data:
+  lnd_bob_config:
+  lnd_bob_data:
 networks:
   indranet:
     driver: bridge
     ipam:
       driver: default
       config:
-        - subnet: 172.16.42.0/24
-          gateway: 172.16.42.1
+        - subnet: 172.16.43.0/24
+          gateway: 172.16.43.1
 
 # docker-compose -f docker/lnd/docker-compose.yml up

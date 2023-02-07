@@ -1,0 +1,10 @@
+#!/bin/bash
+
+docker run --rm -it \
+    --network=lnd_indranet \
+    --volume=lnd_lnd_alice_config:/etc/lnd:ro \
+    --volume=lnd_lnd_alice_data:/var/lnd:ro \
+    indralabs/lncli-multi-arch:linux-amd64-dev \
+        --rpcserver=172.16.43.10 \
+        --tlscertpath=/etc/lnd/keys/rpc.cert \
+        --chain=bitcoin --network=simnet $@

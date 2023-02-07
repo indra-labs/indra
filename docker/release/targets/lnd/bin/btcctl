@@ -1,0 +1,8 @@
+#!/bin/bash
+
+docker run --rm -it --network=lnd_indranet \
+  --volume=lnd_btcd_config:/etc/btcd:ro \
+ indralabs/btcctl-multi-arch:linux-amd64-dev \
+  --rpcserver=172.16.43.2:8334 \
+  --rpcuser=simnet --rpcpass=simnet \
+  --simnet $@
