@@ -18,19 +18,19 @@ sleep 5
 
 echo "generating an lnd pubkey and address for miner, alice and bob."
 
-docker/release/targets/lnd/bin/lnsim-lncli-miner getinfo | jq -r .identity_pubkey | xargs -I {} echo "MINER_PUBKEY={}" \
+docker/release/targets/lnd/bin/lnsim-lncli-miner getinfo | jq -r .identity_pubkey | xargs -I {} echo "LNSIM_MINER_PUBKEY={}" \
   >> docker/release/targets/lnd/.env
-docker/release/targets/lnd/bin/lnsim-lncli-miner newaddress np2wkh | jq -r .address | xargs -I {} echo "MINER_ADDRESS={}" \
-  >> docker/release/targets/lnd/.env
-
-docker/release/targets/lnd/bin/lnsim-lncli-alice getinfo | jq -r .identity_pubkey | xargs -I {} echo "ALICE_PUBKEY={}" \
-  >> docker/release/targets/lnd/.env
-docker/release/targets/lnd/bin/lnsim-lncli-alice newaddress np2wkh | jq -r .address | xargs -I {} echo "ALICE_ADDRESS={}" \
+docker/release/targets/lnd/bin/lnsim-lncli-miner newaddress np2wkh | jq -r .address | xargs -I {} echo "LNSIM_MINER_ADDRESS={}" \
   >> docker/release/targets/lnd/.env
 
-docker/release/targets/lnd/bin/lnsim-lncli-bob getinfo | jq -r .identity_pubkey | xargs -I {} echo "BOB_PUBKEY={}" \
+docker/release/targets/lnd/bin/lnsim-lncli-alice getinfo | jq -r .identity_pubkey | xargs -I {} echo "LNSIM_ALICE_PUBKEY={}" \
   >> docker/release/targets/lnd/.env
-docker/release/targets/lnd/bin/lnsim-lncli-bob newaddress np2wkh | jq -r .address | xargs -I {} echo "BOB_ADDRESS={}" \
+docker/release/targets/lnd/bin/lnsim-lncli-alice newaddress np2wkh | jq -r .address | xargs -I {} echo "LNSIM_ALICE_ADDRESS={}" \
+  >> docker/release/targets/lnd/.env
+
+docker/release/targets/lnd/bin/lnsim-lncli-bob getinfo | jq -r .identity_pubkey | xargs -I {} echo "LNSIM_BOB_PUBKEY={}" \
+  >> docker/release/targets/lnd/.env
+docker/release/targets/lnd/bin/lnsim-lncli-bob newaddress np2wkh | jq -r .address | xargs -I {} echo "LNSIM_BOB_ADDRESS={}" \
   >> docker/release/targets/lnd/.env
 
 echo "shutting down environment to enable btcd to mine to the miner address."
@@ -52,8 +52,8 @@ echo "sourcing environment variables"
 source docker/release/targets/lnd/.env
 
 echo "sending coins to alice and bob."
-docker/release/targets/lnd/bin/lnsim-lncli-miner sendcoins --addr $ALICE_ADDRESS --amt 100000000000
-docker/release/targets/lnd/bin/lnsim-lncli-miner sendcoins --addr $BOB_ADDRESS --amt 100000000000
+docker/release/targets/lnd/bin/lnsim-lncli-miner sendcoins --addr $LNSIM_ALICE_ADDRESS --amt 100000000000
+docker/release/targets/lnd/bin/lnsim-lncli-miner sendcoins --addr $LNSIM_BOB_ADDRESS --amt 100000000000
 
 echo "generating 100 blocks to allow them to be spent"
 docker/release/targets/lnd/bin/lnsim-btcctl generate 100 1>/dev/null
