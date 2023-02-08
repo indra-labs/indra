@@ -34,18 +34,18 @@ Navigate to your indra project root directory, and run the following:
 - BEWARE: This script must be run from the project root directory!
 
 ``` 
-    docker/release/targets/lnd/scripts/setup.sh
+docker/release/targets/lnd/scripts/setup.sh
 ```
 
 When complete, it will produce an environment configuration file, located at `docker/release/targets/lnd/.env`. It will be in the following format:
 
 ```
-    MINER_PUBKEY=<lightning_public_key>
-    MINER_ADDRESS=<bitcoin_address>
-    ALICE_PUBKEY=<lightning_public_key>
-    ALICE_ADDRESS=<bitcoin_address>
-    BOB_PUBKEY=<lightning_public_key>
-    BOB_ADDRESS=<bitcoin_address>
+MINER_PUBKEY=<lightning_public_key>
+MINER_ADDRESS=<bitcoin_address>
+ALICE_PUBKEY=<lightning_public_key>
+ALICE_ADDRESS=<bitcoin_address>
+BOB_PUBKEY=<lightning_public_key>
+BOB_ADDRESS=<bitcoin_address>
 ```
 
 ### Using the environment config
@@ -55,7 +55,7 @@ The config file has two functions:
 - The rest of the environment variables can be used by the user for constructing transactions. See the use-cases below.
 
 ```
-    export $(grep -vE "^(#.*|\s*)$" /opt/indra-labs/indra/docker/release/targets/lnd/.env)
+export $(grep -vE "^(#.*|\s*)$" /opt/indra-labs/indra/docker/release/targets/lnd/.env)
 ```
 
 This will take around 30 seconds to complete. Once complete, we can move on to using the simnet.
@@ -65,7 +65,7 @@ This will take around 30 seconds to complete. Once complete, we can move on to u
 For example: (this will not persist, and assumes your indra project root as at /opt/indra-labs/indra):
 
 ```
-    export PATH=$PATH:/opt/indra-labs/indra/docker/release/targets/lnd/bin
+export PATH=$PATH:/opt/indra-labs/indra/docker/release/targets/lnd/bin
 ```
 
 #### Adding $PATH persistence
@@ -80,7 +80,7 @@ The following section will show you how to start and stop the network.
 To start the environment, run the following from your indra project root directory:
 
 ```
-    docker-compose --file=docker/release/targets/lnd/docker-compose.yml up
+docker-compose --file=docker/release/targets/lnd/docker-compose.yml up
 ```
 
 #### Running in the background
@@ -88,7 +88,7 @@ To start the environment, run the following from your indra project root directo
 To start the environment *as a background process*, run the following (from your indra project root directory):
 
 ```
-    docker-compose --file=docker/release/targets/lnd/docker-compose.yml up --detach
+docker-compose --file=docker/release/targets/lnd/docker-compose.yml up --detach
 ```
 
 ### Stopping
@@ -96,7 +96,7 @@ To start the environment *as a background process*, run the following (from your
 To stop the environment, run the following (from your indra project root directory):
 
 ```
-    docker-compose --file=docker/release/targets/lnd/docker-compose.yml down
+docker-compose --file=docker/release/targets/lnd/docker-compose.yml down
 ```
 
 ## Running commands on the network
@@ -108,13 +108,13 @@ Assuming we've already started the environment, we can run commands for all node
 To generate a new block, run the following:
 
 ```
-    lnsim-btcctl generate 1
+lnsim-btcctl generate 1
 ```
 
 If you would like to generate many blocks, you can use the second argument. Here's an example to generate 100 blocks:
 
 ```
-    lnsim-btcctl generate 100
+lnsim-btcctl generate 100
 ```
 
 #### A small rule of thumb
@@ -129,15 +129,15 @@ The lncli interface for any of the nodes can be accessed with the following comm
 
 To check the balance of the 'miner' node
 ```
-    lnsim-lncli-miner walletbalance
+lnsim-lncli-miner walletbalance
 ```
 To check alice's balance:
 ```
-    lnsim-lncli-alice walletbalance
+lnsim-lncli-alice walletbalance
 ```
 To check bob's balance:
 ```
-    lnsim-lncli-bob walletbalance
+lnsim-lncli-bob walletbalance
 ```
 
 ## Some useful use-cases
@@ -145,10 +145,10 @@ To check bob's balance:
 ### Sending alice and bob 1 sBTC from the miner
 
 ``` 
-    lnsim-lncli-miner sendcoins --addr $LNSIM_ALICE_ADDRESS --amt 100000000
-    lnsim-lncli-miner sendcoins --addr $LNSIM_BOB_ADDRESS --amt 100000000
-    
-    lnsim-btcctl generate 1
+lnsim-lncli-miner sendcoins --addr $LNSIM_ALICE_ADDRESS --amt 100000000
+lnsim-lncli-miner sendcoins --addr $LNSIM_BOB_ADDRESS --amt 100000000
+
+lnsim-btcctl generate 1
 ```
 
 # fin; happy simulating!
