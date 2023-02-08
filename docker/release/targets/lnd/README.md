@@ -51,11 +51,11 @@ When complete, it will produce an environment configuration file, located at `do
 ### Using the environment config
 
 The config file has two functions:
-- The MINER_ADDRESS is passed to the docker-compose.yml file, on start. This will ensure that any block rewards will be send to the 'miner' node.
+- The MINER_ADDRESS is passed to the docker-compose.yml file, on start. This will ensure that any block rewards will be send to the 'miner' node.   
 - The rest of the environment variables can be used by the user for constructing transactions. See the use-cases below.
 
 ```
-    source /opt/indra-labs/indra/docker/release/targets/lnd/.env
+    export $(grep -vE "^(#.*|\s*)$" /opt/indra-labs/indra/docker/release/targets/lnd/.env)
 ```
 
 This will take around 30 seconds to complete. Once complete, we can move on to using the simnet.
