@@ -143,12 +143,34 @@ lnsim-lncli-bob walletbalance
 ## Some useful use-cases
 
 ### Sending alice and bob 1 sBTC from the miner
-
 ``` 
 lnsim-lncli-miner sendcoins --addr $LNSIM_ALICE_ADDRESS --amt 100000000
 lnsim-lncli-miner sendcoins --addr $LNSIM_BOB_ADDRESS --amt 100000000
 
 lnsim-btcctl generate 1
 ```
+
+### Opening a (0.01 sBTC) channel between alice and bob
+```
+lnsim-lncli-alice openchannel --node_key=$LNSIM_BOB_PUBKEY --connect=172.16.43.11:9735 --local_amt 1000000
+
+lnsim-btcctl generate 6
+
+lnsim-lncli-alice listchannels
+lnsim-lncli-bob listchannels
+```
+
+You can optionally check the pending channel before generating blocks, with the following:
+```
+lnsim-lncli-alice pendingchannels
+```
+
+### Sending a (0.0005 sBTC) payment from alice to bob
+```
+lnsim-lncli-alice sendpayment --dest=$LNSIM_BOB_PUBKEY --amt=50000 --keysend
+
+lnsim-lncli-alice channelbalance
+```
+
 
 # fin; happy simulating!
