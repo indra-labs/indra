@@ -2,13 +2,14 @@ package cmds
 
 import (
 	"encoding"
-	"fmt"
 	"io"
 	"os"
 	"sort"
 	"strings"
 	"time"
-
+	
+	"github.com/naoina/toml"
+	
 	"git-indra.lan/indra-labs/indra/pkg/proc/opts/duration"
 	"git-indra.lan/indra-labs/indra/pkg/proc/opts/float"
 	"git-indra.lan/indra-labs/indra/pkg/proc/opts/integer"
@@ -17,7 +18,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/proc/opts/text"
 	"git-indra.lan/indra-labs/indra/pkg/proc/opts/toggle"
 	path2 "git-indra.lan/indra-labs/indra/pkg/util/path/path"
-	"github.com/naoina/toml"
 )
 
 type Entry struct {
@@ -26,9 +26,9 @@ type Entry struct {
 	value interface{}
 }
 
-func (e Entry) String() string {
-	return fmt.Sprint(e.path, "/", e.name, "=", e.value)
-}
+// func (e Entry) String() string {
+// 	return fmt.Sprint(e.path, "/", e.name, "=", e.value)
+// }
 
 type Entries []Entry
 
@@ -63,7 +63,7 @@ func walk(p []string, v interface{}, in Entries) (o Entries) {
 					name:  i,
 					value: vv[i],
 				})
-
+				
 			}
 		}
 	}

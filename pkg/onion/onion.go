@@ -29,7 +29,7 @@ func Ping(id nonce.ID, client *traffic.Session, s traffic.Circuit,
 		ForwardCrypt(s[3], ks.Next(), n[3]).
 		ForwardCrypt(s[4], ks.Next(), n[4]).
 		ForwardCrypt(client, ks.Next(), n[5]).
-		Confirmation(id)
+		Confirmation(id, 0)
 }
 
 // SendExit constructs a message containing an arbitrary payload to a node (3rd
@@ -105,7 +105,7 @@ func SendKeys(id nonce.ID, s [5]*session.Layer,
 	}
 	return sk.
 		ForwardCrypt(client, ks.Next(), n[5]).
-		Confirmation(id)
+		Confirmation(id, 0)
 }
 
 // GetBalance sends out a request in a similar way to SendExit except the node
@@ -132,4 +132,38 @@ func GetBalance(id, confID nonce.ID, client *traffic.Session,
 		ReverseCrypt(s[3], prvs[0], n[3], 0).
 		ReverseCrypt(s[4], prvs[1], n[4], 0).
 		ReverseCrypt(client, prvs[2], n[5], 0)
+}
+
+// Diagnostic creates a standard path diagnostics onion that at each hop a
+// confirmation is relayed via a reverse/routing header that carries back a
+// confirmation containing the session ID and load of the relay.
+//
+// The first hop of each layer is supposed to be one of the hops in a circuit
+// that failed to confirm transmission, and last ReverseCrypt of each layer is
+// a client return hop (5).
+func Diagnostic(s []*traffic.Session, ks *signer.KeySet) (o Skins) {
+	
+	if len(s) != 20 {
+		panic("diagnostics require 20 sessions to construct")
+	}
+	
+	n := GenNonces(20)
+	for i := 0; i < 5; i++ {
+		o = o.ForwardCrypt(s[i*4], ks.Next(), n[i*4])
+		var prvs [3]*prv.Key
+		for i := range prvs {
+			prvs[i] = ks.Next()
+		}
+		var pubs [3]*pub.Key
+		pubs[0] = s[i*4+1].PayloadPub
+		pubs[1] = s[i*4+2].PayloadPub
+		pubs[2] = s[i*4+3].PayloadPub
+		var nonces [3]nonce.IV
+		copy(nonces[:], n[i*4+1:i*4+3])
+		o = o.Diagnostic(prvs, pubs, nonces).
+			ReverseCrypt(s[i*4+1], prvs[0], n[i*4+1], 3).
+			ReverseCrypt(s[i*4+2], prvs[0], n[i*4+2], 2).
+			ReverseCrypt(s[i*4+3], prvs[0], n[i*4+3], 1)
+	}
+	return
 }

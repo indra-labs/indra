@@ -10,10 +10,10 @@ import (
 	"strings"
 	"sync"
 	"time"
-
+	
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gookit/color"
-
+	
 	"git-indra.lan/indra-labs/indra"
 )
 
@@ -40,13 +40,13 @@ const (
 
 type LevelMap map[LogLevel]string
 
-func (l LevelMap) String() (s string) {
-	ss := make([]string, len(l))
-	for i := range l {
-		ss[i] = strings.TrimSpace(l[i])
-	}
-	return strings.Join(ss, " ")
-}
+// func (l LevelMap) String() (s string) {
+// 	ss := make([]string, len(l))
+// 	for i := range l {
+// 		ss[i] = strings.TrimSpace(l[i])
+// 	}
+// 	return strings.Join(ss, " ")
+// }
 
 // LvlStr is a map that provides the uniform width strings that are printed
 // to identify the LogLevel of a log entry.
@@ -68,20 +68,20 @@ func GetLevelName(ll LogLevel) string {
 type (
 	// Println prints lists of interfaces with spaces in between
 	Println func(a ...interface{})
-
+	
 	// Printf prints like fmt.Println surrounded by log details
 	Printf func(format string, a ...interface{})
-
+	
 	// Prints  prints a spew.Sdump for an interface slice
 	Prints func(a ...interface{})
-
+	
 	// Printc accepts a function so that the extra computation can be avoided if
 	// it is not being viewed
 	Printc func(closure func() string)
-
+	
 	// Chk is a shortcut for printing if there is an error, or returning true
 	Chk func(e error) bool
-
+	
 	// LevelPrinter defines a set of terminal printing primitives that output
 	// with extra data, time, level, and code location
 	LevelPrinter struct {
@@ -97,14 +97,14 @@ type (
 		// true
 		Chk Chk
 	}
-
+	
 	// LevelSpec is a key pair of log level and the text colorizer used
 	// for it.
 	LevelSpec struct {
 		Name      string
 		Colorizer func(format string, a ...interface{}) string
 	}
-
+	
 	// Logger is a set of log printers for the various LogLevel items.
 	Logger struct {
 		F, E, W, I, D, T LevelPrinter

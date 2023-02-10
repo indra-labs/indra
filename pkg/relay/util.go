@@ -17,10 +17,11 @@ func BudgeUp(b slice.Bytes, start slice.Cursor) (o slice.Bytes) {
 
 func FormatReply(header, res slice.Bytes, ciphers [3]sha256.Hash,
 	nonces [3]nonce.IV) (rb slice.Bytes) {
-
+	
 	rb = make(slice.Bytes, crypt.ReverseHeaderLen+len(res))
 	cur := slice.NewCursor()
-	copy(rb[*cur:cur.Inc(crypt.ReverseHeaderLen)], header[:crypt.ReverseHeaderLen])
+	copy(rb[*cur:cur.Inc(crypt.ReverseHeaderLen)],
+		header[:crypt.ReverseHeaderLen])
 	copy(rb[crypt.ReverseHeaderLen:], res)
 	start := *cur
 	for i := range ciphers {

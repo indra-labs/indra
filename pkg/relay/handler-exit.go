@@ -2,9 +2,9 @@ package relay
 
 import (
 	"time"
-
+	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/onion"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/crypt"
@@ -16,18 +16,18 @@ import (
 
 func (eng *Engine) exit(ex *exit.Layer, b slice.Bytes,
 	c *slice.Cursor, prev types.Onion) {
-
+	
 	// payload is forwarded to a local port and the result is forwarded
 	// back with a reverse header.
 	var e error
 	var result slice.Bytes
 	h := sha256.Single(ex.Bytes)
 	log.T.S(h)
-	log.T.F("received exit id %x", ex.ID)
+	log.T.F("%s received exit id %x", eng.GetLocalNodeAddress(), ex.ID)
 	if e = eng.SendFromLocalNode(ex.Port, ex.Bytes); check(e) {
 		return
 	}
-	timer := time.NewTicker(time.Second * 5) // todo: timeout/retries etc
+	timer := time.NewTicker(time.Second)
 	select {
 	case result = <-eng.ReceiveToLocalNode(ex.Port):
 	case <-timer.C:

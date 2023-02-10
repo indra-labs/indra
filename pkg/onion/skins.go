@@ -13,6 +13,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/confirm"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/crypt"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/delay"
+	diag "git-indra.lan/indra-labs/indra/pkg/onion/layers/diagnostic"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/exit"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/forward"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/getbalance"
@@ -58,12 +59,22 @@ func (o Skins) Balance(id, confID nonce.ID,
 	})
 }
 
-func (o Skins) Confirmation(id nonce.ID) Skins {
-	return append(o, &confirm.Layer{ID: id})
+func (o Skins) Confirmation(id nonce.ID, load byte) Skins {
+	return append(o, &confirm.Layer{ID: id, Load: load})
 }
 
 func (o Skins) Delay(d time.Duration) Skins {
 	return append(o, &delay.Layer{Duration: d, Onion: os})
+}
+
+func (o Skins) Diagnostic(prvs [3]*prv.Key, pubs [3]*pub.Key,
+	nonces [3]nonce.IV) Skins {
+	
+	return append(o, &diag.Layer{
+		Ciphers: GenCiphers(prvs, pubs),
+		Nonces:  nonces,
+		Onion:   os,
+	})
 }
 
 func (o Skins) Exit(port uint16, prvs [3]*prv.Key, pubs [3]*pub.Key,
@@ -99,7 +110,8 @@ func (o Skins) GetBalance(id, confID nonce.ID, prvs [3]*prv.Key,
 	})
 }
 
-func (o Skins) Crypt(toHdr, toPld *pub.Key, from *prv.Key, n nonce.IV, seq int) Skins {
+func (o Skins) Crypt(toHdr, toPld *pub.Key, from *prv.Key, n nonce.IV,
+	seq int) Skins {
 	
 	return append(o, &crypt.Layer{
 		Seq:          seq,

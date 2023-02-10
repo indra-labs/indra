@@ -1,8 +1,6 @@
 package getbalance
 
 import (
-	"github.com/davecgh/go-spew/spew"
-
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
@@ -39,9 +37,9 @@ type Layer struct {
 	types.Onion
 }
 
-func (x *Layer) String() string {
-	return spew.Sdump(x.Ciphers, x.Nonces)
-}
+// func (x *Layer) String() string {
+// 	return spew.Sdump(x.Ciphers, x.Nonces)
+// }
 
 func (x *Layer) Inner() types.Onion   { return x.Onion }
 func (x *Layer) Insert(o types.Onion) { x.Onion = o }

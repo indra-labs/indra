@@ -42,18 +42,20 @@ func (eng *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 		switch on := o[i].(type) {
 		case *crypt.Layer:
 			s := eng.FindSessionByHeaderPub(on.ToHeaderPub)
+			if s == nil {
+				continue
+			}
 			sessions = append(sessions, s)
 			// The last hop needs no accounting as it's us!
 			if i == len(o)-1 {
 				// The session used for the last hop is stored, however.
 				ret = s.ID
+				billable = append(billable, s.ID)
 				break
-			}
-			if s == nil {
-				continue
 			}
 			switch on2 := o[i+1].(type) {
 			case *forward.Layer:
+				billable = append(billable, s.ID)
 				postAcct = append(postAcct,
 					func() {
 						eng.DecSession(s.ID,
@@ -96,7 +98,7 @@ func (eng *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 		}
 	}
 	eng.PendingResponses.Add(last, len(b), sessions, billable, ret, port,
-		responseHook, postAcct, timeout)
+		responseHook, postAcct, timeout, eng)
 	log.T.Ln("sending out onion")
 	eng.Send(ap, b)
 }

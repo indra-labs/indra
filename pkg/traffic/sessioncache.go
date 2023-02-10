@@ -24,13 +24,16 @@ func (sm *SessionManager) UpdateSessionCache() {
 }
 
 func (sc SessionCache) Add(s *Session) SessionCache {
-	log.T.F("adding session %s %s %d", s.ID, s.AddrPort.String(), s.Hop)
+	log.D.F("adding session %s %s %d", s.ID, s.AddrPort.String(), s.Hop)
 	var sce *Circuit
 	var exists bool
 	if sce, exists = sc[s.Node.ID]; !exists {
 		sce = &Circuit{}
+		sce[s.Hop] = s
 		sc[s.Node.ID] = sce
+		return sc
 	}
-	sce[s.Hop] = s
+	sc[s.Node.ID][s.Hop] = s
+	log.D.S(sc[s.Node.ID])
 	return sc
 }

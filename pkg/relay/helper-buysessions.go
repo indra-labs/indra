@@ -78,6 +78,7 @@ func (eng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 			}
 		}
 	}
+	// todo: handle payment failures!
 	o := onion.SendKeys(conf, s, returnSession, nodes[:], eng.KeySet)
 	eng.SendOnion(nodes[0].AddrPort, o, func(id nonce.ID, b slice.Bytes) {
 		eng.SessionManager.Lock()

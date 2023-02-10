@@ -23,3 +23,24 @@ func (eng *Engine) SendExit(port uint16, message slice.Bytes, id nonce.ID,
 	log.D.Ln("sending out exit onion")
 	eng.SendOnion(c[0].AddrPort, o, hook, timeout)
 }
+
+func (eng *Engine) MakeExit(port uint16, message slice.Bytes, id nonce.ID,
+	target *traffic.Session) (c traffic.Circuit,
+	o onion.Skins) {
+	
+	hops := []byte{0, 1, 2, 3, 4, 5}
+	s := make(traffic.Sessions, len(hops))
+	s[2] = target
+	se := eng.SelectHops(hops, s)
+	copy(c[:], se)
+	o = onion.SendExit(port, message, id, se[len(se)-1], c, eng.KeySet)
+	return
+}
+
+func (eng *Engine) SendExitNew(c traffic.Circuit,
+	o onion.Skins, hook func(id nonce.ID, b slice.Bytes),
+	timeout time.Duration) {
+	
+	log.D.Ln("sending out exit onion")
+	eng.SendOnion(c[0].AddrPort, o, hook, timeout)
+}

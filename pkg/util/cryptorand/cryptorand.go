@@ -3,7 +3,7 @@ package cryptorand
 import (
 	rand2 "crypto/rand"
 	"math/rand"
-
+	
 	"git-indra.lan/indra-labs/indra"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -25,4 +25,9 @@ func GetSeed() int64 {
 		return 0
 	}
 	return int64(slice.DecodeUint64(rBytes))
+}
+
+func IntN(n int) int {
+	rand.Seed(GetSeed())
+	return rand.Intn(n)
 }

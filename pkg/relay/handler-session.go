@@ -2,9 +2,9 @@ package relay
 
 import (
 	"fmt"
-
+	
 	"github.com/davecgh/go-spew/spew"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/session"
 	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/types"
@@ -13,7 +13,7 @@ import (
 
 func (eng *Engine) session(on *session.Layer, b slice.Bytes,
 	c *slice.Cursor, prev types.Onion) {
-
+	
 	log.T.C(func() string {
 		return fmt.Sprint("incoming session",
 			spew.Sdump(on.PreimageHash()))
@@ -24,11 +24,11 @@ func (eng *Engine) session(on *session.Layer, b slice.Bytes,
 		// messages arrive at the same time, and we end up with
 		// duplicate sessions.
 		eng.DeletePendingPayment(pi.Preimage)
-		log.T.F("Adding session %x\n", pi.ID)
+		log.D.F("Adding session %s to %s", pi.ID, eng.GetLocalNodeAddress())
 		eng.AddSession(traffic.NewSession(pi.ID,
 			eng.GetLocalNode(), pi.Amount, on.Header, on.Payload, on.Hop))
 		eng.handleMessage(BudgeUp(b, *c), on)
 	} else {
-		log.T.Ln("dropping session message without payment")
+		log.E.Ln("dropping session message without payment")
 	}
 }

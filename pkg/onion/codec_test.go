@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"testing"
 	"time"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -26,7 +26,7 @@ import (
 )
 
 func TestOnionSkins_Cipher(t *testing.T) {
-
+	
 	var e error
 	sess := session.New(1)
 	on := Skins{}.
@@ -55,11 +55,11 @@ func TestOnionSkins_Cipher(t *testing.T) {
 }
 
 func TestOnionSkins_Confirmation(t *testing.T) {
-
+	
 	var e error
 	n := nonce.NewID()
 	on := Skins{}.
-		Confirmation(n).
+		Confirmation(n, 0).
 		Assemble()
 	onb := Encode(on)
 	c := slice.NewCursor()
@@ -80,7 +80,7 @@ func TestOnionSkins_Confirmation(t *testing.T) {
 }
 
 func TestOnionSkins_Delay(t *testing.T) {
-
+	
 	var e error
 	del := time.Duration(rand.Uint64())
 	on := Skins{}.
@@ -105,7 +105,7 @@ func TestOnionSkins_Delay(t *testing.T) {
 }
 
 func TestOnionSkins_Exit(t *testing.T) {
-
+	
 	var e error
 	prvs, pubs := GetCipherSet(t)
 	ciphers := GenCiphers(prvs, pubs)
@@ -162,7 +162,7 @@ func TestOnionSkins_Exit(t *testing.T) {
 }
 
 func TestOnionSkins_Forward(t *testing.T) {
-
+	
 	var e error
 	ipSizes := []int{net.IPv4len, net.IPv6len}
 	for i := range ipSizes {
@@ -205,7 +205,7 @@ func TestOnionSkins_Forward(t *testing.T) {
 }
 
 func TestOnionSkins_Layer(t *testing.T) {
-
+	
 	var e error
 	n := nonce.NewID()
 	n1 := nonce.New()
@@ -213,7 +213,7 @@ func TestOnionSkins_Layer(t *testing.T) {
 	pub1 := pub.Derive(prv1)
 	on := Skins{}.
 		Crypt(pub1, nil, prv2, n1, 0).
-		Confirmation(n).
+		Confirmation(n, 0).
 		Assemble()
 	onb := Encode(on)
 	c := slice.NewCursor()
@@ -246,7 +246,7 @@ func TestOnionSkins_Layer(t *testing.T) {
 }
 
 func TestOnionSkins_Reply(t *testing.T) {
-
+	
 	var e error
 	ipSizes := []int{net.IPv4len, net.IPv6len}
 	for i := range ipSizes {
@@ -289,7 +289,7 @@ func TestOnionSkins_Reply(t *testing.T) {
 }
 
 func TestOnionSkins_Response(t *testing.T) {
-
+	
 	var e error
 	var msg slice.Bytes
 	var id nonce.ID
@@ -318,7 +318,7 @@ func TestOnionSkins_Response(t *testing.T) {
 		t.Errorf("exit message did not unwrap correctly")
 		t.FailNow()
 	}
-
+	
 }
 
 func GetTwoPrvKeys(t *testing.T) (prv1, prv2 *prv.Key) {

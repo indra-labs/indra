@@ -11,6 +11,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/confirm"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/crypt"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/delay"
+	diag "git-indra.lan/indra-labs/indra/pkg/onion/layers/diagnostic"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/exit"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/forward"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/getbalance"
@@ -102,6 +103,9 @@ func (eng *Engine) handleMessage(b slice.Bytes, prev types.Onion) {
 	case *delay.Layer:
 		log.T.C(recLog(on, b, eng))
 		eng.delay(on, b, c, prev)
+	case *diag.Layer:
+		log.T.C(recLog(on, b, eng))
+		eng.diag(on, b, c, prev)
 	case *exit.Layer:
 		log.T.C(recLog(on, b, eng))
 		eng.exit(on, b, c, prev)

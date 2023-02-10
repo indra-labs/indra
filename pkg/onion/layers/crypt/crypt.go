@@ -2,8 +2,7 @@ package crypt
 
 import (
 	"crypto/cipher"
-	"fmt"
-
+	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/cloak"
@@ -52,10 +51,11 @@ type Layer struct {
 	types.Onion
 }
 
-func (x *Layer) String() string {
-	return fmt.Sprintf("\n\tnonce: %x\n\tto: %x,\n\tfrom: %x,\n",
-		x.Nonce, x.ToHeaderPub.ToBytes(), x.From.ToBytes())
-}
+//
+// func (x *Layer) String() string {
+// 	return fmt.Sprintf("\n\tnonce: %x\n\tto: %x,\n\tfrom: %x,\n",
+// 		x.Nonce, x.ToHeaderPub.ToBytes(), x.From.ToBytes())
+// }
 
 func (x *Layer) Inner() types.Onion   { return x.Onion }
 func (x *Layer) Insert(o types.Onion) { x.Onion = o }

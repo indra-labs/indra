@@ -14,6 +14,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/service"
 	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/transport"
+	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 	"git-indra.lan/indra-labs/indra/pkg/util/tests"
 )
@@ -22,7 +23,7 @@ func TestClient_ExitTxFailureDiagnostics(t *testing.T) {
 	log2.SetLogLevel(log2.Info)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuits(false, 1); check(e) {
+	if clients, e = CreateNMockCircuits(false, 10, 3); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -30,16 +31,6 @@ func TestClient_ExitTxFailureDiagnostics(t *testing.T) {
 	peers := clients[1:]
 	const port = 3455
 	sim := transport.NewSim(0)
-	for i := range clients {
-		if i == 0 {
-			continue
-		}
-		_ = clients[i].AddServiceToLocalNode(&service.Service{
-			Port:      port,
-			Transport: sim,
-			RelayRate: 18000 * 4,
-		})
-	}
 	// Start up the clients.
 	for _, v := range clients {
 		go v.Start()
@@ -48,7 +39,7 @@ func TestClient_ExitTxFailureDiagnostics(t *testing.T) {
 	var counter atomic.Int32
 	go func() {
 		select {
-		case <-time.After(time.Second * 12):
+		case <-time.After(time.Second * 20):
 		}
 		for i := 0; i < int(counter.Load()); i++ {
 			wg.Done()
@@ -56,7 +47,8 @@ func TestClient_ExitTxFailureDiagnostics(t *testing.T) {
 		t.Error("TxFailureDiagnostics test failed")
 		os.Exit(1)
 	}()
-	for i := 0; i < 5; i++ {
+	// We need 25 sessions to fill all slots.
+	for i := 0; i < 50; i++ {
 		log.D.Ln("buying sessions", i)
 		wg.Add(1)
 		counter.Inc()
@@ -70,13 +62,26 @@ func TestClient_ExitTxFailureDiagnostics(t *testing.T) {
 		}
 		wg.Wait()
 	}
+	for i := range peers {
+		for j := range peers[i].Sessions {
+			log.D.Ln(peers[i].GetLocalNodeAddress(),
+				peers[i].Sessions[j].Hop)
+		}
+		e = peers[i].AddServiceToLocalNode(&service.Service{
+			Port:      port,
+			Transport: sim,
+			RelayRate: 18000 * 4,
+		})
+		if check(e) {
+			t.Error(e)
+			t.FailNow()
+		}
+	}
 	log.I.Ln("starting fail test")
 	log2.SetLogLevel(log2.Debug)
 	// Now we will disable each of the nodes one by one and run a discovery
 	// process to find the "failed" node.
 	for _, v := range peers {
-		// Pause the node (also clearing its channels and caches).
-		v.Pause.Signal()
 		// Try to send out an Exit message.
 		var msg slice.Bytes
 		if msg, _, e = tests.GenMessage(64, "request"); check(e) {
@@ -94,18 +99,42 @@ func TestClient_ExitTxFailureDiagnostics(t *testing.T) {
 		c[2] = cl.SessionCache[v.GetLocalNode().ID][2]
 		id := nonce.NewID()
 		log.D.Ln("sending out onion that will fail")
-		cl.SendExit(port, msg, id, cl.Sessions[1], func(idd nonce.ID, b slice.Bytes) {
+		exits := v.GetSessionsAtHop(5)
+		cryptorand.Shuffle(len(exits), func(i, j int) {
+			exits[i], exits[j] = exits[j], exits[i]
+		})
+		c, o := cl.MakeExit(port, msg, id, exits[0])
+		failHop := cryptorand.IntN(5)
+		nodeID := c[failHop].Node.ID
+		var failClient *Engine
+		for i := range peers {
+			if peers[i].GetLocalNode().ID == nodeID {
+				failClient = peers[i]
+				break
+			}
+		}
+		if failClient == nil {
+			t.Error("did not find node to pause")
+			continue
+		}
+		// Pause the selected client.
+		failClient.Pause.Signal()
+		cl.SendExitNew(c, o, func(idd nonce.ID,
+			b slice.Bytes) {
 			log.D.Ln("this shouldn't print!")
 		}, 0)
-		log.D.Ln("listening for message")
-		bb := <-clients[3].ReceiveToLocalNode(port)
-		log.T.S(bb.ToBytes())
-		if e = clients[3].SendFromLocalNode(port, respMsg); check(e) {
-			t.Error("fail send")
+		if failHop < 3 {
+			log.D.Ln("listening for message")
+			bb := <-clients[3].ReceiveToLocalNode(port)
+			log.T.S(bb.ToBytes())
+			if e = clients[3].SendFromLocalNode(port, respMsg); check(e) {
+				t.Error("fail send")
+			}
+			log.D.Ln("response sent")
 		}
-		log.D.Ln("response sent")
-		// Resume the node.
-		v.Pause.Signal()
+		time.Sleep(time.Second)
+		// Resume the selected client.
+		failClient.Pause.Signal()
 	}
 	for _, v := range clients {
 		v.Shutdown()

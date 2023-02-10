@@ -1,4 +1,4 @@
-package confirm
+package dxresponse
 
 import (
 	"git-indra.lan/indra-labs/indra"
@@ -11,7 +11,7 @@ import (
 
 const (
 	MagicString = "cn"
-	Len         = magicbytes.Len + nonce.IDLen + 1
+	Len         = magicbytes.Len + nonce.IDLen
 )
 
 var (

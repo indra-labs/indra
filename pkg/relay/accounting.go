@@ -46,7 +46,7 @@ func (p *PendingResponses) GetOldestPending() (pr *PendingResponse) {
 func (p *PendingResponses) Add(id nonce.ID, sentSize int, s traffic.Sessions,
 	billable []nonce.ID, ret nonce.ID, port uint16,
 	callback func(id nonce.ID, b slice.Bytes), postAcct []func(),
-	timeout time.Duration) {
+	timeout time.Duration, eng *Engine) {
 	
 	p.Lock()
 	defer p.Unlock()
@@ -63,7 +63,7 @@ func (p *PendingResponses) Add(id nonce.ID, sentSize int, s traffic.Sessions,
 		Success:  qu.T(),
 	}
 	p.responses = append(p.responses, r)
-	alarm.WakeAtTime(r.Time.Add(timeout), r.HandleTimeout, r.Success)
+	alarm.WakeAtTime(r.Time.Add(timeout), r.HandleTimeout(eng), r.Success)
 }
 
 func (p *PendingResponses) FindOlder(t time.Time) (r []*PendingResponse) {

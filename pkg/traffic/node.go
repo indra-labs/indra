@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"net/netip"
 	"sync"
-
+	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-
+	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
@@ -57,7 +57,7 @@ const (
 func NewNode(addr *netip.AddrPort, idPub *pub.Key, idPrv *prv.Key,
 	tpt types.Transport, relayRate lnwire.MilliSatoshi,
 	local bool) (n *Node, id nonce.ID) {
-
+	
 	id = nonce.NewID()
 	n = &Node{
 		ID:            id,
@@ -122,7 +122,7 @@ func (n *Node) FindService(port uint16) (service *service.Service) {
 func (n *Node) SendTo(port uint16, b slice.Bytes) (e error) {
 	n.Lock()
 	defer n.Unlock()
-	e = fmt.Errorf("port not registered %d", port)
+	e = fmt.Errorf("%s port not registered %d", n.AddrPort.String(), port)
 	for i := range n.Services {
 		if n.Services[i].Port == port {
 			n.Services[i].Send(b)

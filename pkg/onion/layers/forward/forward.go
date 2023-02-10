@@ -1,10 +1,9 @@
 package forward
 
 import (
-	"fmt"
 	"net"
 	"net/netip"
-
+	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/magicbytes"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
@@ -30,10 +29,11 @@ type Layer struct {
 	types.Onion
 }
 
-func (x *Layer) String() string {
-	s, _ := x.AddrPort.MarshalBinary()
-	return fmt.Sprintf("\n\taddrport: %x %v\n", s, x.AddrPort.String())
-}
+//
+// func (x *Layer) String() string {
+// 	s, _ := x.AddrPort.MarshalBinary()
+// 	return fmt.Sprintf("\n\taddrport: %x %v\n", s, x.AddrPort.String())
+// }
 
 func (x *Layer) Inner() types.Onion   { return x.Onion }
 func (x *Layer) Insert(o types.Onion) { x.Onion = o }
