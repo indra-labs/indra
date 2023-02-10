@@ -3,7 +3,7 @@ services:
   btcd:
     sysctls:
       - "net.ipv6.conf.all.disable_ipv6=0"
-    image: indralabs/btcd:latest
+    image: indralabs/btcd-multi-arch:linux-amd64-dev
     container_name: indra-btcd
     volumes:
       - btcd_config:/etc/btcd:ro
