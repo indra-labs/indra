@@ -4,15 +4,16 @@ import (
 	"context"
 	"time"
 
-	"github.com/indra-labs/indra"
-	"github.com/indra-labs/indra/pkg/cfg"
-	"github.com/indra-labs/indra/pkg/interrupt"
-	"github.com/indra-labs/indra/pkg/p2p/introducer"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/server/metrics"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/multiformats/go-multiaddr"
+
+	"git-indra.lan/indra-labs/indra"
+	"git-indra.lan/indra-labs/indra/pkg/cfg"
+	"git-indra.lan/indra-labs/indra/pkg/interrupt"
+	"git-indra.lan/indra-labs/indra/pkg/p2p/introducer"
+	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"git-indra.lan/indra-labs/indra/pkg/server/metrics"
 )
 
 var (

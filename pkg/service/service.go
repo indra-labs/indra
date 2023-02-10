@@ -1,8 +1,9 @@
 package service
 
 import (
-	"github.com/indra-labs/indra/pkg/types"
-	"github.com/indra-labs/lnd/lnd/lnwire"
+	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
+
+	"git-indra.lan/indra-labs/indra/pkg/types"
 )
 
 type Service struct {

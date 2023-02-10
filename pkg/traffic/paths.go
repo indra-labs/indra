@@ -3,17 +3,16 @@ package traffic
 import (
 	"math/rand"
 
-	"github.com/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
-func (pm *Payments) Select(hops []byte, alreadyHave Sessions) (so Sessions) {
-	pm.Lock()
-	defer pm.Unlock()
+func (sm *SessionManager) SelectHops(hops []byte, alreadyHave Sessions) (so Sessions) {
+	sm.Lock()
+	defer sm.Unlock()
 	ws := make(Sessions, 0)
-	// todo: later on we want to pre-thin this according to configuration.
 out:
-	for i := range pm.Sessions {
-		if pm.Sessions[i] == nil {
+	for i := range sm.Sessions {
+		if sm.Sessions[i] == nil {
 			log.D.Ln("nil session", i)
 			continue
 		}
@@ -22,18 +21,17 @@ out:
 			if alreadyHave[j] == nil {
 				continue
 			}
-			if pm.Sessions[i].ID == alreadyHave[j].ID {
+			if sm.Sessions[i].ID == alreadyHave[j].ID {
 				continue out
 			}
 		}
-		ws = append(ws, pm.Sessions[i])
+		ws = append(ws, sm.Sessions[i])
 	}
 	// Shuffle the copy of the sessions.
 	rand.Seed(slice.GetCryptoRandSeed())
 	rand.Shuffle(len(ws), func(i, j int) {
 		ws[i], ws[j] = ws[j], ws[i]
 	})
-	// log.T.S(ws)
 	// Iterate the available sessions picking the first matching hop, then
 	// prune it from the temporary slice and advance the cursor, wrapping
 	// around at end.

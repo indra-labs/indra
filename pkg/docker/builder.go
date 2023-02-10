@@ -15,9 +15,10 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/jsonmessage"
-	"github.com/indra-labs/indra"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/moby/term"
+
+	"git-indra.lan/indra-labs/indra"
+	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 )
 
 var (

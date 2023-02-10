@@ -8,21 +8,21 @@ import (
 	"testing"
 	"time"
 
-	"github.com/indra-labs/indra/pkg/crypto/key/prv"
-	"github.com/indra-labs/indra/pkg/crypto/key/pub"
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
-	"github.com/indra-labs/indra/pkg/onion/layers/confirm"
-	"github.com/indra-labs/indra/pkg/onion/layers/crypt"
-	"github.com/indra-labs/indra/pkg/onion/layers/delay"
-	"github.com/indra-labs/indra/pkg/onion/layers/exit"
-	"github.com/indra-labs/indra/pkg/onion/layers/forward"
-	"github.com/indra-labs/indra/pkg/onion/layers/response"
-	"github.com/indra-labs/indra/pkg/onion/layers/reverse"
-	"github.com/indra-labs/indra/pkg/onion/layers/session"
-	"github.com/indra-labs/indra/pkg/types"
-	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/indra/pkg/util/tests"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/confirm"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/crypt"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/delay"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/exit"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/forward"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/response"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/reverse"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/session"
+	"git-indra.lan/indra-labs/indra/pkg/types"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/util/tests"
 )
 
 func TestOnionSkins_Cipher(t *testing.T) {
@@ -117,8 +117,9 @@ func TestOnionSkins_Exit(t *testing.T) {
 	}
 	n3 := Gen3Nonces()
 	p := uint16(rand.Uint32())
+	id := nonce.NewID()
 	on := Skins{}.
-		Exit(p, prvs, pubs, n3, msg).
+		Exit(p, prvs, pubs, n3, id, msg).
 		Assemble()
 	onb := Encode(on)
 	c := slice.NewCursor()
@@ -147,6 +148,11 @@ func TestOnionSkins_Exit(t *testing.T) {
 			t.Errorf("nonce %d did not unwrap correctly", i)
 			t.FailNow()
 		}
+	}
+	if ex.ID != id {
+		t.Errorf("exit message ID did not unwrap correctly, got %x expected %x",
+			ex.ID, id)
+		t.FailNow()
 	}
 	plH := sha256.Single(ex.Bytes)
 	if plH != hash {
@@ -286,13 +292,14 @@ func TestOnionSkins_Response(t *testing.T) {
 
 	var e error
 	var msg slice.Bytes
+	var id nonce.ID
 	var hash sha256.Hash
 	if msg, hash, e = tests.GenMessage(10000, ""); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
 	on := Skins{}.
-		Response(hash, msg).
+		Response(id, msg, 0).
 		Assemble()
 	onb := Encode(on)
 	c := slice.NewCursor()

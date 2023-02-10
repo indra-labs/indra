@@ -4,27 +4,26 @@ import (
 	"net/netip"
 	"time"
 
-	"github.com/indra-labs/indra/pkg/crypto/key/prv"
-	"github.com/indra-labs/indra/pkg/crypto/key/pub"
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
-	"github.com/indra-labs/indra/pkg/node"
-	"github.com/indra-labs/indra/pkg/onion/layers/balance"
-	"github.com/indra-labs/indra/pkg/onion/layers/confirm"
-	"github.com/indra-labs/indra/pkg/onion/layers/crypt"
-	"github.com/indra-labs/indra/pkg/onion/layers/delay"
-	"github.com/indra-labs/indra/pkg/onion/layers/directbalance"
-	"github.com/indra-labs/indra/pkg/onion/layers/exit"
-	"github.com/indra-labs/indra/pkg/onion/layers/forward"
-	"github.com/indra-labs/indra/pkg/onion/layers/getbalance"
-	"github.com/indra-labs/indra/pkg/onion/layers/noop"
-	"github.com/indra-labs/indra/pkg/onion/layers/response"
-	"github.com/indra-labs/indra/pkg/onion/layers/reverse"
-	"github.com/indra-labs/indra/pkg/onion/layers/session"
-	"github.com/indra-labs/indra/pkg/traffic"
-	"github.com/indra-labs/indra/pkg/types"
-	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/lnd/lnd/lnwire"
+	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
+
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/balance"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/confirm"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/crypt"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/delay"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/directbalance"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/exit"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/forward"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/getbalance"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/noop"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/response"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/reverse"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/session"
+	"git-indra.lan/indra-labs/indra/pkg/traffic"
+	"git-indra.lan/indra-labs/indra/pkg/types"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 type Skins []types.Onion
@@ -34,19 +33,19 @@ var os = &noop.Layer{}
 func (o Skins) ForwardCrypt(s *traffic.Session, k *prv.Key,
 	n nonce.IV) Skins {
 
-	return o.Forward(s.Peer.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, 0)
+	return o.Forward(s.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, 0)
 }
 
 func (o Skins) ReverseCrypt(s *traffic.Session, k *prv.Key, n nonce.IV, seq int) Skins {
 
-	return o.Reverse(s.Peer.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, seq)
+	return o.Reverse(s.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, seq)
 }
 
-func (o Skins) ForwardSession(s *node.Node,
+func (o Skins) ForwardSession(s *traffic.Node,
 	k *prv.Key, n nonce.IV, sess *session.Layer) Skins {
 
-	return o.Forward(s.Peer.AddrPort).
-		Crypt(s.Peer.IdentityPub, nil, k, n, 0).
+	return o.Forward(s.AddrPort).
+		Crypt(s.IdentityPub, nil, k, n, 0).
 		Session(sess)
 }
 
@@ -73,12 +72,13 @@ func (o Skins) DirectBalance(id, confID nonce.ID) Skins {
 }
 
 func (o Skins) Exit(port uint16, prvs [3]*prv.Key, pubs [3]*pub.Key,
-	nonces [3]nonce.IV, payload slice.Bytes) Skins {
+	nonces [3]nonce.IV, id nonce.ID, payload slice.Bytes) Skins {
 
 	return append(o, &exit.Layer{
 		Port:    port,
 		Ciphers: GenCiphers(prvs, pubs),
 		Nonces:  nonces,
+		ID:      id,
 		Bytes:   payload,
 		Onion:   os,
 	})
@@ -120,8 +120,8 @@ func (o Skins) Reverse(ip *netip.AddrPort) Skins {
 	return append(o, &reverse.Layer{AddrPort: ip, Onion: os})
 }
 
-func (o Skins) Response(hash sha256.Hash, res slice.Bytes) Skins {
-	rs := response.Layer{Hash: hash, Bytes: res}
+func (o Skins) Response(id nonce.ID, res slice.Bytes, port uint16) Skins {
+	rs := response.Layer{ID: id, Port: port, Bytes: res}
 	return append(o, &rs)
 }
 

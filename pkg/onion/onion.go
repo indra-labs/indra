@@ -1,14 +1,13 @@
 package onion
 
 import (
-	"github.com/indra-labs/indra/pkg/crypto/key/prv"
-	"github.com/indra-labs/indra/pkg/crypto/key/pub"
-	"github.com/indra-labs/indra/pkg/crypto/key/signer"
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/node"
-	"github.com/indra-labs/indra/pkg/onion/layers/session"
-	"github.com/indra-labs/indra/pkg/traffic"
-	"github.com/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/session"
+	"git-indra.lan/indra-labs/indra/pkg/traffic"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 // Ping is a message which checks the liveness of relays by ensuring they are
@@ -50,7 +49,7 @@ func Ping(id nonce.ID, client *traffic.Session, s traffic.Circuit,
 // The header remains a constant size and each node in the Reverse trims off
 // their section at the top, moves the next crypt header to the top and pads the
 // remainder with noise, so it always looks like the first hop.
-func SendExit(port uint16, payload slice.Bytes,
+func SendExit(port uint16, payload slice.Bytes, id nonce.ID,
 	client *traffic.Session, s traffic.Circuit, ks *signer.KeySet) Skins {
 
 	var prvs [3]*prv.Key
@@ -68,7 +67,7 @@ func SendExit(port uint16, payload slice.Bytes,
 		ReverseCrypt(s[0], ks.Next(), n[0], 3).
 		ReverseCrypt(s[1], ks.Next(), n[1], 2).
 		ReverseCrypt(s[2], ks.Next(), n[2], 1).
-		Exit(port, prvs, pubs, returnNonces, payload).
+		Exit(port, prvs, pubs, returnNonces, id, payload).
 		ReverseCrypt(s[3], prvs[0], n[3], 0).
 		ReverseCrypt(s[4], prvs[1], n[4], 0).
 		ReverseCrypt(client, prvs[2], n[5], 0)
@@ -97,7 +96,7 @@ func SendExit(port uint16, payload slice.Bytes,
 // set of sessions. This is by way of indicating to not use the IdentityPub but
 // the HeaderPub instead. Not allowing free relay at all prevents spam attacks.
 func SendKeys(id nonce.ID, s [5]*session.Layer,
-	client *traffic.Session, hop node.Nodes, ks *signer.KeySet) Skins {
+	client *traffic.Session, hop []*traffic.Node, ks *signer.KeySet) Skins {
 
 	n := GenNonces(6)
 	sk := Skins{}
@@ -128,7 +127,6 @@ func GetBalance(s traffic.Circuit, target int, returns [3]*traffic.Session,
 		o = o.ForwardCrypt(s[target], ks.Next(), n[0]).
 			DirectBalance(s[target].ID, id).
 			Forward(returns[2].AddrPort)
-		log.T.S(o)
 		return
 	}
 	n := GenNonces(target + 1 + 3)

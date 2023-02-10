@@ -13,7 +13,8 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gookit/color"
-	"github.com/indra-labs/indra"
+
+	"git-indra.lan/indra-labs/indra"
 )
 
 // log is your generic Logger creation invocation that uses the version data

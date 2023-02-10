@@ -4,17 +4,17 @@ import (
 	"crypto/cipher"
 	"fmt"
 
-	"github.com/indra-labs/indra"
-	"github.com/indra-labs/indra/pkg/crypto/ciph"
-	"github.com/indra-labs/indra/pkg/crypto/key/cloak"
-	"github.com/indra-labs/indra/pkg/crypto/key/prv"
-	"github.com/indra-labs/indra/pkg/crypto/key/pub"
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/onion/layers/magicbytes"
-	"github.com/indra-labs/indra/pkg/onion/layers/reverse"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/types"
-	"github.com/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/cloak"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/magicbytes"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/reverse"
+	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"git-indra.lan/indra-labs/indra/pkg/types"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 const (

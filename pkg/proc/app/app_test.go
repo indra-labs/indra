@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/indra-labs/indra/pkg/proc/cmds"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"git-indra.lan/indra-labs/indra/pkg/proc/cmds"
+	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 )
 
 func TestNew(t *testing.T) {

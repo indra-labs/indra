@@ -1,4 +1,4 @@
-package client
+package relay
 
 import (
 	"os"
@@ -7,20 +7,24 @@ import (
 	"time"
 
 	"github.com/cybriq/qu"
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/service"
-	"github.com/indra-labs/indra/pkg/traffic"
-	"github.com/indra-labs/indra/pkg/transport"
-	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/indra/pkg/util/tests"
 	"go.uber.org/atomic"
+
+	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"git-indra.lan/indra-labs/indra/pkg/service"
+	"git-indra.lan/indra-labs/indra/pkg/traffic"
+	"git-indra.lan/indra-labs/indra/pkg/transport"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/util/tests"
 )
 
-func TestClient_SendKeys(t *testing.T) {
+// todo: add accounting validation to these tests where relevant
+//  (check relay and client see the same balance after the operations)
+
+func TestClient_SendSessionKeys(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
-	var clients []*Client
+	var clients []*Engine
 	var e error
 	if clients, e = CreateNMockCircuits(false, 2); check(e) {
 		t.Error(e)
@@ -42,22 +46,7 @@ func TestClient_SendKeys(t *testing.T) {
 		t.Error("SendExit test failed")
 		os.Exit(1)
 	}()
-	cl := clients[0]
-	sb := make([]*SessionBuy, len(cl.Nodes))
-	for i := range cl.Nodes {
-		sb[i] = BuySession(cl.Nodes[i], 1000000, byte(i/2))
-		counter.Inc()
-		wg.Add(1)
-	}
-	sess, pmt := cl.BuySessions(sb...)
-	time.Sleep(time.Second / 4)
-	log.T.Ln("sending out sessions")
-	cl.SendKeys(sb, sess, pmt, func(hops []*traffic.Session) {
-		for _ = range hops {
-			counter.Dec()
-			wg.Done()
-		}
-	})
+
 	wg.Wait()
 	for _, v := range clients {
 		v.Shutdown()
@@ -66,7 +55,7 @@ func TestClient_SendKeys(t *testing.T) {
 
 func TestClient_SendPing(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
-	var clients []*Client
+	var clients []*Engine
 	var e error
 	if clients, e = CreateNMockCircuits(true, 2); check(e) {
 		t.Error(e)
@@ -94,7 +83,7 @@ out:
 		sess := clients[0].Sessions[i]
 		c[sess.Hop] = clients[0].Sessions[i]
 		clients[0].SendPing(c,
-			func(b nonce.ID) {
+			func(id nonce.ID, b slice.Bytes) {
 				log.I.Ln("success")
 				wg.Done()
 			})
@@ -113,7 +102,7 @@ out:
 
 func TestClient_SendExit(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
-	var clients []*Client
+	var clients []*Engine
 	var e error
 	if clients, e = CreateNMockCircuits(true, 2); check(e) {
 		t.Error(e)
@@ -126,7 +115,7 @@ func TestClient_SendExit(t *testing.T) {
 		if i == 0 {
 			continue
 		}
-		clients[i].Services = append(clients[i].Services, &service.Service{
+		_ = clients[i].AddServiceToLocalNode(&service.Service{
 			Port:      port,
 			Transport: sim,
 			RelayRate: 18000 * 4,
@@ -152,7 +141,7 @@ out:
 		wg.Add(1)
 		var c traffic.Circuit
 		var msg slice.Bytes
-		if msg, _, e = tests.GenMessage(32, "request"); check(e) {
+		if msg, _, e = tests.GenMessage(64, "request"); check(e) {
 			t.Error(e)
 			t.FailNow()
 		}
@@ -164,17 +153,21 @@ out:
 		}
 		sess := clients[0].Sessions[i]
 		c[sess.Hop] = clients[0].Sessions[i]
-		clients[0].SendExit(port, msg, clients[0].Sessions[i],
-			func(b slice.Bytes) {
+		id := nonce.NewID()
+		clients[0].SendExit(port, msg, id, clients[0].Sessions[i],
+			func(idd nonce.ID, b slice.Bytes) {
 				if sha256.Single(b) != respHash {
 					t.Error("failed to receive expected message")
 				}
-				log.I.Ln("success")
+				if id != idd {
+					t.Error("failed to receive expected message ID")
+				}
+				log.I.F("success\n\n")
 				wg.Done()
 			})
-		bb := <-clients[3].Services[0].Receive()
+		bb := <-clients[3].ReceiveToLocalNode(port)
 		log.T.S(bb.ToBytes())
-		if e = clients[3].SendTo(port, respMsg); check(e) {
+		if e = clients[3].SendFromLocalNode(port, respMsg); check(e) {
 			t.Error("fail send")
 		}
 		log.T.Ln("response sent")
@@ -193,7 +186,7 @@ out:
 
 func TestClient_SendGetBalance(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
-	var clients []*Client
+	var clients []*Engine
 	var e error
 	if clients, e = CreateNMockCircuits(true, 2); check(e) {
 		t.Error(e)
@@ -217,10 +210,11 @@ func TestClient_SendGetBalance(t *testing.T) {
 out:
 	for i := 1; i < len(clients[0].Sessions)-1; i++ {
 		wg.Add(1)
-		clients[0].SendGetBalance(clients[0].Sessions[i], func(cf nonce.ID) {
-			log.I.Ln("success")
-			wg.Done()
-		})
+		clients[0].SendGetBalance(clients[0].Sessions[i],
+			func(cf nonce.ID, b slice.Bytes) {
+				log.I.F("success\n\n")
+				wg.Done()
+			})
 		select {
 		case <-quit:
 			break out

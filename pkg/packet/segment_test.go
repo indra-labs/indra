@@ -5,10 +5,10 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/indra-labs/indra/pkg/crypto/key/prv"
-	"github.com/indra-labs/indra/pkg/crypto/key/pub"
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
-	"github.com/indra-labs/indra/pkg/util/tests"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/util/tests"
 )
 
 func TestSplitJoin(t *testing.T) {
@@ -104,7 +104,7 @@ func BenchmarkSplit(b *testing.B) {
 	//
 	// goos: linux
 	// goarch: amd64
-	// pkg: github.com/indra-labs/indra/pkg/packet
+	// pkg: git-indra.lan/indra-labs/indra/pkg/packet
 	// cpu: AMD Ryzen 7 5800H with Radeon Graphics
 	// BenchmarkSplit
 	// BenchmarkSplit-16    	     157	   7670080 ns/op

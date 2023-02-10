@@ -1,30 +1,33 @@
-package client
+package relay
 
 import (
 	"net/netip"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/indra-labs/indra/pkg/util/slice"
+
+	"git-indra.lan/indra-labs/indra/pkg/traffic"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 // Send a message to a peer via their AddrPort.
-func (cl *Client) Send(addr *netip.AddrPort, b slice.Bytes) {
+func (eng *Engine) Send(addr *netip.AddrPort, b slice.Bytes) {
 	// first search if we already have the node available with connection
 	// open.
 	as := addr.String()
-	for i := range cl.Nodes {
-		if as == cl.Nodes[i].AddrPort.String() {
+	eng.ForEachNode(func(n *traffic.Node) bool {
+		if as == n.AddrPort.String() {
 			log.T.C(func() string {
-				return cl.AddrPort.String() +
+				return eng.GetLocalNodeAddress().String() +
 					" sending to " +
 					addr.String() +
 					"\n" +
 					spew.Sdump(b.ToBytes())
 			})
-			cl.Nodes[i].Transport.Send(b)
-			return
+			n.Transport.Send(b)
+			return true
 		}
-	}
+		return false
+	})
 	// If we got to here none of the addresses matched, and we need to
 	// establish a new peer connection to them, if we know of them (this
 	// would usually be the reason this happens).

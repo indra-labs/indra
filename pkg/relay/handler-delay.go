@@ -1,14 +1,14 @@
-package client
+package relay
 
 import (
 	"time"
 
-	"github.com/indra-labs/indra/pkg/onion/layers/delay"
-	"github.com/indra-labs/indra/pkg/types"
-	"github.com/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/delay"
+	"git-indra.lan/indra-labs/indra/pkg/types"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
-func (cl *Client) delay(on *delay.Layer, b slice.Bytes,
+func (eng *Engine) delay(on *delay.Layer, b slice.Bytes,
 	c *slice.Cursor, prev types.Onion) {
 
 	// this is a message to hold the message in the buffer until a duration
@@ -19,5 +19,5 @@ func (cl *Client) delay(on *delay.Layer, b slice.Bytes,
 	select {
 	case <-time.After(on.Duration):
 	}
-	cl.handleMessage(BudgeUp(b, *c), on)
+	eng.handleMessage(BudgeUp(b, *c), on)
 }

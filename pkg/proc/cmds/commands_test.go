@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/indra-labs/indra/pkg/proc/opts/config"
-	"github.com/indra-labs/indra/pkg/util/path/path"
+	"git-indra.lan/indra-labs/indra/pkg/proc/opts/config"
+	"git-indra.lan/indra-labs/indra/pkg/util/path/path"
 )
 
 func TestCommand_Foreach(t *testing.T) {
