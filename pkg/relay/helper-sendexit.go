@@ -21,7 +21,8 @@ func (eng *Engine) SendExit(port uint16, message slice.Bytes, id nonce.ID,
 	copy(c[:], se)
 	o := onion.SendExit(port, message, id, se[len(se)-1], c, eng.KeySet)
 	log.D.Ln("sending out exit onion")
-	eng.SendOnion(c[0].AddrPort, o, hook, timeout)
+	res := eng.PostAcctOnion(o)
+	eng.SendWithOneHook(c[0].AddrPort, res, 0, hook)
 }
 
 func (eng *Engine) MakeExit(port uint16, message slice.Bytes, id nonce.ID,
@@ -42,5 +43,6 @@ func (eng *Engine) SendExitNew(c traffic.Circuit,
 	timeout time.Duration) {
 	
 	log.D.Ln("sending out exit onion")
-	eng.SendOnion(c[0].AddrPort, o, hook, timeout)
+	res := eng.PostAcctOnion(o)
+	eng.SendWithOneHook(c[0].AddrPort, res, 0, hook)
 }

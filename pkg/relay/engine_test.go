@@ -87,11 +87,15 @@ func TestClient_SendExit(t *testing.T) {
 		if i == 0 {
 			continue
 		}
-		_ = clients[i].AddServiceToLocalNode(&service.Service{
+		e = clients[i].AddServiceToLocalNode(&service.Service{
 			Port:      port,
 			Transport: sim,
 			RelayRate: 18000 * 4,
 		})
+		if check(e) {
+			t.Error(e)
+			t.FailNow()
+		}
 	}
 	// Start up the clients.
 	for _, v := range clients {
@@ -109,9 +113,8 @@ func TestClient_SendExit(t *testing.T) {
 		t.Error("SendExit test failed")
 	}()
 out:
-	for i := 1; i < len(clients[0].Sessions)-1; i++ {
+	for i := 3; i < len(clients[0].Sessions)-1; i++ {
 		wg.Add(1)
-		var c traffic.Circuit
 		var msg slice.Bytes
 		if msg, _, e = tests.GenMessage(64, "request"); check(e) {
 			t.Error(e)
@@ -124,9 +127,10 @@ out:
 			t.FailNow()
 		}
 		sess := clients[0].Sessions[i]
-		c[sess.Hop] = clients[0].Sessions[i]
+		// c[sess.Hop] = clients[0].Sessions[i]
 		id := nonce.NewID()
-		clients[0].SendExit(port, msg, id, clients[0].Sessions[i], func(idd nonce.ID, b slice.Bytes) {
+		clients[0].SendExit(port, msg, id, sess, func(idd nonce.ID,
+			b slice.Bytes) {
 			if sha256.Single(b) != respHash {
 				t.Error("failed to receive expected message")
 			}
@@ -179,7 +183,7 @@ func TestClient_SendPing(t *testing.T) {
 		t.Error("SendPing test failed")
 	}()
 out:
-	for i := 1; i < len(clients[0].Sessions)-1; i++ {
+	for i := 3; i < len(clients[0].Sessions)-1; i++ {
 		wg.Add(1)
 		var c traffic.Circuit
 		sess := clients[0].Sessions[i]

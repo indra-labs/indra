@@ -21,5 +21,6 @@ func (eng *Engine) SendDiagnostic(c *traffic.Circuit, hook Callback) {
 	o := onion.Diagnostic(se, eng.KeySet)
 	log.D.Ln("sending out diagnostic onion")
 	log.T.S(o)
-	eng.SendOnion(c[0].AddrPort, o, hook, 0)
+	res := eng.PostAcctOnion(o)
+	eng.SendWithOneHook(c[0].AddrPort, res, 0, hook)
 }

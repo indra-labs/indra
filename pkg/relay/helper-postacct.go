@@ -1,9 +1,6 @@
 package relay
 
 import (
-	"net/netip"
-	"time"
-	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -19,19 +16,20 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
-func (eng *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
-	responseHook func(id nonce.ID, b slice.Bytes), timeout time.Duration) {
-	
-	if timeout == 0 {
-		timeout = DefaultTimeout
-	}
-	b := onion.Encode(o.Assemble())
-	var billable []nonce.ID
-	var ret nonce.ID
-	var last nonce.ID
-	var port uint16
-	var postAcct []func()
-	var sessions traffic.Sessions
+type SendData struct {
+	b         slice.Bytes
+	sessions  traffic.Sessions
+	billable  []nonce.ID
+	ret, last nonce.ID
+	port      uint16
+	postAcct  []func()
+}
+
+// PostAcctOnion takes a slice of Skins and calculates their costs and
+// the list of sessions inside them and attaches accounting operations to
+// apply when the associated confirmation(s) or response hooks are executed.
+func (eng *Engine) PostAcctOnion(o onion.Skins) (res SendData) {
+	res.b = onion.Encode(o.Assemble())
 	// do client accounting
 	skip := false
 	for i := range o {
@@ -45,62 +43,54 @@ func (eng *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 			if s == nil {
 				continue
 			}
-			sessions = append(sessions, s)
+			res.sessions = append(res.sessions, s)
 			// The last hop needs no accounting as it's us!
 			if i == len(o)-1 {
 				// The session used for the last hop is stored, however.
-				ret = s.ID
-				billable = append(billable, s.ID)
+				res.ret = s.ID
+				res.billable = append(res.billable, s.ID)
 				break
 			}
 			switch on2 := o[i+1].(type) {
 			case *forward.Layer:
-				billable = append(billable, s.ID)
-				postAcct = append(postAcct,
+				res.billable = append(res.billable, s.ID)
+				res.postAcct = append(res.postAcct,
 					func() {
 						eng.DecSession(s.ID,
 							s.RelayRate*
-								lnwire.MilliSatoshi(len(b))/1024/1024, true,
+								lnwire.MilliSatoshi(len(res.b))/1024/1024, true,
 							"forward")
 					})
 			case *reverse.Layer:
-				billable = append(billable, s.ID)
+				res.billable = append(res.billable, s.ID)
 			case *exit.Layer:
 				for j := range s.Services {
 					if s.Services[j].Port != on2.Port {
 						continue
 					}
-					port = on2.Port
-					postAcct = append(postAcct,
+					res.port = on2.Port
+					res.postAcct = append(res.postAcct,
 						func() {
 							eng.DecSession(s.ID,
 								s.Services[j].RelayRate*
-									lnwire.MilliSatoshi(len(b)/2)/1024/1024,
+									lnwire.MilliSatoshi(len(res.b)/2)/1024/1024,
 								true, "exit")
 						})
 					break
 				}
-				billable = append(billable, s.ID)
-				last = on2.ID
+				res.billable = append(res.billable, s.ID)
+				res.last = on2.ID
 				skip = true
 			case *getbalance.Layer:
-				last = s.ID
-				billable = append(billable, s.ID)
+				res.last = s.ID
+				res.billable = append(res.billable, s.ID)
 				skip = true
 			}
 		case *confirm.Layer:
-			last = on.ID
+			res.last = on.ID
 		case *balance.Layer:
-			last = on.ID
+			res.last = on.ID
 		}
 	}
-	if responseHook == nil {
-		responseHook = func(_ nonce.ID, _ slice.Bytes) {
-			log.D.Ln("nil response hook")
-		}
-	}
-	eng.PendingResponses.Add(last, len(b), sessions, billable, ret, port,
-		responseHook, postAcct, timeout, eng)
-	log.T.Ln("sending out onion")
-	eng.Send(ap, b)
+	return
 }

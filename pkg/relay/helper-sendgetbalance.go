@@ -16,5 +16,6 @@ func (eng *Engine) SendGetBalance(target *traffic.Session, hook Callback) {
 	confID := nonce.NewID()
 	o := onion.GetBalance(se[2].ID, confID, se[5], c, eng.KeySet)
 	log.D.Ln("sending out exit onion")
-	eng.SendOnion(c[0].AddrPort, o, hook, 0)
+	res := eng.PostAcctOnion(o)
+	eng.SendWithOneHook(c[0].AddrPort, res, 0, hook)
 }
