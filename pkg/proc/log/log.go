@@ -40,13 +40,13 @@ const (
 
 type LevelMap map[LogLevel]string
 
-// func (l LevelMap) String() (s string) {
-// 	ss := make([]string, len(l))
-// 	for i := range l {
-// 		ss[i] = strings.TrimSpace(l[i])
-// 	}
-// 	return strings.Join(ss, " ")
-// }
+func (l LevelMap) String() (s string) {
+	ss := make([]string, len(l))
+	for i := range l {
+		ss[i] = strings.TrimSpace(l[i])
+	}
+	return strings.Join(ss, " ")
+}
 
 // LvlStr is a map that provides the uniform width strings that are printed
 // to identify the LogLevel of a log entry.
@@ -201,6 +201,13 @@ func SetLogLevel(l LogLevel) {
 	writerMx.Lock()
 	defer writerMx.Unlock()
 	logLevel = l
+}
+
+func GetLogLevel() (l LogLevel) {
+	writerMx.Lock()
+	defer writerMx.Unlock()
+	l = logLevel
+	return
 }
 
 func CodeLocations(on bool) {

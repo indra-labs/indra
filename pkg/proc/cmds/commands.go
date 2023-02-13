@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
-
+	
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/proc/opts/config"
 	"git-indra.lan/indra-labs/indra/pkg/proc/opts/meta"
@@ -79,14 +79,14 @@ loaded from at application startup, and where it will be written if changed.
 `),
 			Default: defaultConfigFile,
 		}, text.NormalizeFilesystemPath(abs, appName)),
-
+		
 		"DataDir": text.New(meta.Data{
 			Aliases:     []string{"DD"},
 			Label:       "Data Directory",
 			Description: "root folder where application data is stored",
 			Default:     defaultDataDir,
 		}, text.NormalizeFilesystemPath(abs, appName)),
-
+		
 		"LogCodeLocations": toggle.New(meta.Data{
 			Aliases:     []string{"LCL"},
 			Label:       "Log Code Locations",
@@ -99,7 +99,7 @@ Toggles on and off the printing of code locations in logs.
 			log2.CodeLocations(o.Value().Bool())
 			return
 		}),
-
+		
 		"LogLevel": text.New(meta.Data{
 			Aliases: []string{"LL"},
 			Label:   "Log Level",
@@ -134,7 +134,7 @@ trace log statements will not print.
 			log2.SetLogLevel(lvl)
 			return
 		}),
-
+		
 		"LogFilePath": text.New(meta.Data{
 			Aliases:     Tags("LFP"),
 			Label:       "Log ToHeaderPub File",
@@ -147,7 +147,7 @@ Sets the path of the file to write logs to.
 			err = log2.SetLogFilePath(o.Expanded())
 			return
 		}, text.NormalizeFilesystemPath(abs, appName)),
-
+		
 		"LogToFile": toggle.New(meta.Data{
 			Aliases:     Tags("LTF"),
 			Label:       "Log ToHeaderPub File",
