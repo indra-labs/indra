@@ -40,12 +40,12 @@ docker/release/targets/lnd/scripts/setup.sh
 When complete, it will produce an environment configuration file, located at `docker/release/targets/lnd/.env`. It will be in the following format:
 
 ```
-MINER_PUBKEY=<lightning_public_key>
-MINER_ADDRESS=<bitcoin_address>
-ALICE_PUBKEY=<lightning_public_key>
-ALICE_ADDRESS=<bitcoin_address>
-BOB_PUBKEY=<lightning_public_key>
-BOB_ADDRESS=<bitcoin_address>
+LNSIM_MINER_PUBKEY=<lightning_public_key>
+LNSIM_MINER_ADDRESS=<bitcoin_address>
+LNSIM_ALICE_PUBKEY=<lightning_public_key>
+LNSIM_ALICE_ADDRESS=<bitcoin_address>
+LNSIM_BOB_PUBKEY=<lightning_public_key>
+LNSIM_BOB_ADDRESS=<bitcoin_address>
 ```
 
 ### Using the environment config
