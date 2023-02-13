@@ -101,7 +101,11 @@ func SendKeys(id nonce.ID, s [5]*session.Layer,
 	n := GenNonces(6)
 	sk := Skins{}
 	for i := range s {
-		sk = sk.ForwardSession(hop[i], ks.Next(), n[i], s[i])
+		if i == 0 {
+			sk = sk.Session(s[i])
+		} else {
+			sk = sk.ForwardSession(hop[i], ks.Next(), n[i], s[i])
+		}
 	}
 	return sk.
 		ForwardCrypt(client, ks.Next(), n[5]).
