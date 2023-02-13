@@ -22,7 +22,7 @@ func (eng *Engine) SendExit(port uint16, message slice.Bytes, id nonce.ID,
 	o := onion.SendExit(port, message, id, se[len(se)-1], c, eng.KeySet)
 	log.D.Ln("sending out exit onion")
 	res := eng.PostAcctOnion(o)
-	eng.SendWithOneHook(c[0].AddrPort, res, 0, hook)
+	eng.SendWithOneHook(c[0].AddrPort, res, timeout, hook)
 }
 
 func (eng *Engine) MakeExit(port uint16, message slice.Bytes, id nonce.ID,

@@ -23,7 +23,7 @@ func Ping(id nonce.ID, client *traffic.Session, s traffic.Circuit,
 	
 	n := GenPingNonces()
 	return Skins{}.
-		ForwardCrypt(s[0], ks.Next(), n[0]).
+		Crypt(s[0].HeaderPub, nil, ks.Next(), n[0], 0).
 		ForwardCrypt(s[1], ks.Next(), n[1]).
 		ForwardCrypt(s[2], ks.Next(), n[2]).
 		ForwardCrypt(s[3], ks.Next(), n[3]).

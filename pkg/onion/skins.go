@@ -36,7 +36,8 @@ func (o Skins) ForwardCrypt(s *traffic.Session, k *prv.Key,
 	return o.Forward(s.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, 0)
 }
 
-func (o Skins) ReverseCrypt(s *traffic.Session, k *prv.Key, n nonce.IV, seq int) Skins {
+func (o Skins) ReverseCrypt(s *traffic.Session, k *prv.Key, n nonce.IV,
+	seq int) Skins {
 	
 	return o.Reverse(s.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, seq)
 }
@@ -111,10 +112,10 @@ func (o Skins) GetBalance(id, confID nonce.ID, prvs [3]*prv.Key,
 }
 
 func (o Skins) Crypt(toHdr, toPld *pub.Key, from *prv.Key, n nonce.IV,
-	seq int) Skins {
+	depth int) Skins {
 	
 	return append(o, &crypt.Layer{
-		Seq:          seq,
+		Depth:        depth,
 		ToHeaderPub:  toHdr,
 		ToPayloadPub: toPld,
 		From:         from,

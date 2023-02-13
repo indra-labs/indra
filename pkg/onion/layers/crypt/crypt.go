@@ -35,7 +35,7 @@ var (
 // for each crypt, and a header which a relay uses to determine what cipher to
 // use. Everything in a message after this message is encrypted as specified.
 type Layer struct {
-	Seq                       int
+	Depth                     int
 	ToHeaderPub, ToPayloadPub *pub.Key
 	From                      *prv.Key
 	// The remainder here are for Decode.
@@ -81,10 +81,10 @@ func (x *Layer) Encode(b slice.Bytes, c *slice.Cursor) {
 		panic(e)
 	}
 	end := len(b)
-	switch x.Seq {
+	switch x.Depth {
 	case 0:
 	case 3, 2, 1:
-		end = start + (x.Seq-1)*ReverseLayerLen
+		end = start + (x.Depth-1)*ReverseLayerLen
 	default:
 		panic("incorrect value for crypt sequence")
 	}
