@@ -84,9 +84,9 @@ func (x *Layer) Encode(b slice.Bytes, c *slice.Cursor) {
 		panic(e)
 	}
 	end := len(b)
-	switch x.Depth {
-	case 0:
-	case 3, 2, 1:
+	switch {
+	case x.Depth == 0:
+	case x.Depth > 0:
 		end = start + (x.Depth-1)*ReverseLayerLen
 	default:
 		panic("incorrect value for crypt sequence")

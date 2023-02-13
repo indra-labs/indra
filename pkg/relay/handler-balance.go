@@ -39,8 +39,9 @@ func (eng *Engine) balance(on *balance.Layer,
 		var se *traffic.Session
 		eng.IterateSessions(func(s *traffic.Session) bool {
 			if s.ID == on.ID {
-				log.D.F("%s received balance %s for session %s was %s", local,
-					on.MilliSatoshi, on.ID, s.Remaining)
+				log.D.F("%s received balance %s for session %s %s was %s",
+					local,
+					on.MilliSatoshi, on.ID, on.ConfID, s.Remaining)
 				se = s
 				return true
 			}

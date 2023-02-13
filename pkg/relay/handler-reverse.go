@@ -2,7 +2,7 @@ package relay
 
 import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/onion"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/crypt"
@@ -13,7 +13,7 @@ import (
 
 func (eng *Engine) reverse(on *reverse.Layer, b slice.Bytes,
 	c *slice.Cursor, prev types.Onion) {
-
+	
 	var e error
 	var on2 types.Onion
 	if on.AddrPort.String() == eng.GetLocalNodeAddress().String() {
@@ -69,5 +69,5 @@ func (eng *Engine) reverse(on *reverse.Layer, b slice.Bytes,
 		log.T.Ln("forwarding reverse")
 		eng.Send(on.AddrPort, b)
 	}
-
+	
 }
