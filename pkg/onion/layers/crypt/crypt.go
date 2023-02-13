@@ -17,8 +17,9 @@ import (
 )
 
 const (
-	MagicString      = "os"
-	Len              = magicbytes.Len + nonce.IVLen + cloak.Len + pub.KeyLen
+	MagicString = "os"
+	Len         = magicbytes.Len + 1 + nonce.IVLen + cloak.Len +
+		pub.KeyLen
 	ReverseLayerLen  = reverse.Len + Len
 	ReverseHeaderLen = 3 * ReverseLayerLen
 )
@@ -35,7 +36,7 @@ var (
 // for each crypt, and a header which a relay uses to determine what cipher to
 // use. Everything in a message after this message is encrypted as specified.
 type Layer struct {
-	Depth                     int
+	Depth, HeaderLen          int
 	ToHeaderPub, ToPayloadPub *pub.Key
 	From                      *prv.Key
 	// The remainder here are for Decode.
@@ -64,6 +65,8 @@ func (x *Layer) Len() int {
 }
 func (x *Layer) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
+	b[*c] = byte(x.HeaderLen)
+	c.Inc(1)
 	copy(b[*c:c.Inc(nonce.IVLen)], x.Nonce[:])
 	// Derive the cloaked key and copy it in.
 	to := cloak.GetCloak(x.ToHeaderPub)
@@ -100,6 +103,8 @@ func (x *Layer) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < Len-magicbytes.Len {
 		return magicbytes.TooShort(len(b[*c:]), Len-magicbytes.Len, "message")
 	}
+	x.HeaderLen = int(b[*c])
+	c.Inc(1)
 	copy(x.Nonce[:], b[*c:c.Inc(nonce.IVLen)])
 	copy(x.Cloak[:], b[*c:c.Inc(cloak.Len)])
 	if x.FromPub, e = pub.FromBytes(b[*c:c.Inc(pub.KeyLen)]); check(e) {

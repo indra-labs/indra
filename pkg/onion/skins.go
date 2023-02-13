@@ -33,20 +33,20 @@ var os = &noop.Layer{}
 func (o Skins) ForwardCrypt(s *traffic.Session, k *prv.Key,
 	n nonce.IV) Skins {
 	
-	return o.Forward(s.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, 0)
+	return o.Forward(s.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, 0, 0)
 }
 
 func (o Skins) ReverseCrypt(s *traffic.Session, k *prv.Key, n nonce.IV,
-	seq int) Skins {
+	seq, hl int) Skins {
 	
-	return o.Reverse(s.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, seq)
+	return o.Reverse(s.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, seq, hl)
 }
 
 func (o Skins) ForwardSession(s *traffic.Node,
 	k *prv.Key, n nonce.IV, sess *session.Layer) Skins {
 	
 	return o.Forward(s.AddrPort).
-		Crypt(s.IdentityPub, nil, k, n, 0).
+		Crypt(s.IdentityPub, nil, k, n, 0, 0).
 		Session(sess)
 }
 
@@ -112,10 +112,11 @@ func (o Skins) GetBalance(id, confID nonce.ID, prvs [3]*prv.Key,
 }
 
 func (o Skins) Crypt(toHdr, toPld *pub.Key, from *prv.Key, n nonce.IV,
-	depth int) Skins {
+	depth, hl int) Skins {
 	
 	return append(o, &crypt.Layer{
 		Depth:        depth,
+		HeaderLen:    hl,
 		ToHeaderPub:  toHdr,
 		ToPayloadPub: toPld,
 		From:         from,
