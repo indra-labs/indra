@@ -114,7 +114,7 @@ func initConfig() {
 
 func persistConfig() {
 
-	if !viper.GetBool("config-save") {
+	if !cfgSave {
 		return
 	}
 

@@ -4,9 +4,8 @@ import (
 	"github.com/btcsuite/btcd/btcutil/base58"
 	"github.com/btcsuite/btcd/btcutil/bech32"
 	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/spf13/viper"
 )
-
-var hnd = "ind"
 
 func bech32encode(key crypto.PrivKey) (keyStr string, err error) {
 
@@ -82,23 +81,22 @@ func Base58Decode(key string) (priv crypto.PrivKey, err error) {
 
 func GetOrGeneratePrivKey(key string) (privKey crypto.PrivKey, err error) {
 
-	//if key == "" {
-	//
-	//	privKey = server.GeneratePrivKey()
-	//
-	//	if key, err = server.Base58Encode(privKey); check(err) {
-	//		return
-	//	}
-	//}
-	//
-	//if privKey, err = server.Base58Decode(key); check(err) {
-	//	return
-	//}
-	//
-	//spew.Dump(key)
-	//spew.Dump(privKey)
-	//
-	//server.DefaultConfig.PrivKey = privKey
+	if key == "" {
 
-	return nil, nil
+		privKey = GeneratePrivKey()
+
+		if key, err = Base58Encode(privKey); check(err) {
+			return
+		}
+
+		viper.Set("key", key)
+
+		return
+	}
+
+	if privKey, err = Base58Decode(key); check(err) {
+		return
+	}
+
+	return
 }

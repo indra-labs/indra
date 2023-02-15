@@ -5,7 +5,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/cfg"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/server"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -38,8 +37,6 @@ var seedCmd = &cobra.Command{
 	Short: "Serves an instance of the seed node",
 	Long:  `Serves an instance of the seed node.`,
 	Run: func(cmd *cobra.Command, args []string) {
-
-		spew.Dump(viper.AllSettings())
 
 		log.I.Ln("-- ", log2.App, "("+viper.GetString("network")+") -", indra.SemVer, "- Network Freedom. --")
 

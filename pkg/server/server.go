@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"github.com/davecgh/go-spew/spew"
 	"time"
 
 	"github.com/libp2p/go-libp2p"
@@ -99,8 +98,6 @@ func New(params *cfg.Params, config *Config) (srv *Server, err error) {
 
 	s.params = params
 	s.config = config
-
-	spew.Dump(config.PrivKey)
 
 	if s.host, err = libp2p.New(libp2p.Identity(config.PrivKey), libp2p.UserAgent(userAgent), libp2p.ListenAddrs(config.ListenAddresses...)); check(err) {
 		return nil, err
