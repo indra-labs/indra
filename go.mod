@@ -18,6 +18,8 @@ require (
 	github.com/moby/term v0.0.0-20221205130635-1aeaba878587
 	github.com/multiformats/go-multiaddr v0.8.0
 	github.com/naoina/toml v0.1.1
+	github.com/spf13/cobra v1.6.1
+	github.com/spf13/viper v1.15.0
 	github.com/templexxx/reedsolomon v1.1.3
 	go.uber.org/atomic v1.10.0
 	gopkg.in/src-d/go-git.v4 v4.13.1
@@ -159,10 +161,8 @@ require (
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
-	github.com/spf13/cobra v1.6.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/spf13/viper v1.15.0 // indirect
 	github.com/src-d/gcfg v1.4.0 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/templexxx/cpu v0.0.1 // indirect
