@@ -17,14 +17,16 @@ func NewMultiAddr(addr string) (maddr multiaddr.Multiaddr) {
 }
 
 var DefaultConfig = &Config{
-	ListenAddresses: []multiaddr.Multiaddr{},
-	SeedAddresses:   []multiaddr.Multiaddr{},
+	ListenAddresses:  []multiaddr.Multiaddr{},
+	SeedAddresses:    []multiaddr.Multiaddr{},
+	ConnectAddresses: []multiaddr.Multiaddr{},
 }
 
 type Config struct {
 	PrivKey crypto.PrivKey
 
-	PublicAddress   multiaddr.Multiaddr
-	SeedAddresses   []multiaddr.Multiaddr
-	ListenAddresses []multiaddr.Multiaddr
+	PublicAddress    multiaddr.Multiaddr
+	SeedAddresses    []multiaddr.Multiaddr
+	ConnectAddresses []multiaddr.Multiaddr
+	ListenAddresses  []multiaddr.Multiaddr
 }

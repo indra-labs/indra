@@ -51,20 +51,12 @@ var seedCmd = &cobra.Command{
 			server.DefaultConfig.ListenAddresses = append(server.DefaultConfig.ListenAddresses, multiaddr.StringCast(listener))
 		}
 
-		// If one or more --seed arguments are passed, append them to the list of seed addresses.
 		for _, seed := range viper.GetStringSlice("seed") {
 			server.DefaultConfig.SeedAddresses = append(server.DefaultConfig.SeedAddresses, multiaddr.StringCast(seed))
 		}
 
-		// If we have been passed one or more --connect arguments, we should clear the seed addresses, ...
-		// and use the ones passed instead.
-		if len(viper.GetStringSlice("connect")) != 0 {
-
-			server.DefaultConfig.SeedAddresses = []multiaddr.Multiaddr{}
-
-			for _, connector := range viper.GetStringSlice("connect") {
-				server.DefaultConfig.SeedAddresses = append(server.DefaultConfig.SeedAddresses, multiaddr.StringCast(connector))
-			}
+		for _, connector := range viper.GetStringSlice("connect") {
+			server.DefaultConfig.ConnectAddresses = append(server.DefaultConfig.ConnectAddresses, multiaddr.StringCast(connector))
 		}
 
 		var srv *server.Server
