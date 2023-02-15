@@ -45,6 +45,17 @@ func bech32decode(keyStr string) (privKey crypto.PrivKey, err error) {
 	return privKey, nil
 }
 
+func GeneratePrivKey() (privKey crypto.PrivKey) {
+
+	var err error
+
+	if privKey, _, err = crypto.GenerateKeyPair(crypto.Secp256k1, 0); check(err) {
+		return
+	}
+
+	return
+}
+
 func Base58Encode(priv crypto.PrivKey) (key string, err error) {
 
 	var raw []byte
@@ -67,4 +78,27 @@ func Base58Decode(key string) (priv crypto.PrivKey, err error) {
 	}
 
 	return
+}
+
+func GetOrGeneratePrivKey(key string) (privKey crypto.PrivKey, err error) {
+
+	//if key == "" {
+	//
+	//	privKey = server.GeneratePrivKey()
+	//
+	//	if key, err = server.Base58Encode(privKey); check(err) {
+	//		return
+	//	}
+	//}
+	//
+	//if privKey, err = server.Base58Decode(key); check(err) {
+	//	return
+	//}
+	//
+	//spew.Dump(key)
+	//spew.Dump(privKey)
+	//
+	//server.DefaultConfig.PrivKey = privKey
+
+	return nil, nil
 }
