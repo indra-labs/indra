@@ -42,28 +42,29 @@ var seedCmd = &cobra.Command{
 
 		var err error
 		var params = cfg.SelectNetworkParams(viper.GetString("network"))
+		var config = server.DefaultConfig
 
-		if server.DefaultConfig.PrivKey, err = server.GetOrGeneratePrivKey(viper.GetString("key")); check(err) {
+		if config.PrivKey, err = server.GetOrGeneratePrivKey(viper.GetString("key")); check(err) {
 			return
 		}
 
 		for _, listener := range viper.GetStringSlice("listen") {
-			server.DefaultConfig.ListenAddresses = append(server.DefaultConfig.ListenAddresses, multiaddr.StringCast(listener))
+			config.ListenAddresses = append(config.ListenAddresses, multiaddr.StringCast(listener))
 		}
 
 		for _, seed := range viper.GetStringSlice("seed") {
-			server.DefaultConfig.SeedAddresses = append(server.DefaultConfig.SeedAddresses, multiaddr.StringCast(seed))
+			config.SeedAddresses = append(config.SeedAddresses, multiaddr.StringCast(seed))
 		}
 
 		for _, connector := range viper.GetStringSlice("connect") {
-			server.DefaultConfig.ConnectAddresses = append(server.DefaultConfig.ConnectAddresses, multiaddr.StringCast(connector))
+			config.ConnectAddresses = append(config.ConnectAddresses, multiaddr.StringCast(connector))
 		}
 
 		var srv *server.Server
 
 		log.I.Ln("running serve.")
 
-		if srv, err = server.New(params, server.DefaultConfig); check(err) {
+		if srv, err = server.New(params, config); check(err) {
 			return
 		}
 
