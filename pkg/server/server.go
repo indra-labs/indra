@@ -109,6 +109,15 @@ func New(params *cfg.Params, config *Config) (srv *Server, err error) {
 	log.I.Ln("p2p listeners:")
 	log.I.Ln("-", s.host.Addrs())
 
+	if len(config.ConnectAddresses) > 0 {
+
+		log.I.Ln("connect detected, using only the connect seed addresses")
+
+		config.SeedAddresses = config.ConnectAddresses
+
+		return &s, nil
+	}
+
 	var seedAddresses []multiaddr.Multiaddr
 
 	if seedAddresses, err = params.ParseSeedMultiAddresses(); check(err) {

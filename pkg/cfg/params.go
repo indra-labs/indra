@@ -2,6 +2,7 @@ package cfg
 
 import (
 	"github.com/multiformats/go-multiaddr"
+	"os"
 
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/node"
@@ -26,6 +27,27 @@ type Params struct {
 
 	// DNSSeedAddresses is a list of DNS hostnames used to bootstrap a new node on the network
 	DNSSeedAddresses []*DNSSeedAddress
+}
+
+func SelectNetworkParams(network string) *Params {
+
+	if network == "mainnet" {
+		return MainNetServerParams
+	}
+
+	if network == "testnet" {
+		return TestNetServerParams
+	}
+
+	if network == "simnet" {
+		return SimnetServerParams
+	}
+
+	panic("invalid network, exiting...")
+
+	os.Exit(1)
+
+	return nil
 }
 
 func (self *Params) ParseSeedMultiAddresses() (addresses []multiaddr.Multiaddr, err error) {

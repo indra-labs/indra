@@ -36,10 +36,11 @@ services:
       - 62134
       - 62135
     environment:
-      INDRA_SERVE_KEY: "66T7j5JnhsjDTqVvV8zEM2rTUobu66tocizfqArVEnP1"
-      INDRA_SERVE_LISTEN: "/ip4/0.0.0.0/tcp/62134,/ip6/::/tcp/62134"
+      INDRA_NETWORK: "simnet"
+      INDRA_KEY: "66T7j5JnhsjDTqVvV8zEM2rTUobu66tocizfqArVEnP1"
+      INDRA_LISTEN: "/ip4/0.0.0.0/tcp/62134 /ip6/::/tcp/62134"
     command:
-      - "serve"
+      - "seed"
   seed1:
     sysctls:
       - "net.ipv6.conf.all.disable_ipv6=0"
@@ -57,10 +58,11 @@ services:
       - 62134
       - 62135
     environment:
-      INDRA_SERVE_KEY: "66T7j5JnhsjDTqVvV8zEM2rTUobu66tocizfqArVEnP2"
-      INDRA_SERVE_LISTEN: "/ip4/0.0.0.0/tcp/62134,/ip6/::/tcp/62134"
+      INDRA_NETWORK: "simnet"
+      INDRA_KEY: "66T7j5JnhsjDTqVvV8zEM2rTUobu66tocizfqArVEnP2"
+      INDRA_LISTEN: "/ip4/0.0.0.0/tcp/62134 /ip6/::/tcp/62134"
     command:
-      - "serve"
+      - "seed"
   seed2:
     sysctls:
       - "net.ipv6.conf.all.disable_ipv6=0"
@@ -79,76 +81,77 @@ services:
       - 62134
       - 62135
     environment:
-      INDRA_SERVE_KEY: "66T7j5JnhsjDTqVvV8zEM2rTUobu66tocizfqArVEnP3"
-      INDRA_SERVE_LISTEN: "/ip4/0.0.0.0/tcp/62134,/ip6/::/tcp/62134"
+      INDRA_NETWORK: "simnet"
+      INDRA_KEY: "66T7j5JnhsjDTqVvV8zEM2rTUobu66tocizfqArVEnP3"
+      INDRA_LISTEN: "/ip4/0.0.0.0/tcp/62134 /ip6/::/tcp/62134"
     command:
-      - "serve"
-  peer0:
-    sysctls:
-      - "net.ipv6.conf.all.disable_ipv6=0"
-    image: indralabs/indra-dev:latest
-    container_name: indra-peer0
-    volumes:
-      - peer0_gopath:/go
-      - ./../../:/indra
-    networks:
-      indranet:
-    depends_on:
-      - seed0
-      - seed1
-      - seed2
-    expose:
-      - 62134
-      - 62135
-    environment:
-      #INDRA_SERVE_SEED: "/dns4/seed0/tcp/62134/p2p/16Uiu2HAm2LgowPNBM47dR6gSJmEeQaqCZ6u4WPhTCSWkxyNrfAxo"
-      INDRA_SERVE_LISTEN: "/ip4/0.0.0.0/tcp/62134,/ip6/::/tcp/62134"
-    command:
-      - "serve"
-  peer1:
-    sysctls:
-      - "net.ipv6.conf.all.disable_ipv6=0"
-    image: indralabs/indra-dev:latest
-    container_name: indra-peer1
-    volumes:
-      - peer1_gopath:/go
-      - ./../../:/indra
-    networks:
-      indranet:
-    depends_on:
-      - seed0
-      - seed1
-      - seed2
-    expose:
-      - 62134
-      - 62135
-    environment:
-      #INDRA_SERVE_SEED: "/dns4/seed0/tcp/62134/p2p/16Uiu2HAm2LgowPNBM47dR6gSJmEeQaqCZ6u4WPhTCSWkxyNrfAxo"
-      INDRA_SERVE_LISTEN: "/ip4/0.0.0.0/tcp/62134,/ip6/::/tcp/62134"
-    command:
-      - "serve"
-  peer2:
-    sysctls:
-      - "net.ipv6.conf.all.disable_ipv6=0"
-    image: indralabs/indra-dev:latest
-    container_name: indra-peer2
-    volumes:
-      - peer1_gopath:/go
-      - ./../../:/indra
-    networks:
-      indranet:
-    depends_on:
-      - seed0
-      - seed1
-      - seed2
-    #expose:
-    #  - 62134
-    #  - 62135
-    environment:
-      #INDRA_SERVE_SEED: "/dns4/seed0/tcp/62134/p2p/16Uiu2HAm2LgowPNBM47dR6gSJmEeQaqCZ6u4WPhTCSWkxyNrfAxo"
-      INDRA_SERVE_LISTEN: "/ip4/127.0.0.1/tcp/62134,/ip6/::1/tcp/62134"
-    command:
-      - "serve"
+      - "seed"
+#  peer0:
+#    sysctls:
+#      - "net.ipv6.conf.all.disable_ipv6=0"
+#    image: indralabs/indra-dev:latest
+#    container_name: indra-peer0
+#    volumes:
+#      - peer0_gopath:/go
+#      - ./../../:/indra
+#    networks:
+#      indranet:
+#    depends_on:
+#      - seed0
+#      - seed1
+#      - seed2
+#    expose:
+#      - 62134
+#      - 62135
+#    environment:
+#      #INDRA_SERVE_SEED: "/dns4/seed0/tcp/62134/p2p/16Uiu2HAm2LgowPNBM47dR6gSJmEeQaqCZ6u4WPhTCSWkxyNrfAxo"
+#      INDRA_SERVE_LISTEN: "/ip4/0.0.0.0/tcp/62134,/ip6/::/tcp/62134"
+#    command:
+#      - "serve"
+#  peer1:
+#    sysctls:
+#      - "net.ipv6.conf.all.disable_ipv6=0"
+#    image: indralabs/indra-dev:latest
+#    container_name: indra-peer1
+#    volumes:
+#      - peer1_gopath:/go
+#      - ./../../:/indra
+#    networks:
+#      indranet:
+#    depends_on:
+#      - seed0
+#      - seed1
+#      - seed2
+#    expose:
+#      - 62134
+#      - 62135
+#    environment:
+#      #INDRA_SERVE_SEED: "/dns4/seed0/tcp/62134/p2p/16Uiu2HAm2LgowPNBM47dR6gSJmEeQaqCZ6u4WPhTCSWkxyNrfAxo"
+#      INDRA_SERVE_LISTEN: "/ip4/0.0.0.0/tcp/62134,/ip6/::/tcp/62134"
+#    command:
+#      - "serve"
+#  peer2:
+#    sysctls:
+#      - "net.ipv6.conf.all.disable_ipv6=0"
+#    image: indralabs/indra-dev:latest
+#    container_name: indra-peer2
+#    volumes:
+#      - peer1_gopath:/go
+#      - ./../../:/indra
+#    networks:
+#      indranet:
+#    depends_on:
+#      - seed0
+#      - seed1
+#      - seed2
+#    #expose:
+#    #  - 62134
+#    #  - 62135
+#    environment:
+#      #INDRA_SERVE_SEED: "/dns4/seed0/tcp/62134/p2p/16Uiu2HAm2LgowPNBM47dR6gSJmEeQaqCZ6u4WPhTCSWkxyNrfAxo"
+#      INDRA_SERVE_LISTEN: "/ip4/127.0.0.1/tcp/62134,/ip6/::1/tcp/62134"
+#    command:
+#      - "serve"
 volumes:
   btcd_config:
   btcd_data:
