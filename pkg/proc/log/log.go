@@ -65,6 +65,28 @@ func GetLevelName(ll LogLevel) string {
 	return strings.TrimSpace(LvlStr[ll])
 }
 
+var lvlStrs = map[string]LogLevel{
+	"off":   Off,
+	"fatal": Fatal,
+	"error": Error,
+	"check": Check,
+	"warn":  Warn,
+	"info":  Info,
+	"debug": Debug,
+	"trace": Trace,
+}
+
+func GetLevelByString(lvl string, def LogLevel) (ll LogLevel) {
+
+	var exists bool
+
+	if ll, exists = lvlStrs[lvl]; !exists {
+		return def
+	}
+
+	return ll
+}
+
 type (
 	// Println prints lists of interfaces with spaces in between
 	Println func(a ...interface{})
@@ -195,6 +217,13 @@ func StopLogToFile() (err error) {
 		file = nil
 	}
 	return
+}
+
+func GetLogLevel() LogLevel {
+	writerMx.Lock()
+	defer writerMx.Unlock()
+
+	return logLevel
 }
 
 func SetLogLevel(l LogLevel) {
