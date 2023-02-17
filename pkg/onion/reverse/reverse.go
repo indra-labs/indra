@@ -13,7 +13,8 @@ import (
 
 const (
 	MagicString = "rv"
-	Len         = magicbytes.Len + 1 + net.IPv6len + 2
+	AddrLen     = net.IPv6len + 3
+	Len         = magicbytes.Len + 1 + AddrLen
 )
 
 var (
@@ -46,15 +47,15 @@ func (x *Layer) Encode(b slice.Bytes, c *slice.Cursor) {
 		return
 	}
 	b[*c] = byte(len(ap))
-	copy(b[c.Inc(1):c.Inc(Len-magicbytes.Len-1)], ap)
+	copy(b[c.Inc(1):c.Inc(AddrLen)], ap)
 	x.Onion.Encode(b, c)
 }
 func (x *Layer) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
-	if len(b[*c:]) < Len-magicbytes.Len {
-		return magicbytes.TooShort(len(b[*c:]), Len-magicbytes.Len, string(Magic))
+	if len(b[*c:]) < AddrLen {
+		return magicbytes.TooShort(len(b[*c:]), AddrLen, string(Magic))
 	}
 	apLen := b[*c]
-	apBytes := b[c.Inc(1):c.Inc(Len-magicbytes.Len-1)]
+	apBytes := b[c.Inc(1):c.Inc(AddrLen)]
 	x.AddrPort = &netip.AddrPort{}
 	if e = x.AddrPort.UnmarshalBinary(apBytes[:apLen]); check(e) {
 		return
