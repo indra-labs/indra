@@ -4,17 +4,16 @@ import (
 	"fmt"
 	"reflect"
 	
-	"git-indra.lan/indra-labs/indra/pkg/onion"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/balance"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/confirm"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/crypt"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/delay"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/exit"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/forward"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/getbalance"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/response"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/reverse"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/session"
+	"git-indra.lan/indra-labs/indra/pkg/onion/balance"
+	"git-indra.lan/indra-labs/indra/pkg/onion/confirm"
+	"git-indra.lan/indra-labs/indra/pkg/onion/crypt"
+	"git-indra.lan/indra-labs/indra/pkg/onion/delay"
+	"git-indra.lan/indra-labs/indra/pkg/onion/exit"
+	"git-indra.lan/indra-labs/indra/pkg/onion/forward"
+	"git-indra.lan/indra-labs/indra/pkg/onion/getbalance"
+	"git-indra.lan/indra-labs/indra/pkg/onion/response"
+	"git-indra.lan/indra-labs/indra/pkg/onion/reverse"
+	"git-indra.lan/indra-labs/indra/pkg/onion/session"
 	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -85,7 +84,7 @@ func (eng *Engine) handleMessage(b slice.Bytes, prev types.Onion) {
 	var on1 types.Onion
 	var e error
 	c := slice.NewCursor()
-	if on1, e = onion.Peel(b, c); check(e) {
+	if on1, e = Peel(b, c); check(e) {
 		return
 	}
 	switch on := on1.(type) {

@@ -3,7 +3,7 @@ package relay
 import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/balance"
+	"git-indra.lan/indra-labs/indra/pkg/onion/balance"
 	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"

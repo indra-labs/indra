@@ -2,7 +2,6 @@ package relay
 
 import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/onion"
 	"git-indra.lan/indra-labs/indra/pkg/traffic"
 )
 
@@ -14,7 +13,7 @@ func (eng *Engine) SendGetBalance(target *traffic.Session, hook Callback) {
 	var c traffic.Circuit
 	copy(c[:], se)
 	confID := nonce.NewID()
-	o := onion.GetBalance(target.ID, confID, se[5], c, eng.KeySet)
+	o := GetBalance(target.ID, confID, se[5], c, eng.KeySet)
 	log.D.Ln("sending out getbalance onion")
 	res := eng.PostAcctOnion(o)
 	eng.SendWithOneHook(c[0].AddrPort, res, hook)

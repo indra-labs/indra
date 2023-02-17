@@ -2,10 +2,10 @@ package traffic
 
 import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/session"
+	"git-indra.lan/indra-labs/indra/pkg/onion/session"
 )
 
 type Payment struct {
@@ -20,7 +20,7 @@ type PaymentChan chan *Payment
 // Send a payment on the PaymentChan.
 func (pc PaymentChan) Send(amount lnwire.MilliSatoshi,
 	s *session.Layer) (confirmChan chan bool) {
-
+	
 	confirmChan = make(chan bool)
 	pc <- &Payment{
 		ID:          s.ID,
@@ -77,7 +77,7 @@ func (p PendingPayments) FindPreimage(pi sha256.Hash) (pp *Payment) {
 
 func (sm *SessionManager) AddPendingPayment(
 	np *Payment) {
-
+	
 	sm.Lock()
 	defer sm.Unlock()
 	log.D.F("%s adding pending payment %s for %v",
@@ -87,21 +87,21 @@ func (sm *SessionManager) AddPendingPayment(
 }
 func (sm *SessionManager) DeletePendingPayment(
 	preimage sha256.Hash) {
-
+	
 	sm.Lock()
 	defer sm.Unlock()
 	sm.PendingPayments = sm.PendingPayments.Delete(preimage)
 }
 func (sm *SessionManager) FindPendingPayment(
 	id nonce.ID) (pp *Payment) {
-
+	
 	sm.Lock()
 	defer sm.Unlock()
 	return sm.PendingPayments.Find(id)
 }
 func (sm *SessionManager) FindPendingPreimage(
 	pi sha256.Hash) (pp *Payment) {
-
+	
 	log.T.F("searching preimage %x", pi)
 	sm.Lock()
 	defer sm.Unlock()

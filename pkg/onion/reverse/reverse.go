@@ -5,7 +5,7 @@ import (
 	"net/netip"
 	
 	"git-indra.lan/indra-labs/indra"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/magicbytes"
+	"git-indra.lan/indra-labs/indra/pkg/onion/magicbytes"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"

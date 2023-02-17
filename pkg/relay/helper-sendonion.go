@@ -7,25 +7,24 @@ import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/onion"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/balance"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/confirm"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/crypt"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/exit"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/forward"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/getbalance"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/reverse"
+	"git-indra.lan/indra-labs/indra/pkg/onion/balance"
+	"git-indra.lan/indra-labs/indra/pkg/onion/confirm"
+	"git-indra.lan/indra-labs/indra/pkg/onion/crypt"
+	"git-indra.lan/indra-labs/indra/pkg/onion/exit"
+	"git-indra.lan/indra-labs/indra/pkg/onion/forward"
+	"git-indra.lan/indra-labs/indra/pkg/onion/getbalance"
+	"git-indra.lan/indra-labs/indra/pkg/onion/reverse"
 	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
-func (eng *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
+func (eng *Engine) SendOnion(ap *netip.AddrPort, o Skins,
 	responseHook func(id nonce.ID, b slice.Bytes), timeout time.Duration) {
 	
 	if timeout == 0 {
 		timeout = DefaultTimeout
 	}
-	b := onion.Encode(o.Assemble())
+	b := Encode(o.Assemble())
 	var billable []nonce.ID
 	var ret nonce.ID
 	var last nonce.ID

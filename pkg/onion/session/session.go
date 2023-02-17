@@ -5,8 +5,8 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/magicbytes"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/noop"
+	"git-indra.lan/indra-labs/indra/pkg/onion/magicbytes"
+	"git-indra.lan/indra-labs/indra/pkg/onion/noop"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -59,7 +59,7 @@ func New(hop byte) (x *Layer) {
 	if pldPrv, e = prv.GenerateKey(); check(e) {
 		return
 	}
-
+	
 	return &Layer{
 		ID:      nonce.NewID(),
 		Hop:     hop,

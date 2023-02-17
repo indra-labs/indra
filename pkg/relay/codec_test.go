@@ -1,4 +1,4 @@
-package onion
+package relay
 
 import (
 	"math/rand"
@@ -12,14 +12,14 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/confirm"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/crypt"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/delay"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/exit"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/forward"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/response"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/reverse"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/session"
+	"git-indra.lan/indra-labs/indra/pkg/onion/confirm"
+	"git-indra.lan/indra-labs/indra/pkg/onion/crypt"
+	"git-indra.lan/indra-labs/indra/pkg/onion/delay"
+	"git-indra.lan/indra-labs/indra/pkg/onion/exit"
+	"git-indra.lan/indra-labs/indra/pkg/onion/forward"
+	"git-indra.lan/indra-labs/indra/pkg/onion/response"
+	"git-indra.lan/indra-labs/indra/pkg/onion/reverse"
+	"git-indra.lan/indra-labs/indra/pkg/onion/session"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 	"git-indra.lan/indra-labs/indra/pkg/util/tests"

@@ -3,10 +3,9 @@ package relay
 import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	
-	"git-indra.lan/indra-labs/indra/pkg/onion"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/balance"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/crypt"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/getbalance"
+	"git-indra.lan/indra-labs/indra/pkg/onion/balance"
+	"git-indra.lan/indra-labs/indra/pkg/onion/crypt"
+	"git-indra.lan/indra-labs/indra/pkg/onion/getbalance"
 	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -37,7 +36,7 @@ func (eng *Engine) getBalance(on *getbalance.Layer,
 	}
 	header := b[*c:c.Inc(crypt.ReverseHeaderLen)]
 	rb := FormatReply(header,
-		onion.Encode(bal), on.Ciphers, on.Nonces)
+		Encode(bal), on.Ciphers, on.Nonces)
 	rb = append(rb, slice.NoisePad(714-len(rb))...)
 	switch on1 := prev.(type) {
 	case *crypt.Layer:
@@ -63,7 +62,7 @@ func (eng *Engine) getBalance(on *getbalance.Layer,
 		return false
 	})
 	rb = FormatReply(header,
-		onion.Encode(bal), on.Ciphers, on.Nonces)
+		Encode(bal), on.Ciphers, on.Nonces)
 	rb = append(rb, slice.NoisePad(714-len(rb))...)
 	eng.handleMessage(rb, on)
 }

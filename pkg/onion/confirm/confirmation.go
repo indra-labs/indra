@@ -1,16 +1,16 @@
-package dxresponse
+package confirm
 
 import (
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/magicbytes"
+	"git-indra.lan/indra-labs/indra/pkg/onion/magicbytes"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 const (
-	MagicString = "dr"
+	MagicString = "cn"
 	Len         = magicbytes.Len + nonce.IDLen + 1
 )
 
@@ -38,6 +38,7 @@ type Layer struct {
 	Load byte
 }
 
+//
 // func (x *Layer) String() string {
 // 	return fmt.Sprintf("\n\tnonce: %x\n",
 // 		x.ID)

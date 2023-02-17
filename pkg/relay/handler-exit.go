@@ -6,10 +6,9 @@ import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
-	"git-indra.lan/indra-labs/indra/pkg/onion"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/crypt"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/exit"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/response"
+	"git-indra.lan/indra-labs/indra/pkg/onion/crypt"
+	"git-indra.lan/indra-labs/indra/pkg/onion/exit"
+	"git-indra.lan/indra-labs/indra/pkg/onion/response"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -34,7 +33,7 @@ func (eng *Engine) exit(ex *exit.Layer, b slice.Bytes,
 	}
 	// We need to wrap the result in a message crypt.
 	eng.Lock()
-	res := onion.Encode(&response.Layer{
+	res := Encode(&response.Layer{
 		ID:    ex.ID,
 		Port:  ex.Port,
 		Load:  eng.Load,

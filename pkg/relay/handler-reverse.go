@@ -4,9 +4,8 @@ import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
-	"git-indra.lan/indra-labs/indra/pkg/onion"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/crypt"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/reverse"
+	"git-indra.lan/indra-labs/indra/pkg/onion/crypt"
+	"git-indra.lan/indra-labs/indra/pkg/onion/reverse"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -17,7 +16,7 @@ func (eng *Engine) reverse(on *reverse.Layer, b slice.Bytes,
 	var e error
 	var on2 types.Onion
 	if on.AddrPort.String() == eng.GetLocalNodeAddress().String() {
-		if on2, e = onion.Peel(b, c); check(e) {
+		if on2, e = Peel(b, c); check(e) {
 			return
 		}
 		switch on1 := on2.(type) {

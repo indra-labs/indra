@@ -6,8 +6,7 @@ import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/onion"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/session"
+	"git-indra.lan/indra-labs/indra/pkg/onion/session"
 	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -79,7 +78,7 @@ func (eng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 		}
 	}
 	// todo: handle payment failures!
-	o := onion.SendKeys(conf, s, returnSession, nodes[:], eng.KeySet)
+	o := SendKeys(conf, s, returnSession, nodes[:], eng.KeySet)
 	res := eng.PostAcctOnion(o)
 	eng.SendWithOneHook(nodes[0].AddrPort, res, func(id nonce.ID, b slice.Bytes) {
 		eng.SessionManager.Lock()

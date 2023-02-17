@@ -1,4 +1,4 @@
-package onion
+package relay
 
 import (
 	"net/netip"
@@ -9,17 +9,17 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/balance"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/confirm"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/crypt"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/delay"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/exit"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/forward"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/getbalance"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/noop"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/response"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/reverse"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/session"
+	"git-indra.lan/indra-labs/indra/pkg/onion/balance"
+	"git-indra.lan/indra-labs/indra/pkg/onion/confirm"
+	"git-indra.lan/indra-labs/indra/pkg/onion/crypt"
+	"git-indra.lan/indra-labs/indra/pkg/onion/delay"
+	"git-indra.lan/indra-labs/indra/pkg/onion/exit"
+	"git-indra.lan/indra-labs/indra/pkg/onion/forward"
+	"git-indra.lan/indra-labs/indra/pkg/onion/getbalance"
+	"git-indra.lan/indra-labs/indra/pkg/onion/noop"
+	"git-indra.lan/indra-labs/indra/pkg/onion/response"
+	"git-indra.lan/indra-labs/indra/pkg/onion/reverse"
+	"git-indra.lan/indra-labs/indra/pkg/onion/session"
 	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -27,7 +27,7 @@ import (
 
 type Skins []types.Onion
 
-var os = &noop.Layer{}
+var nop = &noop.Layer{}
 
 func (o Skins) ForwardCrypt(s *traffic.Session, k *prv.Key,
 	n nonce.IV) Skins {
@@ -64,7 +64,7 @@ func (o Skins) Confirmation(id nonce.ID, load byte) Skins {
 }
 
 func (o Skins) Delay(d time.Duration) Skins {
-	return append(o, &delay.Layer{Duration: d, Onion: os})
+	return append(o, &delay.Layer{Duration: d, Onion: nop})
 }
 
 func (o Skins) Exit(port uint16, prvs [3]*prv.Key, pubs [3]*pub.Key,
@@ -76,7 +76,7 @@ func (o Skins) Exit(port uint16, prvs [3]*prv.Key, pubs [3]*pub.Key,
 		Nonces:  nonces,
 		ID:      id,
 		Bytes:   payload,
-		Onion:   os,
+		Onion:   nop,
 	})
 }
 
@@ -96,7 +96,7 @@ func (o Skins) GetBalance(id, confID nonce.ID, prvs [3]*prv.Key,
 		ConfID:  confID,
 		Ciphers: GenCiphers(prvs, pubs),
 		Nonces:  nonces,
-		Onion:   os,
+		Onion:   nop,
 	})
 }
 
@@ -109,12 +109,12 @@ func (o Skins) Crypt(toHdr, toPld *pub.Key, from *prv.Key, n nonce.IV,
 		ToPayloadPub: toPld,
 		From:         from,
 		Nonce:        n,
-		Onion:        os,
+		Onion:        nop,
 	})
 }
 
 func (o Skins) Reverse(ip *netip.AddrPort) Skins {
-	return append(o, &reverse.Layer{AddrPort: ip, Onion: os})
+	return append(o, &reverse.Layer{AddrPort: ip, Onion: nop})
 }
 
 func (o Skins) Response(id nonce.ID, res slice.Bytes, port uint16) Skins {

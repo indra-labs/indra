@@ -1,36 +1,29 @@
-package onion
+package relay
 
 import (
 	"fmt"
 	
 	"github.com/davecgh/go-spew/spew"
 	
-	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/ecdh"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/balance"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/confirm"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/crypt"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/delay"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/dxresponse"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/exit"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/forward"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/getbalance"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/magicbytes"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/response"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/reverse"
-	"git-indra.lan/indra-labs/indra/pkg/onion/layers/session"
-	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"git-indra.lan/indra-labs/indra/pkg/onion/balance"
+	"git-indra.lan/indra-labs/indra/pkg/onion/confirm"
+	"git-indra.lan/indra-labs/indra/pkg/onion/crypt"
+	"git-indra.lan/indra-labs/indra/pkg/onion/delay"
+	"git-indra.lan/indra-labs/indra/pkg/onion/dxresponse"
+	"git-indra.lan/indra-labs/indra/pkg/onion/exit"
+	"git-indra.lan/indra-labs/indra/pkg/onion/forward"
+	"git-indra.lan/indra-labs/indra/pkg/onion/getbalance"
+	"git-indra.lan/indra-labs/indra/pkg/onion/magicbytes"
+	"git-indra.lan/indra-labs/indra/pkg/onion/response"
+	"git-indra.lan/indra-labs/indra/pkg/onion/reverse"
+	"git-indra.lan/indra-labs/indra/pkg/onion/session"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
-)
-
-var (
-	log   = log2.GetLogger(indra.PathBase)
-	check = log.E.Chk
 )
 
 func Encode(on types.Onion) (b slice.Bytes) {
