@@ -3,6 +3,7 @@ package introducer
 import (
 	"context"
 	"errors"
+	record "github.com/libp2p/go-libp2p-record"
 	"sync"
 
 	dht "github.com/libp2p/go-libp2p-kad-dht"
@@ -73,7 +74,7 @@ func Bootstrap(ctx context.Context, host host.Host, seeds []multiaddr.Multiaddr)
 		dht.BootstrapPeers(bootstrapPeers...),
 		dht.DisableValues(),
 		dht.DisableProviders(),
-		// dht.Validator(),
+		dht.Validator(record.PublicKeyValidator{}),
 	}
 
 	if kadht, err = dht.New(ctx, h, options...); check(err) {
