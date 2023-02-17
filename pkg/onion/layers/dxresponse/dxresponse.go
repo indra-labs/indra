@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	MagicString = "cn"
-	Len         = magicbytes.Len + nonce.IDLen
+	MagicString = "dr"
+	Len         = magicbytes.Len + nonce.IDLen + 1
 )
 
 var (

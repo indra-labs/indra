@@ -4,14 +4,11 @@ import (
 	"fmt"
 	"reflect"
 	
-	"github.com/davecgh/go-spew/spew"
-	
 	"git-indra.lan/indra-labs/indra/pkg/onion"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/balance"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/confirm"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/crypt"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/delay"
-	diag "git-indra.lan/indra-labs/indra/pkg/onion/layers/diagnostic"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/exit"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/forward"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/getbalance"
@@ -84,13 +81,15 @@ func (eng *Engine) handler() (out bool) {
 
 func (eng *Engine) handleMessage(b slice.Bytes, prev types.Onion) {
 	log.T.F("%v handling received message", eng.GetLocalNodeAddress())
-	var on types.Onion
+	log.T.S(prev == nil, b.ToBytes())
+	var on1 types.Onion
 	var e error
 	c := slice.NewCursor()
-	if on, e = onion.Peel(b, c); check(e) {
+	if on1, e = onion.Peel(b, c); check(e) {
 		return
 	}
-	switch on := on.(type) {
+	log.D.S(on1)
+	switch on := on1.(type) {
 	case *balance.Layer:
 		log.T.C(recLog(on, b, eng))
 		eng.balance(on, b, c, prev)
@@ -103,9 +102,6 @@ func (eng *Engine) handleMessage(b slice.Bytes, prev types.Onion) {
 	case *delay.Layer:
 		log.T.C(recLog(on, b, eng))
 		eng.delay(on, b, c, prev)
-	case *diag.Layer:
-		log.T.C(recLog(on, b, eng))
-		eng.diag(on, b, c, prev)
 	case *exit.Layer:
 		log.T.C(recLog(on, b, eng))
 		eng.exit(on, b, c, prev)
@@ -136,6 +132,7 @@ func recLog(on types.Onion, b slice.Bytes, cl *Engine) func() string {
 		return cl.GetLocalNodeAddress().String() +
 			" received " +
 			fmt.Sprint(reflect.TypeOf(on)) + "\n" +
-			spew.Sdump(b.ToBytes())
+			""
+		// spew.Sdump(b.ToBytes())
 	}
 }

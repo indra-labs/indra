@@ -1,6 +1,8 @@
 package relay
 
 import (
+	"time"
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -11,7 +13,7 @@ func (pr *PendingResponse) HandleTimeout(eng *Engine) func() {
 	return func() {
 		log.D.Ln("response timeout")
 		var c traffic.Circuit
-		for i := range pr.Billable {
+		for i := range c {
 			c[i] = eng.FindSession(pr.Billable[i])
 		}
 		log.D.Ln(c)
@@ -23,9 +25,16 @@ func (pr *PendingResponse) HandleTimeout(eng *Engine) func() {
 		for i := range nodes {
 			nodeIDs[i] = nodes[i].ID
 		}
-		hooks := make([]func(id nonce.ID, b slice.Bytes), len(c))
+		var confirmed [5]bool
+		hooks := make([]Callback, len(c))
 		for i := range hooks {
-			_ = i
+			hooks[i] = func(id nonce.ID, b slice.Bytes) {
+				log.D.Ln("hop", i, "made it")
+				confirmed[i] = true
+			}
 		}
+		log.D.Ln("sending diagnostic message")
+		time.Sleep(time.Second * 2)
+		log.I.S(confirmed)
 	}
 }

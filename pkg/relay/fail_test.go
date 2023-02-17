@@ -23,7 +23,7 @@ func TestClient_ExitTxFailureDiagnostics(t *testing.T) {
 	log2.SetLogLevel(log2.Info)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuits(false, 10, 3); check(e) {
+	if clients, e = CreateNMockCircuits(false, 10, 10); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -78,7 +78,7 @@ func TestClient_ExitTxFailureDiagnostics(t *testing.T) {
 		}
 	}
 	log.I.Ln("starting fail test")
-	log2.SetLogLevel(log2.Debug)
+	log2.SetLogLevel(log2.Trace)
 	// Now we will disable each of the nodes one by one and run a discovery
 	// process to find the "failed" node.
 	for _, v := range peers {
@@ -121,9 +121,9 @@ func TestClient_ExitTxFailureDiagnostics(t *testing.T) {
 		failClient.Pause.Signal()
 		cl.SendExitNew(c, o, func(idd nonce.ID,
 			b slice.Bytes) {
-			log.D.Ln("this shouldn't print!")
+			log.D.Ln("this probably won't print!")
 		}, 0)
-		if failHop < 3 {
+		if failHop > 2 {
 			log.D.Ln("listening for message")
 			bb := <-clients[3].ReceiveToLocalNode(port)
 			log.T.S(bb.ToBytes())

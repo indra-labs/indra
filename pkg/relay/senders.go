@@ -37,7 +37,7 @@ func (eng *Engine) SendWithHooks(
 	res SendData,
 	timeout time.Duration,
 	ids []nonce.ID,
-	responseHooks []func(id nonce.ID, b slice.Bytes),
+	responseHooks []Callback,
 ) {
 	if len(responseHooks) != len(ids) {
 		panic("programmer error, " +

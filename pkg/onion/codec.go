@@ -15,6 +15,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/confirm"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/crypt"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/delay"
+	"git-indra.lan/indra-labs/indra/pkg/onion/layers/dxresponse"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/exit"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/forward"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/getbalance"
@@ -60,6 +61,11 @@ func Peel(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 		on = &o
 	case delay.MagicString:
 		on = &delay.Layer{}
+		if e = on.Decode(b, c); check(e) {
+			return
+		}
+	case dxresponse.MagicString:
+		on = &dxresponse.Layer{}
 		if e = on.Decode(b, c); check(e) {
 			return
 		}

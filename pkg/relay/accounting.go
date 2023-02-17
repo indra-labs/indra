@@ -63,7 +63,7 @@ func (p *PendingResponses) Add(id nonce.ID, sentSize int, s traffic.Sessions,
 		Success:  qu.T(),
 	}
 	p.responses = append(p.responses, r)
-	alarm.WakeAtTime(r.Time.Add(timeout), r.HandleTimeout(eng), r.Success)
+	alarm.WakeAtTime(r.Time.Add(time.Second), r.HandleTimeout(eng), r.Success)
 }
 
 func (p *PendingResponses) FindOlder(t time.Time) (r []*PendingResponse) {
