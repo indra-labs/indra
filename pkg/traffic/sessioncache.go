@@ -34,6 +34,5 @@ func (sc SessionCache) Add(s *Session) SessionCache {
 		return sc
 	}
 	sc[s.Node.ID][s.Hop] = s
-	log.D.S(sc[s.Node.ID])
 	return sc
 }

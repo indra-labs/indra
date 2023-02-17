@@ -15,5 +15,5 @@ func (eng *Engine) SendPing(c traffic.Circuit, hook Callback) {
 	confID := nonce.NewID()
 	o := onion.Ping(confID, se[len(se)-1], c, eng.KeySet)
 	res := eng.PostAcctOnion(o)
-	eng.SendWithOneHook(c[0].AddrPort, res, 0, hook)
+	eng.SendWithOneHook(c[0].AddrPort, res, hook)
 }

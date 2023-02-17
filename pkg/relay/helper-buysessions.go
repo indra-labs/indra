@@ -81,22 +81,21 @@ func (eng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 	// todo: handle payment failures!
 	o := onion.SendKeys(conf, s, returnSession, nodes[:], eng.KeySet)
 	res := eng.PostAcctOnion(o)
-	eng.SendWithOneHook(nodes[0].AddrPort, res, 0,
-		func(id nonce.ID, b slice.Bytes) {
-			eng.SessionManager.Lock()
-			defer eng.SessionManager.Unlock()
-			var sessions [5]*traffic.Session
-			for i := range nodes {
-				log.D.F("confirming and storing session at hop %d %s for %s with"+
-					" %v initial"+
-					" balance", i, s[i].ID, nodes[i].AddrPort.String(), amount)
-				sessions[i] = traffic.NewSession(s[i].ID, nodes[i], amount,
-					s[i].Header, s[i].Payload, byte(i))
-				eng.SessionManager.Add(sessions[i])
-				eng.Sessions = append(eng.Sessions, sessions[i])
-				eng.SessionManager.PendingPayments.Delete(s[i].PreimageHash())
-			}
-			hook()
-		})
+	eng.SendWithOneHook(nodes[0].AddrPort, res, func(id nonce.ID, b slice.Bytes) {
+		eng.SessionManager.Lock()
+		defer eng.SessionManager.Unlock()
+		var sessions [5]*traffic.Session
+		for i := range nodes {
+			log.D.F("confirming and storing session at hop %d %s for %s with"+
+				" %v initial"+
+				" balance", i, s[i].ID, nodes[i].AddrPort.String(), amount)
+			sessions[i] = traffic.NewSession(s[i].ID, nodes[i], amount,
+				s[i].Header, s[i].Payload, byte(i))
+			eng.SessionManager.Add(sessions[i])
+			eng.Sessions = append(eng.Sessions, sessions[i])
+			eng.SessionManager.PendingPayments.Delete(s[i].PreimageHash())
+		}
+		hook()
+	})
 	return
 }

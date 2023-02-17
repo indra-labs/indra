@@ -99,8 +99,7 @@ func (eng *Engine) SendOnion(ap *netip.AddrPort, o onion.Skins,
 			log.D.Ln("nil response hook")
 		}
 	}
-	eng.PendingResponses.Add(last, len(b), sessions, billable, ret, port,
-		responseHook, postAcct, timeout, eng)
+	eng.PendingResponses.Add(last, len(b), sessions, billable, ret, port, responseHook, postAcct)
 	log.T.Ln("sending out onion")
 	eng.Send(ap, b)
 }

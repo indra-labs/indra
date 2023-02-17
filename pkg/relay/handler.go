@@ -88,7 +88,6 @@ func (eng *Engine) handleMessage(b slice.Bytes, prev types.Onion) {
 	if on1, e = onion.Peel(b, c); check(e) {
 		return
 	}
-	log.D.S(on1)
 	switch on := on1.(type) {
 	case *balance.Layer:
 		log.T.C(recLog(on, b, eng))
