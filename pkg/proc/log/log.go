@@ -77,13 +77,13 @@ var lvlStrs = map[string]LogLevel{
 }
 
 func GetLevelByString(lvl string, def LogLevel) (ll LogLevel) {
-
+	
 	var exists bool
-
+	
 	if ll, exists = lvlStrs[lvl]; !exists {
 		return def
 	}
-
+	
 	return ll
 }
 
@@ -217,13 +217,6 @@ func StopLogToFile() (err error) {
 		file = nil
 	}
 	return
-}
-
-func GetLogLevel() LogLevel {
-	writerMx.Lock()
-	defer writerMx.Unlock()
-
-	return logLevel
 }
 
 func SetLogLevel(l LogLevel) {

@@ -44,5 +44,5 @@ func (eng *Engine) SendExitNew(c traffic.Circuit,
 	
 	log.D.Ln("sending out exit onion")
 	res := eng.PostAcctOnion(o)
-	eng.SendWithOneHook(c[0].AddrPort, res, 0, hook)
+	eng.SendWithOneHook(c[0].AddrPort, res, timeout, hook)
 }

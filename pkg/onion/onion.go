@@ -23,7 +23,7 @@ func Ping(id nonce.ID, client *traffic.Session, s traffic.Circuit,
 	
 	n := GenPingNonces()
 	return Skins{}.
-		Crypt(s[0].HeaderPub, nil, ks.Next(), n[0], 0, 0).
+		Crypt(s[0].HeaderPub, nil, ks.Next(), n[0], 0).
 		ForwardCrypt(s[1], ks.Next(), n[1]).
 		ForwardCrypt(s[2], ks.Next(), n[2]).
 		ForwardCrypt(s[3], ks.Next(), n[3]).
@@ -64,13 +64,13 @@ func SendExit(port uint16, payload slice.Bytes, id nonce.ID,
 	pubs[1] = s[4].PayloadPub
 	pubs[2] = client.PayloadPub
 	return Skins{}.
-		ReverseCrypt(s[0], ks.Next(), n[0], 3, 3).
-		ReverseCrypt(s[1], ks.Next(), n[1], 2, 3).
-		ReverseCrypt(s[2], ks.Next(), n[2], 1, 3).
+		ReverseCrypt(s[0], ks.Next(), n[0], 3).
+		ReverseCrypt(s[1], ks.Next(), n[1], 2).
+		ReverseCrypt(s[2], ks.Next(), n[2], 1).
 		Exit(port, prvs, pubs, returnNonces, id, payload).
-		ReverseCrypt(s[3], prvs[0], n[3], 3, 3).
-		ReverseCrypt(s[4], prvs[1], n[4], 2, 3).
-		ReverseCrypt(client, prvs[2], n[5], 1, 3)
+		ReverseCrypt(s[3], prvs[0], n[3], 3).
+		ReverseCrypt(s[4], prvs[1], n[4], 2).
+		ReverseCrypt(client, prvs[2], n[5], 1)
 }
 
 // SendKeys provides a pair of private keys that will be used to generate the
@@ -129,13 +129,13 @@ func GetBalance(id, confID nonce.ID, client *traffic.Session,
 	pubs[1] = s[4].PayloadPub
 	pubs[2] = client.PayloadPub
 	return Skins{}.
-		ReverseCrypt(s[0], ks.Next(), n[0], 3, 3).
-		ReverseCrypt(s[1], ks.Next(), n[1], 2, 3).
-		ReverseCrypt(s[2], ks.Next(), n[2], 1, 3).
+		ReverseCrypt(s[0], ks.Next(), n[0], 3).
+		ReverseCrypt(s[1], ks.Next(), n[1], 2).
+		ReverseCrypt(s[2], ks.Next(), n[2], 1).
 		GetBalance(id, confID, prvs, pubs, retNonces).
-		ReverseCrypt(s[3], prvs[0], n[3], 0, 3).
-		ReverseCrypt(s[4], prvs[1], n[4], 0, 3).
-		ReverseCrypt(client, prvs[2], n[5], 0, 3)
+		ReverseCrypt(s[3], prvs[0], n[3], 0).
+		ReverseCrypt(s[4], prvs[1], n[4], 0).
+		ReverseCrypt(client, prvs[2], n[5], 0)
 }
 
 // Diagnostic creates a standard path diagnostics onion that at each hop a
@@ -165,9 +165,9 @@ func Diagnostic(s []*traffic.Session, ks *signer.KeySet) (o Skins) {
 		var nonces [3]nonce.IV
 		copy(nonces[:], n[i*4+1:i*4+3])
 		o = o.Diagnostic(prvs, pubs, nonces).
-			ReverseCrypt(s[i*4+1], prvs[0], n[i*4+1], 3, 3).
-			ReverseCrypt(s[i*4+2], prvs[0], n[i*4+2], 2, 3).
-			ReverseCrypt(s[i*4+3], prvs[0], n[i*4+3], 1, 3)
+			ReverseCrypt(s[i*4+1], prvs[0], n[i*4+1], 3).
+			ReverseCrypt(s[i*4+2], prvs[0], n[i*4+2], 2).
+			ReverseCrypt(s[i*4+3], prvs[0], n[i*4+3], 1)
 	}
 	return
 }

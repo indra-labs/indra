@@ -73,7 +73,7 @@ func TestClient_SendSessionKeys(t *testing.T) {
 }
 
 func TestClient_SendExit(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+	log2.SetLogLevel(log2.Trace)
 	var clients []*Engine
 	var e error
 	if clients, e = CreateNMockCircuits(true, 2, 2); check(e) {
