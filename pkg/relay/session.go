@@ -1,10 +1,10 @@
-package traffic
+package relay
 
 import (
 	"encoding/hex"
-
+	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -35,7 +35,7 @@ func NewSession(
 	pldPrv *prv.Key,
 	hop byte,
 ) (s *Session) {
-
+	
 	var e error
 	if hdrPrv == nil || pldPrv == nil {
 		if hdrPrv, e = prv.GenerateKey(); check(e) {

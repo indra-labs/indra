@@ -14,7 +14,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/onion/forward"
 	"git-indra.lan/indra-labs/indra/pkg/onion/getbalance"
 	"git-indra.lan/indra-labs/indra/pkg/onion/reverse"
-	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -30,7 +29,7 @@ func (eng *Engine) SendOnion(ap *netip.AddrPort, o Skins,
 	var last nonce.ID
 	var port uint16
 	var postAcct []func()
-	var sessions traffic.Sessions
+	var sessions Sessions
 	// do client accounting
 	skip := false
 	for i := range o {

@@ -1,4 +1,4 @@
-package traffic
+package relay
 
 import (
 	"sync"

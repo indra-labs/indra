@@ -4,7 +4,6 @@ import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	
 	"git-indra.lan/indra-labs/indra/pkg/onion/balance"
-	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -36,8 +35,8 @@ func (eng *Engine) balance(on *balance.Layer,
 				}
 			}
 		}
-		var se *traffic.Session
-		eng.IterateSessions(func(s *traffic.Session) bool {
+		var se *Session
+		eng.IterateSessions(func(s *Session) bool {
 			if s.ID == on.ID {
 				log.D.F("%s received balance %s for session %s %s was %s",
 					local,

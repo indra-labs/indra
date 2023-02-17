@@ -6,7 +6,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/onion/balance"
 	"git-indra.lan/indra-labs/indra/pkg/onion/crypt"
 	"git-indra.lan/indra-labs/indra/pkg/onion/getbalance"
-	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -17,7 +16,7 @@ func (eng *Engine) getBalance(on *getbalance.Layer,
 	log.T.S(on)
 	var found bool
 	var bal *balance.Layer
-	eng.IterateSessions(func(s *traffic.Session) bool {
+	eng.IterateSessions(func(s *Session) bool {
 		if s.ID == on.ID {
 			bal = &balance.Layer{
 				ID:           on.ID,
@@ -49,7 +48,7 @@ func (eng *Engine) getBalance(on *getbalance.Layer,
 			eng.DecSession(sess.ID, in+out, false, "getbalance")
 		}
 	}
-	eng.IterateSessions(func(s *traffic.Session) bool {
+	eng.IterateSessions(func(s *Session) bool {
 		if s.ID == on.ID {
 			bal = &balance.Layer{
 				ID:           on.ID,

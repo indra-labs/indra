@@ -11,13 +11,12 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/onion/forward"
 	"git-indra.lan/indra-labs/indra/pkg/onion/getbalance"
 	"git-indra.lan/indra-labs/indra/pkg/onion/reverse"
-	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 type SendData struct {
 	b         slice.Bytes
-	sessions  traffic.Sessions
+	sessions  Sessions
 	billable  []nonce.ID
 	ret, last nonce.ID
 	port      uint16

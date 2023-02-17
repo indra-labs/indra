@@ -6,7 +6,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/onion/session"
-	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -18,7 +17,7 @@ import (
 // an increment of their liveness score. By using this scheme, when nodes are
 // offline their scores will fall to zero after a time whereas live nodes will
 // have steadily increasing scores from successful pings.
-func Ping(id nonce.ID, client *traffic.Session, s traffic.Circuit,
+func Ping(id nonce.ID, client *Session, s Circuit,
 	ks *signer.KeySet) Skins {
 	
 	n := GenPingNonces()
@@ -50,7 +49,7 @@ func Ping(id nonce.ID, client *traffic.Session, s traffic.Circuit,
 // their section at the top, moves the next crypt header to the top and pads the
 // remainder with noise, so it always looks like the first hop.
 func SendExit(port uint16, payload slice.Bytes, id nonce.ID,
-	client *traffic.Session, s traffic.Circuit, ks *signer.KeySet) Skins {
+	client *Session, s Circuit, ks *signer.KeySet) Skins {
 	
 	var prvs [3]*prv.Key
 	for i := range prvs {
@@ -96,7 +95,7 @@ func SendExit(port uint16, payload slice.Bytes, id nonce.ID,
 // set of sessions. This is by way of indicating to not use the IdentityPub but
 // the HeaderPub instead. Not allowing free relay at all prevents spam attacks.
 func SendKeys(id nonce.ID, s [5]*session.Layer,
-	client *traffic.Session, hop []*traffic.Node, ks *signer.KeySet) Skins {
+	client *Session, hop []*Node, ks *signer.KeySet) Skins {
 	
 	n := GenNonces(6)
 	sk := Skins{}
@@ -114,8 +113,8 @@ func SendKeys(id nonce.ID, s [5]*session.Layer,
 
 // GetBalance sends out a request in a similar way to SendExit except the node
 // being queried can be any of the 5.
-func GetBalance(id, confID nonce.ID, client *traffic.Session,
-	s traffic.Circuit, ks *signer.KeySet) Skins {
+func GetBalance(id, confID nonce.ID, client *Session,
+	s Circuit, ks *signer.KeySet) Skins {
 	
 	var prvs [3]*prv.Key
 	for i := range prvs {

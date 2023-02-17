@@ -20,7 +20,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/onion/response"
 	"git-indra.lan/indra-labs/indra/pkg/onion/reverse"
 	"git-indra.lan/indra-labs/indra/pkg/onion/session"
-	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -29,19 +28,19 @@ type Skins []types.Onion
 
 var nop = &noop.Layer{}
 
-func (o Skins) ForwardCrypt(s *traffic.Session, k *prv.Key,
+func (o Skins) ForwardCrypt(s *Session, k *prv.Key,
 	n nonce.IV) Skins {
 	
 	return o.Forward(s.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, 0)
 }
 
-func (o Skins) ReverseCrypt(s *traffic.Session, k *prv.Key, n nonce.IV,
+func (o Skins) ReverseCrypt(s *Session, k *prv.Key, n nonce.IV,
 	seq int) Skins {
 	
 	return o.Reverse(s.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, seq)
 }
 
-func (o Skins) ForwardSession(s *traffic.Node,
+func (o Skins) ForwardSession(s *Node,
 	k *prv.Key, n nonce.IV, sess *session.Layer) Skins {
 	
 	return o.Forward(s.AddrPort).

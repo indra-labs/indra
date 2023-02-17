@@ -1,4 +1,4 @@
-package traffic
+package relay
 
 // SelectUnusedCircuit accepts an array of 5 Node entries where all or some are
 // empty and picks nodes for the remainder that do not have a hop at that

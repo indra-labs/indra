@@ -4,7 +4,6 @@ import (
 	"net/netip"
 	"runtime"
 	
-	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -13,7 +12,7 @@ func (eng *Engine) Send(addr *netip.AddrPort, b slice.Bytes) {
 	// first search if we already have the node available with connection
 	// open.
 	as := addr.String()
-	eng.ForEachNode(func(n *traffic.Node) bool {
+	eng.ForEachNode(func(n *Node) bool {
 		if as == n.AddrPort.String() {
 			n.Transport.Send(b)
 			_, f, l, _ := runtime.Caller(1)

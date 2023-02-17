@@ -4,19 +4,18 @@ import (
 	"time"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 func (eng *Engine) SendExit(port uint16, message slice.Bytes, id nonce.ID,
-	target *traffic.Session, hook func(id nonce.ID, b slice.Bytes),
+	target *Session, hook func(id nonce.ID, b slice.Bytes),
 	timeout time.Duration) {
 	
 	hops := []byte{0, 1, 2, 3, 4, 5}
-	s := make(traffic.Sessions, len(hops))
+	s := make(Sessions, len(hops))
 	s[2] = target
 	se := eng.SelectHops(hops, s)
-	var c traffic.Circuit
+	var c Circuit
 	copy(c[:], se)
 	o := SendExit(port, message, id, se[len(se)-1], c, eng.KeySet)
 	log.D.Ln("sending out exit onion")
@@ -25,11 +24,11 @@ func (eng *Engine) SendExit(port uint16, message slice.Bytes, id nonce.ID,
 }
 
 func (eng *Engine) MakeExit(port uint16, message slice.Bytes, id nonce.ID,
-	target *traffic.Session) (c traffic.Circuit,
+	target *Session) (c Circuit,
 	o Skins) {
 	
 	hops := []byte{0, 1, 2, 3, 4, 5}
-	s := make(traffic.Sessions, len(hops))
+	s := make(Sessions, len(hops))
 	s[2] = target
 	se := eng.SelectHops(hops, s)
 	copy(c[:], se)
@@ -37,7 +36,7 @@ func (eng *Engine) MakeExit(port uint16, message slice.Bytes, id nonce.ID,
 	return
 }
 
-func (eng *Engine) SendExitNew(c traffic.Circuit,
+func (eng *Engine) SendExitNew(c Circuit,
 	o Skins, hook func(id nonce.ID, b slice.Bytes),
 	timeout time.Duration) {
 	

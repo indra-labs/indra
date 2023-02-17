@@ -1,4 +1,4 @@
-package traffic
+package relay
 
 import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"

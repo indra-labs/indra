@@ -7,7 +7,6 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/onion/session"
-	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -18,7 +17,7 @@ import (
 func (eng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 	hook func()) (e error) {
 	
-	var nodes [5]*traffic.Node
+	var nodes [5]*Node
 	nodes = eng.SessionManager.SelectUnusedCircuit()
 	for i := range nodes {
 		if nodes[i] == nil {
@@ -27,7 +26,7 @@ func (eng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 		}
 	}
 	// Get a random return hop session (index 5).
-	var returnSession *traffic.Session
+	var returnSession *Session
 	returnHops := eng.SessionManager.GetSessionsAtHop(5)
 	if len(returnHops) > 1 {
 		cryptorand.Shuffle(len(returnHops), func(i, j int) {
@@ -83,12 +82,12 @@ func (eng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 	eng.SendWithOneHook(nodes[0].AddrPort, res, func(id nonce.ID, b slice.Bytes) {
 		eng.SessionManager.Lock()
 		defer eng.SessionManager.Unlock()
-		var sessions [5]*traffic.Session
+		var sessions [5]*Session
 		for i := range nodes {
 			log.D.F("confirming and storing session at hop %d %s for %s with"+
 				" %v initial"+
 				" balance", i, s[i].ID, nodes[i].AddrPort.String(), amount)
-			sessions[i] = traffic.NewSession(s[i].ID, nodes[i], amount,
+			sessions[i] = NewSession(s[i].ID, nodes[i], amount,
 				s[i].Header, s[i].Payload, byte(i))
 			eng.SessionManager.Add(sessions[i])
 			eng.Sessions = append(eng.Sessions, sessions[i])

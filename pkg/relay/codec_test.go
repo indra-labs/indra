@@ -26,7 +26,6 @@ import (
 )
 
 func TestOnionSkins_Cipher(t *testing.T) {
-	
 	var e error
 	sess := session.New(1)
 	on := Skins{}.
@@ -55,7 +54,6 @@ func TestOnionSkins_Cipher(t *testing.T) {
 }
 
 func TestOnionSkins_Confirmation(t *testing.T) {
-	
 	var e error
 	n := nonce.NewID()
 	on := Skins{}.
@@ -80,7 +78,6 @@ func TestOnionSkins_Confirmation(t *testing.T) {
 }
 
 func TestOnionSkins_Delay(t *testing.T) {
-	
 	var e error
 	del := time.Duration(rand.Uint64())
 	on := Skins{}.
@@ -105,7 +102,6 @@ func TestOnionSkins_Delay(t *testing.T) {
 }
 
 func TestOnionSkins_Exit(t *testing.T) {
-	
 	var e error
 	prvs, pubs := GetCipherSet(t)
 	ciphers := GenCiphers(prvs, pubs)
@@ -162,7 +158,6 @@ func TestOnionSkins_Exit(t *testing.T) {
 }
 
 func TestOnionSkins_Forward(t *testing.T) {
-	
 	var e error
 	ipSizes := []int{net.IPv4len, net.IPv6len}
 	for i := range ipSizes {
@@ -205,7 +200,6 @@ func TestOnionSkins_Forward(t *testing.T) {
 }
 
 func TestOnionSkins_Layer(t *testing.T) {
-	
 	var e error
 	n := nonce.NewID()
 	n1 := nonce.New()

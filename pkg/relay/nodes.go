@@ -1,11 +1,11 @@
-package traffic
+package relay
 
 import (
 	"fmt"
 	"net/netip"
-
+	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -44,7 +44,7 @@ func (sm *SessionManager) SetLocalNodeAddress(addr *netip.AddrPort) {
 
 func (sm *SessionManager) SendFromLocalNode(port uint16,
 	b slice.Bytes) (e error) {
-
+	
 	sm.Lock()
 	defer sm.Unlock()
 	return sm.GetLocalNode().SendTo(port, b)

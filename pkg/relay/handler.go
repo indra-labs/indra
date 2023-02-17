@@ -14,7 +14,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/onion/response"
 	"git-indra.lan/indra-labs/indra/pkg/onion/reverse"
 	"git-indra.lan/indra-labs/indra/pkg/onion/session"
-	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -35,7 +34,7 @@ func (eng *Engine) handler() (out bool) {
 	case p := <-eng.GetLocalNode().PaymentChan.Receive():
 		log.D.F("incoming payment for %s: %v", p.ID, p.Amount)
 		topUp := false
-		eng.IterateSessions(func(s *traffic.Session) bool {
+		eng.IterateSessions(func(s *Session) bool {
 			if s.Preimage == p.Preimage {
 				s.IncSats(p.Amount, false, "top-up")
 				topUp = true

@@ -13,7 +13,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 )
 
@@ -27,7 +26,7 @@ const DefaultTimeout = time.Second
 type Engine struct {
 	sync.Mutex
 	*PendingResponses
-	*traffic.SessionManager
+	*SessionManager
 	*signer.KeySet
 	Load          byte
 	TimeoutSignal qu.C
@@ -36,8 +35,8 @@ type Engine struct {
 	qu.C
 }
 
-func NewEngine(tpt types.Transport, hdrPrv *prv.Key, no *traffic.Node,
-	nodes []*traffic.Node, nReturnSessions int) (c *Engine, e error) {
+func NewEngine(tpt types.Transport, hdrPrv *prv.Key, no *Node,
+	nodes []*Node, nReturnSessions int) (c *Engine, e error) {
 	
 	no.Transport = tpt
 	no.IdentityPrv = hdrPrv
@@ -49,16 +48,16 @@ func NewEngine(tpt types.Transport, hdrPrv *prv.Key, no *traffic.Node,
 	c = &Engine{
 		PendingResponses: &PendingResponses{},
 		KeySet:           ks,
-		SessionManager:   traffic.NewSessionManager(),
+		SessionManager:   NewSessionManager(),
 		TimeoutSignal:    qu.T(),
 		Pause:            qu.T(),
 		C:                qu.T(),
 	}
-	c.AddNodes(append([]*traffic.Node{no}, nodes...)...)
+	c.AddNodes(append([]*Node{no}, nodes...)...)
 	// Add a return session for receiving responses, ideally more of these will
 	// be generated during operation and rotated out over time.
 	for i := 0; i < nReturnSessions; i++ {
-		c.AddSession(traffic.NewSession(nonce.NewID(), no, 0, nil, nil, 5))
+		c.AddSession(NewSession(nonce.NewID(), no, 0, nil, nil, 5))
 	}
 	return
 }

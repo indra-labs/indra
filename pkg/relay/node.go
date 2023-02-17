@@ -1,6 +1,4 @@
-// Package traffic maintains information about peers on the network and
-// associated connection sessions.
-package traffic
+package relay
 
 import (
 	"fmt"
@@ -9,20 +7,13 @@ import (
 	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	
-	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/ring"
 	"git-indra.lan/indra-labs/indra/pkg/service"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
-)
-
-var (
-	log   = log2.GetLogger(indra.PathBase)
-	check = log.E.Chk
 )
 
 // Node is a representation of a messaging counterparty.

@@ -13,7 +13,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/service"
-	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/transport"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 	"git-indra.lan/indra-labs/indra/pkg/util/tests"
@@ -185,7 +184,7 @@ func TestClient_SendPing(t *testing.T) {
 out:
 	for i := 3; i < len(clients[0].Sessions)-1; i++ {
 		wg.Add(1)
-		var c traffic.Circuit
+		var c Circuit
 		sess := clients[0].Sessions[i]
 		c[sess.Hop] = clients[0].Sessions[i]
 		clients[0].SendPing(c,

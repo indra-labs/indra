@@ -2,12 +2,11 @@ package relay
 
 import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/traffic"
 )
 
-func (eng *Engine) SendPing(c traffic.Circuit, hook Callback) {
+func (eng *Engine) SendPing(c Circuit, hook Callback) {
 	hops := []byte{0, 1, 2, 3, 4, 5}
-	s := make(traffic.Sessions, len(hops))
+	s := make(Sessions, len(hops))
 	copy(s, c[:])
 	se := eng.SelectHops(hops, s)
 	copy(c[:], se)

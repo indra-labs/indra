@@ -6,7 +6,6 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	
 	"git-indra.lan/indra-labs/indra/pkg/onion/session"
-	"git-indra.lan/indra-labs/indra/pkg/traffic"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -25,7 +24,7 @@ func (eng *Engine) session(on *session.Layer, b slice.Bytes,
 		// duplicate sessions.
 		eng.DeletePendingPayment(pi.Preimage)
 		log.D.F("Adding session %s to %s", pi.ID, eng.GetLocalNodeAddress())
-		eng.AddSession(traffic.NewSession(pi.ID,
+		eng.AddSession(NewSession(pi.ID,
 			eng.GetLocalNode(), pi.Amount, on.Header, on.Payload, on.Hop))
 		eng.handleMessage(BudgeUp(b, *c), on)
 	} else {
