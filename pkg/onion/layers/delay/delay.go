@@ -2,7 +2,7 @@ package delay
 
 import (
 	"time"
-
+	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/magicbytes"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
@@ -28,7 +28,6 @@ type Layer struct {
 	types.Onion
 }
 
-func (x *Layer) Inner() types.Onion   { return nil }
 func (x *Layer) Insert(_ types.Onion) {}
 func (x *Layer) Len() int             { return Len }
 

@@ -51,7 +51,6 @@ type Layer struct {
 // 	return spew.Sdump(x.Port, x.Ciphers, x.Nonces, x.Bytes.ToBytes())
 // }
 
-func (x *Layer) Inner() types.Onion   { return x.Onion }
 func (x *Layer) Insert(o types.Onion) { x.Onion = o }
 func (x *Layer) Len() int {
 	return Len + x.Bytes.Len() + x.Onion.Len()

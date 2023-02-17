@@ -40,8 +40,6 @@ type Layer struct {
 // func (x *Layer) String() string {
 // 	return spew.Sdump(x.Ciphers, x.Nonces)
 // }
-
-func (x *Layer) Inner() types.Onion   { return x.Onion }
 func (x *Layer) Insert(o types.Onion) { x.Onion = o }
 func (x *Layer) Len() int {
 	return Len + x.Onion.Len()

@@ -2,7 +2,7 @@ package balance
 
 import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-
+	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/magicbytes"
@@ -33,11 +33,8 @@ type Layer struct {
 	lnwire.MilliSatoshi
 }
 
-func (x *Layer) Inner() types.Onion   { return nil }
 func (x *Layer) Insert(o types.Onion) {}
-func (x *Layer) Len() int {
-	return Len
-}
+func (x *Layer) Len() int             { return Len }
 
 func (x *Layer) Encode(b slice.Bytes, c *slice.Cursor) {
 	copy(b[*c:c.Inc(magicbytes.Len)], Magic)

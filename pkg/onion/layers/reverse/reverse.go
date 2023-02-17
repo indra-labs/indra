@@ -3,7 +3,7 @@ package reverse
 import (
 	"net"
 	"net/netip"
-
+	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/onion/layers/magicbytes"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
@@ -36,7 +36,6 @@ type Layer struct {
 	types.Onion
 }
 
-func (x *Layer) Inner() types.Onion   { return x.Onion }
 func (x *Layer) Insert(o types.Onion) { x.Onion = o }
 func (x *Layer) Len() int             { return Len + x.Onion.Len() }
 func (x *Layer) Encode(b slice.Bytes, c *slice.Cursor) {

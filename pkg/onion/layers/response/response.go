@@ -35,7 +35,6 @@ func New() *Layer {
 	return &o
 }
 
-func (x *Layer) Inner() types.Onion   { return nil }
 func (x *Layer) Insert(_ types.Onion) {}
 func (x *Layer) Len() int             { return Len + len(x.Bytes) }
 func (x *Layer) Encode(b slice.Bytes, c *slice.Cursor) {

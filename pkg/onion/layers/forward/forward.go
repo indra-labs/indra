@@ -35,7 +35,6 @@ type Layer struct {
 // 	return fmt.Sprintf("\n\taddrport: %x %v\n", s, x.AddrPort.String())
 // }
 
-func (x *Layer) Inner() types.Onion   { return x.Onion }
 func (x *Layer) Insert(o types.Onion) { x.Onion = o }
 func (x *Layer) Len() int             { return Len + x.Onion.Len() }
 func (x *Layer) Encode(b slice.Bytes, c *slice.Cursor) {

@@ -44,7 +44,6 @@ type Layer struct {
 // 		x.ID)
 // }
 
-func (x *Layer) Inner() types.Onion   { return nil }
 func (x *Layer) Insert(o types.Onion) {}
 func (x *Layer) Len() int             { return Len }
 func (x *Layer) Encode(b slice.Bytes, c *slice.Cursor) {

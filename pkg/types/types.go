@@ -10,7 +10,6 @@ type Onion interface {
 	Encode(b slice.Bytes, c *slice.Cursor)
 	Decode(b slice.Bytes, c *slice.Cursor) (e error)
 	Len() int
-	Inner() Onion
 	Insert(on Onion)
 }
 
