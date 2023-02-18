@@ -1,4 +1,4 @@
-package server
+package seed
 
 import (
 	"github.com/btcsuite/btcd/btcutil/base58"

@@ -4,7 +4,7 @@ import (
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/cfg"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	"git-indra.lan/indra-labs/indra/pkg/server"
+	"git-indra.lan/indra-labs/indra/pkg/seed"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -50,11 +50,11 @@ var seedCmd = &cobra.Command{
 		log.I.Ln("-- ", log2.App, "("+viper.GetString("network")+") -", indra.SemVer, "- Network Freedom. --")
 
 		var err error
-		var config = server.DefaultConfig
+		var config = seed.DefaultConfig
 
 		config.Params = cfg.SelectNetworkParams(viper.GetString("network"))
 
-		if config.PrivKey, err = server.GetOrGeneratePrivKey(viper.GetString("key")); check(err) {
+		if config.PrivKey, err = seed.GetOrGeneratePrivKey(viper.GetString("key")); check(err) {
 			return
 		}
 
@@ -70,11 +70,11 @@ var seedCmd = &cobra.Command{
 			config.ConnectAddresses = append(config.ConnectAddresses, multiaddr.StringCast(connector))
 		}
 
-		var srv *server.Server
+		var srv *seed.Server
 
 		log.I.Ln("running serve.")
 
-		if srv, err = server.New(config); check(err) {
+		if srv, err = seed.New(config); check(err) {
 			return
 		}
 

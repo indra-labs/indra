@@ -1,4 +1,4 @@
-package server
+package seed
 
 import (
 	"git-indra.lan/indra-labs/indra/pkg/cfg"

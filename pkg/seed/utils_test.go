@@ -1,4 +1,4 @@
-package server
+package seed
 
 import (
 	"crypto/rand"
