@@ -1,8 +1,6 @@
 package main
 
-import (
-	"github.com/indra-labs/indra/pkg/docker"
-)
+import "git-indra.lan/indra-labs/indra/pkg/docker"
 
 var sourceConfigurations = []docker.BuildConfiguration{
 	//docker.BuildConfiguration{
