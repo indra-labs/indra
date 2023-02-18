@@ -1,9 +1,10 @@
 package cfg
 
 import (
-	"github.com/multiformats/go-multiaddr"
 	"os"
-
+	
+	"github.com/multiformats/go-multiaddr"
+	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/node"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
@@ -15,67 +16,67 @@ var (
 )
 
 type Params struct {
-
+	
 	// Name defines a human-readable identifier for the network
 	Name string
-
+	
 	// Net is a uint32 magic byte identifier for the network
 	Net node.IndraNet
-
+	
 	// DefaultPort is the default port for p2p listening
 	DefaultPort string
-
+	
 	// DNSSeedAddresses is a list of DNS hostnames used to bootstrap a new node on the network
 	DNSSeedAddresses []*DNSSeedAddress
 }
 
 func SelectNetworkParams(network string) *Params {
-
+	
 	if network == "mainnet" {
 		return MainNetServerParams
 	}
-
+	
 	if network == "testnet" {
 		return TestNetServerParams
 	}
-
+	
 	if network == "simnet" {
 		return SimnetServerParams
 	}
-
+	
 	panic("invalid network, exiting...")
-
+	
 	os.Exit(1)
-
+	
 	return nil
 }
 
 func (self *Params) ParseSeedMultiAddresses() (addresses []multiaddr.Multiaddr, err error) {
-
+	
 	var adr multiaddr.Multiaddr
-
+	
 	addresses = []multiaddr.Multiaddr{}
-
+	
 	for _, addr := range self.DNSSeedAddresses {
-
+		
 		if adr, err = multiaddr.NewMultiaddr("/dns4/" + addr.DNSAddress + "/tcp/" + self.DefaultPort + "/p2p/" + addr.ID); check(err) {
 			return
 		}
-
+		
 		addresses = append(addresses, adr)
 	}
-
+	
 	return
 }
 
 var MainNetServerParams = &Params{
-
+	
 	Name: "mainnet",
-
+	
 	Net: node.MainNet,
-
-	DefaultPort: "8337",
-
+	
+	DefaultPort: "8336",
+	
 	DNSSeedAddresses: []*DNSSeedAddress{
 		NewSeedAddress("seed0.indra.org", "12D3KooWCfTmWavthiVV7Vkm9eouCdiLdGnhd2PShQ2hiu2VVU6Q"),
 		NewSeedAddress("seed1.indra.org", "12D3KooWASwYWP2gMh581EQG25nauvWfwAU3g6v8TugEoEzL5Ags"),
@@ -89,13 +90,13 @@ var MainNetServerParams = &Params{
 }
 
 var TestNetServerParams = &Params{
-
+	
 	Name: "testnet",
-
+	
 	Net: node.TestNet,
-
+	
 	DefaultPort: "58337",
-
+	
 	DNSSeedAddresses: []*DNSSeedAddress{
 		// NewSeedAddress("seed0.indra.org", "12D3KooWCfTmWavthiVV7Vkm9eouCdiLdGnhd2PShQ2hiu2VVU6Q"),
 		// NewSeedAddress("seed1.indra.org", "12D3KooWASwYWP2gMh581EQG25nauvWfwAU3g6v8TugEoEzL5Ags"),
@@ -109,13 +110,13 @@ var TestNetServerParams = &Params{
 }
 
 var SimnetServerParams = &Params{
-
+	
 	Name: "simnet",
-
+	
 	Net: node.SimNet,
-
+	
 	DefaultPort: "62134",
-
+	
 	// Should be passed via --seed
 	DNSSeedAddresses: []*DNSSeedAddress{
 		NewSeedAddress("seed0", "16Uiu2HAmCxWoKp4vs7xrmzbScHEhUK7trCgCPhKPZRBiUvSxS7xA"),
