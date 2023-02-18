@@ -63,10 +63,12 @@ func (eng *Engine) reverse(on *reverse.Layer, b slice.Bytes,
 			// message is incorrectly formed, just drop it.
 			return
 		}
-	} else {
+	} else if prev != nil {
 		// we need to forward this message onion.
 		log.T.Ln("forwarding reverse")
 		eng.Send(on.AddrPort, b)
+	} else {
+		log.E.Ln("we do not forward nonsense! scoff! snort!")
 	}
 	
 }

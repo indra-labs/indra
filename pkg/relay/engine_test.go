@@ -22,7 +22,7 @@ import (
 //  (check relay and client see the same balance after the operations)
 
 func TestClient_SendSessionKeys(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+	log2.SetLogLevel(log2.Trace)
 	var clients []*Engine
 	var e error
 	if clients, e = CreateNMockCircuits(false, 2, 2); check(e) {

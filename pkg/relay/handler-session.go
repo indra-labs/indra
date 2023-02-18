@@ -1,10 +1,6 @@
 package relay
 
 import (
-	"fmt"
-	
-	"github.com/davecgh/go-spew/spew"
-	
 	"git-indra.lan/indra-labs/indra/pkg/onion/session"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -13,10 +9,8 @@ import (
 func (eng *Engine) session(on *session.Layer, b slice.Bytes,
 	c *slice.Cursor, prev types.Onion) {
 	
-	log.T.C(func() string {
-		return fmt.Sprint("incoming session",
-			spew.Sdump(on.PreimageHash()))
-	})
+	log.D.Ln(prev == nil)
+	log.T.F("incoming session %s", on.ID)
 	pi := eng.FindPendingPreimage(on.PreimageHash())
 	if pi != nil {
 		// We need to delete this first in case somehow two such

@@ -28,6 +28,6 @@ func (eng *Engine) forward(on *forward.Layer, b slice.Bytes,
 			}
 		}
 		// we need to forward this message onion.
-		eng.Send(on.AddrPort, b)
+		eng.Send(on.AddrPort, BudgeUp(b, *c))
 	}
 }
