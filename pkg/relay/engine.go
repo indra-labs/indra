@@ -64,6 +64,7 @@ func NewEngine(tpt types.Transport, hdrPrv *prv.Key, no *Node,
 
 // Start a single thread of the Engine.
 func (eng *Engine) Start() {
+	log.D.Ln("starting engine")
 	for {
 		if eng.handler() {
 			break
