@@ -50,8 +50,9 @@ var seedCmd = &cobra.Command{
 		log.I.Ln("-- ", log2.App, "("+viper.GetString("network")+") -", indra.SemVer, "- Network Freedom. --")
 
 		var err error
-		var params = cfg.SelectNetworkParams(viper.GetString("network"))
 		var config = server.DefaultConfig
+
+		config.Params = cfg.SelectNetworkParams(viper.GetString("network"))
 
 		if config.PrivKey, err = server.GetOrGeneratePrivKey(viper.GetString("key")); check(err) {
 			return
@@ -73,7 +74,7 @@ var seedCmd = &cobra.Command{
 
 		log.I.Ln("running serve.")
 
-		if srv, err = server.New(params, config); check(err) {
+		if srv, err = server.New(config); check(err) {
 			return
 		}
 

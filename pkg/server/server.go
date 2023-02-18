@@ -9,7 +9,6 @@ import (
 	"github.com/multiformats/go-multiaddr"
 
 	"git-indra.lan/indra-labs/indra"
-	"git-indra.lan/indra-labs/indra/pkg/cfg"
 	"git-indra.lan/indra-labs/indra/pkg/interrupt"
 	"git-indra.lan/indra-labs/indra/pkg/p2p/introducer"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
@@ -29,8 +28,6 @@ type Server struct {
 	context.Context
 
 	config *Config
-
-	params *cfg.Params
 
 	host host.Host
 }
@@ -90,13 +87,12 @@ func (srv *Server) Serve() (err error) {
 	return nil
 }
 
-func New(params *cfg.Params, config *Config) (srv *Server, err error) {
+func New(config *Config) (srv *Server, err error) {
 
 	log.I.Ln("initializing the server")
 
 	var s Server
 
-	s.params = params
 	s.config = config
 
 	if s.host, err = libp2p.New(libp2p.Identity(config.PrivKey), libp2p.UserAgent(userAgent), libp2p.ListenAddrs(config.ListenAddresses...)); check(err) {
@@ -120,7 +116,7 @@ func New(params *cfg.Params, config *Config) (srv *Server, err error) {
 
 	var seedAddresses []multiaddr.Multiaddr
 
-	if seedAddresses, err = params.ParseSeedMultiAddresses(); check(err) {
+	if seedAddresses, err = config.Params.ParseSeedMultiAddresses(); check(err) {
 		return
 	}
 
