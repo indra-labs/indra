@@ -15,6 +15,7 @@ require (
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
 	github.com/libp2p/go-libp2p v0.24.2
 	github.com/libp2p/go-libp2p-kad-dht v0.20.0
+	github.com/libp2p/go-libp2p-record v0.2.0
 	github.com/minio/sha256-simd v1.0.0
 	github.com/moby/term v0.0.0-20221205130635-1aeaba878587
 	github.com/multiformats/go-multiaddr v0.8.0
@@ -100,7 +101,6 @@ require (
 	github.com/libp2p/go-flow-metrics v0.1.0 // indirect
 	github.com/libp2p/go-libp2p-asn-util v0.2.0 // indirect
 	github.com/libp2p/go-libp2p-kbucket v0.5.0 // indirect
-	github.com/libp2p/go-libp2p-record v0.2.0 // indirect
 	github.com/libp2p/go-msgio v0.2.0 // indirect
 	github.com/libp2p/go-nat v0.1.0 // indirect
 	github.com/libp2p/go-netroute v0.2.1 // indirect

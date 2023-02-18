@@ -1,6 +1,7 @@
 package server
 
 import (
+	"git-indra.lan/indra-labs/indra/pkg/cfg"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/multiformats/go-multiaddr"
 )
@@ -29,4 +30,6 @@ type Config struct {
 	SeedAddresses    []multiaddr.Multiaddr
 	ConnectAddresses []multiaddr.Multiaddr
 	ListenAddresses  []multiaddr.Multiaddr
+
+	Params *cfg.Params
 }
