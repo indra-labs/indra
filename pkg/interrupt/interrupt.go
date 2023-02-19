@@ -8,12 +8,12 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
-
+	
 	"go.uber.org/atomic"
-
+	
 	"git-indra.lan/indra-labs/indra"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-
+	
 	"github.com/kardianos/osext"
 )
 
@@ -51,20 +51,19 @@ var interruptCallbackSources []string
 // responds to custom shutdown signals as required
 func Listener() {
 	invokeCallbacks := func() {
-		log.D.Ln(
-			"running interrupt callbacks",
-			len(interruptCallbacks),
-			strings.Repeat(" ", 48),
-			interruptCallbackSources,
-		)
+		var callSrc string
+		for i := range interruptCallbackSources {
+			callSrc += fmt.Sprintf("\n-> %s running callback %d",
+				strings.Split(interruptCallbackSources[i], indra.PathBase)[1],
+				i)
+		}
+		log.T.Ln("running interrupt callbacks", callSrc)
 		// run handlers in LIFO order.
 		for i := range interruptCallbacks {
 			idx := len(interruptCallbacks) - 1 - i
-			log.D.Ln("running callback", idx,
-				interruptCallbackSources[idx])
 			interruptCallbacks[idx]()
 		}
-		log.D.Ln("interrupt handlers finished")
+		log.T.Ln("interrupt handlers finished")
 		close(HandlersDone)
 		if Restart {
 			var file string
@@ -82,11 +81,11 @@ func Listener() {
 				}
 			} else {
 				log.I.Ln("doing windows restart")
-
+				
 				// procAttr := new(os.ProcAttr)
 				// procAttr.Files = []*os.File{os.Stdin, os.Stdout, os.Stderr}
 				// os.StartProcess(os.Args[0], os.Args[1:], procAttr)
-
+				
 				var s []string
 				// s = []string{"cmd.exe", "/C", "start"}
 				s = append(s, os.Args[0])
@@ -111,7 +110,8 @@ out:
 		case sig := <-ch:
 			// if !requested {
 			// 	L.Printf("\r>>> received signal (%s)\n", sig)
-			log.I.Ln("received signal", sig)
+			fmt.Print("\r  \r")
+			log.W.F("received signal %v", sig)
 			requested.Store(true)
 			invokeCallbacks()
 			// pprof.Lookup("goroutine").WriteTo(os.Stderr, 2)
@@ -126,7 +126,6 @@ out:
 			// }
 		case handler := <-addHandlerChan:
 			// if !requested {
-			log.D.Ln("adding handler")
 			interruptCallbacks =
 				append(interruptCallbacks, handler.Fn)
 			interruptCallbackSources =
@@ -144,7 +143,8 @@ func AddHandler(handler func()) {
 	// all other callbacks and exits if not already done.
 	_, loc, line, _ := runtime.Caller(1)
 	msg := fmt.Sprintf("%s:%d", loc, line)
-	log.D.Ln("handler added by:", msg)
+	log.T.Ln("\n"+strings.Split(msg, indra.PathBase)[1],
+		"added interrupt handler")
 	if ch == nil {
 		ch = make(chan os.Signal)
 		signal.Notify(ch, signals...)
