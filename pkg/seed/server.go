@@ -1,4 +1,4 @@
-package server
+package seed
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/interrupt"
 	"git-indra.lan/indra-labs/indra/pkg/p2p/introducer"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	"git-indra.lan/indra-labs/indra/pkg/server/metrics"
+	"git-indra.lan/indra-labs/indra/pkg/seed/metrics"
 )
 
 var (
