@@ -16,13 +16,24 @@ var (
 	check = log.E.Chk
 )
 
+type handlemessage struct {
+	Name   string
+	Extern bool
+}
+
+type handlemessages []handlemessage
+
+func (p handlemessages) Len() int           { return len(p) }
+func (p handlemessages) Less(i, j int) bool { return p[i].Name < p[j].Name }
+func (p handlemessages) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
+
 func main() {
 	typesList := []string{"balance", "confirm", "crypt", "delay", "dxresponse",
 		"exit", "forward", "getbalance", "reverse", "response", "session"}
 	sort.Strings(typesList)
 	tpl := `package relay
 
-//go:generate go run ./pkg/relay/gen/main.go
+//go:generate go run ./gen/main.go
 
 import (
 	"fmt"
@@ -66,7 +77,7 @@ func Peel(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 	if check(e) {
 		panic(e)
 	}
-	const filename = "pkg/relay/peel.go"
+	const filename = "peel.go"
 	f, err := os.Create(filename)
 	if check(err) {
 		panic(err)
@@ -74,10 +85,82 @@ func Peel(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 	if e = t.Execute(f, typesList); check(e) {
 		panic(e)
 	}
+	_ = f.Close()
 	if e = runCmd("go", "fmt", filename); e != nil {
 		os.Exit(1)
 	}
+	typesList2 := handlemessages{
+		// {"parp", false},
+		{"balance", false},
+		{"confirm", true},
+		{"crypt", true},
+		{"delay", true},
+		{"exit", true},
+		{"forward", true},
+		{"getbalance", true},
+		{"reverse", false},
+		{"response", true},
+		{"session", true},
+	}
+	sort.Sort(typesList2)
 	
+	tpl = `package relay
+
+//go:generate go run ./gen/main.go
+
+import (
+	"reflect"
+	
+	"git-indra.lan/indra-labs/indra/pkg/onion/balance"
+	"git-indra.lan/indra-labs/indra/pkg/onion/confirm"
+	"git-indra.lan/indra-labs/indra/pkg/onion/crypt"
+	"git-indra.lan/indra-labs/indra/pkg/onion/delay"
+	"git-indra.lan/indra-labs/indra/pkg/onion/exit"
+	"git-indra.lan/indra-labs/indra/pkg/onion/forward"
+	"git-indra.lan/indra-labs/indra/pkg/onion/getbalance"
+	"git-indra.lan/indra-labs/indra/pkg/onion/response"
+	"git-indra.lan/indra-labs/indra/pkg/onion/reverse"
+	"git-indra.lan/indra-labs/indra/pkg/onion/session"
+	"git-indra.lan/indra-labs/indra/pkg/types"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+)
+
+func (eng *Engine) handleMessage(b slice.Bytes, prev types.Onion) {
+	log.T.F("%v handling received message", eng.GetLocalNodeAddress())
+	var on1 types.Onion
+	var e error
+	c := slice.NewCursor()
+	if on1, e = Peel(b, c); check(e) {
+		return
+	}
+	switch on := on1.(type) {
+	{{range .}}case *{{.Name}}.Layer:
+		{{if .Extern}}if prev == nil {
+			log.E.Ln(reflect.TypeOf(on), "requests from outside? absurd!")
+			return
+		}
+		{{end}}log.T.C(recLog(on, b, eng))
+		eng.{{.Name}}(on, b, c, prev)
+	{{end}}default:
+		log.I.S("unrecognised packet", b)
+	}
+}
+`
+	t, e = template.New("peel").Parse(tpl)
+	if check(e) {
+		panic(e)
+	}
+	const handlemessage = "handlemessage.go"
+	f, e = os.Create(handlemessage)
+	if check(e) {
+		panic(e)
+	}
+	if e = t.Execute(f, typesList2); check(e) {
+		panic(e)
+	}
+	if e = runCmd("go", "fmt", handlemessage); e != nil {
+		panic(e)
+	}
 }
 
 func errPrintln(a ...interface{}) {

@@ -1,6 +1,6 @@
 package relay
 
-//go:generate go run ./pkg/relay/gen/main.go
+//go:generate go run ./gen/main.go
 
 import (
 	"fmt"

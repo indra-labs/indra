@@ -2,7 +2,7 @@ package relay
 
 import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/onion/balance"
 	"git-indra.lan/indra-labs/indra/pkg/onion/crypt"
 	"git-indra.lan/indra-labs/indra/pkg/onion/getbalance"
@@ -10,9 +10,9 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
-func (eng *Engine) getBalance(on *getbalance.Layer,
+func (eng *Engine) getbalance(on *getbalance.Layer,
 	b slice.Bytes, c *slice.Cursor, prev types.Onion) {
-
+	
 	log.T.S(on)
 	var found bool
 	var bal *balance.Layer
