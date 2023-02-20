@@ -191,7 +191,7 @@ func main() {
 //
 // which will run all these generators below and finish with a go install.
 ` + `//go:generate go run ./pkg/relay/gen/main.go
-` + `//go:generate go install -v ./...
+` + `//go:generate go install ./...
 
 import (
 	"fmt"
