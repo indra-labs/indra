@@ -5,10 +5,10 @@ import (
 	"sync"
 	"testing"
 	"time"
-	
+
 	"github.com/cybriq/qu"
 	"go.uber.org/atomic"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"

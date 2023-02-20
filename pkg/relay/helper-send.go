@@ -3,7 +3,7 @@ package relay
 import (
 	"net/netip"
 	"runtime"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 

@@ -19,7 +19,7 @@ import (
 // have steadily increasing scores from successful pings.
 func Ping(id nonce.ID, client *Session, s Circuit,
 	ks *signer.KeySet) Skins {
-	
+
 	n := GenPingNonces()
 	return Skins{}.
 		Crypt(s[0].HeaderPub, nil, ks.Next(), n[0], 0).
@@ -50,7 +50,7 @@ func Ping(id nonce.ID, client *Session, s Circuit,
 // remainder with noise, so it always looks like the first hop.
 func SendExit(port uint16, payload slice.Bytes, id nonce.ID,
 	client *Session, s Circuit, ks *signer.KeySet) Skins {
-	
+
 	var prvs [3]*prv.Key
 	for i := range prvs {
 		prvs[i] = ks.Next()
@@ -96,7 +96,7 @@ func SendExit(port uint16, payload slice.Bytes, id nonce.ID,
 // the HeaderPub instead. Not allowing free relay at all prevents spam attacks.
 func SendKeys(id nonce.ID, s [5]*session.Layer,
 	client *Session, hop []*Node, ks *signer.KeySet) Skins {
-	
+
 	n := GenNonces(6)
 	sk := Skins{}
 	for i := range s {
@@ -116,7 +116,7 @@ func SendKeys(id nonce.ID, s [5]*session.Layer,
 // being queried can be any of the 5.
 func GetBalance(id, confID nonce.ID, client *Session,
 	s Circuit, ks *signer.KeySet) Skins {
-	
+
 	var prvs [3]*prv.Key
 	for i := range prvs {
 		prvs[i] = ks.Next()

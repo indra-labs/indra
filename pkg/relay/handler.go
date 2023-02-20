@@ -3,7 +3,7 @@ package relay
 import (
 	"fmt"
 	"reflect"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/onion/balance"
 	"git-indra.lan/indra-labs/indra/pkg/onion/confirm"
 	"git-indra.lan/indra-labs/indra/pkg/onion/crypt"
@@ -71,7 +71,7 @@ func (eng *Engine) handler() (out bool) {
 				log.D.Ln("unpausing", eng.GetLocalNodeAddress())
 				break out
 			}
-			
+
 		}
 	}
 	return

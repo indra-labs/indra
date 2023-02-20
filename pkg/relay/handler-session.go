@@ -8,7 +8,7 @@ import (
 
 func (eng *Engine) session(on *session.Layer, b slice.Bytes,
 	c *slice.Cursor, prev types.Onion) {
-	
+
 	log.D.Ln(prev == nil)
 	log.T.F("incoming session %s", on.ID)
 	pi := eng.FindPendingPreimage(on.PreimageHash())

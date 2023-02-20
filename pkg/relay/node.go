@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/netip"
 	"sync"
-	
+
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -48,7 +48,7 @@ const (
 func NewNode(addr *netip.AddrPort, idPub *pub.Key, idPrv *prv.Key,
 	tpt types.Transport, relayRate lnwire.MilliSatoshi,
 	local bool) (n *Node, id nonce.ID) {
-	
+
 	id = nonce.NewID()
 	n = &Node{
 		ID:            id,

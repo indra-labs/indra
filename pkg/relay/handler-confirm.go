@@ -8,7 +8,7 @@ import (
 
 func (eng *Engine) confirm(on *confirm.Layer,
 	b slice.Bytes, c *slice.Cursor, prev types.Onion) {
-	
+
 	// When a confirmation arrives check if it is registered for and run the
 	// hook that was registered with it.
 	eng.PendingResponses.Delete(on.ID, nil)

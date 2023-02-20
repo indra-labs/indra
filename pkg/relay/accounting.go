@@ -3,9 +3,9 @@ package relay
 import (
 	"sync"
 	"time"
-	
+
 	"github.com/cybriq/qu"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -44,7 +44,7 @@ func (p *PendingResponses) GetOldestPending() (pr *PendingResponse) {
 func (p *PendingResponses) Add(id nonce.ID, sentSize int, s Sessions,
 	billable []nonce.ID, ret nonce.ID, port uint16,
 	callback func(id nonce.ID, b slice.Bytes), postAcct []func()) {
-	
+
 	p.Lock()
 	defer p.Unlock()
 	log.T.F("adding response hook %s", id)

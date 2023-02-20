@@ -10,7 +10,7 @@ import (
 // this.
 func (eng *Engine) FindCloaked(clk cloak.PubKey) (hdr *prv.Key,
 	pld *prv.Key, sess *Session, identity bool) {
-	
+
 	var b cloak.Blinder
 	copy(b[:], clk[:cloak.BlindLen])
 	hash := cloak.Cloak(b, eng.GetLocalNodeIdentityBytes())

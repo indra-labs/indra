@@ -6,7 +6,7 @@ import (
 
 func (sm *SessionManager) SelectHops(hops []byte,
 	alreadyHave Sessions) (so Sessions) {
-	
+
 	sm.Lock()
 	defer sm.Unlock()
 	ws := make(Sessions, 0)

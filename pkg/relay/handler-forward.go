@@ -2,7 +2,7 @@ package relay
 
 import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/onion/crypt"
 	"git-indra.lan/indra-labs/indra/pkg/onion/forward"
 	"git-indra.lan/indra-labs/indra/pkg/types"
@@ -11,7 +11,7 @@ import (
 
 func (eng *Engine) forward(on *forward.Layer, b slice.Bytes,
 	c *slice.Cursor, prev types.Onion) {
-	
+
 	// forward the whole buffer received onwards. Usually there will be a
 	// crypt.Layer under this which will be unwrapped by the receiver.
 	if on.AddrPort.String() == eng.GetLocalNodeAddress().String() {

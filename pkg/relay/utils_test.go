@@ -10,7 +10,7 @@ import (
 )
 
 func CreateNMockCircuits(inclSessions bool, nCircuits int, nReturnSessions int) (cl []*Engine, e error) {
-	
+
 	nTotal := 1 + nCircuits*5
 	cl = make([]*Engine, nTotal)
 	nodes := make([]*Node, nTotal)

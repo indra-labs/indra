@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"testing"
 	"time"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -240,7 +240,7 @@ func TestOnionSkins_Layer(t *testing.T) {
 }
 
 func TestOnionSkins_Reply(t *testing.T) {
-	
+
 	var e error
 	ipSizes := []int{net.IPv4len, net.IPv6len}
 	for i := range ipSizes {
@@ -283,7 +283,7 @@ func TestOnionSkins_Reply(t *testing.T) {
 }
 
 func TestOnionSkins_Response(t *testing.T) {
-	
+
 	var e error
 	var msg slice.Bytes
 	var id nonce.ID
@@ -312,7 +312,7 @@ func TestOnionSkins_Response(t *testing.T) {
 		t.Errorf("exit message did not unwrap correctly")
 		t.FailNow()
 	}
-	
+
 }
 
 func GetTwoPrvKeys(t *testing.T) (prv1, prv2 *prv.Key) {

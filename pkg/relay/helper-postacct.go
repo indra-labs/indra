@@ -2,7 +2,7 @@ package relay
 
 import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/onion/balance"
 	"git-indra.lan/indra-labs/indra/pkg/onion/confirm"

@@ -10,7 +10,7 @@ import (
 
 func (eng *Engine) crypt(on *crypt.Layer, b slice.Bytes,
 	c *slice.Cursor, prev types.Onion) {
-	
+
 	// this is probably an encrypted crypt for us.
 	hdr, _, _, identity := eng.FindCloaked(on.Cloak)
 	if hdr == nil {

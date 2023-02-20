@@ -3,10 +3,10 @@ package relay
 import (
 	"sync"
 	"time"
-	
+
 	"github.com/cybriq/qu"
 	"go.uber.org/atomic"
-	
+
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
@@ -37,7 +37,7 @@ type Engine struct {
 
 func NewEngine(tpt types.Transport, hdrPrv *prv.Key, no *Node,
 	nodes []*Node, nReturnSessions int) (c *Engine, e error) {
-	
+
 	no.Transport = tpt
 	no.IdentityPrv = hdrPrv
 	no.IdentityPub = pub.Derive(hdrPrv)

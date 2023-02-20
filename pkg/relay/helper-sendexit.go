@@ -2,7 +2,7 @@ package relay
 
 import (
 	"time"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -10,7 +10,7 @@ import (
 func (eng *Engine) SendExit(port uint16, message slice.Bytes, id nonce.ID,
 	target *Session, hook func(id nonce.ID, b slice.Bytes),
 	timeout time.Duration) {
-	
+
 	hops := []byte{0, 1, 2, 3, 4, 5}
 	s := make(Sessions, len(hops))
 	s[2] = target
@@ -26,7 +26,7 @@ func (eng *Engine) SendExit(port uint16, message slice.Bytes, id nonce.ID,
 func (eng *Engine) MakeExit(port uint16, message slice.Bytes, id nonce.ID,
 	target *Session) (c Circuit,
 	o Skins) {
-	
+
 	hops := []byte{0, 1, 2, 3, 4, 5}
 	s := make(Sessions, len(hops))
 	s[2] = target
@@ -39,7 +39,7 @@ func (eng *Engine) MakeExit(port uint16, message slice.Bytes, id nonce.ID,
 func (eng *Engine) SendExitNew(c Circuit,
 	o Skins, hook func(id nonce.ID, b slice.Bytes),
 	timeout time.Duration) {
-	
+
 	log.D.Ln("sending out exit onion")
 	res := eng.PostAcctOnion(o)
 	eng.SendWithOneHook(c[0].AddrPort, res, hook)
