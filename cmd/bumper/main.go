@@ -191,8 +191,6 @@ func main() {
 //
 // which will run all these generators below and finish with a go install.
 ` + `//go:generate go run ./pkg/relay/gen/main.go
-
-// Lastly install
 ` + `//go:generate go install -v ./...
 
 import (

@@ -8,8 +8,6 @@ package indra
 //
 // which will run all these generators below and finish with a go install.
 //go:generate go run ./pkg/relay/gen/main.go
-
-// Lastly install
 //go:generate go install -v ./...
 
 import (
@@ -22,9 +20,9 @@ var (
 	// GitRef is the gitref, as in refs/heads/branchname.
 	GitRef = "refs/heads/protocol"
 	// ParentGitCommit is the commit hash of the parent HEAD.
-	ParentGitCommit = "d29730c11a450ce377aea8c8f492c047592f35db"
+	ParentGitCommit = "aae608551b4670eaccd0430dc91f344218e9fb3b"
 	// BuildTime stores the time when the current binary was built.
-	BuildTime = "2023-02-20T14:03:31Z"
+	BuildTime = "2023-02-20T14:05:01Z"
 	// SemVer lists the (latest) git tag on the release.
 	SemVer = "v0.0.9"
 	// PathBase is the path base returned from runtime caller.
