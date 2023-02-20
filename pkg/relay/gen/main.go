@@ -1,3 +1,5 @@
+//go:build ignore
+
 package main
 
 import (
@@ -32,8 +34,6 @@ func main() {
 		"exit", "forward", "getbalance", "reverse", "response", "session"}
 	sort.Strings(typesList)
 	tpl := `package relay
-
-//go:generate go run ./gen/main.go
 
 import (
 	"fmt"
@@ -77,7 +77,7 @@ func Peel(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 	if check(e) {
 		panic(e)
 	}
-	const filename = "peel.go"
+	const filename = "pkg/relay/peel.go"
 	f, err := os.Create(filename)
 	if check(err) {
 		panic(err)
@@ -86,7 +86,7 @@ func Peel(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 		panic(e)
 	}
 	_ = f.Close()
-	if e = runCmd("go", "fmt", filename); e != nil {
+	if e = runCmd("go", "fmt", filename); check(e) {
 		os.Exit(1)
 	}
 	typesList2 := handlemessages{
@@ -105,8 +105,6 @@ func Peel(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 	sort.Sort(typesList2)
 	
 	tpl = `package relay
-
-//go:generate go run ./gen/main.go
 
 import (
 	"reflect"
@@ -150,7 +148,7 @@ func (eng *Engine) handleMessage(b slice.Bytes, prev types.Onion) {
 	if check(e) {
 		panic(e)
 	}
-	const handlemessage = "handlemessage.go"
+	const handlemessage = "pkg/relay/handlemessage.go"
 	f, e = os.Create(handlemessage)
 	if check(e) {
 		panic(e)
@@ -158,7 +156,7 @@ func (eng *Engine) handleMessage(b slice.Bytes, prev types.Onion) {
 	if e = t.Execute(f, typesList2); check(e) {
 		panic(e)
 	}
-	if e = runCmd("go", "fmt", handlemessage); e != nil {
+	if e = runCmd("go", "fmt", handlemessage); check(e) {
 		panic(e)
 	}
 }

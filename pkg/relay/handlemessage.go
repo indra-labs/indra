@@ -1,7 +1,5 @@
 package relay
 
-//go:generate go run ./gen/main.go
-
 import (
 	"reflect"
 

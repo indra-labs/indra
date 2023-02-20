@@ -15,11 +15,11 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
+	
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
-
+	
 	"git-indra.lan/indra-labs/indra"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 )
@@ -182,6 +182,18 @@ func main() {
 	}
 	name := filepath.Base(dir)
 	versionFile := `package ` + name + `
+
+
+// Put invocations to run all the generators in here (
+// check cmd/bumper/ to add them, and they will automatically run with:
+//
+// $ go generate .
+//
+// which will run all these generators below and finish with a go install.` +
+		`//go:generate go run ./pkg/relay/gen/main.go
+
+// Lastly install
+` + `//go:generate go install -v ./...
 
 import (
 	"fmt"
