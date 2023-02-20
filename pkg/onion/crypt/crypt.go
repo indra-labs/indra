@@ -12,6 +12,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/onion/magicbytes"
 	"git-indra.lan/indra-labs/indra/pkg/onion/reverse"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -62,14 +63,11 @@ func (x *Layer) Len() int {
 	return Len + x.Onion.Len()
 }
 func (x *Layer) Encode(b slice.Bytes, c *slice.Cursor) {
-	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
-	copy(b[*c:c.Inc(nonce.IVLen)], x.Nonce[:])
-	// Derive the cloaked key and copy it in.
-	to := cloak.GetCloak(x.ToHeaderPub)
-	copy(b[*c:c.Inc(cloak.Len)], to[:])
-	// Derive the public key from the From key and copy in.
-	pubKey := pub.Derive(x.From).ToBytes()
-	copy(b[*c:c.Inc(pub.KeyLen)], pubKey[:])
+	splice.Splice(b, c).
+		Magic(Magic).
+		IV(x.Nonce).
+		Cloak(x.ToHeaderPub).
+		Pubkey(x.From)
 	start := int(*c)
 	// Call the tree of onions to perform their encoding.
 	x.Onion.Encode(b, c)
@@ -99,11 +97,10 @@ func (x *Layer) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < Len-magicbytes.Len {
 		return magicbytes.TooShort(len(b[*c:]), Len-magicbytes.Len, "message")
 	}
-	copy(x.Nonce[:], b[*c:c.Inc(nonce.IVLen)])
-	copy(x.Cloak[:], b[*c:c.Inc(cloak.Len)])
-	if x.FromPub, e = pub.FromBytes(b[*c:c.Inc(pub.KeyLen)]); check(e) {
-		return
-	}
+	splice.Splice(b, c).
+		ReadIV(&x.Nonce).
+		ReadCloak(&x.Cloak).
+		ReadPubkey(&x.FromPub)
 	// A further step is required which decrypts the remainder of the bytes
 	// after finding the private key corresponding to the Cloak.
 	return

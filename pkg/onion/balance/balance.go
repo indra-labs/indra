@@ -7,6 +7,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/onion/magicbytes"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -37,12 +38,11 @@ func (x *Layer) Insert(o types.Onion) {}
 func (x *Layer) Len() int             { return Len }
 
 func (x *Layer) Encode(b slice.Bytes, c *slice.Cursor) {
-	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
-	copy(b[*c:c.Inc(nonce.IDLen)], x.ID[:])
-	copy(b[*c:c.Inc(nonce.IDLen)], x.ConfID[:])
-	s := slice.NewUint64()
-	slice.EncodeUint64(s, uint64(x.MilliSatoshi))
-	copy(b[*c:c.Inc(slice.Uint64Len)], s)
+	splice.Splice(b, c).
+		Magic(Magic).
+		ID(x.ID).
+		ID(x.ConfID).
+		Uint64(uint64(x.MilliSatoshi))
 }
 
 func (x *Layer) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
@@ -50,9 +50,9 @@ func (x *Layer) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 		return magicbytes.TooShort(len(b[*c:]), Len-magicbytes.Len,
 			string(Magic))
 	}
-	copy(x.ID[:], b[*c:c.Inc(nonce.IDLen)])
-	copy(x.ConfID[:], b[*c:c.Inc(nonce.IDLen)])
-	x.MilliSatoshi = lnwire.MilliSatoshi(
-		slice.DecodeUint64(b[*c:c.Inc(slice.Uint64Len)]))
+	splice.Splice(b, c).
+		ReadID(&x.ID).
+		ReadID(&x.ConfID).
+		ReadMilliSatoshi(&x.MilliSatoshi)
 	return
 }

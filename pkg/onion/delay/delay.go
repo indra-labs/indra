@@ -6,6 +6,7 @@ import (
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/onion/magicbytes"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -32,17 +33,17 @@ func (x *Layer) Insert(_ types.Onion) {}
 func (x *Layer) Len() int             { return Len }
 
 func (x *Layer) Encode(b slice.Bytes, c *slice.Cursor) {
-	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
-	slice.EncodeUint64(b[*c:c.Inc(slice.Uint64Len)], uint64(x.Duration))
+	splice.Splice(b, c).
+		Magic(Magic).
+		Uint64(uint64(x.Duration))
 	x.Onion.Encode(b, c)
 }
 
 func (x *Layer) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < Len-magicbytes.Len {
-		return magicbytes.TooShort(len(b[*c:]), Len-magicbytes.Len,
-			string(Magic))
+		return magicbytes.TooShort(len(b[*c:]),
+			Len-magicbytes.Len, string(Magic))
 	}
-	x.Duration = time.Duration(
-		slice.DecodeUint64(b[*c:c.Inc(slice.Uint64Len)]))
+	splice.Splice(b, c).ReadDuration(&x.Duration)
 	return
 }

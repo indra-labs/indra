@@ -5,6 +5,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/onion/magicbytes"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -47,19 +48,18 @@ type Layer struct {
 func (x *Layer) Insert(o types.Onion) {}
 func (x *Layer) Len() int             { return Len }
 func (x *Layer) Encode(b slice.Bytes, c *slice.Cursor) {
-	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
-	// Copy in the ID.
-	copy(b[*c:c.Inc(nonce.IDLen)], x.ID[:])
-	b[*c] = x.Load
-	c.Inc(1)
+	splice.Splice(b, c).
+		Magic(Magic).
+		ID(x.ID).
+		Byte(x.Load)
 }
 func (x *Layer) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < Len-magicbytes.Len {
 		return magicbytes.TooShort(len(b[*c:]),
 			Len-magicbytes.Len, string(Magic))
 	}
-	copy(x.ID[:], b[*c:c.Inc(nonce.IDLen)])
-	x.Load = b[*c]
-	c.Inc(1)
+	splice.Splice(b, c).
+		ReadID(&x.ID).
+		ReadByte(&x.Load)
 	return
 }

@@ -1,20 +1,19 @@
 package reverse
 
 import (
-	"net"
 	"net/netip"
 	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/onion/magicbytes"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 const (
 	MagicString = "rv"
-	AddrLen     = net.IPv6len + 3
-	Len         = magicbytes.Len + 1 + AddrLen
+	Len         = magicbytes.Len + 1 + splice.AddrLen
 )
 
 var (
@@ -40,25 +39,22 @@ type Layer struct {
 func (x *Layer) Insert(o types.Onion) { x.Onion = o }
 func (x *Layer) Len() int             { return Len + x.Onion.Len() }
 func (x *Layer) Encode(b slice.Bytes, c *slice.Cursor) {
-	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
-	var ap []byte
-	var e error
-	if ap, e = x.AddrPort.MarshalBinary(); check(e) {
-		return
-	}
-	b[*c] = byte(len(ap))
-	copy(b[c.Inc(1):c.Inc(AddrLen)], ap)
+	splice.Splice(b, c).
+		Magic(Magic).
+		AddrPort(x.AddrPort)
 	x.Onion.Encode(b, c)
 }
 func (x *Layer) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
-	if len(b[*c:]) < AddrLen {
-		return magicbytes.TooShort(len(b[*c:]), AddrLen, string(Magic))
+	if len(b[*c:]) < splice.AddrLen {
+		return magicbytes.TooShort(len(b[*c:]), splice.AddrLen, string(Magic))
 	}
-	apLen := b[*c]
-	apBytes := b[c.Inc(1):c.Inc(AddrLen)]
-	x.AddrPort = &netip.AddrPort{}
-	if e = x.AddrPort.UnmarshalBinary(apBytes[:apLen]); check(e) {
-		return
-	}
+	splice.Splice(b, c).
+		ReadAddrPort(&x.AddrPort)
+	// apLen := b[*c]
+	// apBytes := b[c.Inc(1):c.Inc(AddrLen)]
+	// x.AddrPort = &netip.AddrPort{}
+	// if e = x.AddrPort.UnmarshalBinary(apBytes[:apLen]); check(e) {
+	// 	return
+	// }
 	return
 }

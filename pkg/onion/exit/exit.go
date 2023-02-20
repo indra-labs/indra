@@ -6,6 +6,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/onion/magicbytes"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -46,7 +47,6 @@ type Layer struct {
 	types.Onion
 }
 
-//
 // func (x *Layer) String() string {
 // 	return spew.Sdump(x.Port, x.Ciphers, x.Nonces, x.Bytes.ToBytes())
 // }
@@ -57,21 +57,13 @@ func (x *Layer) Len() int {
 }
 
 func (x *Layer) Encode(b slice.Bytes, c *slice.Cursor) {
-	copy(b[*c:c.Inc(magicbytes.Len)], Magic)
-	port := slice.NewUint16()
-	slice.EncodeUint16(port, int(x.Port))
-	copy(b[*c:c.Inc(slice.Uint16Len)], port)
-	copy(b[*c:c.Inc(sha256.Len)], x.Ciphers[0][:])
-	copy(b[*c:c.Inc(sha256.Len)], x.Ciphers[1][:])
-	copy(b[*c:c.Inc(sha256.Len)], x.Ciphers[2][:])
-	copy(b[*c:c.Inc(nonce.IVLen)], x.Nonces[0][:])
-	copy(b[*c:c.Inc(nonce.IVLen)], x.Nonces[1][:])
-	copy(b[*c:c.Inc(nonce.IVLen)], x.Nonces[2][:])
-	copy(b[*c:c.Inc(nonce.IDLen)], x.ID[:])
-	bytesLen := slice.NewUint32()
-	slice.EncodeUint32(bytesLen, len(x.Bytes))
-	copy(b[*c:c.Inc(slice.Uint32Len)], bytesLen)
-	copy(b[*c:c.Inc(len(x.Bytes))], x.Bytes)
+	splice.Splice(b, c).
+		Magic(Magic).
+		Uint16(x.Port).
+		Hash(x.Ciphers[0]).Hash(x.Ciphers[1]).Hash(x.Ciphers[2]).
+		IV(x.Nonces[0]).IV(x.Nonces[1]).IV(x.Nonces[2]).
+		ID(x.ID).
+		Bytes(x.Bytes)
 	x.Onion.Encode(b, c)
 }
 
@@ -79,19 +71,11 @@ func (x *Layer) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < Len-magicbytes.Len {
 		return magicbytes.TooShort(len(b[*c:]), Len-magicbytes.Len, string(Magic))
 	}
-	x.Port = uint16(slice.DecodeUint16(b[*c:c.Inc(slice.Uint16Len)]))
-	for i := range x.Ciphers {
-		bytes := b[*c:c.Inc(sha256.Len)]
-		copy(x.Ciphers[i][:], bytes)
-		bytes.Zero()
-	}
-	for i := range x.Nonces {
-		bytes := b[*c:c.Inc(nonce.IVLen)]
-		copy(x.Nonces[i][:], bytes)
-		bytes.Zero()
-	}
-	copy(x.ID[:], b[*c:c.Inc(nonce.IDLen)])
-	bytesLen := slice.DecodeUint32(b[*c:c.Inc(slice.Uint32Len)])
-	x.Bytes = b[*c:c.Inc(bytesLen)]
+	splice.Splice(b, c).
+		ReadUint16(&x.Port).
+		ReadHash(&x.Ciphers[0]).ReadHash(&x.Ciphers[1]).ReadHash(&x.Ciphers[2]).
+		ReadIV(&x.Nonces[0]).ReadIV(&x.Nonces[1]).ReadIV(&x.Nonces[2]).
+		ReadID(&x.ID).
+		ReadBytes(&x.Bytes)
 	return
 }

@@ -107,7 +107,7 @@ func TestOnionSkins_Exit(t *testing.T) {
 	ciphers := GenCiphers(prvs, pubs)
 	var msg slice.Bytes
 	var hash sha256.Hash
-	if msg, hash, e = tests.GenMessage(512, ""); check(e) {
+	if msg, hash, e = tests.GenMessage(512, "aoeu"); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
