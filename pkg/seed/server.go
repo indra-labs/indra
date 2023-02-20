@@ -2,6 +2,8 @@ package seed
 
 import (
 	"context"
+	"git-indra.lan/indra-labs/indra/pkg/rpc"
+	"strconv"
 	"time"
 
 	"github.com/libp2p/go-libp2p"
@@ -30,6 +32,8 @@ type Server struct {
 	config *Config
 
 	host host.Host
+
+	rpc *rpc.RPC
 }
 
 func (srv *Server) Restart() (err error) {
@@ -55,6 +59,8 @@ func (srv *Server) Shutdown() (err error) {
 func (srv *Server) Serve() (err error) {
 
 	log.I.Ln("starting the server")
+
+	srv.rpc.Start()
 
 	// Here we create a context with cancel and add it to the interrupt handler
 	var ctx context.Context
@@ -87,13 +93,28 @@ func (srv *Server) Serve() (err error) {
 	return nil
 }
 
-func New(config *Config) (srv *Server, err error) {
+func New(config *Config) (*Server, error) {
 
 	log.I.Ln("initializing the server")
 
+	var err error
 	var s Server
 
 	s.config = config
+
+	if s.config.RPCConfig.IsEnabled() {
+
+		log.I.Ln("enabling rpc server")
+
+		if s.rpc, err = rpc.New(s.config.RPCConfig); check(err) {
+			return nil, err
+		}
+
+		log.I.Ln("rpc public key:")
+		log.I.Ln("-", s.config.RPCConfig.Key.PubKey().Encode())
+		log.I.Ln("rpc listeners:")
+		log.I.Ln("- [/ip4/0.0.0.0/udp/"+strconv.Itoa(int(s.config.RPCConfig.ListenPort)), "/ip6/::1/udp/"+strconv.Itoa(int(s.config.RPCConfig.ListenPort))+"]")
+	}
 
 	if s.host, err = libp2p.New(libp2p.Identity(config.PrivKey), libp2p.UserAgent(userAgent), libp2p.ListenAddrs(config.ListenAddresses...)); check(err) {
 		return nil, err
@@ -117,7 +138,7 @@ func New(config *Config) (srv *Server, err error) {
 	var seedAddresses []multiaddr.Multiaddr
 
 	if seedAddresses, err = config.Params.ParseSeedMultiAddresses(); check(err) {
-		return
+		return nil, err
 	}
 
 	config.SeedAddresses = append(config.SeedAddresses, seedAddresses...)
