@@ -90,10 +90,9 @@ func Peel(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 		os.Exit(1)
 	}
 	typesList2 := handlemessages{
-		// {"parp", false},
-		{"balance", false},
+		{"balance", true},
 		{"confirm", true},
-		{"crypt", true},
+		{"crypt", false},
 		{"delay", true},
 		{"exit", true},
 		{"forward", true},

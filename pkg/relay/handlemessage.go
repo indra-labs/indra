@@ -27,6 +27,10 @@ func (eng *Engine) handleMessage(b slice.Bytes, prev types.Onion) {
 	}
 	switch on := on1.(type) {
 	case *balance.Layer:
+		if prev == nil {
+			log.E.Ln(reflect.TypeOf(on), "requests from outside? absurd!")
+			return
+		}
 		log.T.C(recLog(on, b, eng))
 		eng.balance(on, b, c, prev)
 	case *confirm.Layer:
@@ -37,10 +41,6 @@ func (eng *Engine) handleMessage(b slice.Bytes, prev types.Onion) {
 		log.T.C(recLog(on, b, eng))
 		eng.confirm(on, b, c, prev)
 	case *crypt.Layer:
-		if prev == nil {
-			log.E.Ln(reflect.TypeOf(on), "requests from outside? absurd!")
-			return
-		}
 		log.T.C(recLog(on, b, eng))
 		eng.crypt(on, b, c, prev)
 	case *delay.Layer:

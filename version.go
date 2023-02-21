@@ -1,8 +1,7 @@
 package indra
 
-
-// Put invocations to run all the generators in here (
-// check cmd/bumper/ to add them, and they will automatically run with:
+// Put invocations to run all the generators in here (check cmd/bumper/ to add
+// them, and they will automatically run with:
 //
 // $ go generate .
 //
