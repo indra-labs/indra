@@ -1,17 +1,20 @@
 package main
 
 import (
+	"context"
 	"git-indra.lan/indra-labs/indra"
-	"git-indra.lan/indra-labs/indra/pkg/cfg"
+	"git-indra.lan/indra-labs/indra/pkg/interrupt"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/rpc"
 	"git-indra.lan/indra-labs/indra/pkg/seed"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"math/rand"
 	"os"
-	"time"
+)
+
+var (
+	err error
 )
 
 var (
@@ -19,6 +22,7 @@ var (
 	listeners          []string
 	seeds              []string
 	connectors         []string
+	rpc_enable         bool
 	rpc_listen_port    uint16
 	rpc_key            string
 	rpc_whitelist_peer []string
@@ -32,36 +36,26 @@ func init() {
 	seedCmd.PersistentFlags().StringSliceVarP(&listeners, "listen", "l", []string{"/ip4/127.0.0.1/tcp/8337", "/ip6/::1/tcp/8337"}, "binds to an interface")
 	seedCmd.PersistentFlags().StringSliceVarP(&seeds, "seed", "s", []string{}, "adds an additional seed connection  (e.g /dns4/seed0.indra.org/tcp/8337/p2p/<pub_key>)")
 	seedCmd.PersistentFlags().StringSliceVarP(&connectors, "connect", "c", []string{}, "connects only to the seed multi-addresses specified")
+
+	seedCmd.PersistentFlags().BoolVarP(&rpc_enable, "rpc-enable", "", false, "enables the rpc server")
 	seedCmd.PersistentFlags().Uint16VarP(&rpc_listen_port, "rpc-listen-port", "", 0, "binds the udp server to port (random if not selected)")
 	seedCmd.PersistentFlags().StringVarP(&rpc_key, "rpc-key", "", "", "the base58 encoded pre-shared key for accessing the rpc")
 	seedCmd.PersistentFlags().StringSliceVarP(&rpc_whitelist_peer, "rpc-whitelist-peer", "", []string{}, "adds a peer id to the whitelist for access")
 	seedCmd.PersistentFlags().StringSliceVarP(&rpc_whitelist_ip, "rpc-whitelist-ip", "", []string{}, "adds a cidr ip range to the whitelist for access (e.g /ip4/127.0.0.1/ipcidr/32)")
-	seedCmd.PersistentFlags().StringVarP(&rpc_unix_path, "rpc-listen-unix", "", "", "binds to a unix socket with path (default is $HOME/.indra/indra.sock)")
+	seedCmd.PersistentFlags().StringVarP(&rpc_unix_path, "rpc-listen-unix", "", "/tmp/indra.sock", "binds to a unix socket with path (default is /tmp/indra.sock)")
 
 	viper.BindPFlag("key", seedCmd.PersistentFlags().Lookup("key"))
 	viper.BindPFlag("listen", seedCmd.PersistentFlags().Lookup("listen"))
 	viper.BindPFlag("seed", seedCmd.PersistentFlags().Lookup("seed"))
 	viper.BindPFlag("connect", seedCmd.PersistentFlags().Lookup("connect"))
+	viper.BindPFlag("rpc-enable", seedCmd.PersistentFlags().Lookup("rpc-enable"))
 	viper.BindPFlag("rpc-listen-port", seedCmd.PersistentFlags().Lookup("rpc-listen-port"))
 	viper.BindPFlag("rpc-key", seedCmd.PersistentFlags().Lookup("rpc-key"))
 	viper.BindPFlag("rpc-whitelist-peer", seedCmd.PersistentFlags().Lookup("rpc-whitelist-peer"))
 	viper.BindPFlag("rpc-whitelist-ip", seedCmd.PersistentFlags().Lookup("rpc-whitelist-ip"))
 	viper.BindPFlag("rpc-listen-unix", seedCmd.PersistentFlags().Lookup("rpc-listen-unix"))
 
-	cobra.OnInitialize(initUnixSocket)
-
 	rootCmd.AddCommand(seedCmd)
-}
-
-func initUnixSocket() {
-
-	if rpc_unix_path == "" {
-
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
-
-		rpc_unix_path = home + "/.indra/indra.sock"
-	}
 }
 
 var seedCmd = &cobra.Command{
@@ -72,39 +66,61 @@ var seedCmd = &cobra.Command{
 
 		log.I.Ln("-- ", log2.App, "("+viper.GetString("network")+") -", indra.SemVer, "- Network Freedom. --")
 
-		var err error
-		var config = seed.DefaultConfig
+		log.I.Ln("running seed")
 
-		config.Params = cfg.SelectNetworkParams(viper.GetString("network"))
+		//
+		// Set the context
+		//
 
-		config.RPCConfig.Key.Decode(viper.GetString("rpc-key"))
+		var ctx context.Context
+		var cancel context.CancelFunc
 
-		if config.RPCConfig.IsEnabled() {
+		ctx, cancel = context.WithCancel(context.Background())
 
-			config.RPCConfig.ListenPort = viper.GetUint16("rpc-listen-port")
+		interrupt.AddHandler(cancel)
 
-			if config.RPCConfig.ListenPort == 0 {
+		//
+		// RPC
+		//
 
-				rand.Seed(time.Now().Unix())
+		if viper.GetBool("rpc-enable") {
 
-				config.RPCConfig.ListenPort = uint16(rand.Intn(45534) + 10000)
+			log.I.Ln("enabling rpc server")
 
-				viper.Set("rpc-listen-port", config.RPCConfig.ListenPort)
+			if err = rpc.ConfigureWithViper(); check(err) {
+				os.Exit(1)
 			}
 
-			for _, ip := range viper.GetStringSlice("rpc-whitelist-ip") {
-				config.RPCConfig.IP_Whitelist = append(config.RPCConfig.IP_Whitelist, multiaddr.StringCast(ip))
-			}
+			// We need to enable specific gRPC services here
+			// rpc.Register()
 
-			for _, peer := range viper.GetStringSlice("rpc-whitelist-peer") {
+			log.I.Ln("starting rpc server")
 
-				var pubKey rpc.RPCPublicKey
+			go rpc.Start(ctx)
 
-				pubKey.Decode(peer)
+			select {
+			case <-rpc.CantStart():
 
-				config.RPCConfig.Peer_Whitelist = append(config.RPCConfig.Peer_Whitelist, pubKey)
+				log.I.Ln("issues starting the rpc server")
+				log.I.Ln("attempting a graceful shutdown")
+
+				rpc.Shutdown()
+
+				os.Exit(1)
+
+			case <-rpc.IsReady():
+
+				log.I.Ln("rpc server is ready!")
 			}
 		}
+
+		//
+		// P2P
+		//
+
+		var config = seed.DefaultConfig
+
+		config.SetNetwork(viper.GetString("network"))
 
 		if config.PrivKey, err = seed.GetOrGeneratePrivKey(viper.GetString("key")); check(err) {
 			return
@@ -123,8 +139,6 @@ var seedCmd = &cobra.Command{
 		}
 
 		var srv *seed.Server
-
-		log.I.Ln("running serve.")
 
 		if srv, err = seed.New(config); check(err) {
 			return

@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"context"
 	"git-indra.lan/indra-labs/indra"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"github.com/multiformats/go-multiaddr"
@@ -8,12 +9,13 @@ import (
 	"golang.zx2c4.com/wireguard/device"
 	"golang.zx2c4.com/wireguard/tun"
 	"golang.zx2c4.com/wireguard/tun/netstack"
-	"gvisor.dev/gvisor/pkg/tcpip/adapters/gonet"
 	"net"
 	"net/netip"
-	"net/rpc"
+	"os"
 	"strconv"
 )
+
+const NullPort = 0
 
 var (
 	log   = log2.GetLogger(indra.PathBase)
@@ -21,65 +23,56 @@ var (
 )
 
 var (
-	DefaultIPAddress = netip.MustParseAddr("127.0.37.1")
+	config = rpcConfig{
+		Key:            &nullRPCPrivateKey,
+		ListenPort:     NullPort,
+		Peer_Whitelist: []RPCPublicKey{},
+		IP_Whitelist:   []multiaddr.Multiaddr{},
+	}
 )
 
-type RPCConfig struct {
-	Key            *RPCPrivateKey
-	ListenPort     uint16
-	Peer_Whitelist []RPCPublicKey
-	IP_Whitelist   []multiaddr.Multiaddr
+var (
+	isReady       = make(chan bool)
+	startupErrors = make(chan error)
+)
+
+func IsReady() chan bool {
+	return isReady
 }
 
-func (conf *RPCConfig) IsEnabled() bool {
-	return !conf.Key.IsZero()
+func CantStart() chan error {
+	return startupErrors
 }
 
-type RPC struct {
-	device  *device.Device
-	network *netstack.Net
-	tunnel  tun.Device
-}
+var (
+	deviceIP   netip.Addr = netip.MustParseAddr("127.0.37.1")
+	devicePort int        = 0
+	deviceMTU  int        = 1420
+)
 
-func (r *RPC) Start() error {
+var (
+	dev      *device.Device
+	network  *netstack.Net
+	tunnel   tun.Device
+	unixSock net.Listener
+	tcpSock  net.Listener
+)
 
-	log.I.Ln("starting rpc server")
-
-	r.device.Up()
+func Start(ctx context.Context) {
 
 	var err error
-	var listener *gonet.TCPListener
+	var config = config
 
-	if listener, err = r.network.ListenTCP(&net.TCPAddr{Port: 80}); check(err) {
-		return err
+	// Initializing the tunnel
+	if tunnel, network, err = netstack.CreateNetTUN([]netip.Addr{deviceIP}, []netip.Addr{}, deviceMTU); check(err) {
+		startupErrors <- err
+		return
 	}
 
-	rpc.HandleHTTP()
+	dev = device.NewDevice(tunnel, conn.NewDefaultBind(), device.NewLogger(device.LogLevelError, "server "))
 
-	go rpc.Accept(listener)
-
-	return nil
-}
-
-func (rpc *RPC) Stop() {
-
-	rpc.device.Close()
-
-}
-
-func New(config *RPCConfig) (*RPC, error) {
-
-	var err error
-	var r RPC
-
-	if r.tunnel, r.network, err = netstack.CreateNetTUN([]netip.Addr{DefaultIPAddress}, []netip.Addr{}, 1420); check(err) {
-		return nil, err
-	}
-
-	r.device = device.NewDevice(r.tunnel, conn.NewDefaultBind(), device.NewLogger(device.LogLevelError, "server "))
-
-	r.device.SetPrivateKey(config.Key.AsDeviceKey())
-	r.device.IpcSet("listen_port=" + strconv.Itoa(int(config.ListenPort)))
+	dev.SetPrivateKey(config.Key.AsDeviceKey())
+	dev.IpcSet("listen_port=" + strconv.Itoa(int(config.ListenPort)))
 
 	for _, peer_whitelist := range config.Peer_Whitelist {
 
@@ -87,10 +80,51 @@ func New(config *RPCConfig) (*RPC, error) {
 			"public_key=" + peer_whitelist.HexString() + "\n" +
 			"allowed_ip=" + "127.0.37.2" + "/32\n"
 
-		if err = r.device.IpcSet(deviceConf); check(err) {
-			return nil, err
+		if err = dev.IpcSet(deviceConf); check(err) {
+			startupErrors <- err
+			return
 		}
 	}
 
-	return &r, nil
+	if err = dev.Up(); check(err) {
+		startupErrors <- err
+		return
+	}
+
+	if unixSock, err = net.Listen("unix", config.UnixPath); check(err) {
+		startupErrors <- err
+		return
+	}
+
+	if tcpSock, err = network.ListenTCP(&net.TCPAddr{Port: devicePort}); check(err) {
+		startupErrors <- err
+		return
+	}
+
+	isReady <- true
+
+	select {
+	case <-ctx.Done():
+		Shutdown()
+	}
+}
+
+func Shutdown() {
+
+	log.I.Ln("shutting down rpc server")
+
+	if unixSock != nil {
+
+		unixSock.Close()
+
+		os.Remove(config.UnixPath)
+	}
+
+	if tcpSock != nil {
+		tcpSock.Close()
+	}
+
+	if dev != nil {
+		dev.Close()
+	}
 }

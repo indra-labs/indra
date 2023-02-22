@@ -2,8 +2,6 @@ package seed
 
 import (
 	"context"
-	"git-indra.lan/indra-labs/indra/pkg/rpc"
-	"strconv"
 	"time"
 
 	"github.com/libp2p/go-libp2p"
@@ -32,8 +30,6 @@ type Server struct {
 	config *Config
 
 	host host.Host
-
-	rpc *rpc.RPC
 }
 
 func (srv *Server) Restart() (err error) {
@@ -47,22 +43,18 @@ func (srv *Server) Shutdown() (err error) {
 
 	log.I.Ln("shutting down [p2p.host]")
 
-	if srv.host.Close(); check(err) {
-		return
+	if err = srv.host.Close(); check(err) {
+		// continue
 	}
 
 	log.I.Ln("shutdown complete")
 
-	return nil
+	return
 }
 
 func (srv *Server) Serve() (err error) {
 
-	log.I.Ln("starting the server")
-
-	if srv.config.RPCConfig.IsEnabled() {
-		srv.rpc.Start()
-	}
+	log.I.Ln("starting the p2p server")
 
 	// Here we create a context with cancel and add it to the interrupt handler
 	var ctx context.Context
@@ -87,7 +79,7 @@ func (srv *Server) Serve() (err error) {
 
 	case <-ctx.Done():
 
-		log.I.Ln("shutting down server")
+		log.I.Ln("shutting down p2p server")
 
 		srv.Shutdown()
 	}
@@ -97,27 +89,12 @@ func (srv *Server) Serve() (err error) {
 
 func New(config *Config) (*Server, error) {
 
-	log.I.Ln("initializing the server")
+	log.I.Ln("initializing the p2p server")
 
 	var err error
 	var s Server
 
 	s.config = config
-
-	if config.RPCConfig.IsEnabled() {
-
-		log.I.Ln("enabling rpc server")
-
-		if s.rpc, err = rpc.New(config.RPCConfig); check(err) {
-			return nil, err
-		}
-
-		log.I.Ln("rpc public key:")
-		log.I.Ln("-", config.RPCConfig.Key.PubKey().Encode())
-
-		log.I.Ln("rpc listeners:")
-		log.I.Ln("- [/ip4/0.0.0.0/udp/"+strconv.Itoa(int(config.RPCConfig.ListenPort)), "/ip6/:::/udp/"+strconv.Itoa(int(config.RPCConfig.ListenPort))+"]")
-	}
 
 	//var client *rpc.RPCClient
 	//

@@ -68,7 +68,7 @@ func NewClient(config *ClientConfig) (*RPCClient, error) {
 	deviceConf := "" +
 		"public_key=" + config.Peer.PublicKey.HexString() + "\n" +
 		"endpoint=0.0.0.0:18222" + "\n" +
-		"allowed_ip=" + DefaultIPAddress.String() + "/32\n" +
+		"allowed_ip=" + deviceIP.String() + "/32\n" +
 		"persistent_keepalive_interval=" + strconv.Itoa(int(config.Peer.KeepAliveInterval)) + "\n"
 
 	if err = r.device.IpcSet(deviceConf); check(err) {

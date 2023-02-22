@@ -20,18 +20,21 @@ type (
 )
 
 var (
-	DefaultRPCPrivateKey RPCPrivateKey
-	DefaultRPCPublicKey  RPCPublicKey
+	nullRPCPrivateKey   RPCPrivateKey
+	DefaultRPCPublicKey RPCPublicKey
 )
 
-func NewPrivateKey() (sk RPCPrivateKey, err error) {
+func NewPrivateKey() (*RPCPrivateKey, error) {
+
+	var err error
+	var sk RPCPrivateKey
 
 	_, err = rand.Read(sk[:])
 
 	sk[0] &= 248
 	sk[31] = (sk[31] & 127) | 64
 
-	return
+	return &sk, err
 }
 
 func (key RPCPrivateKey) Equals(tar RPCPrivateKey) bool {
