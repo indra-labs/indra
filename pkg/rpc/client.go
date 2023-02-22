@@ -3,6 +3,7 @@ package rpc
 import (
 	"context"
 	"github.com/multiformats/go-multiaddr"
+	"github.com/tutorialedge/go-grpc-tutorial/chat"
 	"golang.zx2c4.com/wireguard/conn"
 	"golang.zx2c4.com/wireguard/device"
 	"golang.zx2c4.com/wireguard/tun"
@@ -79,17 +80,31 @@ func NewClient(config *ClientConfig) (*RPCClient, error) {
 		return nil, err
 	}
 
-	//var conn *grpc.ClientConn
+	var conn *grpc.ClientConn
 
-	go grpc.Dial("unix:///tmp/indra.sock", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	//conn, err = grpc.Dial(
+	//	"unix:///tmp/indra.sock",
+	//	grpc.WithBlock(),
+	//	grpc.WithTransportCredentials(insecure.NewCredentials()),
+	//)
 
-	go grpc.DialContext(context.Background(),
+	conn, err = grpc.DialContext(context.Background(),
 		deviceIP.String()+":80",
 		grpc.WithBlock(),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithContextDialer(func(ctx context.Context, address string) (net.Conn, error) {
 			return r.network.DialContext(ctx, "tcp4", address)
 		}))
+
+	c := chat.NewChatServiceClient(conn)
+
+	response, err := c.SayHello(context.Background(), &chat.Message{Body: "Hello From Client!"})
+
+	if err != nil {
+		check(err)
+	}
+
+	log.I.F(response.Body)
 
 	return &r, nil
 }
