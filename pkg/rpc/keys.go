@@ -3,6 +3,7 @@ package rpc
 import (
 	"crypto/rand"
 	"crypto/subtle"
+	"encoding/hex"
 	"github.com/btcsuite/btcd/btcutil/base58"
 	"golang.org/x/crypto/curve25519"
 	"golang.zx2c4.com/wireguard/device"
@@ -61,8 +62,21 @@ func (sk RPCPrivateKey) Encode() (key string) {
 	return
 }
 
+func (sk RPCPrivateKey) HexString() string {
+	return hex.EncodeToString(sk[:])
+}
+
 func (sk *RPCPrivateKey) Decode(key string) {
 	copy(sk[:], base58.Decode(key))
+}
+
+func DecodePrivateKey(key string) RPCPrivateKey {
+
+	var pk RPCPrivateKey
+
+	pk.Decode(key)
+
+	return pk
 }
 
 func (sk RPCPublicKey) AsDeviceKey() device.NoisePublicKey {
@@ -76,6 +90,19 @@ func (sk RPCPublicKey) Encode() (key string) {
 	return
 }
 
-func (sk RPCPublicKey) Decode(key string) {
+func (sk RPCPublicKey) HexString() string {
+	return hex.EncodeToString(sk[:])
+}
+
+func (sk *RPCPublicKey) Decode(key string) {
 	copy(sk[:], base58.Decode(key))
+}
+
+func DecodePublicKey(key string) *RPCPublicKey {
+
+	var pk RPCPublicKey
+
+	pk.Decode(key)
+
+	return &pk
 }

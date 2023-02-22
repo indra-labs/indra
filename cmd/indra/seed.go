@@ -21,7 +21,7 @@ var (
 	rpc_listen_port    uint16
 	rpc_key            string
 	rpc_whitelist_peer []string
-	pc_whitelist_ip    []string
+	rpc_whitelist_ip   []string
 )
 
 func init() {
@@ -33,7 +33,7 @@ func init() {
 	seedCmd.PersistentFlags().Uint16VarP(&rpc_listen_port, "rpc-listen-port", "", 0, "binds the udp server to port (random if not selected)")
 	seedCmd.PersistentFlags().StringVarP(&rpc_key, "rpc-key", "", "", "the base58 encoded pre-shared key for accessing the rpc")
 	seedCmd.PersistentFlags().StringSliceVarP(&rpc_whitelist_peer, "rpc-whitelist-peer", "", []string{}, "adds a peer id to the whitelist for access")
-	seedCmd.PersistentFlags().StringSliceVarP(&pc_whitelist_ip, "rpc-whitelist-ip", "", []string{}, "adds a cidr ip range to the whitelist for access (e.g /ip4/127.0.0.1/ipcidr/32)")
+	seedCmd.PersistentFlags().StringSliceVarP(&rpc_whitelist_ip, "rpc-whitelist-ip", "", []string{}, "adds a cidr ip range to the whitelist for access (e.g /ip4/127.0.0.1/ipcidr/32)")
 
 	viper.BindPFlag("key", seedCmd.PersistentFlags().Lookup("key"))
 	viper.BindPFlag("listen", seedCmd.PersistentFlags().Lookup("listen"))

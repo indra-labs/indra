@@ -60,7 +60,9 @@ func (srv *Server) Serve() (err error) {
 
 	log.I.Ln("starting the server")
 
-	srv.rpc.Start()
+	if srv.config.RPCConfig.IsEnabled() {
+		srv.rpc.Start()
+	}
 
 	// Here we create a context with cancel and add it to the interrupt handler
 	var ctx context.Context
@@ -102,19 +104,28 @@ func New(config *Config) (*Server, error) {
 
 	s.config = config
 
-	if s.config.RPCConfig.IsEnabled() {
+	if config.RPCConfig.IsEnabled() {
 
 		log.I.Ln("enabling rpc server")
 
-		if s.rpc, err = rpc.New(s.config.RPCConfig); check(err) {
+		if s.rpc, err = rpc.New(config.RPCConfig); check(err) {
 			return nil, err
 		}
 
 		log.I.Ln("rpc public key:")
-		log.I.Ln("-", s.config.RPCConfig.Key.PubKey().Encode())
+		log.I.Ln("-", config.RPCConfig.Key.PubKey().Encode())
+
 		log.I.Ln("rpc listeners:")
-		log.I.Ln("- [/ip4/0.0.0.0/udp/"+strconv.Itoa(int(s.config.RPCConfig.ListenPort)), "/ip6/::1/udp/"+strconv.Itoa(int(s.config.RPCConfig.ListenPort))+"]")
+		log.I.Ln("- [/ip4/0.0.0.0/udp/"+strconv.Itoa(int(config.RPCConfig.ListenPort)), "/ip6/:::/udp/"+strconv.Itoa(int(config.RPCConfig.ListenPort))+"]")
 	}
+
+	//var client *rpc.RPCClient
+	//
+	//if client, err = rpc.NewClient(rpc.DefaultClientConfig); check(err) {
+	//	return nil, err
+	//}
+	//
+	//client.Start()
 
 	if s.host, err = libp2p.New(libp2p.Identity(config.PrivKey), libp2p.UserAgent(userAgent), libp2p.ListenAddrs(config.ListenAddresses...)); check(err) {
 		return nil, err
