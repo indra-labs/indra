@@ -47,7 +47,6 @@ func (r *RPCClient) Start() {
 }
 
 func (rpc *RPCClient) Stop() {
-
 	rpc.device.Close()
 }
 

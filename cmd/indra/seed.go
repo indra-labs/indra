@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"math/rand"
+	"os"
 	"time"
 )
 
@@ -22,6 +23,7 @@ var (
 	rpc_key            string
 	rpc_whitelist_peer []string
 	rpc_whitelist_ip   []string
+	rpc_unix_path      string
 )
 
 func init() {
@@ -34,6 +36,7 @@ func init() {
 	seedCmd.PersistentFlags().StringVarP(&rpc_key, "rpc-key", "", "", "the base58 encoded pre-shared key for accessing the rpc")
 	seedCmd.PersistentFlags().StringSliceVarP(&rpc_whitelist_peer, "rpc-whitelist-peer", "", []string{}, "adds a peer id to the whitelist for access")
 	seedCmd.PersistentFlags().StringSliceVarP(&rpc_whitelist_ip, "rpc-whitelist-ip", "", []string{}, "adds a cidr ip range to the whitelist for access (e.g /ip4/127.0.0.1/ipcidr/32)")
+	seedCmd.PersistentFlags().StringVarP(&rpc_unix_path, "rpc-listen-unix", "", "", "binds to a unix socket with path (default is $HOME/.indra/indra.sock)")
 
 	viper.BindPFlag("key", seedCmd.PersistentFlags().Lookup("key"))
 	viper.BindPFlag("listen", seedCmd.PersistentFlags().Lookup("listen"))
@@ -43,8 +46,22 @@ func init() {
 	viper.BindPFlag("rpc-key", seedCmd.PersistentFlags().Lookup("rpc-key"))
 	viper.BindPFlag("rpc-whitelist-peer", seedCmd.PersistentFlags().Lookup("rpc-whitelist-peer"))
 	viper.BindPFlag("rpc-whitelist-ip", seedCmd.PersistentFlags().Lookup("rpc-whitelist-ip"))
+	viper.BindPFlag("rpc-listen-unix", seedCmd.PersistentFlags().Lookup("rpc-listen-unix"))
+
+	cobra.OnInitialize(initUnixSocket)
 
 	rootCmd.AddCommand(seedCmd)
+}
+
+func initUnixSocket() {
+
+	if rpc_unix_path == "" {
+
+		home, err := os.UserHomeDir()
+		cobra.CheckErr(err)
+
+		rpc_unix_path = home + "/.indra/indra.sock"
+	}
 }
 
 var seedCmd = &cobra.Command{
@@ -67,7 +84,9 @@ var seedCmd = &cobra.Command{
 			config.RPCConfig.ListenPort = viper.GetUint16("rpc-listen-port")
 
 			if config.RPCConfig.ListenPort == 0 {
+
 				rand.Seed(time.Now().Unix())
+
 				config.RPCConfig.ListenPort = uint16(rand.Intn(45534) + 10000)
 
 				viper.Set("rpc-listen-port", config.RPCConfig.ListenPort)
