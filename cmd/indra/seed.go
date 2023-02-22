@@ -90,10 +90,7 @@ var seedCmd = &cobra.Command{
 			}
 
 			rpc.Register(func(srv *grpc.Server) {
-
-				s := chat.Server{}
-
-				chat.RegisterChatServiceServer(srv, &s)
+				chat.RegisterChatServiceServer(srv, &chat.Server{})
 			})
 
 			log.I.Ln("starting rpc server")
