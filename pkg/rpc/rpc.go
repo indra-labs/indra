@@ -9,6 +9,7 @@ import (
 	"golang.zx2c4.com/wireguard/device"
 	"golang.zx2c4.com/wireguard/tun"
 	"golang.zx2c4.com/wireguard/tun/netstack"
+	"google.golang.org/grpc"
 	"net"
 	"net/netip"
 	"os"
@@ -56,7 +57,16 @@ var (
 	tunnel   tun.Device
 	unixSock net.Listener
 	tcpSock  net.Listener
+	server   *grpc.Server
 )
+
+func init() {
+	server = grpc.NewServer()
+}
+
+func Server() *grpc.Server {
+	return server
+}
 
 func Start(ctx context.Context) {
 

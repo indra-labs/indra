@@ -68,10 +68,6 @@ var seedCmd = &cobra.Command{
 
 		log.I.Ln("running seed")
 
-		//
-		// Set the context
-		//
-
 		var ctx context.Context
 		var cancel context.CancelFunc
 
@@ -92,7 +88,8 @@ var seedCmd = &cobra.Command{
 			}
 
 			// We need to enable specific gRPC services here
-			// rpc.Register()
+			//srv := rpc.Server()
+			//helloworld.RegisterGreeterServer(srv, helloworld)
 
 			log.I.Ln("starting rpc server")
 
