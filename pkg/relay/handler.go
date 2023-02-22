@@ -1,11 +1,7 @@
 package relay
 
 import (
-	"fmt"
-	"reflect"
-	
 	"git-indra.lan/indra-labs/indra/pkg/types"
-	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 func (eng *Engine) handler() (out bool) {
@@ -65,16 +61,4 @@ func (eng *Engine) handler() (out bool) {
 		}
 	}
 	return
-}
-
-// utility functions
-
-func recLog(on types.Onion, b slice.Bytes, cl *Engine) func() string {
-	return func() string {
-		return cl.GetLocalNodeAddress().String() +
-			" received " +
-			fmt.Sprint(reflect.TypeOf(on)) + "\n" +
-			""
-		// spew.Sdump(b.ToBytes())
-	}
 }

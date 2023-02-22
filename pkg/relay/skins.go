@@ -3,9 +3,9 @@ package relay
 import (
 	"net/netip"
 	"time"
-
+	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -16,6 +16,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/onion/exit"
 	"git-indra.lan/indra-labs/indra/pkg/onion/forward"
 	"git-indra.lan/indra-labs/indra/pkg/onion/getbalance"
+	"git-indra.lan/indra-labs/indra/pkg/onion/hiddenservice"
 	"git-indra.lan/indra-labs/indra/pkg/onion/noop"
 	"git-indra.lan/indra-labs/indra/pkg/onion/response"
 	"git-indra.lan/indra-labs/indra/pkg/onion/reverse"
@@ -30,19 +31,19 @@ var nop = &noop.Layer{}
 
 func (o Skins) ForwardCrypt(s *Session, k *prv.Key,
 	n nonce.IV) Skins {
-
+	
 	return o.Forward(s.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, 0)
 }
 
 func (o Skins) ReverseCrypt(s *Session, k *prv.Key, n nonce.IV,
 	seq int) Skins {
-
+	
 	return o.Reverse(s.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, seq)
 }
 
 func (o Skins) ForwardSession(s *Node,
 	k *prv.Key, n nonce.IV, sess *session.Layer) Skins {
-
+	
 	return o.Forward(s.AddrPort).
 		Crypt(s.IdentityPub, nil, k, n, 0).
 		Session(sess)
@@ -50,7 +51,7 @@ func (o Skins) ForwardSession(s *Node,
 
 func (o Skins) Balance(id, confID nonce.ID,
 	amt lnwire.MilliSatoshi) Skins {
-
+	
 	return append(o, &balance.Layer{
 		ID:           id,
 		ConfID:       confID,
@@ -62,13 +63,26 @@ func (o Skins) Confirmation(id nonce.ID, load byte) Skins {
 	return append(o, &confirm.Layer{ID: id, Load: load})
 }
 
+func (o Skins) Crypt(toHdr, toPld *pub.Key, from *prv.Key, n nonce.IV,
+	depth int) Skins {
+	
+	return append(o, &crypt.Layer{
+		Depth:        depth,
+		ToHeaderPub:  toHdr,
+		ToPayloadPub: toPld,
+		From:         from,
+		Nonce:        n,
+		Onion:        nop,
+	})
+}
+
 func (o Skins) Delay(d time.Duration) Skins {
 	return append(o, &delay.Layer{Duration: d, Onion: nop})
 }
 
 func (o Skins) Exit(port uint16, prvs [3]*prv.Key, pubs [3]*pub.Key,
 	nonces [3]nonce.IV, id nonce.ID, payload slice.Bytes) Skins {
-
+	
 	return append(o, &exit.Layer{
 		Port:    port,
 		Ciphers: GenCiphers(prvs, pubs),
@@ -89,7 +103,7 @@ func (o Skins) Forward(addr *netip.AddrPort) Skins {
 
 func (o Skins) GetBalance(id, confID nonce.ID, prvs [3]*prv.Key,
 	pubs [3]*pub.Key, nonces [3]nonce.IV) Skins {
-
+	
 	return append(o, &getbalance.Layer{
 		ID:      id,
 		ConfID:  confID,
@@ -99,16 +113,12 @@ func (o Skins) GetBalance(id, confID nonce.ID, prvs [3]*prv.Key,
 	})
 }
 
-func (o Skins) Crypt(toHdr, toPld *pub.Key, from *prv.Key, n nonce.IV,
-	depth int) Skins {
-
-	return append(o, &crypt.Layer{
-		Depth:        depth,
-		ToHeaderPub:  toHdr,
-		ToPayloadPub: toPld,
-		From:         from,
-		Nonce:        n,
-		Onion:        nop,
+func (o Skins) HiddenService(addr *pub.Key, prvs [3]*prv.Key,
+	pubs [3]*pub.Key, nonces [3]nonce.IV) Skins {
+	return append(o, &hiddenservice.Layer{
+		Identity: addr,
+		Ciphers:  GenCiphers(prvs, pubs),
+		Nonces:   nonces,
 	})
 }
 
