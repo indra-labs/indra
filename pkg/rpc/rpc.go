@@ -106,10 +106,14 @@ func Start(ctx context.Context) {
 		return
 	}
 
+	go server.Serve(unixSock)
+
 	if tcpSock, err = network.ListenTCP(&net.TCPAddr{Port: devicePort}); check(err) {
 		startupErrors <- err
 		return
 	}
+
+	go server.Serve(tcpSock)
 
 	isReady <- true
 
@@ -137,4 +141,6 @@ func Shutdown() {
 	if dev != nil {
 		dev.Close()
 	}
+
+	server.Stop()
 }
