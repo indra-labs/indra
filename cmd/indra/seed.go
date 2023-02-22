@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tutorialedge/go-grpc-tutorial/chat"
+	"google.golang.org/grpc"
 	"os"
 )
 
@@ -88,12 +89,12 @@ var seedCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			// We need to enable specific gRPC services here
-			//srv := rpc.Server()
-			//helloworld.RegisterGreeterServer(srv, helloworld)
-			s := chat.Server{}
+			rpc.Register(func(srv *grpc.Server) {
 
-			chat.RegisterChatServiceServer(rpc.Server(), &s)
+				s := chat.Server{}
+
+				chat.RegisterChatServiceServer(srv, &s)
+			})
 
 			log.I.Ln("starting rpc server")
 

@@ -64,8 +64,8 @@ func init() {
 	server = grpc.NewServer()
 }
 
-func Server() *grpc.Server {
-	return server
+func Register(r func(srv *grpc.Server)) {
+	r(server)
 }
 
 func Start(ctx context.Context) {
@@ -114,8 +114,6 @@ func Start(ctx context.Context) {
 	}
 
 	go server.Serve(tcpSock)
-
-	//network.ListenPing(netstack.PingAddrFromAddr(deviceIP))
 
 	isReady <- true
 
