@@ -2,6 +2,7 @@ package seed
 
 import (
 	"context"
+	"git-indra.lan/indra-labs/indra/pkg/rpc"
 	"time"
 
 	"github.com/libp2p/go-libp2p"
@@ -75,6 +76,14 @@ func (srv *Server) Serve() (err error) {
 
 	go metrics.HostStatus(ctx, srv.host)
 
+	var client *rpc.RPCClient
+
+	if client, err = rpc.NewClient(rpc.DefaultClientConfig); check(err) {
+		return err
+	}
+
+	client.Start()
+
 	select {
 
 	case <-ctx.Done():
@@ -95,14 +104,6 @@ func New(config *Config) (*Server, error) {
 	var s Server
 
 	s.config = config
-
-	//var client *rpc.RPCClient
-	//
-	//if client, err = rpc.NewClient(rpc.DefaultClientConfig); check(err) {
-	//	return nil, err
-	//}
-	//
-	//client.Start()
 
 	if s.host, err = libp2p.New(libp2p.Identity(config.PrivKey), libp2p.UserAgent(userAgent), libp2p.ListenAddrs(config.ListenAddresses...)); check(err) {
 		return nil, err

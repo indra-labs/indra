@@ -1,17 +1,21 @@
 package rpc
 
 import (
+	"context"
 	"github.com/multiformats/go-multiaddr"
 	"golang.zx2c4.com/wireguard/conn"
 	"golang.zx2c4.com/wireguard/device"
 	"golang.zx2c4.com/wireguard/tun"
 	"golang.zx2c4.com/wireguard/tun/netstack"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"net"
 	"net/netip"
 	"strconv"
 )
 
 var (
-	DefaultClientIPAddr = netip.MustParseAddr("127.0.37.2")
+	DefaultClientIPAddr = netip.MustParseAddr("192.168.4.29")
 )
 
 type Peer struct {
@@ -74,6 +78,18 @@ func NewClient(config *ClientConfig) (*RPCClient, error) {
 	if err = r.device.IpcSet(deviceConf); check(err) {
 		return nil, err
 	}
+
+	//var conn *grpc.ClientConn
+
+	go grpc.Dial("unix:///tmp/indra.sock", grpc.WithTransportCredentials(insecure.NewCredentials()))
+
+	go grpc.DialContext(context.Background(),
+		deviceIP.String()+":80",
+		grpc.WithBlock(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithContextDialer(func(ctx context.Context, address string) (net.Conn, error) {
+			return r.network.DialContext(ctx, "tcp4", address)
+		}))
 
 	return &r, nil
 }

@@ -46,7 +46,7 @@ func CantStart() chan error {
 }
 
 var (
-	deviceIP   netip.Addr = netip.MustParseAddr("127.0.37.1")
+	deviceIP   netip.Addr = netip.MustParseAddr("192.168.4.28")
 	devicePort int        = 0
 	deviceMTU  int        = 1420
 )
@@ -88,7 +88,7 @@ func Start(ctx context.Context) {
 
 		deviceConf := "" +
 			"public_key=" + peer_whitelist.HexString() + "\n" +
-			"allowed_ip=" + "127.0.37.2" + "/32\n"
+			"allowed_ip=" + DefaultClientIPAddr.String() + "/32\n"
 
 		if err = dev.IpcSet(deviceConf); check(err) {
 			startupErrors <- err
@@ -108,12 +108,14 @@ func Start(ctx context.Context) {
 
 	go server.Serve(unixSock)
 
-	if tcpSock, err = network.ListenTCP(&net.TCPAddr{Port: devicePort}); check(err) {
+	if tcpSock, err = network.ListenTCPAddrPort(netip.AddrPortFrom(deviceIP, 80)); check(err) {
 		startupErrors <- err
 		return
 	}
 
 	go server.Serve(tcpSock)
+
+	//network.ListenPing(netstack.PingAddrFromAddr(deviceIP))
 
 	isReady <- true
 

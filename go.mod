@@ -171,6 +171,7 @@ require (
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/templexxx/cpu v0.0.1 // indirect
 	github.com/templexxx/xorsimd v0.1.1 // indirect
+	github.com/tutorialedge/go-grpc-tutorial v0.0.0-20200509091100-f8d1b5b15b01 // indirect
 	github.com/whyrusleeping/go-keyspace v0.0.0-20160322163242-5b898ac5add1 // indirect
 	github.com/xanzy/ssh-agent v0.2.1 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect

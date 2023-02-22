@@ -1111,6 +1111,8 @@ github.com/templexxx/xorsimd v0.1.1 h1:Y4e8YgMx/4xRJO4G6lq0bSswfDCxbIrGu7KqM2ET5
 github.com/templexxx/xorsimd v0.1.1/go.mod h1:W+ffZz8jJMH2SXwuKu9WhygqBMbFnp14G2fqEr8qaNo=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
+github.com/tutorialedge/go-grpc-tutorial v0.0.0-20200509091100-f8d1b5b15b01 h1:dVcYTEMB9QwRqslGxkvYGXI3fL7twjdbTTADm7J3TU8=
+github.com/tutorialedge/go-grpc-tutorial v0.0.0-20200509091100-f8d1b5b15b01/go.mod h1:LBdTyeyzGK4jRGHXkC3z2BFf/Fml8peKISp1OtHDmvs=
 github.com/ugorji/go v1.1.4/go.mod h1:uQMGLiO92mf5W77hV/PUCpI3pbzQx3CRekS0kk+RGrc=
 github.com/urfave/cli v0.0.0-20171014202726-7bc6a0acffa5/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijbERA=
 github.com/urfave/cli v1.20.0/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijbERA=
