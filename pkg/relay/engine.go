@@ -1,12 +1,11 @@
 package relay
 
 import (
-	"sync"
 	"time"
-
+	
 	"github.com/cybriq/qu"
 	"go.uber.org/atomic"
-
+	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
@@ -24,23 +23,23 @@ var (
 const DefaultTimeout = time.Second
 
 type Engine struct {
-	sync.Mutex
 	*PendingResponses
 	*SessionManager
+	*Introductions
 	*signer.KeySet
-	Load          byte
+	Load          atomic.Uint32
 	TimeoutSignal qu.C
 	Pause         qu.C
 	ShuttingDown  atomic.Bool
 	qu.C
 }
 
-func NewEngine(tpt types.Transport, hdrPrv *prv.Key, no *Node,
+func NewEngine(tpt types.Transport, idPrv *prv.Key, no *Node,
 	nodes []*Node, nReturnSessions int) (c *Engine, e error) {
-
+	
 	no.Transport = tpt
-	no.IdentityPrv = hdrPrv
-	no.IdentityPub = pub.Derive(hdrPrv)
+	no.IdentityPrv = idPrv
+	no.IdentityPub = pub.Derive(idPrv)
 	var ks *signer.KeySet
 	if _, ks, e = signer.New(); check(e) {
 		return
@@ -49,6 +48,7 @@ func NewEngine(tpt types.Transport, hdrPrv *prv.Key, no *Node,
 		PendingResponses: &PendingResponses{},
 		KeySet:           ks,
 		SessionManager:   NewSessionManager(),
+		Introductions:    NewIntroductions(),
 		TimeoutSignal:    qu.T(),
 		Pause:            qu.T(),
 		C:                qu.T(),

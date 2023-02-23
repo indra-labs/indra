@@ -22,11 +22,12 @@ require (
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.15.0
 	github.com/templexxx/reedsolomon v1.1.3
+	github.com/tutorialedge/go-grpc-tutorial v0.0.0-20200509091100-f8d1b5b15b01
 	go.uber.org/atomic v1.10.0
 	golang.org/x/crypto v0.6.0
 	golang.zx2c4.com/wireguard v0.0.0-20230216153314-c7b76d3d9ecd
+	google.golang.org/grpc v1.53.0
 	gopkg.in/src-d/go-git.v4 v4.13.1
-	gvisor.dev/gvisor v0.0.0-20221203005347-703fd9b7fbc0
 )
 
 require (
@@ -171,7 +172,6 @@ require (
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/templexxx/cpu v0.0.1 // indirect
 	github.com/templexxx/xorsimd v0.1.1 // indirect
-	github.com/tutorialedge/go-grpc-tutorial v0.0.0-20200509091100-f8d1b5b15b01 // indirect
 	github.com/whyrusleeping/go-keyspace v0.0.0-20160322163242-5b898ac5add1 // indirect
 	github.com/xanzy/ssh-agent v0.2.1 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
@@ -191,12 +191,12 @@ require (
 	golang.org/x/tools v0.5.0 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 // indirect
 	google.golang.org/genproto v0.0.0-20230221151758-ace64dc21148 // indirect
-	google.golang.org/grpc v1.53.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/src-d/go-billy.v4 v4.3.2 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	gvisor.dev/gvisor v0.0.0-20221203005347-703fd9b7fbc0 // indirect
 	lukechampine.com/blake3 v1.1.7 // indirect
 )
 

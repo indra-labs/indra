@@ -2,9 +2,9 @@ package relay
 
 import (
 	"time"
-
+	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/onion/crypt"
 	"git-indra.lan/indra-labs/indra/pkg/onion/exit"
@@ -15,7 +15,7 @@ import (
 
 func (eng *Engine) exit(ex *exit.Layer, b slice.Bytes,
 	c *slice.Cursor, prev types.Onion) {
-
+	
 	// payload is forwarded to a local port and the result is forwarded
 	// back with a reverse header.
 	var e error
@@ -32,14 +32,12 @@ func (eng *Engine) exit(ex *exit.Layer, b slice.Bytes,
 	case <-timer.C:
 	}
 	// We need to wrap the result in a message crypt.
-	eng.Lock()
 	res := Encode(&response.Layer{
 		ID:    ex.ID,
 		Port:  ex.Port,
-		Load:  eng.Load,
+		Load:  byte(eng.Load.Load()),
 		Bytes: result,
 	})
-	eng.Unlock()
 	rb := FormatReply(b[*c:c.Inc(crypt.ReverseHeaderLen)],
 		res, ex.Ciphers, ex.Nonces)
 	switch on := prev.(type) {
