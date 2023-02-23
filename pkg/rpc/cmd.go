@@ -4,18 +4,14 @@ import (
 	"context"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
-	"os"
 )
 
 func RunWith(ctx context.Context, r func(srv *grpc.Server)) {
 
 	log.I.Ln("initializing the rpc server")
 
-	var err error
-
-	if err = configureWithViper(); check(err) {
-		os.Exit(1)
-	}
+	configureUnixSocket()
+	configureTunnel()
 
 	r(server)
 
@@ -24,23 +20,14 @@ func RunWith(ctx context.Context, r func(srv *grpc.Server)) {
 	go Start(ctx)
 }
 
-func configureWithViper() (err error) {
-
-	log.I.Ln("configuring the rpc server")
-
-	configureUnixSocket()
-	configureTunnel()
-
-	return
-}
-
 func configureUnixSocket() {
 
 	if viper.GetString(unixPathFlag) == "" {
 		return
 	}
 
-	log.I.F("enabling rpc unix listener  [/unix%s]", viper.GetString(unixPathFlag))
+	log.I.Ln("enabling rpc unix listener:")
+	log.I.F("- [/unix%s]", viper.GetString(unixPathFlag))
 
 	isUnixSockEnabled = true
 }
@@ -48,9 +35,6 @@ func configureUnixSocket() {
 func configureTunnel() {
 
 	if !viper.GetBool(tunEnableFlag) {
-
-		log.I.Ln("disabling rpc tunnel")
-
 		return
 	}
 

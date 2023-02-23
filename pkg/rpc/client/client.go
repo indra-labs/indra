@@ -1,7 +1,8 @@
-package rpc
+package client
 
 import (
 	"context"
+	"git-indra.lan/indra-labs/indra/pkg/rpc"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/tutorialedge/go-grpc-tutorial/chat"
 	"golang.zx2c4.com/wireguard/conn"
@@ -16,27 +17,28 @@ import (
 )
 
 var (
-	DefaultClientIPAddr = netip.MustParseAddr("192.168.4.29")
+	DefaultClientIPAddr = netip.MustParseAddr("192.168.37.2")
+	DefaultServerIPAddr = netip.MustParseAddr("192.168.37.1")
 )
 
 type Peer struct {
 	Endpoint          multiaddr.Multiaddr
-	PublicKey         *RPCPublicKey
-	PreSharedKey      RPCPrivateKey
+	PublicKey         *rpc.RPCPublicKey
+	PreSharedKey      rpc.RPCPrivateKey
 	KeepAliveInterval uint8
 }
 
 type ClientConfig struct {
-	Key  RPCPrivateKey
+	Key  rpc.RPCPrivateKey
 	Peer *Peer
 }
 
 var (
 	DefaultClientConfig = &ClientConfig{
-		Key: DecodePrivateKey("Aj9CfbE1pXEVxPfjSaTwdY3B4kYHbwsTSyT3nrc34ATN"),
+		Key: rpc.DecodePrivateKey("Aj9CfbE1pXEVxPfjSaTwdY3B4kYHbwsTSyT3nrc34ATN"),
 		Peer: &Peer{
 			Endpoint:          multiaddr.StringCast("/ip4/127.0.0.1/udp/18222"),
-			PublicKey:         DecodePublicKey("G52UmsQpUmN2zFMkJaP9rwCvqQJzi1yHKA9RTrLJTk9f"),
+			PublicKey:         rpc.DecodePublicKey("G52UmsQpUmN2zFMkJaP9rwCvqQJzi1yHKA9RTrLJTk9f"),
 			KeepAliveInterval: 5,
 		},
 	}
@@ -62,7 +64,7 @@ func NewClient(config *ClientConfig) (*RPCClient, error) {
 
 	var tunnel tun.Device
 
-	if tunnel, r.network, err = netstack.CreateNetTUN([]netip.Addr{DefaultClientIPAddr}, []netip.Addr{}, 1420); check(err) {
+	if tunnel, r.network, err = netstack.CreateNetTUN([]netip.Addr{DefaultClientIPAddr}, []netip.Addr{}, 1420); rpc.check(err) {
 		return nil, err
 	}
 
@@ -73,7 +75,7 @@ func NewClient(config *ClientConfig) (*RPCClient, error) {
 	deviceConf := "" +
 		"public_key=" + config.Peer.PublicKey.HexString() + "\n" +
 		"endpoint=0.0.0.0:18222" + "\n" +
-		"allowed_ip=" + deviceRPCIP.String() + "/32\n" +
+		"allowed_ip=" + DefaultServerIPAddr.String() + "/32\n" +
 		"persistent_keepalive_interval=" + strconv.Itoa(int(config.Peer.KeepAliveInterval)) + "\n"
 
 	if err = r.device.IpcSet(deviceConf); check(err) {
@@ -89,7 +91,7 @@ func NewClient(config *ClientConfig) (*RPCClient, error) {
 	//)
 
 	conn, err = grpc.DialContext(context.Background(),
-		deviceRPCIP.String()+":80",
+		DefaultServerIPAddr.String()+":80",
 		grpc.WithBlock(),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithContextDialer(func(ctx context.Context, address string) (net.Conn, error) {

@@ -82,7 +82,7 @@ var seedCmd = &cobra.Command{
 
 		case <-rpc.IsReady():
 
-			log.I.Ln("rpc server is ready!")
+			log.I.Ln("rpc server is ready")
 		}
 
 		//

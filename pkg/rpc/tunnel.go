@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"git-indra.lan/indra-labs/indra/pkg/rpc/client"
 	"golang.zx2c4.com/wireguard/conn"
 	"golang.zx2c4.com/wireguard/device"
 	"golang.zx2c4.com/wireguard/tun"
@@ -60,7 +61,7 @@ func startTunnel(srv *grpc.Server) (err error) {
 
 		deviceConf := "" +
 			"public_key=" + peer_whitelist.HexString() + "\n" +
-			"allowed_ip=" + DefaultClientIPAddr.String() + "/32\n"
+			"allowed_ip=" + client.DefaultClientIPAddr.String() + "/32\n"
 
 		if err = dev.IpcSet(deviceConf); check(err) {
 			startupErrors <- err
