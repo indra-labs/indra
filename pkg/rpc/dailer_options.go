@@ -1,12 +1,10 @@
-package client
-
-import "git-indra.lan/indra-labs/indra/pkg/rpc"
+package rpc
 
 // dialOptions configure a Dial call. dialOptions are set by the DialOption
 // values passed to Dial.
 type dialOptions struct {
-	key               rpc.RPCPrivateKey
-	peerPubKey        rpc.RPCPublicKey
+	key               RPCPrivateKey
+	peerPubKey        RPCPublicKey
 	peerRPCIP         string
 	keepAliveInterval int
 }
@@ -54,12 +52,12 @@ func WithKeepAliveInterval(seconds int) DialOption {
 
 func WithPeer(pubKey string) DialOption {
 	return newFuncDialOption(func(o *dialOptions) {
-		o.peerPubKey = rpc.DecodePublicKey(pubKey)
+		o.peerPubKey = DecodePublicKey(pubKey)
 	})
 }
 
 func WithPrivateKey(key string) DialOption {
 	return newFuncDialOption(func(o *dialOptions) {
-		o.key = rpc.DecodePrivateKey(key)
+		o.key = DecodePrivateKey(key)
 	})
 }
