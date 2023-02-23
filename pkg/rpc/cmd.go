@@ -1,21 +1,36 @@
 package rpc
 
 import (
+	"context"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
+	"os"
 )
 
-func ConfigureWithViper() (err error) {
+func RunWith(ctx context.Context, r func(srv *grpc.Server)) {
+
+	log.I.Ln("initializing the rpc server")
+
+	var err error
+
+	if err = configureWithViper(); check(err) {
+		os.Exit(1)
+	}
+
+	r(server)
+
+	log.I.Ln("starting rpc server")
+
+	go Start(ctx)
+}
+
+func configureWithViper() (err error) {
 
 	log.I.Ln("configuring the rpc server")
 
 	configureUnixSocket()
 	configureTunnel()
-
-	log.I.Ln("rpc listeners:")
-	log.I.F("- [/ip4/0.0.0.0/udp/%d", devicePort)
-	log.I.F("/ip4/0.0.0.0/udp/%d", devicePort)
-	log.I.F("/ip6/:::/udp/%d", devicePort)
-	log.I.F("/unix" + unixPath + "]")
 
 	return
 }
@@ -26,16 +41,21 @@ func configureUnixSocket() {
 		return
 	}
 
-	log.I.Ln("enabling unix listener:", viper.GetString(unixPath))
+	log.I.F("enabling rpc unix listener  [/unix%s]", viper.GetString(unixPathFlag))
 
 	isUnixSockEnabled = true
 }
 
 func configureTunnel() {
 
-	if !viper.GetBool("rpc-tun-enable") {
+	if !viper.GetBool(tunEnableFlag) {
+
+		log.I.Ln("disabling rpc tunnel")
+
 		return
 	}
+
+	enableTunnel()
 
 	log.I.Ln("enabling rpc tunnel")
 
@@ -43,19 +63,23 @@ func configureTunnel() {
 	configureTunnelPort()
 	configurePeerWhitelist()
 
-	enableTunnel()
+	spew.Dump(viper.AllSettings())
+	os.Exit(0)
 }
 
 func configureTunnelKey() {
 
-	if viper.GetString("rpc-tun-key") == "" {
+	if viper.GetString(tunKeyFlag) == "" {
 
 		log.I.Ln("rpc tunnel key not provided, generating a new one.")
 
 		tunKey, _ = NewPrivateKey()
 
-		viper.Set("rpc-tun-key", tunKey.Encode())
+		viper.Set(tunKeyFlag, tunKey.Encode())
 	}
+
+	tunKey = &RPCPrivateKey{}
+	tunKey.Decode(viper.GetString(tunKeyFlag))
 
 	log.I.Ln("rpc public key:")
 	log.I.Ln("-", tunKey.PubKey().Encode())
@@ -63,16 +87,18 @@ func configureTunnelKey() {
 
 func configureTunnelPort() {
 
-	if viper.GetUint16("rpc-tun-port") == NullPort {
-
-		log.I.Ln("rpc tunnel port not provided, generating a random one.")
-
-		viper.Set("rpc-tun-port", genRandomPort(10000))
+	if viper.GetUint16(tunPortFlag) != NullPort {
+		return
 	}
+
+	log.I.Ln("rpc tunnel port not provided, generating a random one.")
+
+	viper.Set(tunPortFlag, genRandomPort(10000))
 }
 
 func configurePeerWhitelist() {
-	for _, peer := range viper.GetStringSlice("rpc-whitelist-peer") {
+
+	for _, peer := range viper.GetStringSlice(tunPeersFlag) {
 
 		var pubKey RPCPublicKey
 

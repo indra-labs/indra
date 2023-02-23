@@ -3,6 +3,7 @@ package rpc
 import (
 	"google.golang.org/grpc"
 	"net"
+	"os"
 )
 
 var (
@@ -17,7 +18,7 @@ func startUnixSocket(srv *grpc.Server) (err error) {
 		return
 	}
 
-	if unixSock, err = net.Listen("unix", unixPath); check(err) {
+	if unixSock, err = net.Listen("unix", unixPath); err != nil {
 		return
 	}
 
@@ -32,13 +33,13 @@ func stopUnixSocket() (err error) {
 		return
 	}
 
-	if err = unixSock.Close(); check(err) {
-		// continue
+	if unixSock != nil {
+		if err = unixSock.Close(); check(err) {
+			// continue
+		}
 	}
 
-	//if err = os.Remove(unixPath); check(err) {
-	//	// continue
-	//}
+	os.Remove(unixPath)
 
 	return
 }

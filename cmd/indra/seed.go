@@ -13,6 +13,7 @@ import (
 	"github.com/tutorialedge/go-grpc-tutorial/chat"
 	"google.golang.org/grpc"
 	"os"
+	"time"
 )
 
 var (
@@ -51,36 +52,37 @@ var seedCmd = &cobra.Command{
 		// RPC
 		//
 
-		if viper.GetBool("rpc-enable") {
+		rpc.RunWith(ctx, func(srv *grpc.Server) {
+			chat.RegisterChatServiceServer(srv, &chat.Server{})
+		})
 
-			log.I.Ln("enabling rpc server")
+		select {
+		case <-rpc.CantStart():
 
-			if err = rpc.ConfigureWithViper(); check(err) {
-				os.Exit(1)
-			}
+			log.I.Ln("issues starting the rpc server")
+			log.I.Ln("attempting a graceful shutdown")
 
-			rpc.Register(func(srv *grpc.Server) {
-				chat.RegisterChatServiceServer(srv, &chat.Server{})
-			})
+			ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
 
-			log.I.Ln("starting rpc server")
-
-			go rpc.Start(ctx)
+			rpc.Shutdown(ctx)
 
 			select {
-			case <-rpc.CantStart():
+			case <-ctx.Done():
 
-				log.I.Ln("issues starting the rpc server")
-				log.I.Ln("attempting a graceful shutdown")
-
-				rpc.Shutdown()
+				log.I.Ln("can't shutdown gracefully, exiting.")
 
 				os.Exit(1)
 
-			case <-rpc.IsReady():
+			default:
 
-				log.I.Ln("rpc server is ready!")
+				log.I.Ln("graceful shutdown complete")
+
+				os.Exit(0)
 			}
+
+		case <-rpc.IsReady():
+
+			log.I.Ln("rpc server is ready!")
 		}
 
 		//

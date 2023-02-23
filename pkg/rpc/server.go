@@ -46,11 +46,13 @@ func Start(ctx context.Context) {
 
 	select {
 	case <-ctx.Done():
-		Shutdown()
+		Shutdown(context.Background())
 	}
 }
 
-func Shutdown() {
+func Shutdown(ctx context.Context) {
+
+	defer ctx.Done()
 
 	log.I.Ln("shutting down rpc server")
 
