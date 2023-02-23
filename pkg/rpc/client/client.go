@@ -47,14 +47,14 @@ func Run(ctx context.Context) {
 	var err error
 	var conn *grpc.ClientConn
 
-	//conn, err = Dial("unix:///tmp/indra.sock")
+	conn, err = Dial("unix:///tmp/indra.sock")
 
-	conn, err = DialContext(ctx,
-		"noise://0.0.0.0:18222",
-		WithPrivateKey("Aj9CfbE1pXEVxPfjSaTwdY3B4kYHbwsTSyT3nrc34ATN"),
-		WithPeer("G52UmsQpUmN2zFMkJaP9rwCvqQJzi1yHKA9RTrLJTk9f"),
-		WithKeepAliveInterval(5),
-	)
+	//conn, err = DialContext(ctx,
+	//	"noise://0.0.0.0:18222",
+	//	WithPrivateKey("Aj9CfbE1pXEVxPfjSaTwdY3B4kYHbwsTSyT3nrc34ATN"),
+	//	WithPeer("G52UmsQpUmN2zFMkJaP9rwCvqQJzi1yHKA9RTrLJTk9f"),
+	//	WithKeepAliveInterval(5),
+	//)
 
 	if err != nil {
 		check(err)
