@@ -1,24 +1,8 @@
 package rpc
 
 import (
-	"context"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 )
-
-func RunWith(ctx context.Context, r func(srv *grpc.Server)) {
-
-	log.I.Ln("initializing the rpc server")
-
-	configureUnixSocket()
-	configureTunnel()
-
-	r(server)
-
-	log.I.Ln("starting rpc server")
-
-	go Start(ctx)
-}
 
 func configureUnixSocket() {
 

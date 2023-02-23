@@ -41,8 +41,8 @@ func InitFlags(cmd *cobra.Command) {
 
 	viper.BindPFlag(tunKeyFlag, cmd.PersistentFlags().Lookup(tunKeyFlag))
 
-	cmd.PersistentFlags().IntVarP(&devicePort, tunPortFlag, "",
-		devicePort,
+	cmd.PersistentFlags().IntVarP(&tunnelPort, tunPortFlag, "",
+		tunnelPort,
 		"binds the udp server to port (random if not selected)",
 	)
 

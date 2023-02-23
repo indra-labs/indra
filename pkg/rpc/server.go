@@ -10,24 +10,31 @@ func init() {
 }
 
 var (
-	server *grpc.Server
-)
-
-var (
-	isReady       = make(chan bool)
+	server        *grpc.Server
 	startupErrors = make(chan error)
+	isReady       = make(chan bool)
 )
 
-func IsReady() chan bool {
-	return isReady
+func RunWith(ctx context.Context, r func(srv *grpc.Server)) {
+
+	log.I.Ln("initializing the rpc server")
+
+	configureUnixSocket()
+	configureTunnel()
+
+	r(server)
+
+	log.I.Ln("starting rpc server")
+
+	go Start(ctx)
 }
 
 func CantStart() chan error {
 	return startupErrors
 }
 
-func Register(r func(srv *grpc.Server)) {
-	r(server)
+func IsReady() chan bool {
+	return isReady
 }
 
 func Start(ctx context.Context) {
@@ -57,6 +64,7 @@ func Shutdown(ctx context.Context) {
 	log.I.Ln("shutting down rpc server")
 
 	stopUnixSocket()
+	stopTunnel()
 
 	server.Stop()
 }

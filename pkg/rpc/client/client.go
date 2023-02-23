@@ -64,7 +64,7 @@ func NewClient(config *ClientConfig) (*RPCClient, error) {
 
 	var tunnel tun.Device
 
-	if tunnel, r.network, err = netstack.CreateNetTUN([]netip.Addr{DefaultClientIPAddr}, []netip.Addr{}, 1420); rpc.check(err) {
+	if tunnel, r.network, err = netstack.CreateNetTUN([]netip.Addr{DefaultClientIPAddr}, []netip.Addr{}, 1420); check(err) {
 		return nil, err
 	}
 
