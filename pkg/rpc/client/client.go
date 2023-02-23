@@ -2,101 +2,64 @@ package client
 
 import (
 	"context"
-	"git-indra.lan/indra-labs/indra/pkg/rpc"
-	"github.com/multiformats/go-multiaddr"
 	"github.com/tutorialedge/go-grpc-tutorial/chat"
 	"golang.zx2c4.com/wireguard/conn"
 	"golang.zx2c4.com/wireguard/device"
 	"golang.zx2c4.com/wireguard/tun"
 	"golang.zx2c4.com/wireguard/tun/netstack"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"net"
 	"net/netip"
+	"os"
 	"strconv"
 )
 
 var (
-	DefaultClientIPAddr = netip.MustParseAddr("192.168.37.2")
-	DefaultServerIPAddr = netip.MustParseAddr("192.168.37.1")
-)
-
-type Peer struct {
-	Endpoint          multiaddr.Multiaddr
-	PublicKey         *rpc.RPCPublicKey
-	PreSharedKey      rpc.RPCPrivateKey
-	KeepAliveInterval uint8
-}
-
-type ClientConfig struct {
-	Key  rpc.RPCPrivateKey
-	Peer *Peer
-}
-
-var (
-	DefaultClientConfig = &ClientConfig{
-		Key: rpc.DecodePrivateKey("Aj9CfbE1pXEVxPfjSaTwdY3B4kYHbwsTSyT3nrc34ATN"),
-		Peer: &Peer{
-			Endpoint:          multiaddr.StringCast("/ip4/127.0.0.1/udp/18222"),
-			PublicKey:         rpc.DecodePublicKey("G52UmsQpUmN2zFMkJaP9rwCvqQJzi1yHKA9RTrLJTk9f"),
-			KeepAliveInterval: 5,
-		},
-	}
-)
-
-type RPCClient struct {
-	device  *device.Device
+	tunnel  tun.Device
 	network *netstack.Net
-}
+	dev     *device.Device
+)
 
-func (r *RPCClient) Start() {
-	r.device.Up()
-}
+func getNetworkInstance(options *dialOptions) (err error) {
 
-func (rpc *RPCClient) Stop() {
-	rpc.device.Close()
-}
-
-func NewClient(config *ClientConfig) (*RPCClient, error) {
-
-	var err error
-	var r RPCClient
-
-	var tunnel tun.Device
-
-	if tunnel, r.network, err = netstack.CreateNetTUN([]netip.Addr{DefaultClientIPAddr}, []netip.Addr{}, 1420); check(err) {
-		return nil, err
+	if tunnel, network, err = netstack.CreateNetTUN([]netip.Addr{netip.MustParseAddr(options.peerRPCIP)}, []netip.Addr{}, 1420); check(err) {
+		return
 	}
 
-	r.device = device.NewDevice(tunnel, conn.NewDefaultBind(), device.NewLogger(device.LogLevelError, "client "))
+	dev = device.NewDevice(tunnel, conn.NewDefaultBind(), device.NewLogger(device.LogLevelVerbose, "client "))
 
-	r.device.SetPrivateKey(config.Key.AsDeviceKey())
+	dev.SetPrivateKey(options.key.AsDeviceKey())
 
 	deviceConf := "" +
-		"public_key=" + config.Peer.PublicKey.HexString() + "\n" +
+		"public_key=" + options.peerPubKey.HexString() + "\n" +
 		"endpoint=0.0.0.0:18222" + "\n" +
-		"allowed_ip=" + DefaultServerIPAddr.String() + "/32\n" +
-		"persistent_keepalive_interval=" + strconv.Itoa(int(config.Peer.KeepAliveInterval)) + "\n"
+		"allowed_ip=" + options.peerRPCIP + "/32\n" +
+		"persistent_keepalive_interval=" + strconv.Itoa(options.keepAliveInterval) + "\n"
 
-	if err = r.device.IpcSet(deviceConf); check(err) {
-		return nil, err
+	if err = dev.IpcSet(deviceConf); check(err) {
+		return
 	}
 
+	return nil
+}
+
+func Run(ctx context.Context) {
+
+	var err error
 	var conn *grpc.ClientConn
 
-	//conn, err = grpc.Dial(
-	//	"unix:///tmp/indra.sock",
-	//	grpc.WithBlock(),
-	//	grpc.WithTransportCredentials(insecure.NewCredentials()),
+	conn, err = Dial("unix:///tmp/indra.sock")
+
+	//conn, err = DialContext(ctx,
+	//	"noise://0.0.0.0:18222",
+	//	WithPrivateKey("Aj9CfbE1pXEVxPfjSaTwdY3B4kYHbwsTSyT3nrc34ATN"),
+	//	WithPeer("G52UmsQpUmN2zFMkJaP9rwCvqQJzi1yHKA9RTrLJTk9f"),
+	//	WithKeepAliveInterval(5),
 	//)
 
-	conn, err = grpc.DialContext(context.Background(),
-		DefaultServerIPAddr.String()+":80",
-		grpc.WithBlock(),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithContextDialer(func(ctx context.Context, address string) (net.Conn, error) {
-			return r.network.DialContext(ctx, "tcp4", address)
-		}))
+	if err != nil {
+		check(err)
+		os.Exit(1)
+	}
 
 	c := chat.NewChatServiceClient(conn)
 
@@ -107,6 +70,4 @@ func NewClient(config *ClientConfig) (*RPCClient, error) {
 	}
 
 	log.I.F(response.Body)
-
-	return &r, nil
 }

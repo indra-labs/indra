@@ -58,12 +58,17 @@ func configureTunnelKey() {
 func configureTunnelPort() {
 
 	if viper.GetUint16(tunPortFlag) != NullPort {
+
+		tunnelPort = int(viper.GetUint16(tunPortFlag))
+
 		return
 	}
 
 	log.I.Ln("rpc tunnel port not provided, generating a random one.")
 
 	viper.Set(tunPortFlag, genRandomPort(10000))
+
+	tunnelPort = int(viper.GetUint16(tunPortFlag))
 }
 
 func configurePeerWhitelist() {
