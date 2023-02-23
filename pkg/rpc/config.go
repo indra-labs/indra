@@ -6,51 +6,60 @@ import (
 	"time"
 )
 
+var (
+	config = rpcConfig{
+		key:           &nullRPCPrivateKey,
+		listenPort:    NullPort,
+		peerWhitelist: []RPCPublicKey{},
+		ipWhitelist:   []multiaddr.Multiaddr{},
+	}
+)
+
 type rpcConfig struct {
-	Key            *RPCPrivateKey
-	ListenPort     uint16
-	Peer_Whitelist []RPCPublicKey
-	IP_Whitelist   []multiaddr.Multiaddr
-	UnixPath       string
+	key           *RPCPrivateKey
+	listenPort    uint16
+	peerWhitelist []RPCPublicKey
+	ipWhitelist   []multiaddr.Multiaddr
+	unixPath      string
 }
 
-func (c *rpcConfig) NewKey() {
+func (c *rpcConfig) newKey() {
 
 	var err error
 
-	if c.Key, err = NewPrivateKey(); check(err) {
+	if c.key, err = NewPrivateKey(); check(err) {
 		panic(err)
 	}
 }
 
-func (c *rpcConfig) SetKey(key string) {
-	c.Key.Decode(key)
+func (c *rpcConfig) setKey(key string) {
+	c.key.Decode(key)
 }
 
-func (c *rpcConfig) IsNullKey() bool {
-	return c.Key.IsZero()
+func (c *rpcConfig) isNullKey() bool {
+	return c.key.IsZero()
 }
 
-func (c *rpcConfig) SetPort(port uint16) {
-	c.ListenPort = port
+func (c *rpcConfig) setPort(port uint16) {
+	c.listenPort = port
 }
 
-func (c *rpcConfig) IsNullPort() bool {
-	return c.ListenPort == NullPort
+func (c *rpcConfig) isNullPort() bool {
+	return c.listenPort == NullPort
 }
 
-func (c *rpcConfig) SetRandomPort() uint16 {
+func (c *rpcConfig) setRandomPort() uint16 {
 	rand.Seed(time.Now().Unix())
 
-	c.ListenPort = uint16(rand.Intn(45534) + 10000)
+	c.listenPort = uint16(rand.Intn(45534) + 10000)
 
-	return c.ListenPort
+	return c.listenPort
 }
 
-func (c *rpcConfig) SetUnixPath(path string) {
-	c.UnixPath = path
+func (c *rpcConfig) setUnixPath(path string) {
+	c.unixPath = path
 }
 
-func (conf *rpcConfig) IsEnabled() bool {
-	return !conf.Key.IsZero()
+func (conf *rpcConfig) isEnabled() bool {
+	return !conf.key.IsZero()
 }

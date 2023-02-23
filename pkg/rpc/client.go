@@ -73,7 +73,7 @@ func NewClient(config *ClientConfig) (*RPCClient, error) {
 	deviceConf := "" +
 		"public_key=" + config.Peer.PublicKey.HexString() + "\n" +
 		"endpoint=0.0.0.0:18222" + "\n" +
-		"allowed_ip=" + deviceIP.String() + "/32\n" +
+		"allowed_ip=" + deviceRPCIP.String() + "/32\n" +
 		"persistent_keepalive_interval=" + strconv.Itoa(int(config.Peer.KeepAliveInterval)) + "\n"
 
 	if err = r.device.IpcSet(deviceConf); check(err) {
@@ -89,7 +89,7 @@ func NewClient(config *ClientConfig) (*RPCClient, error) {
 	//)
 
 	conn, err = grpc.DialContext(context.Background(),
-		deviceIP.String()+":80",
+		deviceRPCIP.String()+":80",
 		grpc.WithBlock(),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithContextDialer(func(ctx context.Context, address string) (net.Conn, error) {

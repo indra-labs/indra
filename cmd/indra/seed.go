@@ -20,16 +20,10 @@ var (
 )
 
 var (
-	key                string
-	listeners          []string
-	seeds              []string
-	connectors         []string
-	rpc_enable         bool
-	rpc_listen_port    uint16
-	rpc_key            string
-	rpc_whitelist_peer []string
-	rpc_whitelist_ip   []string
-	rpc_unix_path      string
+	key        string
+	listeners  []string
+	seeds      []string
+	connectors []string
 )
 
 func init() {
@@ -39,23 +33,12 @@ func init() {
 	seedCmd.PersistentFlags().StringSliceVarP(&seeds, "seed", "s", []string{}, "adds an additional seed connection  (e.g /dns4/seed0.indra.org/tcp/8337/p2p/<pub_key>)")
 	seedCmd.PersistentFlags().StringSliceVarP(&connectors, "connect", "c", []string{}, "connects only to the seed multi-addresses specified")
 
-	seedCmd.PersistentFlags().BoolVarP(&rpc_enable, "rpc-enable", "", false, "enables the rpc server")
-	seedCmd.PersistentFlags().Uint16VarP(&rpc_listen_port, "rpc-listen-port", "", 0, "binds the udp server to port (random if not selected)")
-	seedCmd.PersistentFlags().StringVarP(&rpc_key, "rpc-key", "", "", "the base58 encoded pre-shared key for accessing the rpc")
-	seedCmd.PersistentFlags().StringSliceVarP(&rpc_whitelist_peer, "rpc-whitelist-peer", "", []string{}, "adds a peer id to the whitelist for access")
-	seedCmd.PersistentFlags().StringSliceVarP(&rpc_whitelist_ip, "rpc-whitelist-ip", "", []string{}, "adds a cidr ip range to the whitelist for access (e.g /ip4/127.0.0.1/ipcidr/32)")
-	seedCmd.PersistentFlags().StringVarP(&rpc_unix_path, "rpc-listen-unix", "", "/tmp/indra.sock", "binds to a unix socket with path (default is /tmp/indra.sock)")
-
 	viper.BindPFlag("key", seedCmd.PersistentFlags().Lookup("key"))
 	viper.BindPFlag("listen", seedCmd.PersistentFlags().Lookup("listen"))
 	viper.BindPFlag("seed", seedCmd.PersistentFlags().Lookup("seed"))
 	viper.BindPFlag("connect", seedCmd.PersistentFlags().Lookup("connect"))
-	viper.BindPFlag("rpc-enable", seedCmd.PersistentFlags().Lookup("rpc-enable"))
-	viper.BindPFlag("rpc-listen-port", seedCmd.PersistentFlags().Lookup("rpc-listen-port"))
-	viper.BindPFlag("rpc-key", seedCmd.PersistentFlags().Lookup("rpc-key"))
-	viper.BindPFlag("rpc-whitelist-peer", seedCmd.PersistentFlags().Lookup("rpc-whitelist-peer"))
-	viper.BindPFlag("rpc-whitelist-ip", seedCmd.PersistentFlags().Lookup("rpc-whitelist-ip"))
-	viper.BindPFlag("rpc-listen-unix", seedCmd.PersistentFlags().Lookup("rpc-listen-unix"))
+
+	rpc.Configure(seedCmd)
 
 	rootCmd.AddCommand(seedCmd)
 }
