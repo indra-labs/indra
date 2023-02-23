@@ -7,7 +7,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 )
 
-func HiddenService(ident *pub.Key, client *Session, s Circuit,
+func HiddenService(id nonce.ID, ident *pub.Key, client *Session, s Circuit,
 	ks *signer.KeySet) Skins {
 	
 	var prvs [3]*prv.Key
@@ -25,7 +25,7 @@ func HiddenService(ident *pub.Key, client *Session, s Circuit,
 		ReverseCrypt(s[0], ks.Next(), n[0], 3).
 		ReverseCrypt(s[1], ks.Next(), n[1], 2).
 		ReverseCrypt(s[2], ks.Next(), n[2], 1).
-		HiddenService(ident, prvs, pubs, returnNonces).
+		HiddenService(id, ident, prvs, pubs, returnNonces).
 		ReverseCrypt(s[3], prvs[0], n[3], 3).
 		ReverseCrypt(s[4], prvs[1], n[4], 2).
 		ReverseCrypt(client, prvs[2], n[5], 1)

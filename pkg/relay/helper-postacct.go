@@ -2,7 +2,7 @@ package relay
 
 import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/onion/balance"
 	"git-indra.lan/indra-labs/indra/pkg/onion/confirm"
@@ -10,6 +10,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/onion/exit"
 	"git-indra.lan/indra-labs/indra/pkg/onion/forward"
 	"git-indra.lan/indra-labs/indra/pkg/onion/getbalance"
+	"git-indra.lan/indra-labs/indra/pkg/onion/hiddenservice"
 	"git-indra.lan/indra-labs/indra/pkg/onion/reverse"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -59,6 +60,10 @@ func (eng *Engine) PostAcctOnion(o Skins) (res SendData) {
 								lnwire.MilliSatoshi(len(res.b))/1024/1024, true,
 							"forward")
 					})
+			case *hiddenservice.Layer:
+				res.last = on2.ID
+				res.billable = append(res.billable, s.ID)
+				skip = true
 			case *reverse.Layer:
 				res.billable = append(res.billable, s.ID)
 			case *exit.Layer:

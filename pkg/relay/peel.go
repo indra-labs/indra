@@ -13,6 +13,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/onion/exit"
 	"git-indra.lan/indra-labs/indra/pkg/onion/forward"
 	"git-indra.lan/indra-labs/indra/pkg/onion/getbalance"
+	"git-indra.lan/indra-labs/indra/pkg/onion/hiddenservice"
 	"git-indra.lan/indra-labs/indra/pkg/onion/magicbytes"
 	"git-indra.lan/indra-labs/indra/pkg/onion/response"
 	"git-indra.lan/indra-labs/indra/pkg/onion/reverse"
@@ -60,6 +61,11 @@ func Peel(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 		}
 	case getbalance.MagicString:
 		on = &getbalance.Layer{}
+		if e = on.Decode(b, c); check(e) {
+			return
+		}
+	case hiddenservice.MagicString:
+		on = &hiddenservice.Layer{}
 		if e = on.Decode(b, c); check(e) {
 			return
 		}

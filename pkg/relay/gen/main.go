@@ -31,7 +31,8 @@ func (p handlemessages) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
 func main() {
 	typesList := []string{"balance", "confirm", "crypt", "delay", "dxresponse",
-		"exit", "forward", "getbalance", "reverse", "response", "session"}
+		"exit", "forward", "getbalance", "hiddenservice", "reverse",
+		"response", "session"}
 	sort.Strings(typesList)
 	tpl := `package relay
 
@@ -48,6 +49,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/onion/exit"
 	"git-indra.lan/indra-labs/indra/pkg/onion/forward"
 	"git-indra.lan/indra-labs/indra/pkg/onion/getbalance"
+	"git-indra.lan/indra-labs/indra/pkg/onion/hiddenservice"
 	"git-indra.lan/indra-labs/indra/pkg/onion/magicbytes"
 	"git-indra.lan/indra-labs/indra/pkg/onion/response"
 	"git-indra.lan/indra-labs/indra/pkg/onion/reverse"
@@ -97,6 +99,7 @@ func Peel(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 		{"exit", true},
 		{"forward", true},
 		{"getbalance", true},
+		{"hiddenservice", true},
 		{"reverse", false},
 		{"response", true},
 		{"session", true},
@@ -115,6 +118,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/onion/exit"
 	"git-indra.lan/indra-labs/indra/pkg/onion/forward"
 	"git-indra.lan/indra-labs/indra/pkg/onion/getbalance"
+	"git-indra.lan/indra-labs/indra/pkg/onion/hiddenservice"
 	"git-indra.lan/indra-labs/indra/pkg/onion/response"
 	"git-indra.lan/indra-labs/indra/pkg/onion/reverse"
 	"git-indra.lan/indra-labs/indra/pkg/onion/session"

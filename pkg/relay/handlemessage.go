@@ -10,6 +10,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/onion/exit"
 	"git-indra.lan/indra-labs/indra/pkg/onion/forward"
 	"git-indra.lan/indra-labs/indra/pkg/onion/getbalance"
+	"git-indra.lan/indra-labs/indra/pkg/onion/hiddenservice"
 	"git-indra.lan/indra-labs/indra/pkg/onion/response"
 	"git-indra.lan/indra-labs/indra/pkg/onion/reverse"
 	"git-indra.lan/indra-labs/indra/pkg/onion/session"
@@ -71,6 +72,13 @@ func (eng *Engine) handleMessage(b slice.Bytes, prev types.Onion) {
 		}
 		log.T.C(recLog(on, b, eng))
 		eng.getbalance(on, b, c, prev)
+	case *hiddenservice.Layer:
+		if prev == nil {
+			log.E.Ln(reflect.TypeOf(on), "requests from outside? absurd!")
+			return
+		}
+		log.T.C(recLog(on, b, eng))
+		eng.hiddenservice(on, b, c, prev)
 	case *response.Layer:
 		if prev == nil {
 			log.E.Ln(reflect.TypeOf(on), "requests from outside? absurd!")

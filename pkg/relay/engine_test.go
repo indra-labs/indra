@@ -5,10 +5,12 @@ import (
 	"sync"
 	"testing"
 	"time"
-
+	
 	"github.com/cybriq/qu"
 	"go.uber.org/atomic"
-
+	
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
@@ -138,7 +140,7 @@ out:
 			}
 			log.I.F("success\n\n")
 			wg.Done()
-		}, 0)
+		})
 		bb := <-clients[3].ReceiveToLocalNode(port)
 		log.T.S(bb.ToBytes())
 		if e = clients[3].SendFromLocalNode(port, respMsg); check(e) {
@@ -242,6 +244,57 @@ out:
 		default:
 		}
 		wg.Wait()
+	}
+	quit.Q()
+	for _, v := range clients {
+		v.Shutdown()
+	}
+}
+
+func TestClient_HiddenService(t *testing.T) {
+	log2.SetLogLevel(log2.Trace)
+	var clients []*Engine
+	var e error
+	if clients, e = CreateNMockCircuits(true, 2, 2); check(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	// Start up the clients.
+	for _, v := range clients {
+		go v.Start()
+	}
+	quit := qu.T()
+	// var wg sync.WaitGroup
+	// go func() {
+	// 	select {
+	// 	case <-time.After(time.Second):
+	// 	case <-quit:
+	// 		return
+	// 	}
+	// 	quit.Q()
+	// 	t.Error("SendExit test failed")
+	// }()
+	var identPrv *prv.Key
+	if identPrv, e = prv.GenerateKey(); check(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	identPub := pub.Derive(identPrv)
+out:
+	for i := 3; i < len(clients[0].Sessions)-1; i++ {
+		// wg.Add(1)
+		id := nonce.NewID()
+		clients[0].SendIntro(id, clients[0].Sessions[i],
+			identPub, func(id nonce.ID, b slice.Bytes) {
+				log.I.Ln("success")
+				// wg.Done()
+			})
+		select {
+		case <-quit:
+			break out
+		default:
+		}
+		// wg.Wait()
 	}
 	quit.Q()
 	for _, v := range clients {
