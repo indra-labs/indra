@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	rpcEndpoint string = "192.168.37.1:80"
+	rpcEndpointIp   string = "192.168.37.1"
+	rpcEndpointPort string = "80"
 )
 
 func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *grpc.ClientConn, err error) {
@@ -35,7 +36,7 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 	getNetworkInstance(dialOpts)
 
 	return grpc.DialContext(ctx,
-		rpcEndpoint,
+		rpcEndpointIp+":"+rpcEndpointPort,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithContextDialer(func(ctx context.Context, address string) (net.Conn, error) {
 			return network.DialContext(ctx, "tcp4", address)
