@@ -19,25 +19,12 @@ var (
 	err error
 )
 
-var (
-	key        string
-	listeners  []string
-	seeds      []string
-	connectors []string
-)
-
 func init() {
 
-	seedCmd.PersistentFlags().StringVarP(&key, "key", "k", "", "the base58 encoded private key for the seed node")
-	seedCmd.PersistentFlags().StringSliceVarP(&listeners, "listen", "l", []string{"/ip4/127.0.0.1/tcp/8337", "/ip6/::1/tcp/8337"}, "binds to an interface")
-	seedCmd.PersistentFlags().StringSliceVarP(&seeds, "seed", "s", []string{}, "adds an additional seed connection  (e.g /dns4/seed0.indra.org/tcp/8337/p2p/<pub_key>)")
-	seedCmd.PersistentFlags().StringSliceVarP(&connectors, "connect", "c", []string{}, "connects only to the seed multi-addresses specified")
+	// Init flags belonging to the seed package
+	seed.InitFlags(seedCmd)
 
-	viper.BindPFlag("key", seedCmd.PersistentFlags().Lookup("key"))
-	viper.BindPFlag("listen", seedCmd.PersistentFlags().Lookup("listen"))
-	viper.BindPFlag("seed", seedCmd.PersistentFlags().Lookup("seed"))
-	viper.BindPFlag("connect", seedCmd.PersistentFlags().Lookup("connect"))
-
+	// Init flags belonging to the rpc package
 	rpc.InitFlags(seedCmd)
 
 	rootCmd.AddCommand(seedCmd)
