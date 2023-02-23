@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"errors"
+	"golang.zx2c4.com/wireguard/tun/netstack"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"net"
@@ -33,7 +34,11 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 		opt.apply(dialOpts)
 	}
 
-	getNetworkInstance(dialOpts)
+	var network *netstack.Net
+
+	if network, err = getNetworkInstance(dialOpts); check(err) {
+		return
+	}
 
 	return grpc.DialContext(ctx,
 		rpcEndpointIp+":"+rpcEndpointPort,

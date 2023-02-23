@@ -13,19 +13,15 @@ import (
 	"strconv"
 )
 
-var (
-	tunnel  tun.Device
-	network *netstack.Net
-	dev     *device.Device
-)
+func getNetworkInstance(opts *dialOptions) (net *netstack.Net, err error) {
 
-func getNetworkInstance(opts *dialOptions) (err error) {
+	var tunnel tun.Device
 
-	if tunnel, network, err = netstack.CreateNetTUN([]netip.Addr{netip.MustParseAddr(opts.peerRPCIP)}, []netip.Addr{}, 1420); check(err) {
-		return
+	if tunnel, net, err = netstack.CreateNetTUN([]netip.Addr{netip.MustParseAddr(opts.peerRPCIP)}, []netip.Addr{}, 1420); check(err) {
+		return nil, err
 	}
 
-	dev = device.NewDevice(tunnel, conn.NewDefaultBind(), device.NewLogger(device.LogLevelError, "client "))
+	dev := device.NewDevice(tunnel, conn.NewDefaultBind(), device.NewLogger(device.LogLevelError, "client "))
 
 	dev.SetPrivateKey(opts.key.AsDeviceKey())
 
@@ -39,7 +35,7 @@ func getNetworkInstance(opts *dialOptions) (err error) {
 		return
 	}
 
-	return nil
+	return net, nil
 }
 
 func Run(ctx context.Context) {
@@ -47,14 +43,14 @@ func Run(ctx context.Context) {
 	var err error
 	var conn *grpc.ClientConn
 
-	conn, err = Dial("unix:///tmp/indra.sock")
+	//conn, err = Dial("unix:///tmp/indra.sock")
 
-	//conn, err = DialContext(ctx,
-	//	"noise://0.0.0.0:18222",
-	//	WithPrivateKey("Aj9CfbE1pXEVxPfjSaTwdY3B4kYHbwsTSyT3nrc34ATN"),
-	//	WithPeer("G52UmsQpUmN2zFMkJaP9rwCvqQJzi1yHKA9RTrLJTk9f"),
-	//	WithKeepAliveInterval(5),
-	//)
+	conn, err = DialContext(ctx,
+		"noise://0.0.0.0:18222",
+		WithPrivateKey("Aj9CfbE1pXEVxPfjSaTwdY3B4kYHbwsTSyT3nrc34ATN"),
+		WithPeer("G52UmsQpUmN2zFMkJaP9rwCvqQJzi1yHKA9RTrLJTk9f"),
+		WithKeepAliveInterval(5),
+	)
 
 	if err != nil {
 		check(err)
