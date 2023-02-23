@@ -33,3 +33,8 @@ type Config struct {
 
 	Params *cfg.Params
 }
+
+func (c *Config) SetNetwork(network string) {
+
+	c.Params = cfg.SelectNetworkParams(network)
+}

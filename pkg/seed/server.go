@@ -2,6 +2,7 @@ package seed
 
 import (
 	"context"
+	"git-indra.lan/indra-labs/indra/pkg/rpc"
 	"time"
 
 	"github.com/libp2p/go-libp2p"
@@ -43,18 +44,18 @@ func (srv *Server) Shutdown() (err error) {
 
 	log.I.Ln("shutting down [p2p.host]")
 
-	if srv.host.Close(); check(err) {
-		return
+	if err = srv.host.Close(); check(err) {
+		// continue
 	}
 
 	log.I.Ln("shutdown complete")
 
-	return nil
+	return
 }
 
 func (srv *Server) Serve() (err error) {
 
-	log.I.Ln("starting the server")
+	log.I.Ln("starting the p2p server")
 
 	// Here we create a context with cancel and add it to the interrupt handler
 	var ctx context.Context
@@ -75,11 +76,19 @@ func (srv *Server) Serve() (err error) {
 
 	go metrics.HostStatus(ctx, srv.host)
 
+	var client *rpc.RPCClient
+
+	if client, err = rpc.NewClient(rpc.DefaultClientConfig); check(err) {
+		return err
+	}
+
+	client.Start()
+
 	select {
 
 	case <-ctx.Done():
 
-		log.I.Ln("shutting down server")
+		log.I.Ln("shutting down p2p server")
 
 		srv.Shutdown()
 	}
@@ -87,10 +96,11 @@ func (srv *Server) Serve() (err error) {
 	return nil
 }
 
-func New(config *Config) (srv *Server, err error) {
+func New(config *Config) (*Server, error) {
 
-	log.I.Ln("initializing the server")
+	log.I.Ln("initializing the p2p server")
 
+	var err error
 	var s Server
 
 	s.config = config
@@ -117,7 +127,7 @@ func New(config *Config) (srv *Server, err error) {
 	var seedAddresses []multiaddr.Multiaddr
 
 	if seedAddresses, err = config.Params.ParseSeedMultiAddresses(); check(err) {
-		return
+		return nil, err
 	}
 
 	config.SeedAddresses = append(config.SeedAddresses, seedAddresses...)
