@@ -38,7 +38,7 @@ func init() {
 	viper.BindPFlag("seed", seedCmd.PersistentFlags().Lookup("seed"))
 	viper.BindPFlag("connect", seedCmd.PersistentFlags().Lookup("connect"))
 
-	rpc.Configure(seedCmd)
+	rpc.InitFlags(seedCmd)
 
 	rootCmd.AddCommand(seedCmd)
 }

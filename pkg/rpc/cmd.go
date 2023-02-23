@@ -1,38 +1,8 @@
 package rpc
 
 import (
-	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
-
-var (
-	flag_tun_enable        = "rpc-tun-enable"
-	flag_tun_key           = "rpc-tun-key"
-	flag_tun_port          = "rpc-tun-port"
-	flag_tun_whitlist_peer = "rpc-tun-whitelist-peer"
-)
-
-var (
-	rpc_tun_enable         bool
-	rpc_tun_key            string
-	rpc_tun_port           uint16
-	rpc_tun_whitelist_peer []string
-)
-
-func Configure(cmd *cobra.Command) {
-
-	defineUnixSocket(cmd)
-
-	cmd.PersistentFlags().BoolVarP(&rpc_tun_enable, flag_tun_enable, "", false, "enables the rpc server tunnel")
-	cmd.PersistentFlags().Uint16VarP(&rpc_tun_port, flag_tun_port, "", 0, "binds the udp server to port (random if not selected)")
-	cmd.PersistentFlags().StringVarP(&rpc_tun_key, flag_tun_key, "", "", "the base58 encoded pre-shared key for accessing the rpc")
-	cmd.PersistentFlags().StringSliceVarP(&rpc_tun_whitelist_peer, flag_tun_whitlist_peer, "", []string{}, "adds a peer id to the whitelist for access")
-
-	viper.BindPFlag(flag_tun_enable, cmd.PersistentFlags().Lookup(flag_tun_enable))
-	viper.BindPFlag(flag_tun_port, cmd.PersistentFlags().Lookup(flag_tun_port))
-	viper.BindPFlag(flag_tun_key, cmd.PersistentFlags().Lookup(flag_tun_key))
-	viper.BindPFlag(flag_tun_whitlist_peer, cmd.PersistentFlags().Lookup(flag_tun_whitlist_peer))
-}
 
 func ConfigureWithViper() (err error) {
 
@@ -42,12 +12,23 @@ func ConfigureWithViper() (err error) {
 	configureTunnel()
 
 	log.I.Ln("rpc listeners:")
-	log.I.F("- [/ip4/0.0.0.0/udp/%d", config.listenPort)
-	log.I.F("/ip4/0.0.0.0/udp/%d", config.listenPort)
-	log.I.F("/ip6/:::/udp/%d", config.listenPort)
+	log.I.F("- [/ip4/0.0.0.0/udp/%d", devicePort)
+	log.I.F("/ip4/0.0.0.0/udp/%d", devicePort)
+	log.I.F("/ip6/:::/udp/%d", devicePort)
 	log.I.F("/unix" + unixPath + "]")
 
 	return
+}
+
+func configureUnixSocket() {
+
+	if viper.GetString(unixPathFlag) == "" {
+		return
+	}
+
+	log.I.Ln("enabling unix listener:", viper.GetString(unixPath))
+
+	isUnixSockEnabled = true
 }
 
 func configureTunnel() {
@@ -65,10 +46,6 @@ func configureTunnel() {
 	enableTunnel()
 }
 
-var (
-	tunKey *RPCPrivateKey
-)
-
 func configureTunnelKey() {
 
 	if viper.GetString("rpc-tun-key") == "" {
@@ -81,7 +58,7 @@ func configureTunnelKey() {
 	}
 
 	log.I.Ln("rpc public key:")
-	log.I.Ln("-", config.key.PubKey().Encode())
+	log.I.Ln("-", tunKey.PubKey().Encode())
 }
 
 func configureTunnelPort() {
@@ -101,6 +78,6 @@ func configurePeerWhitelist() {
 
 		pubKey.Decode(peer)
 
-		config.peerWhitelist = append(config.peerWhitelist, pubKey)
+		tunWhitelist = append(tunWhitelist, pubKey)
 	}
 }

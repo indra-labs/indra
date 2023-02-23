@@ -5,6 +5,7 @@ import (
 	"golang.zx2c4.com/wireguard/device"
 	"golang.zx2c4.com/wireguard/tun"
 	"golang.zx2c4.com/wireguard/tun/netstack"
+	"google.golang.org/grpc"
 	"net"
 	"net/netip"
 	"strconv"
@@ -30,11 +31,16 @@ var (
 	tcpSock net.Listener
 )
 
+var (
+	tunKey       *RPCPrivateKey
+	tunWhitelist []RPCPublicKey
+)
+
 func enableTunnel() {
 	isTunnelEnabled = true
 }
 
-func startTunnel() (err error) {
+func startTunnel(srv *grpc.Server) (err error) {
 
 	if !isTunnelEnabled {
 		return
@@ -47,10 +53,10 @@ func startTunnel() (err error) {
 
 	dev = device.NewDevice(tunnel, conn.NewDefaultBind(), device.NewLogger(device.LogLevelError, "server "))
 
-	dev.SetPrivateKey(config.key.AsDeviceKey())
-	dev.IpcSet("listen_port=" + strconv.Itoa(int(config.listenPort)))
+	dev.SetPrivateKey(tunKey.AsDeviceKey())
+	dev.IpcSet("listen_port=" + strconv.Itoa(int(devicePort)))
 
-	for _, peer_whitelist := range config.peerWhitelist {
+	for _, peer_whitelist := range tunWhitelist {
 
 		deviceConf := "" +
 			"public_key=" + peer_whitelist.HexString() + "\n" +
@@ -72,7 +78,7 @@ func startTunnel() (err error) {
 		return
 	}
 
-	go server.Serve(tcpSock)
+	go srv.Serve(tcpSock)
 
 	return
 }

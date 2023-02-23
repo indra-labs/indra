@@ -1,50 +1,17 @@
 package rpc
 
 import (
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 	"net"
 )
 
 var (
 	isUnixSockEnabled bool = false
 	unixSock          net.Listener
+	unixPath          = "/tmp/indra.sock"
 )
 
-var (
-	unixPathFlag  = "rpc-unix-listen"
-	unixPathUsage = "binds to a unix socket with path"
-	unixPath      = "/tmp/indra.sock"
-)
-
-func defineUnixSocket(cmd *cobra.Command) {
-
-	cmd.PersistentFlags().StringVarP(
-		&unixPath,
-		unixPathFlag,
-		"",
-		unixPath,
-		unixPathUsage,
-	)
-
-	viper.BindPFlag(
-		unixPathFlag,
-		cmd.PersistentFlags().Lookup(unixPathFlag),
-	)
-}
-
-func configureUnixSocket() {
-
-	if viper.GetString(unixPathFlag) == "" {
-		return
-	}
-
-	log.I.Ln("enabling unix listener:", viper.GetString(unixPath))
-
-	isUnixSockEnabled = true
-}
-
-func startUnixSocket() (err error) {
+func startUnixSocket(srv *grpc.Server) (err error) {
 
 	if !isUnixSockEnabled {
 		return
@@ -54,7 +21,7 @@ func startUnixSocket() (err error) {
 		return
 	}
 
-	go server.Serve(unixSock)
+	go srv.Serve(unixSock)
 
 	return
 }

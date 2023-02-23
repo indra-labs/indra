@@ -34,7 +34,11 @@ func Start(ctx context.Context) {
 
 	var err error
 
-	if err = startUnixSocket(); check(err) {
+	if err = startUnixSocket(server); check(err) {
+		startupErrors <- err
+	}
+
+	if err = startTunnel(server); check(err) {
 		startupErrors <- err
 	}
 
