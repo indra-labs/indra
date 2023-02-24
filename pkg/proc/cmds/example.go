@@ -139,7 +139,7 @@ func GetExampleCommands() (c *Command) {
 			"OneTimeTLSKey": toggle.New(meta.Data{
 				Aliases:       Tags("OTK"),
 				Tags:          Tags("node", "wallet"),
-				Label:         "One Time TLS Key",
+				Label:         "One Time TLS key",
 				Description:   "generate a new TLS certificate pair at startup, but only write the certificate to disk",
 				Documentation: lorem,
 				Default:       "false",
@@ -186,7 +186,7 @@ func GetExampleCommands() (c *Command) {
 			"RPCKey": text.New(meta.Data{
 				Aliases:       Tags("RK"),
 				Tags:          Tags("node", "wallet"),
-				Label:         "RPC Key",
+				Label:         "RPC key",
 				Description:   "location of rpc TLS key",
 				Documentation: lorem,
 				Default:       "~/.pod/rpc.key",

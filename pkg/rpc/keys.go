@@ -101,11 +101,11 @@ func (sk *RPCPublicKey) Decode(key string) {
 	copy(sk[:], base58.Decode(key))
 }
 
-func DecodePublicKey(key string) *RPCPublicKey {
+func DecodePublicKey(key string) RPCPublicKey {
 
 	var pk RPCPublicKey
 
 	pk.Decode(key)
 
-	return &pk
+	return pk
 }
