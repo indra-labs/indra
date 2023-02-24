@@ -8,6 +8,6 @@ func init() {
 
 var seedCommand = &cobra.Command{
 	Use:   "seed",
-	Short: "Commands related to seeding",
-	Long:  `Commands related to seeding.`,
+	Short: "run and manage your seed node",
+	Long:  `run and manage your seed node`,
 }
