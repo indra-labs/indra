@@ -3,6 +3,7 @@ package rpc
 // dialOptions configure a Dial call. dialOptions are set by the DialOption
 // values passed to Dial.
 type dialOptions struct {
+	endpoint          string
 	key               RPCPrivateKey
 	peerPubKey        RPCPublicKey
 	peerRPCIP         string
