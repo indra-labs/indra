@@ -31,7 +31,7 @@ func (p handlemessages) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
 func main() {
 	typesList := []string{"balance", "confirm", "crypt", "delay", "dxresponse",
-		"exit", "forward", "getbalance", "hiddenservice", "reverse",
+		"exit", "forward", "getbalance", "hiddenservice", "intro", "reverse",
 		"response", "session"}
 	sort.Strings(typesList)
 	tpl := `package relay
@@ -41,19 +41,20 @@ import (
 	
 	"github.com/davecgh/go-spew/spew"
 	
-	"git-indra.lan/indra-labs/indra/pkg/onion/balance"
-	"git-indra.lan/indra-labs/indra/pkg/onion/confirm"
-	"git-indra.lan/indra-labs/indra/pkg/onion/crypt"
-	"git-indra.lan/indra-labs/indra/pkg/onion/delay"
-	"git-indra.lan/indra-labs/indra/pkg/onion/dxresponse"
-	"git-indra.lan/indra-labs/indra/pkg/onion/exit"
-	"git-indra.lan/indra-labs/indra/pkg/onion/forward"
-	"git-indra.lan/indra-labs/indra/pkg/onion/getbalance"
-	"git-indra.lan/indra-labs/indra/pkg/onion/hiddenservice"
-	"git-indra.lan/indra-labs/indra/pkg/onion/magicbytes"
-	"git-indra.lan/indra-labs/indra/pkg/onion/response"
-	"git-indra.lan/indra-labs/indra/pkg/onion/reverse"
-	"git-indra.lan/indra-labs/indra/pkg/onion/session"
+	"git-indra.lan/indra-labs/indra/pkg/messages/balance"
+	"git-indra.lan/indra-labs/indra/pkg/messages/confirm"
+	"git-indra.lan/indra-labs/indra/pkg/messages/crypt"
+	"git-indra.lan/indra-labs/indra/pkg/messages/delay"
+	"git-indra.lan/indra-labs/indra/pkg/messages/dxresponse"
+	"git-indra.lan/indra-labs/indra/pkg/messages/exit"
+	"git-indra.lan/indra-labs/indra/pkg/messages/forward"
+	"git-indra.lan/indra-labs/indra/pkg/messages/getbalance"
+	"git-indra.lan/indra-labs/indra/pkg/messages/hiddenservice"
+	"git-indra.lan/indra-labs/indra/pkg/messages/intro"
+	"git-indra.lan/indra-labs/indra/pkg/messages/magicbytes"
+	"git-indra.lan/indra-labs/indra/pkg/messages/response"
+	"git-indra.lan/indra-labs/indra/pkg/messages/reverse"
+	"git-indra.lan/indra-labs/indra/pkg/messages/session"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -100,6 +101,7 @@ func Peel(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 		{"forward", true},
 		{"getbalance", true},
 		{"hiddenservice", true},
+		{"intro", false},
 		{"reverse", false},
 		{"response", true},
 		{"session", true},
@@ -111,17 +113,18 @@ func Peel(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 import (
 	"reflect"
 	
-	"git-indra.lan/indra-labs/indra/pkg/onion/balance"
-	"git-indra.lan/indra-labs/indra/pkg/onion/confirm"
-	"git-indra.lan/indra-labs/indra/pkg/onion/crypt"
-	"git-indra.lan/indra-labs/indra/pkg/onion/delay"
-	"git-indra.lan/indra-labs/indra/pkg/onion/exit"
-	"git-indra.lan/indra-labs/indra/pkg/onion/forward"
-	"git-indra.lan/indra-labs/indra/pkg/onion/getbalance"
-	"git-indra.lan/indra-labs/indra/pkg/onion/hiddenservice"
-	"git-indra.lan/indra-labs/indra/pkg/onion/response"
-	"git-indra.lan/indra-labs/indra/pkg/onion/reverse"
-	"git-indra.lan/indra-labs/indra/pkg/onion/session"
+	"git-indra.lan/indra-labs/indra/pkg/messages/balance"
+	"git-indra.lan/indra-labs/indra/pkg/messages/confirm"
+	"git-indra.lan/indra-labs/indra/pkg/messages/crypt"
+	"git-indra.lan/indra-labs/indra/pkg/messages/delay"
+	"git-indra.lan/indra-labs/indra/pkg/messages/exit"
+	"git-indra.lan/indra-labs/indra/pkg/messages/forward"
+	"git-indra.lan/indra-labs/indra/pkg/messages/getbalance"
+	"git-indra.lan/indra-labs/indra/pkg/messages/hiddenservice"
+	"git-indra.lan/indra-labs/indra/pkg/messages/intro"
+	"git-indra.lan/indra-labs/indra/pkg/messages/response"
+	"git-indra.lan/indra-labs/indra/pkg/messages/reverse"
+	"git-indra.lan/indra-labs/indra/pkg/messages/session"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )

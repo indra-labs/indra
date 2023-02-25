@@ -41,9 +41,10 @@ func (in *Introductions) Find(key pub.Bytes) (header slice.Bytes) {
 	return
 }
 
-func (in *Introductions) AddIntro(key pub.Bytes, header slice.Bytes) {
+func (in *Introductions) AddIntro(pk *pub.Key, header slice.Bytes) {
 	in.Lock()
 	var ok bool
+	key := pk.ToBytes()
 	if _, ok = in.Intros[key]; ok {
 		log.D.Ln("entry already exists for key %x", key)
 	} else {

@@ -2,7 +2,7 @@ package relay
 
 import (
 	"reflect"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/messages/balance"
 	"git-indra.lan/indra-labs/indra/pkg/messages/confirm"
 	"git-indra.lan/indra-labs/indra/pkg/messages/crypt"
@@ -11,6 +11,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/messages/forward"
 	"git-indra.lan/indra-labs/indra/pkg/messages/getbalance"
 	"git-indra.lan/indra-labs/indra/pkg/messages/hiddenservice"
+	"git-indra.lan/indra-labs/indra/pkg/messages/intro"
 	"git-indra.lan/indra-labs/indra/pkg/messages/response"
 	"git-indra.lan/indra-labs/indra/pkg/messages/reverse"
 	"git-indra.lan/indra-labs/indra/pkg/messages/session"
@@ -19,8 +20,7 @@ import (
 )
 
 func (eng *Engine) handleMessage(b slice.Bytes, prev types.Onion) {
-	log.T.F("%v handling received message %v", eng.GetLocalNodeAddress(),
-		prev == nil)
+	log.T.F("%v handling received message", eng.GetLocalNodeAddress())
 	var on1 types.Onion
 	var e error
 	c := slice.NewCursor()
@@ -80,6 +80,9 @@ func (eng *Engine) handleMessage(b slice.Bytes, prev types.Onion) {
 		}
 		log.T.C(recLog(on, b, eng))
 		eng.hiddenservice(on, b, c, prev)
+	case *intro.Layer:
+		log.T.C(recLog(on, b, eng))
+		eng.intro(on, b, c, prev)
 	case *response.Layer:
 		if prev == nil {
 			log.E.Ln(reflect.TypeOf(on), "requests from outside? absurd!")

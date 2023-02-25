@@ -15,20 +15,20 @@ import (
 )
 
 var (
-	eng *relay.Engine
-	p2p []string
-	rpc []string
+	eng       *relay.Engine
+	engineP2P []string
+	engineRPC []string
 )
 
 func init() {
 	pf := relayCmd.PersistentFlags()
-	pf.StringSliceVarP(&p2p, "p2p-relay", "P",
+	pf.StringSliceVarP(&engineP2P, "engineP2P-relay", "P",
 		[]string{"127.0.0.1:8337", "::1:8337"},
 		"address/ports for IPv4 and v6 listeners")
-	pf.StringSliceVarP(&rpc, "relay-control", "r",
+	pf.StringSliceVarP(&engineRPC, "relay-control", "r",
 		[]string{"127.0.0.1:8339", "::1:8339"},
 		"address/ports for IPv4 and v6 listeners")
-	viper.BindPFlag("p2p-relay", seedCmd.PersistentFlags().Lookup("p2p-relay"))
+	viper.BindPFlag("engineP2P-relay", seedCmd.PersistentFlags().Lookup("engineP2P-relay"))
 	viper.BindPFlag("relay-control", seedCmd.PersistentFlags().Lookup(
 		"relay-control"))
 	rootCmd.AddCommand(relayCmd)
