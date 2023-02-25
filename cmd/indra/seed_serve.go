@@ -6,6 +6,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/interrupt"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/rpc"
+	"git-indra.lan/indra-labs/indra/pkg/rpc/examples"
 	"git-indra.lan/indra-labs/indra/pkg/seed"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/spf13/cobra"
@@ -85,7 +86,7 @@ var seedServeCommand = &cobra.Command{
 			log.I.Ln("rpc server is ready")
 		}
 
-		rpc.Run(ctx)
+		examples.TunnelHello(ctx)
 
 		//
 		// P2P

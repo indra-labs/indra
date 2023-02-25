@@ -1,15 +1,11 @@
 package rpc
 
 import (
-	"context"
-	"github.com/tutorialedge/go-grpc-tutorial/chat"
 	"golang.zx2c4.com/wireguard/conn"
 	"golang.zx2c4.com/wireguard/device"
 	"golang.zx2c4.com/wireguard/tun"
 	"golang.zx2c4.com/wireguard/tun/netstack"
-	"google.golang.org/grpc"
 	"net/netip"
-	"os"
 	"strconv"
 )
 
@@ -36,35 +32,4 @@ func getNetworkInstance(opts *dialOptions) (net *netstack.Net, err error) {
 	}
 
 	return net, nil
-}
-
-func Run(ctx context.Context) {
-
-	var err error
-	var conn *grpc.ClientConn
-
-	//conn, err = Dial("unix:///tmp/indra.sock")
-
-	conn, err = DialContext(ctx,
-		"noise://0.0.0.0:18222",
-		WithPrivateKey("Aj9CfbE1pXEVxPfjSaTwdY3B4kYHbwsTSyT3nrc34ATN"),
-		WithPeer("G52UmsQpUmN2zFMkJaP9rwCvqQJzi1yHKA9RTrLJTk9f"),
-		WithKeepAliveInterval(5),
-	)
-
-	if err != nil {
-		check(err)
-		os.Exit(1)
-	}
-
-	c := chat.NewChatServiceClient(conn)
-
-	response, err := c.SayHello(context.Background(), &chat.Message{Body: "Hello From Client!"})
-
-	if err != nil {
-		check(err)
-		return
-	}
-
-	log.I.F(response.Body)
 }
