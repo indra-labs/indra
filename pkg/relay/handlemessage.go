@@ -2,7 +2,7 @@ package relay
 
 import (
 	"reflect"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/onion/balance"
 	"git-indra.lan/indra-labs/indra/pkg/onion/confirm"
 	"git-indra.lan/indra-labs/indra/pkg/onion/crypt"
@@ -19,7 +19,8 @@ import (
 )
 
 func (eng *Engine) handleMessage(b slice.Bytes, prev types.Onion) {
-	log.T.F("%v handling received message", eng.GetLocalNodeAddress())
+	log.T.F("%v handling received message %v", eng.GetLocalNodeAddress(),
+		prev == nil)
 	var on1 types.Onion
 	var e error
 	c := slice.NewCursor()

@@ -3,9 +3,9 @@ package relay
 import (
 	"net/netip"
 	"time"
-
+	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/onion/balance"
 	"git-indra.lan/indra-labs/indra/pkg/onion/confirm"
@@ -19,7 +19,7 @@ import (
 
 func (eng *Engine) SendOnion(ap *netip.AddrPort, o Skins,
 	responseHook func(id nonce.ID, b slice.Bytes), timeout time.Duration) {
-
+	
 	if timeout == 0 {
 		timeout = DefaultTimeout
 	}
@@ -97,7 +97,8 @@ func (eng *Engine) SendOnion(ap *netip.AddrPort, o Skins,
 			log.D.Ln("nil response hook")
 		}
 	}
-	eng.PendingResponses.Add(last, len(b), sessions, billable, ret, port, responseHook, postAcct)
+	eng.PendingResponses.Add(last, len(b), sessions, billable, ret, port,
+		responseHook, postAcct)
 	log.T.Ln("sending out onion")
 	eng.Send(ap, b)
 }

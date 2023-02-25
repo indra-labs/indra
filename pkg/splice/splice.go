@@ -78,8 +78,8 @@ func (s *Splicer) ReadPubkey(from **pub.Key) *Splicer {
 	return s
 }
 
-func (s *Splicer) Pubkey(from *prv.Key) *Splicer {
-	pubKey := pub.Derive(from).ToBytes()
+func (s *Splicer) Pubkey(from *pub.Key) *Splicer {
+	pubKey := from.ToBytes()
 	copy(s.b[*s.c:s.c.Inc(pub.KeyLen)], pubKey[:])
 	return s
 }

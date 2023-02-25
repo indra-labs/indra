@@ -14,8 +14,8 @@ import (
 
 const (
 	MagicString = "hs"
-	Len         = magicbytes.Len + 3*sha256.Len + nonce.IVLen*3 +
-		nonce.IDLen
+	Len         = magicbytes.Len + nonce.IDLen + pub.KeyLen +
+		3*sha256.Len + nonce.IVLen*3
 )
 
 var (
@@ -25,8 +25,9 @@ var (
 	_     types.Onion = &Layer{}
 )
 
-// Layer exit messages are the crypt of a message after two Forward packets
-// that provides an exit address and
+// Layer hiddenservice messages deliver an introduction message which they
+// advertise they have received and when requested can then request a routing
+// header for any client that requests it.
 type Layer struct {
 	nonce.ID
 	// Identity is a public key identifying the hidden service. It is encoded
@@ -55,6 +56,7 @@ func (x *Layer) Encode(b slice.Bytes, c *slice.Cursor) {
 	splice.Splice(b, c).
 		Magic(Magic).
 		ID(x.ID).
+		Pubkey(x.Identity).
 		Hash(x.Ciphers[0]).Hash(x.Ciphers[1]).Hash(x.Ciphers[2]).
 		IV(x.Nonces[0]).IV(x.Nonces[1]).IV(x.Nonces[2])
 }
@@ -65,6 +67,7 @@ func (x *Layer) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	}
 	splice.Splice(b, c).
 		ReadID(&x.ID).
+		ReadPubkey(&x.Identity).
 		ReadHash(&x.Ciphers[0]).ReadHash(&x.Ciphers[1]).ReadHash(&x.Ciphers[2]).
 		ReadIV(&x.Nonces[0]).ReadIV(&x.Nonces[1]).ReadIV(&x.Nonces[2])
 	return

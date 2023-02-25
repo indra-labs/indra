@@ -8,6 +8,8 @@ import (
 
 func (eng *Engine) SendIntro(id nonce.ID, target *Session, ident *pub.Key,
 	hook func(id nonce.ID, b slice.Bytes)) {
+	
+	log.I.Ln(target.Hop)
 	hops := []byte{0, 1, 2, 3, 4, 5}
 	s := make(Sessions, len(hops))
 	s[2] = target

@@ -67,7 +67,7 @@ func (x *Layer) Encode(b slice.Bytes, c *slice.Cursor) {
 		Magic(Magic).
 		IV(x.Nonce).
 		Cloak(x.ToHeaderPub).
-		Pubkey(x.From)
+		Pubkey(pub.Derive(x.From))
 	start := int(*c)
 	// Call the tree of onions to perform their encoding.
 	x.Onion.Encode(b, c)

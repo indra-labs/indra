@@ -3,7 +3,7 @@ package relay
 import (
 	"net/netip"
 	"runtime"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -14,10 +14,10 @@ func (eng *Engine) Send(addr *netip.AddrPort, b slice.Bytes) {
 	as := addr.String()
 	eng.ForEachNode(func(n *Node) bool {
 		if as == n.AddrPort.String() {
-			n.Transport.Send(b)
 			_, f, l, _ := runtime.Caller(1)
 			log.T.F("%s sending message to %v %s:%d",
 				eng.GetLocalNode().AddrPort.String(), addr, f, l)
+			n.Transport.Send(b)
 			return true
 		}
 		return false
