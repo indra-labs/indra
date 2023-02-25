@@ -7,6 +7,7 @@ type dialOptions struct {
 	peerPubKey        RPCPublicKey
 	peerRPCIP         string
 	keepAliveInterval int
+	mtu               int
 }
 
 // DialOption configures how we set up the connection.
