@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/netip"
 	"sync"
-
+	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -20,15 +20,16 @@ import (
 type Node struct {
 	nonce.ID
 	sync.Mutex
-	AddrPort      *netip.AddrPort
-	IdentityPub   *pub.Key
-	IdentityBytes pub.Bytes
-	IdentityPrv   *prv.Key
-	RelayRate     lnwire.MilliSatoshi // Base relay price/Mb.
-	Services      service.Services    // Services offered by this peer.
-	Load          *ring.BufferLoad    // Relay load.
-	Latency       *ring.BufferLatency // Latency to peer.
-	Failure       *ring.BufferFailure // Times of tx failure.
+	AddrPort       *netip.AddrPort
+	IdentityPub    *pub.Key
+	IdentityBytes  pub.Bytes
+	IdentityPrv    *prv.Key
+	RelayRate      lnwire.MilliSatoshi // Base relay price/Mb.
+	Services       service.Services    // Services offered by this peer.
+	HiddenServices Referrers           // Hidden services known by peer.
+	Load           *ring.BufferLoad    // Relay load.
+	Latency        *ring.BufferLatency // Latency to peer.
+	Failure        *ring.BufferFailure // Times of tx failure.
 	PaymentChan
 	types.Transport
 }
@@ -48,7 +49,7 @@ const (
 func NewNode(addr *netip.AddrPort, idPub *pub.Key, idPrv *prv.Key,
 	tpt types.Transport, relayRate lnwire.MilliSatoshi,
 	local bool) (n *Node, id nonce.ID) {
-
+	
 	id = nonce.NewID()
 	n = &Node{
 		ID:            id,

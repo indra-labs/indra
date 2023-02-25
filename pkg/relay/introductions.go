@@ -4,10 +4,13 @@ import (
 	"sync"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 type Intros map[pub.Bytes]slice.Bytes
+
+type NotifiedIntroducers map[pub.Bytes][]nonce.ID
 
 // Introductions is a map of existing known hidden service keys and the
 // routing header for requesting a new one on behalf of the client.
@@ -19,10 +22,12 @@ type Intros map[pub.Bytes]slice.Bytes
 type Introductions struct {
 	sync.Mutex
 	Intros
+	NotifiedIntroducers
 }
 
 func NewIntroductions() *Introductions {
-	return &Introductions{Intros: make(Intros)}
+	return &Introductions{Intros: make(Intros),
+		NotifiedIntroducers: make(NotifiedIntroducers)}
 }
 
 func (in *Introductions) Find(key pub.Bytes) (header slice.Bytes) {
@@ -36,13 +41,26 @@ func (in *Introductions) Find(key pub.Bytes) (header slice.Bytes) {
 	return
 }
 
-func (in *Introductions) Add(key pub.Bytes, header slice.Bytes) {
+func (in *Introductions) AddIntro(key pub.Bytes, header slice.Bytes) {
 	in.Lock()
 	var ok bool
 	if _, ok = in.Intros[key]; ok {
 		log.D.Ln("entry already exists for key %x", key)
 	} else {
 		in.Intros[key] = header
+		in.NotifiedIntroducers[key] = []nonce.ID{}
+	}
+	in.Unlock()
+}
+
+func (in *Introductions) AddNotified(nodeID nonce.ID, ident pub.Bytes) {
+	in.Lock()
+	var ok bool
+	if _, ok = in.NotifiedIntroducers[ident]; ok {
+		in.NotifiedIntroducers[ident] = append(in.NotifiedIntroducers[ident],
+			nodeID)
+	} else {
+		in.NotifiedIntroducers[ident] = []nonce.ID{nodeID}
 	}
 	in.Unlock()
 }
