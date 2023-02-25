@@ -28,7 +28,7 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 		return nil, errors.New("Unsupported protocol. Only unix:// or noise://")
 	}
 
-	dialOpts := &dialOptions{peerRPCIP: "192.168.37.2"}
+	dialOpts := &dialOptions{peerRPCIP: "192.168.37.2", mtu: 1420}
 
 	for _, opt := range opts {
 		opt.apply(dialOpts)
