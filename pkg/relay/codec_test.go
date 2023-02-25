@@ -7,19 +7,19 @@ import (
 	"reflect"
 	"testing"
 	"time"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
-	"git-indra.lan/indra-labs/indra/pkg/onion/confirm"
-	"git-indra.lan/indra-labs/indra/pkg/onion/crypt"
-	"git-indra.lan/indra-labs/indra/pkg/onion/delay"
-	"git-indra.lan/indra-labs/indra/pkg/onion/exit"
-	"git-indra.lan/indra-labs/indra/pkg/onion/forward"
-	"git-indra.lan/indra-labs/indra/pkg/onion/response"
-	"git-indra.lan/indra-labs/indra/pkg/onion/reverse"
-	"git-indra.lan/indra-labs/indra/pkg/onion/session"
+	"git-indra.lan/indra-labs/indra/pkg/messages/confirm"
+	"git-indra.lan/indra-labs/indra/pkg/messages/crypt"
+	"git-indra.lan/indra-labs/indra/pkg/messages/delay"
+	"git-indra.lan/indra-labs/indra/pkg/messages/exit"
+	"git-indra.lan/indra-labs/indra/pkg/messages/forward"
+	"git-indra.lan/indra-labs/indra/pkg/messages/response"
+	"git-indra.lan/indra-labs/indra/pkg/messages/reverse"
+	"git-indra.lan/indra-labs/indra/pkg/messages/session"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 	"git-indra.lan/indra-labs/indra/pkg/util/tests"
@@ -240,7 +240,7 @@ func TestOnionSkins_Layer(t *testing.T) {
 }
 
 func TestOnionSkins_Reply(t *testing.T) {
-
+	
 	var e error
 	ipSizes := []int{net.IPv4len, net.IPv6len}
 	for i := range ipSizes {
@@ -283,7 +283,7 @@ func TestOnionSkins_Reply(t *testing.T) {
 }
 
 func TestOnionSkins_Response(t *testing.T) {
-
+	
 	var e error
 	var msg slice.Bytes
 	var id nonce.ID
@@ -312,7 +312,7 @@ func TestOnionSkins_Response(t *testing.T) {
 		t.Errorf("exit message did not unwrap correctly")
 		t.FailNow()
 	}
-
+	
 }
 
 func GetTwoPrvKeys(t *testing.T) (prv1, prv2 *prv.Key) {

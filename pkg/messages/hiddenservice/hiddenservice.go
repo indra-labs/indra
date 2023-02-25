@@ -5,7 +5,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
-	"git-indra.lan/indra-labs/indra/pkg/onion/magicbytes"
+	"git-indra.lan/indra-labs/indra/pkg/messages/magicbytes"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/types"

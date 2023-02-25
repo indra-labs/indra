@@ -1,7 +1,7 @@
 package relay
 
 import (
-	"git-indra.lan/indra-labs/indra/pkg/onion/hiddenservice"
+	"git-indra.lan/indra-labs/indra/pkg/messages/hiddenservice"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )

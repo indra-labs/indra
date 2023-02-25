@@ -7,13 +7,13 @@ import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/onion/balance"
-	"git-indra.lan/indra-labs/indra/pkg/onion/confirm"
-	"git-indra.lan/indra-labs/indra/pkg/onion/crypt"
-	"git-indra.lan/indra-labs/indra/pkg/onion/exit"
-	"git-indra.lan/indra-labs/indra/pkg/onion/forward"
-	"git-indra.lan/indra-labs/indra/pkg/onion/getbalance"
-	"git-indra.lan/indra-labs/indra/pkg/onion/reverse"
+	"git-indra.lan/indra-labs/indra/pkg/messages/balance"
+	"git-indra.lan/indra-labs/indra/pkg/messages/confirm"
+	"git-indra.lan/indra-labs/indra/pkg/messages/crypt"
+	"git-indra.lan/indra-labs/indra/pkg/messages/exit"
+	"git-indra.lan/indra-labs/indra/pkg/messages/forward"
+	"git-indra.lan/indra-labs/indra/pkg/messages/getbalance"
+	"git-indra.lan/indra-labs/indra/pkg/messages/reverse"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 

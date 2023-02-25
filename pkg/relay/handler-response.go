@@ -2,8 +2,8 @@ package relay
 
 import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-
-	"git-indra.lan/indra-labs/indra/pkg/onion/response"
+	
+	"git-indra.lan/indra-labs/indra/pkg/messages/response"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -11,7 +11,7 @@ import (
 // response is a payload from an exit message.
 func (eng *Engine) response(on *response.Layer, b slice.Bytes,
 	cur *slice.Cursor, prev types.Onion) {
-
+	
 	pending := eng.PendingResponses.Find(on.ID)
 	log.T.F("searching for pending ID %x", on.ID)
 	if pending != nil {

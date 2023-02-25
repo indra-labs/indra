@@ -3,7 +3,7 @@ package relay
 import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/onion/session"
+	"git-indra.lan/indra-labs/indra/pkg/messages/session"
 )
 
 // SendKeys provides a pair of private keys that will be used to generate the

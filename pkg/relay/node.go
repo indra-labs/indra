@@ -34,9 +34,9 @@ type Node struct {
 	types.Transport
 }
 
-// DefaultSampleBufferSize defines the number of samples for the Load, Latency
-// and Failure ring buffers.
 const (
+	// DefaultSampleBufferSize defines the number of samples for the Load, Latency
+	// and Failure ring buffers.
 	DefaultSampleBufferSize = 64
 	PaymentChanBuffers      = 8
 )

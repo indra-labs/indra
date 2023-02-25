@@ -3,9 +3,9 @@ package relay
 import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	
-	"git-indra.lan/indra-labs/indra/pkg/onion/balance"
-	"git-indra.lan/indra-labs/indra/pkg/onion/crypt"
-	"git-indra.lan/indra-labs/indra/pkg/onion/getbalance"
+	"git-indra.lan/indra-labs/indra/pkg/messages/balance"
+	"git-indra.lan/indra-labs/indra/pkg/messages/crypt"
+	"git-indra.lan/indra-labs/indra/pkg/messages/getbalance"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )

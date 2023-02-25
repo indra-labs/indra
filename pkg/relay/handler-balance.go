@@ -2,15 +2,15 @@ package relay
 
 import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-
-	"git-indra.lan/indra-labs/indra/pkg/onion/balance"
+	
+	"git-indra.lan/indra-labs/indra/pkg/messages/balance"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 func (eng *Engine) balance(on *balance.Layer,
 	b slice.Bytes, c *slice.Cursor, prev types.Onion) {
-
+	
 	local := eng.GetLocalNodeAddress()
 	pending := eng.PendingResponses.Find(on.ID)
 	if pending != nil {
