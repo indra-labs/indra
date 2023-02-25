@@ -35,14 +35,13 @@ func (eng *Engine) handler() (out bool) {
 			log.T.F("awaiting session keys for preimage %x session ID %x",
 				p.Preimage, p.ID)
 		}
-		// For now if we received this we return true.
-		// Later this will wait with a timeout on the lnd node returning the
-		// success to trigger this.
+		// For now if we received this we return true. Later this will wait with
+		// a timeout on the lnd node returning the success to trigger this.
 		p.ConfirmChan <- true
 	case <-eng.Pause:
 		log.D.Ln("pausing", eng.GetLocalNodeAddress())
-		// For testing purposes we need to halt this handler and discard
-		// channel messages.
+		// For testing purposes we need to halt this handler and discard channel
+		// messages.
 	out:
 		for {
 			select {

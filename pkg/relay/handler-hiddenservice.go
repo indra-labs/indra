@@ -12,5 +12,6 @@ func (eng *Engine) hiddenservice(hs *hiddenservice.Layer, b slice.Bytes,
 	log.D.F("%s adding introduction for key %x", eng.GetLocalNodeAddress(),
 		hs.Identity.ToBytes())
 	eng.Introductions.Add(hs.Identity.ToBytes(), b[*c:])
-	log.I.Ln("stored new introduction")
+	log.I.Ln("stored new introduction, starting broadcast")
+	go eng.hiddenserviceBroadcaster()
 }
