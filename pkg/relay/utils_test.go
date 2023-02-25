@@ -10,7 +10,7 @@ import (
 )
 
 func CreateNMockCircuits(inclSessions bool, nCircuits int, nReturnSessions int) (cl []*Engine, e error) {
-
+	
 	nTotal := 1 + nCircuits*5
 	cl = make([]*Engine, nTotal)
 	nodes := make([]*Node, nTotal)
@@ -45,7 +45,7 @@ func CreateNMockCircuits(inclSessions bool, nCircuits int, nReturnSessions int) 
 					nonce.NewID(), nodes[i],
 					1<<16, nil, nil,
 					byte((i-1)/nCircuits))
-				// Add session to node, so it will be able to relay if it gets a
+				// AddIntro session to node, so it will be able to relay if it gets a
 				// message with the key.
 				cl[i].AddSession(sessions[i-1])
 				// we need a copy for the node so the balance adjustments don't
@@ -55,7 +55,7 @@ func CreateNMockCircuits(inclSessions bool, nCircuits int, nReturnSessions int) 
 			}
 		}
 	}
-	// Add all the nodes to each other, so they can pass messages.
+	// AddIntro all the nodes to each other, so they can pass messages.
 	for i := range cl {
 		for j := range nodes {
 			if i == j {

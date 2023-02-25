@@ -9,8 +9,8 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/onion/magicbytes"
-	"git-indra.lan/indra-labs/indra/pkg/onion/reverse"
+	"git-indra.lan/indra-labs/indra/pkg/messages/magicbytes"
+	"git-indra.lan/indra-labs/indra/pkg/messages/reverse"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/types"
@@ -67,7 +67,7 @@ func (x *Layer) Encode(b slice.Bytes, c *slice.Cursor) {
 		Magic(Magic).
 		IV(x.Nonce).
 		Cloak(x.ToHeaderPub).
-		Pubkey(x.From)
+		Pubkey(pub.Derive(x.From))
 	start := int(*c)
 	// Call the tree of onions to perform their encoding.
 	x.Onion.Encode(b, c)

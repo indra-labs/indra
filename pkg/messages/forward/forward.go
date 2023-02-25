@@ -5,7 +5,7 @@ import (
 	"net/netip"
 	
 	"git-indra.lan/indra-labs/indra"
-	"git-indra.lan/indra-labs/indra/pkg/onion/magicbytes"
+	"git-indra.lan/indra-labs/indra/pkg/messages/magicbytes"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/types"
@@ -31,7 +31,6 @@ type Layer struct {
 	types.Onion
 }
 
-//
 // func (x *Layer) String() string {
 // 	s, _ := x.AddrPort.MarshalBinary()
 // 	return fmt.Sprintf("\n\taddrport: %x %v\n", s, x.AddrPort.String())

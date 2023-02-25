@@ -4,8 +4,8 @@ import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
-	"git-indra.lan/indra-labs/indra/pkg/onion/crypt"
-	"git-indra.lan/indra-labs/indra/pkg/onion/reverse"
+	"git-indra.lan/indra-labs/indra/pkg/messages/crypt"
+	"git-indra.lan/indra-labs/indra/pkg/messages/reverse"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )

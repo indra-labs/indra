@@ -1,9 +1,11 @@
-package response
+package balance
 
 import (
+	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
+	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/onion/magicbytes"
+	"git-indra.lan/indra-labs/indra/pkg/messages/magicbytes"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/types"
@@ -11,9 +13,9 @@ import (
 )
 
 const (
-	MagicString = "rs"
-	Len         = magicbytes.Len + slice.Uint32Len + slice.Uint16Len +
-		nonce.IDLen + 1
+	MagicString = "ba"
+	Len         = magicbytes.Len + 2*nonce.IDLen +
+		slice.Uint64Len
 )
 
 var (
@@ -23,38 +25,34 @@ var (
 	_     types.Onion = &Layer{}
 )
 
-// Layer messages are what are carried back via Reverse messages from an Exit.
+// Layer balance messages are the response replying to a GetBalance message. The
+// ID is a random value that quickly identifies to the client which request it
+// relates to for the callback.
 type Layer struct {
 	nonce.ID
-	Port uint16
-	Load byte
-	slice.Bytes
+	ConfID nonce.ID
+	lnwire.MilliSatoshi
 }
 
-func New() *Layer {
-	o := Layer{}
-	return &o
-}
+func (x *Layer) Insert(o types.Onion) {}
+func (x *Layer) Len() int             { return Len }
 
-func (x *Layer) Insert(_ types.Onion) {}
-func (x *Layer) Len() int             { return Len + len(x.Bytes) }
 func (x *Layer) Encode(b slice.Bytes, c *slice.Cursor) {
 	splice.Splice(b, c).
 		Magic(Magic).
 		ID(x.ID).
-		Uint16(x.Port).
-		Byte(x.Load).
-		Bytes(x.Bytes)
+		ID(x.ConfID).
+		Uint64(uint64(x.MilliSatoshi))
 }
+
 func (x *Layer) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	if len(b[*c:]) < Len-magicbytes.Len {
-		return magicbytes.TooShort(len(b[*c:]),
-			Len-magicbytes.Len, string(Magic))
+		return magicbytes.TooShort(len(b[*c:]), Len-magicbytes.Len,
+			string(Magic))
 	}
 	splice.Splice(b, c).
 		ReadID(&x.ID).
-		ReadUint16(&x.Port).
-		ReadByte(&x.Load).
-		ReadBytes(&x.Bytes)
+		ReadID(&x.ConfID).
+		ReadMilliSatoshi(&x.MilliSatoshi)
 	return
 }

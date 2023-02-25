@@ -2,11 +2,11 @@ package relay
 
 import (
 	"fmt"
-
+	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/onion/session"
+	"git-indra.lan/indra-labs/indra/pkg/messages/session"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -16,7 +16,7 @@ import (
 // the sessions will be paid the amount specified, not divided up.
 func (eng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 	hook func()) (e error) {
-
+	
 	var nodes [5]*Node
 	nodes = eng.SessionManager.SelectUnusedCircuit()
 	for i := range nodes {

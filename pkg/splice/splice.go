@@ -13,7 +13,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
-	"git-indra.lan/indra-labs/indra/pkg/onion/magicbytes"
+	"git-indra.lan/indra-labs/indra/pkg/messages/magicbytes"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -78,8 +78,8 @@ func (s *Splicer) ReadPubkey(from **pub.Key) *Splicer {
 	return s
 }
 
-func (s *Splicer) Pubkey(from *prv.Key) *Splicer {
-	pubKey := pub.Derive(from).ToBytes()
+func (s *Splicer) Pubkey(from *pub.Key) *Splicer {
+	pubKey := from.ToBytes()
 	copy(s.b[*s.c:s.c.Inc(pub.KeyLen)], pubKey[:])
 	return s
 }

@@ -54,7 +54,7 @@ func NewEngine(tpt types.Transport, idPrv *prv.Key, no *Node,
 		C:                qu.T(),
 	}
 	c.AddNodes(append([]*Node{no}, nodes...)...)
-	// Add a return session for receiving responses, ideally more of these will
+	// AddIntro a return session for receiving responses, ideally more of these will
 	// be generated during operation and rotated out over time.
 	for i := 0; i < nReturnSessions; i++ {
 		c.AddSession(NewSession(nonce.NewID(), no, 0, nil, nil, 5))

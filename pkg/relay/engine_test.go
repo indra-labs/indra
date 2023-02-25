@@ -255,7 +255,8 @@ func TestClient_HiddenService(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuits(true, 2, 2); check(e) {
+	const returns = 2
+	if clients, e = CreateNMockCircuits(false, 5, returns); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -263,40 +264,89 @@ func TestClient_HiddenService(t *testing.T) {
 	for _, v := range clients {
 		go v.Start()
 	}
-	quit := qu.T()
-	// var wg sync.WaitGroup
-	// go func() {
-	// 	select {
-	// 	case <-time.After(time.Second):
-	// 	case <-quit:
-	// 		return
-	// 	}
-	// 	quit.Q()
-	// 	t.Error("SendExit test failed")
-	// }()
+	// Fund the client for all hops on all nodes.
+	var wg sync.WaitGroup
+	var counter atomic.Int32
+	for i := 0; i < 25; i++ {
+		log.D.Ln("buying sessions", i)
+		wg.Add(1)
+		counter.Inc()
+		e = clients[0].BuyNewSessions(1000000, func() {
+			wg.Done()
+			counter.Dec()
+		})
+		if check(e) {
+			wg.Done()
+			counter.Dec()
+		}
+		wg.Wait()
+		for j := range clients[0].SessionCache {
+			log.D.F("%d %s %v", i, j, clients[0].SessionCache[j])
+		}
+	}
+	for i := 0; i < 25; i++ {
+		var identPrv *prv.Key
+		if identPrv, e = prv.GenerateKey(); check(e) {
+			t.Error(e)
+			t.FailNow()
+		}
+		identPub := pub.Derive(identPrv)
+		id := nonce.NewID()
+		clients[0].SendIntro(id, clients[0].Sessions[i+returns],
+			identPub, func(id nonce.ID, b slice.Bytes) {
+				log.I.Ln("success")
+			})
+	}
+	time.Sleep(time.Second / 2)
+	for _, v := range clients {
+		v.Shutdown()
+	}
+}
+func TestClient_HiddenServiceBroadcast(t *testing.T) {
+	log2.SetLogLevel(log2.Trace)
+	var clients []*Engine
+	var e error
+	const returns = 2
+	if clients, e = CreateNMockCircuits(false, 5, returns); check(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	// Start up the clients.
+	for _, v := range clients {
+		go v.Start()
+	}
+	// Fund the client for all hops on all nodes.
+	var wg sync.WaitGroup
+	var counter atomic.Int32
+	for i := 0; i < 25; i++ {
+		log.D.Ln("buying sessions", i)
+		wg.Add(1)
+		counter.Inc()
+		e = clients[0].BuyNewSessions(1000000, func() {
+			wg.Done()
+			counter.Dec()
+		})
+		if check(e) {
+			wg.Done()
+			counter.Dec()
+		}
+		wg.Wait()
+		for j := range clients[0].SessionCache {
+			log.D.F("%d %s %v", i, j, clients[0].SessionCache[j])
+		}
+	}
 	var identPrv *prv.Key
 	if identPrv, e = prv.GenerateKey(); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
 	identPub := pub.Derive(identPrv)
-out:
-	for i := 3; i < len(clients[0].Sessions)-1; i++ {
-		// wg.Add(1)
-		id := nonce.NewID()
-		clients[0].SendIntro(id, clients[0].Sessions[i],
-			identPub, func(id nonce.ID, b slice.Bytes) {
-				log.I.Ln("success")
-				// wg.Done()
-			})
-		select {
-		case <-quit:
-			break out
-		default:
-		}
-		// wg.Wait()
-	}
-	quit.Q()
+	id := nonce.NewID()
+	clients[0].SendIntro(id, clients[0].Sessions[returns],
+		identPub, func(id nonce.ID, b slice.Bytes) {
+			log.I.Ln("success")
+		})
+	time.Sleep(time.Second * 5)
 	for _, v := range clients {
 		v.Shutdown()
 	}

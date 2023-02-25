@@ -1,16 +1,16 @@
 package relay
 
 import (
-	"git-indra.lan/indra-labs/indra/pkg/onion/crypt"
-	"git-indra.lan/indra-labs/indra/pkg/onion/magicbytes"
-	"git-indra.lan/indra-labs/indra/pkg/onion/session"
+	"git-indra.lan/indra-labs/indra/pkg/messages/crypt"
+	"git-indra.lan/indra-labs/indra/pkg/messages/magicbytes"
+	"git-indra.lan/indra-labs/indra/pkg/messages/session"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 func (eng *Engine) crypt(on *crypt.Layer, b slice.Bytes,
 	c *slice.Cursor, prev types.Onion) {
-
+	
 	// this is probably an encrypted crypt for us.
 	hdr, _, _, identity := eng.FindCloaked(on.Cloak)
 	if hdr == nil {
