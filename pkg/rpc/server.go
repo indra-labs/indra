@@ -11,8 +11,8 @@ func init() {
 
 var (
 	server        *grpc.Server
-	startupErrors = make(chan error)
-	isReady       = make(chan bool)
+	startupErrors = make(chan error, 128)
+	isReady       = make(chan bool, 1)
 )
 
 func RunWith(ctx context.Context, r func(srv *grpc.Server)) {

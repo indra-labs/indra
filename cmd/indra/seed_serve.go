@@ -103,9 +103,6 @@ var seedServeCommand = &cobra.Command{
 
 		}, false)
 
-		storage.Shutdown()
-		os.Exit(0)
-
 		//
 		// RPC
 		//

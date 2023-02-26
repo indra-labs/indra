@@ -3,6 +3,7 @@ package storage
 import (
 	"crypto/rand"
 	"github.com/btcsuite/btcd/btcutil/base58"
+	"strings"
 )
 
 type Key [32]byte
@@ -15,8 +16,11 @@ func (k Key) Encode() string {
 	return base58.Encode(k[:])
 }
 
-func (k Key) Decode(key string) {
-	base58.Decode(key)
+func (k *Key) Decode(key string) {
+
+	key = strings.TrimSpace(key)
+
+	copy(k[:], base58.Decode(key))
 }
 
 func KeyGen() (Key, error) {

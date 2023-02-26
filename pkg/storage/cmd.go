@@ -2,9 +2,12 @@ package storage
 
 import (
 	"errors"
+	"fmt"
 	"github.com/spf13/viper"
+	"golang.org/x/term"
 	"os"
 	"strings"
+	"syscall"
 )
 
 var (
@@ -60,6 +63,20 @@ func configureKey() {
 		}
 
 		key.Decode(string(keyBytes))
+
+		return
+	}
+
+	if viper.GetBool(storeAskPassFlag) {
+
+		log.I.Ln("prompting user for key")
+
+		var password []byte
+
+		fmt.Print("Enter Encryption Key: ")
+		password, err = term.ReadPassword(int(syscall.Stdin))
+
+		key.Decode(string(password))
 
 		return
 	}
