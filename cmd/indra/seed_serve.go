@@ -8,6 +8,9 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/rpc"
 	"git-indra.lan/indra-labs/indra/pkg/rpc/examples"
 	"git-indra.lan/indra-labs/indra/pkg/seed"
+	"git-indra.lan/indra-labs/indra/pkg/storage"
+	"github.com/davecgh/go-spew/spew"
+	"github.com/dgraph-io/badger/v3"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -22,6 +25,8 @@ var (
 )
 
 func init() {
+
+	storage.InitFlags(seedServeCommand)
 
 	// Init flags belonging to the seed package
 	seed.InitFlags(seedServeCommand)
@@ -48,6 +53,58 @@ var seedServeCommand = &cobra.Command{
 		ctx, cancel = context.WithCancel(context.Background())
 
 		interrupt.AddHandler(cancel)
+
+		//
+		// Storage
+		//
+
+		go storage.Run(ctx)
+
+		select {
+		case <-storage.CantStart():
+
+			log.I.Ln("issues starting storage")
+			log.I.Ln("exiting")
+
+			os.Exit(0)
+
+		case <-storage.IsReady():
+
+			log.I.Ln("storage is ready")
+
+		case <-ctx.Done():
+
+			log.I.Ln("shutting down")
+
+			os.Exit(0)
+		}
+
+		storage.Txn(func(txn *badger.Txn) error {
+
+			txn.Set([]byte("hello"), []byte("world"))
+
+			txn.Commit()
+
+			return nil
+
+		}, true)
+
+		storage.Txn(func(txn *badger.Txn) error {
+
+			item, _ := txn.Get([]byte("hello"))
+
+			spew.Dump(item.String())
+			item.Value(func(val []byte) error {
+				spew.Dump(string(val))
+				return nil
+			})
+
+			return nil
+
+		}, false)
+
+		storage.Shutdown()
+		os.Exit(0)
 
 		//
 		// RPC

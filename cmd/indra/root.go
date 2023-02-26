@@ -57,11 +57,12 @@ func init() {
 
 func initData() {
 
-	if dataDir == "" {
+	if viper.GetString("data-dir") == "" {
 		home, err := os.UserHomeDir()
+
 		cobra.CheckErr(err)
 
-		dataDir = home + "/indra/data"
+		viper.Set("data-dir", home+"/.indra/data")
 	}
 
 }
@@ -73,7 +74,7 @@ func initLogging() {
 		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
 
-		logsDir = home + "/indra/logs"
+		logsDir = home + "/.indra/logs"
 	}
 
 	log2.SetLogLevel(log2.GetLevelByString(viper.GetString("logs-level"), log2.Debug))
