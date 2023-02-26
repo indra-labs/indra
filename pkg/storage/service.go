@@ -2,8 +2,11 @@ package storage
 
 import (
 	"context"
+	"git-indra.lan/indra-labs/indra/pkg/rpc"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
+	"sync"
 )
 
 var (
@@ -49,25 +52,42 @@ func Txn(tx func(txn *badger.Txn) error, update bool) error {
 	return tx(txn)
 }
 
+var (
+	running sync.Mutex
+)
+
 func Run(ctx context.Context) {
+
+	if !running.TryLock() {
+		return
+	}
 
 	configure()
 
-	log.I.Ln("running storage")
-
-	var err error
-
 	opts = badger.DefaultOptions(viper.GetString(storeFilePathFlag))
-	opts.EncryptionKey = key.Bytes()
 	opts.IndexCacheSize = 128 << 20
 	opts.Logger = nil
 
-	db, err = badger.Open(opts)
+	if isRPCUnlockable {
 
-	if err != nil {
-		startupErrors <- err
-		return
+		var unlockService = NewUnlockService()
+
+		go rpc.RunWith(ctx, func(srv *grpc.Server) {
+			RegisterUnlockServiceServer(srv, unlockService)
+		})
+
+		select {
+		case <-IsReady():
+			return
+		case <-ctx.Done():
+			rpc.Shutdown(context.Background())
+			return
+		}
 	}
+
+	opts.EncryptionKey = key.Bytes()
+
+	log.I.Ln("running storage")
 
 	isReady <- true
 

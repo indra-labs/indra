@@ -1,0 +1,19 @@
+
+syntax = "proto3";
+
+option go_package = ".";
+
+package rpc;
+
+message UnlockRequest {
+  string key = 1;
+}
+
+message UnlockResponse {
+  bool success = 1;
+  optional string message = 2;
+}
+
+service UnlockService {
+  rpc Unlock(UnlockRequest) returns (UnlockResponse) {}
+}

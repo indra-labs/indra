@@ -11,8 +11,9 @@ import (
 )
 
 var (
-	isNewKey bool
-	key      Key
+	isNewKey        bool
+	isRPCUnlockable bool
+	key             Key
 )
 
 func configure() {
@@ -67,7 +68,18 @@ func configureKey() {
 		return
 	}
 
-	log.I.Ln("no keyfile found, checking for user prompt")
+	log.I.Ln("no keyfile found, checking for rpc unlock")
+
+	if viper.GetBool(storeKeyRPCFlag) {
+
+		log.I.Ln("attempting rpc unlock")
+
+		isRPCUnlockable = true
+
+		return
+	}
+
+	log.I.Ln("rpc unlock disabled, checking for a user prompt")
 
 	if viper.GetBool(storeAskPassFlag) {
 
