@@ -60,6 +60,7 @@ func Run(ctx context.Context) {
 	opts = badger.DefaultOptions(viper.GetString(storeFilePathFlag))
 	opts.EncryptionKey = key.Bytes()
 	opts.IndexCacheSize = 128 << 20
+	opts.WithLoggingLevel(badger.WARNING)
 
 	db, err = badger.Open(opts)
 

@@ -37,13 +37,24 @@ func configureKey() {
 
 	log.I.Ln("no key found, checking for keyfile")
 
-	if viper.GetString(storeFilePathFlag) != "" {
+	if viper.GetString(storeKeyFileFlag) != "" {
+
+		var fileInfo os.FileInfo
+
+		if fileInfo, err = os.Stat(viper.GetString(storeKeyFileFlag)); err != nil {
+			startupErrors <- err
+			return
+		}
+
+		if fileInfo.Mode() != 0600 {
+			log.W.Ln("keyfile permissions are too open:", fileInfo.Mode())
+			log.W.Ln("It is recommended that you change them to 0600")
+		}
 
 		var keyBytes []byte
 
-		if keyBytes, err = os.ReadFile(viper.GetString(storeFilePathFlag)); err != nil {
+		if keyBytes, err = os.ReadFile(viper.GetString(storeKeyFileFlag)); err != nil {
 			startupErrors <- err
-
 			return
 		}
 
