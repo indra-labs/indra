@@ -4,10 +4,11 @@
 package pub
 
 import (
+	"encoding/base32"
 	"encoding/hex"
-
+	
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-
+	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
@@ -59,6 +60,15 @@ func (pub *Key) ToHex() (s string, e error) {
 	b := pub.ToBytes()
 	s = hex.EncodeToString(b[:])
 	return
+}
+
+const charset = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
+
+var b32enc = base32.NewEncoding(charset)
+
+func (pub *Key) ToBase32() (s string) {
+	b := pub.ToBytes()
+	return b32enc.EncodeToString(b[:])
 }
 
 func (pb Bytes) Equals(qb Bytes) bool { return pb == qb }
