@@ -6,18 +6,12 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/interrupt"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/rpc"
-	"git-indra.lan/indra-labs/indra/pkg/rpc/examples"
 	"git-indra.lan/indra-labs/indra/pkg/seed"
 	"git-indra.lan/indra-labs/indra/pkg/storage"
-	"github.com/davecgh/go-spew/spew"
-	"github.com/dgraph-io/badger/v3"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/tutorialedge/go-grpc-tutorial/chat"
-	"google.golang.org/grpc"
 	"os"
-	"time"
 )
 
 var (
@@ -79,68 +73,45 @@ var seedServeCommand = &cobra.Command{
 			os.Exit(0)
 		}
 
-		storage.Txn(func(txn *badger.Txn) error {
-
-			txn.Set([]byte("hello"), []byte("world"))
-
-			txn.Commit()
-
-			return nil
-
-		}, true)
-
-		storage.Txn(func(txn *badger.Txn) error {
-
-			item, _ := txn.Get([]byte("hello"))
-
-			spew.Dump(item.String())
-			item.Value(func(val []byte) error {
-				spew.Dump(string(val))
-				return nil
-			})
-
-			return nil
-
-		}, false)
-
 		//
-		// RPC
+		////
+		//// RPC
+		////
 		//
-
-		rpc.RunWith(ctx, func(srv *grpc.Server) {
-			chat.RegisterChatServiceServer(srv, &chat.Server{})
-		})
-
-		select {
-		case <-rpc.CantStart():
-
-			log.I.Ln("issues starting the rpc server")
-			log.I.Ln("attempting a graceful shutdown")
-
-			ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
-
-			rpc.Shutdown(ctx)
-
-			select {
-			case <-ctx.Done():
-
-				log.I.Ln("can't shutdown gracefully, exiting.")
-
-				os.Exit(1)
-
-			default:
-
-				log.I.Ln("graceful shutdown complete")
-
-				os.Exit(0)
-			}
-
-		case <-rpc.IsReady():
-
-			log.I.Ln("rpc server is ready")
-		}
-
-		examples.TunnelHello(ctx)
+		//rpc.RunWith(ctx, func(srv *grpc.Server) {
+		//	chat.RegisterChatServiceServer(srv, &chat.Server{})
+		//})
+		//
+		//select {
+		//case <-rpc.CantStart():
+		//
+		//	log.I.Ln("issues starting the rpc server")
+		//	log.I.Ln("attempting a graceful shutdown")
+		//
+		//	ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
+		//
+		//	rpc.Shutdown(ctx)
+		//
+		//	select {
+		//	case <-ctx.Done():
+		//
+		//		log.I.Ln("can't shutdown gracefully, exiting.")
+		//
+		//		os.Exit(1)
+		//
+		//	default:
+		//
+		//		log.I.Ln("graceful shutdown complete")
+		//
+		//		os.Exit(0)
+		//	}
+		//
+		//case <-rpc.IsReady():
+		//
+		//	log.I.Ln("rpc server is ready")
+		//}
+		//
+		//examples.TunnelHello(ctx)
 
 		//
 		// P2P

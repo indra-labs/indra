@@ -70,22 +70,39 @@ func Run(ctx context.Context) {
 
 	if isRPCUnlockable {
 
-		var unlockService = NewUnlockService()
+		var unlock = NewUnlockService()
 
 		go rpc.RunWith(ctx, func(srv *grpc.Server) {
-			RegisterUnlockServiceServer(srv, unlockService)
+			RegisterUnlockServiceServer(srv, unlock)
 		})
 
-		select {
-		case <-IsReady():
-			return
-		case <-ctx.Done():
-			rpc.Shutdown(context.Background())
-			return
+		for {
+			select {
+			case <-rpc.IsReady():
+
+				log.I.Ln("waiting for unlock")
+
+			case <-unlock.IsSuccessful():
+
+				log.I.Ln("storage successfully unlocked")
+
+				isReady <- true
+
+			case <-ctx.Done():
+				Shutdown()
+				return
+			}
 		}
 	}
 
+	var err error
+
 	opts.EncryptionKey = key.Bytes()
+
+	if db, err = badger.Open(opts); check(err) {
+		startupErrors <- err
+		return
+	}
 
 	log.I.Ln("running storage")
 

@@ -3,8 +3,6 @@ package storage
 import (
 	"context"
 	"github.com/dgraph-io/badger/v3"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type Service struct {
@@ -21,18 +19,24 @@ func (s *Service) Unlock(ctx context.Context, req *UnlockRequest) (res *UnlockRe
 
 	key.Decode(req.Key)
 
+	opts.EncryptionKey = key.Bytes()
+
 	if db, err = badger.Open(opts); check(err) {
 		return &UnlockResponse{
 			Success: false,
 		}, err
 	}
 
-	return nil, status.Errorf(codes.Unimplemented, "method Unlock not implemented")
+	s.success <- true
+
+	return &UnlockResponse{
+		Success: true,
+	}, nil
 }
 
 func (s *Service) mustEmbedUnimplementedUnlockServiceServer() {}
 
-func NewUnlockService() UnlockServiceServer {
+func NewUnlockService() *Service {
 	return &Service{
 		success: make(chan bool, 1),
 	}
