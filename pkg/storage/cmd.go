@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"errors"
 	"github.com/spf13/viper"
 	"os"
 	"strings"
@@ -151,7 +152,7 @@ func configureFile() {
 	}
 
 	if isNewKey {
-		log.F.Ln("new key generated for an existing database. Check your configuration. Exiting!")
-		os.Exit(1)
+		startupErrors <- errors.New("new key generated for an existing database. check your configuration.")
+		return
 	}
 }

@@ -61,10 +61,10 @@ var seedServeCommand = &cobra.Command{
 		go storage.Run(ctx)
 
 		select {
-		case <-storage.CantStart():
+		case err = <-storage.CantStart():
 
-			log.I.Ln("issues starting storage")
-			log.I.Ln("exiting")
+			log.E.Ln("can't start storage:", err)
+			log.I.Ln("shutting down")
 
 			os.Exit(0)
 

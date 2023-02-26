@@ -13,8 +13,8 @@ var (
 var (
 	db            *badger.DB
 	opts          badger.Options
-	startupErrors = make(chan error)
-	isReady       = make(chan bool)
+	startupErrors = make(chan error, 128)
+	isReady       = make(chan bool, 1)
 )
 
 func CantStart() chan error {
