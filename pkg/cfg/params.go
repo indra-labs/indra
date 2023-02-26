@@ -26,7 +26,7 @@ type Params struct {
 	DefaultPort string
 
 	// DNSSeedAddresses is a list of DNS hostnames used to bootstrap a new node on the network
-	DNSSeedAddresses []*DNSSeedAddress
+	DNSSeedAddresses []*SeedAddress
 }
 
 func SelectNetworkParams(network string) *Params {
@@ -76,7 +76,7 @@ var MainNetServerParams = &Params{
 
 	DefaultPort: "8337",
 
-	DNSSeedAddresses: []*DNSSeedAddress{
+	DNSSeedAddresses: []*SeedAddress{
 		NewSeedAddress("seed0.indra.org", "12D3KooWCfTmWavthiVV7Vkm9eouCdiLdGnhd2PShQ2hiu2VVU6Q"),
 		NewSeedAddress("seed1.indra.org", "12D3KooWASwYWP2gMh581EQG25nauvWfwAU3g6v8TugEoEzL5Ags"),
 		NewSeedAddress("seed2.indra.org", "12D3KooWFW7k2YcxjZrqWXJhmoCTNiNtgjLkEUeqgvZRAF3xHZjs"),
@@ -96,7 +96,7 @@ var TestNetServerParams = &Params{
 
 	DefaultPort: "58337",
 
-	DNSSeedAddresses: []*DNSSeedAddress{
+	DNSSeedAddresses: []*SeedAddress{
 		// NewSeedAddress("seed0.indra.org", "12D3KooWCfTmWavthiVV7Vkm9eouCdiLdGnhd2PShQ2hiu2VVU6Q"),
 		// NewSeedAddress("seed1.indra.org", "12D3KooWASwYWP2gMh581EQG25nauvWfwAU3g6v8TugEoEzL5Ags"),
 		// NewSeedAddress("seed2.indra.org", "12D3KooWFW7k2YcxjZrqWXJhmoCTNiNtgjLkEUeqgvZRAF3xHZjs"),
@@ -117,7 +117,7 @@ var SimnetServerParams = &Params{
 	DefaultPort: "62134",
 
 	// Should be passed via --seed
-	DNSSeedAddresses: []*DNSSeedAddress{
+	DNSSeedAddresses: []*SeedAddress{
 		NewSeedAddress("seed0", "16Uiu2HAmCxWoKp4vs7xrmzbScHEhUK7trCgCPhKPZRBiUvSxS7xA"),
 		NewSeedAddress("seed1", "16Uiu2HAmTKk6BvJFPmcQ6q92XgvQ4ZPu1AVjQxMvCfM4you9Zyvc"),
 		NewSeedAddress("seed2", "16Uiu2HAm8tCAW7D9WFLxkda52R73nSk9yBCFW8uwA4MZPzHYVhnW"),
