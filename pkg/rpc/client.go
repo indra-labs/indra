@@ -23,8 +23,8 @@ func getNetworkInstance(opts *dialOptions) (net *netstack.Net, err error) {
 
 	deviceConf := "" +
 		"public_key=" + opts.peerPubKey.HexString() + "\n" +
-		"endpoint=" + opts.endpoint + "\n" +
-		"allowed_ip=" + rpcEndpointIp + "/32\n" +
+		"endpoint=" + opts.endpoint.String() + "\n" +
+		"allowed_ip=" + opts.rpcEndpoint.Address() + "/32\n" +
 		"persistent_keepalive_interval=" + strconv.Itoa(opts.keepAliveInterval) + "\n"
 
 	if err = dev.IpcSet(deviceConf); check(err) {
