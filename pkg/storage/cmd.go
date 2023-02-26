@@ -67,6 +67,8 @@ func configureKey() {
 		return
 	}
 
+	log.I.Ln("no keyfile found, checking for user prompt")
+
 	if viper.GetBool(storeAskPassFlag) {
 
 		log.I.Ln("prompting user for key")
@@ -81,7 +83,7 @@ func configureKey() {
 		return
 	}
 
-	log.I.Ln("no keyfile found, generating a new key")
+	log.I.Ln("no prompt specified, generating a new key")
 
 	isNewKey = true
 
