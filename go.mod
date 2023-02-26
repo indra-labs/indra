@@ -5,6 +5,7 @@ go 1.19
 require (
 	git-indra.lan/indra-labs/lnd v0.15.5-beta
 	github.com/btcsuite/btcd/btcutil v1.1.3
+	github.com/btcsuite/btcutil v0.0.0-20190425235716-9e5f4b9a998d
 	github.com/cybriq/qu v0.1.2
 	github.com/davecgh/go-spew v1.1.1
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0
