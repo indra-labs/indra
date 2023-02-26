@@ -14,7 +14,7 @@ func TunnelHello(ctx context.Context) {
 	var conn *grpc.ClientConn
 
 	conn, err = rpc.DialContext(ctx,
-		"noise://0.0.0.0:18222",
+		"noise://[::1]:18222",
 		rpc.WithPrivateKey("Aj9CfbE1pXEVxPfjSaTwdY3B4kYHbwsTSyT3nrc34ATN"),
 		rpc.WithPeer("G52UmsQpUmN2zFMkJaP9rwCvqQJzi1yHKA9RTrLJTk9f"),
 		rpc.WithKeepAliveInterval(5),
