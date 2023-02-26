@@ -52,7 +52,7 @@ func TestCodec(t *testing.T) {
 	}
 	
 	generated += "}\n"
-	// t.Log(generated)
+	t.Log(generated)
 	
 	expected := []string{
 		"ee94d6cef460b180c995b2f8672e53006aced15fe4d5cc0da332d041feaa1514",
@@ -97,43 +97,42 @@ func TestCodec(t *testing.T) {
 			t.FailNow()
 		}
 	}
-	
 	encodedStr := []string{
-		"thff4kw73strqxfjke0seew2vqx4nk3tljdtnqd5vedqs074g23fwfq",
-		"v8e9yr6f4mwe6ttqshze0tqugmcqwwvjty44jvlw05w4j7a8zneeksz",
-		"nwq3ysc9585mkry84hpc22y9nukctg2p2v9kar6w37edf8c06ed7sru",
-		"hapqe4ajxkv8gtwkzxkchh43yll3gxsz5jmkvxdd0nxe635xrtk9zqe",
-		"elwl9jj0f397eyfu89rwdm3snd25l2vav72lsy37d8acqeu4l3qqsrl",
-		"f029xn3fq672jhpl425ncgyx63xr8gm3t5sj35dxuqfqwhgw8yvq9cn",
-		"dqswzlgga30ca4rds8n2pkrmjgw0r7p9tzl8nf78rrww0rddl600me5",
-		"shpjduxwrfd6akcn70zn55zzwc09cxavuaddww94vnmx3mjefqdjt5j",
-		"56rzd9gtr9pnnyc3uc2y5ph98wtswj5fckv06eu5cm3zp6eretjkdqg",
-		"ec9fp6ycwgyvz685q6ae0r6wff5zuh60mqjvpjesv9utpmyd2k8kxxa",
-		"gf6m0kr0ja7xy0u48yax75gfjk4jz4nvfs4e0cw5f66knffcaagmvdw",
-		"0l3ghhzexp58zc46vg3xe0yt285cuusurfd8e6sqd4mdwtacuhanry0",
-		"nulaffu86kysehxxls34lshvmez5950n6v73xvdf4wyeky948z964ua",
-		"4deeffpq37vqcnp4nrt8h9hc6krgzst8p9yvjv8c7j9lawz0cn952qs",
-		"elsg50gex3fgv6j8zpezk0u9m59ptppkg6ygnl03teq3zlslxjynhwa",
-		"gj0umrfu5shhm7lqvjl2t34vul3ed0kw3vjlkpvvy5nr6a2ytpham9a",
-		"0vfyaw22vgyxvkjptx3f5c39gyxsjl9pay503esanntx3pug39f7jm6",
-		"spxw3mquglmp3tcpcj3fs4wl7newgrm9kuh7j4lwgyw6wtdp5ph9mhj",
-		"hdywlljauher99my898vcpckyswyp50evrx938k8cu7ad5v8f0dy0mc",
-		"62r2ut0y5x795elunrk69pax8l60cw4xmmyg4nztfd4947fpnw9mejv",
-		"2meqvl40y3psqr9rdm8vyhvulutpr622ft97uh0rnk2wp7g6rlmraew",
-		"w7528pk6ey8ss3h39gu49rj26vuev50aj43s5022r5qwwngu8hwzxkn",
-		"jlfggmdqgzfnqn5a4dw86n3nzmlsw0nvs4sfjpmxh3h5j96z0te4n0s",
-		"5qhmqhmx0g0ruy88gvd3kh6nwzmxhk8ptchzhfln57jq3fj9rjctaxt",
-		"6tsglvwerm0f848z5hxvfhpcl5wxtpwnhr2vzmvzqctv496h9j6ftjl",
-		"gnrf6drhayd2h4txf3rk99ny04y6dsrunzleetnhlt7ht3nu602lezx",
-		"0utcsz7mw4ygglhkfexf8tef9w9e5xm6wwtvpyya8pldwpgkvs0xfsm",
-		"nv29aa2yqs783mu6pxl3dsrxrzm08fuchxaz4hgd7e6p7e5kq8jghqc",
-		"4wrs82vguxfn4a7kkt2xkd7xh7ehdz4kzyqx8z9x69ej2xwgj02ga8f",
-		"6pmw7476nr80ctfsqk7p39kza3rpljwvul69xuqr77mmcl804xvv9sl",
-		"gftgqnsaxyam32s7a9z5ehkpy5s8lswcp6a72pxzj86jzq24yemxmdp",
-		"dxmvfvmk92wqpaluklqdfjphva8j76da255glf0d4x7amfldtgzkp4a",
+		"lxjjvwo6rqldagjswzpqzzokmagvtwrl9snltanumznaqp6vikrjoja",
+		"mhzfed2jv3oz2llaqxczpla4i3yaoomslevvsm9opuovs65hctzzwqc",
+		"toareqyfuhu3wdehvxbykkeft4wylikbkmfw5d2or6znjhyp2zn6qd4",
+		"x5bazv5sgwmhilowcgwyxxvre99rigqcus3wmgnnptgz2rugdlwfcaz",
+		"z9o9fsspjrf6zej4hfdon3rqtnku9km5m6k9qer6nh5yaz4v9raaqd9",
+		"jpkfgtrja26ksxb9vkutyieg2rgdhi3rluqsrung4ajaoxiohemafyt",
+		"naqoc9ii5rpy5vdnqhtkbwd3siopd6bflc9htj6hddoopdnn92pp3zu",
+		"qxbsn4godjn25wyt6pctuuccoypfyg5m45nnoofvmt3gr3szjanslus",
+		"u2dcnfildfbtteyr4ykeubxfholqosujywmp2z4uy3rcb2zdzlswnai",
+		"zyfjb2eyoiemc2hua25zpd2ojjuc4x2p3asmbszqmf4lb3enkwhwgg5",
+		"ij23pwdps56gep4vhe5g6uijswvscvtmjqvzpyouj22wtjjy55i3mno",
+		"p9rixxczgbuhcyv2mirgzpelkhuy44q4djnhz2qanv3nol5y4x5tdep",
+		"t495jj4h2weqzxgg9qrv9qxm3zcufupt2m6rgmnjvoezwefvhcf2v45",
+		"vnzzjjbar6maytbvtdlhxfxy2wdicqlhbfemsmhy6sf95ocpytfukaq",
+		"z9qiupizgrjim2shcbzcwp4f3ufblbbwi2eit9prlzarc9q9gsetxo5",
+		"isp43dj4uqxx369ams9klrvm49rznpworms9wbmmeutd25kelbx53f5",
+		"pmje5okkmiegmwsblgrjuyrfiegqs9fb5euprzq5ttlgrb4irfj6s32",
+		"qbgor3a4i93brlybysrjqvo96tzoid3fw4x6sv9oieo2olnbubxf3xs",
+		"xneo99s54xzdff3ehfhmybyweqoebupzmdgfrhwhy465numhjpnep3y",
+		"2kdk4lpeug6fuz94tdw2fb5gh92pyovg33eivtcljnvfv6jbtof3zsm",
+		"k3zam9vperbqadfdn3hmexm494lbd2kkjlf64xpdtwkob6i2d93d5zo",
+		"o6ukhbw2zehqqrxrfi4vfdsk2m4zmup5svrqupkkduaooti4hxocgwt",
+		"s9jii3naicjtatu5vnoh2trtc39qoptmqvqjsb3gxrxusf2cplzvtpq",
+		"uax3ax3gpipd4ehhimnrwx2toc3gxwhblyxcxj9tu6sarjsfdsyl5gl",
+		"2lqi9mozd3pjhvhcuxgmjxby9uoglbotxdkmc3mcaylmvf2xfs2jls9",
+		"itdj2ndx5enkxvlgjrdwfftepve2nqd4tc9zzltx9l6xlrt42pk9zcg",
+		"p4lyqc63oveii9xwjzgjhlzjfofzug32oolmbee5hb9nobiwmqpgjq3",
+		"tmkf55keaq6hr342bg9rnqdgdc3phj4yxg5cvxin6z2b6zuwahsixay",
+		"vodqhkmi4gjtv56wwlkgwn6gx6zxncvwceaghcfg2fzskgoispki5hj",
+		"2b3o6v62tdhpyljqaw6brfwc5rdb9som492fg4ad6633y9hpvgmmfq9",
+		"ijliatq5ge53rkq65fcuzxwbeuqh9qoyb256kbgcsh2scakvez3g3nb",
+		"ng3mjm3wfkoab594w9anjsbxm5hs62n5kuui9jpnvg653j9nlicwbv5",
 	}
 	
-	// encoded := "\nencodedStr := []string{\n"
+	encoded := "\nencodedStr := []string{\n"
 	
 	// Convert hashes to our base32 encoding format
 	for i := range hashedSeeds {
@@ -153,11 +152,11 @@ func TestCodec(t *testing.T) {
 				i, encodedStr[i], encode,
 			)
 		}
-		// encoded += "\t\"" + encode + "\",\n"
+		encoded += "\t\"" + encode + "\",\n"
 	}
 	
-	// encoded += "}\n"
-	// t.Log(encoded)
+	encoded += "}\n"
+	t.Log(encoded)
 	
 	// Next, decode the encodedStr above, which should be the output of the
 	// original generated seeds, with the index mod 5 truncations performed on
