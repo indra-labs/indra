@@ -10,9 +10,9 @@ import (
 	"go.uber.org/atomic"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/messages/intro"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/service"
 	"git-indra.lan/indra-labs/indra/pkg/transport"
@@ -290,10 +290,10 @@ func TestClient_HiddenService(t *testing.T) {
 			t.Error(e)
 			t.FailNow()
 		}
-		identPub := pub.Derive(identPrv)
 		id := nonce.NewID()
+		il := intro.New(identPrv, clients[0].GetLocalNodeAddress())
 		clients[0].SendIntro(id, clients[0].Sessions[i+returns],
-			identPub, func(id nonce.ID, b slice.Bytes) {
+			il, func(id nonce.ID, b slice.Bytes) {
 				log.I.Ln("success")
 			})
 	}
@@ -303,7 +303,7 @@ func TestClient_HiddenService(t *testing.T) {
 	}
 }
 func TestClient_HiddenServiceBroadcast(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	log2.SetLogLevel(log2.Info)
 	var clients []*Engine
 	var e error
 	const returns = 2
@@ -340,10 +340,12 @@ func TestClient_HiddenServiceBroadcast(t *testing.T) {
 		t.Error(e)
 		t.FailNow()
 	}
-	identPub := pub.Derive(identPrv)
+	log2.SetLogLevel(log2.Trace)
+	// identPub := pub.Derive(identPrv)
 	id := nonce.NewID()
+	il := intro.New(identPrv, clients[0].GetLocalNodeAddress())
 	clients[0].SendIntro(id, clients[0].Sessions[returns],
-		identPub, func(id nonce.ID, b slice.Bytes) {
+		il, func(id nonce.ID, b slice.Bytes) {
 			log.I.Ln("success")
 		})
 	time.Sleep(time.Second * 5)

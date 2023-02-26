@@ -10,7 +10,7 @@ func (eng *Engine) session(on *session.Layer, b slice.Bytes,
 	c *slice.Cursor, prev types.Onion) {
 	
 	log.D.Ln(prev == nil)
-	log.T.F("incoming session %s", on.ID)
+	log.T.F("incoming session %x", on.PreimageHash())
 	pi := eng.FindPendingPreimage(on.PreimageHash())
 	if pi != nil {
 		// We need to delete this first in case somehow two such messages arrive

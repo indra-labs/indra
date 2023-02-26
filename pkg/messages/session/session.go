@@ -44,7 +44,7 @@ var (
 // is concealed to the hops except for the encryption crypt they decrypt using
 // their Payload key, delivered in this message.
 type Layer struct {
-	nonce.ID
+	nonce.ID             // only used by a node
 	Hop             byte // only used by a node
 	Header, Payload *prv.Key
 	types.Onion

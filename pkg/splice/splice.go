@@ -11,6 +11,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/cloak"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/sig"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/messages/magicbytes"
@@ -174,6 +175,16 @@ func (s *Splicer) Bytes(b []byte) *Splicer {
 	slice.EncodeUint32(bytesLen, len(b))
 	copy(s.b[*s.c:s.c.Inc(slice.Uint32Len)], bytesLen)
 	copy(s.b[*s.c:s.c.Inc(len(b))], b)
+	return s
+}
+
+func (s *Splicer) Signature(sb sig.Bytes) *Splicer {
+	copy(s.b[*s.c:s.c.Inc(sig.Len)], sb[:])
+	return s
+}
+
+func (s *Splicer) ReadSignature(sb sig.Bytes) *Splicer {
+	copy(sb[:], s.b[*s.c:s.c.Inc(sig.Len)])
 	return s
 }
 
