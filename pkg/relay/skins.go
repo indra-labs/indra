@@ -134,7 +134,7 @@ func (o Skins) Response(id nonce.ID, res slice.Bytes, port uint16) Skins {
 }
 
 func (o Skins) Session(sess *session.Layer) Skins {
-	// SendKeys can apply to from 1 to 5 nodes, if either key is nil then
+	// SendSessions can apply to from 1 to 5 nodes, if either key is nil then
 	// this crypt just doesn't get added in the serialization process.
 	if sess.Header == nil || sess.Payload == nil {
 		return o
