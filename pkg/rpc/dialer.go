@@ -28,7 +28,12 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 		return nil, errors.New("Unsupported protocol. Only unix:// or noise://")
 	}
 
-	dialOpts := &dialOptions{peerRPCIP: "192.168.37.2", mtu: 1420}
+	dialOpts := &dialOptions{
+		endpoint:    EndpointString(target),
+		rpcEndpoint: EndpointString("192.168.37.1:80"),
+		peerRPCIP:   "192.168.37.2",
+		mtu:         1420,
+	}
 
 	for _, opt := range opts {
 		opt.apply(dialOpts)
@@ -41,7 +46,7 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 	}
 
 	return grpc.DialContext(ctx,
-		rpcEndpointIp+":"+rpcEndpointPort,
+		dialOpts.rpcEndpoint.String(),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithContextDialer(func(ctx context.Context, address string) (net.Conn, error) {
 			return network.DialContext(ctx, "tcp4", address)

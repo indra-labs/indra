@@ -1,6 +1,6 @@
 package cfg
 
-type DNSSeedAddress struct {
+type SeedAddress struct {
 
 	// ID is the p2p identifier
 	ID string
@@ -9,9 +9,9 @@ type DNSSeedAddress struct {
 	DNSAddress string
 }
 
-func NewSeedAddress(dns string, id string) *DNSSeedAddress {
+func NewSeedAddress(dns string, id string) *SeedAddress {
 
-	return &DNSSeedAddress{
+	return &SeedAddress{
 		ID:         id,
 		DNSAddress: dns,
 	}

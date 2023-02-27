@@ -1,48 +1,10 @@
-package seed
+package p2p
 
 import (
 	"github.com/btcsuite/btcd/btcutil/base58"
-	"github.com/btcsuite/btcd/btcutil/bech32"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/spf13/viper"
 )
-
-func bech32encode(key crypto.PrivKey) (keyStr string, err error) {
-
-	var raw []byte
-
-	if raw, err = key.Raw(); check(err) {
-		return
-	}
-
-	var conv []byte
-
-	if conv, err = bech32.ConvertBits(raw, 8, 5, true); check(err) {
-		return
-	}
-
-	if keyStr, err = bech32.Encode("ind", conv); check(err) {
-		return
-	}
-
-	return
-}
-
-func bech32decode(keyStr string) (privKey crypto.PrivKey, err error) {
-
-	// var hnd string
-	var key []byte
-
-	if _, key, err = bech32.Decode(keyStr); check(err) {
-		return
-	}
-
-	if privKey, err = crypto.UnmarshalSecp256k1PrivateKey(key); check(err) {
-		return
-	}
-
-	return privKey, nil
-}
 
 func GeneratePrivKey() (privKey crypto.PrivKey) {
 
@@ -89,7 +51,7 @@ func GetOrGeneratePrivKey(key string) (privKey crypto.PrivKey, err error) {
 			return
 		}
 
-		viper.Set("key", key)
+		viper.Set(keyFlag, key)
 
 		return
 	}

@@ -1,4 +1,4 @@
-package seed
+package p2p
 
 import (
 	"git-indra.lan/indra-labs/indra/pkg/cfg"
