@@ -13,5 +13,5 @@ func (eng *Engine) hiddenservice(hs *hiddenservice.Layer, b slice.Bytes,
 		hs.Layer.Key.ToBase32())
 	eng.Introductions.AddIntro(hs.Layer.Key, b[*c:])
 	log.I.Ln("stored new introduction, starting broadcast")
-	go eng.hiddenserviceBroadcaster(hs.Layer.Key)
+	go eng.hiddenserviceBroadcaster(&hs.Layer)
 }

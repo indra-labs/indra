@@ -13,12 +13,11 @@ import (
 
 type Referrers map[pub.Bytes][]pub.Bytes
 
-func (eng *Engine) hiddenserviceBroadcaster(hsk *pub.Key) {
-	log.D.F("propagating hidden service introduction for %x", hsk.ToBytes())
+func (eng *Engine) hiddenserviceBroadcaster(hs *intro.Layer) {
+	log.D.F("propagating hidden service introduction for %x", hs.Key.ToBytes())
 	done := qu.T()
-	me := eng.GetLocalNodeAddress()
 	intr := &intro.Layer{
-		Key: hsk, AddrPort: me,
+		Key: hs.Key, AddrPort: hs.AddrPort, Bytes: hs.Bytes,
 	}
 	msg := make(slice.Bytes, intro.Len)
 	c := slice.NewCursor()

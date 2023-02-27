@@ -9,6 +9,8 @@ import (
 func (eng *Engine) intro(intr *intro.Layer, b slice.Bytes,
 	c *slice.Cursor, prev types.Onion) {
 	
-	log.D.F("sending out intro to %s at %s to all known peers",
-		intr.Key.ToBase32(), intr.AddrPort.String())
+	if intr.Validate() {
+		log.D.F("sending out intro to %s at %s to all known peers",
+			intr.Key.ToBase32(), intr.AddrPort.String())
+	}
 }

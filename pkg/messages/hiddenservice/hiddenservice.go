@@ -65,9 +65,9 @@ func (x *Layer) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	}
 	splice.Splice(b, c).
 		ReadID(&x.ID).
-		ReadPubkey(&x.Key).
-		ReadAddrPort(&x.AddrPort).
-		ReadSignature(x.Bytes).
+		ReadPubkey(&x.Layer.Key).
+		ReadAddrPort(&x.Layer.AddrPort).
+		ReadSignature(&x.Layer.Bytes).
 		ReadHash(&x.Ciphers[0]).ReadHash(&x.Ciphers[1]).ReadHash(&x.Ciphers[2]).
 		ReadIV(&x.Nonces[0]).ReadIV(&x.Nonces[1]).ReadIV(&x.Nonces[2])
 	return

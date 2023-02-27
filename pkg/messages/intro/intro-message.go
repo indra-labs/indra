@@ -32,12 +32,12 @@ var (
 )
 
 type Layer struct {
-	*pub.Key
-	*netip.AddrPort
-	sig.Bytes
+	Key      *pub.Key
+	AddrPort *netip.AddrPort
+	Bytes    sig.Bytes
 }
 
-func New(key *prv.Key, ap *netip.AddrPort) (im *Layer) {
+func New(key *prv.Key, ap *netip.AddrPort) (in *Layer) {
 	pk := pub.Derive(key)
 	bap, _ := ap.MarshalBinary()
 	pkb := pk.ToBytes()
@@ -47,7 +47,7 @@ func New(key *prv.Key, ap *netip.AddrPort) (im *Layer) {
 	if sign, e = sig.Sign(key, hash); check(e) {
 		return nil
 	}
-	im = &Layer{
+	in = &Layer{
 		Key:      pk,
 		AddrPort: ap,
 		Bytes:    sign,
@@ -85,6 +85,7 @@ func (im *Layer) Encode(b slice.Bytes, c *slice.Cursor) {
 func (im *Layer) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	splice.Splice(b, c).
 		ReadPubkey(&im.Key).
-		ReadAddrPort(&im.AddrPort).ReadSignature(im.Bytes)
+		ReadAddrPort(&im.AddrPort).
+		ReadSignature(&im.Bytes)
 	return
 }

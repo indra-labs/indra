@@ -183,7 +183,7 @@ func (s *Splicer) Signature(sb sig.Bytes) *Splicer {
 	return s
 }
 
-func (s *Splicer) ReadSignature(sb sig.Bytes) *Splicer {
+func (s *Splicer) ReadSignature(sb *sig.Bytes) *Splicer {
 	copy(sb[:], s.b[*s.c:s.c.Inc(sig.Len)])
 	return s
 }

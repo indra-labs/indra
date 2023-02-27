@@ -302,6 +302,7 @@ func TestClient_HiddenService(t *testing.T) {
 		v.Shutdown()
 	}
 }
+
 func TestClient_HiddenServiceBroadcast(t *testing.T) {
 	log2.SetLogLevel(log2.Info)
 	var clients []*Engine
