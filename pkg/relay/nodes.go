@@ -166,6 +166,9 @@ func (sm *SessionManager) ForEachNode(fn func(n *Node) bool) {
 	sm.Lock()
 	defer sm.Unlock()
 	for i := range sm.nodes {
+		if i == 0 {
+			continue
+		}
 		if fn(sm.nodes[i]) {
 			return
 		}

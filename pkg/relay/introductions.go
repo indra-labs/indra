@@ -2,7 +2,6 @@ package relay
 
 import (
 	"sync"
-	"time"
 	
 	"github.com/cybriq/qu"
 	
@@ -18,6 +17,8 @@ type Intros map[pub.Bytes]slice.Bytes
 
 type NotifiedIntroducers map[pub.Bytes][]nonce.ID
 
+type KnownIntros map[pub.Bytes]*intro.Layer
+
 // Introductions is a map of existing known hidden service keys and the
 // routing header for requesting a new one on behalf of the client.
 //
@@ -29,14 +30,25 @@ type Introductions struct {
 	sync.Mutex
 	Intros
 	NotifiedIntroducers
+	KnownIntros
 }
 
 func NewIntroductions() *Introductions {
 	return &Introductions{Intros: make(Intros),
-		NotifiedIntroducers: make(NotifiedIntroducers)}
+		NotifiedIntroducers: make(NotifiedIntroducers),
+		KnownIntros:         make(KnownIntros)}
 }
 
 func (in *Introductions) Find(key pub.Bytes) (header slice.Bytes) {
+	in.Lock()
+	var ok bool
+	if header, ok = in.Intros[key]; ok {
+	}
+	in.Unlock()
+	return
+}
+
+func (in *Introductions) Delete(key pub.Bytes) (header slice.Bytes) {
 	in.Lock()
 	var ok bool
 	if header, ok = in.Intros[key]; ok {
@@ -87,15 +99,6 @@ func (eng *Engine) SendIntro(id nonce.ID, target *Session, intr *intro.Layer,
 	eng.SendWithOneHook(c[0].AddrPort, res, hook)
 }
 
-func (eng *Engine) intro(intr *intro.Layer, b slice.Bytes,
-	c *slice.Cursor, prev types.Onion) {
-	
-	if intr.Validate() {
-		log.D.F("sending out intro to %s at %s to all known peers",
-			intr.Key.ToBase32(), intr.AddrPort.String())
-	}
-}
-
 func (eng *Engine) introductionBroadcaster(intr *intro.Layer) {
 	log.D.F("propagating hidden service introduction for %x", intr.Key.ToBytes())
 	done := qu.T()
@@ -104,7 +107,7 @@ func (eng *Engine) introductionBroadcaster(intr *intro.Layer) {
 	intr.Encode(msg, c)
 	nPeers := eng.NodesLen()
 	peerIndices := make([]int, nPeers)
-	for i := 0; i < nPeers; i++ {
+	for i := 1; i < nPeers; i++ {
 		peerIndices[i] = i
 	}
 	cryptorand.Shuffle(nPeers, func(i, j int) {
@@ -113,7 +116,6 @@ func (eng *Engine) introductionBroadcaster(intr *intro.Layer) {
 	// Since relays will also gossip this information, we will start a ticker
 	// that sends out the hidden service introduction once a second until it
 	// runs out of known relays to gossip to.
-	ticker := time.NewTicker(time.Second)
 	var cursor int
 	for {
 		select {
@@ -121,10 +123,51 @@ func (eng *Engine) introductionBroadcaster(intr *intro.Layer) {
 			return
 		case <-done:
 			return
-		case <-ticker.C:
-			n := eng.FindNodeByIndex(peerIndices[cursor])
-			n.Transport.Send(msg)
-			cursor++
+		default:
 		}
+		n := eng.FindNodeByIndex(peerIndices[cursor])
+		n.Transport.Send(msg)
+		cursor++
+		if cursor > len(peerIndices)-1 {
+			break
+		}
+	}
+	log.T.Ln("finished broadcasting intro")
+}
+
+func (eng *Engine) intro(intr *intro.Layer, b slice.Bytes,
+	c *slice.Cursor, prev types.Onion) {
+	
+	eng.Introductions.Lock()
+	if intr.Validate() {
+		if _, ok := eng.Introductions.KnownIntros[intr.Key.ToBytes()]; ok {
+			log.T.Ln("received intro we already know about")
+			eng.Introductions.Unlock()
+			return
+		}
+		log.T.F("storing intro for %s", intr.Key.ToBase32())
+		eng.Introductions.KnownIntros[intr.Key.ToBytes()] = intr
+		log.D.F("%s sending out intro to %s at %s to all known peers",
+			eng.GetLocalNodeAddress(), intr.Key.ToBase32(),
+			intr.AddrPort.String())
+		sender := eng.SessionManager.FindNodeByAddrPort(intr.AddrPort)
+		nodes := make(map[nonce.ID]*Node)
+		eng.SessionManager.ForEachNode(func(n *Node) bool {
+			if n.ID != sender.ID {
+				nodes[n.ID] = n
+			}
+			return false
+		})
+		counter := 0
+		for i := range nodes {
+			log.T.F("sending intro to %s", nodes[i].AddrPort.String())
+			nodes[i].Transport.Send(b)
+			counter++
+			if counter < 2 {
+				continue
+			}
+			break
+		}
+		eng.Introductions.Unlock()
 	}
 }
