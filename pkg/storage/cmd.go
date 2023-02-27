@@ -1,28 +1,25 @@
 package storage
 
 import (
-	"errors"
-	"fmt"
 	"github.com/spf13/viper"
-	"golang.org/x/term"
 	"os"
 	"strings"
-	"syscall"
 )
 
 var (
-	isNewKey        bool
-	isRPCUnlockable bool
-	key             Key
+	isNewKey bool
+	isNewDB  bool
+	isLocked bool
+	key      Key
 )
 
 func configure() {
 
 	log.I.Ln("initializing storage")
 
-	configureKey()
 	configureDirPath()
 	configureFile()
+	configureKey()
 }
 
 func configureKey() {
@@ -51,6 +48,8 @@ func configureKey() {
 			return
 		}
 
+		log.I.Ln("keyfile found")
+
 		if fileInfo.Mode() != 0600 {
 			log.W.Ln("keyfile permissions are too open:", fileInfo.Mode())
 			log.W.Ln("It is recommended that you change them to 0600")
@@ -68,34 +67,16 @@ func configureKey() {
 		return
 	}
 
-	log.I.Ln("no keyfile found, checking for rpc unlock")
+	if !isNewDB {
 
-	if viper.GetBool(storeKeyRPCFlag) {
+		log.I.Ln("no keyfile found")
 
-		log.I.Ln("attempting rpc unlock")
-
-		isRPCUnlockable = true
+		isLocked = true
 
 		return
 	}
 
-	log.I.Ln("rpc unlock disabled, checking for a user prompt")
-
-	if viper.GetBool(storeAskPassFlag) {
-
-		log.I.Ln("prompting user for key")
-
-		var password []byte
-
-		fmt.Print("Enter Encryption Key: ")
-		password, err = term.ReadPassword(int(syscall.Stdin))
-
-		key.Decode(string(password))
-
-		return
-	}
-
-	log.I.Ln("no prompt specified, generating a new key")
+	log.I.Ln("no keyfile found, generating a new key")
 
 	isNewKey = true
 
@@ -162,28 +143,18 @@ func configureFile() {
 	log.I.Ln("using storage db path:")
 	log.I.Ln("-", viper.GetString(storeFilePathFlag))
 
+	log.I.Ln("checking if database exists")
+
 	var err error
 
 	if _, err = os.Stat(viper.GetString(storeFilePathFlag)); err != nil {
 
-		log.I.Ln("none found, creating a new one")
+		log.I.Ln("no database found, creating a new one")
 
-		//file, err := os.OpenFile(viper.GetString(storeFilePathFlag), os.O_WRONLY, 0666)
-		//
-		//if err != nil && os.IsPermission(err) {
-		//	startupErrors <- err
-		//	return
-		//}
-		//
-		//file.Close()
-		//
-		//os.Remove(viper.GetString(storeFilePathFlag))
+		isNewDB = true
 
 		return
 	}
 
-	if isNewKey {
-		startupErrors <- errors.New("new key generated for an existing database. check your configuration.")
-		return
-	}
+	log.I.Ln("database found")
 }

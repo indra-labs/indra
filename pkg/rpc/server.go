@@ -59,8 +59,6 @@ func Start(ctx context.Context) {
 
 func Shutdown(ctx context.Context) {
 
-	defer ctx.Done()
-
 	log.I.Ln("shutting down rpc server")
 
 	stopUnixSocket()

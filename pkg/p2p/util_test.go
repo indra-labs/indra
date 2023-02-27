@@ -1,4 +1,4 @@
-package seed
+package p2p
 
 import (
 	"crypto/rand"

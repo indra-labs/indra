@@ -2,10 +2,9 @@ package storage
 
 import (
 	"context"
-	"git-indra.lan/indra-labs/indra/pkg/rpc"
+	"git-indra.lan/indra-labs/indra/pkg/interrupt"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 	"sync"
 )
 
@@ -17,15 +16,20 @@ var (
 	db            *badger.DB
 	opts          badger.Options
 	startupErrors = make(chan error, 128)
-	isReady       = make(chan bool, 1)
+	isLockedChan  = make(chan bool, 1)
+	isReadyChan   = make(chan bool, 1)
 )
 
 func CantStart() chan error {
 	return startupErrors
 }
 
+func IsLocked() chan bool {
+	return isLockedChan
+}
+
 func IsReady() chan bool {
-	return isReady
+	return isReadyChan
 }
 
 func Shutdown() (err error) {
@@ -40,7 +44,7 @@ func Shutdown() (err error) {
 		return
 	}
 
-	log.I.Ln("storage shutdown complete")
+	log.I.Ln("storage shutdown completed")
 
 	return
 }
@@ -56,6 +60,23 @@ var (
 	running sync.Mutex
 )
 
+func open() {
+
+	var err error
+
+	opts.EncryptionKey = key.Bytes()
+
+	if db, err = badger.Open(opts); check(err) {
+		startupErrors <- err
+		return
+	}
+
+	log.I.Ln("successfully opened database")
+	log.I.Ln("storage is ready")
+
+	isReadyChan <- true
+}
+
 func Run(ctx context.Context) {
 
 	if !running.TryLock() {
@@ -68,50 +89,33 @@ func Run(ctx context.Context) {
 	opts.IndexCacheSize = 128 << 20
 	opts.Logger = nil
 
-	if isRPCUnlockable {
+	if !isLocked {
 
-		var unlock = NewUnlockService()
+		log.I.Ln("attempting to open database with key")
 
-		go rpc.RunWith(ctx, func(srv *grpc.Server) {
-			RegisterUnlockServiceServer(srv, unlock)
-		})
+		open()
+	}
 
-		for {
-			select {
-			case <-rpc.IsReady():
+	isLockedChan <- true
 
-				log.I.Ln("waiting for unlock")
+	lockedCtx, cancel := context.WithCancel(context.Background())
 
-			case <-unlock.IsSuccessful():
+	interrupt.AddHandler(cancel)
 
-				log.I.Ln("storage successfully unlocked")
+	for {
+		select {
+		case <-IsReady():
+			log.I.Ln("storage is ready")
 
-				isReady <- true
+		//case <-unlock.IsSuccessful():
+		//
+		//	log.I.Ln("storage successfully unlocked")
+		//
+		//	isReadyChan <- true
 
-			case <-ctx.Done():
-				Shutdown()
-				return
-			}
+		case <-lockedCtx.Done():
+			Shutdown()
+			return
 		}
 	}
-
-	var err error
-
-	opts.EncryptionKey = key.Bytes()
-
-	if db, err = badger.Open(opts); check(err) {
-		startupErrors <- err
-		return
-	}
-
-	log.I.Ln("running storage")
-
-	isReady <- true
-
-	select {
-	case <-ctx.Done():
-		Shutdown()
-	}
-
-	return
 }
