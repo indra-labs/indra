@@ -1,7 +1,10 @@
-package seed
+package p2p
 
 import (
 	"context"
+	"git-indra.lan/indra-labs/indra/pkg/cfg"
+	"git-indra.lan/indra-labs/indra/pkg/p2p/metrics"
+	"github.com/libp2p/go-libp2p/core/crypto"
 	"time"
 
 	"github.com/libp2p/go-libp2p"
@@ -11,18 +14,24 @@ import (
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/interrupt"
 	"git-indra.lan/indra-labs/indra/pkg/p2p/introducer"
-	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	"git-indra.lan/indra-labs/indra/pkg/seed/metrics"
-)
-
-var (
-	log   = log2.GetLogger(indra.PathBase)
-	check = log.E.Chk
 )
 
 var (
 	userAgent = "/indra:" + indra.SemVer + "/"
 )
+
+var (
+	privKey         crypto.PrivKey
+	p2pHost         host.Host
+	seedAddresses   []multiaddr.Multiaddr
+	listenAddresses []multiaddr.Multiaddr
+	netParams       *cfg.Params
+)
+
+func init() {
+	seedAddresses = []multiaddr.Multiaddr{}
+	listenAddresses = []multiaddr.Multiaddr{}
+}
 
 type Server struct {
 	context.Context
@@ -30,13 +39,6 @@ type Server struct {
 	config *Config
 
 	host host.Host
-}
-
-func (srv *Server) Restart() (err error) {
-
-	log.I.Ln("restarting the server.")
-
-	return nil
 }
 
 func (srv *Server) Shutdown() (err error) {
@@ -72,14 +74,6 @@ func (srv *Server) Serve() (err error) {
 	metrics.SetInterval(30 * time.Second)
 
 	go metrics.HostStatus(ctx, srv.host)
-
-	//var client *rpc.RPCClient
-	//
-	//if client, err = rpc.NewClient(rpc.DefaultClientConfig); check(err) {
-	//	return err
-	//}
-	//
-	//client.Start()
 
 	select {
 
