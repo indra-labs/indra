@@ -1,7 +1,6 @@
 package rpc
 
 import (
-	"context"
 	"google.golang.org/grpc"
 )
 
@@ -10,15 +9,19 @@ func init() {
 }
 
 var (
-	server        *grpc.Server
-	startupErrors = make(chan error, 128)
-	isReady       = make(chan bool, 1)
+	server *grpc.Server
 )
 
-func RunWith(ctx context.Context, r func(srv *grpc.Server)) {
+func RunWith(r func(srv *grpc.Server), opts ...ServerOption) {
 
 	log.I.Ln("initializing the rpc server")
 
+	serverOpts := serverOptions{}
+
+	for _, opt := range opts {
+		opt.apply(&serverOpts)
+	}
+	
 	configureUnixSocket()
 	configureTunnel()
 
@@ -26,18 +29,10 @@ func RunWith(ctx context.Context, r func(srv *grpc.Server)) {
 
 	log.I.Ln("starting rpc server")
 
-	go Start(ctx)
+	go Start()
 }
 
-func CantStart() chan error {
-	return startupErrors
-}
-
-func IsReady() chan bool {
-	return isReady
-}
-
-func Start(ctx context.Context) {
+func Start() {
 
 	var err error
 
@@ -49,15 +44,12 @@ func Start(ctx context.Context) {
 		startupErrors <- err
 	}
 
-	isReady <- true
+	log.I.Ln("rpc server is ready")
 
-	select {
-	case <-ctx.Done():
-		Shutdown(context.Background())
-	}
+	isReady <- true
 }
 
-func Shutdown(ctx context.Context) {
+func Shutdown() {
 
 	log.I.Ln("shutting down rpc server")
 

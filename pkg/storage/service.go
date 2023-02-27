@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"context"
-	"git-indra.lan/indra-labs/indra/pkg/interrupt"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/spf13/viper"
 	"sync"
@@ -10,26 +8,29 @@ import (
 
 var (
 	fileName string = "indra.db"
+	db       *badger.DB
+	opts     badger.Options
 )
 
 var (
-	db            *badger.DB
-	opts          badger.Options
-	startupErrors = make(chan error, 128)
-	isLockedChan  = make(chan bool, 1)
-	isReadyChan   = make(chan bool, 1)
+	running sync.Mutex
 )
 
-func CantStart() chan error {
-	return startupErrors
-}
+func Run() {
 
-func IsLocked() chan bool {
-	return isLockedChan
-}
+	if !running.TryLock() {
+		return
+	}
 
-func IsReady() chan bool {
-	return isReadyChan
+	configure()
+
+	if !attempt_unlock() {
+		isLockedChan <- true
+		return
+	}
+
+	log.I.Ln("storage is ready")
+	isReadyChan <- true
 }
 
 func Shutdown() (err error) {
@@ -37,6 +38,10 @@ func Shutdown() (err error) {
 	log.I.Ln("shutting down storage")
 
 	if db == nil {
+		return nil
+	}
+
+	if db.IsClosed() {
 		return nil
 	}
 
@@ -56,66 +61,28 @@ func Txn(tx func(txn *badger.Txn) error, update bool) error {
 	return tx(txn)
 }
 
-var (
-	running sync.Mutex
-)
+func attempt_unlock() bool {
 
-func open() {
+	if noKeyProvided {
+		return false
+	}
 
 	var err error
 
+	log.I.Ln("attempting to unlock database")
+
+	opts = badger.DefaultOptions(viper.GetString(storeFilePathFlag))
+	opts.Logger = nil
+	opts.IndexCacheSize = 128 << 20
 	opts.EncryptionKey = key.Bytes()
 
 	if db, err = badger.Open(opts); check(err) {
 		startupErrors <- err
-		return
+		return false
 	}
 
-	log.I.Ln("successfully opened database")
-	log.I.Ln("storage is ready")
+	log.I.Ln("successfully unlocked database")
+	isUnlockedChan <- true
 
-	isReadyChan <- true
-}
-
-func Run(ctx context.Context) {
-
-	if !running.TryLock() {
-		return
-	}
-
-	configure()
-
-	opts = badger.DefaultOptions(viper.GetString(storeFilePathFlag))
-	opts.IndexCacheSize = 128 << 20
-	opts.Logger = nil
-
-	if !isLocked {
-
-		log.I.Ln("attempting to open database with key")
-
-		open()
-	}
-
-	isLockedChan <- true
-
-	lockedCtx, cancel := context.WithCancel(context.Background())
-
-	interrupt.AddHandler(cancel)
-
-	for {
-		select {
-		case <-IsReady():
-			log.I.Ln("storage is ready")
-
-		//case <-unlock.IsSuccessful():
-		//
-		//	log.I.Ln("storage successfully unlocked")
-		//
-		//	isReadyChan <- true
-
-		case <-lockedCtx.Done():
-			Shutdown()
-			return
-		}
-	}
+	return true
 }

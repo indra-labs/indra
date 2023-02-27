@@ -7,10 +7,10 @@ import (
 )
 
 var (
-	isNewKey bool
-	isNewDB  bool
-	isLocked bool
-	key      Key
+	newKeyGenerated bool
+	isNewDB         bool
+	noKeyProvided   bool
+	key             Key
 )
 
 func configure() {
@@ -71,14 +71,12 @@ func configureKey() {
 
 		log.I.Ln("no keyfile found")
 
-		isLocked = true
+		noKeyProvided = true
 
 		return
 	}
 
 	log.I.Ln("no keyfile found, generating a new key")
-
-	isNewKey = true
 
 	if key, err = KeyGen(); err != nil {
 		startupErrors <- err
@@ -114,6 +112,8 @@ func configureKey() {
 	log.W.Ln("-- KEY:", key.Encode(), "--")
 	log.W.Ln("-------------------------------------------------------")
 	log.W.Ln("")
+
+	newKeyGenerated = true
 
 	viper.Set(storeKeyFlag, key.Encode())
 }

@@ -34,12 +34,12 @@ func InitFlags(cmd *cobra.Command) {
 
 	viper.BindPFlag(tunEnableFlag, cmd.PersistentFlags().Lookup(tunEnableFlag))
 
-	cmd.PersistentFlags().StringVarP(&tunKeyRaw, tunKeyFlag, "",
+	cmd.Flags().StringVarP(&tunKeyRaw, tunKeyFlag, "",
 		"",
 		"the base58 encoded pre-shared key for accessing the rpc",
 	)
 
-	viper.BindPFlag(tunKeyFlag, cmd.PersistentFlags().Lookup(tunKeyFlag))
+	viper.BindPFlag(tunKeyFlag, cmd.Flags().Lookup(tunKeyFlag))
 
 	cmd.PersistentFlags().IntVarP(&tunnelPort, tunPortFlag, "",
 		tunnelPort,

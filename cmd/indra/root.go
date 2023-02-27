@@ -92,7 +92,7 @@ func initConfig() {
 		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
 
-		cfgFile = home + "/.indra.toml"
+		cfgFile = home + "/.indra/config.toml"
 	}
 
 	viper.SetConfigFile(cfgFile)

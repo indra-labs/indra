@@ -44,7 +44,7 @@ var (
 
 func initUnlock(cmd *cobra.Command) {
 
-	cmd.PersistentFlags().StringVarP(&unlockTarget, unlockTargetFlag, "",
+	cmd.Flags().StringVarP(&unlockTarget, unlockTargetFlag, "",
 		"unix:///tmp/indra.sock",
 		"the url of the rpc server",
 	)
