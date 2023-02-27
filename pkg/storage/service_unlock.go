@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"github.com/dgraph-io/badger/v3"
+	"github.com/spf13/viper"
 )
 
 type Service struct {
@@ -19,15 +20,24 @@ func (s *Service) Unlock(ctx context.Context, req *UnlockRequest) (res *UnlockRe
 
 	key.Decode(req.Key)
 
+	opts = badger.DefaultOptions(viper.GetString(storeFilePathFlag))
+	opts.Logger = nil
+	opts.IndexCacheSize = 128 << 20
 	opts.EncryptionKey = key.Bytes()
 
-	if db, err = badger.Open(opts); check(err) {
+	if db, err = badger.Open(opts); err != nil {
+
+		log.I.Ln("unlock attempt failed:", err)
+
 		return &UnlockResponse{
 			Success: false,
 		}, err
 	}
 
 	s.success <- true
+	isUnlockedChan <- true
+
+	log.I.Ln("unlock successful")
 
 	return &UnlockResponse{
 		Success: true,

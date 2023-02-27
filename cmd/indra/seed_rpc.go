@@ -2,15 +2,12 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"git-indra.lan/indra-labs/indra/pkg/rpc"
 	"git-indra.lan/indra-labs/indra/pkg/storage"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"golang.org/x/term"
 	"google.golang.org/grpc"
 	"os"
-	"syscall"
 )
 
 func init() {
@@ -35,11 +32,13 @@ var seedRPCCmd = &cobra.Command{
 }
 
 var (
-	unlockTargetFlag = "target"
+	unlockTargetFlag   = "target"
+	unlockPassFileFlag = "keyfile"
 )
 
 var (
-	unlockTarget string
+	unlockTarget       string
+	unlockPassFilePath string
 )
 
 func initUnlock(cmd *cobra.Command) {
@@ -49,8 +48,14 @@ func initUnlock(cmd *cobra.Command) {
 		"the url of the rpc server",
 	)
 
-	viper.BindPFlag(unlockTargetFlag, cmd.PersistentFlags().Lookup(unlockTargetFlag))
+	viper.BindPFlag(unlockTargetFlag, cmd.Flags().Lookup(unlockTargetFlag))
 
+	cmd.Flags().StringVarP(&unlockPassFilePath, unlockPassFileFlag, "",
+		"",
+		"",
+	)
+
+	viper.BindPFlag(unlockPassFileFlag, cmd.Flags().Lookup(unlockPassFileFlag))
 }
 
 var unlockRPCCmd = &cobra.Command{
@@ -62,23 +67,29 @@ var unlockRPCCmd = &cobra.Command{
 		var err error
 		var conn *grpc.ClientConn
 
-		conn, err = rpc.Dial(viper.GetString("target"))
+		conn, err = rpc.Dial(viper.GetString(unlockTargetFlag))
 
 		if err != nil {
 			check(err)
 			os.Exit(1)
 		}
 
-		var password []byte
+		var keyFileBytes []byte
 
-		fmt.Print("Enter Encryption Key: ")
-		password, err = term.ReadPassword(int(syscall.Stdin))
-		fmt.Println()
+		if keyFileBytes, err = os.ReadFile(viper.GetString(unlockPassFileFlag)); check(err) {
+			os.Exit(0)
+		}
+
+		//var password []byte
+		//
+		//fmt.Print("Enter Encryption Key: ")
+		//password, err = term.ReadPassword(int(syscall.Stdin))
+		//fmt.Println()
 
 		u := storage.NewUnlockServiceClient(conn)
 
 		_, err = u.Unlock(context.Background(), &storage.UnlockRequest{
-			Key: string(password),
+			Key: string(string(keyFileBytes)),
 		})
 
 		if err != nil {
@@ -86,5 +97,6 @@ var unlockRPCCmd = &cobra.Command{
 			return
 		}
 
+		log.I.Ln("successfully unlocked")
 	},
 }
