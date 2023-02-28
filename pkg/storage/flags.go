@@ -6,29 +6,29 @@ import (
 )
 
 var (
-	storeKeyFlag      = "store-key"
-	storeKeyFileFlag  = "store-keyfile"
-	storeKeyRPCFlag   = "store-key-rpc"
+	storeKeyFlag     = "store-key"
+	storeKeyFileFlag = "store-keyfile"
+	//storeKeyRPCFlag   = "store-key-rpc"
 	storeFilePathFlag = "store-path"
-	storeAskPassFlag  = "store-ask-pass"
+	//storeAskPassFlag  = "store-ask-pass"
 )
 
 var (
 	storeEncryptionKey     string
 	storeEncryptionKeyFile string
-	storeEncryptionKeyRPC  bool
-	storeFilePath          string
-	storeAskPass           bool
+	//storeEncryptionKeyRPC  bool
+	storeFilePath string
+	//storeAskPass  bool
 )
 
 func InitFlags(cmd *cobra.Command) {
 
-	cmd.PersistentFlags().StringVarP(&storeEncryptionKey, storeKeyFlag, "",
+	cmd.Flags().StringVarP(&storeEncryptionKey, storeKeyFlag, "",
 		"",
 		"the key required to unlock storage",
 	)
 
-	viper.BindPFlag(storeKeyFlag, cmd.PersistentFlags().Lookup(storeKeyFlag))
+	viper.BindPFlag(storeKeyFlag, cmd.Flags().Lookup(storeKeyFlag))
 
 	cmd.PersistentFlags().StringVarP(&storeEncryptionKeyFile, storeKeyFileFlag, "",
 		"",
@@ -44,17 +44,17 @@ func InitFlags(cmd *cobra.Command) {
 
 	viper.BindPFlag(storeFilePathFlag, cmd.PersistentFlags().Lookup(storeFilePathFlag))
 
-	cmd.PersistentFlags().BoolVarP(&storeEncryptionKeyRPC, storeKeyRPCFlag, "",
-		false,
-		"looks for the encryption key via RPC",
-	)
+	//cmd.PersistentFlags().BoolVarP(&storeEncryptionKeyRPC, storeKeyRPCFlag, "",
+	//	false,
+	//	"looks for the encryption key via RPC",
+	//)
+	//
+	//viper.BindPFlag(storeKeyRPCFlag, cmd.PersistentFlags().Lookup(storeKeyRPCFlag))
 
-	viper.BindPFlag(storeKeyRPCFlag, cmd.PersistentFlags().Lookup(storeKeyRPCFlag))
-
-	cmd.PersistentFlags().BoolVarP(&storeAskPass, storeAskPassFlag, "",
-		false,
-		"prompts the user for a password to unlock storage",
-	)
-
-	viper.BindPFlag(storeAskPassFlag, cmd.PersistentFlags().Lookup(storeAskPassFlag))
+	//cmd.PersistentFlags().BoolVarP(&storeAskPass, storeAskPassFlag, "",
+	//	false,
+	//	"prompts the user for a password to unlock storage",
+	//)
+	//
+	//viper.BindPFlag(storeAskPassFlag, cmd.PersistentFlags().Lookup(storeAskPassFlag))
 }

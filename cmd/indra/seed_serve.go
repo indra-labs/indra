@@ -39,6 +39,9 @@ var seedServeCommand = &cobra.Command{
 		go seed.Run(ctx)
 
 		select {
+		case err := <-seed.WhenStartFailed():
+			log.E.Ln("startup error:", err)
+			return
 		case <-seed.IsShutdown():
 			log.I.Ln("shutdown complete")
 		}
