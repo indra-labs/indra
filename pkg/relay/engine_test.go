@@ -252,7 +252,7 @@ out:
 }
 
 func TestClient_HiddenService(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	log2.SetLogLevel(log2.Info)
 	var clients []*Engine
 	var e error
 	const returns = 2
@@ -284,7 +284,9 @@ func TestClient_HiddenService(t *testing.T) {
 			log.D.F("%d %s %v", i, j, clients[0].SessionCache[j])
 		}
 	}
-	for i := 0; i < 25; i++ {
+	log2.SetLogLevel(log2.Debug)
+	const nHiddenServices = 25
+	for i := 0; i < nHiddenServices; i++ {
 		var identPrv *prv.Key
 		if identPrv, e = prv.GenerateKey(); check(e) {
 			t.Error(e)
@@ -292,64 +294,19 @@ func TestClient_HiddenService(t *testing.T) {
 		}
 		id := nonce.NewID()
 		il := intro.New(identPrv, clients[0].GetLocalNodeAddress())
-		clients[0].SendIntro(id, clients[0].Sessions[i+returns],
-			il, func(id nonce.ID, b slice.Bytes) {
-				log.I.Ln("success")
-			})
+		clients[0].SendIntro(id, clients[0].Sessions[i+returns], il)
 	}
-	time.Sleep(time.Second / 2)
-	for _, v := range clients {
-		v.Shutdown()
-	}
-}
-
-func TestClient_HiddenServiceBroadcast(t *testing.T) {
-	log2.SetLogLevel(log2.Info)
-	var clients []*Engine
-	var e error
-	const returns = 2
-	if clients, e = CreateNMockCircuits(false, 10, returns); check(e) {
-		t.Error(e)
-		t.FailNow()
-	}
-	// Start up the clients.
-	for _, v := range clients {
-		go v.Start()
-	}
-	// Fund the client for all hops on all nodes.
-	var wg sync.WaitGroup
-	var counter atomic.Int32
-	for i := 0; i < 25; i++ {
-		log.D.Ln("buying sessions", i)
-		wg.Add(1)
-		counter.Inc()
-		e = clients[0].BuyNewSessions(1000000, func() {
-			wg.Done()
-			counter.Dec()
-		})
-		if check(e) {
-			wg.Done()
-			counter.Dec()
+	time.Sleep(time.Second)
+	for i, v := range clients {
+		if i == 0 {
+			continue
 		}
-		wg.Wait()
-		for j := range clients[0].SessionCache {
-			log.D.F("%d %s %v", i, j, clients[0].SessionCache[j])
+		if len(v.Introductions.KnownIntros) != nHiddenServices {
+			log.E.Ln("did not find expected", nHiddenServices, "got",
+				len(v.Introductions.KnownIntros))
+			t.FailNow()
 		}
 	}
-	var identPrv *prv.Key
-	if identPrv, e = prv.GenerateKey(); check(e) {
-		t.Error(e)
-		t.FailNow()
-	}
-	log2.SetLogLevel(log2.Trace)
-	// identPub := pub.Derive(identPrv)
-	id := nonce.NewID()
-	il := intro.New(identPrv, clients[0].GetLocalNodeAddress())
-	clients[0].SendIntro(id, clients[0].Sessions[returns],
-		il, func(id nonce.ID, b slice.Bytes) {
-			log.I.Ln("success")
-		})
-	time.Sleep(time.Second * 60)
 	for _, v := range clients {
 		v.Shutdown()
 	}
@@ -393,19 +350,29 @@ func TestClient_HiddenServiceRequest(t *testing.T) {
 		t.Error(e)
 		t.FailNow()
 	}
-	log2.SetLogLevel(log2.Trace)
+	log2.SetLogLevel(log2.Debug)
 	// identPub := pub.Derive(identPrv)
 	id := nonce.NewID()
 	il := intro.New(identPrv, clients[0].GetLocalNodeAddress())
 	clients[0].SendIntro(id, clients[0].Sessions[returns],
-		il, func(id nonce.ID, b slice.Bytes) {
-			log.I.Ln("success")
-		})
+		il)
 	// In this test environment generally every node has the intro after 1
 	// second.
 	time.Sleep(time.Second)
+	for _, v := range clients {
+		// if i == 0 {
+		// 	continue
+		// }
+		if len(v.Introductions.KnownIntros) != 1 {
+			log.E.Ln("did not find expected", 1, "got",
+				len(v.Introductions.KnownIntros))
+			t.FailNow()
+		}
+	}
 	// Now to test nodes requesting the address (even though they already know
 	// it).
+	
+	time.Sleep(time.Second)
 	for _, v := range clients {
 		v.Shutdown()
 	}

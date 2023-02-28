@@ -28,8 +28,8 @@ func init() {
 	pf.StringSliceVarP(&engineRPC, "relay-control", "r",
 		[]string{"127.0.0.1:8339", "::1:8339"},
 		"address/ports for IPv4 and v6 listeners")
-	viper.BindPFlag("engineP2P-relay", seedCmd.PersistentFlags().Lookup("engineP2P-relay"))
-	viper.BindPFlag("relay-control", seedCmd.PersistentFlags().Lookup(
+	viper.BindPFlag("engineP2P-relay", seedCommand.PersistentFlags().Lookup("engineP2P-relay"))
+	viper.BindPFlag("relay-control", seedCommand.PersistentFlags().Lookup(
 		"relay-control"))
 	rootCmd.AddCommand(relayCmd)
 }

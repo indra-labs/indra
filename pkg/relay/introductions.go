@@ -3,19 +3,22 @@ package relay
 import (
 	"sync"
 	
+	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	"github.com/cybriq/qu"
 	
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/messages/crypt"
 	"git-indra.lan/indra-labs/indra/pkg/messages/intro"
+	"git-indra.lan/indra-labs/indra/pkg/messages/introquery"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 type Intros map[pub.Bytes]slice.Bytes
-
-type NotifiedIntroducers map[pub.Bytes][]nonce.ID
 
 type KnownIntros map[pub.Bytes]*intro.Layer
 
@@ -29,14 +32,12 @@ type KnownIntros map[pub.Bytes]*intro.Layer
 type Introductions struct {
 	sync.Mutex
 	Intros
-	NotifiedIntroducers
 	KnownIntros
 }
 
 func NewIntroductions() *Introductions {
 	return &Introductions{Intros: make(Intros),
-		NotifiedIntroducers: make(NotifiedIntroducers),
-		KnownIntros:         make(KnownIntros)}
+		KnownIntros: make(KnownIntros)}
 }
 
 func (in *Introductions) Find(key pub.Bytes) (header slice.Bytes) {
@@ -52,7 +53,6 @@ func (in *Introductions) Delete(key pub.Bytes) (header slice.Bytes) {
 	in.Lock()
 	var ok bool
 	if header, ok = in.Intros[key]; ok {
-		// If found, the header is not to be used again.
 		delete(in.Intros, key)
 	}
 	in.Unlock()
@@ -67,26 +67,11 @@ func (in *Introductions) AddIntro(pk *pub.Key, header slice.Bytes) {
 		log.D.Ln("entry already exists for key %x", key)
 	} else {
 		in.Intros[key] = header
-		in.NotifiedIntroducers[key] = []nonce.ID{}
 	}
 	in.Unlock()
 }
 
-func (in *Introductions) AddNotified(nodeID nonce.ID, ident pub.Bytes) {
-	in.Lock()
-	var ok bool
-	if _, ok = in.NotifiedIntroducers[ident]; ok {
-		in.NotifiedIntroducers[ident] = append(in.NotifiedIntroducers[ident],
-			nodeID)
-	} else {
-		in.NotifiedIntroducers[ident] = []nonce.ID{nodeID}
-	}
-	in.Unlock()
-}
-
-func (eng *Engine) SendIntro(id nonce.ID, target *Session, intr *intro.Layer,
-	hook func(id nonce.ID, b slice.Bytes)) {
-	
+func (eng *Engine) SendIntro(id nonce.ID, target *Session, intr *intro.Layer) {
 	hops := []byte{0, 1, 2, 3, 4, 5}
 	s := make(Sessions, len(hops))
 	s[2] = target
@@ -96,10 +81,12 @@ func (eng *Engine) SendIntro(id nonce.ID, target *Session, intr *intro.Layer,
 	o := HiddenService(id, intr, se[len(se)-1], c, eng.KeySet)
 	log.D.Ln("sending out intro onion")
 	res := eng.PostAcctOnion(o)
-	eng.SendWithOneHook(c[0].AddrPort, res, hook)
+	eng.SendWithOneHook(c[0].AddrPort, res, func(id nonce.ID, b slice.Bytes) {
+		log.I.Ln("received routing header request for %s", intr.Key.ToBase32())
+	})
 }
 
-func (eng *Engine) introductionBroadcaster(intr *intro.Layer) {
+func (eng *Engine) gossipIntro(intr *intro.Layer) {
 	log.D.F("propagating hidden service introduction for %x", intr.Key.ToBytes())
 	done := qu.T()
 	msg := make(slice.Bytes, intro.Len)
@@ -113,9 +100,9 @@ func (eng *Engine) introductionBroadcaster(intr *intro.Layer) {
 	cryptorand.Shuffle(nPeers, func(i, j int) {
 		peerIndices[i], peerIndices[j] = peerIndices[j], peerIndices[i]
 	})
-	// Since relays will also gossip this information, we will start a ticker
-	// that sends out the hidden service introduction once a second until it
-	// runs out of known relays to gossip to.
+	// We broadcast the received introduction to two other randomly selected
+	// nodes, which guarantees the entire network will see the intro at least
+	// once.
 	var cursor int
 	for {
 		select {
@@ -141,11 +128,11 @@ func (eng *Engine) intro(intr *intro.Layer, b slice.Bytes,
 	eng.Introductions.Lock()
 	if intr.Validate() {
 		if _, ok := eng.Introductions.KnownIntros[intr.Key.ToBytes()]; ok {
-			log.T.Ln("received intro we already know about")
 			eng.Introductions.Unlock()
 			return
 		}
-		log.T.F("storing intro for %s", intr.Key.ToBase32())
+		log.D.F("%s storing intro for %s", eng.GetLocalNodeAddress().String(),
+			intr.Key.ToBase32())
 		eng.Introductions.KnownIntros[intr.Key.ToBytes()] = intr
 		log.D.F("%s sending out intro to %s at %s to all known peers",
 			eng.GetLocalNodeAddress(), intr.Key.ToBase32(),
@@ -170,4 +157,57 @@ func (eng *Engine) intro(intr *intro.Layer, b slice.Bytes,
 		}
 		eng.Introductions.Unlock()
 	}
+}
+
+func IntroQuery(hsk *pub.Key, client *Session, s Circuit,
+	ks *signer.KeySet) Skins {
+	
+	var prvs [3]*prv.Key
+	for i := range prvs {
+		prvs[i] = ks.Next()
+	}
+	n := GenNonces(6)
+	var returnNonces [3]nonce.IV
+	copy(returnNonces[:], n[3:])
+	var pubs [3]*pub.Key
+	pubs[0] = s[3].PayloadPub
+	pubs[1] = s[4].PayloadPub
+	pubs[2] = client.PayloadPub
+	return Skins{}.
+		ReverseCrypt(s[0], ks.Next(), n[0], 3).
+		ReverseCrypt(s[1], ks.Next(), n[1], 2).
+		ReverseCrypt(s[2], ks.Next(), n[2], 1).
+		IntroQuery(hsk, prvs, pubs, returnNonces).
+		ReverseCrypt(s[3], prvs[0], n[3], 3).
+		ReverseCrypt(s[4], prvs[1], n[4], 2).
+		ReverseCrypt(client, prvs[2], n[5], 1)
+}
+
+func (eng *Engine) introquery(iq *introquery.Layer, b slice.Bytes,
+	c *slice.Cursor, prev types.Onion) {
+	
+	eng.Introductions.Lock()
+	var ok bool
+	var il *intro.Layer
+	if il, ok = eng.Introductions.KnownIntros[iq.Key.ToBytes()]; !ok {
+		// if the reply is zeroes the querant knows it needs to retry at a
+		// different relay
+		il = &intro.Layer{}
+	}
+	eng.Introductions.Unlock()
+	header := b[*c:c.Inc(crypt.ReverseHeaderLen)]
+	rb := FormatReply(header,
+		Encode(il), iq.Ciphers, iq.Nonces)
+	switch on1 := prev.(type) {
+	case *crypt.Layer:
+		sess := eng.FindSessionByHeader(on1.ToPriv)
+		if sess != nil {
+			in := sess.RelayRate *
+				lnwire.MilliSatoshi(len(b)) / 2 / 1024 / 1024
+			out := sess.RelayRate *
+				lnwire.MilliSatoshi(len(rb)) / 2 / 1024 / 1024
+			eng.DecSession(sess.ID, in+out, false, "introquery")
+		}
+	}
+	eng.handleMessage(rb, iq)
 }

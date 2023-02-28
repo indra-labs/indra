@@ -34,7 +34,7 @@ var (
 type Layer struct {
 	Key      *pub.Key
 	AddrPort *netip.AddrPort
-	Bytes    sig.Bytes
+	Sig      sig.Bytes
 }
 
 func New(key *prv.Key, ap *netip.AddrPort) (in *Layer) {
@@ -50,7 +50,7 @@ func New(key *prv.Key, ap *netip.AddrPort) (in *Layer) {
 	in = &Layer{
 		Key:      pk,
 		AddrPort: ap,
-		Bytes:    sign,
+		Sig:      sign,
 	}
 	return
 }
@@ -59,7 +59,7 @@ func (im *Layer) Validate() bool {
 	bap, _ := im.AddrPort.MarshalBinary()
 	pkb := im.Key.ToBytes()
 	hash := sha256.Single(append(pkb[:], bap...))
-	key, e := im.Bytes.Recover(hash)
+	key, e := im.Sig.Recover(hash)
 	if check(e) {
 		return false
 	}
@@ -78,7 +78,7 @@ func (im *Layer) Encode(b slice.Bytes, c *slice.Cursor) {
 		Magic(Magic).
 		Pubkey(im.Key).
 		AddrPort(im.AddrPort).
-		Signature(im.Bytes)
+		Signature(im.Sig)
 	return
 }
 
@@ -86,6 +86,6 @@ func (im *Layer) Decode(b slice.Bytes, c *slice.Cursor) (e error) {
 	splice.Splice(b, c).
 		ReadPubkey(&im.Key).
 		ReadAddrPort(&im.AddrPort).
-		ReadSignature(&im.Bytes)
+		ReadSignature(&im.Sig)
 	return
 }

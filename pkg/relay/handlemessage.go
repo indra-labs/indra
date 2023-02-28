@@ -12,6 +12,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/messages/getbalance"
 	"git-indra.lan/indra-labs/indra/pkg/messages/hiddenservice"
 	"git-indra.lan/indra-labs/indra/pkg/messages/intro"
+	"git-indra.lan/indra-labs/indra/pkg/messages/introquery"
 	"git-indra.lan/indra-labs/indra/pkg/messages/response"
 	"git-indra.lan/indra-labs/indra/pkg/messages/reverse"
 	"git-indra.lan/indra-labs/indra/pkg/messages/session"
@@ -83,6 +84,13 @@ func (eng *Engine) handleMessage(b slice.Bytes, prev types.Onion) {
 	case *intro.Layer:
 		log.T.C(recLog(on, b, eng))
 		eng.intro(on, b, c, prev)
+	case *introquery.Layer:
+		if prev == nil {
+			log.E.Ln(reflect.TypeOf(on), "requests from outside? absurd!")
+			return
+		}
+		log.T.C(recLog(on, b, eng))
+		eng.introquery(on, b, c, prev)
 	case *response.Layer:
 		if prev == nil {
 			log.E.Ln(reflect.TypeOf(on), "requests from outside? absurd!")

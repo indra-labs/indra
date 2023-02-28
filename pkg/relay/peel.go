@@ -15,6 +15,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/messages/getbalance"
 	"git-indra.lan/indra-labs/indra/pkg/messages/hiddenservice"
 	"git-indra.lan/indra-labs/indra/pkg/messages/intro"
+	"git-indra.lan/indra-labs/indra/pkg/messages/introquery"
 	"git-indra.lan/indra-labs/indra/pkg/messages/magicbytes"
 	"git-indra.lan/indra-labs/indra/pkg/messages/response"
 	"git-indra.lan/indra-labs/indra/pkg/messages/reverse"
@@ -72,6 +73,11 @@ func Peel(b slice.Bytes, c *slice.Cursor) (on types.Onion, e error) {
 		}
 	case intro.MagicString:
 		on = &intro.Layer{}
+		if e = on.Decode(b, c); check(e) {
+			return
+		}
+	case introquery.MagicString:
+		on = &introquery.Layer{}
 		if e = on.Decode(b, c); check(e) {
 			return
 		}

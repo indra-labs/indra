@@ -18,6 +18,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/messages/getbalance"
 	"git-indra.lan/indra-labs/indra/pkg/messages/hiddenservice"
 	"git-indra.lan/indra-labs/indra/pkg/messages/intro"
+	"git-indra.lan/indra-labs/indra/pkg/messages/introquery"
 	"git-indra.lan/indra-labs/indra/pkg/messages/noop"
 	"git-indra.lan/indra-labs/indra/pkg/messages/response"
 	"git-indra.lan/indra-labs/indra/pkg/messages/reverse"
@@ -119,6 +120,16 @@ func (o Skins) HiddenService(id nonce.ID, intr *intro.Layer, prvs [3]*prv.Key,
 	return append(o, &hiddenservice.Layer{
 		ID:      id,
 		Layer:   *intr,
+		Ciphers: GenCiphers(prvs, pubs),
+		Nonces:  nonces,
+	})
+}
+
+func (o Skins) IntroQuery(hsk *pub.Key, prvs [3]*prv.Key, pubs [3]*pub.Key,
+	nonces [3]nonce.IV) Skins {
+	
+	return append(o, &introquery.Layer{
+		Key:     hsk,
 		Ciphers: GenCiphers(prvs, pubs),
 		Nonces:  nonces,
 	})
