@@ -1,7 +1,8 @@
 package indra
 
-// Put invocations to run all the generators in here (check cmd/bumper/ to add
-// them, and they will automatically run with:
+
+// Put invocations to run all the generators in here (
+// check cmd/bumper/ to add them, and they will automatically run with:
 //
 // $ go generate .
 //
@@ -17,11 +18,11 @@ var (
 	// URL is the git URL for the repository.
 	URL = ""
 	// GitRef is the gitref, as in refs/heads/branchname.
-	GitRef = "refs/heads/protocol"
+	GitRef = "refs/heads/main"
 	// ParentGitCommit is the commit hash of the parent HEAD.
-	ParentGitCommit = "b7c5325955866564a3b83bebe8eb7eb99bee4fe6"
+	ParentGitCommit = "15b4fac35f514c7e5c8e7a4bba338854c82277bc"
 	// BuildTime stores the time when the current binary was built.
-	BuildTime = "2023-02-20T14:05:37Z"
+	BuildTime = "2023-03-01T09:28:09Z"
 	// SemVer lists the (latest) git tag on the release.
 	SemVer = "v0.0.9"
 	// PathBase is the path base returned from runtime caller.
