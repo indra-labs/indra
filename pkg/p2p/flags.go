@@ -6,26 +6,18 @@ import (
 )
 
 var (
-	keyFlag     = "p2p-key"
 	listenFlag  = "p2p-listen"
 	seedFlag    = "p2p-seed"
 	connectFlag = "p2p-connect"
 )
 
 var (
-	key        string
 	listeners  []string
 	seeds      []string
 	connectors []string
 )
 
 func InitFlags(cmd *cobra.Command) {
-
-	cmd.Flags().StringVarP(&key, keyFlag, "",
-		"",
-		"the base58 encoded private key for the seed node")
-
-	viper.BindPFlag(keyFlag, cmd.Flags().Lookup(keyFlag))
 
 	cmd.PersistentFlags().StringSliceVarP(&listeners, listenFlag, "",
 		[]string{

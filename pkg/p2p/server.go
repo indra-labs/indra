@@ -63,7 +63,7 @@ func run() {
 func Run() {
 
 	//storage.Update(func(txn *badger.Txn) error {
-	//	txn.Delete([]byte(keyFlag))
+	//	txn.Delete([]byte(storeKeyKey))
 	//	return nil
 	//})
 

@@ -18,6 +18,10 @@ func configure() {
 	configureSeeds()
 }
 
+var (
+	storeKeyKey = "p2p-key"
+)
+
 func configureKey() {
 
 	log.I.Ln("looking for key in storage")
@@ -28,7 +32,7 @@ func configureKey() {
 
 	err = storage.View(func(txn *badger.Txn) error {
 
-		if item, err = txn.Get([]byte(keyFlag)); err != nil {
+		if item, err = txn.Get([]byte(storeKeyKey)); err != nil {
 			return err
 		}
 
@@ -50,7 +54,7 @@ func configureKey() {
 		}
 
 		err = storage.Update(func(txn *badger.Txn) error {
-			err = txn.Set([]byte(keyFlag), keyBytes)
+			err = txn.Set([]byte(storeKeyKey), keyBytes)
 			check(err)
 			return nil
 		})

@@ -50,7 +50,7 @@ func Base58Decode(key string) (priv crypto.PrivKey, err error) {
 //			return
 //		}
 //
-//		viper.Set(keyFlag, key)
+//		viper.Set(storeKeyKey, key)
 //
 //		return
 //	}
