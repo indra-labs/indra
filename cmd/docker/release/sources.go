@@ -1,6 +1,9 @@
 package main
 
-import "git-indra.lan/indra-labs/indra/pkg/docker"
+import (
+	"git-indra.lan/indra-labs/indra/pkg/docker"
+	"github.com/docker/docker/api/types"
+)
 
 var sourceConfigurations = []docker.BuildConfiguration{
 	//docker.BuildConfiguration{
@@ -60,23 +63,23 @@ var sourceConfigurations = []docker.BuildConfiguration{
 	//		PullParent:     false,
 	//	},
 	//},
-	//docker.BuildConfiguration{
-	//	Name:            defaultRepositoryName + "/" + "indra-source",
-	//	ContextFilePath: "/tmp/indra-source-local.tar",
-	//	BuildOpts: types.ImageBuildOptions{
-	//		Dockerfile: "docker/sources/indra/local.Dockerfile",
-	//		Tags: []string{
-	//			"dev",
-	//		},
-	//		BuildArgs: map[string]*string{
-	//			"sourcing_image": strPtr(defaultBuilderContainer),
-	//		},
-	//		SuppressOutput: false,
-	//		Remove:         true,
-	//		ForceRemove:    true,
-	//		PullParent:     false,
-	//	},
-	//},
+	docker.BuildConfiguration{
+		Name:            defaultRepositoryName + "/" + "indra-source",
+		ContextFilePath: "/tmp/indra-source-local.tar",
+		BuildOpts: types.ImageBuildOptions{
+			Dockerfile: "docker/sources/indra/local.Dockerfile",
+			Tags: []string{
+				"dev",
+			},
+			BuildArgs: map[string]*string{
+				"sourcing_image": strPtr(defaultBuilderContainer),
+			},
+			SuppressOutput: false,
+			Remove:         true,
+			ForceRemove:    true,
+			PullParent:     false,
+		},
+	},
 	//docker.BuildConfiguration{
 	//	Name:            defaultRepositoryName + "/" + "indra-source",
 	//	ContextFilePath: "/tmp/indra-source.tar",

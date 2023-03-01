@@ -83,5 +83,7 @@ func Shutdown() {
 
 	isRunning = false
 
+	inUse.Unlock()
+
 	log.I.Ln("- rpc server shutdown completed")
 }

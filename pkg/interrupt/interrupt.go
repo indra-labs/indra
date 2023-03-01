@@ -8,12 +8,12 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
-	
+
 	"go.uber.org/atomic"
-	
+
 	"git-indra.lan/indra-labs/indra"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	
+
 	"github.com/kardianos/osext"
 )
 
@@ -81,11 +81,11 @@ func Listener() {
 				}
 			} else {
 				log.I.Ln("doing windows restart")
-				
+
 				// procAttr := new(os.ProcAttr)
 				// procAttr.Files = []*os.File{os.Stdin, os.Stdout, os.Stderr}
 				// os.StartProcess(os.Args[0], os.Args[1:], procAttr)
-				
+
 				var s []string
 				// s = []string{"cmd.exe", "/C", "start"}
 				s = append(s, os.Args[0])
@@ -143,7 +143,7 @@ func AddHandler(handler func()) {
 	// all other callbacks and exits if not already done.
 	_, loc, line, _ := runtime.Caller(1)
 	msg := fmt.Sprintf("%s:%d", loc, line)
-	log.T.Ln("\n"+strings.Split(msg, indra.PathBase)[1],
+	log.T.Ln("\n"+strings.Split(msg, indra.PathBase)[0],
 		"added interrupt handler")
 	if ch == nil {
 		ch = make(chan os.Signal)

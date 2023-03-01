@@ -3,7 +3,10 @@ package seed
 import (
 	"context"
 	"git-indra.lan/indra-labs/indra/pkg/p2p"
+	"git-indra.lan/indra-labs/indra/pkg/rpc"
 	"git-indra.lan/indra-labs/indra/pkg/storage"
+	"github.com/tutorialedge/go-grpc-tutorial/chat"
+	"google.golang.org/grpc"
 	"sync"
 )
 
@@ -63,6 +66,22 @@ func Run(ctx context.Context) {
 	//
 	// Ready!
 	//
+
+	go rpc.RunWith(func(srv *grpc.Server) {
+		chat.RegisterChatServiceServer(srv, &chat.Server{})
+	})
+
+	select {
+	case err := <-rpc.WhenStartFailed():
+		log.E.Ln("rpc can't start:", err)
+		startupErrors <- err
+		return
+	case <-rpc.IsReady():
+		// continue
+	case <-ctx.Done():
+		Shutdown()
+		return
+	}
 
 	log.I.Ln("seed is ready")
 	isReadyChan <- true

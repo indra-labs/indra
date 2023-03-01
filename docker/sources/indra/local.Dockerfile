@@ -23,7 +23,7 @@ RUN set -ex "cleaning up repository" \
 WORKDIR /tmp/indra-source
 
 RUN set -ex echo "downloading modules" \
-    && go mod vendor
+    && GOINSECURE=git-indra.lan/* GOPRIVATE=git-indra.lan/* go mod vendor
 
 FROM scratch
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"git-indra.lan/indra-labs/indra/pkg/docker"
+	"github.com/docker/docker/api/types"
 )
 
 var (
@@ -69,24 +70,24 @@ var packagingConfigurations = []docker.BuildConfiguration{
 	//		PullParent:     false,
 	//	},
 	//},
-	//docker.BuildConfiguration{
-	//	Name:            defaultRepositoryName + "/" + "indra-package",
-	//	ContextFilePath: "/tmp/indra-package.tar",
-	//	BuildOpts: types.ImageBuildOptions{
-	//		Dockerfile: "docker/build/package.Dockerfile",
-	//		Tags: []string{
-	//			"dev",
-	//		},
-	//		BuildArgs: map[string]*string{
-	//			"binaries_image":   strPtr("indralabs/indra-build"),
-	//			"binaries_version": strPtr("dev"),
-	//			"packaging_image":  strPtr(defaultPackagingContainer),
-	//			"target_name":      strPtr("indra"),
-	//		},
-	//		SuppressOutput: false,
-	//		Remove:         true,
-	//		ForceRemove:    true,
-	//		PullParent:     false,
-	//	},
-	//},
+	docker.BuildConfiguration{
+		Name:            defaultRepositoryName + "/" + "indra-package",
+		ContextFilePath: "/tmp/indra-package.tar",
+		BuildOpts: types.ImageBuildOptions{
+			Dockerfile: "docker/build/package.Dockerfile",
+			Tags: []string{
+				"dev",
+			},
+			BuildArgs: map[string]*string{
+				"binaries_image":   strPtr("indralabs/indra-build"),
+				"binaries_version": strPtr("dev"),
+				"packaging_image":  strPtr(defaultPackagingContainer),
+				"target_name":      strPtr("indra"),
+			},
+			SuppressOutput: false,
+			Remove:         true,
+			ForceRemove:    true,
+			PullParent:     false,
+		},
+	},
 }
