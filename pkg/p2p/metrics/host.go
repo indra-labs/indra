@@ -39,23 +39,23 @@ func HostStatus(ctx context.Context, host host.Host) {
 
 	log.I.Ln("[metrics.hoststatus] is ready")
 
-	for {
+	go func() {
+		for {
+			select {
+			case <-time.After(hostStatusInterval):
 
-		select {
+				log.I.Ln()
+				log.I.Ln("---- host status ----")
+				log.I.Ln("-- peers:", len(host.Network().Peers()))
+				log.I.Ln("-- connections:", len(host.Network().Conns()))
+				log.I.Ln("---- ---- ------ ----")
 
-		case <-time.After(hostStatusInterval):
+			case <-ctx.Done():
 
-			log.I.Ln()
-			log.I.Ln("---- host status ----")
-			log.I.Ln("-- peers:", len(host.Network().Peers()))
-			log.I.Ln("-- connections:", len(host.Network().Conns()))
-			log.I.Ln("---- ---- ------ ----")
+				log.I.Ln("shutting down [metrics.hoststatus]")
 
-		case <-ctx.Done():
-
-			log.I.Ln("shutting down [metrics.hoststatus]")
-
-			return
+				return
+			}
 		}
-	}
+	}()
 }

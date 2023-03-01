@@ -2,6 +2,7 @@ package seed
 
 import (
 	"context"
+	"git-indra.lan/indra-labs/indra/pkg/p2p"
 	"git-indra.lan/indra-labs/indra/pkg/storage"
 	"sync"
 )
@@ -19,29 +20,51 @@ func Run(ctx context.Context) {
 
 	log.I.Ln("running seed")
 
+	//
+	// Storage
+	//
+
 	go storage.Run()
 
-signals:
-	for {
-		select {
-		case err := <-storage.WhenStartupFailed():
-			log.E.Ln("storage can't start:", err)
-			startupErrors <- err
-			return
-		case <-storage.WhenIsReady():
-			break signals
-		case <-ctx.Done():
-			Shutdown()
-			return
-		}
+	select {
+	case err := <-storage.WhenStartFailed():
+		log.E.Ln("storage can't start:", err)
+		startupErrors <- err
+		return
+	case <-storage.WhenReady():
+		// continue
+	case <-ctx.Done():
+		Shutdown()
+		return
 	}
 
-	// Startup all RPC services
+	//
+	// P2P
+	//
 
-	// Startup P2P services
+	go p2p.Run()
+
+	select {
+	case err := <-p2p.WhenStartFailed():
+		log.E.Ln("p2p can't start:", err)
+		startupErrors <- err
+		return
+	case <-p2p.WhenReady():
+		// continue
+	case <-ctx.Done():
+		Shutdown()
+		return
+	}
+
+	//
+	// RPC
+	//
+
+	//
+	// Ready!
+	//
 
 	log.I.Ln("seed is ready")
-
 	isReadyChan <- true
 
 	select {
@@ -55,7 +78,12 @@ func Shutdown() {
 
 	log.I.Ln("shutting down seed")
 
-	err := storage.Shutdown()
+	var err error
+
+	err = p2p.Shutdown()
+	check(err)
+
+	err = storage.Shutdown()
 	check(err)
 
 	log.I.Ln("seed shutdown completed")

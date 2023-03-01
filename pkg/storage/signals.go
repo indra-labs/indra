@@ -7,7 +7,11 @@ var (
 	isReadyChan    = make(chan bool, 1)
 )
 
-func WhenStartupFailed() chan error {
+var (
+	isReady bool
+)
+
+func WhenStartFailed() chan error {
 	return startupErrors
 }
 
@@ -19,6 +23,6 @@ func WhenIsUnlocked() chan bool {
 	return isUnlockedChan
 }
 
-func WhenIsReady() chan bool {
+func WhenReady() chan bool {
 	return isReadyChan
 }

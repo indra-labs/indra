@@ -72,6 +72,9 @@ signals:
 		}
 	}
 
+	log.I.Ln("running garbage collection before ready")
+	db.RunValueLogGC(0.5)
+
 	log.I.Ln("storage is ready")
 	isReadyChan <- true
 }
@@ -98,9 +101,21 @@ func Shutdown() (err error) {
 	return
 }
 
-func Txn(tx func(txn *badger.Txn) error, update bool) error {
+func Txn(tx func(txn *badger.Txn) error, update bool) (err error) {
 
 	txn := db.NewTransaction(update)
 
-	return tx(txn)
+	if err = tx(txn); err != nil {
+		return
+	}
+
+	return txn.Commit()
+}
+
+func View(fn func(txn *badger.Txn) error) error {
+	return db.View(fn)
+}
+
+func Update(fn func(txn *badger.Txn) error) error {
+	return db.Update(fn)
 }

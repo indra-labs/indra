@@ -4,11 +4,11 @@ import (
 	"context"
 	"git-indra.lan/indra-labs/indra/pkg/cfg"
 	"git-indra.lan/indra-labs/indra/pkg/p2p/metrics"
+	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/libp2p/go-libp2p/core/host"
 	"time"
 
-	"github.com/libp2p/go-libp2p"
-	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/multiformats/go-multiaddr"
 
 	"git-indra.lan/indra-labs/indra"
@@ -33,28 +33,15 @@ func init() {
 	listenAddresses = []multiaddr.Multiaddr{}
 }
 
-type Server struct {
-	context.Context
+func run() {
 
-	config *Config
+	log.I.Ln("starting p2p server")
 
-	host host.Host
-}
+	log.I.Ln("host id:")
+	log.I.Ln("-", p2pHost.ID())
 
-func (srv *Server) Shutdown() (err error) {
-
-	if err = srv.host.Close(); check(err) {
-		// continue
-	}
-
-	log.I.Ln("shutdown complete")
-
-	return
-}
-
-func (srv *Server) Serve() (err error) {
-
-	log.I.Ln("starting the p2p server")
+	log.I.Ln("p2p listeners:")
+	log.I.Ln("-", p2pHost.Addrs())
 
 	// Here we create a context with cancel and add it to the interrupt handler
 	var ctx context.Context
@@ -64,64 +51,48 @@ func (srv *Server) Serve() (err error) {
 
 	interrupt.AddHandler(cancel)
 
-	// Introduce your node to the network
-	go introducer.Bootstrap(ctx, srv.host, srv.config.SeedAddresses)
+	introducer.Bootstrap(ctx, p2pHost, seedAddresses)
 
-	// Get some basic metrics for the host
-	// metrics.Init()
-	// metrics.Set('indra.host.status.reporting.interval', 30 * time.Second)
-	// metrics.Enable('indra.host.status')
 	metrics.SetInterval(30 * time.Second)
 
-	go metrics.HostStatus(ctx, srv.host)
+	metrics.HostStatus(ctx, p2pHost)
 
-	select {
-
-	case <-ctx.Done():
-
-		log.I.Ln("shutting down p2p server")
-
-		srv.Shutdown()
-	}
-
-	return nil
+	isReadyChan <- true
 }
 
-func New(config *Config) (*Server, error) {
+func Run() {
 
-	log.I.Ln("initializing the p2p server")
+	//storage.Update(func(txn *badger.Txn) error {
+	//	txn.Delete([]byte(keyFlag))
+	//	return nil
+	//})
+
+	configure()
 
 	var err error
-	var s Server
 
-	s.config = config
+	p2pHost, err = libp2p.New(
+		libp2p.Identity(privKey),
+		libp2p.UserAgent(userAgent),
+		libp2p.ListenAddrs(listenAddresses...),
+	)
 
-	if s.host, err = libp2p.New(libp2p.Identity(config.PrivKey), libp2p.UserAgent(userAgent), libp2p.ListenAddrs(config.ListenAddresses...)); check(err) {
-		return nil, err
+	if check(err) {
+		return
 	}
 
-	log.I.Ln("host id:")
-	log.I.Ln("-", s.host.ID())
+	run()
+}
 
-	log.I.Ln("p2p listeners:")
-	log.I.Ln("-", s.host.Addrs())
+func Shutdown() (err error) {
 
-	if len(config.ConnectAddresses) > 0 {
+	log.I.Ln("shutting down p2p server")
 
-		log.I.Ln("connect detected, using only the connect seed addresses")
-
-		config.SeedAddresses = config.ConnectAddresses
-
-		return &s, nil
+	if err = p2pHost.Close(); check(err) {
+		// continue
 	}
 
-	var seedAddresses []multiaddr.Multiaddr
+	log.I.Ln("- p2p server shutdown complete")
 
-	if seedAddresses, err = config.Params.ParseSeedMultiAddresses(); check(err) {
-		return nil, err
-	}
-
-	config.SeedAddresses = append(config.SeedAddresses, seedAddresses...)
-
-	return &s, err
+	return
 }

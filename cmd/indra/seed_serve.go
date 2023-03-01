@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"git-indra.lan/indra-labs/indra"
+	"git-indra.lan/indra-labs/indra/pkg/cfg"
 	"git-indra.lan/indra-labs/indra/pkg/interrupt"
 	"git-indra.lan/indra-labs/indra/pkg/p2p"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
@@ -29,6 +30,8 @@ var seedServeCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		log.I.Ln("-- ", log2.App, "("+viper.GetString("network")+") -", indra.SemVer, "- Network Freedom. --")
+
+		cfg.SelectNetworkParams(viper.GetString("network"))
 
 		ctx, cancel := context.WithCancel(context.Background())
 		interrupt.AddHandler(cancel)

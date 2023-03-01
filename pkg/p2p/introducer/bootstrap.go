@@ -87,13 +87,15 @@ func Bootstrap(ctx context.Context, host host.Host, seeds []multiaddr.Multiaddr)
 
 	log.I.Ln("[introducer.bootstrap] is ready")
 
-	select {
-	case <-c.Done():
+	go func() {
+		select {
+		case <-c.Done():
 
-		log.I.Ln("shutting down [introducer.bootstrap]")
+			log.I.Ln("shutting down [introducer.bootstrap]")
 
-		return
-	}
+			return
+		}
+	}()
 
 	return
 }
