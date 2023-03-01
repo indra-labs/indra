@@ -34,7 +34,7 @@ func stopUnixSocket() (err error) {
 	}
 
 	if unixSock != nil {
-		if err = unixSock.Close(); check(err) {
+		if err = unixSock.Close(); err != nil {
 			// continue
 		}
 	}

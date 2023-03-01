@@ -10,10 +10,10 @@ func WhenStartFailed() chan error {
 	return startupErrors
 }
 
-func IsReady() chan bool {
+func WhenReady() chan bool {
 	return isReadyChan
 }
 
-func IsShutdown() chan bool {
+func WhenShutdown() chan bool {
 	return isShutdownChan
 }

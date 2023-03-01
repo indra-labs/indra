@@ -13,10 +13,10 @@ import (
 func init() {
 
 	//// Init flags belonging to the seed package
-	//seed.InitFlags(seedServeCommand)
+	//seed.InitFlags(seedServeCmd)
 	//
 	//// Init flags belonging to the rpc package
-	//rpc.InitFlags(seedServeCommand)
+	//rpc.InitFlags(seedServeCmd)
 
 	seedCommand.AddCommand(seedRPCCmd)
 

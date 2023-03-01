@@ -1,8 +1,9 @@
 package storage
 
 import (
+	"git-indra.lan/indra-labs/indra/pkg/rpc"
 	"github.com/dgraph-io/badger/v3"
-	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 	"sync"
 )
 
@@ -16,6 +17,27 @@ var (
 	running sync.Mutex
 )
 
+func run() {
+
+	if noKeyProvided {
+		log.I.Ln("storage is locked")
+		isLockedChan <- true
+
+		return
+	}
+
+	log.I.Ln("attempting to unlock database")
+	isUnlocked, err := attempt_unlock()
+
+	if !isUnlocked {
+		log.I.Ln("unlock attempt failed")
+		startupErrors <- err
+	}
+
+	log.I.Ln("successfully unlocked database")
+	isUnlockedChan <- true
+}
+
 func Run() {
 
 	if !running.TryLock() {
@@ -24,9 +46,30 @@ func Run() {
 
 	configure()
 
-	if !attempt_unlock() {
-		isLockedChan <- true
-		return
+	run()
+
+signals:
+	for {
+		select {
+		case err := <-rpc.WhenStartFailed():
+			startupErrors <- err
+			return
+		case <-WhenIsUnlocked():
+			rpc.Shutdown()
+			break signals
+		case <-WhenIsLocked():
+
+			log.I.Ln("running rpc server, with unlock service")
+
+			go rpc.RunWith(
+				func(srv *grpc.Server) {
+					RegisterUnlockServiceServer(srv, NewUnlockService())
+				},
+				rpc.WithDisableTunnel(),
+			)
+		case <-rpc.IsReady():
+			log.I.Ln("... awaiting unlock over rpc")
+		}
 	}
 
 	log.I.Ln("storage is ready")
@@ -35,21 +78,22 @@ func Run() {
 
 func Shutdown() (err error) {
 
+	rpc.Shutdown()
+
 	log.I.Ln("shutting down storage")
 
 	if db == nil {
+		log.I.Ln("- storage was never started")
 		return nil
 	}
 
-	if db.IsClosed() {
-		return nil
+	log.I.Ln("- storage db closing, it may take a minute...")
+
+	if err = db.Close(); err != nil {
+		log.W.Ln("- storage shutdown warning: ", err)
 	}
 
-	if err = db.Close(); check(err) {
-		return
-	}
-
-	log.I.Ln("storage shutdown completed")
+	log.I.Ln("- storage shutdown completed")
 
 	return
 }
@@ -59,30 +103,4 @@ func Txn(tx func(txn *badger.Txn) error, update bool) error {
 	txn := db.NewTransaction(update)
 
 	return tx(txn)
-}
-
-func attempt_unlock() bool {
-
-	if noKeyProvided {
-		return false
-	}
-
-	var err error
-
-	log.I.Ln("attempting to unlock database")
-
-	opts = badger.DefaultOptions(viper.GetString(storeFilePathFlag))
-	opts.Logger = nil
-	opts.IndexCacheSize = 128 << 20
-	opts.EncryptionKey = key.Bytes()
-
-	if db, err = badger.Open(opts); check(err) {
-		startupErrors <- err
-		return false
-	}
-
-	log.I.Ln("successfully unlocked database")
-	isUnlockedChan <- true
-
-	return true
 }
