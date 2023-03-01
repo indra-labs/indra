@@ -3,7 +3,6 @@ package relay
 import (
 	"sync"
 	
-	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	"github.com/cybriq/qu"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
@@ -202,10 +201,8 @@ func (eng *Engine) introquery(iq *introquery.Layer, b slice.Bytes,
 	case *crypt.Layer:
 		sess := eng.FindSessionByHeader(on1.ToPriv)
 		if sess != nil {
-			in := sess.RelayRate *
-				lnwire.MilliSatoshi(len(b)) / 2 / 1024 / 1024
-			out := sess.RelayRate *
-				lnwire.MilliSatoshi(len(rb)) / 2 / 1024 / 1024
+			in := sess.RelayRate * len(b) / 2
+			out := sess.RelayRate * len(rb) / 2
 			eng.DecSession(sess.ID, in+out, false, "introquery")
 		}
 	}

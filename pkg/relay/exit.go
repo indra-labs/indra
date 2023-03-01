@@ -3,8 +3,6 @@ package relay
 import (
 	"time"
 	
-	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
@@ -96,9 +94,9 @@ func (eng *Engine) exit(ex *exit.Layer, b slice.Bytes,
 				continue
 			}
 			in := sess.Services[i].RelayRate *
-				lnwire.MilliSatoshi(len(b)) / 2 / 1024 / 1024
+				len(b) / 2
 			out := sess.Services[i].RelayRate *
-				lnwire.MilliSatoshi(len(rb)) / 2 / 1024 / 1024
+				len(rb) / 2
 			eng.DecSession(sess.ID, in+out, false, "exit")
 			break
 		}

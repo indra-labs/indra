@@ -1,14 +1,12 @@
 package service
 
 import (
-	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-
 	"git-indra.lan/indra-labs/indra/pkg/types"
 )
 
 type Service struct {
 	Port      uint16
-	RelayRate lnwire.MilliSatoshi
+	RelayRate int
 	types.Transport
 }
 

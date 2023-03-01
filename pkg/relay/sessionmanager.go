@@ -2,9 +2,9 @@ package relay
 
 import (
 	"sync"
-
+	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -52,7 +52,7 @@ func (sm *SessionManager) ClearSessions() {
 
 func (sm *SessionManager) IncSession(id nonce.ID, sats lnwire.MilliSatoshi,
 	sender bool, typ string) {
-
+	
 	sess := sm.FindSession(id)
 	if sess != nil {
 		sm.Lock()
@@ -60,21 +60,23 @@ func (sm *SessionManager) IncSession(id nonce.ID, sats lnwire.MilliSatoshi,
 		sess.IncSats(sats, sender, typ)
 	}
 }
-func (sm *SessionManager) DecSession(id nonce.ID, sats lnwire.MilliSatoshi,
-	sender bool, typ string) bool {
 
+func (sm *SessionManager) DecSession(id nonce.ID, sats int,
+	sender bool, typ string) bool {
+	
 	sess := sm.FindSession(id)
 	if sess != nil {
 		sm.Lock()
 		defer sm.Unlock()
-		return sess.DecSats(sats, sender, typ)
+		return sess.DecSats(lnwire.MilliSatoshi(sats/1024/1024),
+			sender, typ)
 	}
 	return false
 }
 
 func (sm *SessionManager) GetNodeCircuit(id nonce.ID) (sce *Circuit,
 	exists bool) {
-
+	
 	sm.Lock()
 	defer sm.Unlock()
 	sce, exists = sm.SessionCache[id]
@@ -183,7 +185,7 @@ func (sm *SessionManager) IterateSessions(fn func(s *Session) bool) {
 // Do not call SessionManager methods within this function.
 func (sm *SessionManager) IterateSessionCache(fn func(n *Node,
 	c *Circuit) bool) {
-
+	
 	sm.Lock()
 	defer sm.Unlock()
 out:

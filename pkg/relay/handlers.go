@@ -3,8 +3,6 @@ package relay
 import (
 	"time"
 	
-	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/messages/confirm"
 	"git-indra.lan/indra-labs/indra/pkg/messages/crypt"
@@ -77,7 +75,7 @@ func (eng *Engine) forward(on *forward.Layer, b slice.Bytes,
 			sess := eng.FindSessionByHeader(on1.ToPriv)
 			if sess != nil {
 				eng.DecSession(sess.ID,
-					eng.GetLocalNodeRelayRate()*lnwire.MilliSatoshi(len(b))/1024/1024,
+					eng.GetLocalNodeRelayRate()*len(b),
 					false, "forward")
 			}
 		}
@@ -110,7 +108,7 @@ func (eng *Engine) response(on *response.Layer, b slice.Bytes,
 						}
 					}
 				}
-				eng.DecSession(s.ID, relayRate*lnwire.MilliSatoshi(dataSize)/1024/1024, true, typ)
+				eng.DecSession(s.ID, relayRate*dataSize, true, typ)
 			}
 		}
 		eng.PendingResponses.Delete(on.ID, on.Bytes)
@@ -161,7 +159,7 @@ func (eng *Engine) reverse(on *reverse.Layer, b slice.Bytes,
 			sess := eng.FindSessionByHeader(hdr)
 			if sess != nil {
 				eng.DecSession(sess.ID,
-					eng.GetLocalNodeRelayRate()*lnwire.MilliSatoshi(len(b))/1024/1024, false, "reverse")
+					eng.GetLocalNodeRelayRate()*len(b), false, "reverse")
 				eng.handleMessage(BudgeUp(b, start), on1)
 			}
 		default:

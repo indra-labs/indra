@@ -5,8 +5,6 @@ import (
 	"net/netip"
 	"sync"
 	
-	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -24,7 +22,7 @@ type Node struct {
 	IdentityPub    *pub.Key
 	IdentityBytes  pub.Bytes
 	IdentityPrv    *prv.Key
-	RelayRate      lnwire.MilliSatoshi // Base relay price/Mb.
+	RelayRate      int                 // Base relay price/Mb.
 	Services       service.Services    // Services offered by this peer.
 	HiddenServices Referrers           // Hidden services known by peer.
 	Load           *ring.BufferLoad    // Relay load.
@@ -47,7 +45,7 @@ const (
 // available. The Node for a client's self should use true in the local
 // parameter to not initialise the peer state ring buffers as it won't use them.
 func NewNode(addr *netip.AddrPort, idPub *pub.Key, idPrv *prv.Key,
-	tpt types.Transport, relayRate lnwire.MilliSatoshi,
+	tpt types.Transport, relayRate int,
 	local bool) (n *Node, id nonce.ID) {
 	
 	id = nonce.NewID()

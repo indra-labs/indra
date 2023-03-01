@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net/netip"
 	
-	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -65,7 +63,7 @@ func (sm *SessionManager) AddServiceToLocalNode(s *service.Service) (e error) {
 	return sm.GetLocalNode().AddService(s)
 }
 
-func (sm *SessionManager) GetLocalNodeRelayRate() (rate lnwire.MilliSatoshi) {
+func (sm *SessionManager) GetLocalNodeRelayRate() (rate int) {
 	sm.Lock()
 	defer sm.Unlock()
 	return sm.GetLocalNode().RelayRate

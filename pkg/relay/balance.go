@@ -1,8 +1,6 @@
 package relay
 
 import (
-	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
@@ -25,18 +23,15 @@ func (eng *Engine) balance(on *balance.Layer,
 			if s != nil {
 				switch {
 				case i < 2:
-					in := s.RelayRate * lnwire.MilliSatoshi(
-						pending.SentSize) / 1024 / 1024
+					in := s.RelayRate *
+						pending.SentSize
 					eng.DecSession(s.ID, in, true, "reverse")
 				case i == 2:
-					in := s.RelayRate * lnwire.MilliSatoshi(
-						pending.SentSize/2) / 1024 / 1024
-					out := s.RelayRate * lnwire.MilliSatoshi(
-						len(b)/2) / 1024 / 1024
+					in := s.RelayRate * pending.SentSize / 2
+					out := s.RelayRate * len(b) / 2
 					eng.DecSession(s.ID, in+out, true, "getbalance")
 				case i > 2:
-					out := s.RelayRate * lnwire.MilliSatoshi(
-						len(b)) / 1024 / 1024
+					out := s.RelayRate * len(b)
 					eng.DecSession(s.ID, out, true, "reverse")
 				}
 			}
@@ -131,10 +126,8 @@ func (eng *Engine) getbalance(on *getbalance.Layer,
 	case *crypt.Layer:
 		sess := eng.FindSessionByHeader(on1.ToPriv)
 		if sess != nil {
-			in := sess.RelayRate *
-				lnwire.MilliSatoshi(len(b)) / 2 / 1024 / 1024
-			out := sess.RelayRate *
-				lnwire.MilliSatoshi(len(rb)) / 2 / 1024 / 1024
+			in := sess.RelayRate * len(b) / 2
+			out := sess.RelayRate * len(rb) / 2
 			eng.DecSession(sess.ID, in+out, false, "getbalance")
 		}
 	}

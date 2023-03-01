@@ -4,8 +4,6 @@ import (
 	"net/netip"
 	"runtime"
 	
-	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/messages/balance"
 	"git-indra.lan/indra-labs/indra/pkg/messages/confirm"
@@ -74,12 +72,7 @@ func (eng *Engine) PostAcctOnion(o Skins) (res SendData) {
 			case *forward.Layer:
 				res.billable = append(res.billable, s.ID)
 				res.postAcct = append(res.postAcct,
-					func() {
-						eng.DecSession(s.ID,
-							s.RelayRate*
-								lnwire.MilliSatoshi(len(res.b))/1024/1024, true,
-							"forward")
-					})
+					func() { eng.DecSession(s.ID, s.RelayRate*len(res.b), true, "forward") })
 			case *hiddenservice.Layer:
 				res.last = on2.ID
 				res.billable = append(res.billable, s.ID)
@@ -93,12 +86,7 @@ func (eng *Engine) PostAcctOnion(o Skins) (res SendData) {
 					}
 					res.port = on2.Port
 					res.postAcct = append(res.postAcct,
-						func() {
-							eng.DecSession(s.ID,
-								s.Services[j].RelayRate*
-									lnwire.MilliSatoshi(len(res.b)/2)/1024/1024,
-								true, "exit")
-						})
+						func() { eng.DecSession(s.ID, s.Services[j].RelayRate*len(res.b)/2, true, "exit") })
 					break
 				}
 				res.billable = append(res.billable, s.ID)
