@@ -54,7 +54,7 @@ func Listener() {
 		var callSrc string
 		for i := range interruptCallbackSources {
 			callSrc += fmt.Sprintf("\n-> %s running callback %d",
-				strings.Split(interruptCallbackSources[i], indra.PathBase)[1],
+				strings.Split(interruptCallbackSources[i], indra.PathBase)[0],
 				i)
 		}
 		log.T.Ln("running interrupt callbacks", callSrc)
