@@ -10,7 +10,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/interrupt"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/relay"
-	"git-indra.lan/indra-labs/indra/pkg/transport"
+	"git-indra.lan/indra-labs/indra/pkg/relay/transport"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 

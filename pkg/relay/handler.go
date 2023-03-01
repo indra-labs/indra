@@ -1,7 +1,7 @@
 package relay
 
 import (
-	"git-indra.lan/indra-labs/indra/pkg/types"
+	"git-indra.lan/indra-labs/indra/pkg/relay/types"
 )
 
 func (eng *Engine) handler() (out bool) {

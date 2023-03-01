@@ -1,7 +1,7 @@
 package relay
 
 import (
-	"git-indra.lan/indra-labs/indra/pkg/types"
+	"git-indra.lan/indra-labs/indra/pkg/relay/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 

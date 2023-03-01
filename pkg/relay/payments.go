@@ -5,7 +5,7 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
-	"git-indra.lan/indra-labs/indra/pkg/messages/session"
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/session"
 )
 
 type Payment struct {

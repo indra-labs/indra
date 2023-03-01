@@ -5,9 +5,9 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/messages/hiddenservice"
-	"git-indra.lan/indra-labs/indra/pkg/messages/intro"
-	"git-indra.lan/indra-labs/indra/pkg/types"
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/hiddenservice"
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/intro"
+	"git-indra.lan/indra-labs/indra/pkg/relay/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 

@@ -5,14 +5,14 @@ import (
 	"runtime"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/messages/balance"
-	"git-indra.lan/indra-labs/indra/pkg/messages/confirm"
-	"git-indra.lan/indra-labs/indra/pkg/messages/crypt"
-	"git-indra.lan/indra-labs/indra/pkg/messages/exit"
-	"git-indra.lan/indra-labs/indra/pkg/messages/forward"
-	"git-indra.lan/indra-labs/indra/pkg/messages/getbalance"
-	"git-indra.lan/indra-labs/indra/pkg/messages/hiddenservice"
-	"git-indra.lan/indra-labs/indra/pkg/messages/reverse"
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/balance"
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/confirm"
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/crypt"
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/exit"
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/forward"
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/getbalance"
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/hiddenservice"
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/reverse"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 

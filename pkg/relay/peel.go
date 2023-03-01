@@ -2,25 +2,25 @@ package relay
 
 import (
 	"fmt"
-
+	
 	"github.com/davecgh/go-spew/spew"
-
-	"git-indra.lan/indra-labs/indra/pkg/messages/balance"
-	"git-indra.lan/indra-labs/indra/pkg/messages/confirm"
-	"git-indra.lan/indra-labs/indra/pkg/messages/crypt"
-	"git-indra.lan/indra-labs/indra/pkg/messages/delay"
-	"git-indra.lan/indra-labs/indra/pkg/messages/dxresponse"
-	"git-indra.lan/indra-labs/indra/pkg/messages/exit"
-	"git-indra.lan/indra-labs/indra/pkg/messages/forward"
-	"git-indra.lan/indra-labs/indra/pkg/messages/getbalance"
-	"git-indra.lan/indra-labs/indra/pkg/messages/hiddenservice"
-	"git-indra.lan/indra-labs/indra/pkg/messages/intro"
-	"git-indra.lan/indra-labs/indra/pkg/messages/introquery"
-	"git-indra.lan/indra-labs/indra/pkg/messages/magicbytes"
-	"git-indra.lan/indra-labs/indra/pkg/messages/response"
-	"git-indra.lan/indra-labs/indra/pkg/messages/reverse"
-	"git-indra.lan/indra-labs/indra/pkg/messages/session"
-	"git-indra.lan/indra-labs/indra/pkg/types"
+	
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/balance"
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/confirm"
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/crypt"
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/delay"
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/dxresponse"
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/exit"
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/forward"
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/getbalance"
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/hiddenservice"
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/intro"
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/introquery"
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/magicbytes"
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/response"
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/reverse"
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/session"
+	"git-indra.lan/indra-labs/indra/pkg/relay/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
