@@ -9,7 +9,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/ring"
-	"git-indra.lan/indra-labs/indra/pkg/service"
 	"git-indra.lan/indra-labs/indra/pkg/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -23,7 +22,7 @@ type Node struct {
 	IdentityBytes  pub.Bytes
 	IdentityPrv    *prv.Key
 	RelayRate      int                 // Base relay price/Mb.
-	Services       service.Services    // Services offered by this peer.
+	Services       Services            // Services offered by this peer.
 	HiddenServices Referrers           // Hidden services known by peer.
 	Load           *ring.BufferLoad    // Relay load.
 	Latency        *ring.BufferLatency // Latency to peer.
@@ -68,7 +67,7 @@ func NewNode(addr *netip.AddrPort, idPub *pub.Key, idPrv *prv.Key,
 	return
 }
 
-func (n *Node) AddService(s *service.Service) (e error) {
+func (n *Node) AddService(s *Service) (e error) {
 	n.Lock()
 	defer n.Unlock()
 	for i := range n.Services {
@@ -96,7 +95,7 @@ func (n *Node) DeleteService(port uint16) {
 	}
 }
 
-func (n *Node) FindService(port uint16) (service *service.Service) {
+func (n *Node) FindService(port uint16) (service *Service) {
 	n.Lock()
 	defer n.Unlock()
 	for i := range n.Services {

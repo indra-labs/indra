@@ -7,7 +7,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/service"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -57,7 +56,7 @@ func (sm *SessionManager) ReceiveToLocalNode(port uint16) <-chan slice.Bytes {
 	return sm.GetLocalNode().ReceiveFrom(port)
 }
 
-func (sm *SessionManager) AddServiceToLocalNode(s *service.Service) (e error) {
+func (sm *SessionManager) AddServiceToLocalNode(s *Service) (e error) {
 	sm.Lock()
 	defer sm.Unlock()
 	return sm.GetLocalNode().AddService(s)

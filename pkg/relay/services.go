@@ -1,8 +1,6 @@
-package service
+package relay
 
-import (
-	"git-indra.lan/indra-labs/indra/pkg/types"
-)
+import "git-indra.lan/indra-labs/indra/pkg/types"
 
 type Service struct {
 	Port      uint16

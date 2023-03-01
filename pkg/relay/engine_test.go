@@ -14,7 +14,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/messages/intro"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	"git-indra.lan/indra-labs/indra/pkg/service"
 	"git-indra.lan/indra-labs/indra/pkg/transport"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 	"git-indra.lan/indra-labs/indra/pkg/util/tests"
@@ -88,7 +87,7 @@ func TestClient_SendExit(t *testing.T) {
 		if i == 0 {
 			continue
 		}
-		e = clients[i].AddServiceToLocalNode(&service.Service{
+		e = clients[i].AddServiceToLocalNode(&Service{
 			Port:      port,
 			Transport: sim,
 			RelayRate: 18000 * 4,
