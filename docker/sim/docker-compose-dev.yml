@@ -1,26 +1,26 @@
 version: '3'
 services:
-  btcd:
-    sysctls:
-      - "net.ipv6.conf.all.disable_ipv6=0"
-    image: indralabs/btcd-multi-arch:linux-amd64-dev
-    container_name: indra-btcd
-    volumes:
-      - btcd_config:/etc/btcd:ro
-      - btcd_data:/var/btcd
-    networks:
-      indranet:
-        ipv4_address: 172.16.238.254
-    expose:
-      - 8333
-      - 8334
-    command:
-      - "--listen=0.0.0.0:8333"
-      - "--rpclisten=0.0.0.0:8334"
-      - "--rpcuser=simnet"
-      - "--rpcpass=simnet"
-      - "--simnet"
-      - "--txindex"
+#  btcd:
+#    sysctls:
+#      - "net.ipv6.conf.all.disable_ipv6=0"
+#    image: indralabs/btcd-multi-arch:linux-amd64-dev
+#    container_name: indra-btcd
+#    volumes:
+#      - btcd_config:/etc/btcd:ro
+#      - btcd_data:/var/btcd
+#    networks:
+#      indranet:
+#        ipv4_address: 172.16.238.254
+#    expose:
+#      - 8333
+#      - 8334
+#    command:
+#      - "--listen=0.0.0.0:8333"
+#      - "--rpclisten=0.0.0.0:8334"
+#      - "--rpcuser=simnet"
+#      - "--rpcpass=simnet"
+#      - "--simnet"
+#      - "--txindex"
   seed0:
     sysctls:
       - "net.ipv6.conf.all.disable_ipv6=0"
@@ -28,6 +28,7 @@ services:
     container_name: indra-seed0
     volumes:
       - seed0_gopath:/go
+      - seed0_var:/var/indra
       - ./../../:/indra
     networks:
       indranet:
@@ -37,10 +38,11 @@ services:
       - 62135
     environment:
       INDRA_NETWORK: "simnet"
-      INDRA_KEY: "66T7j5JnhsjDTqVvV8zEM2rTUobu66tocizfqArVEnP1"
-      INDRA_LISTEN: "/ip4/0.0.0.0/tcp/62134 /ip6/::/tcp/62134"
+      INDRA_P2P_LISTEN: "/ip4/0.0.0.0/tcp/62134 /ip6/::/tcp/62134"
+      INDRA_STORE_KEY: "4oTvAqetHfJMACt7ETfrSeF6df41Hm7cYjbN3A72NSiW"
+      INDRA_STORE_PATH: "/var/indra/data"
     command:
-      - "seed"
+      - "seed serve"
   seed1:
     sysctls:
       - "net.ipv6.conf.all.disable_ipv6=0"
@@ -48,6 +50,7 @@ services:
     container_name: indra-seed1
     volumes:
       - seed1_gopath:/go
+      - seed1_var:/var/indra
       - ./../../:/indra
     networks:
       indranet:
@@ -59,10 +62,11 @@ services:
       - 62135
     environment:
       INDRA_NETWORK: "simnet"
-      INDRA_KEY: "66T7j5JnhsjDTqVvV8zEM2rTUobu66tocizfqArVEnP2"
-      INDRA_LISTEN: "/ip4/0.0.0.0/tcp/62134 /ip6/::/tcp/62134"
+      INDRA_P2P_LISTEN: "/ip4/0.0.0.0/tcp/62134 /ip6/::/tcp/62134"
+      INDRA_STORE_KEY: "CMHYEnbb3kWmuHwDpXksYWBTx8uX8B52kAtKv11ARdQv"
+      INDRA_STORE_PATH: "/var/indra/data"
     command:
-      - "seed"
+      - "seed serve"
   seed2:
     sysctls:
       - "net.ipv6.conf.all.disable_ipv6=0"
@@ -70,6 +74,7 @@ services:
     container_name: indra-seed2
     volumes:
       - seed2_gopath:/go
+      - seed2_var:/var/indra
       - ./../../:/indra
     networks:
       indranet:
@@ -82,10 +87,11 @@ services:
       - 62135
     environment:
       INDRA_NETWORK: "simnet"
-      INDRA_KEY: "66T7j5JnhsjDTqVvV8zEM2rTUobu66tocizfqArVEnP3"
-      INDRA_LISTEN: "/ip4/0.0.0.0/tcp/62134 /ip6/::/tcp/62134"
+      INDRA_P2P_LISTEN: "/ip4/0.0.0.0/tcp/62134 /ip6/::/tcp/62134"
+      INDRA_STORE_KEY: "9835EZPpdbd4H7meoqNS2MK7GwUPJJQQY3yHVEfCN7f7"
+      INDRA_STORE_PATH: "/var/indra/data"
     command:
-      - "seed"
+      - "seed serve"
 #  peer0:
 #    sysctls:
 #      - "net.ipv6.conf.all.disable_ipv6=0"
@@ -156,8 +162,11 @@ volumes:
   btcd_config:
   btcd_data:
   seed0_gopath:
+  seed0_var:
   seed1_gopath:
+  seed1_var:
   seed2_gopath:
+  seed2_var:
   peer0_gopath:
   peer1_gopath:
   peer2_gopath:

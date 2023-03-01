@@ -118,8 +118,8 @@ var SimnetServerParams = &Params{
 
 	// Should be passed via --seed
 	DNSSeedAddresses: []*SeedAddress{
-		NewSeedAddress("seed0", "16Uiu2HAmCxWoKp4vs7xrmzbScHEhUK7trCgCPhKPZRBiUvSxS7xA"),
-		NewSeedAddress("seed1", "16Uiu2HAmTKk6BvJFPmcQ6q92XgvQ4ZPu1AVjQxMvCfM4you9Zyvc"),
-		NewSeedAddress("seed2", "16Uiu2HAm8tCAW7D9WFLxkda52R73nSk9yBCFW8uwA4MZPzHYVhnW"),
+		NewSeedAddress("seed0", "16Uiu2HAmHL9cwDdGdGEQk7K5xTBH3rUKoRWS3tWgjej9WmjMG6L9"),
+		NewSeedAddress("seed1", "16Uiu2HAm3ZVpmNPnk67eCKsR3HCMSLhbw3THcBDpyKwCE5GNgHVN"),
+		NewSeedAddress("seed2", "16Uiu2HAmTP7o9yyuFz8f5sRGr7KTamuMo6UguuTqPMaJavdGX7Ju"),
 	},
 }
