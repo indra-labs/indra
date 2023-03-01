@@ -24,4 +24,4 @@ USER indra:indra
 # :8334  indra RPC port
 EXPOSE 8337 8338
 
-ENTRYPOINT ["/bin/indra", "--conffile=/etc/indra/indra.conf"]
+ENTRYPOINT ["/bin/indra", "--config-file=/etc/indra/indra.conf", "--data-dir=/var/indra/data", "--logs-dir=/var/indra/logs"]

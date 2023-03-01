@@ -110,13 +110,15 @@ RUN set -ex && echo "adding and permissioning /var directories" \
     && mkdir -pv /var/btcd/.btcd && chmod 750 /var/btcd/.btcd && chown btcd:btcd /var/btcd/.btcd \
     && mkdir -pv /var/lnd && chmod 750 /var/lnd && chown lnd:lnd /var/lnd \
     && mkdir -pv /var/lnd/.lnd && chmod 750 /var/lnd/.lnd && chown lnd:lnd /var/lnd/.lnd \
-    && mkdir -pv /var/indra && chmod 750 /var/indra && chown indra:indra /var/indra
+    && mkdir -pv /var/indra && chmod 750 /var/indra && chown indra:indra /var/indra \
+    && mkdir -pv /var/run/indra && chmod 750 /var/run/indra && chown indra:indra /var/run/indra
 
 RUN set -ex && echo "copying /var directories to root filesystem" \
     && cp -rp /var/btcwallet /tmp/root-fs/var/btcwallet \
     && cp -rp /var/btcd /tmp/root-fs/var/btcd \
     && cp -rp /var/lnd /tmp/root-fs/var/lnd \
-    && cp -rp /var/indra /tmp/root-fs/var/indra
+    && cp -rp /var/indra /tmp/root-fs/var/indra \
+    && cp -rp /var/run /tmp/root-fs/var/run
 
 # DEBUG
 RUN set -ex && echo "checking /var directories on root filesystem" \
@@ -127,7 +129,8 @@ RUN set -ex && echo "checking /var directories on root filesystem" \
     && ls -hal /tmp/root-fs/var/btcd/.btcd \
     && ls -hal /tmp/root-fs/var/lnd \
     && ls -hal /tmp/root-fs/var/lnd/.lnd \
-    && ls -hal /tmp/root-fs/var/indra
+    && ls -hal /tmp/root-fs/var/indra \
+    && ls -hal /tmp/root-fs/var/run/indra
 
 WORKDIR /tmp/root-fs
 
