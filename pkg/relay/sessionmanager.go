@@ -96,7 +96,7 @@ func (sm *SessionManager) AddSession(s *Session) {
 	sm.Sessions = append(sm.Sessions, s)
 	// log.D.S(s.ID, sm.Sessions)
 	// Hop 5, the return session( s) are not added to the SessionCache as they
-	// are not billable and are only related to the node of the Engine.
+	// are not Billable and are only related to the node of the Engine.
 	if s.Hop < 5 {
 		log.D.Ln("storing session", s)
 		sm.SessionCache = sm.SessionCache.Add(s)
@@ -158,9 +158,9 @@ func (sm *SessionManager) DeleteSession(id nonce.ID) {
 	defer sm.Unlock()
 	for i := range sm.Sessions {
 		if sm.Sessions[i].ID == id {
-			// Delete from Session cache.
+			// ProcessAndDelete from Session cache.
 			sm.SessionCache[sm.Sessions[i].Node.ID][sm.Sessions[i].Hop] = nil
-			// Delete from Sessions.
+			// ProcessAndDelete from Sessions.
 			sm.Sessions = append(sm.Sessions[:i], sm.Sessions[i+1:]...)
 		}
 	}
@@ -219,7 +219,7 @@ func (sm *SessionManager) DeleteNodeAndSessions(id nonce.ID) {
 		return
 	}
 	delete(sm.SessionCache, id)
-	// Delete from the nodes list.
+	// ProcessAndDelete from the nodes list.
 	for i := range sm.nodes {
 		if sm.nodes[i].ID == id {
 			sm.nodes = append(sm.nodes[:i], sm.nodes[i+1:]...)

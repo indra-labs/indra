@@ -70,8 +70,7 @@ func NewSession(
 
 // IncSats adds to the Remaining counter, used when new data allowance has been
 // purchased.
-func (s *Session) IncSats(sats lnwire.MilliSatoshi,
-	sender bool, typ string) {
+func (s *Session) IncSats(sats lnwire.MilliSatoshi, sender bool, typ string) {
 	who := "relay"
 	if sender {
 		who = "client"
@@ -84,8 +83,9 @@ func (s *Session) IncSats(sats lnwire.MilliSatoshi,
 // DecSats reduces the amount Remaining, if the requested amount would put
 // the total below zero it returns false, signalling that new data allowance
 // needs to be purchased before any further messages can be sent.
-func (s *Session) DecSats(sats lnwire.MilliSatoshi,
-	sender bool, typ string) bool {
+func (s *Session) DecSats(sats lnwire.MilliSatoshi, sender bool,
+	typ string) bool {
+	
 	if s.Remaining < sats {
 		return false
 	}
@@ -141,7 +141,7 @@ func (eng *Engine) session(on *session.Layer, b slice.Bytes,
 // different hop numbers to relays with existing sessions. Note that all 5 of
 // the sessions will be paid the amount specified, not divided up.
 func (eng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
-	hook func()) (e error) {
+	fn func()) (e error) {
 	
 	var nodes [5]*Node
 	nodes = eng.SessionManager.SelectUnusedCircuit()
@@ -219,7 +219,7 @@ func (eng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 			eng.Sessions = append(eng.Sessions, sessions[i])
 			eng.SessionManager.PendingPayments.Delete(s[i].PreimageHash())
 		}
-		hook()
+		fn()
 	})
 	return
 }

@@ -21,7 +21,7 @@ func (eng *Engine) confirm(on *confirm.Layer,
 	
 	// When a confirmation arrives check if it is registered for and run the
 	// hook that was registered with it.
-	eng.PendingResponses.Delete(on.ID, nil)
+	eng.PendingResponses.ProcessAndDelete(on.ID, nil)
 }
 
 func (eng *Engine) crypt(on *crypt.Layer, b slice.Bytes,
@@ -111,7 +111,7 @@ func (eng *Engine) response(on *response.Layer, b slice.Bytes,
 				eng.DecSession(s.ID, relayRate*dataSize, true, typ)
 			}
 		}
-		eng.PendingResponses.Delete(on.ID, on.Bytes)
+		eng.PendingResponses.ProcessAndDelete(on.ID, on.Bytes)
 	}
 }
 

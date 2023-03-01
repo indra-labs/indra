@@ -9,15 +9,16 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
-func CreateNMockCircuits(inclSessions bool, nCircuits int, nReturnSessions int) (cl []*Engine, e error) {
+func createNMockCircuits(inclSessions bool, nCircuits int,
+	nReturnSessions int) (cl []*Engine, e error) {
 	
 	nTotal := 1 + nCircuits*5
 	cl = make([]*Engine, nTotal)
 	nodes := make([]*Node, nTotal)
-	transports := make([]types.Transport, nTotal)
+	tpts := make([]types.Transport, nTotal)
 	sessions := make(Sessions, nTotal-1)
-	for i := range transports {
-		transports[i] = transport.NewSim(nTotal)
+	for i := range tpts {
+		tpts[i] = transport.NewSim(nTotal)
 	}
 	for i := range nodes {
 		var idPrv *prv.Key
@@ -30,10 +31,14 @@ func CreateNMockCircuits(inclSessions bool, nCircuits int, nReturnSessions int) 
 		if i == 0 {
 			local = true
 		}
-		nodes[i], _ = NewNode(addr, idPub, idPrv, transports[i], 50000,
-			local)
-		if cl[i], e = NewEngine(transports[i], idPrv, nodes[i], nil,
-			nReturnSessions); check(e) {
+		nodes[i], _ = NewNode(addr, idPub, idPrv, tpts[i], 50000, local)
+		if cl[i], e = NewEngine(EngineParams{
+			tpts[i],
+			idPrv,
+			nodes[i],
+			nil,
+			nReturnSessions},
+		); check(e) {
 			return
 		}
 		cl[i].SetLocalNodeAddress(nodes[i].AddrPort)
@@ -65,4 +70,12 @@ func CreateNMockCircuits(inclSessions bool, nCircuits int, nReturnSessions int) 
 		}
 	}
 	return
+}
+func CreateNMockCircuits(nCirc int, nReturns int) (cl []*Engine, e error) {
+	return createNMockCircuits(false, nCirc, nReturns)
+}
+
+func CreateNMockCircuitsWithSessions(nCirc int, nReturns int) (cl []*Engine, e error) {
+	return createNMockCircuits(true, nCirc, nReturns)
+	
 }

@@ -15,7 +15,16 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
-// SendExit constructs a message containing an arbitrary payload to a node (3rd
+type ExitParams struct {
+	Port    uint16
+	Payload slice.Bytes
+	ID      nonce.ID
+	Client  *Session
+	S       Circuit
+	KS      *signer.KeySet
+}
+
+// Exit constructs a message containing an arbitrary payload to a node (3rd
 // hop) with a set of 3 ciphers derived from the hidden PayloadPub of the return
 // hops that are layered progressively after the Exit message.
 //
@@ -32,28 +41,27 @@ import (
 // The header remains a constant size and each node in the Reverse trims off
 // their section at the top, moves the next crypt header to the top and pads the
 // remainder with noise, so it always looks like the first hop.
-func SendExit(port uint16, payload slice.Bytes, id nonce.ID,
-	client *Session, s Circuit, ks *signer.KeySet) Skins {
+func Exit(p ExitParams) Skins {
 	
 	var prvs [3]*prv.Key
 	for i := range prvs {
-		prvs[i] = ks.Next()
+		prvs[i] = p.KS.Next()
 	}
 	n := GenNonces(6)
 	var returnNonces [3]nonce.IV
 	copy(returnNonces[:], n[3:])
 	var pubs [3]*pub.Key
-	pubs[0] = s[3].PayloadPub
-	pubs[1] = s[4].PayloadPub
-	pubs[2] = client.PayloadPub
+	pubs[0] = p.S[3].PayloadPub
+	pubs[1] = p.S[4].PayloadPub
+	pubs[2] = p.Client.PayloadPub
 	return Skins{}.
-		ReverseCrypt(s[0], ks.Next(), n[0], 3).
-		ReverseCrypt(s[1], ks.Next(), n[1], 2).
-		ReverseCrypt(s[2], ks.Next(), n[2], 1).
-		Exit(port, prvs, pubs, returnNonces, id, payload).
-		ReverseCrypt(s[3], prvs[0], n[3], 3).
-		ReverseCrypt(s[4], prvs[1], n[4], 2).
-		ReverseCrypt(client, prvs[2], n[5], 1)
+		ReverseCrypt(p.S[0], p.KS.Next(), n[0], 3).
+		ReverseCrypt(p.S[1], p.KS.Next(), n[1], 2).
+		ReverseCrypt(p.S[2], p.KS.Next(), n[2], 1).
+		Exit(p.Port, prvs, pubs, returnNonces, p.ID, p.Payload).
+		ReverseCrypt(p.S[3], prvs[0], n[3], 3).
+		ReverseCrypt(p.S[4], prvs[1], n[4], 2).
+		ReverseCrypt(p.Client, prvs[2], n[5], 1)
 }
 
 func (eng *Engine) exit(ex *exit.Layer, b slice.Bytes,
@@ -113,7 +121,7 @@ func (eng *Engine) SendExit(port uint16, msg slice.Bytes, id nonce.ID,
 	se := eng.SelectHops(hops, s)
 	var c Circuit
 	copy(c[:], se)
-	o := SendExit(port, msg, id, se[len(se)-1], c, eng.KeySet)
+	o := Exit(ExitParams{port, msg, id, se[len(se)-1], c, eng.KeySet})
 	log.D.Ln("sending out exit onion")
 	res := eng.PostAcctOnion(o)
 	eng.SendWithOneHook(c[0].AddrPort, res, hook)
@@ -127,7 +135,7 @@ func (eng *Engine) MakeExit(port uint16, msg slice.Bytes, id nonce.ID,
 	s[2] = exit
 	se := eng.SelectHops(hops, s)
 	copy(c[:], se)
-	o = SendExit(port, msg, id, se[len(se)-1], c, eng.KeySet)
+	o = Exit(ExitParams{port, msg, id, se[len(se)-1], c, eng.KeySet})
 	return
 }
 

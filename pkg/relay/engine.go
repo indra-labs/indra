@@ -1,8 +1,6 @@
 package relay
 
 import (
-	"time"
-	
 	"github.com/cybriq/qu"
 	"go.uber.org/atomic"
 	
@@ -20,8 +18,6 @@ var (
 	check = log.E.Chk
 )
 
-const DefaultTimeout = time.Second
-
 type Engine struct {
 	*PendingResponses
 	*SessionManager
@@ -34,12 +30,18 @@ type Engine struct {
 	qu.C
 }
 
-func NewEngine(tpt types.Transport, idPrv *prv.Key, no *Node,
-	nodes []*Node, nReturnSessions int) (c *Engine, e error) {
-	
-	no.Transport = tpt
-	no.IdentityPrv = idPrv
-	no.IdentityPub = pub.Derive(idPrv)
+type EngineParams struct {
+	Tpt             types.Transport
+	IDPrv           *prv.Key
+	No              *Node
+	Nodes           []*Node
+	NReturnSessions int
+}
+
+func NewEngine(p EngineParams) (c *Engine, e error) {
+	p.No.Transport = p.Tpt
+	p.No.IdentityPrv = p.IDPrv
+	p.No.IdentityPub = pub.Derive(p.IDPrv)
 	var ks *signer.KeySet
 	if _, ks, e = signer.New(); check(e) {
 		return
@@ -53,11 +55,11 @@ func NewEngine(tpt types.Transport, idPrv *prv.Key, no *Node,
 		Pause:            qu.T(),
 		C:                qu.T(),
 	}
-	c.AddNodes(append([]*Node{no}, nodes...)...)
+	c.AddNodes(append([]*Node{p.No}, p.Nodes...)...)
 	// AddIntro a return session for receiving responses, ideally more of these will
 	// be generated during operation and rotated out over time.
-	for i := 0; i < nReturnSessions; i++ {
-		c.AddSession(NewSession(nonce.NewID(), no, 0, nil, nil, 5))
+	for i := 0; i < p.NReturnSessions; i++ {
+		c.AddSession(NewSession(nonce.NewID(), p.No, 0, nil, nil, 5))
 	}
 	return
 }

@@ -45,8 +45,7 @@ const (
 // available. The Node for a client's self should use true in the local
 // parameter to not initialise the peer state ring buffers as it won't use them.
 func NewNode(addr *netip.AddrPort, idPub *pub.Key, idPrv *prv.Key,
-	tpt types.Transport, relayRate int,
-	local bool) (n *Node, id nonce.ID) {
+	tpt types.Transport, relayRate int, local bool) (n *Node, id nonce.ID) {
 	
 	id = nonce.NewID()
 	n = &Node{

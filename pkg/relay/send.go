@@ -117,8 +117,15 @@ func (eng *Engine) SendWithOneHook(ap *netip.AddrPort, res SendData,
 			log.D.Ln("nil response hook")
 		}
 	}
-	eng.PendingResponses.Add(res.last, len(res.b), res.sessions, res.billable,
-		res.ret, res.port, responseHook, res.postAcct)
+	eng.PendingResponses.Add(PendingResponseParams{
+		res.last,
+		len(res.b),
+		res.sessions,
+		res.billable,
+		res.ret,
+		res.port,
+		responseHook,
+		res.postAcct})
 	log.T.Ln("sending out onion")
 	eng.Send(ap, res.b)
 }

@@ -3,9 +3,9 @@ package relay
 import (
 	"sync"
 	"time"
-
+	
 	"github.com/cybriq/qu"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -41,22 +41,30 @@ func (p *PendingResponses) GetOldestPending() (pr *PendingResponse) {
 	return
 }
 
-func (p *PendingResponses) Add(id nonce.ID, sentSize int, s Sessions,
-	billable []nonce.ID, ret nonce.ID, port uint16,
-	callback func(id nonce.ID, b slice.Bytes), postAcct []func()) {
+type PendingResponseParams struct {
+	ID       nonce.ID
+	SentSize int
+	S        Sessions
+	Billable []nonce.ID
+	Ret      nonce.ID
+	Port     uint16
+	Callback func(id nonce.ID, b slice.Bytes)
+	PostAcct []func()
+}
 
+func (p *PendingResponses) Add(pr PendingResponseParams) {
 	p.Lock()
 	defer p.Unlock()
-	log.T.F("adding response hook %s", id)
+	log.T.F("adding response hook %s", pr.ID)
 	r := &PendingResponse{
-		ID:       id,
-		SentSize: sentSize,
+		ID:       pr.ID,
+		SentSize: pr.SentSize,
 		Time:     time.Now(),
-		Billable: billable,
-		Return:   ret,
-		Port:     port,
-		PostAcct: postAcct,
-		Callback: callback,
+		Billable: pr.Billable,
+		Return:   pr.Ret,
+		Port:     pr.Port,
+		PostAcct: pr.PostAcct,
+		Callback: pr.Callback,
 		Success:  qu.T(),
 	}
 	p.responses = append(p.responses, r)
@@ -84,9 +92,9 @@ func (p *PendingResponses) Find(id nonce.ID) (pr *PendingResponse) {
 	return
 }
 
-// Delete runs the callback and post accounting function list and deletes the
+// ProcessAndDelete runs the callback and post accounting function list and deletes the
 // pending response.
-func (p *PendingResponses) Delete(id nonce.ID, b slice.Bytes) {
+func (p *PendingResponses) ProcessAndDelete(id nonce.ID, b slice.Bytes) {
 	p.Lock()
 	defer p.Unlock()
 	log.T.F("deleting response %s", id)

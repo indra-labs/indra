@@ -27,7 +27,7 @@ func TestClient_SendSessionKeys(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuits(false, 2, 2); check(e) {
+	if clients, e = CreateNMockCircuits(2, 2); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -77,7 +77,7 @@ func TestClient_SendExit(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuits(true, 2, 2); check(e) {
+	if clients, e = CreateNMockCircuitsWithSessions(2, 2); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -111,7 +111,7 @@ func TestClient_SendExit(t *testing.T) {
 			return
 		}
 		quit.Q()
-		t.Error("SendExit test failed")
+		t.Error("Exit test failed")
 	}()
 out:
 	for i := 3; i < len(clients[0].Sessions)-1; i++ {
@@ -164,7 +164,7 @@ func TestClient_SendPing(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuits(true, 1, 2); check(e) {
+	if clients, e = CreateNMockCircuitsWithSessions(1, 2); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -211,7 +211,7 @@ func TestClient_SendGetBalance(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuits(true, 2, 2); check(e) {
+	if clients, e = CreateNMockCircuitsWithSessions(2, 2); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -256,7 +256,7 @@ func TestClient_HiddenService(t *testing.T) {
 	var clients []*Engine
 	var e error
 	const returns = 2
-	if clients, e = CreateNMockCircuits(false, 5, returns); check(e) {
+	if clients, e = CreateNMockCircuits(5, returns); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -317,7 +317,7 @@ func TestClient_HiddenServiceRequest(t *testing.T) {
 	var clients []*Engine
 	var e error
 	const returns = 2
-	if clients, e = CreateNMockCircuits(false, 10, returns); check(e) {
+	if clients, e = CreateNMockCircuits(10, returns); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
