@@ -29,27 +29,7 @@ signals:
 			startupErrors <- err
 			return
 		case <-storage.WhenIsReady():
-
-			//log.I.Ln("shutting down rpc server, with unlock service")
-			//
-			//rpc.Shutdown()
-
 			break signals
-		//case <-storage.WhenIsLocked():
-		//
-		//	log.I.Ln("running rpc server, with unlock service")
-		//
-		//	go rpc.RunWith(
-		//		func(srv *grpc.Server) {
-		//			storage.RegisterUnlockServiceServer(srv, storage.NewUnlockService())
-		//		},
-		//		rpc.WithDisableTunnel(),
-		//	)
-		//
-		//case err := <-rpc.WhenStartFailed():
-		//	startupErrors <- err
-		//case <-rpc.IsReady():
-		//	log.I.Ln("... awaiting unlock over rpc")
 		case <-ctx.Done():
 			Shutdown()
 			return
