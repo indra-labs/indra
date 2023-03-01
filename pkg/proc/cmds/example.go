@@ -5,7 +5,7 @@ import (
 	"encoding/base32"
 	"fmt"
 	"runtime"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/proc/opts/config"
 	"git-indra.lan/indra-labs/indra/pkg/proc/opts/duration"
 	"git-indra.lan/indra-labs/indra/pkg/proc/opts/float"
@@ -320,14 +320,14 @@ func GetExampleCommands() (c *Command) {
 					"AddCheckpoints": list.New(meta.Data{
 						Aliases:       Tags("AC"),
 						Tags:          Tags("node"),
-						Label:         "Add Checkpoints",
+						Label:         "AddIntro Checkpoints",
 						Description:   "add custom checkpoints",
 						Documentation: lorem,
 					}),
 					"AddPeers": list.New(meta.Data{
 						Aliases:       Tags("AP"),
 						Tags:          Tags("node"),
-						Label:         "Add Peers",
+						Label:         "AddIntro Peers",
 						Description:   "manually adds addresses to try to connect to",
 						Documentation: lorem,
 					}),

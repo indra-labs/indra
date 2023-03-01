@@ -7,7 +7,7 @@ package ciph
 import (
 	"crypto/aes"
 	"crypto/cipher"
-
+	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/ecdh"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
@@ -26,7 +26,6 @@ var (
 // keys using ECDH.
 func GetBlock(from *prv.Key, to *pub.Key) (block cipher.Block) {
 	secret := ecdh.Compute(from, to)
-	// log.T.C(func() string { return "\n" + spew.Sdump(secret) })
 	block, _ = aes.NewCipher(secret[:])
 	return
 }

@@ -7,7 +7,7 @@ package sig
 import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
-
+	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
@@ -21,13 +21,11 @@ var (
 )
 
 // Len is the length of the signatures used in Indra, compact keys that can have
-// the public key extracted from them, thus eliminating the need to separately
-// specify it in messages.
+// the public key extracted from them.
 const Len = 65
 
 // Bytes is an ECDSA BIP62 formatted compact signature which allows the recovery
-// of the public key from the signature. This allows messages to avoid adding
-// extra bytes to also specify the public key of the signer.
+// of the public key from the signature.
 type Bytes [Len]byte
 
 // Sign produces an ECDSA BIP62 compact signature.

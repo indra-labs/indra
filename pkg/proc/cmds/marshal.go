@@ -2,6 +2,7 @@ package cmds
 
 import (
 	"encoding"
+	"fmt"
 	"io"
 	"os"
 	"sort"
@@ -26,9 +27,9 @@ type Entry struct {
 	value interface{}
 }
 
-// func (e Entry) String() string {
-// 	return fmt.Sprint(e.path, "/", e.name, "=", e.value)
-// }
+func (e Entry) String() string {
+	return fmt.Sprint(e.path, "/", e.name, "=", e.value)
+}
 
 type Entries []Entry
 

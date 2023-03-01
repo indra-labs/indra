@@ -1,9 +1,6 @@
 package relay
 
 import (
-	"sync"
-	"time"
-	
 	"github.com/cybriq/qu"
 	"go.uber.org/atomic"
 	
@@ -13,8 +10,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	"git-indra.lan/indra-labs/indra/pkg/traffic"
-	"git-indra.lan/indra-labs/indra/pkg/types"
+	"git-indra.lan/indra-labs/indra/pkg/relay/types"
 )
 
 var (
@@ -22,26 +18,30 @@ var (
 	check = log.E.Chk
 )
 
-const DefaultTimeout = time.Second
-
 type Engine struct {
-	sync.Mutex
 	*PendingResponses
-	*traffic.SessionManager
+	*SessionManager
+	*Introductions
 	*signer.KeySet
-	Load          byte
+	Load          atomic.Uint32
 	TimeoutSignal qu.C
 	Pause         qu.C
 	ShuttingDown  atomic.Bool
 	qu.C
 }
 
-func NewEngine(tpt types.Transport, hdrPrv *prv.Key, no *traffic.Node,
-	nodes []*traffic.Node, nReturnSessions int) (c *Engine, e error) {
-	
-	no.Transport = tpt
-	no.IdentityPrv = hdrPrv
-	no.IdentityPub = pub.Derive(hdrPrv)
+type EngineParams struct {
+	Tpt             types.Transport
+	IDPrv           *prv.Key
+	No              *Node
+	Nodes           []*Node
+	NReturnSessions int
+}
+
+func NewEngine(p EngineParams) (c *Engine, e error) {
+	p.No.Transport = p.Tpt
+	p.No.IdentityPrv = p.IDPrv
+	p.No.IdentityPub = pub.Derive(p.IDPrv)
 	var ks *signer.KeySet
 	if _, ks, e = signer.New(); check(e) {
 		return
@@ -49,22 +49,24 @@ func NewEngine(tpt types.Transport, hdrPrv *prv.Key, no *traffic.Node,
 	c = &Engine{
 		PendingResponses: &PendingResponses{},
 		KeySet:           ks,
-		SessionManager:   traffic.NewSessionManager(),
+		SessionManager:   NewSessionManager(),
+		Introductions:    NewIntroductions(),
 		TimeoutSignal:    qu.T(),
 		Pause:            qu.T(),
 		C:                qu.T(),
 	}
-	c.AddNodes(append([]*traffic.Node{no}, nodes...)...)
-	// Add a return session for receiving responses, ideally more of these will
+	c.AddNodes(append([]*Node{p.No}, p.Nodes...)...)
+	// AddIntro a return session for receiving responses, ideally more of these will
 	// be generated during operation and rotated out over time.
-	for i := 0; i < nReturnSessions; i++ {
-		c.AddSession(traffic.NewSession(nonce.NewID(), no, 0, nil, nil, 5))
+	for i := 0; i < p.NReturnSessions; i++ {
+		c.AddSession(NewSession(nonce.NewID(), p.No, 0, nil, nil, 5))
 	}
 	return
 }
 
 // Start a single thread of the Engine.
 func (eng *Engine) Start() {
+	log.D.Ln("starting engine")
 	for {
 		if eng.handler() {
 			break

@@ -9,12 +9,12 @@ import (
 	"github.com/cybriq/qu"
 	"go.uber.org/atomic"
 	
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	"git-indra.lan/indra-labs/indra/pkg/service"
-	"git-indra.lan/indra-labs/indra/pkg/traffic"
-	"git-indra.lan/indra-labs/indra/pkg/transport"
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/intro"
+	"git-indra.lan/indra-labs/indra/pkg/relay/transport"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 	"git-indra.lan/indra-labs/indra/pkg/util/tests"
 )
@@ -23,10 +23,10 @@ import (
 //  (check relay and client see the same balance after the operations)
 
 func TestClient_SendSessionKeys(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+	log2.SetLogLevel(log2.Trace)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuits(false, 2, 2); check(e) {
+	if clients, e = CreateNMockCircuits(2, 2); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -73,10 +73,10 @@ func TestClient_SendSessionKeys(t *testing.T) {
 }
 
 func TestClient_SendExit(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+	log2.SetLogLevel(log2.Trace)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuits(true, 2, 2); check(e) {
+	if clients, e = CreateNMockCircuitsWithSessions(2, 2); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -87,11 +87,15 @@ func TestClient_SendExit(t *testing.T) {
 		if i == 0 {
 			continue
 		}
-		_ = clients[i].AddServiceToLocalNode(&service.Service{
+		e = clients[i].AddServiceToLocalNode(&Service{
 			Port:      port,
 			Transport: sim,
 			RelayRate: 18000 * 4,
 		})
+		if check(e) {
+			t.Error(e)
+			t.FailNow()
+		}
 	}
 	// Start up the clients.
 	for _, v := range clients {
@@ -106,12 +110,11 @@ func TestClient_SendExit(t *testing.T) {
 			return
 		}
 		quit.Q()
-		t.Error("SendExit test failed")
+		t.Error("Exit test failed")
 	}()
 out:
-	for i := 1; i < len(clients[0].Sessions)-1; i++ {
+	for i := 3; i < len(clients[0].Sessions)-1; i++ {
 		wg.Add(1)
-		var c traffic.Circuit
 		var msg slice.Bytes
 		if msg, _, e = tests.GenMessage(64, "request"); check(e) {
 			t.Error(e)
@@ -124,9 +127,10 @@ out:
 			t.FailNow()
 		}
 		sess := clients[0].Sessions[i]
-		c[sess.Hop] = clients[0].Sessions[i]
+		// c[sess.Hop] = clients[0].Sessions[i]
 		id := nonce.NewID()
-		clients[0].SendExit(port, msg, id, clients[0].Sessions[i], func(idd nonce.ID, b slice.Bytes) {
+		clients[0].SendExit(port, msg, id, sess, func(idd nonce.ID,
+			b slice.Bytes) {
 			if sha256.Single(b) != respHash {
 				t.Error("failed to receive expected message")
 			}
@@ -135,7 +139,7 @@ out:
 			}
 			log.I.F("success\n\n")
 			wg.Done()
-		}, 0)
+		})
 		bb := <-clients[3].ReceiveToLocalNode(port)
 		log.T.S(bb.ToBytes())
 		if e = clients[3].SendFromLocalNode(port, respMsg); check(e) {
@@ -159,7 +163,7 @@ func TestClient_SendPing(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuits(true, 1, 2); check(e) {
+	if clients, e = CreateNMockCircuitsWithSessions(1, 2); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -179,9 +183,9 @@ func TestClient_SendPing(t *testing.T) {
 		t.Error("SendPing test failed")
 	}()
 out:
-	for i := 1; i < len(clients[0].Sessions)-1; i++ {
+	for i := 3; i < len(clients[0].Sessions)-1; i++ {
 		wg.Add(1)
-		var c traffic.Circuit
+		var c Circuit
 		sess := clients[0].Sessions[i]
 		c[sess.Hop] = clients[0].Sessions[i]
 		clients[0].SendPing(c,
@@ -203,10 +207,10 @@ out:
 }
 
 func TestClient_SendGetBalance(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+	log2.SetLogLevel(log2.Trace)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuits(true, 2, 2); check(e) {
+	if clients, e = CreateNMockCircuitsWithSessions(2, 2); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -241,6 +245,133 @@ out:
 		wg.Wait()
 	}
 	quit.Q()
+	for _, v := range clients {
+		v.Shutdown()
+	}
+}
+
+func TestClient_HiddenService(t *testing.T) {
+	log2.SetLogLevel(log2.Info)
+	var clients []*Engine
+	var e error
+	const returns = 2
+	if clients, e = CreateNMockCircuits(5, returns); check(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	// Start up the clients.
+	for _, v := range clients {
+		go v.Start()
+	}
+	// Fund the client for all hops on all nodes.
+	var wg sync.WaitGroup
+	var counter atomic.Int32
+	for i := 0; i < 25; i++ {
+		log.D.Ln("buying sessions", i)
+		wg.Add(1)
+		counter.Inc()
+		e = clients[0].BuyNewSessions(1000000, func() {
+			wg.Done()
+			counter.Dec()
+		})
+		if check(e) {
+			wg.Done()
+			counter.Dec()
+		}
+		wg.Wait()
+		for j := range clients[0].SessionCache {
+			log.D.F("%d %s %v", i, j, clients[0].SessionCache[j])
+		}
+	}
+	log2.SetLogLevel(log2.Debug)
+	const nHiddenServices = 25
+	for i := 0; i < nHiddenServices; i++ {
+		var identPrv *prv.Key
+		if identPrv, e = prv.GenerateKey(); check(e) {
+			t.Error(e)
+			t.FailNow()
+		}
+		id := nonce.NewID()
+		il := intro.New(identPrv, clients[0].GetLocalNodeAddress())
+		clients[0].SendIntro(id, clients[0].Sessions[i+returns], il)
+	}
+	time.Sleep(time.Second)
+	for i, v := range clients {
+		if i == 0 {
+			continue
+		}
+		if len(v.Introductions.KnownIntros) != nHiddenServices {
+			log.E.Ln("did not find expected", nHiddenServices, "got",
+				len(v.Introductions.KnownIntros))
+			t.FailNow()
+		}
+	}
+	for _, v := range clients {
+		v.Shutdown()
+	}
+}
+
+func TestClient_HiddenServiceRequest(t *testing.T) {
+	log2.SetLogLevel(log2.Info)
+	var clients []*Engine
+	var e error
+	const returns = 2
+	if clients, e = CreateNMockCircuits(10, returns); check(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	// Start up the clients.
+	for _, v := range clients {
+		go v.Start()
+	}
+	// Fund the client for all hops on all nodes.
+	var wg sync.WaitGroup
+	var counter atomic.Int32
+	for i := 0; i < 25; i++ {
+		log.D.Ln("buying sessions", i)
+		wg.Add(1)
+		counter.Inc()
+		e = clients[0].BuyNewSessions(1000000, func() {
+			wg.Done()
+			counter.Dec()
+		})
+		if check(e) {
+			wg.Done()
+			counter.Dec()
+		}
+		wg.Wait()
+		for j := range clients[0].SessionCache {
+			log.D.F("%d %s %v", i, j, clients[0].SessionCache[j])
+		}
+	}
+	var identPrv *prv.Key
+	if identPrv, e = prv.GenerateKey(); check(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	log2.SetLogLevel(log2.Debug)
+	// identPub := pub.Derive(identPrv)
+	id := nonce.NewID()
+	il := intro.New(identPrv, clients[0].GetLocalNodeAddress())
+	clients[0].SendIntro(id, clients[0].Sessions[returns],
+		il)
+	// In this test environment generally every node has the intro after 1
+	// second.
+	time.Sleep(time.Second)
+	for _, v := range clients {
+		// if i == 0 {
+		// 	continue
+		// }
+		if len(v.Introductions.KnownIntros) != 1 {
+			log.E.Ln("did not find expected", 1, "got",
+				len(v.Introductions.KnownIntros))
+			t.FailNow()
+		}
+	}
+	// Now to test nodes requesting the address (even though they already know
+	// it).
+	
+	time.Sleep(time.Second)
 	for _, v := range clients {
 		v.Shutdown()
 	}
