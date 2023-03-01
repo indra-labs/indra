@@ -2,9 +2,7 @@ package seed
 
 import (
 	"context"
-	"git-indra.lan/indra-labs/indra/pkg/rpc"
 	"git-indra.lan/indra-labs/indra/pkg/storage"
-	"google.golang.org/grpc"
 	"sync"
 )
 
@@ -26,40 +24,41 @@ func Run(ctx context.Context) {
 signals:
 	for {
 		select {
-		case <-storage.WhenIsLocked():
-
-			log.I.Ln("storage is locked")
-
-			// Run an unlock RPC server
-			go rpc.RunWith(
-				func(srv *grpc.Server) {
-					storage.RegisterUnlockServiceServer(srv, storage.NewUnlockService())
-				},
-				rpc.WithDisableTunnel(),
-			)
-
-		case err := <-rpc.WhenStartFailed():
+		case err := <-storage.WhenStartupFailed():
+			log.E.Ln("storage can't start:", err)
 			startupErrors <- err
-		case <-rpc.IsReady():
-			log.I.Ln("waiting for unlock")
-		case <-storage.WhenIsUnlocked():
-
-			log.I.Ln("restarting rpc server")
-
-			// Shut down unlock RPC server to we can launch the main one
-			rpc.Shutdown()
-
-			//go rpc.RunWith(func(srv *grpc.Server) {
-			//	chat.RegisterChatServiceServer(srv, &chat.Server{})
-			//})
-
+			return
 		case <-storage.WhenIsReady():
+
+			//log.I.Ln("shutting down rpc server, with unlock service")
+			//
+			//rpc.Shutdown()
+
 			break signals
+		//case <-storage.WhenIsLocked():
+		//
+		//	log.I.Ln("running rpc server, with unlock service")
+		//
+		//	go rpc.RunWith(
+		//		func(srv *grpc.Server) {
+		//			storage.RegisterUnlockServiceServer(srv, storage.NewUnlockService())
+		//		},
+		//		rpc.WithDisableTunnel(),
+		//	)
+		//
+		//case err := <-rpc.WhenStartFailed():
+		//	startupErrors <- err
+		//case <-rpc.IsReady():
+		//	log.I.Ln("... awaiting unlock over rpc")
 		case <-ctx.Done():
 			Shutdown()
 			return
 		}
 	}
+
+	// Startup all RPC services
+
+	// Startup P2P services
 
 	log.I.Ln("seed is ready")
 
@@ -76,10 +75,10 @@ func Shutdown() {
 
 	log.I.Ln("shutting down seed")
 
-	rpc.Shutdown()
-
 	err := storage.Shutdown()
 	check(err)
+
+	log.I.Ln("seed shutdown completed")
 
 	isShutdownChan <- true
 }

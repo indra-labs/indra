@@ -4,12 +4,12 @@ import (
 	"google.golang.org/grpc"
 )
 
-func init() {
-	server = grpc.NewServer()
-}
-
 var (
 	server *grpc.Server
+)
+
+var (
+	running bool
 )
 
 func RunWith(r func(srv *grpc.Server), opts ...ServerOption) {
@@ -21,7 +21,9 @@ func RunWith(r func(srv *grpc.Server), opts ...ServerOption) {
 	for _, opt := range opts {
 		opt.apply(&serverOpts)
 	}
-	
+
+	server = grpc.NewServer()
+
 	configureUnixSocket()
 	configureTunnel()
 
@@ -36,13 +38,15 @@ func Start() {
 
 	var err error
 
+	if err = startTunnel(server); check(err) {
+		startupErrors <- err
+	}
+
 	if err = startUnixSocket(server); check(err) {
 		startupErrors <- err
 	}
 
-	if err = startTunnel(server); check(err) {
-		startupErrors <- err
-	}
+	running = true
 
 	log.I.Ln("rpc server is ready")
 
@@ -51,10 +55,25 @@ func Start() {
 
 func Shutdown() {
 
+	if !running {
+		return
+	}
+
 	log.I.Ln("shutting down rpc server")
 
-	stopUnixSocket()
-	stopTunnel()
+	server.GracefulStop()
 
-	server.Stop()
+	var err error
+
+	//err = stopUnixSocket()
+	//
+	//check(err)
+
+	err = stopTunnel()
+
+	check(err)
+
+	running = false
+
+	log.I.Ln("- rpc server shutdown completed")
 }

@@ -15,14 +15,14 @@ import (
 
 func init() {
 
-	storage.InitFlags(seedServeCommand)
-	p2p.InitFlags(seedServeCommand)
-	rpc.InitFlags(seedServeCommand)
+	storage.InitFlags(seedServeCmd)
+	p2p.InitFlags(seedServeCmd)
+	rpc.InitFlags(seedServeCmd)
 
-	seedCommand.AddCommand(seedServeCommand)
+	seedCommand.AddCommand(seedServeCmd)
 }
 
-var seedServeCommand = &cobra.Command{
+var seedServeCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Serves an instance of the seed node",
 	Long:  `Serves an instance of the seed node.`,
@@ -31,7 +31,6 @@ var seedServeCommand = &cobra.Command{
 		log.I.Ln("-- ", log2.App, "("+viper.GetString("network")+") -", indra.SemVer, "- Network Freedom. --")
 
 		ctx, cancel := context.WithCancel(context.Background())
-
 		interrupt.AddHandler(cancel)
 
 		// Seed //
@@ -39,10 +38,9 @@ var seedServeCommand = &cobra.Command{
 		go seed.Run(ctx)
 
 		select {
-		case err := <-seed.WhenStartFailed():
-			log.E.Ln("startup error:", err)
-			return
-		case <-seed.IsShutdown():
+		case <-seed.WhenStartFailed():
+			log.I.Ln("stopped")
+		case <-seed.WhenShutdown():
 			log.I.Ln("shutdown complete")
 		}
 

@@ -7,7 +7,7 @@ var (
 	isReadyChan    = make(chan bool, 1)
 )
 
-func CantStart() chan error {
+func WhenStartupFailed() chan error {
 	return startupErrors
 }
 

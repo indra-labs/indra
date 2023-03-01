@@ -2,52 +2,29 @@ package storage
 
 import (
 	"context"
-	"github.com/dgraph-io/badger/v3"
-	"github.com/spf13/viper"
 )
 
-type Service struct {
-	success chan bool
-}
-
-func (s *Service) IsSuccessful() chan bool {
-	return s.success
-}
+type Service struct{}
 
 func (s *Service) Unlock(ctx context.Context, req *UnlockRequest) (res *UnlockResponse, err error) {
 
-	var key Key
-
 	key.Decode(req.Key)
 
-	opts = badger.DefaultOptions(viper.GetString(storeFilePathFlag))
-	opts.Logger = nil
-	opts.IndexCacheSize = 128 << 20
-	opts.EncryptionKey = key.Bytes()
+	isUnlocked, err := attempt_unlock()
 
-	if db, err = badger.Open(opts); err != nil {
+	if !isUnlocked {
 
 		log.I.Ln("unlock attempt failed:", err)
 
-		return &UnlockResponse{
-			Success: false,
-		}, err
+		return &UnlockResponse{Success: false}, err
 	}
 
-	s.success <- true
+	log.I.Ln("successfully unlocked database")
 	isUnlockedChan <- true
 
-	log.I.Ln("unlock successful")
-
-	return &UnlockResponse{
-		Success: true,
-	}, nil
+	return &UnlockResponse{Success: true}, nil
 }
 
 func (s *Service) mustEmbedUnimplementedUnlockServiceServer() {}
 
-func NewUnlockService() *Service {
-	return &Service{
-		success: make(chan bool, 1),
-	}
-}
+func NewUnlockService() *Service { return &Service{} }
