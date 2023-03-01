@@ -8,6 +8,8 @@ type Service struct{}
 
 func (s *Service) Unlock(ctx context.Context, req *UnlockRequest) (res *UnlockResponse, err error) {
 
+	log.I.Ln("attempting to unlock database")
+
 	key.Decode(req.Key)
 
 	isUnlocked, err := attempt_unlock()

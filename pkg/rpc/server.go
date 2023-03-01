@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"google.golang.org/grpc"
+	"sync"
 )
 
 var (
@@ -9,10 +10,16 @@ var (
 )
 
 var (
-	running bool
+	inUse     sync.Mutex
+	isRunning bool
 )
 
 func RunWith(r func(srv *grpc.Server), opts ...ServerOption) {
+
+	if !inUse.TryLock() {
+		log.E.Ln("rpc server is in use.")
+		return
+	}
 
 	log.I.Ln("initializing the rpc server")
 
@@ -31,31 +38,32 @@ func RunWith(r func(srv *grpc.Server), opts ...ServerOption) {
 
 	log.I.Ln("starting rpc server")
 
-	go Start()
+	go start()
 }
 
-func Start() {
+func start() {
 
 	var err error
 
 	if err = startTunnel(server); check(err) {
 		startupErrors <- err
+		return
 	}
 
 	if err = startUnixSocket(server); check(err) {
 		startupErrors <- err
+		return
 	}
 
-	running = true
+	isRunning = true
 
 	log.I.Ln("rpc server is ready")
-
 	isReady <- true
 }
 
 func Shutdown() {
 
-	if !running {
+	if !isRunning {
 		return
 	}
 
@@ -73,7 +81,7 @@ func Shutdown() {
 
 	check(err)
 
-	running = false
+	isRunning = false
 
 	log.I.Ln("- rpc server shutdown completed")
 }
