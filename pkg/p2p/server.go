@@ -88,8 +88,10 @@ func Shutdown() (err error) {
 
 	log.I.Ln("shutting down p2p server")
 
-	if err = p2pHost.Close(); check(err) {
-		// continue
+	if p2pHost != nil {
+		if err = p2pHost.Close(); check(err) {
+			// continue
+		}
 	}
 
 	log.I.Ln("- p2p server shutdown complete")

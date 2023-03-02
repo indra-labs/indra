@@ -29,11 +29,9 @@ var (
 	tunnelMTU    int = 1420
 )
 
-func enableTunnel() {
+func createTunnel() {
 
 	var err error
-
-	isTunnelEnabled = true
 
 	if tunnel, network, err = netstack.CreateNetTUN([]netip.Addr{deviceRPCIP}, []netip.Addr{}, tunnelMTU); check(err) {
 		startupErrors <- err

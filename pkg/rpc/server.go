@@ -45,6 +45,8 @@ func start() {
 
 	var err error
 
+	createTunnel()
+
 	if err = startTunnel(server); check(err) {
 		startupErrors <- err
 		return

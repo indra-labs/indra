@@ -45,7 +45,7 @@ for DOCKERFILE in $DOCKERFILES; do
             DOCKER_PLATFORM_TAG=$PLATFORM-dev
         fi
 
-        docker build --quiet --progress=plain --platform=$DOCKER_PLATFORM \
+        docker build --quiet --platform=$DOCKER_PLATFORM \
           --build-arg platform=$PLATFORM \
           --build-arg version=$TARGET_TAG \
           --build-arg scratch_version=$SCRATCH_PLATFORM_TAG \

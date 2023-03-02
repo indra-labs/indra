@@ -6,23 +6,25 @@ import (
 
 func configureUnixSocket() {
 
-	if viper.GetString(unixPathFlag) == "" {
+	unixPath = viper.GetString(unixPathFlag)
+
+	if unixPath == "" {
 		return
 	}
 
 	log.I.Ln("enabling rpc unix listener:")
-	log.I.F("- [/unix%s]", viper.GetString(unixPathFlag))
+	log.I.F("- [/unix%s]", unixPath)
 
 	isUnixSockEnabled = true
 }
 
 func configureTunnel() {
 
-	if !viper.GetBool(tunEnableFlag) {
+	isTunnelEnabled = viper.GetBool(tunEnableFlag)
+
+	if !isTunnelEnabled {
 		return
 	}
-
-	enableTunnel()
 
 	log.I.Ln("enabling rpc tunnel")
 
@@ -32,9 +34,7 @@ func configureTunnel() {
 	log.I.F("- [/ip4/0.0.0.0/udp/%d /ip6/:::/udp/%d]", viper.GetUint16(tunPortFlag), viper.GetUint16(tunPortFlag))
 
 	configureTunnelKey()
-
 	configurePeerWhitelist()
-
 }
 
 func configureTunnelKey() {
@@ -85,9 +85,8 @@ func configurePeerWhitelist() {
 
 		pubKey.Decode(peer)
 
-		tunWhitelist = append(tunWhitelist, pubKey)
-
 		log.I.Ln("-", pubKey.Encode())
 
+		tunWhitelist = append(tunWhitelist, pubKey)
 	}
 }

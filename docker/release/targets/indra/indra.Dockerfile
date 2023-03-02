@@ -19,9 +19,16 @@ USER indra:indra
 # Set the data volumes
 #VOLUME ["/etc/indra"]
 #VOLUME ["/var/indra"]
+#VOLUME ["/var/log/indra"]
 
 # :8333  indra peer-to-peer port
 # :8334  indra RPC port
 EXPOSE 8337 8338
 
-ENTRYPOINT ["/bin/indra", "--config-file=/etc/indra/indra.conf", "--data-dir=/var/indra/data", "--logs-dir=/var/indra/logs"]
+ENV INDRA_CONF_FILE=/etc/indra/indra.conf
+ENV INDRA_DATA_DIR=/var/indra
+ENV INDRA_LOGS_DIR=/var/log/indra
+
+ENV INDRA_RPC_UNIX_LISTEN=/var/run/indra/indra.sock
+
+ENTRYPOINT ["/bin/indra"]
