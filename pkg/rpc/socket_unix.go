@@ -9,7 +9,7 @@ import (
 var (
 	isUnixSockEnabled bool = false
 	unixSock          net.Listener
-	unixPath          = "/tmp/indra.sock"
+	unixPath          string
 )
 
 func startUnixSocket(srv *grpc.Server) (err error) {

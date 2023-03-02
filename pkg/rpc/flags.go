@@ -3,6 +3,7 @@ package rpc
 import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"os"
 )
 
 var (
@@ -20,16 +21,18 @@ var (
 
 func InitFlags(cmd *cobra.Command) {
 
+	cobra.OnInitialize(initUnixSockPath)
+
 	cmd.PersistentFlags().StringVarP(&unixPath, unixPathFlag, "",
-		unixPath,
-		"binds to a unix socket with path",
+		"",
+		"binds to a unix socket with path (default is $HOME/.indra/indra.sock)",
 	)
 
 	viper.BindPFlag(unixPathFlag, cmd.PersistentFlags().Lookup(unixPathFlag))
 
 	cmd.PersistentFlags().BoolVarP(&isTunnelEnabled, tunEnableFlag, "",
-		isTunnelEnabled,
-		"enables the rpc server tunnel",
+		false,
+		"enables the rpc server tunnel (default false)",
 	)
 
 	viper.BindPFlag(tunEnableFlag, cmd.PersistentFlags().Lookup(tunEnableFlag))
@@ -54,4 +57,17 @@ func InitFlags(cmd *cobra.Command) {
 	)
 
 	viper.BindPFlag(tunPeersFlag, cmd.PersistentFlags().Lookup(tunPeersFlag))
+}
+
+func initUnixSockPath() {
+
+	if viper.GetString(unixPathFlag) != "" {
+		return
+	}
+
+	home, err := os.UserHomeDir()
+
+	cobra.CheckErr(err)
+
+	viper.Set(unixPathFlag, home+"/.indra/indra.sock")
 }

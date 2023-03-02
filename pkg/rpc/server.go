@@ -36,12 +36,12 @@ func RunWith(r func(srv *grpc.Server), opts ...ServerOption) {
 
 	r(server)
 
-	log.I.Ln("starting rpc server")
-
 	go start()
 }
 
 func start() {
+
+	log.I.Ln("starting rpc server")
 
 	var err error
 

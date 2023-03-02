@@ -39,7 +39,7 @@ func InitFlags(cmd *cobra.Command) {
 
 	cmd.PersistentFlags().StringVarP(&storeFilePath, storeFilePathFlag, "",
 		"",
-		"the path of the database  (defaults to --data-dir/indra.db)",
+		"the path of the database  (default is <data-dir>/indra.db)",
 	)
 
 	viper.BindPFlag(storeFilePathFlag, cmd.PersistentFlags().Lookup(storeFilePathFlag))
