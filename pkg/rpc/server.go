@@ -7,6 +7,7 @@ import (
 
 var (
 	server *grpc.Server
+	o      *serverOptions
 )
 
 var (
@@ -23,10 +24,10 @@ func RunWith(r func(srv *grpc.Server), opts ...ServerOption) {
 
 	log.I.Ln("initializing the rpc server")
 
-	serverOpts := serverOptions{}
+	o = &serverOptions{false, &storeMem{}}
 
 	for _, opt := range opts {
-		opt.apply(&serverOpts)
+		opt.apply(o)
 	}
 
 	server = grpc.NewServer()

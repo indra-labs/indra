@@ -25,7 +25,7 @@ func InitFlags(cmd *cobra.Command) {
 
 	cmd.Flags().StringVarP(&storeEncryptionKey, storeKeyFlag, "",
 		"",
-		"the key required to unlock storage",
+		"the key required to unlock storage (NOT recommended)",
 	)
 
 	viper.BindPFlag(storeKeyFlag, cmd.Flags().Lookup(storeKeyFlag))

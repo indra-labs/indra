@@ -65,12 +65,20 @@ func (sk RPCPrivateKey) Encode() (key string) {
 	return
 }
 
+func (sk RPCPrivateKey) Bytes() []byte {
+	return sk[:]
+}
+
 func (sk RPCPrivateKey) HexString() string {
 	return hex.EncodeToString(sk[:])
 }
 
 func (sk *RPCPrivateKey) Decode(key string) {
 	copy(sk[:], base58.Decode(key))
+}
+
+func (sk *RPCPrivateKey) DecodeBytes(key []byte) {
+	copy(sk[:], key)
 }
 
 func DecodePrivateKey(key string) RPCPrivateKey {

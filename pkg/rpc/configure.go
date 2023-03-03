@@ -39,17 +39,29 @@ func configureTunnel() {
 
 func configureTunnelKey() {
 
-	if viper.GetString(tunKeyFlag) == "" {
+	log.I.Ln("looking for key in storage")
 
-		log.I.Ln("rpc tunnel key not provided, generating a new one.")
+	var err error
 
-		tunKey, _ = NewPrivateKey()
+	tunKey, err = o.store.GetKey()
 
-		viper.Set(tunKeyFlag, tunKey.Encode())
+	if err == nil {
+
+		log.I.Ln("rpc tunnel public key:")
+		log.I.Ln("-", tunKey.PubKey().Encode())
+
+		return
 	}
 
-	tunKey = &RPCPrivateKey{}
-	tunKey.Decode(viper.GetString(tunKeyFlag))
+	if err != ErrKeyNotExists {
+		return
+	}
+
+	log.I.Ln("key not provided, generating a new one.")
+
+	tunKey, _ = NewPrivateKey()
+
+	o.store.SetKey(tunKey)
 
 	log.I.Ln("rpc tunnel public key:")
 	log.I.Ln("-", tunKey.PubKey().Encode())

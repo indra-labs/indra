@@ -2,6 +2,7 @@ package rpc
 
 type serverOptions struct {
 	disableTunnel bool
+	store         Store
 }
 
 type ServerOption interface {
@@ -25,5 +26,11 @@ func newFuncServerOption(f func(*serverOptions)) *funcServerOption {
 func WithDisableTunnel() ServerOption {
 	return newFuncServerOption(func(o *serverOptions) {
 		o.disableTunnel = true
+	})
+}
+
+func WithStore(store Store) ServerOption {
+	return newFuncServerOption(func(o *serverOptions) {
+		o.store = store
 	})
 }

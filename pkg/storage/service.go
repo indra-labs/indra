@@ -119,3 +119,7 @@ func View(fn func(txn *badger.Txn) error) error {
 func Update(fn func(txn *badger.Txn) error) error {
 	return db.Update(fn)
 }
+
+func DB() *badger.DB {
+	return db
+}

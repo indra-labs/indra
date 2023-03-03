@@ -63,13 +63,11 @@ func Run(ctx context.Context) {
 	// RPC
 	//
 
-	//
-	// Ready!
-	//
-
 	go rpc.RunWith(func(srv *grpc.Server) {
 		chat.RegisterChatServiceServer(srv, &chat.Server{})
-	})
+	},
+		rpc.WithStore(&rpc.BadgerStore{storage.DB()}),
+	)
 
 	select {
 	case err := <-rpc.WhenStartFailed():
@@ -82,6 +80,10 @@ func Run(ctx context.Context) {
 		Shutdown()
 		return
 	}
+
+	//
+	// Ready!
+	//
 
 	log.I.Ln("seed is ready")
 	isReadyChan <- true
