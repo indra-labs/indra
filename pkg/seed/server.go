@@ -87,6 +87,7 @@ func Run(ctx context.Context) {
 
 	go rpc.RunWith(services, opts...)
 
+signals:
 	for {
 		select {
 		case <-rpc.IsConfigured():
@@ -97,7 +98,7 @@ func Run(ctx context.Context) {
 			startupErrors <- err
 			return
 		case <-rpc.IsReady():
-			// continue
+			break signals
 		case <-ctx.Done():
 			Shutdown()
 			return

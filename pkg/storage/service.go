@@ -23,7 +23,6 @@ func run() {
 	if noKeyProvided {
 		log.I.Ln("storage is locked")
 		isLockedChan <- true
-
 		return
 	}
 

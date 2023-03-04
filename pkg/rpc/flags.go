@@ -36,13 +36,6 @@ func InitFlags(cmd *cobra.Command) {
 
 	viper.BindPFlag(TunEnableFlag, cmd.PersistentFlags().Lookup(TunEnableFlag))
 
-	//cmd.Flags().StringVarP(&tunKeyRaw, tunKeyFlag, "",
-	//	"",
-	//	"the base58 encoded pre-shared key for accessing the rpc",
-	//)
-	//
-	//viper.BindPFlag(tunKeyFlag, cmd.Flags().Lookup(tunKeyFlag))
-
 	cmd.PersistentFlags().IntVarP(&tunPort, TunPortFlag, "",
 		tunPort,
 		"binds the udp server to port (random if not selected)",
