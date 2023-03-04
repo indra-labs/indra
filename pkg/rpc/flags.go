@@ -3,39 +3,38 @@ package rpc
 import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"os"
 )
 
 var (
-	unixPathFlag  = "rpc-unix-listen"
-	tunEnableFlag = "rpc-tun-enable"
+	UnixPathFlag  = "rpc-unix-listen"
+	TunEnableFlag = "rpc-tun-enable"
 	tunKeyFlag    = "rpc-tun-key"
-	tunPortFlag   = "rpc-tun-port"
-	tunPeersFlag  = "rpc-tun-peer"
+	TunPortFlag   = "rpc-tun-port"
+	TunPeersFlag  = "rpc-tun-peer"
 )
-
 var (
+	unixPath    string
+	tunEnabled  bool = false
 	tunKeyRaw   string
-	tunPeersRaw = []string{}
+	tunPort     int = 0
+	tunPeersRaw     = []string{}
 )
 
 func InitFlags(cmd *cobra.Command) {
 
-	cobra.OnInitialize(initUnixSockPath)
-
-	cmd.PersistentFlags().StringVarP(&unixPath, unixPathFlag, "",
+	cmd.PersistentFlags().StringVarP(&unixPath, UnixPathFlag, "",
 		"",
 		"binds to a unix socket with path (default is $HOME/.indra/indra.sock)",
 	)
 
-	viper.BindPFlag(unixPathFlag, cmd.PersistentFlags().Lookup(unixPathFlag))
+	viper.BindPFlag(UnixPathFlag, cmd.PersistentFlags().Lookup(UnixPathFlag))
 
-	cmd.PersistentFlags().BoolVarP(&isTunnelEnabled, tunEnableFlag, "",
+	cmd.PersistentFlags().BoolVarP(&tunEnabled, TunEnableFlag, "",
 		false,
 		"enables the rpc server tunnel (default false)",
 	)
 
-	viper.BindPFlag(tunEnableFlag, cmd.PersistentFlags().Lookup(tunEnableFlag))
+	viper.BindPFlag(TunEnableFlag, cmd.PersistentFlags().Lookup(TunEnableFlag))
 
 	//cmd.Flags().StringVarP(&tunKeyRaw, tunKeyFlag, "",
 	//	"",
@@ -44,30 +43,17 @@ func InitFlags(cmd *cobra.Command) {
 	//
 	//viper.BindPFlag(tunKeyFlag, cmd.Flags().Lookup(tunKeyFlag))
 
-	cmd.PersistentFlags().IntVarP(&tunnelPort, tunPortFlag, "",
-		tunnelPort,
+	cmd.PersistentFlags().IntVarP(&tunPort, TunPortFlag, "",
+		tunPort,
 		"binds the udp server to port (random if not selected)",
 	)
 
-	viper.BindPFlag(tunPortFlag, cmd.PersistentFlags().Lookup(tunPortFlag))
+	viper.BindPFlag(TunPortFlag, cmd.PersistentFlags().Lookup(TunPortFlag))
 
-	cmd.PersistentFlags().StringSliceVarP(&tunPeersRaw, tunPeersFlag, "",
+	cmd.PersistentFlags().StringSliceVarP(&tunPeersRaw, TunPeersFlag, "",
 		tunPeersRaw,
 		"adds a peer id to the whitelist for access",
 	)
 
-	viper.BindPFlag(tunPeersFlag, cmd.PersistentFlags().Lookup(tunPeersFlag))
-}
-
-func initUnixSockPath() {
-
-	if viper.GetString(unixPathFlag) != "" {
-		return
-	}
-
-	home, err := os.UserHomeDir()
-
-	cobra.CheckErr(err)
-
-	viper.Set(unixPathFlag, home+"/.indra/indra.sock")
+	viper.BindPFlag(TunPeersFlag, cmd.PersistentFlags().Lookup(TunPeersFlag))
 }

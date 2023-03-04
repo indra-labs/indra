@@ -1,28 +1,8 @@
 package rpc
 
-import (
-	"github.com/spf13/viper"
-)
-
-func configureUnixSocket() {
-
-	unixPath = viper.GetString(unixPathFlag)
-
-	if unixPath == "" {
-		return
-	}
-
-	log.I.Ln("enabling rpc unix listener:")
-	log.I.F("- [/unix%s]", unixPath)
-
-	isUnixSockEnabled = true
-}
-
 func configureTunnel() {
 
-	isTunnelEnabled = viper.GetBool(tunEnableFlag)
-
-	if !isTunnelEnabled {
+	if !o.tunEnable {
 		return
 	}
 
@@ -31,7 +11,7 @@ func configureTunnel() {
 	configureTunnelPort()
 
 	log.I.Ln("rpc tunnel listeners:")
-	log.I.F("- [/ip4/0.0.0.0/udp/%d /ip6/:::/udp/%d]", viper.GetUint16(tunPortFlag), viper.GetUint16(tunPortFlag))
+	log.I.F("- [/ip4/0.0.0.0/udp/%d /ip6/:::/udp/%d]", o.tunPort, o.tunPort)
 
 	configureTunnelKey()
 	configurePeerWhitelist()
@@ -69,29 +49,24 @@ func configureTunnelKey() {
 
 func configureTunnelPort() {
 
-	if viper.GetUint16(tunPortFlag) != NullPort {
-
-		tunnelPort = int(viper.GetUint16(tunPortFlag))
-
+	if o.tunPort != NullPort {
 		return
 	}
 
 	log.I.Ln("rpc tunnel port not provided, generating a random one.")
 
-	viper.Set(tunPortFlag, genRandomPort(10000))
-
-	tunnelPort = int(viper.GetUint16(tunPortFlag))
+	o.tunPort = genRandomPort(10000)
 }
 
 func configurePeerWhitelist() {
 
-	if len(viper.GetStringSlice(tunPeersFlag)) == 0 {
+	if len(o.tunPeers) == 0 {
 		return
 	}
 
 	log.I.Ln("rpc tunnel whitelisted peers:")
 
-	for _, peer := range viper.GetStringSlice(tunPeersFlag) {
+	for _, peer := range o.tunPeers {
 
 		var pubKey RPCPublicKey
 

@@ -17,7 +17,7 @@ func configureDevice() {
 	var err error
 
 	dev.SetPrivateKey(tunKey.AsDeviceKey())
-	dev.IpcSet("listen_port=" + strconv.Itoa(int(tunnelPort)))
+	dev.IpcSet("listen_port=" + strconv.Itoa(int(o.tunPort)))
 
 	for _, peer_whitelist := range tunWhitelist {
 

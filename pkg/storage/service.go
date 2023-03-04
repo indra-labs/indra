@@ -3,6 +3,7 @@ package storage
 import (
 	"git-indra.lan/indra-labs/indra/pkg/rpc"
 	"github.com/dgraph-io/badger/v3"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"sync"
 )
@@ -65,7 +66,7 @@ signals:
 				func(srv *grpc.Server) {
 					RegisterUnlockServiceServer(srv, NewUnlockService())
 				},
-				rpc.WithDisableTunnel(),
+				rpc.WithUnixPath(viper.GetString(rpc.UnixPathFlag)),
 			)
 		case <-rpc.IsReady():
 			log.I.Ln("... awaiting unlock over rpc")
@@ -91,6 +92,8 @@ func Shutdown() (err error) {
 	}
 
 	log.I.Ln("- storage db closing, it may take a minute...")
+
+	db.RunValueLogGC(0.5)
 
 	if err = db.Close(); err != nil {
 		log.W.Ln("- storage shutdown warning: ", err)

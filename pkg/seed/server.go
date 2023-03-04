@@ -5,6 +5,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/p2p"
 	"git-indra.lan/indra-labs/indra/pkg/rpc"
 	"git-indra.lan/indra-labs/indra/pkg/storage"
+	"github.com/spf13/viper"
 	"github.com/tutorialedge/go-grpc-tutorial/chat"
 	"google.golang.org/grpc"
 	"sync"
@@ -63,22 +64,44 @@ func Run(ctx context.Context) {
 	// RPC
 	//
 
-	go rpc.RunWith(func(srv *grpc.Server) {
-		chat.RegisterChatServiceServer(srv, &chat.Server{})
-	},
-		rpc.WithStore(&rpc.BadgerStore{storage.DB()}),
-	)
+	opts := []rpc.ServerOption{
+		rpc.WithUnixPath(
+			viper.GetString(rpc.UnixPathFlag),
+		),
+		rpc.WithStore(
+			&rpc.BadgerStore{storage.DB()},
+		),
+	}
 
-	select {
-	case err := <-rpc.WhenStartFailed():
-		log.E.Ln("rpc can't start:", err)
-		startupErrors <- err
-		return
-	case <-rpc.IsReady():
-		// continue
-	case <-ctx.Done():
-		Shutdown()
-		return
+	if viper.GetBool(rpc.TunEnableFlag) {
+		opts = append(opts,
+			rpc.WithTunOptions(
+				viper.GetUint16(rpc.TunPortFlag),
+				viper.GetStringSlice(rpc.TunPeersFlag),
+			))
+	}
+
+	services := func(srv *grpc.Server) {
+		chat.RegisterChatServiceServer(srv, &chat.Server{})
+	}
+
+	go rpc.RunWith(services, opts...)
+
+	for {
+		select {
+		case <-rpc.IsConfigured():
+			// We need to get the randomly generated port
+			viper.Set(rpc.TunPortFlag, rpc.Options().GetTunPort())
+		case err := <-rpc.WhenStartFailed():
+			log.E.Ln("rpc can't start:", err)
+			startupErrors <- err
+			return
+		case <-rpc.IsReady():
+			// continue
+		case <-ctx.Done():
+			Shutdown()
+			return
+		}
 	}
 
 	//

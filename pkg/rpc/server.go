@@ -7,7 +7,7 @@ import (
 
 var (
 	server *grpc.Server
-	o      *serverOptions
+	o      *ServerOptions
 )
 
 var (
@@ -24,20 +24,39 @@ func RunWith(r func(srv *grpc.Server), opts ...ServerOption) {
 
 	log.I.Ln("initializing the rpc server")
 
-	o = &serverOptions{false, &storeMem{}}
+	o = &ServerOptions{
+		&storeMem{},
+		unixPathDefault,
+		false,
+		NullPort,
+		[]string{},
+	}
 
 	for _, opt := range opts {
 		opt.apply(o)
 	}
 
+	if o.unixPath != "" {
+		log.I.Ln("enabling rpc unix listener:")
+		log.I.F("- [/unix%s]", o.unixPath)
+
+		isUnixSockEnabled = true
+	}
+
+	if o.tunEnable {
+		configureTunnel()
+	}
+
+	isConfigured <- true
+
 	server = grpc.NewServer()
-
-	configureUnixSocket()
-	configureTunnel()
-
 	r(server)
 
 	go start()
+}
+
+func Options() *ServerOptions {
+	return o
 }
 
 func start() {

@@ -6,10 +6,11 @@ import (
 	"os"
 )
 
+const unixPathDefault = "/tmp/indra.sock"
+
 var (
 	isUnixSockEnabled bool = false
 	unixSock          net.Listener
-	unixPath          string
 )
 
 func startUnixSocket(srv *grpc.Server) (err error) {
@@ -18,7 +19,7 @@ func startUnixSocket(srv *grpc.Server) (err error) {
 		return
 	}
 
-	if unixSock, err = net.Listen("unix", unixPath); err != nil {
+	if unixSock, err = net.Listen("unix", o.unixPath); err != nil {
 		return
 	}
 
@@ -39,7 +40,7 @@ func stopUnixSocket() (err error) {
 		}
 	}
 
-	os.Remove(unixPath)
+	os.Remove(o.unixPath)
 
 	return
 }

@@ -13,10 +13,6 @@ import (
 const NullPort = 0
 
 var (
-	isTunnelEnabled bool = false
-)
-
-var (
 	network *netstack.Net
 	tunnel  tun.Device
 	tcpSock net.Listener
@@ -25,7 +21,6 @@ var (
 var (
 	tunKey       *RPCPrivateKey
 	tunWhitelist []RPCPublicKey
-	tunnelPort   int = 0
 	tunnelMTU    int = 1420
 )
 
@@ -43,7 +38,7 @@ func createTunnel() {
 
 func startTunnel(srv *grpc.Server) (err error) {
 
-	if !isTunnelEnabled {
+	if !o.tunEnable {
 		return
 	}
 
@@ -66,7 +61,7 @@ func startTunnel(srv *grpc.Server) (err error) {
 
 func stopTunnel() (err error) {
 
-	if !isTunnelEnabled {
+	if !o.tunEnable {
 		return
 	}
 
