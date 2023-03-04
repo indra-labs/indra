@@ -15,9 +15,8 @@ var (
 var (
 	unixPath    string
 	tunEnabled  bool = false
-	tunKeyRaw   string
-	tunPort     int = 0
-	tunPeersRaw     = []string{}
+	tunPort     int  = 0
+	tunPeersRaw      = []string{}
 )
 
 func InitFlags(cmd *cobra.Command) {
