@@ -5,8 +5,8 @@ package rpc
 type dialOptions struct {
 	endpoint          Endpoint
 	rpcEndpoint       Endpoint
-	key               RPCPrivateKey
-	peerPubKey        RPCPublicKey
+	key               PrivateKey
+	peerPubKey        PublicKey
 	peerRPCIP         string
 	keepAliveInterval int
 	mtu               int

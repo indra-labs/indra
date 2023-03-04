@@ -68,7 +68,7 @@ func configurePeerWhitelist() {
 
 	for _, peer := range o.tunPeers {
 
-		var pubKey RPCPublicKey
+		var pubKey PublicKey
 
 		pubKey.Decode(peer)
 

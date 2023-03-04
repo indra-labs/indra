@@ -10,24 +10,19 @@ import (
 )
 
 const (
-	RPCPrivateKeySize = 32
-	RPCPublicKeySize  = 32
+	PrivateKeySize = 32
+	PublicKeySize  = 32
 )
 
 type (
-	RPCPrivateKey [RPCPrivateKeySize]byte
-	RPCPublicKey  [RPCPublicKeySize]byte
+	PrivateKey [PrivateKeySize]byte
+	PublicKey  [PublicKeySize]byte
 )
 
-var (
-	nullRPCPrivateKey   RPCPrivateKey
-	DefaultRPCPublicKey RPCPublicKey
-)
-
-func NewPrivateKey() (*RPCPrivateKey, error) {
+func NewPrivateKey() (*PrivateKey, error) {
 
 	var err error
-	var sk RPCPrivateKey
+	var sk PrivateKey
 
 	_, err = rand.Read(sk[:])
 
@@ -37,81 +32,81 @@ func NewPrivateKey() (*RPCPrivateKey, error) {
 	return &sk, err
 }
 
-func (key RPCPrivateKey) Equals(tar RPCPrivateKey) bool {
+func (key PrivateKey) Equals(tar PrivateKey) bool {
 	return subtle.ConstantTimeCompare(key[:], tar[:]) == 1
 }
 
-func (sk RPCPrivateKey) IsZero() bool {
-	var zero RPCPrivateKey
+func (sk PrivateKey) IsZero() bool {
+	var zero PrivateKey
 	return sk.Equals(zero)
 }
 
-func (sk *RPCPrivateKey) PubKey() (pk RPCPublicKey) {
+func (sk *PrivateKey) PubKey() (pk PublicKey) {
 	apk := (*[device.NoisePublicKeySize]byte)(&pk)
-	ask := (*[RPCPrivateKeySize]byte)(sk)
+	ask := (*[PrivateKeySize]byte)(sk)
 	curve25519.ScalarBaseMult(apk, ask)
 
 	return
 }
 
-func (sk *RPCPrivateKey) AsDeviceKey() device.NoisePrivateKey {
+func (sk *PrivateKey) AsDeviceKey() device.NoisePrivateKey {
 	return device.NoisePrivateKey(*sk)
 }
 
-func (sk RPCPrivateKey) Encode() (key string) {
+func (sk PrivateKey) Encode() (key string) {
 
 	key = base58.Encode(sk[:])
 
 	return
 }
 
-func (sk RPCPrivateKey) Bytes() []byte {
+func (sk PrivateKey) Bytes() []byte {
 	return sk[:]
 }
 
-func (sk RPCPrivateKey) HexString() string {
+func (sk PrivateKey) HexString() string {
 	return hex.EncodeToString(sk[:])
 }
 
-func (sk *RPCPrivateKey) Decode(key string) {
+func (sk *PrivateKey) Decode(key string) {
 	copy(sk[:], base58.Decode(key))
 }
 
-func (sk *RPCPrivateKey) DecodeBytes(key []byte) {
+func (sk *PrivateKey) DecodeBytes(key []byte) {
 	copy(sk[:], key)
 }
 
-func DecodePrivateKey(key string) RPCPrivateKey {
+func DecodePrivateKey(key string) PrivateKey {
 
-	var pk RPCPrivateKey
+	var pk PrivateKey
 
 	pk.Decode(key)
 
 	return pk
 }
 
-func (sk RPCPublicKey) AsDeviceKey() device.NoisePublicKey {
+func (sk PublicKey) AsDeviceKey() device.NoisePublicKey {
 	return device.NoisePublicKey(sk)
 }
 
-func (sk RPCPublicKey) Encode() (key string) {
+func (sk PublicKey) Encode() (key string) {
 
 	key = base58.Encode(sk[:])
 
 	return
 }
 
-func (sk RPCPublicKey) HexString() string {
+func (sk PublicKey) HexString() string {
 	return hex.EncodeToString(sk[:])
 }
 
-func (sk *RPCPublicKey) Decode(key string) {
+func (sk *PublicKey) Decode(key string) {
 	copy(sk[:], base58.Decode(key))
 }
 
-func DecodePublicKey(key string) RPCPublicKey {
+func DecodePublicKey(key string) PublicKey {
 
-	var pk RPCPublicKey
+	var pk PublicKey
 
 	pk.Decode(key)
 

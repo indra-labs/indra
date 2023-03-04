@@ -16,25 +16,25 @@ var (
 type Store interface {
 	Reset()
 
-	SetKey(key *RPCPrivateKey) error
+	SetKey(key *PrivateKey) error
 
-	GetKey() (*RPCPrivateKey, error)
+	GetKey() (*PrivateKey, error)
 }
 
 type storeMem struct {
-	key *RPCPrivateKey
+	key *PrivateKey
 }
 
 func (s *storeMem) Reset() {
 	s.key = nil
 }
 
-func (s *storeMem) SetKey(key *RPCPrivateKey) error {
+func (s *storeMem) SetKey(key *PrivateKey) error {
 	s.key = key
 	return nil
 }
 
-func (s *storeMem) GetKey() (*RPCPrivateKey, error) {
+func (s *storeMem) GetKey() (*PrivateKey, error) {
 
 	if s.key == nil {
 		return nil, ErrKeyNotExists
@@ -60,7 +60,7 @@ func (s *BadgerStore) Reset() {
 	})
 }
 
-func (s *BadgerStore) SetKey(key *RPCPrivateKey) error {
+func (s *BadgerStore) SetKey(key *PrivateKey) error {
 
 	s.Update(func(txn *badger.Txn) error {
 		err := txn.Set([]byte(tunKeyKey), key.Bytes())
@@ -70,7 +70,7 @@ func (s *BadgerStore) SetKey(key *RPCPrivateKey) error {
 	return nil
 }
 
-func (s *BadgerStore) GetKey() (*RPCPrivateKey, error) {
+func (s *BadgerStore) GetKey() (*PrivateKey, error) {
 
 	var err error
 	var item *badger.Item
@@ -84,7 +84,7 @@ func (s *BadgerStore) GetKey() (*RPCPrivateKey, error) {
 		return nil, ErrKeyNotExists
 	}
 
-	var key RPCPrivateKey
+	var key PrivateKey
 
 	err = item.Value(func(val []byte) error {
 		key.DecodeBytes(val)

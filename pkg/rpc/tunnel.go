@@ -19,8 +19,8 @@ var (
 )
 
 var (
-	tunKey       *RPCPrivateKey
-	tunWhitelist []RPCPublicKey
+	tunKey       *PrivateKey
+	tunWhitelist []PublicKey
 	tunnelMTU    int = 1420
 )
 
