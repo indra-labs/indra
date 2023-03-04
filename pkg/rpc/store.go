@@ -9,6 +9,10 @@ var (
 	ErrKeyNotExists error = errors.New("key not found")
 )
 
+var (
+	tunKeyKey = "rpc-tun-key"
+)
+
 type Store interface {
 	Reset()
 
@@ -50,7 +54,7 @@ type BadgerStore struct {
 func (s *BadgerStore) Reset() {
 
 	s.Update(func(txn *badger.Txn) error {
-		txn.Delete([]byte(tunKeyFlag))
+		txn.Delete([]byte(tunKeyKey))
 
 		return nil
 	})
@@ -59,7 +63,7 @@ func (s *BadgerStore) Reset() {
 func (s *BadgerStore) SetKey(key *RPCPrivateKey) error {
 
 	s.Update(func(txn *badger.Txn) error {
-		err := txn.Set([]byte(tunKeyFlag), key.Bytes())
+		err := txn.Set([]byte(tunKeyKey), key.Bytes())
 		return err
 	})
 
@@ -72,7 +76,7 @@ func (s *BadgerStore) GetKey() (*RPCPrivateKey, error) {
 	var item *badger.Item
 
 	err = s.View(func(txn *badger.Txn) error {
-		item, err = txn.Get([]byte(tunKeyFlag))
+		item, err = txn.Get([]byte(tunKeyKey))
 		return err
 	})
 

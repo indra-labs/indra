@@ -8,7 +8,6 @@ import (
 var (
 	UnixPathFlag  = "rpc-unix-listen"
 	TunEnableFlag = "rpc-tun-enable"
-	tunKeyFlag    = "rpc-tun-key"
 	TunPortFlag   = "rpc-tun-port"
 	TunPeersFlag  = "rpc-tun-peer"
 )
