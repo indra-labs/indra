@@ -1,4 +1,4 @@
-package main
+package client
 
 import (
 	"context"
@@ -9,27 +9,6 @@ import (
 	"google.golang.org/grpc"
 	"os"
 )
-
-func init() {
-
-	//// Init flags belonging to the seed package
-	//seed.InitFlags(seedServeCmd)
-	//
-	//// Init flags belonging to the rpc package
-	//rpc.InitFlags(seedServeCmd)
-
-	seedCommand.AddCommand(seedRPCCmd)
-
-	initUnlock(unlockRPCCmd)
-
-	seedRPCCmd.AddCommand(unlockRPCCmd)
-}
-
-var seedRPCCmd = &cobra.Command{
-	Use:   "rpc",
-	Short: "A list of commands for interacting with a seed",
-	Long:  `A list of commands for interacting with a seed.`,
-}
 
 var (
 	unlockTargetFlag   = "target"

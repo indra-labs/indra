@@ -1,29 +1,17 @@
-package main
+package seed
 
 import (
 	"context"
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/cfg"
 	"git-indra.lan/indra-labs/indra/pkg/interrupt"
-	"git-indra.lan/indra-labs/indra/pkg/p2p"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	"git-indra.lan/indra-labs/indra/pkg/rpc"
 	"git-indra.lan/indra-labs/indra/pkg/seed"
-	"git-indra.lan/indra-labs/indra/pkg/storage"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-func init() {
-
-	storage.InitFlags(seedServeCmd)
-	p2p.InitFlags(seedServeCmd)
-	rpc.InitFlags(seedServeCmd)
-
-	seedCommand.AddCommand(seedServeCmd)
-}
-
-var seedServeCmd = &cobra.Command{
+var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Serves an instance of the seed node",
 	Long:  `Serves an instance of the seed node.`,
