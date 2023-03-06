@@ -423,8 +423,11 @@ func _c(level LogLevel, subsystem string) Printc {
 func _chk(level LogLevel, subsystem string) Chk {
 	return func(e error) (is bool) {
 		if e != nil {
-			logPrint(level, subsystem,
-				joinStrings(" ", e.Error()))()
+			logPrint(level,
+				subsystem,
+				joinStrings(
+					" ",
+					e))()
 			is = true
 		}
 		return

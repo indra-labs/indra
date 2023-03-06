@@ -523,7 +523,7 @@ func GetExampleCommands() (c *Command) {
 					"NoCFilters": toggle.New(meta.Data{
 						Aliases:       Tags("NCF"),
 						Tags:          Tags("node"),
-						Label:         "No CFilters",
+						Label:         "Node CFilters",
 						Description:   "disable committed filtering (CF) support",
 						Documentation: lorem,
 						Default:       "false",
@@ -539,7 +539,7 @@ func GetExampleCommands() (c *Command) {
 					"NoPeerBloomFilters": toggle.New(meta.Data{
 						Aliases:       Tags("NPBF"),
 						Tags:          Tags("node"),
-						Label:         "No Peer Bloom Filters",
+						Label:         "Node Peer Bloom Filters",
 						Description:   "disable bloom filtering support",
 						Documentation: lorem,
 						Default:       "false",
@@ -547,7 +547,7 @@ func GetExampleCommands() (c *Command) {
 					"NoRelayPriority": toggle.New(meta.Data{
 						Aliases:       Tags("NRPR"),
 						Tags:          Tags("node"),
-						Label:         "No Relay Priority",
+						Label:         "Node Relay Priority",
 						Description:   "do not require free or low-fee transactions to have high priority for relaying",
 						Documentation: lorem,
 						Default:       "false",

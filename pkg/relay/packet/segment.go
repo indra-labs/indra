@@ -88,7 +88,7 @@ func Join(packets Packets) (msg []byte, e error) {
 				sha256.Single(packets[prevSeq].Data) {
 				
 				discard = append(discard, int(ps.Seq))
-				// No need to go on, we will discard this one.
+				// Node need to go on, we will discard this one.
 				continue
 			}
 		}

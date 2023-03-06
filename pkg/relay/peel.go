@@ -2,9 +2,9 @@ package relay
 
 import (
 	"fmt"
-	
+
 	"github.com/davecgh/go-spew/spew"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/relay/messages/balance"
 	"git-indra.lan/indra-labs/indra/pkg/relay/messages/confirm"
 	"git-indra.lan/indra-labs/indra/pkg/relay/messages/crypt"

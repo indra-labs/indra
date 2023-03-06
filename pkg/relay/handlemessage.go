@@ -2,7 +2,7 @@ package relay
 
 import (
 	"reflect"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/relay/messages/balance"
 	"git-indra.lan/indra-labs/indra/pkg/relay/messages/confirm"
 	"git-indra.lan/indra-labs/indra/pkg/relay/messages/crypt"
