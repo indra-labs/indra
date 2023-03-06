@@ -7,7 +7,9 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/types"
+	"git-indra.lan/indra-labs/indra/pkg/relay/messages/crypt"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 const (
@@ -64,6 +66,21 @@ func (o Skins) GetBalanceOnion(p GetBalanceParams) Skins {
 		ReverseCrypt(p.Client, prvs[2], n[5], 0)
 }
 
+func (ng *Engine) SendGetBalance(target *SessionData, hook Callback) {
+	hops := []byte{0, 1, 2, 3, 4, 5}
+	s := make(Sessions, len(hops))
+	s[2] = target
+	se := ng.SelectHops(hops, s)
+	var c Circuit
+	copy(c[:], se)
+	confID := nonce.NewID()
+	o := Skins{}.GetBalanceOnion(GetBalanceParams{target.ID, confID, se[5], c,
+		ng.KeySet})
+	log.D.Ln("sending out getbalance onion")
+	res := ng.PostAcctOnion(o)
+	ng.SendWithOneHook(c[0].AddrPort, res, hook, ng.PendingResponses)
+}
+
 func (o Skins) GetBalance(id, confID nonce.ID, prvs [3]*prv.Key,
 	pubs [3]*pub.Key, nonces [3]nonce.IV) Skins {
 	
@@ -102,7 +119,57 @@ func (x *GetBalance) Len() int { return GetBalanceLen }
 
 func (x *GetBalance) Wrap(inner types.Onion) { x.Onion = inner }
 
-func (x *GetBalance) Handle(s *octet.Splice, p types.Onion, ng *Engine) (e error) {
+func (x *GetBalance) Handle(s *octet.Splice, p types.Onion,
+	ng *Engine) (e error) {
 	
+	log.T.S(x)
+	var found bool
+	var bal *Balance
+	ng.IterateSessions(func(sd *SessionData) bool {
+		if sd.ID == x.ID {
+			bal = &Balance{
+				ID:           x.ID,
+				ConfID:       x.ConfID,
+				MilliSatoshi: sd.Remaining,
+			}
+			found = true
+			return true
+		}
+		return false
+	})
+	if !found {
+		log.E.Ln("session not found", x.ID)
+		log.D.S(ng.Sessions)
+		return
+	}
+	header := s.GetRange(s.GetCursor(), s.Advance(crypt.ReverseHeaderLen))
+	rbb := FormatReply(header,
+		Encode(bal), x.Ciphers, x.Nonces)
+	rb := append(rbb.GetRange(-1, -1), slice.NoisePad(714-rbb.Len())...)
+	switch on1 := p.(type) {
+	case *Crypt:
+		sess := ng.FindSessionByHeader(on1.ToPriv)
+		if sess != nil {
+			in := sess.RelayRate * s.Len() / 2
+			out := sess.RelayRate * len(rb) / 2
+			ng.DecSession(sess.ID, in+out, false, "getbalance")
+		}
+	}
+	ng.IterateSessions(func(sd *SessionData) bool {
+		if sd.ID == x.ID {
+			bal = &Balance{
+				ID:           x.ID,
+				ConfID:       x.ConfID,
+				MilliSatoshi: sd.Remaining,
+			}
+			found = true
+			return true
+		}
+		return false
+	})
+	rbb = FormatReply(header,
+		Encode(bal), x.Ciphers, x.Nonces)
+	rb = append(rbb.GetRange(-1, -1), slice.NoisePad(714-len(rb))...)
+	ng.HandleMessage(octet.Load(rb, slice.NewCursor()), x)
 	return
 }
