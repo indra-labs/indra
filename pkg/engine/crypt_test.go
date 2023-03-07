@@ -8,7 +8,7 @@ import (
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 )
 
-func TestOnionSkins_Layer(t *testing.T) {
+func TestOnionSkins_SimpleCrypt(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	var e error
 	n := nonce.NewID()
@@ -41,8 +41,13 @@ func TestOnionSkins_Layer(t *testing.T) {
 		t.Error("did not decode")
 		t.FailNow()
 	}
-	if _, ok := oncn.(*Confirmation); !ok {
+	if cn, ok := oncn.(*Confirmation); !ok {
 		t.Error("did not get expected confirmation")
 		t.FailNow()
+	} else {
+		if cn.ID != n {
+			t.Error("did not get expected confirmation ID")
+			t.FailNow()
+		}
 	}
 }

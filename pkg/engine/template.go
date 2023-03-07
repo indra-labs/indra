@@ -16,6 +16,10 @@ func init() { Register(TmplMagic, TmplPrototype) }
 
 type Tmpl struct{}
 
+func (o Skins) Tmpl() Skins {
+	return append(o, &Tmpl{})
+}
+
 func NewTmpl() *Tmpl {
 	return &Tmpl{}
 }

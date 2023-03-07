@@ -283,7 +283,7 @@ func (s *Splice) ReadBytes(b *slice.Bytes) *Splice {
 	return s
 }
 
-func (s *Splice) Signature(sb sig.Bytes) *Splice {
+func (s *Splice) Signature(sb *sig.Bytes) *Splice {
 	copy(s.b[*s.c:s.c.Inc(sig.Len)], sb[:])
 	return s
 }

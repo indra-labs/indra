@@ -13,7 +13,7 @@ import (
 
 const (
 	IntroMagic = "in"
-	IntroLen   = MagicLen + pub.KeyLen + octet.AddrLen + sig.Len
+	IntroLen   = MagicLen + pub.KeyLen + 1 + octet.AddrLen + sig.Len
 )
 
 type Intro struct {
@@ -70,7 +70,7 @@ func (x *Intro) Encode(s *octet.Splice) (e error) {
 		Magic(IntroMagic).
 		Pubkey(x.Key).
 		AddrPort(x.AddrPort).
-		Signature(x.Sig)
+		Signature(&x.Sig)
 	return
 }
 

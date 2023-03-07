@@ -79,7 +79,7 @@ func (x *HiddenService) Encode(s *octet.Splice) (e error) {
 		ID(x.ID).
 		Pubkey(x.Key).
 		AddrPort(x.AddrPort).
-		Signature(x.Sig).
+		Signature(&x.Sig).
 		HashTriple(x.Ciphers).
 		IVTriple(x.Nonces),
 	)
