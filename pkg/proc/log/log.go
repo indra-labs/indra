@@ -408,9 +408,14 @@ func _f(level LogLevel, subsystem string) Printf {
 }
 func _s(level LogLevel, subsystem string) Prints {
 	return func(a ...interface{}) {
+		text := "spew:\n"
+		if s, ok := a[0].(string); ok {
+			text = s
+			a = a[1:]
+		}
 		logPrint(
 			level, subsystem, func() string {
-				return fmt.Sprint("spew:\n" + spew.Sdump(a...))
+				return fmt.Sprint(text + spew.Sdump(a...))
 			},
 		)()
 	}

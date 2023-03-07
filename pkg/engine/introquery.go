@@ -79,7 +79,7 @@ func (x *IntroQuery) Handle(s *octet.Splice, p Onion,
 	}
 	ng.Introductions.Unlock()
 	rb := FormatReply(s.GetRange(s.GetCursor(), s.Advance(ReverseHeaderLen)),
-		Encode(il), x.Ciphers, x.Nonces)
+		Encode(il).GetRange(-1, -1), x.Ciphers, x.Nonces)
 	switch on1 := p.(type) {
 	case *Crypt:
 		sess := ng.FindSessionByHeader(on1.ToPriv)

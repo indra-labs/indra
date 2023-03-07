@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"testing"
 	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
@@ -141,4 +142,31 @@ func CreateNMockCircuitsWithSessions(nCirc int, nReturns int) (cl []*Engine,
 	e error) {
 	
 	return createNMockCircuits(true, nCirc, nReturns)
+}
+
+func GetTwoPrvKeys(t *testing.T) (prv1, prv2 *prv.Key) {
+	var e error
+	if prv1, e = prv.GenerateKey(); check(e) {
+		t.FailNow()
+	}
+	if prv2, e = prv.GenerateKey(); check(e) {
+		t.FailNow()
+	}
+	return
+}
+
+func GetCipherSet(t *testing.T) (prvs [3]*prv.Key, pubs [3]*pub.Key) {
+	for i := range prvs {
+		prv1, prv2 := GetTwoPrvKeys(t)
+		prvs[i] = prv1
+		pubs[i] = pub.Derive(prv2)
+	}
+	return
+}
+
+func Gen3Nonces() (n [3]nonce.IV) {
+	for i := range n {
+		n[i] = nonce.New()
+	}
+	return
 }

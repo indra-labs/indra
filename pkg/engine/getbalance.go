@@ -144,7 +144,7 @@ func (x *GetBalance) Handle(s *octet.Splice, p Onion,
 	}
 	header := s.GetRange(s.GetCursor(), s.Advance(crypt.ReverseHeaderLen))
 	rbb := FormatReply(header,
-		Encode(bal), x.Ciphers, x.Nonces)
+		Encode(bal).GetRange(-1, -1), x.Ciphers, x.Nonces)
 	rb := append(rbb.GetRange(-1, -1), slice.NoisePad(714-rbb.Len())...)
 	switch on1 := p.(type) {
 	case *Crypt:
@@ -168,7 +168,7 @@ func (x *GetBalance) Handle(s *octet.Splice, p Onion,
 		return false
 	})
 	rbb = FormatReply(header,
-		Encode(bal), x.Ciphers, x.Nonces)
+		Encode(bal).GetRange(-1, -1), x.Ciphers, x.Nonces)
 	rb = append(rbb.GetRange(-1, -1), slice.NoisePad(714-len(rb))...)
 	ng.HandleMessage(octet.Load(rb, slice.NewCursor()), x)
 	return

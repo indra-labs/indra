@@ -110,7 +110,7 @@ func (x *Exit) Handle(s *octet.Splice, p Onion,
 		Bytes: result,
 	})
 	rb := FormatReply(s.GetRange(s.GetCursor(), ReverseHeaderLen),
-		res, x.Ciphers, x.Nonces)
+		res.GetRange(-1, -1), x.Ciphers, x.Nonces)
 	switch on := p.(type) {
 	case *Crypt:
 		sess := ng.FindSessionByHeader(on.ToPriv)

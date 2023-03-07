@@ -4,17 +4,16 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
-	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 type Skins []Onion
 
 var nop = &Tmpl{}
 
-func Encode(on Onion) (b slice.Bytes) {
-	s := octet.New(on.Len())
-	on.Encode(s)
-	return s.GetRange(-1, -1)
+func Encode(on Onion) (s *octet.Splice) {
+	s = octet.New(on.Len())
+	check(on.Encode(s))
+	return
 }
 
 // Assemble inserts the slice of Layer s inside each other so the first then

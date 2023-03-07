@@ -23,7 +23,6 @@ func NewRegistry() *Registry {
 func Register(magicString string, on func() Onion) {
 	registry.Lock()
 	defer registry.Unlock()
-	log.I.Ln("registering message type", magicString, reflect.TypeOf(on()))
 	registry.Onions[magicString] = on
 }
 
@@ -37,5 +36,6 @@ func Recognise(s *octet.Splice) (on Onion) {
 	if in, ok = registry.Onions[magic]; ok {
 		on = in()
 	}
+	log.T.F("recognised magic '%s' for type %s", magic, reflect.TypeOf(on))
 	return
 }

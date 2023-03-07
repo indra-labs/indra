@@ -70,7 +70,7 @@ func (s *Splice) GetRange(start, end int) slice.Bytes {
 	case start == -1 && end == -1:
 		return s.b
 	case start == -1:
-		return s.b[start:]
+		return s.b[:end]
 	case end == -1:
 		return s.b[start:]
 	}
