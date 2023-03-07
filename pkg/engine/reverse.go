@@ -4,7 +4,6 @@ import (
 	"net/netip"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
-	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -16,10 +15,10 @@ const (
 
 type Reverse struct {
 	*netip.AddrPort
-	types.Onion
+	Onion
 }
 
-var reversePrototype types.Onion = &Reverse{}
+func reversePrototype() Onion { return &Reverse{} }
 
 func init() { Register(ReverseMagic, reversePrototype) }
 
@@ -38,14 +37,15 @@ func (x *Reverse) Decode(s *octet.Splice) (e error) {
 		ReverseMagic); check(e) {
 		return
 	}
-	return s.ReadAddrPort(&x.AddrPort)
+	s.ReadAddrPort(&x.AddrPort)
+	return
 }
 
 func (x *Reverse) Len() int { return ReverseLen + x.Onion.Len() }
 
-func (x *Reverse) Wrap(inner types.Onion) { x.Onion = inner }
+func (x *Reverse) Wrap(inner Onion) { x.Onion = inner }
 
-func (x *Reverse) Handle(s *octet.Splice, p types.Onion,
+func (x *Reverse) Handle(s *octet.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	if x.AddrPort.String() == ng.GetLocalNodeAddress().String() {

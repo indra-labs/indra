@@ -5,7 +5,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
-	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 )
 
@@ -18,10 +17,10 @@ type Session struct {
 	nonce.ID             // only used by a client
 	Hop             byte // only used by a client
 	Header, Payload *prv.Key
-	types.Onion
+	Onion
 }
 
-var sessionPrototype types.Onion = &Session{}
+func sessionPrototype() Onion { return &Session{} }
 
 func init() { Register(SessionMagic, sessionPrototype) }
 
@@ -88,17 +87,18 @@ func (x *Session) Decode(s *octet.Splice) (e error) {
 		SessionMagic); check(e) {
 		return
 	}
-	return s.
+	s.
 		ReadID(&x.ID).
 		ReadPrvkey(&x.Header).
 		ReadPrvkey(&x.Payload)
+	return
 }
 
 func (x *Session) Len() int { return SessionLen + x.Onion.Len() }
 
-func (x *Session) Wrap(inner types.Onion) { x.Onion = inner }
+func (x *Session) Wrap(inner Onion) { x.Onion = inner }
 
-func (x *Session) Handle(s *octet.Splice, p types.Onion, ng *Engine) (e error) {
+func (x *Session) Handle(s *octet.Splice, p Onion, ng *Engine) (e error) {
 	
 	log.D.Ln(p == nil)
 	log.T.F("incoming session %x", x.PreimageHash())

@@ -1,7 +1,6 @@
-package types
+package engine
 
 import (
-	"git-indra.lan/indra-labs/indra/pkg/engine"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -14,7 +13,7 @@ type Onion interface {
 	Decode(s *octet.Splice) (e error)
 	Len() int
 	Wrap(inner Onion)
-	Handle(s *octet.Splice, p Onion, ng *engine.Engine) (e error)
+	Handle(s *octet.Splice, p Onion, ng *Engine) (e error)
 }
 
 type Transport interface {

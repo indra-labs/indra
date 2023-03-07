@@ -4,7 +4,6 @@ import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -20,7 +19,7 @@ type Balance struct {
 	lnwire.MilliSatoshi
 }
 
-var balancePrototype types.Onion = &Balance{}
+func balancePrototype() Onion { return &Balance{} }
 
 func init() { Register(BalanceMagic, balancePrototype) }
 
@@ -36,12 +35,13 @@ func (o Skins) Balance(id, confID nonce.ID,
 
 func (x *Balance) Magic() string { return BalanceMagic }
 
-func (x *Balance) Encode(s *octet.Splice) error {
-	return s.
+func (x *Balance) Encode(s *octet.Splice) (e error) {
+	s.
 		Magic(BalanceMagic).
 		ID(x.ID).
 		ID(x.ConfID).
 		Uint64(uint64(x.MilliSatoshi))
+	return
 }
 
 func (x *Balance) Decode(s *octet.Splice) (e error) {
@@ -49,17 +49,18 @@ func (x *Balance) Decode(s *octet.Splice) (e error) {
 		BalanceMagic); check(e) {
 		return
 	}
-	return s.
+	s.
 		ReadID(&x.ID).
 		ReadID(&x.ConfID).
 		ReadMilliSatoshi(&x.MilliSatoshi)
+	return
 }
 
 func (x *Balance) Len() int { return BalanceLen }
 
-func (x *Balance) Wrap(inner types.Onion) {}
+func (x *Balance) Wrap(inner Onion) {}
 
-func (x *Balance) Handle(s *octet.Splice, p types.Onion,
+func (x *Balance) Handle(s *octet.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	if pending := ng.PendingResponses.Find(x.ID); pending != nil {

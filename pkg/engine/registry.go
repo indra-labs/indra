@@ -4,13 +4,12 @@ import (
 	"reflect"
 	"sync"
 	
-	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 )
 
 var registry = NewRegistry()
 
-type Onions map[string]types.Onion
+type Onions map[string]func() Onion
 
 type Registry struct {
 	sync.Mutex
@@ -21,24 +20,22 @@ func NewRegistry() *Registry {
 	return &Registry{Onions: make(Onions)}
 }
 
-func Register(magicString string, on types.Onion) {
+func Register(magicString string, on func() Onion) {
 	registry.Lock()
 	defer registry.Unlock()
-	log.T.Ln("registering type", magicString, reflect.TypeOf(on))
+	log.I.Ln("registering message type", magicString, reflect.TypeOf(on()))
 	registry.Onions[magicString] = on
 }
 
-func Recognise(s *octet.Splice) (on types.Onion) {
+func Recognise(s *octet.Splice) (on Onion) {
 	registry.Lock()
 	defer registry.Unlock()
 	var magic string
-	if e := s.ReadMagic(&magic); check(e) {
-		return
-	}
+	s.ReadMagic(&magic)
 	var ok bool
-	var in types.Onion
+	var in func() Onion
 	if in, ok = registry.Onions[magic]; ok {
-		reflect.Copy(reflect.ValueOf(on), reflect.ValueOf(in))
+		on = in()
 	}
 	return
 }

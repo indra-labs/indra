@@ -6,7 +6,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
-	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/relay/messages/intro"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 )
@@ -26,10 +25,10 @@ type HiddenService struct {
 	// Nonces are the nonces to use with the cipher when creating the
 	// encryption for the reply message.
 	Nonces [3]nonce.IV
-	types.Onion
+	Onion
 }
 
-var hiddenServicePrototype types.Onion = &HiddenService{}
+func hiddenServicePrototype() Onion { return &HiddenService{} }
 
 func init() { Register(HiddenServiceMagic, hiddenServicePrototype) }
 
@@ -91,20 +90,21 @@ func (x *HiddenService) Decode(s *octet.Splice) (e error) {
 		HiddenServiceMagic); check(e) {
 		return
 	}
-	return s.
+	s.
 		ReadID(&x.ID).
 		ReadPubkey(&x.Key).
 		ReadAddrPort(&x.AddrPort).
 		ReadSignature(&x.Sig).
 		ReadHashTriple(&x.Ciphers).
 		ReadIVTriple(&x.Nonces)
+	return
 }
 
 func (x *HiddenService) Len() int { return HiddenServiceLen + x.Onion.Len() }
 
-func (x *HiddenService) Wrap(inner types.Onion) { x.Onion = inner }
+func (x *HiddenService) Wrap(inner Onion) { x.Onion = inner }
 
-func (x *HiddenService) Handle(s *octet.Splice, p types.Onion, ng *Engine) (e error) {
+func (x *HiddenService) Handle(s *octet.Splice, p Onion, ng *Engine) (e error) {
 	
 	log.D.F("%s adding introduction for key %s", ng.GetLocalNodeAddress(),
 		x.Key.ToBase32())

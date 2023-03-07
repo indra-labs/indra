@@ -2,7 +2,6 @@ package engine
 
 import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 )
 
@@ -16,7 +15,7 @@ type Confirmation struct {
 	Load byte
 }
 
-var confirmationPrototype types.Onion = &Confirmation{}
+func confirmationPrototype() Onion { return &Confirmation{} }
 
 func init() { Register(ConfirmationMagic, confirmationPrototype) }
 
@@ -27,7 +26,8 @@ func (o Skins) Confirmation(id nonce.ID, load byte) Skins {
 func (x *Confirmation) Magic() string { return ConfirmationMagic }
 
 func (x *Confirmation) Encode(s *octet.Splice) (e error) {
-	return s.Magic(ConfirmationMagic).ID(x.ID).Byte(x.Load)
+	s.Magic(ConfirmationMagic).ID(x.ID).Byte(x.Load)
+	return
 }
 
 func (x *Confirmation) Decode(s *octet.Splice) (e error) {
@@ -35,14 +35,15 @@ func (x *Confirmation) Decode(s *octet.Splice) (e error) {
 		ConfirmationMagic); check(e) {
 		return
 	}
-	return s.ReadID(&x.ID).ReadByte(&x.Load)
+	s.ReadID(&x.ID).ReadByte(&x.Load)
+	return
 }
 
 func (x *Confirmation) Len() int { return ConfirmationLen }
 
-func (x *Confirmation) Wrap(inner types.Onion) {}
+func (x *Confirmation) Wrap(inner Onion) {}
 
-func (x *Confirmation) Handle(s *octet.Splice, p types.Onion,
+func (x *Confirmation) Handle(s *octet.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	// When a confirmation arrives check if it is registered for and run the

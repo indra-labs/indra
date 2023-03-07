@@ -2,7 +2,6 @@ package engine
 
 import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -20,7 +19,7 @@ type Response struct {
 	slice.Bytes
 }
 
-var responsePrototype types.Onion = &Response{}
+func responsePrototype() Onion { return &Response{} }
 
 func init() { Register(ResponseMagic, responsePrototype) }
 
@@ -32,12 +31,13 @@ func (o Skins) Response(id nonce.ID, res slice.Bytes, port uint16) Skins {
 func (x *Response) Magic() string { return ResponseMagic }
 
 func (x *Response) Encode(s *octet.Splice) (e error) {
-	return s.
+	s.
 		Magic(ResponseMagic).
 		ID(x.ID).
 		Uint16(x.Port).
 		Byte(x.Load).
 		Bytes(x.Bytes)
+	return
 }
 
 func (x *Response) Decode(s *octet.Splice) (e error) {
@@ -45,18 +45,19 @@ func (x *Response) Decode(s *octet.Splice) (e error) {
 		ResponseMagic); check(e) {
 		return
 	}
-	return s.
+	s.
 		ReadID(&x.ID).
 		ReadUint16(&x.Port).
 		ReadByte(&x.Load).
 		ReadBytes(&x.Bytes)
+	return
 }
 
 func (x *Response) Len() int { return ResponseLen + len(x.Bytes) }
 
-func (x *Response) Wrap(inner types.Onion) {}
+func (x *Response) Wrap(inner Onion) {}
 
-func (x *Response) Handle(s *octet.Splice, p types.Onion,
+func (x *Response) Handle(s *octet.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	pending := ng.PendingResponses.Find(x.ID)

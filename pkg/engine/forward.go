@@ -3,7 +3,6 @@ package engine
 import (
 	"net/netip"
 	
-	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 )
 
@@ -14,10 +13,10 @@ const (
 
 type Forward struct {
 	*netip.AddrPort
-	types.Onion
+	Onion
 }
 
-var forwardPrototype types.Onion = &Forward{}
+func forwardPrototype() Onion { return &Forward{} }
 
 func init() { Register(ForwardMagic, forwardPrototype) }
 
@@ -36,14 +35,15 @@ func (x *Forward) Decode(s *octet.Splice) (e error) {
 		ForwardMagic); check(e) {
 		return
 	}
-	return s.ReadAddrPort(&x.AddrPort)
+	s.ReadAddrPort(&x.AddrPort)
+	return
 }
 
 func (x *Forward) Len() int { return ForwardLen + x.Onion.Len() }
 
-func (x *Forward) Wrap(inner types.Onion) { x.Onion = inner }
+func (x *Forward) Wrap(inner Onion) { x.Onion = inner }
 
-func (x *Forward) Handle(s *octet.Splice, p types.Onion,
+func (x *Forward) Handle(s *octet.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	// Forward the whole buffer received onwards. Usually there will be a

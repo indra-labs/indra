@@ -7,7 +7,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
-	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -36,10 +35,10 @@ type Exit struct {
 	nonce.ID
 	// Bytes are the message to be passed to the exit service.
 	slice.Bytes
-	types.Onion
+	Onion
 }
 
-var exitPrototype types.Onion = &Exit{}
+func exitPrototype() Onion { return &Exit{} }
 
 func init() { Register(ExitMagic, exitPrototype) }
 
@@ -73,19 +72,20 @@ func (x *Exit) Decode(s *octet.Splice) (e error) {
 	if e = TooShort(s.Remaining(), ExitLen-MagicLen, ExitMagic); check(e) {
 		return
 	}
-	return s.
+	s.
 		ReadUint16(&x.Port).
 		ReadHashTriple(&x.Ciphers).
 		ReadIVTriple(&x.Nonces).
 		ReadID(&x.ID).
 		ReadBytes(&x.Bytes)
+	return
 }
 
 func (x *Exit) Len() int { return ExitLen + x.Bytes.Len() + x.Onion.Len() }
 
-func (x *Exit) Wrap(inner types.Onion) { x.Onion = inner }
+func (x *Exit) Wrap(inner Onion) { x.Onion = inner }
 
-func (x *Exit) Handle(s *octet.Splice, p types.Onion,
+func (x *Exit) Handle(s *octet.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	// payload is forwarded to a local port and the result is forwarded

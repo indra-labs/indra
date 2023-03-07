@@ -8,8 +8,8 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	ring2 "git-indra.lan/indra-labs/indra/pkg/relay/ring"
 	"git-indra.lan/indra-labs/indra/pkg/relay/types"
+	"git-indra.lan/indra-labs/indra/pkg/ring"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -29,11 +29,11 @@ type Node struct {
 	IdentityPub   *pub.Key
 	IdentityBytes pub.Bytes
 	IdentityPrv   *prv.Key
-	RelayRate     int                  // Base relay price/Mb.
-	Services      Services             // Services offered by this peer.
-	Load          *ring2.BufferLoad    // Relay load.
-	Latency       *ring2.BufferLatency // Latency to peer.
-	Failure       *ring2.BufferFailure // Times of tx failure.
+	RelayRate     int                 // Base relay price/Mb.
+	Services      Services            // Services offered by this peer.
+	Load          *ring.BufferLoad    // Relay load.
+	Latency       *ring.BufferLatency // Latency to peer.
+	Failure       *ring.BufferFailure // Times of tx failure.
 	PaymentChan
 	types.Transport
 }
@@ -67,9 +67,9 @@ func New(addr *netip.AddrPort, idPub *pub.Key, idPrv *prv.Key,
 	if !local {
 		// These ring buffers are needed to evaluate these metrics for remote
 		// peers only.
-		n.Load = ring2.NewBufferLoad(DefaultSampleBufferSize)
-		n.Latency = ring2.NewBufferLatency(DefaultSampleBufferSize)
-		n.Failure = ring2.NewBufferFailure(DefaultSampleBufferSize)
+		n.Load = ring.NewBufferLoad(DefaultSampleBufferSize)
+		n.Latency = ring.NewBufferLatency(DefaultSampleBufferSize)
+		n.Failure = ring.NewBufferFailure(DefaultSampleBufferSize)
 	}
 	return
 }

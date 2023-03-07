@@ -6,7 +6,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
-	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/relay/messages/crypt"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -27,12 +26,12 @@ type GetBalance struct {
 	// Nonces are the nonces to use with the cipher when creating the
 	// encryption for the reply message.
 	Nonces [3]nonce.IV
-	types.Onion
+	Onion
 }
 
-var GetBalancePrototype types.Onion = &GetBalance{}
+func getBalancePrototype() Onion { return &GetBalance{} }
 
-func init() { Register(GetBalanceMagic, GetBalancePrototype) }
+func init() { Register(GetBalanceMagic, getBalancePrototype) }
 
 type GetBalanceParams struct {
 	ID, ConfID nonce.ID
@@ -109,17 +108,18 @@ func (x *GetBalance) Decode(s *octet.Splice) (e error) {
 		GetBalanceMagic); check(e) {
 		return
 	}
-	return s.
+	s.
 		ReadID(&x.ID).ReadID(&x.ConfID).
 		ReadHashTriple(&x.Ciphers).
 		ReadIVTriple(&x.Nonces)
+	return
 }
 
 func (x *GetBalance) Len() int { return GetBalanceLen }
 
-func (x *GetBalance) Wrap(inner types.Onion) { x.Onion = inner }
+func (x *GetBalance) Wrap(inner Onion) { x.Onion = inner }
 
-func (x *GetBalance) Handle(s *octet.Splice, p types.Onion,
+func (x *GetBalance) Handle(s *octet.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	log.T.S(x)

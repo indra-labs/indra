@@ -5,7 +5,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
-	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 )
 
@@ -23,10 +22,10 @@ type IntroQuery struct {
 	// Nonces are the nonces to use with the cipher when creating the
 	// encryption for the reply message.
 	Nonces [3]nonce.IV
-	types.Onion
+	Onion
 }
 
-var introQueryPrototype types.Onion = &IntroQuery{}
+func introQueryPrototype() Onion { return &IntroQuery{} }
 
 func init() { Register(IntroQueryMagic, introQueryPrototype) }
 
@@ -56,17 +55,18 @@ func (x *IntroQuery) Decode(s *octet.Splice) (e error) {
 		IntroQueryMagic); check(e) {
 		return
 	}
-	return s.
+	s.
 		ReadPubkey(&x.Key).
 		ReadHash(&x.Ciphers[0]).ReadHash(&x.Ciphers[1]).ReadHash(&x.Ciphers[2]).
 		ReadIV(&x.Nonces[0]).ReadIV(&x.Nonces[1]).ReadIV(&x.Nonces[2])
+	return
 }
 
 func (x *IntroQuery) Len() int { return IntroQueryLen }
 
-func (x *IntroQuery) Wrap(inner types.Onion) { x.Onion = inner }
+func (x *IntroQuery) Wrap(inner Onion) { x.Onion = inner }
 
-func (x *IntroQuery) Handle(s *octet.Splice, p types.Onion,
+func (x *IntroQuery) Handle(s *octet.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	ng.Introductions.Lock()

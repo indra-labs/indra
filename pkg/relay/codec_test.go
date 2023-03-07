@@ -25,7 +25,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/util/tests"
 )
 
-func TestOnionSkins_Cipher(t *testing.T) {
+func TestOnionSkins_Session(t *testing.T) {
 	var e error
 	sess := session.New(1)
 	on := Skins{}.

@@ -8,7 +8,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/sig"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
-	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 )
 
@@ -23,7 +22,7 @@ type Intro struct {
 	Sig      sig.Bytes
 }
 
-var introPrototype types.Onion = &Intro{}
+func introPrototype() Onion { return &Intro{} }
 
 func init() { Register(IntroMagic, introPrototype) }
 
@@ -67,28 +66,30 @@ func (x *Intro) Validate() bool {
 func (x *Intro) Magic() string { return IntroMagic }
 
 func (x *Intro) Encode(s *octet.Splice) (e error) {
-	return s.
+	s.
 		Magic(IntroMagic).
 		Pubkey(x.Key).
 		AddrPort(x.AddrPort).
 		Signature(x.Sig)
+	return
 }
 
 func (x *Intro) Decode(s *octet.Splice) (e error) {
 	if e = TooShort(s.Remaining(), IntroLen-MagicLen, IntroMagic); check(e) {
 		return
 	}
-	return s.
+	s.
 		ReadPubkey(&x.Key).
 		ReadAddrPort(&x.AddrPort).
 		ReadSignature(&x.Sig)
+	return
 }
 
 func (x *Intro) Len() int { return IntroLen }
 
-func (x *Intro) Wrap(inner types.Onion) {}
+func (x *Intro) Wrap(inner Onion) {}
 
-func (x *Intro) Handle(s *octet.Splice, p types.Onion,
+func (x *Intro) Handle(s *octet.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	ng.Introductions.Lock()

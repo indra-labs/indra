@@ -3,7 +3,6 @@ package engine
 import (
 	"time"
 	
-	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -15,10 +14,10 @@ const (
 
 type Delay struct {
 	time.Duration
-	types.Onion
+	Onion
 }
 
-var delayPrototype types.Onion = &Delay{}
+func delayPrototype() Onion { return &Delay{} }
 
 func init() { Register(DelayMagic, delayPrototype) }
 
@@ -36,14 +35,15 @@ func (x *Delay) Decode(s *octet.Splice) (e error) {
 	if e = TooShort(s.Remaining(), DelayLen-MagicLen, DelayMagic); check(e) {
 		return
 	}
-	return s.ReadDuration(&x.Duration)
+	s.ReadDuration(&x.Duration)
+	return
 }
 
 func (x *Delay) Len() int { return DelayLen + x.Onion.Len() }
 
-func (x *Delay) Wrap(inner types.Onion) { x.Onion = inner }
+func (x *Delay) Wrap(inner Onion) { x.Onion = inner }
 
-func (x *Delay) Handle(s *octet.Splice, p types.Onion, ng *Engine) (e error) {
+func (x *Delay) Handle(s *octet.Splice, p Onion, ng *Engine) (e error) {
 	
 	// this is a message to hold the message in the buffer until a duration
 	// elapses. The accounting for the remainder of the message adds a

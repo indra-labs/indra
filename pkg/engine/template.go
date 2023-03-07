@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/relay/messages/magicbytes"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 )
@@ -11,7 +10,9 @@ const (
 	TmplLen   = magicbytes.Len
 )
 
-var TmplPrototype types.Onion = &Tmpl{}
+func TmplPrototype() Onion { return &Tmpl{} }
+
+func init() { Register(TmplMagic, TmplPrototype) }
 
 type Tmpl struct{}
 
@@ -22,24 +23,22 @@ func NewTmpl() *Tmpl {
 func (x *Tmpl) Magic() string { return TmplMagic }
 
 func (x *Tmpl) Encode(s *octet.Splice) (e error) {
-	return s
+	return
 }
 
 func (x *Tmpl) Decode(s *octet.Splice) (e error) {
 	if e = TooShort(s.Remaining(), TmplLen-MagicLen, TmplMagic); check(e) {
 		return
 	}
-	return s
+	return
 }
 
 func (x *Tmpl) Len() int { return TmplLen }
 
-func (x *Tmpl) Wrap(inner types.Onion) {}
+func (x *Tmpl) Wrap(inner Onion) {}
 
-func (x *Tmpl) Handle(s *octet.Splice, p types.Onion,
+func (x *Tmpl) Handle(s *octet.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	return
 }
-
-func init() { Register(TmplMagic, TmplPrototype) }

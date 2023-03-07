@@ -8,7 +8,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/relay/messages/session"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 )
@@ -29,10 +28,10 @@ type Crypt struct {
 	Cloak   cloak.PubKey
 	ToPriv  *prv.Key
 	FromPub *pub.Key
-	types.Onion
+	Onion
 }
 
-var cryptPrototype types.Onion = &Crypt{}
+func cryptPrototype() Onion { return &Crypt{} }
 
 func init() { Register(CryptMagic, cryptPrototype) }
 
@@ -52,10 +51,8 @@ func (o Skins) Crypt(toHdr, toPld *pub.Key, from *prv.Key, n nonce.IV,
 func (x *Crypt) Magic() string { return CryptMagic }
 
 func (x *Crypt) Encode(s *octet.Splice) (e error) {
-	if e = s.Magic(CryptMagic).
-		IV(x.Nonce).Cloak(x.ToHeaderPub).Pubkey(pub.Derive(x.From)); check(e) {
-		return
-	}
+	s.Magic(CryptMagic).
+		IV(x.Nonce).Cloak(x.ToHeaderPub).Pubkey(pub.Derive(x.From))
 	if e = x.Onion.Encode(s); check(e) {
 		return
 	}
@@ -87,16 +84,17 @@ func (x *Crypt) Decode(s *octet.Splice) (e error) {
 	if e = TooShort(s.Remaining(), CryptLen-MagicLen, CryptMagic); check(e) {
 		return
 	}
-	return s.ReadIV(&x.Nonce).ReadCloak(&x.Cloak).ReadPubkey(&x.FromPub)
+	s.ReadIV(&x.Nonce).ReadCloak(&x.Cloak).ReadPubkey(&x.FromPub)
+	return
 }
 
 func (x *Crypt) Len() int {
 	return CryptLen + x.Onion.Len()
 }
 
-func (x *Crypt) Wrap(inner types.Onion) { x.Onion = inner }
+func (x *Crypt) Wrap(inner Onion) { x.Onion = inner }
 
-func (x *Crypt) Handle(s *octet.Splice, p types.Onion,
+func (x *Crypt) Handle(s *octet.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	// this is probably an encrypted crypt for us.

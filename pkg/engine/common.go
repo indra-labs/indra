@@ -11,8 +11,8 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	"git-indra.lan/indra-labs/indra/pkg/relay/transport"
 	"git-indra.lan/indra-labs/indra/pkg/relay/types"
+	"git-indra.lan/indra-labs/indra/pkg/transport"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -48,7 +48,7 @@ func FormatReply(header, res slice.Bytes, ciphers [3]sha256.Hash,
 	nonces [3]nonce.IV) (rb *octet.Splice) {
 	
 	rb = octet.New(ReverseHeaderLen + len(res))
-	check(rb.Bytes(header[:ReverseHeaderLen]).Bytes(res))
+	rb.Bytes(header[:ReverseHeaderLen]).Bytes(res)
 	start := rb.GetCursor()
 	for i := range ciphers {
 		blk := ciph.BlockFromHash(ciphers[i])

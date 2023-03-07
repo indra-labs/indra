@@ -8,7 +8,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	types2 "git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/relay/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -90,7 +89,7 @@ func (ng *Engine) Shutdown() {
 	ng.C.Q()
 }
 
-func (ng *Engine) HandleMessage(s *octet.Splice, pr types2.Onion) {
+func (ng *Engine) HandleMessage(s *octet.Splice, pr Onion) {
 	log.T.F("%v handling received message", ng.GetLocalNodeAddress())
 	
 	on := Recognise(s)
@@ -106,7 +105,7 @@ func (ng *Engine) Handler() (out bool) {
 		return ng.GetLocalNodeAddress().String() +
 			" awaiting message"
 	})
-	var prev types2.Onion
+	var prev Onion
 	select {
 	case <-ng.C.Wait():
 		ng.Shutdown()

@@ -3,18 +3,17 @@ package engine
 import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
-type Skins []types.Onion
+type Skins []Onion
 
 var nop = &Tmpl{}
 
-func Encode(on types.Onion) (b slice.Bytes) {
+func Encode(on Onion) (b slice.Bytes) {
 	s := octet.New(on.Len())
-	check(on.Encode(s))
+	on.Encode(s)
 	return s.GetRange(-1, -1)
 }
 
@@ -22,7 +21,7 @@ func Encode(on types.Onion) (b slice.Bytes) {
 // contains the second, second contains the third, and so on, and then returns
 // the first onion, on which you can then call Encode and generate the wire
 // message form of the onion.
-func (o Skins) Assemble() (on types.Onion) {
+func (o Skins) Assemble() (on Onion) {
 	// First item is the outer crypt.
 	on = o[0]
 	// Iterate through the remaining layers.

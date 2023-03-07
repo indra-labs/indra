@@ -1,7 +1,6 @@
 package octet
 
 import (
-	"fmt"
 	"net"
 	"net/netip"
 	"time"
@@ -30,16 +29,15 @@ const AddrLen = net.IPv6len + 2
 type Splice struct {
 	b slice.Bytes
 	c *slice.Cursor
-	error
 }
 
 func New(length int) (splicer *Splice) {
-	splicer = &Splice{make(slice.Bytes, length), slice.NewCursor(), nil}
+	splicer = &Splice{make(slice.Bytes, length), slice.NewCursor()}
 	return
 }
 
 func Load(b slice.Bytes, c *slice.Cursor) (splicer *Splice) {
-	return &Splice{b, c, nil}
+	return &Splice{b, c}
 }
 
 func (s *Splice) GetCursor() int { return int(*s.c) }
@@ -87,8 +85,6 @@ func (s *Splice) CopyIntoRange(b slice.Bytes, start, end int) {
 	copy(s.GetRange(start, end), b[:end-start])
 }
 
-func (s *Splice) GetError() error { return s.error }
-
 func (s *Splice) Magic(magic string) *Splice {
 	copy(s.b[*s.c:s.c.Inc(magicbytes.Len)], magic)
 	return s
@@ -116,7 +112,7 @@ func (s *Splice) IV(iv nonce.IV) *Splice {
 
 func (s *Splice) IVTriple(h [3]nonce.IV) *Splice {
 	for i := range h {
-		check(s.IV(h[i]))
+		s.IV(h[i])
 	}
 	return s
 }
@@ -128,7 +124,7 @@ func (s *Splice) ReadIV(iv *nonce.IV) *Splice {
 
 func (s *Splice) ReadIVTriple(h *[3]nonce.IV) *Splice {
 	for i := range h {
-		check(s.ReadIV(&h[i]))
+		s.ReadIV(&h[i])
 	}
 	return s
 }
@@ -152,9 +148,8 @@ func (s *Splice) Pubkey(from *pub.Key) *Splice {
 
 func (s *Splice) ReadPubkey(from **pub.Key) *Splice {
 	var f *pub.Key
-	if f, s.error = pub.FromBytes(s.b[*s.c:s.c.Inc(pub.KeyLen)]); !check(s.
-		error) {
-		
+	var e error
+	if f, e = pub.FromBytes(s.b[*s.c:s.c.Inc(pub.KeyLen)]); !check(e) {
 		*from = f
 	}
 	return s
@@ -168,7 +163,6 @@ func (s *Splice) Prvkey(from *prv.Key) *Splice {
 
 func (s *Splice) ReadPrvkey(out **prv.Key) *Splice {
 	if f := prv.PrivkeyFromBytes(s.b[*s.c:s.c.Inc(prv.KeyLen)]); f == nil {
-		s.error = fmt.Errorf("failed to read private key: [%w]", s.error)
 		return s
 	} else {
 		*out = f
@@ -224,7 +218,7 @@ func (s *Splice) Hash(h sha256.Hash) *Splice {
 
 func (s *Splice) HashTriple(h [3]sha256.Hash) *Splice {
 	for i := range h {
-		check(s.Hash(h[i]))
+		s.Hash(h[i])
 	}
 	return s
 }
@@ -238,7 +232,7 @@ func (s *Splice) ReadHash(h *sha256.Hash) *Splice {
 
 func (s *Splice) ReadHashTriple(h *[3]sha256.Hash) *Splice {
 	for i := range h {
-		check(s.ReadHash(&h[i]))
+		s.ReadHash(&h[i])
 	}
 	return s
 }
