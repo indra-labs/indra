@@ -2,12 +2,13 @@ package engine
 
 import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 )
 
 const (
 	ConfirmationMagic = "cn"
-	ConfirmationLen   = MagicLen + nonce.IDLen + 1
+	ConfirmationLen   = magic.Len + nonce.IDLen + 1
 )
 
 type Confirmation struct {
@@ -31,7 +32,7 @@ func (x *Confirmation) Encode(s *octet.Splice) (e error) {
 }
 
 func (x *Confirmation) Decode(s *octet.Splice) (e error) {
-	if e = TooShort(s.Remaining(), ConfirmationLen-MagicLen,
+	if e = magic.TooShort(s.Remaining(), ConfirmationLen-magic.Len,
 		ConfirmationMagic); check(e) {
 		return
 	}

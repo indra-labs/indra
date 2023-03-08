@@ -6,12 +6,13 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 )
 
 const (
 	HiddenServiceMagic = "hs"
-	HiddenServiceLen   = MagicLen + nonce.IDLen + IntroLen +
+	HiddenServiceLen   = magic.Len + nonce.IDLen + IntroLen +
 		3*sha256.Len + nonce.IVLen*3
 )
 
@@ -85,7 +86,7 @@ func (x *HiddenService) Encode(s *octet.Splice) (e error) {
 }
 
 func (x *HiddenService) Decode(s *octet.Splice) (e error) {
-	if e = TooShort(s.Remaining(), HiddenServiceLen-MagicLen,
+	if e = magic.TooShort(s.Remaining(), HiddenServiceLen-magic.Len,
 		HiddenServiceMagic); check(e) {
 		return
 	}

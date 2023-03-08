@@ -1,12 +1,13 @@
 package engine
 
 import (
+	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 )
 
 const (
 	TmplMagic = "!!"
-	TmplLen   = MagicLen
+	TmplLen   = magic.Len
 )
 
 func TmplPrototype() Onion { return &Tmpl{} }
@@ -30,7 +31,7 @@ func (x *Tmpl) Encode(s *octet.Splice) (e error) {
 }
 
 func (x *Tmpl) Decode(s *octet.Splice) (e error) {
-	if e = TooShort(s.Remaining(), TmplLen-MagicLen, TmplMagic); check(e) {
+	if e = magic.TooShort(s.Remaining(), TmplLen-magic.Len, TmplMagic); check(e) {
 		return
 	}
 	return

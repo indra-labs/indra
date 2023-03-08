@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"fmt"
 	"testing"
 	
 	"git-indra.lan/indra-labs/indra"
@@ -20,20 +19,6 @@ var (
 	log   = log2.GetLogger(indra.PathBase)
 	check = log.E.Chk
 )
-
-const (
-	MagicLen    = 2
-	ErrTooShort = "'%s' message  minimum size: %d got: %d"
-)
-
-func TooShort(got, found int, magic string) (e error) {
-	if got >= found {
-		return
-	}
-	e = fmt.Errorf(ErrTooShort, magic, got, found)
-	return
-	
-}
 
 func BudgeUp(s *octet.Splice) (o *octet.Splice) {
 	o = s

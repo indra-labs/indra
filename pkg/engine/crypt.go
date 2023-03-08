@@ -8,12 +8,13 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 )
 
 const (
 	CryptMagic       = "cr"
-	CryptLen         = MagicLen + nonce.IVLen + cloak.Len + pub.KeyLen
+	CryptLen         = magic.Len + nonce.IVLen + cloak.Len + pub.KeyLen
 	ReverseLayerLen  = ReverseLen + CryptLen
 	ReverseHeaderLen = 3 * ReverseLayerLen
 )
@@ -86,7 +87,7 @@ func (x *Crypt) Encode(s *octet.Splice) (e error) {
 }
 
 func (x *Crypt) Decode(s *octet.Splice) (e error) {
-	if e = TooShort(s.Remaining(), CryptLen-MagicLen, CryptMagic); check(e) {
+	if e = magic.TooShort(s.Remaining(), CryptLen-magic.Len, CryptMagic); check(e) {
 		return
 	}
 	s.ReadIV(&x.Nonce).ReadCloak(&x.Cloak).ReadPubkey(&x.FromPub)
@@ -112,7 +113,7 @@ func (x *Crypt) Handle(s *octet.Splice, p Onion,
 	x.ToPriv = hdr
 	x.Decrypt(hdr, s)
 	if identity {
-		if string(s.GetRange(s.GetCursor(), -1)[:MagicLen]) != SessionMagic {
+		if string(s.GetRange(s.GetCursor(), -1)[:magic.Len]) != SessionMagic {
 			log.T.Ln("dropping message due to identity key with" +
 				" no following session")
 			return e

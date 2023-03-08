@@ -8,13 +8,14 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 const (
 	ExitMagic = "ex"
-	ExitLen   = MagicLen + slice.Uint16Len + 3*sha256.Len +
+	ExitLen   = magic.Len + slice.Uint16Len + 3*sha256.Len +
 		slice.Uint32Len + nonce.IVLen*3 + nonce.IDLen
 )
 
@@ -119,7 +120,7 @@ func (x *Exit) Encode(s *octet.Splice) (e error) {
 }
 
 func (x *Exit) Decode(s *octet.Splice) (e error) {
-	if e = TooShort(s.Remaining(), ExitLen-MagicLen, ExitMagic); check(e) {
+	if e = magic.TooShort(s.Remaining(), ExitLen-magic.Len, ExitMagic); check(e) {
 		return
 	}
 	s.

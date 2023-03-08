@@ -14,8 +14,8 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/sig"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	magic2 "git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	"git-indra.lan/indra-labs/indra/pkg/relay/messages/magicbytes"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -86,12 +86,12 @@ func (s *Splice) CopyIntoRange(b slice.Bytes, start, end int) {
 }
 
 func (s *Splice) Magic(magic string) *Splice {
-	copy(s.b[*s.c:s.c.Inc(magicbytes.Len)], magic)
+	copy(s.b[*s.c:s.c.Inc(magic2.Len)], magic)
 	return s
 }
 
 func (s *Splice) ReadMagic(out *string) *Splice {
-	*out = string(s.b[*s.c:s.c.Inc(magicbytes.Len)])
+	*out = string(s.b[*s.c:s.c.Inc(magic2.Len)])
 	return s
 }
 

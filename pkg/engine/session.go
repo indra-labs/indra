@@ -5,12 +5,13 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 )
 
 const (
 	SessionMagic = "ss"
-	SessionLen   = MagicLen + nonce.IDLen + prv.KeyLen*2
+	SessionLen   = magic.Len + nonce.IDLen + prv.KeyLen*2
 )
 
 type Session struct {
@@ -83,7 +84,7 @@ func (x *Session) Encode(s *octet.Splice) (e error) {
 }
 
 func (x *Session) Decode(s *octet.Splice) (e error) {
-	if e = TooShort(s.Remaining(), SessionLen-MagicLen,
+	if e = magic.TooShort(s.Remaining(), SessionLen-magic.Len,
 		SessionMagic); check(e) {
 		return
 	}

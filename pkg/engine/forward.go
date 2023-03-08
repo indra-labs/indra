@@ -3,12 +3,13 @@ package engine
 import (
 	"net/netip"
 	
+	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 )
 
 const (
 	ForwardMagic = "fw"
-	ForwardLen   = MagicLen + 1 + octet.AddrLen
+	ForwardLen   = magic.Len + 1 + octet.AddrLen
 )
 
 type Forward struct {
@@ -31,7 +32,7 @@ func (x *Forward) Encode(s *octet.Splice) error {
 }
 
 func (x *Forward) Decode(s *octet.Splice) (e error) {
-	if e = TooShort(s.Remaining(), ForwardLen-MagicLen,
+	if e = magic.TooShort(s.Remaining(), ForwardLen-magic.Len,
 		ForwardMagic); check(e) {
 		return
 	}

@@ -3,13 +3,14 @@ package engine
 import (
 	"time"
 	
+	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 const (
 	DelayMagic = "dl"
-	DelayLen   = MagicLen + slice.Uint64Len
+	DelayLen   = magic.Len + slice.Uint64Len
 )
 
 type Delay struct {
@@ -32,7 +33,7 @@ func (x *Delay) Encode(s *octet.Splice) (e error) {
 }
 
 func (x *Delay) Decode(s *octet.Splice) (e error) {
-	if e = TooShort(s.Remaining(), DelayLen-MagicLen, DelayMagic); check(e) {
+	if e = magic.TooShort(s.Remaining(), DelayLen-magic.Len, DelayMagic); check(e) {
 		return
 	}
 	s.ReadDuration(&x.Duration)

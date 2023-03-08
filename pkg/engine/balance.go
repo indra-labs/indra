@@ -4,13 +4,14 @@ import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 const (
 	BalanceMagic = "ba"
-	BalanceLen   = MagicLen + nonce.IDLen*2 + slice.Uint64Len
+	BalanceLen   = magic.Len + nonce.IDLen*2 + slice.Uint64Len
 )
 
 type Balance struct {
@@ -46,7 +47,7 @@ func (x *Balance) Encode(s *octet.Splice) (e error) {
 }
 
 func (x *Balance) Decode(s *octet.Splice) (e error) {
-	if e = TooShort(s.Remaining(), BalanceLen-MagicLen,
+	if e = magic.TooShort(s.Remaining(), BalanceLen-magic.Len,
 		BalanceMagic); check(e) {
 		return
 	}

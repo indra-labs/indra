@@ -6,13 +6,14 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 const (
 	GetBalanceMagic = "gb"
-	GetBalanceLen   = MagicLen + 2*nonce.IDLen +
+	GetBalanceLen   = magic.Len + 2*nonce.IDLen +
 		3*sha256.Len + nonce.IVLen*3
 )
 
@@ -102,7 +103,7 @@ func (x *GetBalance) Encode(s *octet.Splice) (e error) {
 }
 
 func (x *GetBalance) Decode(s *octet.Splice) (e error) {
-	if e = TooShort(s.Remaining(), GetBalanceLen-MagicLen,
+	if e = magic.TooShort(s.Remaining(), GetBalanceLen-magic.Len,
 		GetBalanceMagic); check(e) {
 		return
 	}

@@ -8,12 +8,13 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/sig"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 )
 
 const (
 	IntroMagic = "in"
-	IntroLen   = MagicLen + pub.KeyLen + 1 + octet.AddrLen + sig.Len
+	IntroLen   = magic.Len + pub.KeyLen + 1 + octet.AddrLen + sig.Len
 )
 
 type Intro struct {
@@ -75,7 +76,7 @@ func (x *Intro) Encode(s *octet.Splice) (e error) {
 }
 
 func (x *Intro) Decode(s *octet.Splice) (e error) {
-	if e = TooShort(s.Remaining(), IntroLen-MagicLen, IntroMagic); check(e) {
+	if e = magic.TooShort(s.Remaining(), IntroLen-magic.Len, IntroMagic); check(e) {
 		return
 	}
 	s.

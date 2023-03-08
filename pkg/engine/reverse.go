@@ -4,13 +4,14 @@ import (
 	"net/netip"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
+	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 const (
 	ReverseMagic = "rv"
-	ReverseLen   = MagicLen + 1 + octet.AddrLen
+	ReverseLen   = magic.Len + 1 + octet.AddrLen
 )
 
 type Reverse struct {
@@ -33,7 +34,7 @@ func (x *Reverse) Encode(s *octet.Splice) error {
 }
 
 func (x *Reverse) Decode(s *octet.Splice) (e error) {
-	if e = TooShort(s.Remaining(), ReverseLen-MagicLen,
+	if e = magic.TooShort(s.Remaining(), ReverseLen-magic.Len,
 		ReverseMagic); check(e) {
 		return
 	}
@@ -116,7 +117,7 @@ func (x *Reverse) Handle(s *octet.Splice, p Onion,
 				s.GetRange(last, -1).ToBytes(),
 			)
 		}
-		if s.GetRange(start, start+MagicLen).String() != ReverseMagic {
+		if s.GetRange(start, start+magic.Len).String() != ReverseMagic {
 			// It's for us!
 			log.T.Ln("handling response")
 			ng.HandleMessage(BudgeUp(s.SetCursor(last)), on)

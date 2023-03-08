@@ -6,12 +6,13 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 )
 
 const (
 	IntroQueryMagic = "iq"
-	IntroQueryLen   = MagicLen + pub.KeyLen +
+	IntroQueryLen   = magic.Len + pub.KeyLen +
 		3*sha256.Len + nonce.IVLen*3
 )
 
@@ -76,7 +77,7 @@ func (x *IntroQuery) Encode(s *octet.Splice) (e error) {
 }
 
 func (x *IntroQuery) Decode(s *octet.Splice) (e error) {
-	if e = TooShort(s.Remaining(), IntroQueryLen-MagicLen,
+	if e = magic.TooShort(s.Remaining(), IntroQueryLen-magic.Len,
 		IntroQueryMagic); check(e) {
 		return
 	}

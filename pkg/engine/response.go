@@ -2,13 +2,14 @@ package engine
 
 import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 const (
 	ResponseMagic = "rs"
-	ResponseLen   = MagicLen + slice.Uint32Len + slice.Uint16Len +
+	ResponseLen   = magic.Len + slice.Uint32Len + slice.Uint16Len +
 		nonce.IDLen + 1
 )
 
@@ -40,7 +41,7 @@ func (x *Response) Encode(s *octet.Splice) (e error) {
 }
 
 func (x *Response) Decode(s *octet.Splice) (e error) {
-	if e = TooShort(s.Remaining(), ResponseLen-MagicLen,
+	if e = magic.TooShort(s.Remaining(), ResponseLen-magic.Len,
 		ResponseMagic); check(e) {
 		return
 	}
