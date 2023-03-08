@@ -65,7 +65,6 @@ type GetBalanceParams struct {
 // GetBalance sends out a request in a similar way to Exit except the node
 // being queried can be any of the 5.
 func GetBalance(p GetBalanceParams) Skins {
-	
 	var prvs [3]*prv.Key
 	for i := range prvs {
 		prvs[i] = p.KS.Next()

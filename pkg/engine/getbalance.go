@@ -42,8 +42,7 @@ type GetBalanceParams struct {
 
 // GetBalanceOnion sends out a request in a similar way to Exit except the node
 // being queried can be any of the 5.
-func (o Skins) GetBalanceOnion(p GetBalanceParams) Skins {
-	
+func GetBalanceOnion(p GetBalanceParams) Skins {
 	var prvs [3]*prv.Key
 	for i := range prvs {
 		prvs[i] = p.KS.Next()
@@ -73,7 +72,7 @@ func (ng *Engine) SendGetBalance(target *SessionData, hook Callback) {
 	var c Circuit
 	copy(c[:], se)
 	confID := nonce.NewID()
-	o := Skins{}.GetBalanceOnion(GetBalanceParams{target.ID, confID, se[5], c,
+	o := GetBalanceOnion(GetBalanceParams{target.ID, confID, se[5], c,
 		ng.KeySet})
 	log.D.Ln("sending out getbalance onion")
 	res := ng.PostAcctOnion(o)
@@ -98,8 +97,8 @@ func (x *GetBalance) Encode(s *octet.Splice) (e error) {
 	return x.Onion.Encode(s.
 		Magic(GetBalanceMagic).
 		ID(x.ID).ID(x.ConfID).
-		Hash(x.Ciphers[0]).Hash(x.Ciphers[1]).Hash(x.Ciphers[2]).
-		IV(x.Nonces[0]).IV(x.Nonces[1]).IV(x.Nonces[2]),
+		HashTriple(x.Ciphers).
+		IVTriple(x.Nonces),
 	)
 }
 
@@ -115,7 +114,7 @@ func (x *GetBalance) Decode(s *octet.Splice) (e error) {
 	return
 }
 
-func (x *GetBalance) Len() int { return GetBalanceLen }
+func (x *GetBalance) Len() int { return GetBalanceLen + x.Onion.Len() }
 
 func (x *GetBalance) Wrap(inner Onion) { x.Onion = inner }
 
@@ -127,6 +126,7 @@ func (x *GetBalance) Handle(s *octet.Splice, p Onion,
 	var bal *Balance
 	ng.IterateSessions(func(sd *SessionData) bool {
 		if sd.ID == x.ID {
+			log.D.S("sessiondata", sd.ID, sd.Remaining)
 			bal = &Balance{
 				ID:           x.ID,
 				ConfID:       x.ConfID,
@@ -142,6 +142,7 @@ func (x *GetBalance) Handle(s *octet.Splice, p Onion,
 		log.D.S(ng.Sessions)
 		return
 	}
+	log.D.Ln("session found", x.ID)
 	header := s.GetRange(s.GetCursor(), s.Advance(crypt.ReverseHeaderLen))
 	rbb := FormatReply(header,
 		Encode(bal).GetRange(-1, -1), x.Ciphers, x.Nonces)

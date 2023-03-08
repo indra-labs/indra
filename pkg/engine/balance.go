@@ -36,6 +36,7 @@ func (o Skins) Balance(id, confID nonce.ID,
 func (x *Balance) Magic() string { return BalanceMagic }
 
 func (x *Balance) Encode(s *octet.Splice) (e error) {
+	log.D.S("encoding", x.ID, x.ConfID, x.MilliSatoshi)
 	s.
 		Magic(BalanceMagic).
 		ID(x.ID).
@@ -63,7 +64,9 @@ func (x *Balance) Wrap(inner Onion) {}
 func (x *Balance) Handle(s *octet.Splice, p Onion,
 	ng *Engine) (e error) {
 	
+	log.D.S("balance", x.ID, x.ConfID, x.MilliSatoshi)
 	if pending := ng.PendingResponses.Find(x.ID); pending != nil {
+		log.D.S("found pending", pending.ID)
 		for i := range pending.Billable {
 			session := ng.FindSession(pending.Billable[i])
 			out := session.RelayRate * s.Len()
@@ -82,9 +85,8 @@ func (x *Balance) Handle(s *octet.Splice, p Onion,
 		var se *SessionData
 		ng.IterateSessions(func(s *SessionData) bool {
 			if s.ID == x.ID {
-				local := ng.GetLocalNodeAddress()
-				log.D.F("%s received balance %s for session %s %s was %s",
-					local, x.MilliSatoshi, x.ID, x.ConfID, s.Remaining)
+				log.D.F("received balance %s for session %s %s was %s",
+					x.MilliSatoshi, x.ID, x.ConfID, s.Remaining)
 				se = s
 				return true
 			}

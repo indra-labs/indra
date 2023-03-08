@@ -1,12 +1,18 @@
 package engine
 
 import (
+	"sync"
 	"testing"
+	"time"
+	
+	"github.com/cybriq/qu"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 func TestOnionSkins_GetBalance(t *testing.T) {
@@ -57,5 +63,49 @@ func TestOnionSkins_GetBalance(t *testing.T) {
 			t.Errorf("nonce %d did not unwrap correctly", i)
 			t.FailNow()
 		}
+	}
+}
+
+func TestClient_SendGetBalance(t *testing.T) {
+	log2.SetLogLevel(log2.Trace)
+	var clients []*Engine
+	var e error
+	if clients, e = CreateNMockCircuitsWithSessions(2, 2); check(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	// Start up the clients.
+	for _, v := range clients {
+		go v.Start()
+	}
+	quit := qu.T()
+	var wg sync.WaitGroup
+	go func() {
+		select {
+		case <-time.After(time.Second):
+		case <-quit:
+			return
+		}
+		quit.Q()
+		t.Error("SendGetBalance test failed")
+	}()
+out:
+	for i := 1; i < len(clients[0].Sessions)-1; i++ {
+		wg.Add(1)
+		clients[0].SendGetBalance(clients[0].Sessions[i],
+			func(cf nonce.ID, b slice.Bytes) {
+				log.I.Ln("success")
+				wg.Done()
+			})
+		select {
+		case <-quit:
+			break out
+		default:
+		}
+		wg.Wait()
+	}
+	quit.Q()
+	for _, v := range clients {
+		v.Shutdown()
 	}
 }

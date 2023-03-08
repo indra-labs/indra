@@ -48,12 +48,13 @@ func BudgeUp(s *octet.Splice) (o *octet.Splice) {
 func FormatReply(header, res slice.Bytes, ciphers [3]sha256.Hash,
 	nonces [3]nonce.IV) (rb *octet.Splice) {
 	
-	rb = octet.New(ReverseHeaderLen + len(res))
-	rb.Bytes(header[:ReverseHeaderLen]).Bytes(res)
-	start := rb.GetCursor()
+	rl := ReverseHeaderLen
+	rb = octet.New(rl + len(res))
+	copy(rb.GetRange(-1, rl), header[:rl])
+	copy(rb.GetRange(ReverseHeaderLen, -1), res)
 	for i := range ciphers {
 		blk := ciph.BlockFromHash(ciphers[i])
-		ciph.Encipher(blk, nonces[2-i], rb.GetRange(start, -1))
+		ciph.Encipher(blk, nonces[2-i], rb.GetRange(ReverseHeaderLen, -1))
 	}
 	return
 }

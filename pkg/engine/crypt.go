@@ -15,7 +15,7 @@ import (
 const (
 	CryptMagic       = "cr"
 	CryptLen         = MagicLen + nonce.IVLen + cloak.Len + pub.KeyLen
-	ReverseLayerLen  = ReverseLen + CryptLen + MagicLen
+	ReverseLayerLen  = ReverseLen + CryptLen
 	ReverseHeaderLen = 3 * ReverseLayerLen
 )
 
@@ -72,9 +72,9 @@ func (x *Crypt) Encode(s *octet.Splice) (e error) {
 	if e = x.Onion.Encode(s); check(e) {
 		return
 	}
-	// log.T.S("before encryption:\n", s.GetRange(start, end).ToBytes())
+	log.T.S("before encryption:\n", s.GetRange(start, end).ToBytes())
 	ciph.Encipher(blk, x.Nonce, s.GetRange(start, end))
-	// log.T.S("after encryption:\n", s.GetRange(start, end).ToBytes())
+	log.T.S("after encryption:\n", s.GetRange(start, end).ToBytes())
 	if end != s.Len() {
 		if blk = ciph.GetBlock(x.From, x.ToPayloadPub); check(e) {
 			panic(e)
@@ -103,6 +103,7 @@ func (x *Crypt) Wrap(inner Onion) { x.Onion = inner }
 func (x *Crypt) Handle(s *octet.Splice, p Onion,
 	ng *Engine) (e error) {
 	
+	log.D.Ln("handling crypt")
 	// this is probably an encrypted crypt for us.
 	hdr, _, _, identity := ng.FindCloaked(x.Cloak)
 	if hdr == nil {
