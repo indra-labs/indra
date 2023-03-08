@@ -24,8 +24,7 @@ func responsePrototype() Onion { return &Response{} }
 func init() { Register(ResponseMagic, responsePrototype) }
 
 func (o Skins) Response(id nonce.ID, res slice.Bytes, port uint16) Skins {
-	rs := Response{ID: id, Port: port, Bytes: res}
-	return append(o, &rs)
+	return append(o, &Response{ID: id, Port: port, Bytes: res})
 }
 
 func (x *Response) Magic() string { return ResponseMagic }

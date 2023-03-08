@@ -32,8 +32,8 @@ func hiddenServicePrototype() Onion { return &HiddenService{} }
 
 func init() { Register(HiddenServiceMagic, hiddenServicePrototype) }
 
-func (o Skins) HiddenServiceOnion(id nonce.ID, il *Intro, client *SessionData,
-	s Circuit, ks *signer.KeySet) Skins {
+func (o Skins) MakeHiddenService(id nonce.ID, il *Intro,
+	client *SessionData, s Circuit, ks *signer.KeySet) Skins {
 	
 	var prvs [3]*prv.Key
 	for i := range prvs {

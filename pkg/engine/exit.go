@@ -5,6 +5,7 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
@@ -53,6 +54,55 @@ func (o Skins) Exit(port uint16, prvs [3]*prv.Key, pubs [3]*pub.Key,
 		Bytes:   payload,
 		Onion:   nop,
 	})
+}
+
+type ExitParams struct {
+	Port    uint16
+	Payload slice.Bytes
+	ID      nonce.ID
+	Client  *SessionData
+	S       Circuit
+	KS      *signer.KeySet
+}
+
+// MakeExit constructs a message containing an arbitrary payload to a node (3rd
+// hop) with a set of 3 ciphers derived from the hidden PayloadPub of the return
+// hops that are layered progressively after the Exit message.
+//
+// The Exit node forwards the packet it receives to the local port specified in
+// the Exit message, and then uses the ciphers to encrypt the reply with the
+// three ciphers provided, which don't enable it to decrypt the header, only to
+// encrypt the payload.
+//
+// The response is encrypted with the given layers, the ciphers are already
+// given in reverse order, so they are decoded in given order to create the
+// correct payload encryption to match the PayloadPub combined with the header's
+// given public From key.
+//
+// The header remains a constant size and each node in the Reverse trims off
+// their section at the top, moves the next crypt header to the top and pads the
+// remainder with noise, so it always looks like the first hop.
+func MakeExit(p ExitParams) Skins {
+	
+	var prvs [3]*prv.Key
+	for i := range prvs {
+		prvs[i] = p.KS.Next()
+	}
+	n := GenNonces(6)
+	var returnNonces [3]nonce.IV
+	copy(returnNonces[:], n[3:])
+	var pubs [3]*pub.Key
+	pubs[0] = p.S[3].PayloadPub
+	pubs[1] = p.S[4].PayloadPub
+	pubs[2] = p.Client.PayloadPub
+	return Skins{}.
+		ReverseCrypt(p.S[0], p.KS.Next(), n[0], 3).
+		ReverseCrypt(p.S[1], p.KS.Next(), n[1], 2).
+		ReverseCrypt(p.S[2], p.KS.Next(), n[2], 1).
+		Exit(p.Port, prvs, pubs, returnNonces, p.ID, p.Payload).
+		ReverseCrypt(p.S[3], prvs[0], n[3], 3).
+		ReverseCrypt(p.S[4], prvs[1], n[4], 2).
+		ReverseCrypt(p.Client, prvs[2], n[5], 1)
 }
 
 func (x *Exit) Magic() string { return ExitMagic }
@@ -129,4 +179,37 @@ func (x *Exit) Handle(s *octet.Splice, p Onion,
 	}
 	ng.HandleMessage(rb, x)
 	return
+}
+
+func (ng *Engine) SendExit(port uint16, msg slice.Bytes, id nonce.ID,
+	target *SessionData, hook Callback) {
+	
+	hops := []byte{0, 1, 2, 3, 4, 5}
+	s := make(Sessions, len(hops))
+	s[2] = target
+	se := ng.SelectHops(hops, s)
+	var c Circuit
+	copy(c[:], se)
+	o := MakeExit(ExitParams{port, msg, id, se[len(se)-1], c, ng.KeySet})
+	log.D.Ln("sending out exit onion")
+	res := ng.PostAcctOnion(o)
+	ng.SendWithOneHook(c[0].AddrPort, res, hook, ng.PendingResponses)
+}
+
+func (ng *Engine) MakeExit(port uint16, msg slice.Bytes, id nonce.ID,
+	exit *SessionData) (c Circuit, o Skins) {
+	
+	hops := []byte{0, 1, 2, 3, 4, 5}
+	s := make(Sessions, len(hops))
+	s[2] = exit
+	se := ng.SelectHops(hops, s)
+	copy(c[:], se)
+	o = MakeExit(ExitParams{port, msg, id, se[len(se)-1], c, ng.KeySet})
+	return
+}
+
+func (ng *Engine) SendExitNew(c Circuit, o Skins, hook Callback) {
+	log.D.Ln("sending out exit onion")
+	res := ng.PostAcctOnion(o)
+	ng.SendWithOneHook(c[0].AddrPort, res, hook, ng.PendingResponses)
 }

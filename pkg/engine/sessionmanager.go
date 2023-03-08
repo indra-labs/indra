@@ -35,7 +35,8 @@ type SessionManager struct {
 
 func NewSessionManager() *SessionManager {
 	return &SessionManager{
-		SessionCache: make(SessionCache),
+		SessionCache:    make(SessionCache),
+		PendingPayments: make(PendingPayments, 0),
 	}
 }
 

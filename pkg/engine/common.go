@@ -170,3 +170,10 @@ func Gen3Nonces() (n [3]nonce.IV) {
 	}
 	return
 }
+
+func GenPingNonces() (n [6]nonce.IV) {
+	for i := range n {
+		n[i] = nonce.New()
+	}
+	return
+}

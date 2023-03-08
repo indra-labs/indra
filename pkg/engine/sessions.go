@@ -119,6 +119,7 @@ func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 	}
 	var success bool
 	for pendingConfirms > 0 {
+		log.D.Ln("pendingConfirms", pendingConfirms)
 		// The confirmation channels will signal upon success or failure
 		// according to the LN payment send protocol once either the HTLCs
 		// confirm on the way back or the path fails.
@@ -163,6 +164,6 @@ func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 			ng.SessionManager.PendingPayments.Delete(s[i].PreimageHash())
 		}
 		fn()
-	}, nil)
+	}, ng.PendingResponses)
 	return
 }

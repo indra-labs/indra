@@ -410,7 +410,7 @@ func _s(level LogLevel, subsystem string) Prints {
 	return func(a ...interface{}) {
 		text := "spew:\n"
 		if s, ok := a[0].(string); ok {
-			text = s
+			text = strings.TrimSpace(s) + "\n"
 			a = a[1:]
 		}
 		logPrint(

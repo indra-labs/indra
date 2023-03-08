@@ -1,6 +1,7 @@
-package engine
+package relay
 
 import (
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -10,40 +11,6 @@ import (
 	
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 )
-
-func TestOnionSkins_Session(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
-	sess := NewSessionKeys(1)
-	on := Skins{}.
-		Session(sess).
-		Assemble()
-	s := Encode(on)
-	s.SetCursor(0)
-	var onc Onion
-	if onc = Recognise(s); onc == nil {
-		t.Error("did not unwrap")
-		t.FailNow()
-	}
-	if e := onc.Decode(s); check(e) {
-		t.Error("did not decode")
-		t.FailNow()
-		
-	}
-	var ci *Session
-	var ok bool
-	if ci, ok = onc.(*Session); !ok {
-		t.Error("did not unwrap expected type")
-		t.FailNow()
-	}
-	if !ci.Header.Key.Equals(&sess.Header.Key) {
-		t.Error("header key did not unwrap correctly")
-		t.FailNow()
-	}
-	if !ci.Payload.Key.Equals(&sess.Payload.Key) {
-		t.Error("payload key did not unwrap correctly")
-		t.FailNow()
-	}
-}
 
 func TestClient_SendSessionKeys(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
@@ -62,7 +29,7 @@ func TestClient_SendSessionKeys(t *testing.T) {
 	quit := qu.T()
 	go func() {
 		select {
-		case <-time.After(time.Second * 6):
+		case <-time.After(time.Second * 2):
 		case <-quit:
 			return
 		}
@@ -70,9 +37,7 @@ func TestClient_SendSessionKeys(t *testing.T) {
 			wg.Done()
 		}
 		t.Error("SendSessionKeys test failed")
-		quit.Q()
-		// time.Sleep(time.Second)
-		// os.Exit(1)
+		os.Exit(1)
 	}()
 	for i := 0; i < 10; i++ {
 		log.D.Ln("buying sessions", i)
@@ -87,10 +52,10 @@ func TestClient_SendSessionKeys(t *testing.T) {
 			counter.Dec()
 		}
 		wg.Wait()
+		quit.Q()
 		for j := range clients[0].SessionCache {
 			log.D.F("%d %s %v", i, j, clients[0].SessionCache[j])
 		}
-		quit.Q()
 	}
 	for _, v := range clients {
 		v.Shutdown()

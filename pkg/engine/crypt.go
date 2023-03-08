@@ -60,7 +60,7 @@ func (x *Crypt) Encode(s *octet.Splice) (e error) {
 	}
 	start := s.GetCursor()
 	end := s.Len()
-	log.T.Ln("start", start, "end", end)
+	// log.T.Ln("start", start, "end", end)
 	switch {
 	case x.Depth == 0:
 	case x.Depth > 0:
@@ -68,13 +68,13 @@ func (x *Crypt) Encode(s *octet.Splice) (e error) {
 	default:
 		panic("incorrect value for crypt sequence")
 	}
-	log.T.Ln("start", start, "end", end)
+	// log.T.Ln("start", start, "end", end)
 	if e = x.Onion.Encode(s); check(e) {
 		return
 	}
-	log.T.S("before encryption:\n", s.GetRange(start, end).ToBytes())
+	// log.T.S("before encryption:\n", s.GetRange(start, end).ToBytes())
 	ciph.Encipher(blk, x.Nonce, s.GetRange(start, end))
-	log.T.S("after encryption:\n", s.GetRange(start, end).ToBytes())
+	// log.T.S("after encryption:\n", s.GetRange(start, end).ToBytes())
 	if end != s.Len() {
 		if blk = ciph.GetBlock(x.From, x.ToPayloadPub); check(e) {
 			panic(e)

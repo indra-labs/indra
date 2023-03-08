@@ -100,7 +100,6 @@ func (x *Session) Wrap(inner Onion) { x.Onion = inner }
 
 func (x *Session) Handle(s *octet.Splice, p Onion, ng *Engine) (e error) {
 	
-	log.D.Ln(p == nil)
 	log.T.F("incoming session %x", x.PreimageHash())
 	pi := ng.FindPendingPreimage(x.PreimageHash())
 	if pi != nil {
