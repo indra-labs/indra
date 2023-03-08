@@ -6,7 +6,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
-	"git-indra.lan/indra-labs/indra/pkg/relay/messages/crypt"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -143,7 +142,7 @@ func (x *GetBalance) Handle(s *octet.Splice, p Onion,
 		return
 	}
 	log.D.Ln("session found", x.ID)
-	header := s.GetRange(s.GetCursor(), s.Advance(crypt.ReverseHeaderLen))
+	header := s.GetRange(s.GetCursor(), s.Advance(ReverseHeaderLen))
 	rbb := FormatReply(header,
 		Encode(bal).GetRange(-1, -1), x.Ciphers, x.Nonces)
 	rb := append(rbb.GetRange(-1, -1), slice.NoisePad(714-rbb.Len())...)

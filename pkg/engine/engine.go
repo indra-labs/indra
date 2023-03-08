@@ -10,7 +10,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/relay/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -28,7 +27,7 @@ type Engine struct {
 }
 
 type Params struct {
-	Tpt             types.Transport
+	Tpt             Transport
 	IDPrv           *prv.Key
 	Node            *Node
 	Nodes           []*Node

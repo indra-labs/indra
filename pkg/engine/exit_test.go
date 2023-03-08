@@ -11,7 +11,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	"git-indra.lan/indra-labs/indra/pkg/transport"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 	"git-indra.lan/indra-labs/indra/pkg/util/tests"
 )
@@ -82,7 +81,7 @@ func TestClient_SendExit(t *testing.T) {
 	}
 	// set up forwarding port service
 	const port = 3455
-	sim := transport.NewSim(0)
+	sim := NewSim(0)
 	for i := range clients {
 		if i == 0 {
 			continue

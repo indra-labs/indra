@@ -1,13 +1,12 @@
 package engine
 
 import (
-	"git-indra.lan/indra-labs/indra/pkg/relay/messages/magicbytes"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 )
 
 const (
 	TmplMagic = "!!"
-	TmplLen   = magicbytes.Len
+	TmplLen   = MagicLen
 )
 
 func TmplPrototype() Onion { return &Tmpl{} }

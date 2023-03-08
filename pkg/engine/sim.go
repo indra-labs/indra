@@ -1,14 +1,7 @@
-package transport
+package engine
 
 import (
-	"git-indra.lan/indra-labs/indra"
-	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
-)
-
-var (
-	log   = log2.GetLogger(indra.PathBase)
-	check = log.E.Chk
 )
 
 type Sim chan slice.Bytes
@@ -19,4 +12,9 @@ func (d Sim) Send(b slice.Bytes) {
 }
 func (d Sim) Receive() <-chan slice.Bytes {
 	return d
+}
+
+func (d Sim) Chain(t Transport) Transport {
+	// TODO implement me
+	panic("implement me")
 }

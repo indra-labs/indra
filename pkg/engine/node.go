@@ -8,7 +8,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/relay/types"
 	"git-indra.lan/indra-labs/indra/pkg/ring"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -16,7 +15,7 @@ import (
 type Service struct {
 	Port      uint16
 	RelayRate int
-	types.Transport
+	Transport
 }
 
 type Services []*Service
@@ -35,7 +34,7 @@ type Node struct {
 	Latency       *ring.BufferLatency // Latency to peer.
 	Failure       *ring.BufferFailure // Times of tx failure.
 	PaymentChan
-	types.Transport
+	Transport
 }
 
 const (
@@ -51,7 +50,7 @@ const (
 // available. The Node for a client's self should use true in the local
 // parameter to not initialise the peer state ring buffers as it won't use them.
 func New(addr *netip.AddrPort, idPub *pub.Key, idPrv *prv.Key,
-	tpt types.Transport, relayRate int, local bool) (n *Node, id nonce.ID) {
+	tpt Transport, relayRate int, local bool) (n *Node, id nonce.ID) {
 	
 	id = nonce.NewID()
 	n = &Node{

@@ -8,7 +8,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/relay/messages/session"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 )
 
@@ -113,8 +112,7 @@ func (x *Crypt) Handle(s *octet.Splice, p Onion,
 	x.ToPriv = hdr
 	x.Decrypt(hdr, s)
 	if identity {
-		if string(s.GetRange(s.GetCursor(), -1)[:MagicLen]) != session.
-			MagicString {
+		if string(s.GetRange(s.GetCursor(), -1)[:MagicLen]) != SessionMagic {
 			log.T.Ln("dropping message due to identity key with" +
 				" no following session")
 			return e
