@@ -2,7 +2,6 @@ package p2p
 
 import (
 	"crypto/rand"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"testing"
 )
@@ -20,8 +19,6 @@ func TestBase58(t *testing.T) {
 		t.Error("base58encode error: ", err)
 	}
 
-	spew.Dump(priv1)
-
 	if priv2, err = Base58Decode(keyStr1); err != nil {
 		t.Error("base58decode error: ", err)
 	}
@@ -33,8 +30,6 @@ func TestBase58(t *testing.T) {
 	if keyStr2, err = Base58Encode(priv2); err != nil {
 		t.Error("base58encode error: ", err)
 	}
-
-	spew.Dump(priv2)
 
 	if keyStr1 != keyStr2 {
 		t.Error("Keys are not equal!")
