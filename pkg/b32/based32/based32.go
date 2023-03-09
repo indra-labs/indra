@@ -22,15 +22,15 @@ var (
 	check = log.E.Chk
 )
 
-// charset is the set of characters used in the data section of bech32 strings.
-// Note that this is ordered, such that for a given charset[i], i is the binary
+// Charset is the set of characters used in the data section of bech32 strings.
+// Note that this is ordered, such that for a given Charset[i], i is the binary
 // value of the character.
-const charset = "abcdefghijklmnopqrstuvwxyz234569"
+const Charset = "abcdefghijklmnopqrstuvwxyz234679"
 
 // Codec provides the encoder/decoder implementation created by makeCodec.
 var Codec = makeCodec(
 	"Base32Check",
-	charset,
+	Charset,
 	"",
 )
 
@@ -45,8 +45,7 @@ func getCutPoint(length, checkLen int) int {
 }
 
 // Shift5bitsLeft allows the elimination of the first 5 bits of the value,
-// which are always zero in standard base32 encoding when based on a base 2
-// value.
+// which are always zero in standard base32 encoding when encoding a public key.
 func Shift5bitsLeft(b slice.Bytes) (o slice.Bytes) {
 	o = make(slice.Bytes, len(b))
 	for i := range b {

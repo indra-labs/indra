@@ -1,8 +1,6 @@
 package engine
 
 import (
-	"encoding/hex"
-	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
@@ -100,9 +98,9 @@ func (c Circuit) String() (o string) {
 	o += "[ "
 	for i := range c {
 		if c[i] == nil {
-			o += "                 "
+			o += "              "
 		} else {
-			o += hex.EncodeToString(c[i].ID[:]) + " "
+			o += c[i].ID.String() + " "
 		}
 	}
 	o += "]"

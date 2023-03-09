@@ -103,7 +103,6 @@ func (x *Crypt) Wrap(inner Onion) { x.Onion = inner }
 func (x *Crypt) Handle(s *octet.Splice, p Onion,
 	ng *Engine) (e error) {
 	
-	log.D.Ln("handling crypt")
 	// this is probably an encrypted crypt for us.
 	hdr, _, _, identity := ng.FindCloaked(x.Cloak)
 	if hdr == nil {

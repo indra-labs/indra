@@ -67,10 +67,6 @@ func (o Skins) HiddenService(id nonce.ID, intr *Intro, prvs [3]*prv.Key,
 	})
 }
 
-func NewHiddenService() *HiddenService {
-	return &HiddenService{}
-}
-
 func (x *HiddenService) Magic() string { return HiddenServiceMagic }
 
 func (x *HiddenService) Encode(s *octet.Splice) (e error) {
@@ -106,10 +102,10 @@ func (x *HiddenService) Wrap(inner Onion) { x.Onion = inner }
 
 func (x *HiddenService) Handle(s *octet.Splice, p Onion, ng *Engine) (e error) {
 	
-	log.D.F("%s adding introduction for key %s", ng.GetLocalNodeAddress(),
-		x.Key.ToBase32())
-	ng.Introductions.AddIntro(x.Key, s.GetRange(s.GetCursor(), -1))
-	log.I.Ln("stored new introduction, starting broadcast")
+	log.D.F("%s adding introduction for key %s",
+		ng.GetLocalNodeAddress(), x.Key.ToBase32())
+	ng.Introductions.AddIntro(x.Key, s.GetCursorToEnd())
+	log.D.Ln("stored new introduction, starting broadcast")
 	go GossipIntro(&x.Intro, ng.SessionManager, ng.C)
 	return
 }

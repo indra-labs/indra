@@ -62,7 +62,7 @@ func NewEngine(p Params) (c *Engine, e error) {
 
 // Start a single thread of the Engine.
 func (ng *Engine) Start() {
-	log.D.Ln("starting engine")
+	log.T.Ln("starting engine")
 	for {
 		if ng.Handler() {
 			break

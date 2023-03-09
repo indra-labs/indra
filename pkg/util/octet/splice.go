@@ -77,6 +77,10 @@ func (s *Splice) GetRange(start, end int) slice.Bytes {
 	return s.b[start:end]
 }
 
+func (s *Splice) GetCursorToEnd() slice.Bytes {
+	return s.b[s.GetCursor():]
+}
+
 func (s *Splice) CopyRanges(start1, end1, start2, end2 int) {
 	copy(s.GetRange(start1, end1), s.GetRange(start2, end2))
 }

@@ -161,3 +161,5 @@ func GenPingNonces() (n [6]nonce.IV) {
 	}
 	return
 }
+
+func StandardCircuit() []byte { return []byte{0, 1, 2, 3, 4, 5} }

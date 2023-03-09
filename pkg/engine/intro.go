@@ -109,6 +109,7 @@ func (x *Intro) Handle(s *octet.Splice, p Onion,
 		ng.SessionManager.ForEachNode(func(n *Node) bool {
 			if n.ID != sender.ID {
 				nn[n.ID] = n
+				return true
 			}
 			return false
 		})
@@ -122,7 +123,7 @@ func (x *Intro) Handle(s *octet.Splice, p Onion,
 			}
 			break
 		}
-		ng.Introductions.Unlock()
 	}
+	ng.Introductions.Unlock()
 	return
 }

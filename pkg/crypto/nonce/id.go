@@ -2,8 +2,11 @@ package nonce
 
 import (
 	"crypto/rand"
-	"encoding/hex"
+	"encoding/base32"
 	
+	"github.com/gookit/color"
+	
+	"git-indra.lan/indra-labs/indra/pkg/b32/based32"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 )
 
@@ -13,8 +16,10 @@ const IDLen = 8
 // time it generates 2^32 new ID's.
 type ID [IDLen]byte
 
+var enc = base32.NewEncoding(based32.Charset).EncodeToString
+
 func (id ID) String() string {
-	return hex.EncodeToString(id[:])
+	return color.Bold.Sprint(enc(id[:])[:13])
 }
 
 var seed sha256.Hash

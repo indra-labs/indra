@@ -65,7 +65,7 @@ func GetBalanceOnion(p GetBalanceParams) Skins {
 }
 
 func (ng *Engine) SendGetBalance(target *SessionData, hook Callback) {
-	hops := []byte{0, 1, 2, 3, 4, 5}
+	hops := StandardCircuit()
 	s := make(Sessions, len(hops))
 	s[2] = target
 	se := ng.SelectHops(hops, s)

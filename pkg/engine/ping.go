@@ -28,7 +28,7 @@ func Ping(id nonce.ID, client *SessionData, s Circuit,
 }
 
 func (ng *Engine) SendPing(c Circuit, hook Callback) {
-	hops := []byte{0, 1, 2, 3, 4, 5}
+	hops := StandardCircuit()
 	s := make(Sessions, len(hops))
 	copy(s, c[:])
 	se := ng.SelectHops(hops, s)

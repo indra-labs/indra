@@ -70,7 +70,7 @@ func SendIntro(id nonce.ID, target *SessionData,
 	intro *Intro, sm *SessionManager, ks *signer.KeySet,
 	p *PendingResponses) {
 	
-	hops := []byte{0, 1, 2, 3, 4, 5}
+	hops := StandardCircuit()
 	s := make(Sessions, len(hops))
 	s[2] = target
 	se := sm.SelectHops(hops, s)

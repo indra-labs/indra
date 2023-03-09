@@ -102,7 +102,6 @@ func (sm *SessionManager) AddSession(s *SessionData) {
 	// Hop 5, the return session( s) are not added to the SessionCache as they
 	// are not Billable and are only related to the node of the Engine.
 	if s.Hop < 5 {
-		log.D.Ln("storing session", s)
 		sm.SessionCache = sm.SessionCache.Add(s)
 	}
 }
@@ -431,7 +430,6 @@ func (sm *SessionManager) UpdateSessionCache() {
 }
 
 func (sc SessionCache) Add(s *SessionData) SessionCache {
-	log.D.F("adding session %s %s %d", s.ID, s.AddrPort.String(), s.Hop)
 	var sce *Circuit
 	var exists bool
 	if sce, exists = sc[s.Node.ID]; !exists {
