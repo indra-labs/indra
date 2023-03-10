@@ -34,20 +34,6 @@ func init() { Register(HiddenServiceMagic, hiddenServicePrototype) }
 func (o Skins) MakeHiddenService(id nonce.ID, in *Intro,
 	client *SessionData, c Circuit, ks *signer.KeySet) Skins {
 	
-	// forwardKeys := ks.Next3()
-	// returnKeys := ks.Next3()
-	// n := GenNonces(6)
-	// var returnNonces, forwardNonces [3]nonce.IV
-	// copy(returnNonces[:], n[3:])
-	// copy(forwardNonces[:], n[:3])
-	// var forwardSessions, returnSessions [3]*SessionData
-	// copy(forwardSessions[:], c[:3])
-	// copy(returnSessions[:], c[3:5])
-	// returnSessions[2] = client
-	// var returnPubs [3]*pub.Key
-	// returnPubs[0] = c[3].PayloadPub
-	// returnPubs[1] = c[4].PayloadPub
-	// returnPubs[2] = client.PayloadPub
 	headers := GetHeaders(client, c, ks)
 	return Skins{}.
 		RoutingHeader(headers.Forward).
