@@ -44,6 +44,14 @@ func (o Skins) ReverseCrypt(s *SessionData, k *prv.Key, n nonce.IV,
 	return o.Reverse(s.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, seq)
 }
 
+func (o Skins) RoutingHeader(s [3]*SessionData, fl [3]*prv.Key,
+	n [3]nonce.IV) Skins {
+	return o.
+		ReverseCrypt(s[0], fl[0], n[0], 3).
+		ReverseCrypt(s[1], fl[1], n[1], 2).
+		ReverseCrypt(s[2], fl[2], n[2], 1)
+}
+
 func (o Skins) ForwardSession(s *Node,
 	k *prv.Key, n nonce.IV, sess *Session) Skins {
 	

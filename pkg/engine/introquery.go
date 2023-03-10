@@ -41,28 +41,27 @@ func (o Skins) IntroQuery(hsk *pub.Key, prvs [3]*prv.Key, pubs [3]*pub.Key,
 	})
 }
 
-func MakeIntroQuery(hsk *pub.Key, client *SessionData, s Circuit,
+func MakeIntroQuery(hsk *pub.Key, client *SessionData, c Circuit,
 	ks *signer.KeySet) Skins {
 	
-	var prvs [3]*prv.Key
-	for i := range prvs {
-		prvs[i] = ks.Next()
-	}
+	forwardKeys := ks.Next3()
+	returnKeys := ks.Next3()
 	n := GenNonces(6)
-	var returnNonces [3]nonce.IV
+	var returnNonces, forwardNonces [3]nonce.IV
 	copy(returnNonces[:], n[3:])
-	var pubs [3]*pub.Key
-	pubs[0] = s[3].PayloadPub
-	pubs[1] = s[4].PayloadPub
-	pubs[2] = client.PayloadPub
+	copy(forwardNonces[:], n[:3])
+	var forwardSessions, returnSessions [3]*SessionData
+	copy(forwardSessions[:], c[:3])
+	copy(returnSessions[:], c[3:5])
+	returnSessions[2] = client
+	var returnPubs [3]*pub.Key
+	returnPubs[0] = c[3].PayloadPub
+	returnPubs[1] = c[4].PayloadPub
+	returnPubs[2] = client.PayloadPub
 	return Skins{}.
-		ReverseCrypt(s[0], ks.Next(), n[0], 3).
-		ReverseCrypt(s[1], ks.Next(), n[1], 2).
-		ReverseCrypt(s[2], ks.Next(), n[2], 1).
-		IntroQuery(hsk, prvs, pubs, returnNonces).
-		ReverseCrypt(s[3], prvs[0], n[3], 3).
-		ReverseCrypt(s[4], prvs[1], n[4], 2).
-		ReverseCrypt(client, prvs[2], n[5], 1)
+		RoutingHeader(forwardSessions, forwardKeys, forwardNonces).
+		IntroQuery(hsk, returnKeys, returnPubs, returnNonces).
+		RoutingHeader(returnSessions, returnKeys, returnNonces)
 }
 
 func (x *IntroQuery) Magic() string { return IntroQueryMagic }
@@ -71,8 +70,8 @@ func (x *IntroQuery) Encode(s *octet.Splice) (e error) {
 	return x.Onion.Encode(s.
 		Magic(IntroQueryMagic).
 		Pubkey(x.Key).
-		Hash(x.Ciphers[0]).Hash(x.Ciphers[1]).Hash(x.Ciphers[2]).
-		IV(x.Nonces[0]).IV(x.Nonces[1]).IV(x.Nonces[2]),
+		HashTriple(x.Ciphers).
+		IVTriple(x.Nonces),
 	)
 }
 
@@ -83,8 +82,8 @@ func (x *IntroQuery) Decode(s *octet.Splice) (e error) {
 	}
 	s.
 		ReadPubkey(&x.Key).
-		ReadHash(&x.Ciphers[0]).ReadHash(&x.Ciphers[1]).ReadHash(&x.Ciphers[2]).
-		ReadIV(&x.Nonces[0]).ReadIV(&x.Nonces[1]).ReadIV(&x.Nonces[2])
+		ReadHashTriple(&x.Ciphers).
+		ReadIVTriple(&x.Nonces)
 	return
 }
 

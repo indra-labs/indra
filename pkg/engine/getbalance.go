@@ -43,25 +43,24 @@ type GetBalanceParams struct {
 // GetBalanceOnion sends out a request in a similar way to Exit except the node
 // being queried can be any of the 5.
 func GetBalanceOnion(p GetBalanceParams) Skins {
-	var prvs [3]*prv.Key
-	for i := range prvs {
-		prvs[i] = p.KS.Next()
-	}
+	fwKeys := p.KS.Next3()
+	rtKeys := p.KS.Next3()
 	n := GenNonces(6)
-	var retNonces [3]nonce.IV
-	copy(retNonces[:], n[3:])
-	var pubs [3]*pub.Key
-	pubs[0] = p.S[3].PayloadPub
-	pubs[1] = p.S[4].PayloadPub
-	pubs[2] = p.Client.PayloadPub
+	var rtNonces, fwNonces [3]nonce.IV
+	copy(fwNonces[:], n[:3])
+	copy(rtNonces[:], n[3:])
+	var fwSessions, rtSessions [3]*SessionData
+	copy(fwSessions[:], p.S[:3])
+	copy(rtSessions[:], p.S[3:5])
+	rtSessions[2] = p.Client
+	var returnPubs [3]*pub.Key
+	returnPubs[0] = p.S[3].PayloadPub
+	returnPubs[1] = p.S[4].PayloadPub
+	returnPubs[2] = p.Client.PayloadPub
 	return Skins{}.
-		ReverseCrypt(p.S[0], p.KS.Next(), n[0], 3).
-		ReverseCrypt(p.S[1], p.KS.Next(), n[1], 2).
-		ReverseCrypt(p.S[2], p.KS.Next(), n[2], 1).
-		GetBalance(p.ID, p.ConfID, prvs, pubs, retNonces).
-		ReverseCrypt(p.S[3], prvs[0], n[3], 0).
-		ReverseCrypt(p.S[4], prvs[1], n[4], 0).
-		ReverseCrypt(p.Client, prvs[2], n[5], 0)
+		RoutingHeader(fwSessions, fwKeys, fwNonces).
+		GetBalance(p.ID, p.ConfID, rtKeys, returnPubs, rtNonces).
+		RoutingHeader(rtSessions, rtKeys, rtNonces)
 }
 
 func (ng *Engine) SendGetBalance(target *SessionData, hook Callback) {

@@ -85,25 +85,24 @@ type ExitParams struct {
 // remainder with noise, so it always looks like the first hop.
 func MakeExit(p ExitParams) Skins {
 	
-	var prvs [3]*prv.Key
-	for i := range prvs {
-		prvs[i] = p.KS.Next()
-	}
+	forwardKeys := p.KS.Next3()
+	returnKeys := p.KS.Next3()
 	n := GenNonces(6)
-	var returnNonces [3]nonce.IV
+	var returnNonces, forwardNonces [3]nonce.IV
 	copy(returnNonces[:], n[3:])
-	var pubs [3]*pub.Key
-	pubs[0] = p.S[3].PayloadPub
-	pubs[1] = p.S[4].PayloadPub
-	pubs[2] = p.Client.PayloadPub
+	copy(forwardNonces[:], n[:3])
+	var forwardSessions, returnSessions [3]*SessionData
+	copy(forwardSessions[:], p.S[:3])
+	copy(returnSessions[:], p.S[3:5])
+	returnSessions[2] = p.Client
+	var returnPubs [3]*pub.Key
+	returnPubs[0] = p.S[3].PayloadPub
+	returnPubs[1] = p.S[4].PayloadPub
+	returnPubs[2] = p.Client.PayloadPub
 	return Skins{}.
-		ReverseCrypt(p.S[0], p.KS.Next(), n[0], 3).
-		ReverseCrypt(p.S[1], p.KS.Next(), n[1], 2).
-		ReverseCrypt(p.S[2], p.KS.Next(), n[2], 1).
-		Exit(p.Port, prvs, pubs, returnNonces, p.ID, p.Payload).
-		ReverseCrypt(p.S[3], prvs[0], n[3], 3).
-		ReverseCrypt(p.S[4], prvs[1], n[4], 2).
-		ReverseCrypt(p.Client, prvs[2], n[5], 1)
+		RoutingHeader(forwardSessions, forwardKeys, forwardNonces).
+		Exit(p.Port, returnKeys, returnPubs, returnNonces, p.ID, p.Payload).
+		RoutingHeader(returnSessions, returnKeys, returnNonces)
 }
 
 func (x *Exit) Magic() string { return ExitMagic }

@@ -5,7 +5,7 @@ package signer
 
 import (
 	"sync"
-
+	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
@@ -43,5 +43,12 @@ func (ks *KeySet) Next() (n *prv.Key) {
 	ks.Base.Key = *next
 	n = ks.Base
 	ks.Mutex.Unlock()
+	return
+}
+
+func (ks *KeySet) Next3() (n [3]*prv.Key) {
+	for i := range n {
+		n[i] = ks.Next()
+	}
 	return
 }
