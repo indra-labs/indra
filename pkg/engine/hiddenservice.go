@@ -32,7 +32,7 @@ func hiddenServicePrototype() Onion { return &HiddenService{} }
 
 func init() { Register(HiddenServiceMagic, hiddenServicePrototype) }
 
-func (o Skins) MakeHiddenService(id nonce.ID, il *Intro,
+func (o Skins) MakeHiddenService(id nonce.ID, in *Intro,
 	client *SessionData, s Circuit, ks *signer.KeySet) Skins {
 	
 	var prvs [3]*prv.Key
@@ -50,19 +50,35 @@ func (o Skins) MakeHiddenService(id nonce.ID, il *Intro,
 		ReverseCrypt(s[0], ks.Next(), n[0], 3).
 		ReverseCrypt(s[1], ks.Next(), n[1], 2).
 		ReverseCrypt(s[2], ks.Next(), n[2], 1).
-		HiddenService(id, il, prvs, pubs, returnNonces).
+		HiddenService(id, in, prvs, pubs, returnNonces).
 		ReverseCrypt(s[3], prvs[0], n[3], 3).
 		ReverseCrypt(s[4], prvs[1], n[4], 2).
 		ReverseCrypt(client, prvs[2], n[5], 1)
 }
 
-func (o Skins) HiddenService(id nonce.ID, intr *Intro, prvs [3]*prv.Key,
-	pubs [3]*pub.Key, nonces [3]nonce.IV) Skins {
+func (ng *Engine) SendHiddenService(id nonce.ID, key *prv.Key,
+	target *SessionData, hook Callback) {
+	
+	hops := StandardCircuit()
+	s := make(Sessions, len(hops))
+	s[2] = target
+	se := ng.SelectHops(hops, s)
+	var c Circuit
+	copy(c[:], se)
+	in := NewIntro(key, c[2].AddrPort)
+	o := Skins{}.MakeHiddenService(id, in, c[2], c, ng.KeySet)
+	log.D.Ln("sending out exit onion")
+	res := ng.PostAcctOnion(o)
+	ng.SendWithOneHook(c[0].AddrPort, res, hook, ng.PendingResponses)
+}
+
+func (o Skins) HiddenService(id nonce.ID, in *Intro, pv [3]*prv.Key,
+	pb [3]*pub.Key, nonces [3]nonce.IV) Skins {
 	
 	return append(o, &HiddenService{
 		ID:      id,
-		Intro:   *intr,
-		Ciphers: GenCiphers(prvs, pubs),
+		Intro:   *in,
+		Ciphers: GenCiphers(pv, pb),
 		Nonces:  nonces,
 	})
 }
@@ -101,7 +117,6 @@ func (x *HiddenService) Len() int { return HiddenServiceLen + x.Onion.Len() }
 func (x *HiddenService) Wrap(inner Onion) { x.Onion = inner }
 
 func (x *HiddenService) Handle(s *octet.Splice, p Onion, ng *Engine) (e error) {
-	
 	log.D.F("%s adding introduction for key %s",
 		ng.GetLocalNodeAddress(), x.Key.ToBase32())
 	ng.Introductions.AddIntro(x.Key, s.GetCursorToEnd())

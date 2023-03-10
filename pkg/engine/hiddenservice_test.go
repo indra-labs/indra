@@ -13,6 +13,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -86,7 +87,7 @@ func TestOnionSkins_HiddenService(t *testing.T) {
 }
 
 func TestEngine_MakeHiddenService(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+	log2.SetLogLevel(log2.Info)
 	log2.App = "test"
 	var clients []*Engine
 	var e error
@@ -105,17 +106,17 @@ func TestEngine_MakeHiddenService(t *testing.T) {
 	go func() {
 		select {
 		case <-time.After(time.Second * 6):
+			quit.Q()
+			t.Error("MakeHiddenService test failed")
 		case <-quit:
 			for _, v := range clients {
 				v.Shutdown()
 			}
-			quit.Q()
+			for i := 0; i < int(counter.Load()); i++ {
+				wg.Done()
+			}
 			return
 		}
-		for i := 0; i < int(counter.Load()); i++ {
-			wg.Done()
-		}
-		t.Error("MakeHiddenService test failed")
 	}()
 	for i := 0; i < nCircuits*nCircuits/2; i++ {
 		wg.Add(1)
@@ -130,6 +131,26 @@ func TestEngine_MakeHiddenService(t *testing.T) {
 		}
 		wg.Wait()
 	}
-	
+	log2.SetLogLevel(log2.Debug)
+	var idPrv *prv.Key
+	if idPrv, e = prv.GenerateKey(); check(e) {
+		return
+	}
+	id := nonce.NewID()
+	introducerHops := clients[0].SessionManager.GetSessionsAtHop(2)
+	var introducer *SessionData
+	if len(introducerHops) > 1 {
+		cryptorand.Shuffle(len(introducerHops), func(i, j int) {
+			introducerHops[i], introducerHops[j] = introducerHops[j], introducerHops[i]
+		})
+	}
+	// There must be at least one, and if there was more than one the first
+	// index of introducerHops will be a randomly selected one.
+	introducer = introducerHops[0]
+	clients[0].SendHiddenService(id, idPrv, introducer,
+		func(id nonce.ID, b slice.Bytes) {
+			log.D.Ln("yay")
+		})
+	time.Sleep(time.Second)
 	quit.Q()
 }

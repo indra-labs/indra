@@ -59,7 +59,7 @@ func (x *Reverse) Handle(s *octet.Splice, p Onion,
 		}
 		on := in.(*Crypt)
 		first := s.GetCursor()
-		log.D.S("reverse segments",
+		log.T.S("reverse segments",
 			s.GetRange(-1, first).ToBytes(),
 			s.GetRange(first, -1).ToBytes(),
 			// s.GetRange(-1, -1).ToBytes(),
