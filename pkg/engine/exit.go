@@ -148,7 +148,7 @@ func (x *Exit) Handle(s *octet.Splice, p Onion,
 	case *Crypt:
 		sess := ng.FindSessionByHeader(on.ToPriv)
 		if sess == nil {
-			break
+			return
 		}
 		for i := range sess.Services {
 			if x.Port != sess.Services[i].Port {

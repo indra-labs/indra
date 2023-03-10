@@ -94,7 +94,7 @@ func TestOnionSkins_HiddenService(t *testing.T) {
 	}
 }
 
-func TestEngine_MakeHiddenService(t *testing.T) {
+func TestEngine_SendHiddenService(t *testing.T) {
 	log2.SetLogLevel(log2.Info)
 	log2.App = "test"
 	var clients []*Engine

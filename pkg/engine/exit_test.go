@@ -97,7 +97,7 @@ func TestClient_SendExit(t *testing.T) {
 		e = clients[i].AddServiceToLocalNode(&Service{
 			Port:      port,
 			Transport: sim,
-			RelayRate: 18000 * 4,
+			RelayRate: 58000,
 		})
 		if check(e) {
 			t.Error(e)
