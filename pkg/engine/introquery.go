@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -31,37 +30,23 @@ func introQueryPrototype() Onion { return &IntroQuery{} }
 
 func init() { Register(IntroQueryMagic, introQueryPrototype) }
 
-func (o Skins) IntroQuery(hsk *pub.Key, prvs [3]*prv.Key, pubs [3]*pub.Key,
-	nonces [3]nonce.IV) Skins {
+func (o Skins) IntroQuery(hsk *pub.Key, point *ExitPoint) Skins {
 	
 	return append(o, &IntroQuery{
 		Key:     hsk,
-		Ciphers: GenCiphers(prvs, pubs),
-		Nonces:  nonces,
+		Ciphers: GenCiphers(point.Keys, point.ReturnPubs),
+		Nonces:  point.Nonces,
 	})
 }
 
 func MakeIntroQuery(hsk *pub.Key, client *SessionData, c Circuit,
 	ks *signer.KeySet) Skins {
 	
-	forwardKeys := ks.Next3()
-	returnKeys := ks.Next3()
-	n := GenNonces(6)
-	var returnNonces, forwardNonces [3]nonce.IV
-	copy(returnNonces[:], n[3:])
-	copy(forwardNonces[:], n[:3])
-	var forwardSessions, returnSessions [3]*SessionData
-	copy(forwardSessions[:], c[:3])
-	copy(returnSessions[:], c[3:5])
-	returnSessions[2] = client
-	var returnPubs [3]*pub.Key
-	returnPubs[0] = c[3].PayloadPub
-	returnPubs[1] = c[4].PayloadPub
-	returnPubs[2] = client.PayloadPub
+	headers := GetHeaders(client, c, ks)
 	return Skins{}.
-		RoutingHeader(forwardSessions, forwardKeys, forwardNonces).
-		IntroQuery(hsk, returnKeys, returnPubs, returnNonces).
-		RoutingHeader(returnSessions, returnKeys, returnNonces)
+		RoutingHeader(headers.Forward).
+		IntroQuery(hsk, headers.ExitPoint()).
+		RoutingHeader(headers.Return)
 }
 
 func (x *IntroQuery) Magic() string { return IntroQueryMagic }

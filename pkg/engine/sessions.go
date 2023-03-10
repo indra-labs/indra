@@ -146,7 +146,7 @@ func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 		}
 	}
 	// todo: handle payment failures!
-	o := SessionsOnion(conf, s, returnSession, nodes[:], ng.KeySet)
+	o := MakeSession(conf, s, returnSession, nodes[:], ng.KeySet)
 	res := ng.PostAcctOnion(o)
 	ng.SendWithOneHook(nodes[0].AddrPort, res, func(id nonce.ID, b slice.Bytes) {
 		ng.SessionManager.Lock()

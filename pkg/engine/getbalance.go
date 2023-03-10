@@ -1,8 +1,6 @@
 package engine
 
 import (
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
@@ -40,27 +38,14 @@ type GetBalanceParams struct {
 	KS         *signer.KeySet
 }
 
-// GetBalanceOnion sends out a request in a similar way to Exit except the node
+// MakeGetBalance sends out a request in a similar way to Exit except the node
 // being queried can be any of the 5.
-func GetBalanceOnion(p GetBalanceParams) Skins {
-	fwKeys := p.KS.Next3()
-	rtKeys := p.KS.Next3()
-	n := GenNonces(6)
-	var rtNonces, fwNonces [3]nonce.IV
-	copy(fwNonces[:], n[:3])
-	copy(rtNonces[:], n[3:])
-	var fwSessions, rtSessions [3]*SessionData
-	copy(fwSessions[:], p.S[:3])
-	copy(rtSessions[:], p.S[3:5])
-	rtSessions[2] = p.Client
-	var returnPubs [3]*pub.Key
-	returnPubs[0] = p.S[3].PayloadPub
-	returnPubs[1] = p.S[4].PayloadPub
-	returnPubs[2] = p.Client.PayloadPub
+func MakeGetBalance(p GetBalanceParams) Skins {
+	headers := GetHeaders(p.Client, p.S, p.KS)
 	return Skins{}.
-		RoutingHeader(fwSessions, fwKeys, fwNonces).
-		GetBalance(p.ID, p.ConfID, rtKeys, returnPubs, rtNonces).
-		RoutingHeader(rtSessions, rtKeys, rtNonces)
+		RoutingHeader(headers.Forward).
+		GetBalance(p.ID, p.ConfID, headers.ExitPoint()).
+		RoutingHeader(headers.Return)
 }
 
 func (ng *Engine) SendGetBalance(target *SessionData, hook Callback) {
@@ -71,21 +56,20 @@ func (ng *Engine) SendGetBalance(target *SessionData, hook Callback) {
 	var c Circuit
 	copy(c[:], se)
 	confID := nonce.NewID()
-	o := GetBalanceOnion(GetBalanceParams{target.ID, confID, se[5], c,
+	o := MakeGetBalance(GetBalanceParams{target.ID, confID, se[5], c,
 		ng.KeySet})
 	log.D.Ln("sending out getbalance onion")
 	res := ng.PostAcctOnion(o)
 	ng.SendWithOneHook(c[0].AddrPort, res, hook, ng.PendingResponses)
 }
 
-func (o Skins) GetBalance(id, confID nonce.ID, prvs [3]*prv.Key,
-	pubs [3]*pub.Key, nonces [3]nonce.IV) Skins {
+func (o Skins) GetBalance(id, confID nonce.ID, ep *ExitPoint) Skins {
 	
 	return append(o, &GetBalance{
 		ID:      id,
 		ConfID:  confID,
-		Ciphers: GenCiphers(prvs, pubs),
-		Nonces:  nonces,
+		Ciphers: GenCiphers(ep.Keys, ep.ReturnPubs),
+		Nonces:  ep.Nonces,
 		Onion:   nop,
 	})
 }

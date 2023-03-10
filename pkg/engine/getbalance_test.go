@@ -28,8 +28,16 @@ func TestOnionSkins_GetBalance(t *testing.T) {
 	for i := range pubs {
 		pubs[i] = pub.Derive(prvs[i])
 	}
+	ep := &ExitPoint{
+		Routing: &Routing{
+			Sessions: [3]*SessionData{},
+			Keys:     prvs,
+			Nonces:   n3,
+		},
+		ReturnPubs: pubs,
+	}
 	on := Skins{}.
-		GetBalance(id, confID, prvs, pubs, n3).
+		GetBalance(id, confID, ep).
 		Assemble()
 	s := Encode(on)
 	s.SetCursor(0)

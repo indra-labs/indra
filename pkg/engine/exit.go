@@ -3,8 +3,6 @@ package engine
 import (
 	"time"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
@@ -44,13 +42,12 @@ func exitPrototype() Onion { return &Exit{} }
 
 func init() { Register(ExitMagic, exitPrototype) }
 
-func (o Skins) Exit(port uint16, prvs [3]*prv.Key, pubs [3]*pub.Key,
-	nonces [3]nonce.IV, id nonce.ID, payload slice.Bytes) Skins {
+func (o Skins) Exit(port uint16, ep *ExitPoint, id nonce.ID, payload slice.Bytes) Skins {
 	
 	return append(o, &Exit{
 		Port:    port,
-		Ciphers: GenCiphers(prvs, pubs),
-		Nonces:  nonces,
+		Ciphers: GenCiphers(ep.Keys, ep.ReturnPubs),
+		Nonces:  ep.Nonces,
 		ID:      id,
 		Bytes:   payload,
 		Onion:   nop,
@@ -84,25 +81,11 @@ type ExitParams struct {
 // their section at the top, moves the next crypt header to the top and pads the
 // remainder with noise, so it always looks like the first hop.
 func MakeExit(p ExitParams) Skins {
-	
-	forwardKeys := p.KS.Next3()
-	returnKeys := p.KS.Next3()
-	n := GenNonces(6)
-	var returnNonces, forwardNonces [3]nonce.IV
-	copy(returnNonces[:], n[3:])
-	copy(forwardNonces[:], n[:3])
-	var forwardSessions, returnSessions [3]*SessionData
-	copy(forwardSessions[:], p.S[:3])
-	copy(returnSessions[:], p.S[3:5])
-	returnSessions[2] = p.Client
-	var returnPubs [3]*pub.Key
-	returnPubs[0] = p.S[3].PayloadPub
-	returnPubs[1] = p.S[4].PayloadPub
-	returnPubs[2] = p.Client.PayloadPub
+	headers := GetHeaders(p.Client, p.S, p.KS)
 	return Skins{}.
-		RoutingHeader(forwardSessions, forwardKeys, forwardNonces).
-		Exit(p.Port, returnKeys, returnPubs, returnNonces, p.ID, p.Payload).
-		RoutingHeader(returnSessions, returnKeys, returnNonces)
+		RoutingHeader(headers.Forward).
+		Exit(p.Port, headers.ExitPoint(), p.ID, p.Payload).
+		RoutingHeader(headers.Return)
 }
 
 func (x *Exit) Magic() string { return ExitMagic }

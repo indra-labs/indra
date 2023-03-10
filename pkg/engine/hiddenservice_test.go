@@ -31,8 +31,16 @@ func TestOnionSkins_HiddenService(t *testing.T) {
 	for i := range pubs {
 		pubs[i] = pub.Derive(prvs[i])
 	}
+	ep := &ExitPoint{
+		Routing: &Routing{
+			Sessions: [3]*SessionData{},
+			Keys:     prvs,
+			Nonces:   n3,
+		},
+		ReturnPubs: pubs,
+	}
 	on1 := Skins{}.
-		HiddenService(id, in, prvs, pubs, n3)
+		HiddenService(id, in, ep)
 	on1 = append(on1, &Tmpl{})
 	on := on1.Assemble()
 	s := Encode(on)

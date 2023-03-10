@@ -46,7 +46,7 @@ func TestOnionSkins_Session(t *testing.T) {
 }
 
 func TestClient_SendSessionKeys(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	log2.SetLogLevel(log2.Debug)
 	var clients []*Engine
 	var e error
 	if clients, e = CreateNMockCircuits(2, 2); check(e) {

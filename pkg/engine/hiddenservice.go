@@ -2,7 +2,6 @@ package engine
 
 import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
@@ -35,24 +34,25 @@ func init() { Register(HiddenServiceMagic, hiddenServicePrototype) }
 func (o Skins) MakeHiddenService(id nonce.ID, in *Intro,
 	client *SessionData, c Circuit, ks *signer.KeySet) Skins {
 	
-	forwardKeys := ks.Next3()
-	returnKeys := ks.Next3()
-	n := GenNonces(6)
-	var returnNonces, forwardNonces [3]nonce.IV
-	copy(returnNonces[:], n[3:])
-	copy(forwardNonces[:], n[:3])
-	var forwardSessions, returnSessions [3]*SessionData
-	copy(forwardSessions[:], c[:3])
-	copy(returnSessions[:], c[3:5])
-	returnSessions[2] = client
-	var returnPubs [3]*pub.Key
-	returnPubs[0] = c[3].PayloadPub
-	returnPubs[1] = c[4].PayloadPub
-	returnPubs[2] = client.PayloadPub
+	// forwardKeys := ks.Next3()
+	// returnKeys := ks.Next3()
+	// n := GenNonces(6)
+	// var returnNonces, forwardNonces [3]nonce.IV
+	// copy(returnNonces[:], n[3:])
+	// copy(forwardNonces[:], n[:3])
+	// var forwardSessions, returnSessions [3]*SessionData
+	// copy(forwardSessions[:], c[:3])
+	// copy(returnSessions[:], c[3:5])
+	// returnSessions[2] = client
+	// var returnPubs [3]*pub.Key
+	// returnPubs[0] = c[3].PayloadPub
+	// returnPubs[1] = c[4].PayloadPub
+	// returnPubs[2] = client.PayloadPub
+	headers := GetHeaders(client, c, ks)
 	return Skins{}.
-		RoutingHeader(forwardSessions, forwardKeys, forwardNonces).
-		HiddenService(id, in, returnKeys, returnPubs, returnNonces).
-		RoutingHeader(returnSessions, returnKeys, returnNonces)
+		RoutingHeader(headers.Forward).
+		HiddenService(id, in, headers.ExitPoint()).
+		RoutingHeader(headers.Return)
 }
 
 func (ng *Engine) SendHiddenService(id nonce.ID, key *prv.Key,
@@ -71,14 +71,13 @@ func (ng *Engine) SendHiddenService(id nonce.ID, key *prv.Key,
 	ng.SendWithOneHook(c[0].AddrPort, res, hook, ng.PendingResponses)
 }
 
-func (o Skins) HiddenService(id nonce.ID, in *Intro, pv [3]*prv.Key,
-	pb [3]*pub.Key, nonces [3]nonce.IV) Skins {
+func (o Skins) HiddenService(id nonce.ID, in *Intro, point *ExitPoint) Skins {
 	
 	return append(o, &HiddenService{
 		ID:      id,
 		Intro:   *in,
-		Ciphers: GenCiphers(pv, pb),
-		Nonces:  nonces,
+		Ciphers: GenCiphers(point.Keys, point.ReturnPubs),
+		Nonces:  point.Nonces,
 	})
 }
 

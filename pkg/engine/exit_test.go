@@ -28,8 +28,16 @@ func TestOnionSkins_Exit(t *testing.T) {
 	n3 := Gen3Nonces()
 	p := uint16(rand.Uint32())
 	id := nonce.NewID()
+	ep := &ExitPoint{
+		Routing: &Routing{
+			Sessions: [3]*SessionData{},
+			Keys:     prvs,
+			Nonces:   n3,
+		},
+		ReturnPubs: pubs,
+	}
 	on := Skins{}.
-		Exit(p, prvs, pubs, n3, id, msg).
+		Exit(p, ep, id, msg).
 		Assemble()
 	s := Encode(on)
 	s.SetCursor(0)

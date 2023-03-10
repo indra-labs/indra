@@ -25,7 +25,7 @@ func sessionPrototype() Onion { return &Session{} }
 
 func init() { Register(SessionMagic, sessionPrototype) }
 
-func SessionsOnion(id nonce.ID, s [5]*Session,
+func MakeSession(id nonce.ID, s [5]*Session,
 	client *SessionData, hop []*Node, ks *signer.KeySet) Skins {
 	
 	n := GenNonces(6)
@@ -44,7 +44,7 @@ func SessionsOnion(id nonce.ID, s [5]*Session,
 }
 
 func (o Skins) Session(sess *Session) Skins {
-	// SessionsOnion can apply to from 1 to 5 nodes, if either key is nil then
+	// MakeSession can apply to from 1 to 5 nodes, if either key is nil then
 	// this crypt just doesn't get added in the serialization process.
 	if sess.Header == nil || sess.Payload == nil {
 		return o

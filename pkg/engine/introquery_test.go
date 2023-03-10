@@ -13,8 +13,16 @@ func TestOnionSkins_IntroQuery(t *testing.T) {
 	prv1, _ := GetTwoPrvKeys(t)
 	pub1 := pub.Derive(prv1)
 	n3 := Gen3Nonces()
+	ep := &ExitPoint{
+		Routing: &Routing{
+			Sessions: [3]*SessionData{},
+			Keys:     prvs,
+			Nonces:   n3,
+		},
+		ReturnPubs: pubs,
+	}
 	on := Skins{}.
-		IntroQuery(pub.Derive(prv1), prvs, pubs, n3).
+		IntroQuery(pub.Derive(prv1), ep).
 		Tmpl().Assemble()
 	s := Encode(on)
 	s.SetCursor(0)
