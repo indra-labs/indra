@@ -136,7 +136,8 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 	// There must be at least one, and if there was more than one the first
 	// index of introducerHops will be a randomly selected one.
 	introducer = introducerHops[0]
-	client.SendHiddenService(id, idPrv, introducer,
+	client.SendHiddenService(id, idPrv,
+		time.Now().Add(time.Hour), introducer,
 		func(id nonce.ID, b slice.Bytes) {
 			log.D.Ln("yay")
 		})

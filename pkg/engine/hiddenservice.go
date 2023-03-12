@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"time"
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -41,7 +43,7 @@ func MakeHiddenService(id nonce.ID, in *Intro,
 		RoutingHeader(headers.Return)
 }
 
-func (ng *Engine) SendHiddenService(id nonce.ID, key *prv.Key,
+func (ng *Engine) SendHiddenService(id nonce.ID, key *prv.Key, expiry time.Time,
 	target *SessionData, hook Callback) {
 	
 	hops := StandardCircuit()
@@ -50,7 +52,7 @@ func (ng *Engine) SendHiddenService(id nonce.ID, key *prv.Key,
 	se := ng.SelectHops(hops, s)
 	var c Circuit
 	copy(c[:], se)
-	in := NewIntro(id, key, c[2].AddrPort)
+	in := NewIntro(id, key, c[2].AddrPort, expiry)
 	log.D.Ln("intro", in, in.Validate())
 	o := MakeHiddenService(id, in, c[2], c, ng.KeySet)
 	log.D.Ln("sending out hidden service onion")
@@ -77,6 +79,7 @@ func (x *HiddenService) Encode(s *octet.Splice) (e error) {
 		ID(x.Intro.ID).
 		Pubkey(x.Intro.Key).
 		AddrPort(x.Intro.AddrPort).
+		Uint64(uint64(x.Intro.Expiry.UnixNano())).
 		Signature(&x.Intro.Sig).
 		HashTriple(x.Ciphers).
 		IVTriple(x.Nonces),
@@ -93,6 +96,7 @@ func (x *HiddenService) Decode(s *octet.Splice) (e error) {
 		ReadID(&x.Intro.ID).
 		ReadPubkey(&x.Intro.Key).
 		ReadAddrPort(&x.Intro.AddrPort).
+		ReadTime(&x.Intro.Expiry).
 		ReadSignature(&x.Intro.Sig).
 		ReadHashTriple(&x.Ciphers).
 		ReadIVTriple(&x.Nonces)

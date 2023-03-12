@@ -215,6 +215,12 @@ func (s *Splice) ReadDuration(v *time.Duration) *Splice {
 	return s
 }
 
+func (s *Splice) ReadTime(v *time.Time) *Splice {
+	*v = time.Unix(0,
+		int64(slice.DecodeUint64(s.b[*s.c:s.c.Inc(slice.Uint64Len)])))
+	return s
+}
+
 func (s *Splice) Hash(h sha256.Hash) *Splice {
 	copy(s.b[*s.c:s.c.Inc(sha256.Len)], h[:])
 	return s

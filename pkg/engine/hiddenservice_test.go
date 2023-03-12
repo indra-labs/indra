@@ -18,11 +18,13 @@ import (
 )
 
 func TestOnionSkins_HiddenService(t *testing.T) {
+	log2.SetLogLevel(log2.Trace)
 	var e error
 	n3 := Gen3Nonces()
 	id := nonce.NewID()
 	pr, ks, _ := signer.New()
-	in := NewIntro(id, pr, slice.GenerateRandomAddrPortIPv6())
+	in := NewIntro(id, pr, slice.GenerateRandomAddrPortIPv6(),
+		time.Now().Add(time.Hour))
 	var prvs [3]*prv.Key
 	for i := range prvs {
 		prvs[i] = ks.Next()
@@ -41,9 +43,11 @@ func TestOnionSkins_HiddenService(t *testing.T) {
 	}
 	on1 := Skins{}.
 		HiddenService(id, in, ep)
+	log.D.S("on1", on1)
 	on1 = append(on1, &Tmpl{})
 	on := on1.Assemble()
 	s := Encode(on)
+	log.D.S("on1 bytes", s.GetRange(-1, -1).ToBytes())
 	s.SetCursor(0)
 	var onc Onion
 	if onc = Recognise(s); onc == nil {
@@ -86,6 +90,11 @@ func TestOnionSkins_HiddenService(t *testing.T) {
 	}
 	if string(hs.Intro.Sig[:]) != string(in.Sig[:]) {
 		t.Errorf("signature did not decode correctly")
+		t.FailNow()
+	}
+	if hs.Intro.Expiry.UnixNano() != in.Expiry.UnixNano() {
+		log.D.S(hs.Intro.Expiry, in.Expiry)
+		t.Errorf("expiry did not decode correctly")
 		t.FailNow()
 	}
 	if !hs.Intro.Validate() {
@@ -155,7 +164,8 @@ func TestEngine_SendHiddenService(t *testing.T) {
 	// There must be at least one, and if there was more than one the first
 	// index of introducerHops will be a randomly selected one.
 	introducer = introducerHops[0]
-	clients[0].SendHiddenService(id, idPrv, introducer,
+	clients[0].SendHiddenService(id, idPrv, time.Now().Add(time.Hour),
+		introducer,
 		func(id nonce.ID, b slice.Bytes) {
 			log.D.Ln("yay")
 		})

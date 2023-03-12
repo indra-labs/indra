@@ -78,10 +78,10 @@ func (x *IntroQuery) Handle(s *octet.Splice, p Onion,
 	if il, ok = ng.Introductions.KnownIntros[x.Key.ToBytes()]; !ok {
 		// if the reply is zeroes the querant knows it needs to retry at a
 		// different relay
-		// il = &Intro{}
-		ng.Introductions.Unlock()
+		il = &Intro{}
+		// ng.Introductions.Unlock()
 		log.E.Ln("intro not known")
-		return
+		// return
 	}
 	ng.Introductions.Unlock()
 	log.D.S(il.ID, il.Key, il.Sig)

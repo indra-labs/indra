@@ -2,6 +2,7 @@ package engine
 
 import (
 	"net/netip"
+	"time"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
@@ -10,18 +11,20 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 const (
 	IntroMagic = "in"
 	IntroLen   = magic.Len + nonce.IDLen + pub.KeyLen + 1 +
-		octet.AddrLen + sig.Len
+		octet.AddrLen + slice.Uint64Len + sig.Len
 )
 
 type Intro struct {
 	nonce.ID // This ensures never a repeated signed message.
 	Key      *pub.Key
 	AddrPort *netip.AddrPort
+	Expiry   time.Time
 	Sig      sig.Bytes
 }
 
@@ -29,14 +32,17 @@ func introPrototype() Onion { return &Intro{} }
 
 func init() { Register(IntroMagic, introPrototype) }
 
-func (o Skins) Intro(id nonce.ID, key *prv.Key, ap *netip.AddrPort) (sk Skins) {
-	return append(o, NewIntro(id, key, ap))
+func (o Skins) Intro(id nonce.ID, key *prv.Key, ap *netip.AddrPort,
+	expires time.Time) (sk Skins) {
+	return append(o, NewIntro(id, key, ap, expires))
 }
 
-func NewIntro(id nonce.ID, key *prv.Key, ap *netip.AddrPort) (in *Intro) {
+func NewIntro(id nonce.ID, key *prv.Key, ap *netip.AddrPort,
+	expires time.Time) (in *Intro) {
 	pk := pub.Derive(key)
 	s := octet.New(IntroLen - magic.Len)
-	s.ID(id).Pubkey(pk).AddrPort(ap)
+	s.ID(id).Pubkey(pk).AddrPort(ap).Uint64(uint64(expires.
+		UnixNano()))
 	hash := sha256.Single(s.GetRange(-1, s.GetCursor()))
 	var e error
 	var sign sig.Bytes
@@ -49,14 +55,18 @@ func NewIntro(id nonce.ID, key *prv.Key, ap *netip.AddrPort) (in *Intro) {
 		ID:       id,
 		Key:      pk,
 		AddrPort: ap,
+		Expiry:   expires,
 		Sig:      sign,
 	}
+	log.D.S("new intro expiry", in.Expiry)
 	return
 }
 
 func (x *Intro) Validate() bool {
 	s := octet.New(IntroLen - magic.Len)
-	s.ID(x.ID).Pubkey(x.Key).AddrPort(x.AddrPort)
+	log.D.S("expiry", x.Expiry)
+	s.ID(x.ID).Pubkey(x.Key).AddrPort(x.AddrPort).Uint64(uint64(x.Expiry.
+		UnixNano()))
 	hash := sha256.Single(s.GetRange(-1, s.GetCursor()))
 	key, e := x.Sig.Recover(hash)
 	if check(e) {
@@ -76,6 +86,7 @@ func (x *Intro) Encode(s *octet.Splice) (e error) {
 		ID(x.ID).
 		Pubkey(x.Key).
 		AddrPort(x.AddrPort).
+		Uint64(uint64(x.Expiry.UnixNano())).
 		Signature(&x.Sig)
 	return
 }
@@ -88,6 +99,7 @@ func (x *Intro) Decode(s *octet.Splice) (e error) {
 		ReadID(&x.ID).
 		ReadPubkey(&x.Key).
 		ReadAddrPort(&x.AddrPort).
+		ReadTime(&x.Expiry).
 		ReadSignature(&x.Sig)
 	return
 }

@@ -2,6 +2,7 @@ package engine
 
 import (
 	"testing"
+	"time"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
@@ -16,7 +17,8 @@ func TestOnionSkins_Intro(t *testing.T) {
 	var e error
 	pr, ks, _ := signer.New()
 	id := nonce.NewID()
-	in := NewIntro(id, pr, slice.GenerateRandomAddrPortIPv6())
+	in := NewIntro(id, pr, slice.GenerateRandomAddrPortIPv6(),
+		time.Now().Add(time.Hour))
 	var prvs [3]*prv.Key
 	for i := range prvs {
 		prvs[i] = ks.Next()
@@ -26,7 +28,7 @@ func TestOnionSkins_Intro(t *testing.T) {
 		pubs[i] = pub.Derive(prvs[i])
 	}
 	on1 := Skins{}.
-		Intro(id, pr, in.AddrPort)
+		Intro(id, pr, in.AddrPort, time.Now().Add(time.Hour))
 	on1 = append(on1, &Tmpl{})
 	on := on1.Assemble()
 	s := Encode(on)
