@@ -1,8 +1,6 @@
 package engine
 
 import (
-	"reflect"
-	
 	"github.com/cybriq/qu"
 	"go.uber.org/atomic"
 	
@@ -94,9 +92,6 @@ func (ng *Engine) HandleMessage(s *octet.Splice, pr Onion) {
 	log.T.F("%v handling received message", ng.GetLocalNodeAddress())
 	s.SetCursor(0)
 	on := Recognise(s)
-	log.T.S("bytes", reflect.TypeOf(on), s.GetRange(-1,
-		s.GetCursor()).ToBytes(),
-		s.GetRange(s.GetCursor(), -1).ToBytes())
 	if on != nil {
 		if check(on.Decode(s)) {
 			return

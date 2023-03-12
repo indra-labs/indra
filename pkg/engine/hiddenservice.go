@@ -31,7 +31,7 @@ func hiddenServicePrototype() Onion { return &HiddenService{} }
 
 func init() { Register(HiddenServiceMagic, hiddenServicePrototype) }
 
-func (o Skins) MakeHiddenService(id nonce.ID, in *Intro,
+func MakeHiddenService(id nonce.ID, in *Intro,
 	client *SessionData, c Circuit, ks *signer.KeySet) Skins {
 	
 	headers := GetHeaders(client, c, ks)
@@ -50,9 +50,10 @@ func (ng *Engine) SendHiddenService(id nonce.ID, key *prv.Key,
 	se := ng.SelectHops(hops, s)
 	var c Circuit
 	copy(c[:], se)
-	in := NewIntro(key, c[2].AddrPort)
-	o := Skins{}.MakeHiddenService(id, in, c[2], c, ng.KeySet)
-	log.D.Ln("sending out exit onion")
+	in := NewIntro(id, key, c[2].AddrPort)
+	log.D.Ln("intro", in, in.Validate())
+	o := MakeHiddenService(id, in, c[2], c, ng.KeySet)
+	log.D.Ln("sending out hidden service onion")
 	res := ng.PostAcctOnion(o)
 	ng.SendWithOneHook(c[0].AddrPort, res, hook, ng.PendingResponses)
 }
@@ -73,9 +74,10 @@ func (x *HiddenService) Encode(s *octet.Splice) (e error) {
 	return x.Onion.Encode(s.
 		Magic(HiddenServiceMagic).
 		ID(x.ID).
-		Pubkey(x.Key).
-		AddrPort(x.AddrPort).
-		Signature(&x.Sig).
+		ID(x.Intro.ID).
+		Pubkey(x.Intro.Key).
+		AddrPort(x.Intro.AddrPort).
+		Signature(&x.Intro.Sig).
 		HashTriple(x.Ciphers).
 		IVTriple(x.Nonces),
 	)
@@ -88,9 +90,10 @@ func (x *HiddenService) Decode(s *octet.Splice) (e error) {
 	}
 	s.
 		ReadID(&x.ID).
-		ReadPubkey(&x.Key).
-		ReadAddrPort(&x.AddrPort).
-		ReadSignature(&x.Sig).
+		ReadID(&x.Intro.ID).
+		ReadPubkey(&x.Intro.Key).
+		ReadAddrPort(&x.Intro.AddrPort).
+		ReadSignature(&x.Intro.Sig).
 		ReadHashTriple(&x.Ciphers).
 		ReadIVTriple(&x.Nonces)
 	return
@@ -108,3 +111,7 @@ func (x *HiddenService) Handle(s *octet.Splice, p Onion, ng *Engine) (e error) {
 	go GossipIntro(&x.Intro, ng.SessionManager, ng.C)
 	return
 }
+
+/*
+ 
+ */

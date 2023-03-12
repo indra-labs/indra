@@ -22,7 +22,7 @@ func TestOnionSkins_HiddenService(t *testing.T) {
 	n3 := Gen3Nonces()
 	id := nonce.NewID()
 	pr, ks, _ := signer.New()
-	in := NewIntro(pr, slice.GenerateRandomAddrPortIPv6())
+	in := NewIntro(id, pr, slice.GenerateRandomAddrPortIPv6())
 	var prvs [3]*prv.Key
 	for i := range prvs {
 		prvs[i] = ks.Next()

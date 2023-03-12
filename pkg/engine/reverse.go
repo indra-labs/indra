@@ -59,15 +59,9 @@ func (x *Reverse) Handle(s *octet.Splice, p Onion,
 		}
 		on := in.(*Crypt)
 		first := s.GetCursor()
-		log.T.S("reverse segments",
-			s.GetRange(-1, first).ToBytes(),
-			s.GetRange(first, -1).ToBytes(),
-			// s.GetRange(-1, -1).ToBytes(),
-		)
 		start := first - ReverseLayerLen
 		second := first + ReverseLayerLen
 		last := second + ReverseLayerLen
-		log.T.Ln("searching for reverse crypt keys")
 		hdr, pld, _, _ := ng.FindCloaked(on.Cloak)
 		if hdr == nil || pld == nil {
 			log.E.F("failed to find key for %s",
@@ -78,44 +72,16 @@ func (x *Reverse) Handle(s *octet.Splice, p Onion,
 		on.ToPriv = hdr
 		// Decrypt using the Payload key and header nonce.
 		c := s.GetCursor()
-		log.T.S("segments",
-			s.GetRange(-1, start).ToBytes(),
-			s.GetRange(start, first).ToBytes(),
-			s.GetRange(first, second).ToBytes(),
-			s.GetRange(second, last).ToBytes(),
-			s.GetRange(last, -1).ToBytes(),
-		)
 		ciph.Encipher(ciph.GetBlock(on.ToPriv, on.FromPub), on.Nonce,
 			s.GetRange(c, c+2*ReverseLayerLen))
-		log.T.S("header decoded",
-			s.GetRange(-1, start).ToBytes(),
-			s.GetRange(start, first).ToBytes(),
-			s.GetRange(first, second).ToBytes(),
-			s.GetRange(second, last).ToBytes(),
-			s.GetRange(last, -1).ToBytes(),
-		)
 		// shift the header segment upwards and pad the
 		// remainder.
 		s.CopyRanges(start, first, first, second)
 		s.CopyRanges(first, second, second, last)
 		s.CopyIntoRange(slice.NoisePad(ReverseLayerLen), second, last)
-		log.T.S("header budged up",
-			s.GetRange(-1, start).ToBytes(),
-			s.GetRange(start, first).ToBytes(),
-			s.GetRange(first, second).ToBytes(),
-			s.GetRange(second, last).ToBytes(),
-			s.GetRange(last, -1).ToBytes(),
-		)
 		if last != s.Len() {
 			ciph.Encipher(ciph.GetBlock(pld, on.FromPub), on.Nonce,
 				s.GetRange(last, -1))
-			log.T.S("payload decrypted",
-				s.GetRange(-1, start).ToBytes(),
-				s.GetRange(start, first).ToBytes(),
-				s.GetRange(first, second).ToBytes(),
-				s.GetRange(second, last).ToBytes(),
-				s.GetRange(last, -1).ToBytes(),
-			)
 		}
 		if s.GetRange(start, start+magic.Len).String() != ReverseMagic {
 			// It's for us!

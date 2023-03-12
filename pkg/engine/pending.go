@@ -68,6 +68,7 @@ func (p *PendingResponses) Add(pr ResponseParams) {
 		Success:  qu.T(),
 	}
 	p.responses = append(p.responses, r)
+	log.T.S("loaded response", len(p.responses))
 }
 
 func (p *PendingResponses) FindOlder(t time.Time) (r []*PendingResponse) {
@@ -94,12 +95,14 @@ func (p *PendingResponses) Find(id nonce.ID) (pr *PendingResponse) {
 
 // ProcessAndDelete runs the callback and post accounting function list and
 // deletes the pending response.
-func (p *PendingResponses) ProcessAndDelete(id nonce.ID, b slice.Bytes) {
+func (p *PendingResponses) ProcessAndDelete(id nonce.ID,
+	b slice.Bytes) (found bool) {
+	
 	p.Lock()
 	defer p.Unlock()
-	log.T.F("deleting response %s", id)
 	for i := range p.responses {
 		if p.responses[i].ID == id {
+			log.D.F("deleting response %s", id)
 			// Stop the timeout handler.
 			p.responses[i].Success.Q()
 			for _, fn := range p.responses[i].PostAcct {
@@ -112,7 +115,9 @@ func (p *PendingResponses) ProcessAndDelete(id nonce.ID, b slice.Bytes) {
 				p.responses = append(p.responses[:i],
 					p.responses[i+1:]...)
 			}
+			found = true
 			break
 		}
 	}
+	return
 }

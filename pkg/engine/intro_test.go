@@ -6,6 +6,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -14,7 +15,8 @@ func TestOnionSkins_Intro(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	var e error
 	pr, ks, _ := signer.New()
-	in := NewIntro(pr, slice.GenerateRandomAddrPortIPv6())
+	id := nonce.NewID()
+	in := NewIntro(id, pr, slice.GenerateRandomAddrPortIPv6())
 	var prvs [3]*prv.Key
 	for i := range prvs {
 		prvs[i] = ks.Next()
@@ -24,7 +26,7 @@ func TestOnionSkins_Intro(t *testing.T) {
 		pubs[i] = pub.Derive(prvs[i])
 	}
 	on1 := Skins{}.
-		Intro(pr, in.AddrPort)
+		Intro(id, pr, in.AddrPort)
 	on1 = append(on1, &Tmpl{})
 	on := on1.Assemble()
 	s := Encode(on)

@@ -85,7 +85,9 @@ func (s *SessionData) DecSats(sats lnwire.MilliSatoshi, sender bool,
 	if sender {
 		who = "client"
 	}
-	log.D.F("%s session %s %s current %v decrementing by %v", who, typ, s.ID,
+	log.D.F("%s %s session %s %s current %v decrementing by %v",
+		s.Node.AddrPort.String(), who,
+		typ, s.ID,
 		s.Remaining, sats)
 	s.Remaining -= sats
 	return true

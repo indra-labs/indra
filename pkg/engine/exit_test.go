@@ -37,7 +37,7 @@ func TestOnionSkins_Exit(t *testing.T) {
 		ReturnPubs: pubs,
 	}
 	on := Skins{}.
-		Exit(p, ep, id, msg).
+		Exit(id, p, msg, ep).
 		Assemble()
 	s := Encode(on)
 	s.SetCursor(0)

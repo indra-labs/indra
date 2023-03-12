@@ -45,6 +45,13 @@ func (sm *SessionManager) PostAcctOnion(o Skins) (res SendData) {
 							true, "forward")
 					})
 			case *HiddenService:
+				res.Last = on2.Intro.ID
+				res.Billable = append(res.Billable, s.ID)
+				skip = true
+			case *Intro:
+				log.D.Ln("intro in crypt")
+				res.Last = on2.ID
+			case *IntroQuery:
 				res.Last = on2.ID
 				res.Billable = append(res.Billable, s.ID)
 				skip = true
@@ -74,6 +81,12 @@ func (sm *SessionManager) PostAcctOnion(o Skins) (res SendData) {
 		case *Confirmation:
 			res.Last = on.ID
 		case *Balance:
+			res.Last = on.ID
+		case *Intro:
+			log.D.Ln("intro not in crypt")
+			res.Last = on.ID
+		case *IntroQuery:
+			log.D.Ln("introquery not in crypt")
 			res.Last = on.ID
 		}
 	}

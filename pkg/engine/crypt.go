@@ -72,16 +72,16 @@ func (x *Crypt) Encode(s *octet.Splice) (e error) {
 	if e = x.Onion.Encode(s); check(e) {
 		return
 	}
-	log.T.S("before encryption:\n", s.GetRange(start, end).ToBytes())
+	// log.T.S("before encryption:\n", s.GetRange(start, end).ToBytes())
 	ciph.Encipher(blk, x.Nonce, s.GetRange(start, end))
-	log.T.S("after encryption:\n", s.GetRange(start, end).ToBytes())
+	// log.T.S("after encryption:\n", s.GetRange(start, end).ToBytes())
 	if end != s.Len() {
 		if blk = ciph.GetBlock(x.From, x.ToPayloadPub); check(e) {
 			panic(e)
 		}
-		log.T.S(s.GetRange(end, -1).ToBytes())
+		// log.T.S("payload before", s.GetRange(end, -1).ToBytes())
 		ciph.Encipher(blk, x.Nonce, s.GetRange(end, -1))
-		log.T.S(s.GetRange(end, -1).ToBytes())
+		// log.T.S("payload after", s.GetRange(end, -1).ToBytes())
 	}
 	return e
 }

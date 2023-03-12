@@ -55,6 +55,6 @@ func (sm *SessionManager) SendWithOneHook(ap *netip.AddrPort,
 		Callback: responseHook,
 		PostAcct: res.PostAcct},
 	)
-	log.T.Ln("sending out onion")
+	log.T.Ln("sending out onion", res.Last)
 	sm.Send(ap, octet.Load(res.B, slice.NewCursor()))
 }

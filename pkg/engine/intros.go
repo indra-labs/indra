@@ -76,8 +76,7 @@ func SendIntro(id nonce.ID, target *SessionData,
 	se := sm.SelectHops(hops, s)
 	var c Circuit
 	copy(c[:], se)
-	var o Skins
-	o = o.MakeHiddenService(id, intro, se[len(se)-1], c, ks)
+	o := MakeHiddenService(id, intro, se[len(se)-1], c, ks)
 	log.D.Ln("sending out intro onion")
 	res := sm.PostAcctOnion(o)
 	sm.SendWithOneHook(c[0].AddrPort, res, func(id nonce.ID, b slice.Bytes) {
@@ -86,7 +85,7 @@ func SendIntro(id nonce.ID, target *SessionData,
 }
 
 func GossipIntro(intr *Intro, sm *SessionManager, c qu.C) {
-	log.D.F("propagating hidden service introduction for %x", intr.Key.ToBytes())
+	log.D.F("propagating hidden service intro for %x", intr.Key.ToBytes())
 	done := qu.T()
 	msg := octet.New(IntroLen)
 	if check(intr.Encode(msg)) {
