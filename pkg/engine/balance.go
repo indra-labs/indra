@@ -65,7 +65,7 @@ func (x *Balance) Wrap(inner Onion) {}
 func (x *Balance) Handle(s *octet.Splice, p Onion,
 	ng *Engine) (e error) {
 	
-	log.D.S("balance", x.ID, x.ConfID, x.MilliSatoshi)
+	// log.D.S("balance", x.ID, x.ConfID, x.MilliSatoshi)
 	if pending := ng.PendingResponses.Find(x.ID); pending != nil {
 		log.D.S("found pending", pending.ID)
 		for i := range pending.Billable {

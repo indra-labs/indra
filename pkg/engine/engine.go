@@ -81,11 +81,9 @@ func (ng *Engine) Shutdown() {
 		return
 	}
 	ng.ShuttingDown.Store(true)
-	log.T.C(func() string {
-		return "shutting down client " + ng.GetLocalNodeAddress().String()
-	})
 	ng.Cleanup()
 	ng.C.Q()
+	log.D.Ln("finished shutdown for", ng.GetLocalNodeAddress().String())
 }
 
 func (ng *Engine) HandleMessage(s *octet.Splice, pr Onion) {
@@ -110,6 +108,7 @@ func (ng *Engine) Handler() (out bool) {
 	var prev Onion
 	select {
 	case <-ng.C.Wait():
+		log.D.Ln("shutting down engine", ng.GetLocalNodeAddress().String())
 		ng.Shutdown()
 		out = true
 		break

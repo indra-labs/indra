@@ -68,7 +68,6 @@ func (p *PendingResponses) Add(pr ResponseParams) {
 		Success:  qu.T(),
 	}
 	p.responses = append(p.responses, r)
-	log.T.S("loaded response", len(p.responses))
 }
 
 func (p *PendingResponses) FindOlder(t time.Time) (r []*PendingResponse) {

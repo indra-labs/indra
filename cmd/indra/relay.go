@@ -1,7 +1,7 @@
 package main
 
 //
-//import (
+// import (
 //	"github.com/spf13/cobra"
 //	"github.com/spf13/viper"
 //
@@ -13,15 +13,15 @@ package main
 //	"git-indra.lan/indra-labs/indra/pkg/relay"
 //	"git-indra.lan/indra-labs/indra/pkg/relay/transport"
 //	"git-indra.lan/indra-labs/indra/pkg/util/slice"
-//)
+// )
 //
-//var (
+// var (
 //	eng       *relay.Engine
 //	engineP2P []string
 //	engineRPC []string
-//)
+// )
 //
-//func init() {
+// func init() {
 //	pf := relayCmd.PersistentFlags()
 //	pf.StringSliceVarP(&engineP2P, "engineP2P-relay", "P",
 //		[]string{"127.0.0.1:8337", "::1:8337"},
@@ -33,9 +33,9 @@ package main
 //	viper.BindPFlag("relay-control", seedCommand.PersistentFlags().Lookup(
 //		"relay-control"))
 //	rootCmd.AddCommand(relayCmd)
-//}
+// }
 //
-//var relayCmd = &cobra.Command{
+// var relayCmd = &cobra.Command{
 //	Use:   "relay",
 //	Short: "Runs a relay server.",
 //	Long:  `Runs a server that can be controlled with RPC and CLI interfaces.`,
@@ -48,7 +48,7 @@ package main
 //			indra.SemVer, "- Network Freedom. --")
 //
 //		var e error
-//		var idPrv *prv.Key
+//		var idPrv *prv.HiddenService
 //		if idPrv, e = prv.GenerateKey(); check(e) {
 //			return
 //		}
@@ -65,4 +65,4 @@ package main
 //		log.I.Ln("fin")
 //		return
 //	},
-//}
+// }

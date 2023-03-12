@@ -64,7 +64,6 @@ func NewIntro(id nonce.ID, key *prv.Key, ap *netip.AddrPort,
 
 func (x *Intro) Validate() bool {
 	s := octet.New(IntroLen - magic.Len)
-	log.D.S("expiry", x.Expiry)
 	s.ID(x.ID).Pubkey(x.Key).AddrPort(x.AddrPort).Uint64(uint64(x.Expiry.
 		UnixNano()))
 	hash := sha256.Single(s.GetRange(-1, s.GetCursor()))
@@ -72,7 +71,7 @@ func (x *Intro) Validate() bool {
 	if check(e) {
 		return false
 	}
-	if key.Equals(x.Key) {
+	if key.Equals(x.Key) && x.Expiry.After(time.Now()) {
 		return true
 	}
 	return false
@@ -113,7 +112,6 @@ func (x *Intro) Handle(s *octet.Splice, p Onion,
 	
 	ng.Introductions.Lock()
 	valid := x.Validate()
-	log.D.Ln("valid", valid)
 	if valid {
 		log.D.Ln("validated intro", x.ID)
 		// ng.PendingResponses.ProcessAndDelete(x.ID, s.GetRange(-1, -1))
@@ -128,6 +126,7 @@ func (x *Intro) Handle(s *octet.Splice, p Onion,
 		ng.Introductions.KnownIntros[x.Key.ToBytes()] = x
 		if ng.PendingResponses.ProcessAndDelete(x.ID, nil) {
 			ng.Introductions.Unlock()
+			log.D.Ln("deleted pending response", x.ID)
 			return
 		}
 		log.D.F("%s sending out intro to %s at %s to all known peers",

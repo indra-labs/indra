@@ -44,6 +44,15 @@ func (in *Introductions) Find(key pub.Bytes) (header slice.Bytes) {
 	return
 }
 
+func (in *Introductions) FindKnownIntro(key pub.Bytes) (intro *Intro) {
+	in.Lock()
+	var ok bool
+	if intro, ok = in.KnownIntros[key]; ok {
+	}
+	in.Unlock()
+	return
+}
+
 func (in *Introductions) Delete(key pub.Bytes) (header slice.Bytes) {
 	in.Lock()
 	var ok bool

@@ -169,6 +169,5 @@ func TestEngine_SendHiddenService(t *testing.T) {
 		func(id nonce.ID, b slice.Bytes) {
 			log.D.Ln("yay")
 		})
-	time.Sleep(time.Second)
 	quit.Q()
 }

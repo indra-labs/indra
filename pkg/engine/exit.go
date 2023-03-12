@@ -193,7 +193,7 @@ func (ng *Engine) SendExit(port uint16, msg slice.Bytes, id nonce.ID,
 	var c Circuit
 	copy(c[:], se)
 	o := MakeExit(ExitParams{port, msg, id, se[len(se)-1], c, ng.KeySet})
-	log.D.S(ng.GetLocalNodeAddress().String()+" sending out exit onion", o)
+	// log.D.S(ng.GetLocalNodeAddress().String()+" sending out exit onion", o)
 	res := ng.PostAcctOnion(o)
 	ng.SendWithOneHook(c[0].AddrPort, res, hook, ng.PendingResponses)
 }

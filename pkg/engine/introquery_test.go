@@ -65,7 +65,7 @@ func TestOnionSkins_IntroQuery(t *testing.T) {
 		}
 	}
 	if !ex.Key.Equals(pub1) {
-		t.Error("Key did not decode correctly")
+		t.Error("HiddenService did not decode correctly")
 		t.FailNow()
 	}
 	if ex.ID != id {
@@ -144,32 +144,29 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 	for i := range clients {
 		log.D.S("known intros", clients[i].KnownIntros)
 	}
-	time.Sleep(time.Second)
 	log2.SetLogLevel(log2.Trace)
 	// Now query everyone for the intro.
 	idPub := pub.Derive(idPrv)
-	// peers := clients[1:]
+	peers := clients[1:]
 	log.D.Ln("client address", client.GetLocalNodeAddress())
 	delete(client.Introductions.KnownIntros, idPub.ToBytes())
-	i := 1
-	// for i := range peers {
-	wg.Add(1)
-	counter.Inc()
-	log.I.Ln("peer", i)
-	returnHops := client.SessionManager.GetSessionsAtHop(2)
-	if len(returnHops) > 1 {
-		cryptorand.Shuffle(len(returnHops), func(i, j int) {
-			returnHops[i], returnHops[j] = returnHops[j], returnHops[i]
-		})
+	for i := range peers {
+		wg.Add(1)
+		counter.Inc()
+		log.I.Ln("peer", i)
+		returnHops := client.SessionManager.GetSessionsAtHop(2)
+		if len(returnHops) > 1 {
+			cryptorand.Shuffle(len(returnHops), func(i, j int) {
+				returnHops[i], returnHops[j] = returnHops[j], returnHops[i]
+			})
+		}
+		client.SendIntroQuery(id, idPub, returnHops[0],
+			func(id nonce.ID, b slice.Bytes) {
+				wg.Done()
+				counter.Dec()
+				log.I.Ln("success")
+			})
+		wg.Wait()
 	}
-	client.SendIntroQuery(id, idPub, returnHops[0],
-		func(id nonce.ID, b slice.Bytes) {
-			wg.Done()
-			counter.Dec()
-			log.I.Ln("success")
-		})
-	wg.Wait()
-	time.Sleep(time.Second)
-	// }
 	quit.Q()
 }

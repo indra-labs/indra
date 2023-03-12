@@ -79,15 +79,15 @@ func (x *IntroQuery) Handle(s *octet.Splice, p Onion,
 		// if the reply is zeroes the querant knows it needs to retry at a
 		// different relay
 		il = &Intro{}
-		// ng.Introductions.Unlock()
+		ng.Introductions.Unlock()
 		log.E.Ln("intro not known")
-		// return
+		return
 	}
 	ng.Introductions.Unlock()
-	log.D.S(il.ID, il.Key, il.Sig)
-	iq := Encode(il)
+	log.D.S(il.ID, il.Key, il.Expiry, il.Sig)
+	iqr := Encode(il)
 	rb := FormatReply(s.GetRange(s.GetCursor(), s.Advance(ReverseHeaderLen)),
-		iq.GetRange(-1, -1), x.Ciphers, x.Nonces)
+		iqr.GetRange(-1, -1), x.Ciphers, x.Nonces)
 	switch on1 := p.(type) {
 	case *Crypt:
 		sess := ng.FindSessionByHeader(on1.ToPriv)
@@ -121,9 +121,6 @@ func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *pub.Key, target *SessionData,
 	var c Circuit
 	copy(c[:], se)
 	o := MakeIntroQuery(id, hsk, s[5], c, ng.KeySet)
-	// log.D.S(ng.GetLocalNodeAddress().String()+" sending out intro query onion",
-	// 	o)
 	res := ng.PostAcctOnion(o)
-	// res.Last = id
 	ng.SendWithOneHook(c[0].AddrPort, res, fn, ng.PendingResponses)
 }
