@@ -14,7 +14,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/b32/codec"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 var (
@@ -22,15 +21,15 @@ var (
 	check = log.E.Chk
 )
 
-// charset is the set of characters used in the data section of bech32 strings.
-// Note that this is ordered, such that for a given charset[i], i is the binary
+// Charset is the set of characters used in the data section of bech32 strings.
+// Note that this is ordered, such that for a given Charset[i], i is the binary
 // value of the character.
-const charset = "abcdefghijklmnopqrstuvwxyz234569"
+const Charset = "abcdefghijklmnopqrstuvwxyz234679"
 
 // Codec provides the encoder/decoder implementation created by makeCodec.
 var Codec = makeCodec(
 	"Base32Check",
-	charset,
+	Charset,
 	"",
 )
 
@@ -44,33 +43,6 @@ func getCutPoint(length, checkLen int) int {
 	return length - checkLen - 1
 }
 
-// Shift5bitsLeft allows the elimination of the first 5 bits of the value,
-// which are always zero in standard base32 encoding when based on a base 2
-// value.
-func Shift5bitsLeft(b slice.Bytes) (o slice.Bytes) {
-	o = make(slice.Bytes, len(b))
-	for i := range b {
-		if i != len(b)-1 {
-			o[i] = b[i] << 5
-			o[i] += b[i+1] >> 3
-		} else {
-			o[i] = b[i] << 5
-		}
-	}
-	return
-}
-func Shift5bitsRight(b slice.Bytes) (o slice.Bytes) {
-	o = make(slice.Bytes, len(b))
-	for i := range b {
-		if i == 0 {
-			o[i] = b[i] >> 5
-		} else {
-			o[i] = b[i] >> 5
-			o[i] += b[i-1] << 3
-		}
-	}
-	return
-}
 
 func makeCodec(
 	name string,
@@ -97,7 +69,6 @@ func makeCodec(
 		outputBytes[0] = byte(checkLen)
 		copy(outputBytes[1:len(input)+1], input)
 		copy(outputBytes[len(input)+1:], cdc.MakeCheck(input, checkLen))
-		outputBytes = Shift5bitsLeft(outputBytes)
 		outputString := enc.EncodeToString(outputBytes)
 		output = cdc.HRP + outputString[:len(outputString)-1]
 		return
@@ -136,7 +107,6 @@ func makeCodec(
 		if check(e) {
 			return
 		}
-		data = Shift5bitsRight(data)
 		// The first byte signifies the length of the check at the end
 		checkLen := int(data[0])
 		if writtenBytes < checkLen+1 {

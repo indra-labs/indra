@@ -65,18 +65,40 @@ func (pub *Key) ToHex() (s string, e error) {
 
 func (pub *Key) ToBase32() (s string) {
 	b := pub.ToBytes()
-	bb := append(b[1:], b[0])
 	var e error
-	if s, e = based32.Codec.Encode(bb); check(e) {
+	if s, e = based32.Codec.Encode(b[:]); check(e) {
 	}
-	return s
+	ss := []byte(s)
+	// Reverse text order to get all starting ciphers.
+	for i := 0; i < len(s)/2; i++ {
+		ss[i], ss[len(s)-i-1] = ss[len(s)-i-1], ss[i]
+	}
+	return string(ss)
+}
+
+func (pub *Key) ToBase32Abbreviated() (s string) {
+	b := pub.ToBytes()
+	var e error
+	if s, e = based32.Codec.Encode(b[:]); check(e) {
+	}
+	ss := []byte(s)
+	// Reverse text order to get all starting ciphers.
+	for i := 0; i < len(s)/2; i++ {
+		ss[i], ss[len(s)-i-1] = ss[len(s)-i-1], ss[i]
+	}
+	ss = append(ss[:13], append([]byte("..."), ss[len(ss)-8:]...)...)
+	return string(ss)
 }
 
 func FromBase32(s string) (k *Key, e error) {
+	ss := []byte(s)
+	// Reverse text order to get all starting ciphers.
+	for i := 0; i < len(s)/2; i++ {
+		ss[i], ss[len(s)-i-1] = ss[len(s)-i-1], ss[i]
+	}
 	var b slice.Bytes
-	b, e = based32.Codec.Decode(s)
-	bb := append(b[len(b)-1:], b[:len(b)-1]...)
-	return FromBytes(bb)
+	b, e = based32.Codec.Decode(string(ss))
+	return FromBytes(b)
 }
 
 func (pb Bytes) Equals(qb Bytes) bool { return pb == qb }

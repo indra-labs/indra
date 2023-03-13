@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"testing"
 	"unicode"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/util/appdata"
 )
 
@@ -170,7 +170,7 @@ func TestAppDataDir(t *testing.T) {
 			"unrecognized", "." + appNameUpper, false,
 			filepath.Join(homeDir, "."+appNameLower),
 		},
-		// No application name provided, so expect current directory.
+		// Node application name provided, so expect current directory.
 		{"windows", "", false, "."},
 		{"windows", "", true, "."},
 		{"linux", "", false, "."},

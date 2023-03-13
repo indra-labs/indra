@@ -1,6 +1,8 @@
 package log
 
 import (
+	"encoding/base32"
+	"encoding/binary"
 	"fmt"
 	"io"
 	"os"
@@ -309,6 +311,14 @@ func joinStrings(sep string, a ...interface{}) func() (o string) {
 	}
 }
 
+const Charset = "abcdefghijklmnopqrstuvwxyz234679"
+
+func Base32(in uint64) (out string) {
+	o := make([]byte, 8)
+	binary.BigEndian.PutUint64(o, in)
+	return base32.NewEncoding(Charset).EncodeToString(o)[:13]
+}
+
 // logPrint is the generic log printing function that provides the base
 // format for log entries.
 func logPrint(
@@ -323,10 +333,13 @@ func logPrint(
 		formatString := "%v%s%s%-6v %s"
 		loc := ""
 		tsf := timeStampFormat
+		timeText := getTimeText(tsf)
 		if codeLoc {
 			formatString = "%-58v%s%s%-6v %s"
 			loc = GetLoc(3, subsystem)
 			tsf = LocTimeStampFormat
+			now := uint64(time.Now().UnixMicro())
+			timeText = fmt.Sprint(now) // Base32(now)
 		}
 		var app string
 		if len(App) > 0 {
@@ -335,7 +348,7 @@ func logPrint(
 		s := fmt.Sprintf(
 			formatString,
 			loc,
-			color.Gray.Sprint(getTimeText(tsf)),
+			color.Gray.Sprint(timeText),
 			app,
 			LevelSpecs[level].Colorizer(
 				" "+LevelSpecs[level].Name+" ",
@@ -408,9 +421,14 @@ func _f(level LogLevel, subsystem string) Printf {
 }
 func _s(level LogLevel, subsystem string) Prints {
 	return func(a ...interface{}) {
+		text := "spew:\n"
+		if s, ok := a[0].(string); ok {
+			text = strings.TrimSpace(s) + "\n"
+			a = a[1:]
+		}
 		logPrint(
 			level, subsystem, func() string {
-				return fmt.Sprint("spew:\n" + spew.Sdump(a...))
+				return fmt.Sprint(text + spew.Sdump(a...))
 			},
 		)()
 	}
@@ -423,8 +441,11 @@ func _c(level LogLevel, subsystem string) Printc {
 func _chk(level LogLevel, subsystem string) Chk {
 	return func(e error) (is bool) {
 		if e != nil {
-			logPrint(level, subsystem,
-				joinStrings(" ", e.Error()))()
+			logPrint(level,
+				subsystem,
+				joinStrings(
+					" ",
+					e))()
 			is = true
 		}
 		return
