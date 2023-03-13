@@ -49,7 +49,9 @@ func RunWith(r func(srv *grpc.Server), opts ...ServerOption) {
 
 	isConfigured <- true
 
-	server = grpc.NewServer()
+	server = grpc.NewServer(
+	//grpc.WithPerRPCCredentials(),
+	)
 	r(server)
 
 	go start()
