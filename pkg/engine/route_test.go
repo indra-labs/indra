@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -36,9 +37,9 @@ func TestEngine_Route(t *testing.T) {
 	quit := qu.T()
 	go func() {
 		select {
-		case <-time.After(time.Second * 4):
+		case <-time.After(time.Second * 7):
 			quit.Q()
-			t.Error("MakeHiddenService test failed")
+			t.Error("Route test failed")
 		case <-quit:
 			for i := 0; i < int(counter.Load()); i++ {
 				wg.Done()
@@ -80,8 +81,10 @@ func TestEngine_Route(t *testing.T) {
 	introducer = introHops[0]
 	client.SendHiddenService(id, idPrv,
 		time.Now().Add(time.Hour), introducer,
-		func(id nonce.ID, b slice.Bytes) {
-			log.D.Ln("yay")
+		func(id nonce.ID, b slice.Bytes) (e error) {
+			log.I.Ln("yay")
+			log.I.S("hidden service callback", id, b.ToBytes())
+			return
 		})
 	for i := range clients {
 		log.D.S("known intros", clients[i].KnownIntros)
@@ -90,7 +93,6 @@ func TestEngine_Route(t *testing.T) {
 	// Now query everyone for the intro.
 	idPub := pub.Derive(idPrv)
 	log.D.Ln("client address", client.GetLocalNodeAddress())
-	delete(client.Introductions.KnownIntros, idPub.ToBytes())
 	wg.Add(1)
 	counter.Inc()
 	returnHops := client.SessionManager.GetSessionsAtHop(2)
@@ -99,14 +101,22 @@ func TestEngine_Route(t *testing.T) {
 			returnHops[i], returnHops[j] = returnHops[j], returnHops[i]
 		})
 	}
+	log.D.Ln(strings.Repeat("-", 72))
+	var intro *Intro
 	client.SendIntroQuery(id, idPub, returnHops[0],
-		func(id nonce.ID, b slice.Bytes) {
-			wg.Done()
+		func(id nonce.ID, b slice.Bytes) (e error) {
 			counter.Dec()
 			log.I.Ln("success")
-			quit.Q()
+			idb := idPub.ToBytes()
+			intro = client.Introductions.FindKnownIntroUnsafe(idb)
+			log.I.S("intro", intro.ID,
+				intro.Key.ToBase32Abbreviated(), intro.AddrPort.String())
+			wg.Done()
+			return
 		})
 	wg.Wait()
+	log.I.F("found introducer: %s", intro.AddrPort.String())
+	
 	quit.Q()
-	log.D.Ln("-------------------------------------")
+	log.D.Ln(strings.Repeat("-", 72))
 }

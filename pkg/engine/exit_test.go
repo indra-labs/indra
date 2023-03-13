@@ -137,7 +137,7 @@ out:
 		// c[sess.Hop] = clients[0].Sessions[i]
 		id := nonce.NewID()
 		clients[0].SendExit(port, msg, id, sess, func(idd nonce.ID,
-			b slice.Bytes) {
+			b slice.Bytes) (e error) {
 			if sha256.Single(b) != respHash {
 				t.Error("failed to receive expected message")
 			}
@@ -146,6 +146,7 @@ out:
 			}
 			log.I.F("success\n\n")
 			wg.Done()
+			return
 		})
 		bb := <-clients[3].ReceiveToLocalNode(port)
 		log.T.S(bb.ToBytes())

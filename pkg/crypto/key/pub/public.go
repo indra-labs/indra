@@ -76,6 +76,20 @@ func (pub *Key) ToBase32() (s string) {
 	return string(ss)
 }
 
+func (pub *Key) ToBase32Abbreviated() (s string) {
+	b := pub.ToBytes()
+	var e error
+	if s, e = based32.Codec.Encode(b[:]); check(e) {
+	}
+	ss := []byte(s)
+	// Reverse text order to get all starting ciphers.
+	for i := 0; i < len(s)/2; i++ {
+		ss[i], ss[len(s)-i-1] = ss[len(s)-i-1], ss[i]
+	}
+	ss = append(ss[:13], append([]byte("..."), ss[len(ss)-8:]...)...)
+	return string(ss)
+}
+
 func FromBase32(s string) (k *Key, e error) {
 	ss := []byte(s)
 	// Reverse text order to get all starting ciphers.

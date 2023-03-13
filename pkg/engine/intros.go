@@ -44,12 +44,28 @@ func (in *Introductions) Find(key pub.Bytes) (header slice.Bytes) {
 	return
 }
 
+func (in *Introductions) FindUnsafe(key pub.Bytes) (header slice.Bytes) {
+	var ok bool
+	log.D.S(in.Intros)
+	if header, ok = in.Intros[key]; ok {
+	}
+	return
+}
+
 func (in *Introductions) FindKnownIntro(key pub.Bytes) (intro *Intro) {
 	in.Lock()
+	log.D.S(in.KnownIntros)
 	var ok bool
 	if intro, ok = in.KnownIntros[key]; ok {
 	}
 	in.Unlock()
+	return
+}
+
+func (in *Introductions) FindKnownIntroUnsafe(key pub.Bytes) (intro *Intro) {
+	var ok bool
+	if intro, ok = in.KnownIntros[key]; ok {
+	}
 	return
 }
 
@@ -88,8 +104,10 @@ func SendIntro(id nonce.ID, target *SessionData,
 	o := MakeHiddenService(id, intro, se[len(se)-1], c, ks)
 	log.D.Ln("sending out intro onion")
 	res := sm.PostAcctOnion(o)
-	sm.SendWithOneHook(c[0].AddrPort, res, func(id nonce.ID, b slice.Bytes) {
+	sm.SendWithOneHook(c[0].AddrPort, res, func(id nonce.ID,
+		b slice.Bytes) (e error) {
 		log.I.Ln("received routing header request for %s", intro.Key.ToBase32())
+		return
 	}, p)
 }
 

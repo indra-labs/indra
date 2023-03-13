@@ -42,9 +42,10 @@ out:
 		sess := clients[0].Sessions[i]
 		c[sess.Hop] = clients[0].Sessions[i]
 		clients[0].SendPing(c,
-			func(id nonce.ID, b slice.Bytes) {
+			func(id nonce.ID, b slice.Bytes) (e error) {
 				log.I.Ln("success")
 				wg.Done()
+				return
 			})
 		select {
 		case <-quit:

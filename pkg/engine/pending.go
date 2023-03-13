@@ -10,7 +10,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
-type Callback func(id nonce.ID, b slice.Bytes)
+type Callback func(id nonce.ID, b slice.Bytes) (e error)
 
 type PendingResponse struct {
 	nonce.ID
@@ -20,7 +20,7 @@ type PendingResponse struct {
 	Return   nonce.ID
 	PostAcct []func()
 	Sessions
-	Callback
+	Callback Callback
 	time.Time
 	Success qu.C
 }
@@ -95,7 +95,7 @@ func (p *PendingResponses) Find(id nonce.ID) (pr *PendingResponse) {
 // ProcessAndDelete runs the callback and post accounting function list and
 // deletes the pending response.
 func (p *PendingResponses) ProcessAndDelete(id nonce.ID,
-	b slice.Bytes) (found bool) {
+	b slice.Bytes) (found bool, e error) {
 	
 	p.Lock()
 	defer p.Unlock()
@@ -107,7 +107,7 @@ func (p *PendingResponses) ProcessAndDelete(id nonce.ID,
 			for _, fn := range p.responses[i].PostAcct {
 				fn()
 			}
-			p.responses[i].Callback(id, b)
+			e = p.responses[i].Callback(id, b)
 			if i < 1 {
 				p.responses = p.responses[1:]
 			} else {

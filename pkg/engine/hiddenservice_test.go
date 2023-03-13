@@ -166,8 +166,9 @@ func TestEngine_SendHiddenService(t *testing.T) {
 	introducer = introducerHops[0]
 	clients[0].SendHiddenService(id, idPrv, time.Now().Add(time.Hour),
 		introducer,
-		func(id nonce.ID, b slice.Bytes) {
+		func(id nonce.ID, b slice.Bytes) (e error) {
 			log.D.Ln("yay")
+			return
 		})
 	quit.Q()
 }

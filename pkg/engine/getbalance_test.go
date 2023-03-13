@@ -101,9 +101,10 @@ out:
 	for i := 1; i < len(clients[0].Sessions)-1; i++ {
 		wg.Add(1)
 		clients[0].SendGetBalance(clients[0].Sessions[i],
-			func(cf nonce.ID, b slice.Bytes) {
+			func(cf nonce.ID, b slice.Bytes) (e error) {
 				log.I.Ln("success")
 				wg.Done()
+				return
 			})
 		select {
 		case <-quit:

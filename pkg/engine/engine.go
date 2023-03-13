@@ -108,7 +108,7 @@ func (ng *Engine) Handler() (out bool) {
 	var prev Onion
 	select {
 	case <-ng.C.Wait():
-		log.D.Ln("shutting down engine", ng.GetLocalNodeAddress().String())
+		// log.D.Ln("shutting down engine", ng.GetLocalNodeAddress().String())
 		ng.Shutdown()
 		out = true
 		break

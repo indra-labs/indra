@@ -113,24 +113,26 @@ func (x *Intro) Handle(s *octet.Splice, p Onion,
 	ng.Introductions.Lock()
 	valid := x.Validate()
 	if valid {
-		log.D.Ln("validated intro", x.ID)
+		log.T.Ln("validated intro", x.ID)
 		// ng.PendingResponses.ProcessAndDelete(x.ID, s.GetRange(-1, -1))
 		if _, ok := ng.Introductions.KnownIntros[x.Key.ToBytes()]; ok {
 			log.D.Ln(ng.GetLocalNodeAddress(), "already have intro")
-			ng.PendingResponses.ProcessAndDelete(x.ID, nil)
+			ng.PendingResponses.ProcessAndDelete(x.ID, s.GetRange(-1, -1))
 			ng.Introductions.Unlock()
 			return
 		}
 		log.D.F("%s storing intro for %s %s",
-			ng.GetLocalNodeAddress().String(), x.Key.ToBase32(), x.ID)
+			ng.GetLocalNodeAddress().String(), x.Key.ToBase32Abbreviated(), x.ID)
 		ng.Introductions.KnownIntros[x.Key.ToBytes()] = x
-		if ng.PendingResponses.ProcessAndDelete(x.ID, nil) {
+		var ok bool
+		if ok, e = ng.PendingResponses.ProcessAndDelete(x.ID, s.GetRange(-1,
+			-1)); ok || check(e) {
 			ng.Introductions.Unlock()
 			log.D.Ln("deleted pending response", x.ID)
 			return
 		}
 		log.D.F("%s sending out intro to %s at %s to all known peers",
-			ng.GetLocalNodeAddress(), x.Key.ToBase32(), x.AddrPort.String())
+			ng.GetLocalNodeAddress(), x.Key.ToBase32Abbreviated(), x.AddrPort.String())
 		sender := ng.SessionManager.FindNodeByAddrPort(x.AddrPort)
 		nn := make(map[nonce.ID]*Node)
 		ng.SessionManager.ForEachNode(func(n *Node) bool {

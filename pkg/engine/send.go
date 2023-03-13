@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	"net/netip"
 	"runtime"
 	
@@ -41,8 +42,9 @@ func (sm *SessionManager) SendWithOneHook(ap *netip.AddrPort,
 	res SendData, responseHook Callback, p *PendingResponses) {
 	
 	if responseHook == nil {
-		responseHook = func(_ nonce.ID, _ slice.Bytes) {
+		responseHook = func(_ nonce.ID, _ slice.Bytes) (e error) {
 			log.D.Ln("nil response hook")
+			return errors.New("nil response hook")
 		}
 	}
 	p.Add(ResponseParams{
