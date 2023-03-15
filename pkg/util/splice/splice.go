@@ -15,9 +15,10 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	"git-indra.lan/indra-labs/indra/pkg/relay/messages/magicbytes"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
+
+const magicbytesLen = 2
 
 var (
 	log   = log2.GetLogger(indra.PathBase)
@@ -36,7 +37,7 @@ func Splice(b slice.Bytes, c *slice.Cursor) *Splicer {
 }
 
 func (s *Splicer) Magic(magic slice.Bytes) *Splicer {
-	copy(s.b[*s.c:s.c.Inc(magicbytes.Len)], magic)
+	copy(s.b[*s.c:s.c.Inc(magicbytesLen)], magic)
 	return s
 }
 

@@ -145,6 +145,10 @@ func (s *Splice) ReadCloak(ck *cloak.PubKey) *Splice {
 }
 
 func (s *Splice) Pubkey(from *pub.Key) *Splice {
+	if from == nil {
+		log.E.Ln("given empty pubkey, doing nothing")
+		return s
+	}
 	pubKey := from.ToBytes()
 	copy(s.b[*s.c:s.c.Inc(pub.KeyLen)], pubKey[:])
 	return s

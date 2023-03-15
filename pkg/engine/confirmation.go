@@ -49,6 +49,6 @@ func (x *Confirmation) Handle(s *octet.Splice, p Onion,
 	
 	// When a confirmation arrives check if it is registered for and run the
 	// hook that was registered with it.
-	ng.PendingResponses.ProcessAndDelete(x.ID, s.GetRange(-1, -1))
+	ng.PendingResponses.ProcessAndDelete(x.ID, nil, s.GetRange(-1, -1))
 	return
 }

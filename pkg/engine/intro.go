@@ -49,7 +49,7 @@ func NewIntro(id nonce.ID, key *prv.Key, ap *netip.AddrPort,
 	if sign, e = sig.Sign(key, hash); check(e) {
 		return nil
 	}
-	log.D.S("new intro bytes", s.GetRange(-1, s.GetCursor()).ToBytes(),
+	log.T.S("new intro bytes", s.GetRange(-1, s.GetCursor()).ToBytes(),
 		sign)
 	in = &Intro{
 		ID:       id,
@@ -58,7 +58,6 @@ func NewIntro(id nonce.ID, key *prv.Key, ap *netip.AddrPort,
 		Expiry:   expires,
 		Sig:      sign,
 	}
-	log.D.S("new intro expiry", in.Expiry)
 	return
 }
 
@@ -113,11 +112,12 @@ func (x *Intro) Handle(s *octet.Splice, p Onion,
 	ng.Introductions.Lock()
 	valid := x.Validate()
 	if valid {
-		log.T.Ln("validated intro", x.ID)
+		log.T.Ln(ng.GetLocalNodeAddress().String(), "validated intro", x.ID)
 		// ng.PendingResponses.ProcessAndDelete(x.ID, s.GetRange(-1, -1))
+		kb := x.Key.ToBytes()
 		if _, ok := ng.Introductions.KnownIntros[x.Key.ToBytes()]; ok {
 			log.D.Ln(ng.GetLocalNodeAddress(), "already have intro")
-			ng.PendingResponses.ProcessAndDelete(x.ID, s.GetRange(-1, -1))
+			ng.PendingResponses.ProcessAndDelete(x.ID, &kb, s.GetRange(-1, -1))
 			ng.Introductions.Unlock()
 			return
 		}
@@ -125,7 +125,7 @@ func (x *Intro) Handle(s *octet.Splice, p Onion,
 			ng.GetLocalNodeAddress().String(), x.Key.ToBase32Abbreviated(), x.ID)
 		ng.Introductions.KnownIntros[x.Key.ToBytes()] = x
 		var ok bool
-		if ok, e = ng.PendingResponses.ProcessAndDelete(x.ID, s.GetRange(-1,
+		if ok, e = ng.PendingResponses.ProcessAndDelete(x.ID, &kb, s.GetRange(-1,
 			-1)); ok || check(e) {
 			ng.Introductions.Unlock()
 			log.D.Ln("deleted pending response", x.ID)

@@ -5,6 +5,7 @@ import (
 	"net/netip"
 	"runtime"
 	
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -42,7 +43,7 @@ func (sm *SessionManager) SendWithOneHook(ap *netip.AddrPort,
 	res SendData, responseHook Callback, p *PendingResponses) {
 	
 	if responseHook == nil {
-		responseHook = func(_ nonce.ID, _ slice.Bytes) (e error) {
+		responseHook = func(_ nonce.ID, _ *pub.Bytes, _ slice.Bytes) (e error) {
 			log.D.Ln("nil response hook")
 			return errors.New("nil response hook")
 		}
@@ -57,6 +58,6 @@ func (sm *SessionManager) SendWithOneHook(ap *netip.AddrPort,
 		Callback: responseHook,
 		PostAcct: res.PostAcct},
 	)
-	log.T.Ln("sending out onion", res.Last)
+	log.T.Ln("sending out onion", res.Last, "to", ap.String())
 	sm.Send(ap, octet.Load(res.B, slice.NewCursor()))
 }

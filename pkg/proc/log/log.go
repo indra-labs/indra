@@ -338,8 +338,7 @@ func logPrint(
 			formatString = "%-58v%s%s%-6v %s"
 			loc = GetLoc(3, subsystem)
 			tsf = LocTimeStampFormat
-			now := uint64(time.Now().UnixMicro())
-			timeText = fmt.Sprint(now) // Base32(now)
+			timeText = getTimeText(LocTimeStampFormat)
 		}
 		var app string
 		if len(App) > 0 {

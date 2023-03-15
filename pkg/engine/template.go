@@ -7,7 +7,7 @@ import (
 
 const (
 	TmplMagic = "!!"
-	TmplLen   = magic.Len
+	TmplLen   = 0
 )
 
 func TmplPrototype() Onion { return &Tmpl{} }
@@ -31,7 +31,8 @@ func (x *Tmpl) Encode(s *octet.Splice) (e error) {
 }
 
 func (x *Tmpl) Decode(s *octet.Splice) (e error) {
-	if e = magic.TooShort(s.Remaining(), TmplLen-magic.Len, TmplMagic); check(e) {
+	if e = magic.TooShort(s.Remaining(), TmplLen-magic.Len,
+		TmplMagic); check(e) {
 		return
 	}
 	return

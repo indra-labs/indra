@@ -138,8 +138,8 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 	introducer = introducerHops[0]
 	client.SendHiddenService(id, idPrv,
 		time.Now().Add(time.Hour), introducer,
-		func(id nonce.ID, b slice.Bytes) (e error) {
-			log.D.Ln("yay")
+		func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
+			log.I.S("hidden service callback", id, k, b.ToBytes())
 			return
 		})
 	for i := range clients {
@@ -162,7 +162,7 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 			})
 		}
 		client.SendIntroQuery(id, idPub, returnHops[0],
-			func(id nonce.ID, b slice.Bytes) (e error) {
+			func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
 				wg.Done()
 				counter.Dec()
 				log.I.Ln("success")

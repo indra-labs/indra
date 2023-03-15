@@ -8,6 +8,7 @@ import (
 	
 	"github.com/cybriq/qu"
 	
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
@@ -137,7 +138,7 @@ out:
 		// c[sess.Hop] = clients[0].Sessions[i]
 		id := nonce.NewID()
 		clients[0].SendExit(port, msg, id, sess, func(idd nonce.ID,
-			b slice.Bytes) (e error) {
+			k *pub.Bytes, b slice.Bytes) (e error) {
 			if sha256.Single(b) != respHash {
 				t.Error("failed to receive expected message")
 			}

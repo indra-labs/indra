@@ -87,7 +87,7 @@ func (ng *Engine) Shutdown() {
 }
 
 func (ng *Engine) HandleMessage(s *octet.Splice, pr Onion) {
-	log.T.F("%v handling received message", ng.GetLocalNodeAddress())
+	log.D.F("%v handling received message", ng.GetLocalNodeAddress())
 	s.SetCursor(0)
 	on := Recognise(s)
 	if on != nil {

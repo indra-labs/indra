@@ -6,11 +6,12 @@ import (
 	
 	"github.com/cybriq/qu"
 	
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
-type Callback func(id nonce.ID, b slice.Bytes) (e error)
+type Callback func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error)
 
 type PendingResponse struct {
 	nonce.ID
@@ -94,7 +95,7 @@ func (p *PendingResponses) Find(id nonce.ID) (pr *PendingResponse) {
 
 // ProcessAndDelete runs the callback and post accounting function list and
 // deletes the pending response.
-func (p *PendingResponses) ProcessAndDelete(id nonce.ID,
+func (p *PendingResponses) ProcessAndDelete(id nonce.ID, k *pub.Bytes,
 	b slice.Bytes) (found bool, e error) {
 	
 	p.Lock()
@@ -107,7 +108,7 @@ func (p *PendingResponses) ProcessAndDelete(id nonce.ID,
 			for _, fn := range p.responses[i].PostAcct {
 				fn()
 			}
-			e = p.responses[i].Callback(id, b)
+			e = p.responses[i].Callback(id, k, b)
 			if i < 1 {
 				p.responses = p.responses[1:]
 			} else {

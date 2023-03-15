@@ -7,6 +7,7 @@ import (
 	
 	"github.com/cybriq/qu"
 	
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -42,7 +43,7 @@ out:
 		sess := clients[0].Sessions[i]
 		c[sess.Hop] = clients[0].Sessions[i]
 		clients[0].SendPing(c,
-			func(id nonce.ID, b slice.Bytes) (e error) {
+			func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
 				log.I.Ln("success")
 				wg.Done()
 				return

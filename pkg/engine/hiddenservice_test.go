@@ -42,7 +42,7 @@ func TestOnionSkins_HiddenService(t *testing.T) {
 		ReturnPubs: pubs,
 	}
 	on1 := Skins{}.
-		HiddenService(id, in, ep)
+		HiddenService(in, ep)
 	log.D.S("on1", on1)
 	on1 = append(on1, &Tmpl{})
 	on := on1.Assemble()
@@ -148,7 +148,7 @@ func TestEngine_SendHiddenService(t *testing.T) {
 		}
 		wg.Wait()
 	}
-	log2.SetLogLevel(log2.Debug)
+	log2.SetLogLevel(log2.Trace)
 	var idPrv *prv.Key
 	if idPrv, e = prv.GenerateKey(); check(e) {
 		return
@@ -158,17 +158,24 @@ func TestEngine_SendHiddenService(t *testing.T) {
 	var introducer *SessionData
 	if len(introducerHops) > 1 {
 		cryptorand.Shuffle(len(introducerHops), func(i, j int) {
-			introducerHops[i], introducerHops[j] = introducerHops[j], introducerHops[i]
+			introducerHops[i], introducerHops[j] = introducerHops[j],
+				introducerHops[i]
 		})
 	}
 	// There must be at least one, and if there was more than one the first
 	// index of introducerHops will be a randomly selected one.
 	introducer = introducerHops[0]
+	wg.Add(1)
+	counter.Inc()
 	clients[0].SendHiddenService(id, idPrv, time.Now().Add(time.Hour),
 		introducer,
-		func(id nonce.ID, b slice.Bytes) (e error) {
+		func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
 			log.D.Ln("yay")
+			wg.Done()
+			counter.Dec()
 			return
 		})
+	wg.Wait()
+	time.Sleep(time.Second)
 	quit.Q()
 }

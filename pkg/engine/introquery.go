@@ -84,7 +84,7 @@ func (x *IntroQuery) Handle(s *octet.Splice, p Onion,
 		return
 	}
 	ng.Introductions.Unlock()
-	log.D.S(il.ID, il.Key, il.Expiry, il.Sig)
+	// log.D.S(il.ID, il.Key, il.Expiry, il.Sig)
 	iqr := Encode(il)
 	rb := FormatReply(s.GetRange(s.GetCursor(), s.Advance(ReverseHeaderLen)),
 		iqr.GetRange(-1, -1), x.Ciphers, x.Nonces)

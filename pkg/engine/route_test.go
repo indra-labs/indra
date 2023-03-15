@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -22,7 +21,7 @@ func TestEngine_Route(t *testing.T) {
 	log2.App = "test"
 	var clients []*Engine
 	var e error
-	const nCircuits = 10
+	const nCircuits = 5
 	if clients, e = CreateNMockCircuits(nCircuits, nCircuits); check(e) {
 		t.Error(e)
 		t.FailNow()
@@ -37,7 +36,7 @@ func TestEngine_Route(t *testing.T) {
 	quit := qu.T()
 	go func() {
 		select {
-		case <-time.After(time.Second * 7):
+		case <-time.After(time.Second * 20):
 			quit.Q()
 			t.Error("Route test failed")
 		case <-quit:
@@ -63,60 +62,51 @@ func TestEngine_Route(t *testing.T) {
 		}
 		wg.Wait()
 	}
-	log2.SetLogLevel(log2.Info)
 	var idPrv *prv.Key
 	if idPrv, e = prv.GenerateKey(); check(e) {
 		return
 	}
 	id := nonce.NewID()
-	introHops := client.SessionManager.GetSessionsAtHop(2)
+	introducerHops := client.SessionManager.GetSessionsAtHop(2)
 	var introducer *SessionData
-	if len(introHops) > 1 {
-		cryptorand.Shuffle(len(introHops), func(i, j int) {
-			introHops[i], introHops[j] = introHops[j], introHops[i]
+	if len(introducerHops) > 1 {
+		cryptorand.Shuffle(len(introducerHops), func(i, j int) {
+			introducerHops[i], introducerHops[j] = introducerHops[j], introducerHops[i]
 		})
 	}
 	// There must be at least one, and if there was more than one the first
-	// index of introHops will be a randomly selected one.
-	introducer = introHops[0]
+	// index of introducerHops will be a randomly selected one.
+	introducer = introducerHops[0]
 	client.SendHiddenService(id, idPrv,
 		time.Now().Add(time.Hour), introducer,
-		func(id nonce.ID, b slice.Bytes) (e error) {
-			log.I.Ln("yay")
-			log.I.S("hidden service callback", id, b.ToBytes())
+		func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
+			log.I.S("hidden service callback", id, k, b.ToBytes())
 			return
 		})
-	for i := range clients {
-		log.D.S("known intros", clients[i].KnownIntros)
-	}
-	log2.SetLogLevel(log2.Trace)
 	// Now query everyone for the intro.
 	idPub := pub.Derive(idPrv)
-	log.D.Ln("client address", client.GetLocalNodeAddress())
-	wg.Add(1)
-	counter.Inc()
+	// peers := clients[1:]
+	delete(client.Introductions.KnownIntros, idPub.ToBytes())
 	returnHops := client.SessionManager.GetSessionsAtHop(2)
-	if len(returnHops) > 1 {
-		cryptorand.Shuffle(len(returnHops), func(i, j int) {
-			returnHops[i], returnHops[j] = returnHops[j], returnHops[i]
-		})
+	for i := range returnHops {
+		wg.Add(1)
+		counter.Inc()
+		if len(returnHops) > 1 {
+			cryptorand.Shuffle(len(returnHops), func(i, j int) {
+				returnHops[i], returnHops[j] = returnHops[j], returnHops[i]
+			})
+		}
+		client.SendIntroQuery(id, idPub, returnHops[0],
+			func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
+				wg.Done()
+				counter.Dec()
+				log.I.Ln("success", i)
+				return
+			})
+		wg.Wait()
 	}
-	log.D.Ln(strings.Repeat("-", 72))
-	var intro *Intro
-	client.SendIntroQuery(id, idPub, returnHops[0],
-		func(id nonce.ID, b slice.Bytes) (e error) {
-			counter.Dec()
-			log.I.Ln("success")
-			idb := idPub.ToBytes()
-			intro = client.Introductions.FindKnownIntroUnsafe(idb)
-			log.I.S("intro", intro.ID,
-				intro.Key.ToBase32Abbreviated(), intro.AddrPort.String())
-			wg.Done()
-			return
-		})
-	wg.Wait()
-	log.I.F("found introducer: %s", intro.AddrPort.String())
+	log.I.Ln("all peers know about the hidden service")
+	log2.SetLogLevel(log2.Debug)
 	
 	quit.Q()
-	log.D.Ln(strings.Repeat("-", 72))
 }

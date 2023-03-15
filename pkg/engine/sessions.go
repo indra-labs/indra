@@ -5,6 +5,7 @@ import (
 	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -57,6 +58,9 @@ func (sm *SessionManager) PostAcctOnion(o Skins) (res SendData) {
 				skip = true
 			case *Reverse:
 				res.Billable = append(res.Billable, s.ID)
+			case *Route:
+				hsb := on2.HiddenService.ToBytes()
+				copy(res.Last[:], hsb[:])
 			case *Exit:
 				for j := range s.Services {
 					if s.Services[j].Port != on2.Port {
@@ -161,7 +165,7 @@ func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 	// todo: handle payment failures!
 	o := MakeSession(conf, s, returnSession, nodes[:], ng.KeySet)
 	res := ng.PostAcctOnion(o)
-	ng.SendWithOneHook(nodes[0].AddrPort, res, func(id nonce.ID,
+	ng.SendWithOneHook(nodes[0].AddrPort, res, func(id nonce.ID, k *pub.Bytes,
 		b slice.Bytes) (e error) {
 		ng.SessionManager.Lock()
 		defer ng.SessionManager.Unlock()

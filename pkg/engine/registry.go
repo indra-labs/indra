@@ -36,6 +36,6 @@ func Recognise(s *octet.Splice) (on Onion) {
 	if in, ok = registry.Onions[magic]; ok {
 		on = in()
 	}
-	log.T.F("recognised magic '%s' for type %v", magic, reflect.TypeOf(on))
+	log.D.F("recognised magic '%s' for type %v", magic, reflect.TypeOf(on))
 	return
 }

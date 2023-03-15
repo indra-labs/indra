@@ -61,7 +61,7 @@ func (x *Response) Handle(s *octet.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	pending := ng.PendingResponses.Find(x.ID)
-	log.T.F("searching for pending ID %x", x.ID)
+	log.T.F("searching for pending ID %s", x.ID)
 	if pending != nil {
 		for i := range pending.Billable {
 			se := ng.FindSession(pending.Billable[i])
@@ -83,7 +83,7 @@ func (x *Response) Handle(s *octet.Splice, p Onion,
 				ng.DecSession(se.ID, relayRate*dataSize, true, typ)
 			}
 		}
-		ng.PendingResponses.ProcessAndDelete(x.ID, x.Bytes)
+		ng.PendingResponses.ProcessAndDelete(x.ID, nil, x.Bytes)
 	}
 	return
 }

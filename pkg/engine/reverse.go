@@ -64,13 +64,13 @@ func (x *Reverse) Handle(s *octet.Splice, p Onion,
 		last := second + ReverseLayerLen
 		hdr, pld, _, _ := ng.FindCloaked(on.Cloak)
 		if hdr == nil || pld == nil {
-			log.E.F("failed to find key for %s",
+			log.E.F("failed to find recv for %s",
 				ng.GetLocalNodeAddress().String())
 			return e
 		}
 		// We need to find the PayloadPub to match.
 		on.ToPriv = hdr
-		// Decrypt using the Payload key and header nonce.
+		// Decrypt using the Payload recv and header nonce.
 		c := s.GetCursor()
 		ciph.Encipher(ciph.GetBlock(on.ToPriv, on.FromPub), on.Nonce,
 			s.GetRange(c, c+2*ReverseLayerLen))
@@ -85,7 +85,9 @@ func (x *Reverse) Handle(s *octet.Splice, p Onion,
 		}
 		if s.GetRange(start, start+magic.Len).String() != ReverseMagic {
 			// It's for us!
-			log.T.Ln("handling response")
+			log.T.S("handling response",
+				// s.GetRange(last, -1).ToBytes(),
+			)
 			ng.HandleMessage(BudgeUp(s.SetCursor(last)), on)
 			return e
 		}

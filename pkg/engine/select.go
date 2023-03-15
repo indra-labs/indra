@@ -43,6 +43,7 @@ out:
 func (sm *SessionManager) SelectHops(hops []byte,
 	alreadyHave Sessions) (so Sessions) {
 	
+	log.T.Ln("selecting hops")
 	sm.Lock()
 	defer sm.Unlock()
 	ws := make(Sessions, 0)
@@ -63,10 +64,11 @@ out:
 		}
 		ws = append(ws, sm.Sessions[i])
 	}
-	// Shuffle the copy of the 
+	// Shuffle the copy of the candidates.
 	cryptorand.Shuffle(len(ws), func(i, j int) {
 		ws[i], ws[j] = ws[j], ws[i]
 	})
+	log.D.Ln("shuffled", len(ws), "candidate sessions")
 	// Iterate the available sessions picking the first matching hop, then
 	// prune it from the temporary slice and advance the cursor, wrapping
 	// around at end.
@@ -98,6 +100,6 @@ out:
 			}
 		}
 	}
-	log.D.Ln("selecting hops")
+	log.D.Ln("completed hop selection")
 	return
 }
