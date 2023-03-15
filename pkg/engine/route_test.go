@@ -21,7 +21,7 @@ func TestEngine_Route(t *testing.T) {
 	log2.App = "test"
 	var clients []*Engine
 	var e error
-	const nCircuits = 5
+	const nCircuits = 10
 	if clients, e = CreateNMockCircuits(nCircuits, nCircuits); check(e) {
 		t.Error(e)
 		t.FailNow()
@@ -67,16 +67,16 @@ func TestEngine_Route(t *testing.T) {
 		return
 	}
 	id := nonce.NewID()
-	introducerHops := client.SessionManager.GetSessionsAtHop(2)
+	iH := client.SessionManager.GetSessionsAtHop(2)
 	var introducer *SessionData
-	if len(introducerHops) > 1 {
-		cryptorand.Shuffle(len(introducerHops), func(i, j int) {
-			introducerHops[i], introducerHops[j] = introducerHops[j], introducerHops[i]
-		})
+	if len(iH) > 1 {
+		cryptorand.Shuffle(len(iH),
+			func(i, j int) { iH[i], iH[j] = iH[j], iH[i] },
+		)
 	}
 	// There must be at least one, and if there was more than one the first
-	// index of introducerHops will be a randomly selected one.
-	introducer = introducerHops[0]
+	// index of iH will be a randomly selected one.
+	introducer = iH[0]
 	client.SendHiddenService(id, idPrv,
 		time.Now().Add(time.Hour), introducer,
 		func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
@@ -87,16 +87,16 @@ func TestEngine_Route(t *testing.T) {
 	idPub := pub.Derive(idPrv)
 	// peers := clients[1:]
 	delete(client.Introductions.KnownIntros, idPub.ToBytes())
-	returnHops := client.SessionManager.GetSessionsAtHop(2)
-	for i := range returnHops {
+	rH := client.SessionManager.GetSessionsAtHop(2)
+	for i := range rH {
 		wg.Add(1)
 		counter.Inc()
-		if len(returnHops) > 1 {
-			cryptorand.Shuffle(len(returnHops), func(i, j int) {
-				returnHops[i], returnHops[j] = returnHops[j], returnHops[i]
+		if len(rH) > 1 {
+			cryptorand.Shuffle(len(rH), func(i, j int) {
+				rH[i], rH[j] = rH[j], rH[i]
 			})
 		}
-		client.SendIntroQuery(id, idPub, returnHops[0],
+		client.SendIntroQuery(id, idPub, rH[0],
 			func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
 				wg.Done()
 				counter.Dec()
