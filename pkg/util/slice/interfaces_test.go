@@ -3,15 +3,14 @@ package slice
 import (
 	"bytes"
 	"testing"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
-	"git-indra.lan/indra-labs/indra/pkg/util/tests"
 )
 
 func TestMessage_ToU64Slice(t *testing.T) {
 	var e error
 	var msg1 Bytes
-	if msg1, _, e = tests.GenMessage(33, ""); check(e) {
+	if msg1, _, e = GenMessage(33, ""); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -27,21 +26,21 @@ func TestU64Slice_XOR(t *testing.T) {
 	const ml = 1024
 	var e error
 	var msg1 Bytes
-	if msg1, _, e = tests.GenMessage(ml, ""); check(e) {
+	if msg1, _, e = GenMessage(ml, ""); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
 	hash1 := sha256.Single(msg1)
 	uMsg1 := msg1.ToU64Slice()
 	var msg2 Bytes
-	if msg2, _, e = tests.GenMessage(ml, ""); check(e) {
+	if msg2, _, e = GenMessage(ml, ""); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
 	// log.I.S(msg2)
 	uMsg2 := msg2.ToU64Slice()
 	var msg3 Bytes
-	if msg3, _, e = tests.GenMessage(ml, ""); check(e) {
+	if msg3, _, e = GenMessage(ml, ""); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}

@@ -29,6 +29,7 @@ require (
 	golang.zx2c4.com/wireguard v0.0.0-20230216153314-c7b76d3d9ecd
 	google.golang.org/grpc v1.53.0
 	google.golang.org/protobuf v1.28.1
+	gopkg.in/macaroon.v2 v2.1.0
 	gopkg.in/src-d/go-git.v4 v4.13.1
 )
 
@@ -248,7 +249,6 @@ require (
 	gopkg.in/errgo.v1 v1.0.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/macaroon-bakery.v2 v2.3.0 // indirect
-	gopkg.in/macaroon.v2 v2.1.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/src-d/go-billy.v4 v4.3.2 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
