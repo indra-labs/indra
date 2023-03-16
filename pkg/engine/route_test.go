@@ -88,7 +88,7 @@ func TestEngine_Route(t *testing.T) {
 	// peers := clients[1:]
 	delete(client.Introductions.KnownIntros, idPub.ToBytes())
 	rH := client.SessionManager.GetSessionsAtHop(2)
-	for i := range rH {
+	for _ = range rH {
 		wg.Add(1)
 		counter.Inc()
 		if len(rH) > 1 {
@@ -100,7 +100,6 @@ func TestEngine_Route(t *testing.T) {
 			func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
 				wg.Done()
 				counter.Dec()
-				log.I.Ln("success", i)
 				return
 			})
 		wg.Wait()

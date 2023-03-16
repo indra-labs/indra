@@ -10,6 +10,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 const (
@@ -22,7 +23,10 @@ func RoutePrototype() Onion { return &Route{} }
 func init() { Register(RouteMagic, RoutePrototype) }
 
 type Route struct {
-	HiddenService, Receiver *pub.Key
+	HiddenService *pub.Key
+	// Header is the 3 layer header to use with the following cipher and
+	// nonces to package the return message.
+	Header slice.Bytes
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
 	Ciphers [3]sha256.Hash
@@ -32,10 +36,11 @@ type Route struct {
 	Onion
 }
 
-func (o Skins) Route(key, receiver *pub.Key, point *ExitPoint) Skins {
+func (o Skins) Route(key *pub.Key, header slice.Bytes,
+	point *ExitPoint) Skins {
 	return append(o, &Route{
 		HiddenService: key,
-		Receiver:      receiver,
+		Header:        header,
 		Ciphers:       GenCiphers(point.Keys, point.ReturnPubs),
 		Nonces:        point.Nonces,
 		Onion:         NewTmpl(),
@@ -47,7 +52,7 @@ func (x *Route) Magic() string { return TmplMagic }
 func (x *Route) Encode(s *octet.Splice) (e error) {
 	s.Magic(RouteMagic).
 		Pubkey(x.HiddenService).
-		Pubkey(x.Receiver).
+		Bytes(x.Header).
 		HashTriple(x.Ciphers).
 		IVTriple(x.Nonces)
 	if x.Onion != nil {
@@ -62,7 +67,7 @@ func (x *Route) Decode(s *octet.Splice) (e error) {
 		return
 	}
 	s.ReadPubkey(&x.HiddenService).
-		ReadPubkey(&x.Receiver).
+		ReadBytes(&x.Header).
 		ReadHashTriple(&x.Ciphers).
 		ReadIVTriple(&x.Nonces)
 	return
@@ -109,7 +114,7 @@ func (x *Route) Handle(s *octet.Splice, p Onion,
 				},
 				Nonces: [3]nonce.IV{n[0], n[1], n[2]},
 			}
-			hr := MakeHiddenRoute(hb.Intro.Key, x.Receiver, hb.Bytes, r)
+			hr := MakeHiddenRoute(hb.Intro.Key, hb.Bytes, r)
 			ob := hr.Assemble()
 			encoded := Encode(ob)
 			rb := FormatReply(hb.Bytes.ToBytes(), encoded.GetRange(-1, -1),
@@ -133,17 +138,17 @@ func (x *Route) Handle(s *octet.Splice, p Onion,
 	}
 }
 
-func MakeRoute(hs, recv *pub.Key, target *SessionData, s Circuit,
+func MakeRoute(hs *pub.Key, header slice.Bytes, target *SessionData, s Circuit,
 	ks *signer.KeySet) Skins {
 	headers := GetHeaders(target, s, ks)
 	return Skins{}.
 		RoutingHeader(headers.Forward).
-		Route(hs, recv, headers.ExitPoint()).
+		Route(hs, header, headers.ExitPoint()).
 		RoutingHeader(headers.Return)
 }
 
-func (ng *Engine) SendRoute(hs, recv *pub.Key, target *SessionData,
-	hook Callback) {
+func (ng *Engine) SendRoute(hs *pub.Key, header slice.Bytes,
+	target *SessionData, hook Callback) {
 	
 	log.D.Ln("sending route", hs.ToBase32Abbreviated())
 	hops := StandardCircuit()
@@ -152,7 +157,7 @@ func (ng *Engine) SendRoute(hs, recv *pub.Key, target *SessionData,
 	se := ng.SelectHops(hops, s)
 	var c Circuit
 	copy(c[:], se)
-	o := MakeRoute(hs, recv, c[2], c, ng.KeySet)
+	o := MakeRoute(hs, header, c[2], c, ng.KeySet)
 	log.D.Ln("sending out route request onion")
 	res := ng.PostAcctOnion(o)
 	ng.SendWithOneHook(c[0].AddrPort, res, hook, ng.PendingResponses)

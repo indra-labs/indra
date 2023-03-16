@@ -19,23 +19,19 @@ func init() { Register(HiddenRouteMagic, HiddenRoutePrototype) }
 
 type HiddenRoute struct {
 	*pub.Key
-	recv  *pub.Key
-	Cloak cloak.PubKey
 	Onion
 }
 
-func (o Skins) HiddenRoute(addr, recv *pub.Key) Skins {
+func (o Skins) HiddenRoute(addr *pub.Key) Skins {
 	return append(o, &HiddenRoute{
-		Key:   addr,
-		recv:  recv,
-		Cloak: cloak.GetCloak(recv),
+		Key: addr,
 	})
 }
 
 func (x *HiddenRoute) Magic() string { return HiddenRouteMagic }
 
 func (x *HiddenRoute) Encode(s *octet.Splice) (e error) {
-	s.Magic(HiddenRouteMagic).Pubkey(x.Key).Cloak(x.recv)
+	s.Magic(HiddenRouteMagic).Pubkey(x.Key)
 	if x.Onion != nil {
 		return x.Onion.Encode(s)
 	}
@@ -46,8 +42,7 @@ func (x *HiddenRoute) Decode(s *octet.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), HiddenRouteLen-magic.Len,
 		HiddenRouteMagic); check(e) {
 		
-		s.ReadPubkey(&x.Key).
-			ReadCloak(&x.Cloak)
+		s.ReadPubkey(&x.Key)
 		return
 	}
 	return
@@ -64,9 +59,9 @@ func (x *HiddenRoute) Handle(s *octet.Splice, p Onion,
 	return
 }
 
-func MakeHiddenRoute(addr, recv *pub.Key, header slice.Bytes,
+func MakeHiddenRoute(addr *pub.Key, header slice.Bytes,
 	r *Routing) (o Skins) {
 	
-	o = o.Triple(header).HiddenRoute(addr, recv).RoutingHeader(r)
+	o = o.Triple(header).HiddenRoute(addr).RoutingHeader(r)
 	return
 }
