@@ -189,6 +189,9 @@ func (ng *Engine) SendRoute(k *pub.Key, ap *netip.AddrPort,
 		}
 		return false
 	})
+	if ss == nil {
+		panic("panic!")
+	}
 	log.D.Ln("sending route", k.ToBase32Abbreviated())
 	hops := StandardCircuit()
 	s := make(Sessions, len(hops))

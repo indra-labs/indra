@@ -47,7 +47,7 @@ func (sm *SessionManager) SelectHops(hops []byte,
 	sm.Lock()
 	defer sm.Unlock()
 	ws := make(Sessions, 0)
-out:
+	// out:
 	for i := range sm.Sessions {
 		if sm.Sessions[i] == nil {
 			log.D.Ln("nil session", i)
@@ -58,9 +58,9 @@ out:
 			if alreadyHave[j] == nil {
 				continue
 			}
-			if sm.Sessions[i].ID == alreadyHave[j].ID {
-				continue out
-			}
+			// if sm.Sessions[i].ID == alreadyHave[j].ID {
+			// 	continue out
+			// }
 		}
 		ws = append(ws, sm.Sessions[i])
 	}
@@ -89,6 +89,11 @@ out:
 				break out2
 			}
 			if ws[cur].Hop == hops[i] {
+				for _, v := range so[:i] {
+					if v.AddrPort.String() == ws[cur].AddrPort.String() {
+						continue
+					}
+				}
 				so[i] = ws[cur]
 				ws[cur] = nil
 				cur = 0

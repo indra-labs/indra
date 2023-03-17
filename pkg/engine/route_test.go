@@ -76,7 +76,6 @@ func TestEngine_Route(t *testing.T) {
 			func(i, j int) { iH[i], iH[j] = iH[j], iH[i] },
 		)
 	}
-	// log2.SetLogLevel(log2.Debug)
 	// There must be at least one, and if there was more than one the first
 	// index of iH will be a randomly selected one.
 	const localPort = 25234

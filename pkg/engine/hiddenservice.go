@@ -35,7 +35,7 @@ func (o Skins) HiddenService(in *Intro, point *ExitPoint) Skins {
 			Ciphers: GenCiphers(point.Keys, point.ReturnPubs),
 			Nonces:  point.Nonces,
 		},
-		// Onion: NewTmpl(),
+		Onion: NewTmpl(),
 	})
 }
 
@@ -100,14 +100,13 @@ func (ng *Engine) SendHiddenService(id nonce.ID, key *prv.Key, expiry time.Time,
 	
 	hops := StandardCircuit()
 	s := make(Sessions, len(hops))
-	s[2] = target
 	se := ng.SelectHops(hops, s)
 	var c Circuit
-	copy(c[:], se)
-	in := NewIntro(id, key, c[2].AddrPort, expiry)
+	copy(c[:], se[:len(c)])
+	in := NewIntro(id, key, target.AddrPort, expiry)
 	log.D.Ln("intro", in, in.Validate())
-	o := MakeHiddenService(in, c[2], c, ng.KeySet)
-	log.D.Ln("sending out hidden service onion")
+	o := MakeHiddenService(in, target, c, ng.KeySet)
+	log.I.S("sending out hidden service onion", o)
 	res := ng.PostAcctOnion(o)
 	log.D.Ln("storing hidden service info")
 	ng.HiddenRouting.AddHiddenService(key, localPort)
