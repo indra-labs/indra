@@ -43,10 +43,8 @@ func (x *IntroQuery) Magic() string { return IntroQueryMagic }
 func (x *IntroQuery) Encode(s *octet.Splice) (e error) {
 	return x.Onion.Encode(s.
 		Magic(IntroQueryMagic).
-		ID(x.ID).
-		Pubkey(x.Key).
-		HashTriple(x.Ciphers).
-		IVTriple(x.Nonces),
+		Reply(&x.Reply).
+		Pubkey(x.Key),
 	)
 }
 
@@ -55,11 +53,7 @@ func (x *IntroQuery) Decode(s *octet.Splice) (e error) {
 		IntroQueryMagic); check(e) {
 		return
 	}
-	s.
-		ReadID(&x.ID).
-		ReadPubkey(&x.Key).
-		ReadHashTriple(&x.Ciphers).
-		ReadIVTriple(&x.Nonces)
+	s.ReadReply(&x.Reply).ReadPubkey(&x.Key)
 	return
 }
 

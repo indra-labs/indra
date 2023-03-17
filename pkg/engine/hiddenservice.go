@@ -31,6 +31,7 @@ func (o Skins) HiddenService(in *Intro, point *ExitPoint) Skins {
 	return append(o, &HiddenService{
 		Intro: *in,
 		Reply: octet.Reply{
+			ID:      in.ID,
 			Ciphers: GenCiphers(point.Keys, point.ReturnPubs),
 			Nonces:  point.Nonces,
 		},
@@ -48,8 +49,7 @@ func (x *HiddenService) Encode(s *octet.Splice) (e error) {
 		AddrPort(x.Intro.AddrPort).
 		Uint64(uint64(x.Intro.Expiry.UnixNano())).
 		Signature(&x.Intro.Sig).
-		HashTriple(x.Ciphers).
-		IVTriple(x.Nonces),
+		Reply(&x.Reply),
 	)
 }
 
@@ -64,8 +64,7 @@ func (x *HiddenService) Decode(s *octet.Splice) (e error) {
 		ReadAddrPort(&x.Intro.AddrPort).
 		ReadTime(&x.Intro.Expiry).
 		ReadSignature(&x.Intro.Sig).
-		ReadHashTriple(&x.Ciphers).
-		ReadIVTriple(&x.Nonces)
+		ReadReply(&x.Reply)
 	return
 }
 

@@ -79,8 +79,7 @@ func (x *Intro) Validate() bool {
 func (x *Intro) Magic() string { return IntroMagic }
 
 func (x *Intro) Encode(s *octet.Splice) (e error) {
-	s.
-		Magic(IntroMagic).
+	s.Magic(IntroMagic).
 		ID(x.ID).
 		Pubkey(x.Key).
 		AddrPort(x.AddrPort).
@@ -90,11 +89,12 @@ func (x *Intro) Encode(s *octet.Splice) (e error) {
 }
 
 func (x *Intro) Decode(s *octet.Splice) (e error) {
-	if e = magic.TooShort(s.Remaining(), IntroLen-magic.Len, IntroMagic); check(e) {
+	if e = magic.TooShort(s.Remaining(), IntroLen-magic.Len,
+		IntroMagic); check(e) {
+		
 		return
 	}
-	s.
-		ReadID(&x.ID).
+	s.ReadID(&x.ID).
 		ReadPubkey(&x.Key).
 		ReadAddrPort(&x.AddrPort).
 		ReadTime(&x.Expiry).
@@ -125,14 +125,16 @@ func (x *Intro) Handle(s *octet.Splice, p Onion,
 			ng.GetLocalNodeAddress().String(), x.Key.ToBase32Abbreviated(), x.ID)
 		ng.Introductions.KnownIntros[x.Key.ToBytes()] = x
 		var ok bool
-		if ok, e = ng.PendingResponses.ProcessAndDelete(x.ID, &kb, s.GetRange(-1,
-			-1)); ok || check(e) {
+		if ok, e = ng.PendingResponses.ProcessAndDelete(x.ID, &kb,
+			s.GetRange(-1, -1)); ok || check(e) {
+			
 			ng.Introductions.Unlock()
 			log.D.Ln("deleted pending response", x.ID)
 			return
 		}
 		log.D.F("%s sending out intro to %s at %s to all known peers",
-			ng.GetLocalNodeAddress(), x.Key.ToBase32Abbreviated(), x.AddrPort.String())
+			ng.GetLocalNodeAddress(), x.Key.ToBase32Abbreviated(),
+			x.AddrPort.String())
 		sender := ng.SessionManager.FindNodeByAddrPort(x.AddrPort)
 		nn := make(map[nonce.ID]*Node)
 		ng.SessionManager.ForEachNode(func(n *Node) bool {

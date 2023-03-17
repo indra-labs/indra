@@ -74,10 +74,7 @@ func (x *GetBalance) Magic() string { return GetBalanceMagic }
 
 func (x *GetBalance) Encode(s *octet.Splice) (e error) {
 	return x.Onion.Encode(s.
-		Magic(GetBalanceMagic).
-		ID(x.ID).ID(x.Reply.ID).
-		HashTriple(x.Ciphers).
-		IVTriple(x.Nonces),
+		Magic(GetBalanceMagic).ID(x.ID).Reply(&x.Reply),
 	)
 }
 
@@ -86,10 +83,7 @@ func (x *GetBalance) Decode(s *octet.Splice) (e error) {
 		GetBalanceMagic); check(e) {
 		return
 	}
-	s.
-		ReadID(&x.ID).ReadID(&x.Reply.ID).
-		ReadHashTriple(&x.Ciphers).
-		ReadIVTriple(&x.Nonces)
+	s.ReadID(&x.ID).ReadReply(&x.Reply)
 	return
 }
 
