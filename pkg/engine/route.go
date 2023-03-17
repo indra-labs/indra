@@ -197,6 +197,7 @@ func (ng *Engine) SendRoute(k *pub.Key, ap *netip.AddrPort,
 	s := make(Sessions, len(hops))
 	s[2] = ss
 	se := ng.SelectHops(hops, s)
+	// se[2] = ss
 	var c Circuit
 	copy(c[:], se)
 	o := MakeRoute(nonce.NewID(), k, ng.KeySet, ss, c)

@@ -153,7 +153,7 @@ func (ng *Engine) SendExit(port uint16, msg slice.Bytes, id nonce.ID,
 	
 	hops := StandardCircuit()
 	s := make(Sessions, len(hops))
-	s[2] = target
+	// s[2] = target
 	se := ng.SelectHops(hops, s)
 	var c Circuit
 	copy(c[:], se)

@@ -123,7 +123,7 @@ func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *pub.Key,
 	
 	hops := StandardCircuit()
 	s := make(Sessions, len(hops))
-	s[2] = target
+	// s[2] = target
 	se := ng.SelectHops(hops, s)
 	var c Circuit
 	copy(c[:], se)
