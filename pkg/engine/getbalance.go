@@ -17,13 +17,7 @@ const (
 
 type GetBalance struct {
 	nonce.ID
-	ConfID nonce.ID
-	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
-	// given order over the reply message from the service.
-	Ciphers [3]sha256.Hash
-	// Nonces are the nonces to use with the cipher when creating the
-	// encryption for the reply message.
-	Nonces [3]nonce.IV
+	octet.Reply
 	Onion
 }
 
@@ -66,11 +60,13 @@ func (ng *Engine) SendGetBalance(target *SessionData, hook Callback) {
 func (o Skins) GetBalance(id, confID nonce.ID, ep *ExitPoint) Skins {
 	
 	return append(o, &GetBalance{
-		ID:      id,
-		ConfID:  confID,
-		Ciphers: GenCiphers(ep.Keys, ep.ReturnPubs),
-		Nonces:  ep.Nonces,
-		Onion:   nop,
+		ID: id,
+		Reply: octet.Reply{
+			ID:      confID,
+			Ciphers: GenCiphers(ep.Keys, ep.ReturnPubs),
+			Nonces:  ep.Nonces,
+		},
+		Onion: nop,
 	})
 }
 
@@ -79,7 +75,7 @@ func (x *GetBalance) Magic() string { return GetBalanceMagic }
 func (x *GetBalance) Encode(s *octet.Splice) (e error) {
 	return x.Onion.Encode(s.
 		Magic(GetBalanceMagic).
-		ID(x.ID).ID(x.ConfID).
+		ID(x.ID).ID(x.Reply.ID).
 		HashTriple(x.Ciphers).
 		IVTriple(x.Nonces),
 	)
@@ -91,7 +87,7 @@ func (x *GetBalance) Decode(s *octet.Splice) (e error) {
 		return
 	}
 	s.
-		ReadID(&x.ID).ReadID(&x.ConfID).
+		ReadID(&x.ID).ReadID(&x.Reply.ID).
 		ReadHashTriple(&x.Ciphers).
 		ReadIVTriple(&x.Nonces)
 	return
@@ -112,7 +108,7 @@ func (x *GetBalance) Handle(s *octet.Splice, p Onion,
 			log.D.S("sessiondata", sd.ID, sd.Remaining)
 			bal = &Balance{
 				ID:           x.ID,
-				ConfID:       x.ConfID,
+				ConfID:       x.Reply.ID,
 				MilliSatoshi: sd.Remaining,
 			}
 			found = true
@@ -143,7 +139,7 @@ func (x *GetBalance) Handle(s *octet.Splice, p Onion,
 		if sd.ID == x.ID {
 			bal = &Balance{
 				ID:           x.ID,
-				ConfID:       x.ConfID,
+				ConfID:       x.Reply.ID,
 				MilliSatoshi: sd.Remaining,
 			}
 			found = true

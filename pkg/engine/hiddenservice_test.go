@@ -64,7 +64,7 @@ func TestOnionSkins_HiddenService(t *testing.T) {
 		t.Error("did not unwrap expected type")
 		t.FailNow()
 	}
-	if hs.ID != id {
+	if hs.Intro.ID != id {
 		t.Error("ID did not decode correctly")
 		t.FailNow()
 	}
@@ -176,6 +176,5 @@ func TestEngine_SendHiddenService(t *testing.T) {
 			return
 		})
 	wg.Wait()
-	time.Sleep(time.Second)
 	quit.Q()
 }

@@ -33,6 +33,10 @@ func TestEngine_Route(t *testing.T) {
 	}
 	var wg sync.WaitGroup
 	var counter atomic.Int32
+	wgdec := func() {
+		wg.Done()
+		counter.Dec()
+	}
 	quit := qu.T()
 	go func() {
 		select {
@@ -53,12 +57,10 @@ func TestEngine_Route(t *testing.T) {
 		wg.Add(1)
 		counter.Inc()
 		e = clients[0].BuyNewSessions(1000000, func() {
-			wg.Done()
-			counter.Dec()
+			wgdec()
 		})
 		if check(e) {
-			wg.Done()
-			counter.Dec()
+			wgdec()
 		}
 		wg.Wait()
 	}
@@ -88,6 +90,7 @@ func TestEngine_Route(t *testing.T) {
 	// peers := clients[1:]
 	delete(client.Introductions.KnownIntros, idPub.ToBytes())
 	rH := client.SessionManager.GetSessionsAtHop(2)
+	var ini *Intro
 	for _ = range rH {
 		wg.Add(1)
 		counter.Inc()
@@ -96,16 +99,15 @@ func TestEngine_Route(t *testing.T) {
 				rH[i], rH[j] = rH[j], rH[i]
 			})
 		}
-		client.SendIntroQuery(id, idPub, rH[0],
-			func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
-				wg.Done()
-				counter.Dec()
-				return
-			})
+		client.SendIntroQuery(id, idPub, rH[0], func(in *Intro) {
+			wgdec()
+			ini = in
+		})
 		wg.Wait()
 	}
 	log.I.Ln("all peers know about the hidden service")
 	log2.SetLogLevel(log2.Debug)
+	log.D.S("intro", ini.ID, ini.Key.ToBase32Abbreviated(), ini.Expiry, ini.Validate())
 	
 	quit.Q()
 }

@@ -98,11 +98,11 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 			quit.Q()
 			t.Error("MakeHiddenService test failed")
 		case <-quit:
-			for _, v := range clients {
-				v.Shutdown()
-			}
 			for i := 0; i < int(counter.Load()); i++ {
 				wg.Done()
+			}
+			for _, v := range clients {
+				v.Shutdown()
 			}
 			return
 		}
@@ -120,7 +120,6 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 		}
 		wg.Wait()
 	}
-	log2.SetLogLevel(log2.Info)
 	var idPrv *prv.Key
 	if idPrv, e = prv.GenerateKey(); check(e) {
 		return
@@ -162,11 +161,11 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 			})
 		}
 		client.SendIntroQuery(id, idPub, returnHops[0],
-			func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
+			func(in *Intro) {
 				wg.Done()
 				counter.Dec()
-				log.I.Ln("success")
-				return
+				log.D.S("onion",
+					in.ID, in.Key.ToBase32Abbreviated(), in.AddrPort)
 			})
 		wg.Wait()
 	}

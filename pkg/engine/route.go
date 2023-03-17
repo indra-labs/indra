@@ -7,7 +7,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -27,12 +26,7 @@ type Route struct {
 	// Header is the 3 layer header to use with the following cipher and
 	// nonces to package the return message.
 	Header slice.Bytes
-	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
-	// given order over the reply message from the service.
-	Ciphers [3]sha256.Hash
-	// Nonces are the nonces to use with the cipher when creating the
-	// encryption for the reply message.
-	Nonces [3]nonce.IV
+	octet.Reply
 	Onion
 }
 
@@ -41,9 +35,11 @@ func (o Skins) Route(key *pub.Key, header slice.Bytes,
 	return append(o, &Route{
 		HiddenService: key,
 		Header:        header,
-		Ciphers:       GenCiphers(point.Keys, point.ReturnPubs),
-		Nonces:        point.Nonces,
-		Onion:         NewTmpl(),
+		Reply: octet.Reply{
+			Ciphers: GenCiphers(point.Keys, point.ReturnPubs),
+			Nonces:  point.Nonces,
+		},
+		Onion: NewTmpl(),
 	})
 }
 
@@ -75,7 +71,7 @@ func (x *Route) Decode(s *octet.Splice) (e error) {
 
 func (x *Route) Len() int { return RouteLen + x.Onion.Len() }
 
-func (x *Route) Wrap(inner Onion) {}
+func (x *Route) Wrap(inner Onion) { x.Onion = inner }
 
 func (x *Route) Handle(s *octet.Splice, p Onion,
 	ng *Engine) (e error) {

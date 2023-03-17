@@ -19,12 +19,7 @@ const (
 
 type HiddenService struct {
 	Intro
-	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
-	// given order over the reply message from the service.
-	Ciphers [3]sha256.Hash
-	// Nonces are the nonces to use with the cipher when creating the
-	// encryption for the reply message.
-	Nonces [3]nonce.IV
+	octet.Reply
 	Onion
 }
 
@@ -34,10 +29,12 @@ func init() { Register(HiddenServiceMagic, hiddenServicePrototype) }
 
 func (o Skins) HiddenService(in *Intro, point *ExitPoint) Skins {
 	return append(o, &HiddenService{
-		Intro:   *in,
-		Ciphers: GenCiphers(point.Keys, point.ReturnPubs),
-		Nonces:  point.Nonces,
-		Onion:   NewTmpl(),
+		Intro: *in,
+		Reply: octet.Reply{
+			Ciphers: GenCiphers(point.Keys, point.ReturnPubs),
+			Nonces:  point.Nonces,
+		},
+		Onion: NewTmpl(),
 	})
 }
 

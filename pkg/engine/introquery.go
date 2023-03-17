@@ -7,6 +7,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/octet"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 const (
@@ -16,14 +17,8 @@ const (
 )
 
 type IntroQuery struct {
-	ID  nonce.ID
+	octet.Reply
 	Key *pub.Key
-	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
-	// given order over the reply message from the service.
-	Ciphers [3]sha256.Hash
-	// Nonces are the nonces to use with the cipher when creating the
-	// encryption for the reply message.
-	Nonces [3]nonce.IV
 	Onion
 }
 
@@ -33,10 +28,13 @@ func init() { Register(IntroQueryMagic, introQueryPrototype) }
 
 func (o Skins) IntroQuery(id nonce.ID, hsk *pub.Key, exit *ExitPoint) Skins {
 	return append(o, &IntroQuery{
-		ID:      id,
-		Key:     hsk,
-		Ciphers: GenCiphers(exit.Keys, exit.ReturnPubs),
-		Nonces:  exit.Nonces,
+		Reply: octet.Reply{
+			ID:      id,
+			Ciphers: GenCiphers(exit.Keys, exit.ReturnPubs),
+			Nonces:  exit.Nonces,
+		},
+		Key:   hsk,
+		Onion: nop,
 	})
 }
 
@@ -111,8 +109,23 @@ func MakeIntroQuery(id nonce.ID, hsk *pub.Key, target *SessionData, c Circuit,
 		RoutingHeader(headers.Return)
 }
 
-func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *pub.Key, target *SessionData,
-	fn Callback) {
+func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *pub.Key,
+	target *SessionData, hook func(in *Intro)) {
+	
+	fn := func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
+		s := octet.Load(b, slice.NewCursor())
+		on := Recognise(s)
+		if e = on.Decode(s); check(e) {
+			return
+		}
+		var oni *Intro
+		var ok bool
+		if oni, ok = on.(*Intro); !ok {
+			return
+		}
+		hook(oni)
+		return
+	}
 	
 	hops := StandardCircuit()
 	s := make(Sessions, len(hops))

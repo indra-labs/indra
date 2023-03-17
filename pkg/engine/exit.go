@@ -18,6 +18,7 @@ const (
 )
 
 type Exit struct {
+	octet.Reply
 	// Port identifies the type of service as well as being the port used by
 	// the service to be relayed to. Notice there is no IP address, this is
 	// because Indranet only forwards to exits of decentralised services
@@ -26,13 +27,6 @@ type Exit struct {
 	// a local Socks5 proxy into Indranet and the exit node also having
 	// this.
 	Port uint16
-	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
-	// given order over the reply message from the service.
-	Ciphers [3]sha256.Hash
-	// Nonces are the nonces to use with the cipher when creating the
-	// encryption for the reply message.
-	Nonces [3]nonce.IV
-	nonce.ID
 	// Bytes are the message to be passed to the exit service.
 	slice.Bytes
 	Onion
@@ -46,12 +40,14 @@ func (o Skins) Exit(id nonce.ID, port uint16, payload slice.Bytes,
 	ep *ExitPoint) Skins {
 	
 	return append(o, &Exit{
-		Port:    port,
-		Ciphers: GenCiphers(ep.Keys, ep.ReturnPubs),
-		Nonces:  ep.Nonces,
-		ID:      id,
-		Bytes:   payload,
-		Onion:   nop,
+		Reply: octet.Reply{
+			ID:      id,
+			Ciphers: GenCiphers(ep.Keys, ep.ReturnPubs),
+			Nonces:  ep.Nonces,
+		},
+		Port:  port,
+		Bytes: payload,
+		Onion: nop,
 	})
 }
 
@@ -59,25 +55,17 @@ func (x *Exit) Magic() string { return ExitMagic }
 
 func (x *Exit) Encode(s *octet.Splice) (e error) {
 	return x.Onion.Encode(s.
-		Magic(ExitMagic).
-		Uint16(x.Port).
-		HashTriple(x.Ciphers).
-		IVTriple(x.Nonces).
-		ID(x.ID).
-		Bytes(x.Bytes),
+		Magic(ExitMagic).Reply(&x.Reply).Uint16(x.Port).Bytes(x.Bytes),
 	)
 }
 
 func (x *Exit) Decode(s *octet.Splice) (e error) {
-	if e = magic.TooShort(s.Remaining(), ExitLen-magic.Len, ExitMagic); check(e) {
+	if e = magic.TooShort(s.Remaining(), ExitLen-magic.Len,
+		ExitMagic); check(e) {
+		
 		return
 	}
-	s.
-		ReadUint16(&x.Port).
-		ReadHashTriple(&x.Ciphers).
-		ReadIVTriple(&x.Nonces).
-		ReadID(&x.ID).
-		ReadBytes(&x.Bytes)
+	s.ReadReply(&x.Reply).ReadUint16(&x.Port).ReadBytes(&x.Bytes)
 	return
 }
 
@@ -131,24 +119,6 @@ func (x *Exit) Handle(s *octet.Splice, p Onion,
 	return
 }
 
-func (ng *Engine) MakeExit(port uint16, msg slice.Bytes, id nonce.ID,
-	exit *SessionData) (c Circuit, o Skins) {
-	
-	hops := StandardCircuit()
-	s := make(Sessions, len(hops))
-	s[2] = exit
-	se := ng.SelectHops(hops, s)
-	copy(c[:], se)
-	o = MakeExit(ExitParams{port, msg, id, se[len(se)-1], c, ng.KeySet})
-	return
-}
-
-func (ng *Engine) SendExitNew(c Circuit, o Skins, hook Callback) {
-	log.D.Ln("sending out exit onion")
-	res := ng.PostAcctOnion(o)
-	ng.SendWithOneHook(c[0].AddrPort, res, hook, ng.PendingResponses)
-}
-
 type ExitParams struct {
 	Port    uint16
 	Payload slice.Bytes
@@ -166,11 +136,6 @@ type ExitParams struct {
 // the Exit message, and then uses the ciphers to encrypt the reply with the
 // three ciphers provided, which don't enable it to decrypt the header, only to
 // encrypt the payload.
-//
-// The response is encrypted with the given layers, the ciphers are already
-// given in reverse order, so they are decoded in given order to create the
-// correct payload encryption to match the PayloadPub combined with the header's
-// given public From key.
 //
 // The header remains a constant size and each node in the Reverse trims off
 // their section at the top, moves the next crypt header to the top and pads the

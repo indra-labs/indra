@@ -114,9 +114,9 @@ func (s *Splice) IV(iv nonce.IV) *Splice {
 	return s
 }
 
-func (s *Splice) IVTriple(h [3]nonce.IV) *Splice {
-	for i := range h {
-		s.IV(h[i])
+func (s *Splice) IVTriple(iv [3]nonce.IV) *Splice {
+	for i := range iv {
+		s.IV(iv[i])
 	}
 	return s
 }
@@ -126,9 +126,9 @@ func (s *Splice) ReadIV(iv *nonce.IV) *Splice {
 	return s
 }
 
-func (s *Splice) ReadIVTriple(h *[3]nonce.IV) *Splice {
-	for i := range h {
-		s.ReadIV(&h[i])
+func (s *Splice) ReadIVTriple(iv *[3]nonce.IV) *Splice {
+	for i := range iv {
+		s.ReadIV(&iv[i])
 	}
 	return s
 }
@@ -248,6 +248,27 @@ func (s *Splice) ReadHashTriple(h *[3]sha256.Hash) *Splice {
 	for i := range h {
 		s.ReadHash(&h[i])
 	}
+	return s
+}
+
+type Reply struct {
+	nonce.ID
+	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
+	// given order over the reply message from the service.
+	Ciphers [3]sha256.Hash
+	// Nonces are the nonces to use with the cipher when creating the
+	// encryption for the reply message,
+	// they are common with the crypts in the header.
+	Nonces [3]nonce.IV
+}
+
+func (s *Splice) Reply(rpl *Reply) *Splice {
+	s.ID(rpl.ID).HashTriple(rpl.Ciphers).IVTriple(rpl.Nonces)
+	return s
+}
+
+func (s *Splice) ReadReply(rpl *Reply) *Splice {
+	s.ReadID(&rpl.ID).ReadHashTriple(&rpl.Ciphers).ReadIVTriple(&rpl.Nonces)
 	return s
 }
 
