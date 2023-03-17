@@ -4,12 +4,12 @@ import (
 	"net/netip"
 	
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/util/octet"
+	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
 const (
 	ForwardMagic = "fw"
-	ForwardLen   = magic.Len + 1 + octet.AddrLen
+	ForwardLen   = magic.Len + 1 + zip.AddrLen
 )
 
 type Forward struct {
@@ -27,11 +27,11 @@ func (o Skins) Forward(addr *netip.AddrPort) Skins {
 
 func (x *Forward) Magic() string { return ForwardMagic }
 
-func (x *Forward) Encode(s *octet.Splice) error {
+func (x *Forward) Encode(s *zip.Splice) error {
 	return x.Onion.Encode(s.Magic(ForwardMagic).AddrPort(x.AddrPort))
 }
 
-func (x *Forward) Decode(s *octet.Splice) (e error) {
+func (x *Forward) Decode(s *zip.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), ForwardLen-magic.Len,
 		ForwardMagic); check(e) {
 		return
@@ -44,7 +44,7 @@ func (x *Forward) Len() int { return ForwardLen + x.Onion.Len() }
 
 func (x *Forward) Wrap(inner Onion) { x.Onion = inner }
 
-func (x *Forward) Handle(s *octet.Splice, p Onion,
+func (x *Forward) Handle(s *zip.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	// Forward the whole buffer received onwards. Usually there will be a

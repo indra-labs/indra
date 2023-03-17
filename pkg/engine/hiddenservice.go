@@ -8,7 +8,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/util/octet"
+	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
 const (
@@ -19,7 +19,7 @@ const (
 
 type HiddenService struct {
 	Intro
-	octet.Reply
+	zip.Reply
 	Onion
 }
 
@@ -30,18 +30,18 @@ func init() { Register(HiddenServiceMagic, hiddenServicePrototype) }
 func (o Skins) HiddenService(in *Intro, point *ExitPoint) Skins {
 	return append(o, &HiddenService{
 		Intro: *in,
-		Reply: octet.Reply{
+		Reply: zip.Reply{
 			ID:      in.ID,
 			Ciphers: GenCiphers(point.Keys, point.ReturnPubs),
 			Nonces:  point.Nonces,
 		},
-		Onion: NewTmpl(),
+		// Onion: NewTmpl(),
 	})
 }
 
 func (x *HiddenService) Magic() string { return HiddenServiceMagic }
 
-func (x *HiddenService) Encode(s *octet.Splice) (e error) {
+func (x *HiddenService) Encode(s *zip.Splice) (e error) {
 	return x.Onion.Encode(s.
 		Magic(HiddenServiceMagic).
 		ID(x.Intro.ID).
@@ -53,13 +53,12 @@ func (x *HiddenService) Encode(s *octet.Splice) (e error) {
 	)
 }
 
-func (x *HiddenService) Decode(s *octet.Splice) (e error) {
+func (x *HiddenService) Decode(s *zip.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), HiddenServiceLen-magic.Len,
 		HiddenServiceMagic); check(e) {
 		return
 	}
-	s.
-		ReadID(&x.Intro.ID).
+	s.ReadID(&x.Intro.ID).
 		ReadPubkey(&x.Intro.Key).
 		ReadAddrPort(&x.Intro.AddrPort).
 		ReadTime(&x.Intro.Expiry).
@@ -72,10 +71,10 @@ func (x *HiddenService) Len() int { return HiddenServiceLen + x.Onion.Len() }
 
 func (x *HiddenService) Wrap(inner Onion) { x.Onion = inner }
 
-func (x *HiddenService) Handle(s *octet.Splice, p Onion, ng *Engine) (e error) {
-	log.D.F("%s adding introduction for recv %s",
+func (x *HiddenService) Handle(s *zip.Splice, p Onion, ng *Engine) (e error) {
+	log.D.F("%s adding introduction for key %s",
 		ng.GetLocalNodeAddress(), x.Key.ToBase32())
-	ng.Introductions.AddIntro(x.Key, &Introduction{
+	ng.HiddenRouting.AddIntro(x.Key, &Introduction{
 		Intro:   &x.Intro,
 		Ciphers: x.Ciphers,
 		Nonces:  x.Nonces,
@@ -97,7 +96,7 @@ func MakeHiddenService(in *Intro, client *SessionData, c Circuit,
 }
 
 func (ng *Engine) SendHiddenService(id nonce.ID, key *prv.Key, expiry time.Time,
-	target *SessionData, hook Callback) {
+	target *SessionData, localPort uint16, hook Callback) {
 	
 	hops := StandardCircuit()
 	s := make(Sessions, len(hops))
@@ -110,5 +109,7 @@ func (ng *Engine) SendHiddenService(id nonce.ID, key *prv.Key, expiry time.Time,
 	o := MakeHiddenService(in, c[2], c, ng.KeySet)
 	log.D.Ln("sending out hidden service onion")
 	res := ng.PostAcctOnion(o)
+	log.D.Ln("storing hidden service info")
+	ng.HiddenRouting.AddHiddenService(key, localPort)
 	ng.SendWithOneHook(c[0].AddrPort, res, hook, ng.PendingResponses)
 }

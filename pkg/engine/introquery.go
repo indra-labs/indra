@@ -6,8 +6,8 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
 const (
@@ -17,7 +17,7 @@ const (
 )
 
 type IntroQuery struct {
-	octet.Reply
+	zip.Reply
 	Key *pub.Key
 	Onion
 }
@@ -28,7 +28,7 @@ func init() { Register(IntroQueryMagic, introQueryPrototype) }
 
 func (o Skins) IntroQuery(id nonce.ID, hsk *pub.Key, exit *ExitPoint) Skins {
 	return append(o, &IntroQuery{
-		Reply: octet.Reply{
+		Reply: zip.Reply{
 			ID:      id,
 			Ciphers: GenCiphers(exit.Keys, exit.ReturnPubs),
 			Nonces:  exit.Nonces,
@@ -40,7 +40,7 @@ func (o Skins) IntroQuery(id nonce.ID, hsk *pub.Key, exit *ExitPoint) Skins {
 
 func (x *IntroQuery) Magic() string { return IntroQueryMagic }
 
-func (x *IntroQuery) Encode(s *octet.Splice) (e error) {
+func (x *IntroQuery) Encode(s *zip.Splice) (e error) {
 	return x.Onion.Encode(s.
 		Magic(IntroQueryMagic).
 		Reply(&x.Reply).
@@ -48,7 +48,7 @@ func (x *IntroQuery) Encode(s *octet.Splice) (e error) {
 	)
 }
 
-func (x *IntroQuery) Decode(s *octet.Splice) (e error) {
+func (x *IntroQuery) Decode(s *zip.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), IntroQueryLen-magic.Len,
 		IntroQueryMagic); check(e) {
 		return
@@ -61,21 +61,21 @@ func (x *IntroQuery) Len() int { return IntroQueryLen + x.Onion.Len() }
 
 func (x *IntroQuery) Wrap(inner Onion) { x.Onion = inner }
 
-func (x *IntroQuery) Handle(s *octet.Splice, p Onion,
+func (x *IntroQuery) Handle(s *zip.Splice, p Onion,
 	ng *Engine) (e error) {
 	
-	ng.Introductions.Lock()
+	ng.HiddenRouting.Lock()
 	var ok bool
 	var il *Intro
-	if il, ok = ng.Introductions.KnownIntros[x.Key.ToBytes()]; !ok {
+	if il, ok = ng.HiddenRouting.KnownIntros[x.Key.ToBytes()]; !ok {
 		// if the reply is zeroes the querant knows it needs to retry at a
 		// different relay
 		il = &Intro{}
-		ng.Introductions.Unlock()
+		ng.HiddenRouting.Unlock()
 		log.E.Ln("intro not known")
 		return
 	}
-	ng.Introductions.Unlock()
+	ng.HiddenRouting.Unlock()
 	// log.D.S(il.ID, il.Key, il.Expiry, il.Sig)
 	iqr := Encode(il)
 	rb := FormatReply(s.GetRange(s.GetCursor(), s.Advance(ReverseHeaderLen)),
@@ -107,7 +107,7 @@ func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *pub.Key,
 	target *SessionData, hook func(in *Intro)) {
 	
 	fn := func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
-		s := octet.Load(b, slice.NewCursor())
+		s := zip.Load(b, slice.NewCursor())
 		on := Recognise(s)
 		if e = on.Decode(s); check(e) {
 			return

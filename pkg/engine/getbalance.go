@@ -5,8 +5,8 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
 const (
@@ -17,7 +17,7 @@ const (
 
 type GetBalance struct {
 	nonce.ID
-	octet.Reply
+	zip.Reply
 	Onion
 }
 
@@ -61,7 +61,7 @@ func (o Skins) GetBalance(id, confID nonce.ID, ep *ExitPoint) Skins {
 	
 	return append(o, &GetBalance{
 		ID: id,
-		Reply: octet.Reply{
+		Reply: zip.Reply{
 			ID:      confID,
 			Ciphers: GenCiphers(ep.Keys, ep.ReturnPubs),
 			Nonces:  ep.Nonces,
@@ -72,13 +72,13 @@ func (o Skins) GetBalance(id, confID nonce.ID, ep *ExitPoint) Skins {
 
 func (x *GetBalance) Magic() string { return GetBalanceMagic }
 
-func (x *GetBalance) Encode(s *octet.Splice) (e error) {
+func (x *GetBalance) Encode(s *zip.Splice) (e error) {
 	return x.Onion.Encode(s.
 		Magic(GetBalanceMagic).ID(x.ID).Reply(&x.Reply),
 	)
 }
 
-func (x *GetBalance) Decode(s *octet.Splice) (e error) {
+func (x *GetBalance) Decode(s *zip.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), GetBalanceLen-magic.Len,
 		GetBalanceMagic); check(e) {
 		return
@@ -91,7 +91,7 @@ func (x *GetBalance) Len() int { return GetBalanceLen + x.Onion.Len() }
 
 func (x *GetBalance) Wrap(inner Onion) { x.Onion = inner }
 
-func (x *GetBalance) Handle(s *octet.Splice, p Onion,
+func (x *GetBalance) Handle(s *zip.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	log.T.S(x)
@@ -144,6 +144,6 @@ func (x *GetBalance) Handle(s *octet.Splice, p Onion,
 	rbb = FormatReply(header,
 		Encode(bal).GetRange(-1, -1), x.Ciphers, x.Nonces)
 	rb = append(rbb.GetRange(-1, -1), slice.NoisePad(714-len(rb))...)
-	ng.HandleMessage(octet.Load(rb, slice.NewCursor()), x)
+	ng.HandleMessage(zip.Load(rb, slice.NewCursor()), x)
 	return
 }

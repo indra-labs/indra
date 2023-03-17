@@ -8,14 +8,14 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
 type Engine struct {
 	*PendingResponses
 	*SessionManager
-	*Introductions
+	*HiddenRouting
 	*signer.KeySet
 	Load          atomic.Uint32
 	TimeoutSignal qu.C
@@ -44,7 +44,7 @@ func NewEngine(p Params) (c *Engine, e error) {
 		PendingResponses: &PendingResponses{},
 		KeySet:           ks,
 		SessionManager:   NewSessionManager(),
-		Introductions:    NewIntroductions(),
+		HiddenRouting:    NewHiddenrouting(),
 		TimeoutSignal:    qu.T(),
 		Pause:            qu.T(),
 		C:                qu.T(),
@@ -86,7 +86,7 @@ func (ng *Engine) Shutdown() {
 	log.D.Ln("finished shutdown for", ng.GetLocalNodeAddress().String())
 }
 
-func (ng *Engine) HandleMessage(s *octet.Splice, pr Onion) {
+func (ng *Engine) HandleMessage(s *zip.Splice, pr Onion) {
 	log.D.F("%v handling received message", ng.GetLocalNodeAddress())
 	s.SetCursor(0)
 	on := Recognise(s)
@@ -113,7 +113,7 @@ func (ng *Engine) Handler() (out bool) {
 		out = true
 		break
 	case b := <-ng.ReceiveToLocalNode(0):
-		s := octet.Load(b, slice.NewCursor())
+		s := zip.Load(b, slice.NewCursor())
 		ng.HandleMessage(s, prev)
 	case p := <-ng.GetLocalNode().PaymentChan.Receive():
 		log.D.F("incoming payment for %s: %v", p.ID, p.Amount)

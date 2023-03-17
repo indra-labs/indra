@@ -6,7 +6,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/util/octet"
+	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
 const (
@@ -75,7 +75,7 @@ func NewSessionKeys(hop byte) (x *Session) {
 
 func (x *Session) Magic() string { return SessionMagic }
 
-func (x *Session) Encode(s *octet.Splice) (e error) {
+func (x *Session) Encode(s *zip.Splice) (e error) {
 	return x.Onion.Encode(s.Magic(SessionMagic).
 		ID(x.ID).
 		Prvkey(x.Header).
@@ -83,7 +83,7 @@ func (x *Session) Encode(s *octet.Splice) (e error) {
 	)
 }
 
-func (x *Session) Decode(s *octet.Splice) (e error) {
+func (x *Session) Decode(s *zip.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), SessionLen-magic.Len,
 		SessionMagic); check(e) {
 		return
@@ -99,7 +99,7 @@ func (x *Session) Len() int { return SessionLen + x.Onion.Len() }
 
 func (x *Session) Wrap(inner Onion) { x.Onion = inner }
 
-func (x *Session) Handle(s *octet.Splice, p Onion, ng *Engine) (e error) {
+func (x *Session) Handle(s *zip.Splice, p Onion, ng *Engine) (e error) {
 	
 	log.T.F("incoming session %x", x.PreimageHash())
 	pi := ng.FindPendingPreimage(x.PreimageHash())

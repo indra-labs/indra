@@ -53,7 +53,7 @@ func TestEngine_Route(t *testing.T) {
 			return
 		}
 	}()
-	for i := 0; i < nCircuits*nCircuits/2; i++ {
+	for i := 0; i < nCircuits; i++ {
 		wg.Add(1)
 		counter.Inc()
 		e = clients[0].BuyNewSessions(1000000, func() {
@@ -76,11 +76,25 @@ func TestEngine_Route(t *testing.T) {
 			func(i, j int) { iH[i], iH[j] = iH[j], iH[i] },
 		)
 	}
+	// log2.SetLogLevel(log2.Debug)
 	// There must be at least one, and if there was more than one the first
 	// index of iH will be a randomly selected one.
+	const localPort = 25234
 	introducer = iH[0]
+	log.D.Ln("getting sessions for introducer...")
+	for i := range clients {
+		if introducer.Node.ID == clients[i].GetLocalNode().ID {
+			for j := 0; j < nCircuits; j++ {
+				e = clients[i].BuyNewSessions(1000000, func() {
+				})
+				if check(e) {
+				}
+			}
+			break
+		}
+	}
 	client.SendHiddenService(id, idPrv,
-		time.Now().Add(time.Hour), introducer,
+		time.Now().Add(time.Hour), introducer, localPort,
 		func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
 			log.I.S("hidden service callback", id, k, b.ToBytes())
 			return
@@ -88,7 +102,7 @@ func TestEngine_Route(t *testing.T) {
 	// Now query everyone for the intro.
 	idPub := pub.Derive(idPrv)
 	// peers := clients[1:]
-	delete(client.Introductions.KnownIntros, idPub.ToBytes())
+	delete(client.HiddenRouting.KnownIntros, idPub.ToBytes())
 	rH := client.SessionManager.GetSessionsAtHop(2)
 	var ini *Intro
 	for _ = range rH {
@@ -102,12 +116,22 @@ func TestEngine_Route(t *testing.T) {
 		client.SendIntroQuery(id, idPub, rH[0], func(in *Intro) {
 			wgdec()
 			ini = in
+			if ini == nil {
+				t.Error("got empty intro query answer")
+				t.FailNow()
+			}
 		})
 		wg.Wait()
 	}
 	log.I.Ln("all peers know about the hidden service")
-	log2.SetLogLevel(log2.Debug)
-	log.D.S("intro", ini.ID, ini.Key.ToBase32Abbreviated(), ini.Expiry, ini.Validate())
-	
+	log2.SetLogLevel(log2.Trace)
+	log.D.S("intro", ini.ID, ini.Key.ToBase32Abbreviated(), ini.Expiry,
+		ini.Validate())
+	client.SendRoute(ini.Key, ini.AddrPort,
+		func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
+			log.I.S("success", id, k, b.ToBytes())
+			return
+		})
+	time.Sleep(time.Second * 3)
 	quit.Q()
 }

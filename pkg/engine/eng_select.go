@@ -43,7 +43,7 @@ out:
 func (sm *SessionManager) SelectHops(hops []byte,
 	alreadyHave Sessions) (so Sessions) {
 	
-	log.T.Ln("selecting hops")
+	log.T.Ln("selecting hops", sm.GetLocalNodeAddress().String())
 	sm.Lock()
 	defer sm.Unlock()
 	ws := make(Sessions, 0)

@@ -168,9 +168,10 @@ func TestEngine_SendHiddenService(t *testing.T) {
 	wg.Add(1)
 	counter.Inc()
 	clients[0].SendHiddenService(id, idPrv, time.Now().Add(time.Hour),
-		introducer,
+		introducer, 23405,
 		func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
 			log.D.Ln("yay")
+			// This happens when the gossip gets back to us.
 			wg.Done()
 			counter.Dec()
 			return

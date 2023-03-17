@@ -11,8 +11,8 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
 var (
@@ -20,7 +20,7 @@ var (
 	check = log.E.Chk
 )
 
-func BudgeUp(s *octet.Splice) (o *octet.Splice) {
+func BudgeUp(s *zip.Splice) (o *zip.Splice) {
 	o = s
 	start := o.GetCursor()
 	copy(o.GetRange(-1, -1), s.GetRange(start, -1))
@@ -29,15 +29,17 @@ func BudgeUp(s *octet.Splice) (o *octet.Splice) {
 }
 
 func FormatReply(header, res slice.Bytes, ciphers [3]sha256.Hash,
-	nonces [3]nonce.IV) (rb *octet.Splice) {
+	nonces [3]nonce.IV) (rb *zip.Splice) {
 	
 	rl := ReverseHeaderLen
-	rb = octet.New(rl + len(res))
+	rb = zip.New(rl + len(res))
 	copy(rb.GetRange(-1, rl), header[:rl])
-	copy(rb.GetRange(ReverseHeaderLen, -1), res)
+	copy(rb.GetRange(rl, -1), res)
+	log.D.S("before", rb.GetRange(-1, -1).ToBytes())
 	for i := range ciphers {
 		blk := ciph.BlockFromHash(ciphers[i])
-		ciph.Encipher(blk, nonces[2-i], rb.GetRange(ReverseHeaderLen, -1))
+		ciph.Encipher(blk, nonces[2-i], rb.GetRange(rl, -1))
+		log.D.S("after", i, rb.GetRange(-1, -1).ToBytes())
 	}
 	return
 }

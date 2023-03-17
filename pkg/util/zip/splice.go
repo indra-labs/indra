@@ -1,4 +1,4 @@
-package octet
+package zip
 
 import (
 	"net"
@@ -261,6 +261,8 @@ type Reply struct {
 	// they are common with the crypts in the header.
 	Nonces [3]nonce.IV
 }
+
+const ReplyLen = nonce.IDLen + 3*sha256.Len + 3*nonce.IVLen
 
 func (s *Splice) Reply(rpl *Reply) *Splice {
 	s.ID(rpl.ID).HashTriple(rpl.Ciphers).IVTriple(rpl.Nonces)

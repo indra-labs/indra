@@ -136,7 +136,7 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 	// index of introducerHops will be a randomly selected one.
 	introducer = introducerHops[0]
 	client.SendHiddenService(id, idPrv,
-		time.Now().Add(time.Hour), introducer,
+		time.Now().Add(time.Hour), introducer, 2342,
 		func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
 			log.I.S("hidden service callback", id, k, b.ToBytes())
 			return
@@ -149,7 +149,7 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 	idPub := pub.Derive(idPrv)
 	peers := clients[1:]
 	log.D.Ln("client address", client.GetLocalNodeAddress())
-	delete(client.Introductions.KnownIntros, idPub.ToBytes())
+	delete(client.HiddenRouting.KnownIntros, idPub.ToBytes())
 	for i := range peers {
 		wg.Add(1)
 		counter.Inc()

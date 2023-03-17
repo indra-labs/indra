@@ -3,8 +3,8 @@ package engine
 import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
 const (
@@ -30,7 +30,7 @@ func (o Skins) Response(id nonce.ID, res slice.Bytes, port uint16) Skins {
 
 func (x *Response) Magic() string { return ResponseMagic }
 
-func (x *Response) Encode(s *octet.Splice) (e error) {
+func (x *Response) Encode(s *zip.Splice) (e error) {
 	s.
 		Magic(ResponseMagic).
 		ID(x.ID).
@@ -40,7 +40,7 @@ func (x *Response) Encode(s *octet.Splice) (e error) {
 	return
 }
 
-func (x *Response) Decode(s *octet.Splice) (e error) {
+func (x *Response) Decode(s *zip.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), ResponseLen-magic.Len,
 		ResponseMagic); check(e) {
 		return
@@ -57,7 +57,7 @@ func (x *Response) Len() int { return ResponseLen + len(x.Bytes) }
 
 func (x *Response) Wrap(inner Onion) {}
 
-func (x *Response) Handle(s *octet.Splice, p Onion,
+func (x *Response) Handle(s *zip.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	pending := ng.PendingResponses.Find(x.ID)

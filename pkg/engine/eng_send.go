@@ -7,8 +7,8 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
 type SendData struct {
@@ -21,7 +21,7 @@ type SendData struct {
 }
 
 // Send a message to a peer via their AddrPort.
-func (sm *SessionManager) Send(addr *netip.AddrPort, s *octet.Splice) {
+func (sm *SessionManager) Send(addr *netip.AddrPort, s *zip.Splice) {
 	// first search if we already have the node available with connection open.
 	as := addr.String()
 	sm.ForEachNode(func(n *Node) bool {
@@ -59,5 +59,5 @@ func (sm *SessionManager) SendWithOneHook(ap *netip.AddrPort,
 		PostAcct: res.PostAcct},
 	)
 	log.T.Ln("sending out onion", res.Last, "to", ap.String())
-	sm.Send(ap, octet.Load(res.B, slice.NewCursor()))
+	sm.Send(ap, zip.Load(res.B, slice.NewCursor()))
 }

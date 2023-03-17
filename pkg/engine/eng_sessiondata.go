@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"fmt"
+	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
@@ -21,6 +23,10 @@ type SessionData struct {
 	HeaderBytes, PayloadBytes pub.Bytes
 	Preimage                  sha256.Hash
 	Hop                       byte
+}
+
+func (s *SessionData) String() string {
+	return fmt.Sprintf("sesssion %s node %s hop %d", s.ID, s.Node.ID, s.Hop)
 }
 
 // NewSessionData creates a new SessionData, generating cached public key bytes and

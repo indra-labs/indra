@@ -10,14 +10,14 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
 const (
 	IntroMagic = "in"
 	IntroLen   = magic.Len + nonce.IDLen + pub.KeyLen + 1 +
-		octet.AddrLen + slice.Uint64Len + sig.Len
+		zip.AddrLen + slice.Uint64Len + sig.Len
 )
 
 type Intro struct {
@@ -40,7 +40,7 @@ func (o Skins) Intro(id nonce.ID, key *prv.Key, ap *netip.AddrPort,
 func NewIntro(id nonce.ID, key *prv.Key, ap *netip.AddrPort,
 	expires time.Time) (in *Intro) {
 	pk := pub.Derive(key)
-	s := octet.New(IntroLen - magic.Len)
+	s := zip.New(IntroLen - magic.Len)
 	s.ID(id).Pubkey(pk).AddrPort(ap).Uint64(uint64(expires.
 		UnixNano()))
 	hash := sha256.Single(s.GetRange(-1, s.GetCursor()))
@@ -62,7 +62,7 @@ func NewIntro(id nonce.ID, key *prv.Key, ap *netip.AddrPort,
 }
 
 func (x *Intro) Validate() bool {
-	s := octet.New(IntroLen - magic.Len)
+	s := zip.New(IntroLen - magic.Len)
 	s.ID(x.ID).Pubkey(x.Key).AddrPort(x.AddrPort).Uint64(uint64(x.Expiry.
 		UnixNano()))
 	hash := sha256.Single(s.GetRange(-1, s.GetCursor()))
@@ -78,7 +78,7 @@ func (x *Intro) Validate() bool {
 
 func (x *Intro) Magic() string { return IntroMagic }
 
-func (x *Intro) Encode(s *octet.Splice) (e error) {
+func (x *Intro) Encode(s *zip.Splice) (e error) {
 	s.Magic(IntroMagic).
 		ID(x.ID).
 		Pubkey(x.Key).
@@ -88,7 +88,7 @@ func (x *Intro) Encode(s *octet.Splice) (e error) {
 	return
 }
 
-func (x *Intro) Decode(s *octet.Splice) (e error) {
+func (x *Intro) Decode(s *zip.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), IntroLen-magic.Len,
 		IntroMagic); check(e) {
 		
@@ -106,29 +106,29 @@ func (x *Intro) Len() int { return IntroLen }
 
 func (x *Intro) Wrap(inner Onion) {}
 
-func (x *Intro) Handle(s *octet.Splice, p Onion,
+func (x *Intro) Handle(s *zip.Splice, p Onion,
 	ng *Engine) (e error) {
 	
-	ng.Introductions.Lock()
+	ng.HiddenRouting.Lock()
 	valid := x.Validate()
 	if valid {
 		log.T.Ln(ng.GetLocalNodeAddress().String(), "validated intro", x.ID)
 		// ng.PendingResponses.ProcessAndDelete(x.ID, s.GetRange(-1, -1))
 		kb := x.Key.ToBytes()
-		if _, ok := ng.Introductions.KnownIntros[x.Key.ToBytes()]; ok {
+		if _, ok := ng.HiddenRouting.KnownIntros[x.Key.ToBytes()]; ok {
 			log.D.Ln(ng.GetLocalNodeAddress(), "already have intro")
 			ng.PendingResponses.ProcessAndDelete(x.ID, &kb, s.GetRange(-1, -1))
-			ng.Introductions.Unlock()
+			ng.HiddenRouting.Unlock()
 			return
 		}
 		log.D.F("%s storing intro for %s %s",
 			ng.GetLocalNodeAddress().String(), x.Key.ToBase32Abbreviated(), x.ID)
-		ng.Introductions.KnownIntros[x.Key.ToBytes()] = x
+		ng.HiddenRouting.KnownIntros[x.Key.ToBytes()] = x
 		var ok bool
 		if ok, e = ng.PendingResponses.ProcessAndDelete(x.ID, &kb,
 			s.GetRange(-1, -1)); ok || check(e) {
 			
-			ng.Introductions.Unlock()
+			ng.HiddenRouting.Unlock()
 			log.D.Ln("deleted pending response", x.ID)
 			return
 		}
@@ -155,6 +155,6 @@ func (x *Intro) Handle(s *octet.Splice, p Onion,
 			break
 		}
 	}
-	ng.Introductions.Unlock()
+	ng.HiddenRouting.Unlock()
 	return
 }

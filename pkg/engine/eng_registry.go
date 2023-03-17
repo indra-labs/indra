@@ -4,7 +4,8 @@ import (
 	"reflect"
 	"sync"
 	
-	"git-indra.lan/indra-labs/indra/pkg/util/octet"
+	magic2 "git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
 var registry = NewRegistry()
@@ -26,7 +27,7 @@ func Register(magicString string, on func() Onion) {
 	registry.Onions[magicString] = on
 }
 
-func Recognise(s *octet.Splice) (on Onion) {
+func Recognise(s *zip.Splice) (on Onion) {
 	registry.Lock()
 	defer registry.Unlock()
 	var magic string
@@ -37,5 +38,6 @@ func Recognise(s *octet.Splice) (on Onion) {
 		on = in()
 	}
 	log.D.F("recognised magic '%s' for type %v", magic, reflect.TypeOf(on))
+	log.T.S("recognition", s.GetRange(s.GetCursor()-magic2.Len, -1).ToBytes())
 	return
 }

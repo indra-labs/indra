@@ -5,8 +5,8 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/util/octet"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
 const (
@@ -36,7 +36,7 @@ func (o Skins) Balance(id, confID nonce.ID,
 
 func (x *Balance) Magic() string { return BalanceMagic }
 
-func (x *Balance) Encode(s *octet.Splice) (e error) {
+func (x *Balance) Encode(s *zip.Splice) (e error) {
 	log.D.S("encoding", x.ID, x.ConfID, x.MilliSatoshi)
 	s.
 		Magic(BalanceMagic).
@@ -46,7 +46,7 @@ func (x *Balance) Encode(s *octet.Splice) (e error) {
 	return
 }
 
-func (x *Balance) Decode(s *octet.Splice) (e error) {
+func (x *Balance) Decode(s *zip.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), BalanceLen-magic.Len,
 		BalanceMagic); check(e) {
 		return
@@ -62,7 +62,7 @@ func (x *Balance) Len() int { return BalanceLen }
 
 func (x *Balance) Wrap(inner Onion) {}
 
-func (x *Balance) Handle(s *octet.Splice, p Onion,
+func (x *Balance) Handle(s *zip.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	// log.D.S("balance", x.ID, x.ConfID, x.MilliSatoshi)

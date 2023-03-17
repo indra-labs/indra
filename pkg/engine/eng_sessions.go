@@ -38,29 +38,6 @@ func (sm *SessionManager) PostAcctOnion(o Skins) (res SendData) {
 				break
 			}
 			switch on2 := o[i+1].(type) {
-			case *Forward:
-				res.Billable = append(res.Billable, s.ID)
-				res.PostAcct = append(res.PostAcct,
-					func() {
-						sm.DecSession(s.ID, s.RelayRate*len(res.B),
-							true, "forward")
-					})
-			case *HiddenService:
-				res.Last = on2.Intro.ID
-				res.Billable = append(res.Billable, s.ID)
-				skip = true
-			case *Intro:
-				log.D.Ln("intro in crypt")
-				res.Last = on2.ID
-			case *IntroQuery:
-				res.Last = on2.ID
-				res.Billable = append(res.Billable, s.ID)
-				skip = true
-			case *Reverse:
-				res.Billable = append(res.Billable, s.ID)
-			case *Route:
-				hsb := on2.HiddenService.ToBytes()
-				copy(res.Last[:], hsb[:])
 			case *Exit:
 				for j := range s.Services {
 					if s.Services[j].Port != on2.Port {
@@ -77,10 +54,33 @@ func (sm *SessionManager) PostAcctOnion(o Skins) (res SendData) {
 				res.Billable = append(res.Billable, s.ID)
 				res.Last = on2.ID
 				skip = true
+			case *Forward:
+				res.Billable = append(res.Billable, s.ID)
+				res.PostAcct = append(res.PostAcct,
+					func() {
+						sm.DecSession(s.ID, s.RelayRate*len(res.B),
+							true, "forward")
+					})
 			case *GetBalance:
 				res.Last = s.ID
 				res.Billable = append(res.Billable, s.ID)
 				skip = true
+			case *HiddenService:
+				res.Last = on2.Intro.ID
+				res.Billable = append(res.Billable, s.ID)
+				skip = true
+			case *Intro:
+				log.D.Ln("intro in crypt")
+				res.Last = on2.ID
+			case *IntroQuery:
+				res.Last = on2.ID
+				res.Billable = append(res.Billable, s.ID)
+				skip = true
+			case *Reverse:
+				res.Billable = append(res.Billable, s.ID)
+			case *Route:
+				copy(res.Last[:], on2.ID[:])
+				res.Billable = append(res.Billable, s.ID)
 			}
 		case *Confirmation:
 			res.Last = on.ID
