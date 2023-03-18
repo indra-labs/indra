@@ -103,8 +103,6 @@ func (x *Route) Handle(s *zip.Splice, p Onion, ng *Engine) (e error) {
 	
 	log.D.S("handling route", x, ng.GetLocalNodeAddressString(),
 		ng.HiddenRouting.KnownIntros, ng.HiddenRouting.MyIntros)
-	// If we have an intro header we now send a request out to the hidden
-	// service using the header we have cached.
 	hc := ng.FindCloakedHiddenService(x.HiddenCloaked)
 	if hc == nil {
 		log.T.Ln("no matching hidden service key found from cloaked key")
@@ -125,6 +123,7 @@ func (x *Route) Handle(s *zip.Splice, p Onion, ng *Engine) (e error) {
 	// The message is encrypted to them and will be recognised and accepted.
 	var tryCount int
 	for {
+		log.I.Ln("trycount", tryCount)
 		hb := ng.HiddenRouting.FindIntroduction(hcl)
 		if hb != nil {
 			log.D.S("found route", hb.ID, hb.AddrPort.String(),

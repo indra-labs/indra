@@ -42,15 +42,14 @@ func (o Skins) HiddenService(in *Intro, point *ExitPoint) Skins {
 func (x *HiddenService) Magic() string { return HiddenServiceMagic }
 
 func (x *HiddenService) Encode(s *zip.Splice) (e error) {
-	return x.Onion.Encode(s.
-		Magic(HiddenServiceMagic).
+	s.Magic(HiddenServiceMagic).
 		ID(x.Intro.ID).
 		Pubkey(x.Intro.Key).
 		AddrPort(x.Intro.AddrPort).
 		Uint64(uint64(x.Intro.Expiry.UnixNano())).
 		Signature(&x.Intro.Sig).
-		Reply(&x.Reply),
-	)
+		Reply(&x.Reply)
+	return
 }
 
 func (x *HiddenService) Decode(s *zip.Splice) (e error) {

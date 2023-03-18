@@ -18,7 +18,7 @@ import (
 
 func TestEngine_Route(t *testing.T) {
 	log2.SetLogLevel(log2.Info)
-	log2.App = "test"
+	log2.App = ""
 	var clients []*Engine
 	var e error
 	const nCircuits = 10
@@ -109,37 +109,38 @@ func TestEngine_Route(t *testing.T) {
 			return
 		})
 	wg.Wait()
-	// // Now query everyone for the intro.
-	// idPub := pub.Derive(idPrv)
-	// // delete(client.HiddenRouting.KnownIntros, idPub.ToBytes())
-	// rH := client.SessionManager.GetSessionsAtHop(2)
-	// var ini *Intro
-	// for _ = range rH {
-	// 	wg.Add(1)
-	// 	counter.Inc()
-	// 	if len(rH) > 1 {
-	// 		cryptorand.Shuffle(len(rH), func(i, j int) {
-	// 			rH[i], rH[j] = rH[j], rH[i]
-	// 		})
-	// 	}
-	// 	client.SendIntroQuery(id, idPub, rH[0], func(in *Intro) {
-	// 		wgdec()
-	// 		ini = in
-	// 		if ini == nil {
-	// 			t.Error("got empty intro query answer")
-	// 			t.FailNow()
-	// 		}
-	// 	})
-	// 	wg.Wait()
-	// }
-	// log.I.Ln("all peers know about the hidden service")
-	// log.D.S("intro", ini.ID, ini.Key.ToBase32Abbreviated(), ini.Expiry,
-	// 	ini.Validate())
-	// client.SendRoute(ini.Key, ini.AddrPort,
-	// 	func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
-	// 		log.I.S("success", id, k, b.ToBytes())
-	// 		return
-	// 	})
-	// time.Sleep(time.Second)
+	// Now query everyone for the intro.
+	idPub := pub.Derive(idPrv)
+	// delete(client.HiddenRouting.KnownIntros, idPub.ToBytes())
+	rH := client.SessionManager.GetSessionsAtHop(2)
+	var ini *Intro
+	for _ = range rH {
+		wg.Add(1)
+		counter.Inc()
+		if len(rH) > 1 {
+			cryptorand.Shuffle(len(rH), func(i, j int) {
+				rH[i], rH[j] = rH[j], rH[i]
+			})
+		}
+		client.SendIntroQuery(id, idPub, rH[0], func(in *Intro) {
+			wgdec()
+			ini = in
+			if ini == nil {
+				t.Error("got empty intro query answer")
+				t.FailNow()
+			}
+		})
+	}
+	wg.Wait()
+	time.Sleep(time.Second)
+	log.I.Ln("all peers know about the hidden service")
+	log.D.Ln("intro", ini.ID, ini.Key.ToBase32Abbreviated(), ini.Expiry,
+		ini.Validate())
+	client.SendRoute(ini.Key, ini.AddrPort,
+		func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
+			log.I.S("success", id, k, b.ToBytes())
+			return
+		})
+	time.Sleep(time.Second * 6)
 	quit.Q()
 }

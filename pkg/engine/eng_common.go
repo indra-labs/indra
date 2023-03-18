@@ -35,11 +35,11 @@ func FormatReply(header, res slice.Bytes, ciphers [3]sha256.Hash,
 	rb = zip.New(rl + len(res))
 	copy(rb.GetRange(-1, rl), header[:rl])
 	copy(rb.GetRange(rl, -1), res)
-	log.D.S("before", rb.GetRange(-1, -1).ToBytes())
+	// log.D.S("before", rb.GetRange(-1, -1).ToBytes())
 	for i := range ciphers {
 		blk := ciph.BlockFromHash(ciphers[i])
 		ciph.Encipher(blk, nonces[2-i], rb.GetRange(rl, -1))
-		log.D.S("after", i, rb.GetRange(-1, -1).ToBytes())
+		// log.D.S("after", i, rb.GetRange(-1, -1).ToBytes())
 	}
 	return
 }

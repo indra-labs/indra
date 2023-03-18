@@ -4,7 +4,8 @@ import (
 	"reflect"
 	"sync"
 	
-	magic2 "git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"github.com/gookit/color"
+	
 	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
@@ -37,7 +38,8 @@ func Recognise(s *zip.Splice) (on Onion) {
 	if in, ok = registry.Onions[magic]; ok {
 		on = in()
 	}
-	log.D.F("recognised magic '%s' for type %v", magic, reflect.TypeOf(on))
-	log.T.S("recognition", s.GetRange(s.GetCursor()-magic2.Len, -1).ToBytes())
+	log.D.F("recognised magic %s for type %v", color.Red.Sprint(magic),
+		color.Green.Sprint(reflect.TypeOf(on)))
+	// log.T.S("recognition", s.GetRange(s.GetCursor()-magic2.Len, -1).ToBytes())
 	return
 }

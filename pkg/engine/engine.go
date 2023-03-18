@@ -94,21 +94,21 @@ func (ng *Engine) HandleMessage(s *zip.Splice, pr Onion) {
 		if check(on.Decode(s)) {
 			return
 		}
+		log.D.Ln(s)
 		if check(on.Handle(s, pr, ng)) {
-			log.I.S("unrecognised packet", s.GetRange(-1, -1).ToBytes())
+			log.W.S("unrecognised packet", s.GetRange(-1, -1).ToBytes())
 		}
 	}
 }
 
 func (ng *Engine) Handler() (out bool) {
 	log.T.C(func() string {
-		return ng.GetLocalNodeAddressString() +
-			" awaiting message"
+		return ng.GetLocalNodeAddressString() + " awaiting message"
 	})
 	var prev Onion
 	select {
 	case <-ng.C.Wait():
-		// log.D.Ln("shutting down engine", ng.GetLocalNodeAddress().String())
+		log.D.Ln("shutting down engine", ng.GetLocalNodeAddressString())
 		ng.Shutdown()
 		out = true
 		break

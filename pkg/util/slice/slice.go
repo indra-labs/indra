@@ -152,7 +152,6 @@ func (c *Cursor) Inc(v int) Cursor {
 type Bytes []byte
 
 func ToBytes(b []byte) (msg Bytes) { return b }
-func (m Bytes) String() string     { return string(m) }
 func (m Bytes) ToBytes() []byte    { return m }
 func (m Bytes) Len() int           { return len(m) }
 func (m Bytes) Zero() {

@@ -83,7 +83,7 @@ func (x *Reverse) Handle(s *zip.Splice, p Onion,
 			ciph.Encipher(ciph.GetBlock(pld, on.FromPub), on.Nonce,
 				s.GetRange(last, -1))
 		}
-		if s.GetRange(start, start+magic.Len).String() != ReverseMagic {
+		if string(s.GetRange(start, start+magic.Len)) != ReverseMagic {
 			// It's for us!
 			log.T.S("handling response",
 				// s.GetRange(last, -1).ToBytes(),

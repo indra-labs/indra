@@ -1,13 +1,18 @@
 package zip
 
 import (
+	"encoding/hex"
+	"fmt"
 	"net"
 	"net/netip"
+	"sort"
 	"time"
 	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
+	"github.com/gookit/color"
 	
 	"git-indra.lan/indra-labs/indra"
+	"git-indra.lan/indra-labs/indra/pkg/b32/based32"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/cloak"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
@@ -26,18 +31,130 @@ var (
 
 const AddrLen = net.IPv6len + 2
 
+type NameOffset struct {
+	Offset int
+	Name   string
+}
+
+type Segments []NameOffset
+
+func (s Segments) Len() int           { return len(s) }
+func (s Segments) Less(i, j int) bool { return s[i].Offset < s[j].Offset }
+func (s Segments) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+
 type Splice struct {
 	b slice.Bytes
 	c *slice.Cursor
+	Segments
+}
+
+func (s *Splice) String() (o string) {
+	o = "splice:"
+	seg := s.GetSlicesFromSegments()
+	var prevString string
+	for i := range seg {
+		switch v := seg[i].(type) {
+		case string:
+			o += "\n" + v + " "
+			prevString = v
+		case slice.Bytes:
+			if len(v) > 72 {
+				o += "\n "
+			}
+			for j := range v {
+				if (j)%4 == 0 && j != 0 {
+					o += ""
+				}
+				if j == 0 {
+					o += ""
+				}
+				if v[j] >= '0' && v[j] <= '9' ||
+					v[j] >= 'a' && v[j] <= 'z' ||
+					v[j] >= 'A' && v[j] <= 'Z' {
+					o += string(v[j])
+				} else {
+					o += "."
+				}
+			}
+			o += " "
+			if len(v) > 72 {
+				o += "\n "
+			}
+			hexed := hex.EncodeToString(v.ToBytes())
+			var revHex string
+			for {
+				if len(hexed) >= 8 {
+					revHex, hexed = hexed[:8], hexed[8:]
+					o += revHex + " "
+				} else {
+					o += hexed
+					break
+				}
+			}
+			if prevString == "pubkey" {
+				var oo string
+				var e error
+				if oo, e = based32.Codec.Encode(v.ToBytes()); check(e) {
+					o += "<error: " + e.Error() + " >"
+				}
+				tmp := make(slice.Bytes, len(oo))
+				for j := range tmp {
+					tmp[len(oo)-1-j] = oo[j]
+				}
+				tmp = append(tmp[:13], append([]byte("..."),
+					tmp[len(tmp)-8:]...)...)
+				oo = string(tmp)
+				o += oo
+			}
+			if prevString == "ID" {
+				var oo string
+				var e error
+				if oo, e = based32.Codec.Encode(v.ToBytes()); check(e) {
+					o += "<error: " + e.Error() + " >"
+				}
+				o += color.LightBlue.Sprint(oo[:13])
+			}
+		}
+	}
+	return
 }
 
 func New(length int) (splicer *Splice) {
-	splicer = &Splice{make(slice.Bytes, length), slice.NewCursor()}
+	splicer = &Splice{make(slice.Bytes, length), slice.NewCursor(), Segments{}}
 	return
 }
 
 func Load(b slice.Bytes, c *slice.Cursor) (splicer *Splice) {
-	return &Splice{b, c}
+	return &Splice{b, c, Segments{}}
+}
+
+func (s *Splice) GetSegments() (segments Segments) {
+	m := make(map[int]NameOffset)
+	for i := range s.Segments {
+		m[s.Segments[i].Offset] = s.Segments[i]
+	}
+	s.Segments = s.Segments[:0]
+	for i := range m {
+		s.Segments = append(s.Segments, m[i])
+	}
+	sort.Sort(s.Segments)
+	return s.Segments
+}
+
+func (s *Splice) GetSlicesFromSegments() (segments []interface{}) {
+	segs := s.GetSegments()
+	var cur, prev int
+	for i := range segs {
+		cur = segs[i].Offset
+		segments = append(segments, segs[i].Name)
+		segments = append(segments, s.b[prev:cur])
+		prev = cur
+	}
+	if len(s.b) > cur {
+		segments = append(segments, "remainder")
+		segments = append(segments, s.b[cur:])
+	}
+	return
 }
 
 func (s *Splice) GetCursor() int { return int(*s.c) }
@@ -46,6 +163,8 @@ func (s *Splice) Remaining() int { return s.Len() - s.GetCursor() }
 
 func (s *Splice) Advance(n int) int {
 	s.c.Inc(n)
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "unknown"})
 	return int(*s.c)
 }
 
@@ -91,26 +210,36 @@ func (s *Splice) CopyIntoRange(b slice.Bytes, start, end int) {
 
 func (s *Splice) Magic(magic string) *Splice {
 	copy(s.b[*s.c:s.c.Inc(magic2.Len)], magic)
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "magic"})
 	return s
 }
 
 func (s *Splice) ReadMagic(out *string) *Splice {
 	*out = string(s.b[*s.c:s.c.Inc(magic2.Len)])
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "magic"})
 	return s
 }
 
 func (s *Splice) ID(id nonce.ID) *Splice {
 	copy(s.b[*s.c:s.c.Inc(nonce.IDLen)], id[:])
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: fmt.Sprint(id)})
 	return s
 }
 
 func (s *Splice) ReadID(id *nonce.ID) *Splice {
 	copy((*id)[:], s.b[*s.c:s.c.Inc(nonce.IDLen)])
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "ID"})
 	return s
 }
 
 func (s *Splice) IV(iv nonce.IV) *Splice {
 	copy(s.b[*s.c:s.c.Inc(nonce.IVLen)], iv[:])
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "IV"})
 	return s
 }
 
@@ -123,6 +252,8 @@ func (s *Splice) IVTriple(iv [3]nonce.IV) *Splice {
 
 func (s *Splice) ReadIV(iv *nonce.IV) *Splice {
 	copy((*iv)[:], s.b[*s.c:s.c.Inc(nonce.IVLen)])
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "IV"})
 	return s
 }
 
@@ -136,11 +267,15 @@ func (s *Splice) ReadIVTriple(iv *[3]nonce.IV) *Splice {
 func (s *Splice) Cloak(pk *pub.Key) *Splice {
 	to := cloak.GetCloak(pk)
 	copy(s.b[*s.c:s.c.Inc(cloak.Len)], to[:])
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "cloak"})
 	return s
 }
 
 func (s *Splice) ReadCloak(ck *cloak.PubKey) *Splice {
 	copy((*ck)[:], s.b[*s.c:s.c.Inc(cloak.Len)])
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "cloak"})
 	return s
 }
 
@@ -151,6 +286,8 @@ func (s *Splice) Pubkey(from *pub.Key) *Splice {
 	}
 	pubKey := from.ToBytes()
 	copy(s.b[*s.c:s.c.Inc(pub.KeyLen)], pubKey[:])
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "pubkey"})
 	return s
 }
 
@@ -160,12 +297,16 @@ func (s *Splice) ReadPubkey(from **pub.Key) *Splice {
 	if f, e = pub.FromBytes(s.b[*s.c:s.c.Inc(pub.KeyLen)]); !check(e) {
 		*from = f
 	}
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "pubkey"})
 	return s
 }
 
 func (s *Splice) Prvkey(from *prv.Key) *Splice {
 	b := from.ToBytes()
 	copy(s.b[*s.c:s.c.Inc(prv.KeyLen)], b[:])
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "prvkey"})
 	return s
 }
 
@@ -175,58 +316,82 @@ func (s *Splice) ReadPrvkey(out **prv.Key) *Splice {
 	} else {
 		*out = f
 	}
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "prvkey"})
 	return s
 }
 
 func (s *Splice) Uint16(v uint16) *Splice {
 	slice.EncodeUint16(s.b[*s.c:s.c.Inc(slice.Uint16Len)], int(v))
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "uint16"})
 	return s
 }
 
 func (s *Splice) ReadUint16(v *uint16) *Splice {
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "uint16"})
 	*v = uint16(slice.DecodeUint16(s.b[*s.c:s.c.Inc(slice.Uint16Len)]))
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "uint16"})
 	return s
 }
 
 func (s *Splice) Uint32(v uint32) *Splice {
 	slice.EncodeUint32(s.b[*s.c:s.c.Inc(slice.Uint32Len)], int(v))
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "uint32"})
 	return s
 }
 
 func (s *Splice) ReadUint32(v *uint16) *Splice {
 	*v = uint16(slice.DecodeUint32(s.b[*s.c:s.c.Inc(slice.Uint32Len)]))
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "uint32"})
 	return s
 }
 
 func (s *Splice) Uint64(v uint64) *Splice {
 	slice.EncodeUint64(s.b[*s.c:s.c.Inc(slice.Uint64Len)], v)
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "uint64"})
 	return s
 }
 
 func (s *Splice) ReadUint64(v *uint16) *Splice {
 	*v = uint16(slice.DecodeUint64(s.b[*s.c:s.c.Inc(slice.Uint64Len)]))
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "uint64"})
 	return s
 }
 
 func (s *Splice) ReadMilliSatoshi(v *lnwire.MilliSatoshi) *Splice {
 	*v = lnwire.MilliSatoshi(slice.
 		DecodeUint64(s.b[*s.c:s.c.Inc(slice.Uint64Len)]))
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "mSAT"})
 	return s
 }
 
 func (s *Splice) ReadDuration(v *time.Duration) *Splice {
 	*v = time.Duration(slice.DecodeUint64(s.b[*s.c:s.c.Inc(slice.Uint64Len)]))
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: fmt.Sprint(*v)})
 	return s
 }
 
 func (s *Splice) ReadTime(v *time.Time) *Splice {
 	*v = time.Unix(0,
 		int64(slice.DecodeUint64(s.b[*s.c:s.c.Inc(slice.Uint64Len)])))
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: fmt.Sprint(*v)})
 	return s
 }
 
 func (s *Splice) Hash(h sha256.Hash) *Splice {
 	copy(s.b[*s.c:s.c.Inc(sha256.Len)], h[:])
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "hash"})
 	return s
 }
 
@@ -239,8 +404,10 @@ func (s *Splice) HashTriple(h [3]sha256.Hash) *Splice {
 
 func (s *Splice) ReadHash(h *sha256.Hash) *Splice {
 	copy((*h)[:], s.b[*s.c:s.c.Inc(sha256.Len)])
-	zh := sha256.Hash{}
-	copy(s.b[*s.c-sha256.Len:*s.c], zh[:])
+	// zh := sha256.Hash{}
+	// copy(s.b[*s.c-sha256.Len:*s.c], zh[:])
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "hash"})
 	return s
 }
 
@@ -282,27 +449,36 @@ func (s *Splice) AddrPort(a *netip.AddrPort) *Splice {
 	}
 	s.b[*s.c] = byte(len(ap))
 	copy(s.b[s.c.Inc(1):s.c.Inc(AddrLen)], ap)
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: color.Yellow.Sprint(a.String())})
 	return s
 }
 
 func (s *Splice) ReadAddrPort(ap **netip.AddrPort) *Splice {
+	*ap = &netip.AddrPort{}
 	apLen := s.b[*s.c]
 	apBytes := s.b[s.c.Inc(1):s.c.Inc(AddrLen)]
-	*ap = &netip.AddrPort{}
 	if e := (*ap).UnmarshalBinary(apBytes[:apLen]); check(e) {
 	}
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c),
+			Name: color.Yellow.Sprint((*ap).String())})
 	return s
 }
 
 func (s *Splice) Byte(b byte) *Splice {
 	s.b[*s.c] = byte(b)
 	s.c.Inc(1)
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "byte"})
 	return s
 }
 
 func (s *Splice) ReadByte(b *byte) *Splice {
 	*b = s.b[*s.c]
 	s.c.Inc(1)
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "byte"})
 	return s
 }
 
@@ -310,23 +486,35 @@ func (s *Splice) Bytes(b []byte) *Splice {
 	bytesLen := slice.NewUint32()
 	slice.EncodeUint32(bytesLen, len(b))
 	copy(s.b[*s.c:s.c.Inc(slice.Uint32Len)], bytesLen)
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "32 bit length"})
 	copy(s.b[*s.c:s.c.Inc(len(b))], b)
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "bytes"})
 	return s
 }
 
 func (s *Splice) ReadBytes(b *slice.Bytes) *Splice {
 	bytesLen := slice.DecodeUint32(s.b[*s.c:s.c.Inc(slice.Uint32Len)])
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "32 bit length"})
 	*b = s.b[*s.c:s.c.Inc(bytesLen)]
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "bytes"})
 	return s
 }
 
 func (s *Splice) Signature(sb *sig.Bytes) *Splice {
 	copy(s.b[*s.c:s.c.Inc(sig.Len)], sb[:])
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "signature"})
 	return s
 }
 
 func (s *Splice) ReadSignature(sb *sig.Bytes) *Splice {
 	copy(sb[:], s.b[*s.c:s.c.Inc(sig.Len)])
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "signature"})
 	return s
 }
 
