@@ -4,6 +4,7 @@ import (
 	"fmt"
 	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
+	"github.com/gookit/color"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
@@ -92,7 +93,7 @@ func (s *SessionData) DecSats(sats lnwire.MilliSatoshi, sender bool,
 		who = "client"
 	}
 	log.D.F("%s %s session %s %s current %v decrementing by %v",
-		s.Node.AddrPort.String(), who,
+		color.Yellow.Sprint(s.Node.AddrPort.String()), who,
 		typ, s.ID,
 		s.Remaining, sats)
 	s.Remaining -= sats

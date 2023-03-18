@@ -101,13 +101,13 @@ func (x *Session) Wrap(inner Onion) { x.Onion = inner }
 
 func (x *Session) Handle(s *zip.Splice, p Onion, ng *Engine) (e error) {
 	
-	log.T.F("incoming session %x", x.PreimageHash())
+	log.T.F("incoming session %s", x.PreimageHash())
 	pi := ng.FindPendingPreimage(x.PreimageHash())
 	if pi != nil {
 		// We need to delete this first in case somehow two such messages arrive
 		// at the same time, and we end up with duplicate 
 		ng.DeletePendingPayment(pi.Preimage)
-		log.D.F("adding session %s to %s", pi.ID, ng.GetLocalNodeAddress())
+		log.D.F("adding session %s to %s", pi.ID, ng.GetLocalNodeAddressString())
 		ng.AddSession(NewSessionData(pi.ID,
 			ng.GetLocalNode(), pi.Amount, x.Header, x.Payload, x.Hop))
 		ng.HandleMessage(BudgeUp(s), nil)

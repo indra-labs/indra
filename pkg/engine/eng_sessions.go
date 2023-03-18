@@ -4,6 +4,7 @@ import (
 	"fmt"
 	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
+	"github.com/gookit/color"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -172,8 +173,10 @@ func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 		var ss [5]*SessionData
 		for i := range nodes {
 			log.D.F("confirming and storing session at hop %d %s for %s with"+
-				" %v initial"+
-				" balance", i, s[i].ID, nodes[i].AddrPort.String(), amount)
+				" %v initial balance",
+				i, s[i].ID,
+				color.Yellow.Sprint(nodes[i].AddrPort.String()),
+				amount)
 			ss[i] = NewSessionData(s[i].ID, nodes[i], amount,
 				s[i].Header, s[i].Payload, byte(i))
 			ng.SessionManager.Add(ss[i])

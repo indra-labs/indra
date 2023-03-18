@@ -73,7 +73,7 @@ func (x *HiddenService) Wrap(inner Onion) { x.Onion = inner }
 
 func (x *HiddenService) Handle(s *zip.Splice, p Onion, ng *Engine) (e error) {
 	log.D.F("%s adding introduction for key %s",
-		ng.GetLocalNodeAddress(), x.Key.ToBase32())
+		ng.GetLocalNodeAddressString(), x.Key.ToBase32Abbreviated())
 	ng.HiddenRouting.AddIntro(x.Key, &Introduction{
 		Intro:   &x.Intro,
 		Ciphers: x.Ciphers,
@@ -106,7 +106,7 @@ func (ng *Engine) SendHiddenService(id nonce.ID, key *prv.Key, expiry time.Time,
 	in := NewIntro(id, key, target.AddrPort, expiry)
 	log.D.Ln("intro", in, in.Validate())
 	o := MakeHiddenService(in, target, c, ng.KeySet)
-	log.I.S("sending out hidden service onion", o)
+	log.I.S("sending out hidden service onion")
 	res := ng.PostAcctOnion(o)
 	log.D.Ln("storing hidden service info")
 	ng.HiddenRouting.AddHiddenService(key, localPort)

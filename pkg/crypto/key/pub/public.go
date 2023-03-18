@@ -4,9 +4,11 @@
 package pub
 
 import (
+	"encoding/base32"
 	"encoding/hex"
 	
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/gookit/color"
 	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/b32/based32"
@@ -26,12 +28,28 @@ const (
 	KeyLen = secp256k1.PubKeyBytesLenCompressed
 )
 
+var enc = base32.NewEncoding(Charset).EncodeToString
+
+const Charset = "abcdefghijklmnopqrstuvwxyz234679"
+
 type (
 	// Key is a public key.
 	Key secp256k1.PublicKey
 	// Bytes is the serialised form of a public key.
 	Bytes [KeyLen]byte
 )
+
+func (pb Bytes) String() (s string) {
+	var e error
+	if s, e = based32.Codec.Encode(pb[:]); check(e) {
+	}
+	ss := []byte(s)
+	// Reverse text order to get all starting ciphers.
+	for i := 0; i < len(s)/2; i++ {
+		ss[i], ss[len(s)-i-1] = ss[len(s)-i-1], ss[i]
+	}
+	return color.LightGreen.Sprint(string(ss))
+}
 
 // Derive generates a public key from the prv.Key.
 func Derive(prv *prv.Key) *Key {
@@ -87,7 +105,7 @@ func (pub *Key) ToBase32Abbreviated() (s string) {
 		ss[i], ss[len(s)-i-1] = ss[len(s)-i-1], ss[i]
 	}
 	ss = append(ss[:13], append([]byte("..."), ss[len(ss)-8:]...)...)
-	return string(ss)
+	return color.LightGreen.Sprint(string(ss))
 }
 
 func FromBase32(s string) (k *Key, e error) {

@@ -4,6 +4,8 @@ import (
 	"net/netip"
 	"time"
 	
+	"github.com/gookit/color"
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/sig"
@@ -49,8 +51,6 @@ func NewIntro(id nonce.ID, key *prv.Key, ap *netip.AddrPort,
 	if sign, e = sig.Sign(key, hash); check(e) {
 		return nil
 	}
-	log.T.S("new intro bytes", s.GetRange(-1, s.GetCursor()).ToBytes(),
-		sign)
 	in = &Intro{
 		ID:       id,
 		Key:      pk,
@@ -112,17 +112,17 @@ func (x *Intro) Handle(s *zip.Splice, p Onion,
 	ng.HiddenRouting.Lock()
 	valid := x.Validate()
 	if valid {
-		log.T.Ln(ng.GetLocalNodeAddress().String(), "validated intro", x.ID)
+		log.T.Ln(ng.GetLocalNodeAddressString(), "validated intro", x.ID)
 		// ng.PendingResponses.ProcessAndDelete(x.ID, s.GetRange(-1, -1))
 		kb := x.Key.ToBytes()
 		if _, ok := ng.HiddenRouting.KnownIntros[x.Key.ToBytes()]; ok {
-			log.D.Ln(ng.GetLocalNodeAddress(), "already have intro")
+			log.D.Ln(ng.GetLocalNodeAddressString(), "already have intro")
 			ng.PendingResponses.ProcessAndDelete(x.ID, &kb, s.GetRange(-1, -1))
 			ng.HiddenRouting.Unlock()
 			return
 		}
 		log.D.F("%s storing intro for %s %s",
-			ng.GetLocalNodeAddress().String(), x.Key.ToBase32Abbreviated(), x.ID)
+			ng.GetLocalNodeAddressString(), x.Key.ToBase32Abbreviated(), x.ID)
 		ng.HiddenRouting.KnownIntros[x.Key.ToBytes()] = x
 		var ok bool
 		if ok, e = ng.PendingResponses.ProcessAndDelete(x.ID, &kb,
@@ -133,8 +133,8 @@ func (x *Intro) Handle(s *zip.Splice, p Onion,
 			return
 		}
 		log.D.F("%s sending out intro to %s at %s to all known peers",
-			ng.GetLocalNodeAddress(), x.Key.ToBase32Abbreviated(),
-			x.AddrPort.String())
+			ng.GetLocalNodeAddressString(), x.Key.ToBase32Abbreviated(),
+			color.Yellow.Sprint(x.AddrPort.String()))
 		sender := ng.SessionManager.FindNodeByAddrPort(x.AddrPort)
 		nn := make(map[nonce.ID]*Node)
 		ng.SessionManager.ForEachNode(func(n *Node) bool {
@@ -146,7 +146,8 @@ func (x *Intro) Handle(s *zip.Splice, p Onion,
 		})
 		counter := 0
 		for i := range nn {
-			log.T.F("sending intro to %s", nn[i].AddrPort.String())
+			log.T.F("sending intro to %s", color.Yellow.Sprint(nn[i].AddrPort.
+				String()))
 			nn[i].Transport.Send(s.GetRange(-1, -1))
 			counter++
 			if counter < 2 {

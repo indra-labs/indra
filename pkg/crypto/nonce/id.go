@@ -6,7 +6,6 @@ import (
 	
 	"github.com/gookit/color"
 	
-	"git-indra.lan/indra-labs/indra/pkg/b32/based32"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 )
 
@@ -16,10 +15,12 @@ const IDLen = 8
 // time it generates 2^32 new ID's.
 type ID [IDLen]byte
 
-var enc = base32.NewEncoding(based32.Charset).EncodeToString
+var enc = base32.NewEncoding(Charset).EncodeToString
+
+const Charset = "abcdefghijklmnopqrstuvwxyz234679"
 
 func (id ID) String() string {
-	return color.Bold.Sprint(enc(id[:])[:13])
+	return color.LightBlue.Sprint(enc(id[:])[:13])
 }
 
 var seed sha256.Hash

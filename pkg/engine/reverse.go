@@ -65,7 +65,7 @@ func (x *Reverse) Handle(s *zip.Splice, p Onion,
 		hdr, pld, _, _ := ng.FindCloaked(on.Cloak)
 		if hdr == nil || pld == nil {
 			log.E.F("failed to find key for %s",
-				ng.GetLocalNodeAddress().String())
+				ng.GetLocalNodeAddressString())
 			return e
 		}
 		// We need to find the PayloadPub to match.

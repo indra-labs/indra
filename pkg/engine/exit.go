@@ -81,7 +81,7 @@ func (x *Exit) Handle(s *zip.Splice, p Onion,
 	var result slice.Bytes
 	h := sha256.Single(x.Bytes)
 	log.T.S(h)
-	log.T.F("%s received exit id %x", ng.GetLocalNodeAddress(), x.ID)
+	log.T.F("%s received exit id %s", ng.GetLocalNodeAddressString(), x.ID)
 	if e = ng.SendFromLocalNode(x.Port, x.Bytes); check(e) {
 		return
 	}

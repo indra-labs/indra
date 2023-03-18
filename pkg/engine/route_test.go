@@ -37,6 +37,10 @@ func TestEngine_Route(t *testing.T) {
 		wg.Done()
 		counter.Dec()
 	}
+	wginc := func() {
+		wg.Add(1)
+		counter.Inc()
+	}
 	quit := qu.T()
 	go func() {
 		select {
@@ -54,8 +58,7 @@ func TestEngine_Route(t *testing.T) {
 		}
 	}()
 	for i := 0; i < nCircuits; i++ {
-		wg.Add(1)
-		counter.Inc()
+		wginc()
 		e = clients[0].BuyNewSessions(1000000, func() {
 			wgdec()
 		})
@@ -84,53 +87,59 @@ func TestEngine_Route(t *testing.T) {
 	for i := range clients {
 		if introducer.Node.ID == clients[i].GetLocalNode().ID {
 			for j := 0; j < nCircuits; j++ {
+				wginc()
 				e = clients[i].BuyNewSessions(1000000, func() {
+					wgdec()
 				})
 				if check(e) {
+					wgdec()
 				}
 			}
+			wg.Wait()
 			break
 		}
 	}
+	log2.SetLogLevel(log2.Trace)
+	wginc()
 	client.SendHiddenService(id, idPrv,
 		time.Now().Add(time.Hour), introducer, localPort,
 		func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
 			log.I.S("hidden service callback", id, k, b.ToBytes())
-			return
-		})
-	// Now query everyone for the intro.
-	idPub := pub.Derive(idPrv)
-	// peers := clients[1:]
-	delete(client.HiddenRouting.KnownIntros, idPub.ToBytes())
-	rH := client.SessionManager.GetSessionsAtHop(2)
-	var ini *Intro
-	for _ = range rH {
-		wg.Add(1)
-		counter.Inc()
-		if len(rH) > 1 {
-			cryptorand.Shuffle(len(rH), func(i, j int) {
-				rH[i], rH[j] = rH[j], rH[i]
-			})
-		}
-		client.SendIntroQuery(id, idPub, rH[0], func(in *Intro) {
 			wgdec()
-			ini = in
-			if ini == nil {
-				t.Error("got empty intro query answer")
-				t.FailNow()
-			}
-		})
-		wg.Wait()
-	}
-	log.I.Ln("all peers know about the hidden service")
-	log2.SetLogLevel(log2.Trace)
-	log.D.S("intro", ini.ID, ini.Key.ToBase32Abbreviated(), ini.Expiry,
-		ini.Validate())
-	client.SendRoute(ini.Key, ini.AddrPort,
-		func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
-			log.I.S("success", id, k, b.ToBytes())
 			return
 		})
-	time.Sleep(time.Second * 3)
+	wg.Wait()
+	// // Now query everyone for the intro.
+	// idPub := pub.Derive(idPrv)
+	// // delete(client.HiddenRouting.KnownIntros, idPub.ToBytes())
+	// rH := client.SessionManager.GetSessionsAtHop(2)
+	// var ini *Intro
+	// for _ = range rH {
+	// 	wg.Add(1)
+	// 	counter.Inc()
+	// 	if len(rH) > 1 {
+	// 		cryptorand.Shuffle(len(rH), func(i, j int) {
+	// 			rH[i], rH[j] = rH[j], rH[i]
+	// 		})
+	// 	}
+	// 	client.SendIntroQuery(id, idPub, rH[0], func(in *Intro) {
+	// 		wgdec()
+	// 		ini = in
+	// 		if ini == nil {
+	// 			t.Error("got empty intro query answer")
+	// 			t.FailNow()
+	// 		}
+	// 	})
+	// 	wg.Wait()
+	// }
+	// log.I.Ln("all peers know about the hidden service")
+	// log.D.S("intro", ini.ID, ini.Key.ToBase32Abbreviated(), ini.Expiry,
+	// 	ini.Validate())
+	// client.SendRoute(ini.Key, ini.AddrPort,
+	// 	func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
+	// 		log.I.S("success", id, k, b.ToBytes())
+	// 		return
+	// 	})
+	// time.Sleep(time.Second)
 	quit.Q()
 }

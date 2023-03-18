@@ -148,7 +148,7 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 	// Now query everyone for the intro.
 	idPub := pub.Derive(idPrv)
 	peers := clients[1:]
-	log.D.Ln("client address", client.GetLocalNodeAddress())
+	log.D.Ln("client address", client.GetLocalNodeAddressString())
 	delete(client.HiddenRouting.KnownIntros, idPub.ToBytes())
 	for i := range peers {
 		wg.Add(1)

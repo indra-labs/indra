@@ -5,6 +5,8 @@ import (
 	"net/netip"
 	"runtime"
 	
+	"github.com/gookit/color"
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -28,7 +30,7 @@ func (sm *SessionManager) Send(addr *netip.AddrPort, s *zip.Splice) {
 		if as == n.AddrPort.String() {
 			_, f, l, _ := runtime.Caller(1)
 			log.T.F("%s sending message to %v %s:%d",
-				sm.GetLocalNode().AddrPort.String(), addr, f, l)
+				sm.GetLocalNodeAddressString(), color.Yellow.Sprint(addr), f, l)
 			n.Transport.Send(s.GetRange(-1, -1))
 			return true
 		}
@@ -58,6 +60,7 @@ func (sm *SessionManager) SendWithOneHook(ap *netip.AddrPort,
 		Callback: responseHook,
 		PostAcct: res.PostAcct},
 	)
-	log.T.Ln("sending out onion", res.Last, "to", ap.String())
+	log.T.Ln(sm.GetLocalNodeAddressString(), "sending out onion", res.Last,
+		"to", color.Yellow.Sprint(ap.String()))
 	sm.Send(ap, zip.Load(res.B, slice.NewCursor()))
 }

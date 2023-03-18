@@ -49,7 +49,7 @@ func (x *Forward) Handle(s *zip.Splice, p Onion,
 	
 	// Forward the whole buffer received onwards. Usually there will be a
 	// crypt.Layer under this which will be unwrapped by the receiver.
-	if x.AddrPort.String() == ng.GetLocalNodeAddress().String() {
+	if x.AddrPort.String() == ng.GetLocalNodeAddressString() {
 		// it is for us, we want to unwrap the next part.
 		ng.HandleMessage(BudgeUp(s), x)
 	} else {

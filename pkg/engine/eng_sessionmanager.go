@@ -6,6 +6,7 @@ import (
 	"sync"
 	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
+	"github.com/gookit/color"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
@@ -266,9 +267,13 @@ func (sm *SessionManager) GetLocalNodePaymentChan() PaymentChan {
 }
 
 func (sm *SessionManager) GetLocalNodeAddress() (addr *netip.AddrPort) {
-	sm.Lock()
-	defer sm.Unlock()
+	// sm.Lock()
+	// defer sm.Unlock()
 	return sm.GetLocalNode().AddrPort
+}
+
+func (sm *SessionManager) GetLocalNodeAddressString() (s string) {
+	return color.Yellow.Sprint(sm.GetLocalNodeAddress())
 }
 
 func (sm *SessionManager) SetLocalNodeAddress(addr *netip.AddrPort) {
@@ -464,7 +469,7 @@ func (sm *SessionManager) FindPendingPayment(id nonce.ID) (pp *Payment) {
 	return sm.PendingPayments.Find(id)
 }
 func (sm *SessionManager) FindPendingPreimage(pi sha256.Hash) (pp *Payment) {
-	log.T.F("searching preimage %x", pi)
+	log.T.F("searching preimage %s", pi)
 	sm.Lock()
 	defer sm.Unlock()
 	return sm.PendingPayments.FindPreimage(pi)

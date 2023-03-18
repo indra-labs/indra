@@ -4,8 +4,11 @@
 package sha256
 
 import (
+	"encoding/base32"
+	
+	"github.com/gookit/color"
 	"github.com/minio/sha256-simd"
-
+	
 	"git-indra.lan/indra-labs/indra"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 )
@@ -19,8 +22,16 @@ var (
 	check = log.E.Chk
 )
 
+var enc = base32.NewEncoding(Charset).EncodeToString
+
+const Charset = "abcdefghijklmnopqrstuvwxyz234679"
+
 // Hash is just a 256-bit hash.
 type Hash [32]byte
+
+func (h Hash) String() string {
+	return color.LightGreen.Sprint(enc(h[:])[:52])
+}
 
 // New creates a correctly sized slice for a Hash.
 func New() Hash { return Hash{} }

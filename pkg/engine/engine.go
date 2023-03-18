@@ -83,11 +83,11 @@ func (ng *Engine) Shutdown() {
 	ng.ShuttingDown.Store(true)
 	ng.Cleanup()
 	ng.C.Q()
-	log.D.Ln("finished shutdown for", ng.GetLocalNodeAddress().String())
+	log.D.Ln("finished shutdown for", ng.GetLocalNodeAddressString())
 }
 
 func (ng *Engine) HandleMessage(s *zip.Splice, pr Onion) {
-	log.D.F("%v handling received message", ng.GetLocalNodeAddress())
+	log.D.F("%s handling received message", ng.GetLocalNodeAddressString())
 	s.SetCursor(0)
 	on := Recognise(s)
 	if on != nil {
@@ -102,7 +102,7 @@ func (ng *Engine) HandleMessage(s *zip.Splice, pr Onion) {
 
 func (ng *Engine) Handler() (out bool) {
 	log.T.C(func() string {
-		return ng.GetLocalNodeAddress().String() +
+		return ng.GetLocalNodeAddressString() +
 			" awaiting message"
 	})
 	var prev Onion
@@ -130,14 +130,14 @@ func (ng *Engine) Handler() (out bool) {
 		})
 		if !topUp {
 			ng.AddPendingPayment(p)
-			log.T.F("awaiting session keys for preimage %x session ID %x",
+			log.T.F("awaiting session keys for preimage %s session ID %s",
 				p.Preimage, p.ID)
 		}
 		// For now if we received this we return true. Later this will wait with
 		// a timeout on the lnd node returning the success to trigger this.
 		p.ConfirmChan <- true
 	case <-ng.Pause:
-		log.D.Ln("pausing", ng.GetLocalNodeAddress())
+		log.D.Ln("pausing", ng.GetLocalNodeAddressString())
 		// For testing purposes we need to halt this Handler and discard channel
 		// messages.
 	out:
@@ -151,7 +151,7 @@ func (ng *Engine) Handler() (out bool) {
 				break out
 			case <-ng.Pause:
 				// This will then resume to the top level select.
-				log.D.Ln("unpausing", ng.GetLocalNodeAddress())
+				log.D.Ln("unpausing", ng.GetLocalNodeAddressString())
 				break out
 			}
 			

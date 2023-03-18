@@ -201,7 +201,8 @@ func (hr *HiddenRouting) AddIntro(pk *pub.Key, intro *Introduction) {
 }
 
 func GossipIntro(intro *Intro, sm *SessionManager, c qu.C) {
-	log.D.F("propagating hidden service intro for %x", intro.Key.ToBytes())
+	log.D.F("propagating hidden service intro for %s",
+		intro.Key.ToBase32Abbreviated())
 	done := qu.T()
 	msg := zip.New(IntroLen)
 	if check(intro.Encode(msg)) {

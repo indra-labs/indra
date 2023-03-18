@@ -101,7 +101,7 @@ func (x *Route) Wrap(inner Onion) {}
 
 func (x *Route) Handle(s *zip.Splice, p Onion, ng *Engine) (e error) {
 	
-	log.D.S("handling route", x, ng.GetLocalNodeAddress().String(),
+	log.D.S("handling route", x, ng.GetLocalNodeAddressString(),
 		ng.HiddenRouting.KnownIntros, ng.HiddenRouting.MyIntros)
 	// If we have an intro header we now send a request out to the hidden
 	// service using the header we have cached.
