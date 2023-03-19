@@ -5,6 +5,7 @@ import (
 	"time"
 	
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 func TestOnionSkins_Delay(t *testing.T) {
@@ -16,7 +17,7 @@ func TestOnionSkins_Delay(t *testing.T) {
 	s := Encode(on)
 	s.SetCursor(0)
 	var onc Onion
-	if onc = Recognise(s); onc == nil {
+	if onc = Recognise(s, slice.GenerateRandomAddrPortIPv6()); onc == nil {
 		t.Error("did not unwrap")
 		t.FailNow()
 	}

@@ -47,10 +47,11 @@ func TestOnionSkins_HiddenService(t *testing.T) {
 	on1 = append(on1, &Tmpl{})
 	on := on1.Assemble()
 	s := Encode(on)
+	log.D.S("zip", s)
 	log.D.S("on1 bytes", s.GetRange(-1, -1).ToBytes())
 	s.SetCursor(0)
 	var onc Onion
-	if onc = Recognise(s); onc == nil {
+	if onc = Recognise(s, slice.GenerateRandomAddrPortIPv6()); onc == nil {
 		t.Error("did not unwrap")
 		t.FailNow()
 	}
@@ -155,6 +156,7 @@ func TestEngine_SendHiddenService(t *testing.T) {
 	}
 	id := nonce.NewID()
 	introducerHops := clients[0].SessionManager.GetSessionsAtHop(2)
+	returnHops := clients[0].SessionManager.GetSessionsAtHop(5)
 	var introducer *SessionData
 	if len(introducerHops) > 1 {
 		cryptorand.Shuffle(len(introducerHops), func(i, j int) {
@@ -162,13 +164,21 @@ func TestEngine_SendHiddenService(t *testing.T) {
 				introducerHops[i]
 		})
 	}
+	var returner *SessionData
+	if len(introducerHops) > 1 {
+		cryptorand.Shuffle(len(returnHops), func(i, j int) {
+			returnHops[i], returnHops[j] = returnHops[j],
+				returnHops[i]
+		})
+	}
 	// There must be at least one, and if there was more than one the first
 	// index of introducerHops will be a randomly selected one.
 	introducer = introducerHops[0]
+	returner = returnHops[0]
 	wg.Add(1)
 	counter.Inc()
 	clients[0].SendHiddenService(make(slice.Bytes, RoutingHeaderLen), id,
-		idPrv, time.Now().Add(time.Hour), introducer, 23405,
+		idPrv, time.Now().Add(time.Hour), returner, introducer, 23405,
 		func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
 			log.W.Ln("Test passed")
 			// This happens when the gossip gets back to us.

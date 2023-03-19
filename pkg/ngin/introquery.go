@@ -65,6 +65,8 @@ func (x *IntroQuery) Handle(s *zip.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	ng.HiddenRouting.Lock()
+	log.D.Ln(ng.GetLocalNodeAddressString(), "handling introquery", x.ID,
+		x.Key.ToBase32Abbreviated())
 	var ok bool
 	var il *Intro
 	if il, ok = ng.HiddenRouting.KnownIntros[x.Key.ToBytes()]; !ok {
@@ -93,10 +95,10 @@ func (x *IntroQuery) Handle(s *zip.Splice, p Onion,
 	return
 }
 
-func MakeIntroQuery(id nonce.ID, hsk *pub.Key, target *SessionData, c Circuit,
-	ks *signer.KeySet) Skins {
+func MakeIntroQuery(id nonce.ID, hsk *pub.Key, alice, bob *SessionData,
+	c Circuit, ks *signer.KeySet) Skins {
 	
-	headers := GetHeaders(target, c, ks)
+	headers := GetHeaders(alice, bob, c, ks)
 	return Skins{}.
 		RoutingHeader(headers.Forward).
 		IntroQuery(id, hsk, headers.ExitPoint()).
@@ -104,11 +106,12 @@ func MakeIntroQuery(id nonce.ID, hsk *pub.Key, target *SessionData, c Circuit,
 }
 
 func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *pub.Key,
-	target *SessionData, hook func(in *Intro)) {
+	alice, bob *SessionData, hook func(in *Intro)) {
 	
 	fn := func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
+		log.D.S("sendintroquery callback", id, k, b.ToBytes())
 		s := zip.Load(b, slice.NewCursor())
-		on := Recognise(s)
+		on := Recognise(s, ng.GetLocalNodeAddress())
 		if e = on.Decode(s); check(e) {
 			return
 		}
@@ -120,14 +123,16 @@ func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *pub.Key,
 		hook(oni)
 		return
 	}
-	
+	log.D.Ln("sending introquery")
 	hops := StandardCircuit()
 	s := make(Sessions, len(hops))
-	// s[2] = target
+	s[2] = bob
+	s[5] = alice
 	se := ng.SelectHops(hops, s)
 	var c Circuit
 	copy(c[:], se)
-	o := MakeIntroQuery(id, hsk, s[5], c, ng.KeySet)
+	o := MakeIntroQuery(id, hsk, bob, alice, c, ng.KeySet)
 	res := ng.PostAcctOnion(o)
+	log.D.Ln(res.Last)
 	ng.SendWithOneHook(c[0].AddrPort, res, fn, ng.PendingResponses)
 }

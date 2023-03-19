@@ -236,7 +236,7 @@ func (s *Splice) ReadMagic(out *string) *Splice {
 func (s *Splice) ID(id nonce.ID) *Splice {
 	copy(s.b[*s.c:s.c.Inc(nonce.IDLen)], id[:])
 	s.Segments = append(s.Segments,
-		NameOffset{Offset: int(*s.c), Name: fmt.Sprint(id)})
+		NameOffset{Offset: int(*s.c), Name: "ID"})
 	return s
 }
 

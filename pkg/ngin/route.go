@@ -109,13 +109,15 @@ func (x *Route) Handle(s *zip.Splice, p Onion, ng *Engine) (e error) {
 		log.T.Ln("no matching hidden service key found from cloaked key")
 		return
 	}
-	log.D.S("route key", *hc)
+	x.HiddenService, e = pub.FromBytes((*hc)[:])
+	log.D.Ln("route key", *hc)
 	hcl := *hc
 	if hh, ok := ng.HiddenRouting.HiddenServices[hcl]; ok {
-		log.D.S("we are the hidden service")
+		log.D.S("we are the hidden service", hh)
 		// We have the keys to unwrap this one.
 		x.Decrypt(hh.Prv, s)
-		log.D.S(s.GetCursorToEnd().ToBytes())
+		log.D.Ln(s)
+		// ng.HandleMessage(s, x)
 		return
 	}
 	// If we aren't the hidden service then we have maybe got the header to
@@ -168,9 +170,9 @@ func (x *Route) Handle(s *zip.Splice, p Onion, ng *Engine) (e error) {
 }
 
 func MakeRoute(id nonce.ID, k *pub.Key, ks *signer.KeySet,
-	sd *SessionData, c Circuit) Skins {
+	alice, bob *SessionData, c Circuit) Skins {
 	
-	headers := GetHeaders(sd, c, ks)
+	headers := GetHeaders(alice, bob, c, ks)
 	return Skins{}.
 		RoutingHeader(headers.Forward).
 		Route(id, k, ks, headers.ExitPoint()).
@@ -201,7 +203,7 @@ func (ng *Engine) SendRoute(k *pub.Key, ap *netip.AddrPort,
 	se := ng.SelectHops(hops, s)
 	var c Circuit
 	copy(c[:], se)
-	o := MakeRoute(nonce.NewID(), k, ng.KeySet, ss, c)
+	o := MakeRoute(nonce.NewID(), k, ng.KeySet, c[4], ss, c)
 	log.D.Ln("doing accounting")
 	res := ng.PostAcctOnion(o)
 	log.D.Ln("sending out route request onion")

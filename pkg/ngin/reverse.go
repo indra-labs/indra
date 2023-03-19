@@ -50,7 +50,7 @@ func (x *Reverse) Handle(s *zip.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	if x.AddrPort.String() == ng.GetLocalNodeAddress().String() {
-		in := Recognise(s)
+		in := Recognise(s, ng.GetLocalNodeAddress())
 		if e = in.Decode(s); check(e) {
 			return e
 		}

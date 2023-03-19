@@ -35,7 +35,7 @@ func TestOnionSkins_Intro(t *testing.T) {
 	log.D.S(s.GetRange(-1, -1).ToBytes())
 	s.SetCursor(0)
 	var onc Onion
-	if onc = Recognise(s); onc == nil {
+	if onc = Recognise(s, slice.GenerateRandomAddrPortIPv6()); onc == nil {
 		t.Error("did not unwrap")
 		t.FailNow()
 	}

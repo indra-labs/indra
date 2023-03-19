@@ -6,7 +6,6 @@ import (
 	"time"
 	
 	"github.com/cybriq/qu"
-	"github.com/gookit/color"
 	"go.uber.org/atomic"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
@@ -45,18 +44,20 @@ func TestEngine_Route(t *testing.T) {
 	}
 	quit := qu.T()
 	go func() {
-		select {
-		case <-time.After(time.Second * 20):
-			quit.Q()
-			t.Error("Route test failed")
-		case <-quit:
-			for i := 0; i < int(counter.Load()); i++ {
-				wg.Done()
+		for {
+			select {
+			case <-time.After(time.Second * 5):
+				quit.Q()
+				t.Error("Route test failed")
+			case <-quit:
+				for i := 0; i < int(counter.Load()); i++ {
+					wg.Done()
+				}
+				for _, v := range clients {
+					v.Shutdown()
+				}
+				return
 			}
-			for _, v := range clients {
-				v.Shutdown()
-			}
-			return
 		}
 	}()
 	for i := 0; i < nCircuits; i++ {
@@ -74,19 +75,29 @@ func TestEngine_Route(t *testing.T) {
 		return
 	}
 	id := nonce.NewID()
-	iH := client.SessionManager.GetSessionsAtHop(2)
+	introducerHops := client.SessionManager.GetSessionsAtHop(2)
 	var introducer *SessionData
-	if len(iH) > 1 {
-		cryptorand.Shuffle(len(iH),
-			func(i, j int) { iH[i], iH[j] = iH[j], iH[i] },
+	returnHops := client.SessionManager.GetSessionsAtHop(5)
+	var returner *SessionData
+	if len(introducerHops) > 1 {
+		cryptorand.Shuffle(len(introducerHops),
+			func(i, j int) {
+				introducerHops[i], introducerHops[j] =
+					introducerHops[j], introducerHops[i]
+			},
 		)
 	}
-	// There must be at least one, and if there was more than one the first
-	// index of iH will be a randomly selected one.
+	introducer = introducerHops[0]
+	if len(returnHops) > 1 {
+		cryptorand.Shuffle(len(returnHops), func(i, j int) {
+			returnHops[i], returnHops[j] = returnHops[j],
+				returnHops[i]
+		})
+	}
+	returner = returnHops[0]
 	const localPort = 25234
-	introducer = iH[0]
 	var introClient *Engine
-	log.I.F("introducer %s", color.Yellow.Sprint(introducer.AddrPort.String()))
+	// log.I.F("introducer %s", color.Yellow.Sprint(introducer.AddrPort.String()))
 	log.D.Ln("getting sessions for introducer...")
 	for i := range clients {
 		if introducer.Node.ID == clients[i].GetLocalNode().ID {
@@ -106,7 +117,7 @@ func TestEngine_Route(t *testing.T) {
 	}
 	wginc()
 	client.SendHiddenService(make(slice.Bytes, RoutingHeaderLen), id, idPrv,
-		time.Now().Add(time.Hour), introducer, localPort,
+		time.Now().Add(time.Hour), returner, introducer, localPort,
 		func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
 			log.I.S("hidden service callback", client.GetLocalNodeAddressString(),
 				id, k, b.ToBytes())
@@ -122,12 +133,23 @@ func TestEngine_Route(t *testing.T) {
 	for _ = range rH {
 		wg.Add(1)
 		counter.Inc()
-		if len(rH) > 1 {
-			cryptorand.Shuffle(len(rH), func(i, j int) {
-				rH[i], rH[j] = rH[j], rH[i]
+		if len(introducerHops) > 1 {
+			cryptorand.Shuffle(len(introducerHops),
+				func(i, j int) {
+					introducerHops[i], introducerHops[j] =
+						introducerHops[j], introducerHops[i]
+				},
+			)
+		}
+		introducer = introducerHops[0]
+		if len(returnHops) > 1 {
+			cryptorand.Shuffle(len(returnHops), func(i, j int) {
+				returnHops[i], returnHops[j] = returnHops[j],
+					returnHops[i]
 			})
 		}
-		client.SendIntroQuery(id, idPub, rH[0], func(in *Intro) {
+		returner = returnHops[0]
+		client.SendIntroQuery(id, idPub, introducer, returner, func(in *Intro) {
 			wgdec()
 			ini = in
 			if ini == nil {
@@ -137,7 +159,7 @@ func TestEngine_Route(t *testing.T) {
 		})
 	}
 	wg.Wait()
-	time.Sleep(time.Second * 2)
+	wg.Add(1)
 	log.I.Ln("all peers know about the hidden service")
 	log.I.S("introclient", introClient.HiddenRouting.HiddenServices,
 		introClient.HiddenRouting.MyIntros, introClient.HiddenRouting.KnownIntros)
@@ -147,8 +169,9 @@ func TestEngine_Route(t *testing.T) {
 	client.SendRoute(ini.Key, ini.AddrPort,
 		func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
 			log.I.S("success", id, k, b.ToBytes())
+			wg.Done()
 			return
 		})
-	time.Sleep(time.Second * 2)
+	wg.Wait()
 	quit.Q()
 }

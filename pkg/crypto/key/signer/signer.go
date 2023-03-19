@@ -52,3 +52,10 @@ func (ks *KeySet) Next3() (n [3]*prv.Key) {
 	}
 	return
 }
+
+func (ks *KeySet) Next2() (n [2]*prv.Key) {
+	for i := range n {
+		n[i] = ks.Next()
+	}
+	return
+}

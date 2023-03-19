@@ -27,7 +27,7 @@ func init() { Register(GetBalanceMagic, getBalancePrototype) }
 
 type GetBalanceParams struct {
 	ID, ConfID nonce.ID
-	Client     *SessionData
+	Alice, Bob *SessionData
 	S          Circuit
 	KS         *signer.KeySet
 }
@@ -35,22 +35,23 @@ type GetBalanceParams struct {
 // MakeGetBalance sends out a request in a similar way to Exit except the node
 // being queried can be any of the 5.
 func MakeGetBalance(p GetBalanceParams) Skins {
-	headers := GetHeaders(p.Client, p.S, p.KS)
+	headers := GetHeaders(p.Alice, p.Bob, p.S, p.KS)
 	return Skins{}.
 		RoutingHeader(headers.Forward).
 		GetBalance(p.ID, p.ConfID, headers.ExitPoint()).
 		RoutingHeader(headers.Return)
 }
 
-func (ng *Engine) SendGetBalance(target *SessionData, hook Callback) {
+func (ng *Engine) SendGetBalance(alice, bob *SessionData, hook Callback) {
 	hops := StandardCircuit()
 	s := make(Sessions, len(hops))
-	s[2] = target
+	s[2] = bob
+	s[5] = alice
 	se := ng.SelectHops(hops, s)
 	var c Circuit
 	copy(c[:], se)
 	confID := nonce.NewID()
-	o := MakeGetBalance(GetBalanceParams{target.ID, confID, se[5], c,
+	o := MakeGetBalance(GetBalanceParams{alice.ID, confID, alice, bob, c,
 		ng.KeySet})
 	log.D.Ln("sending out getbalance onion")
 	res := ng.PostAcctOnion(o)

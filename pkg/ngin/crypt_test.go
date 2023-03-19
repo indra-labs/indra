@@ -6,6 +6,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 func TestOnionSkins_SimpleCrypt(t *testing.T) {
@@ -23,7 +24,7 @@ func TestOnionSkins_SimpleCrypt(t *testing.T) {
 	s.SetCursor(0)
 	log.D.S("encoded, encrypted onion:\n", s.GetRange(-1, -1).ToBytes())
 	var oncr Onion
-	if oncr = Recognise(s); oncr == nil {
+	if oncr = Recognise(s, slice.GenerateRandomAddrPortIPv6()); oncr == nil {
 		t.Error("did not unwrap")
 		t.FailNow()
 	}
@@ -33,7 +34,7 @@ func TestOnionSkins_SimpleCrypt(t *testing.T) {
 	}
 	oncr.(*Crypt).Decrypt(prv1, s)
 	var oncn Onion
-	if oncn = Recognise(s); oncn == nil {
+	if oncn = Recognise(s, slice.GenerateRandomAddrPortIPv6()); oncn == nil {
 		t.Error("did not unwrap")
 		t.FailNow()
 	}

@@ -57,7 +57,8 @@ type Headers struct {
 	ReturnPubs      [3]*pub.Key
 }
 
-func GetHeaders(sd *SessionData, c Circuit, ks *signer.KeySet) (h *Headers) {
+func GetHeaders(alice, bob *SessionData, c Circuit,
+	ks *signer.KeySet) (h *Headers) {
 	
 	fwKeys := ks.Next3()
 	rtKeys := ks.Next3()
@@ -66,13 +67,14 @@ func GetHeaders(sd *SessionData, c Circuit, ks *signer.KeySet) (h *Headers) {
 	copy(fwNonces[:], n[:3])
 	copy(rtNonces[:], n[3:])
 	var fwSessions, rtSessions [3]*SessionData
-	copy(fwSessions[:], c[:3])
-	copy(rtSessions[:], c[3:5])
-	rtSessions[2] = sd
+	copy(fwSessions[:], c[:2])
+	fwSessions[2] = bob
+	copy(rtSessions[:], c[3:])
+	rtSessions[2] = alice
 	var returnPubs [3]*pub.Key
 	returnPubs[0] = c[3].PayloadPub
 	returnPubs[1] = c[4].PayloadPub
-	returnPubs[2] = sd.PayloadPub
+	returnPubs[2] = alice.PayloadPub
 	h = &Headers{
 		Forward: &Routing{
 			Sessions: fwSessions,

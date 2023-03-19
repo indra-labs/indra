@@ -8,6 +8,7 @@ import (
 	"testing"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 func TestOnionSkins_Forward(t *testing.T) {
@@ -35,7 +36,7 @@ func TestOnionSkins_Forward(t *testing.T) {
 		s := Encode(on)
 		s.SetCursor(0)
 		var onr Onion
-		if onr = Recognise(s); onr == nil {
+		if onr = Recognise(s, slice.GenerateRandomAddrPortIPv6()); onr == nil {
 			t.Error("did not unwrap")
 			t.FailNow()
 		}

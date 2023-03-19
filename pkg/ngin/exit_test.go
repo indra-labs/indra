@@ -12,6 +12,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 	"git-indra.lan/indra-labs/indra/pkg/util/tests"
 )
@@ -43,7 +44,7 @@ func TestOnionSkins_Exit(t *testing.T) {
 	s := Encode(on)
 	s.SetCursor(0)
 	var onc Onion
-	if onc = Recognise(s); onc == nil {
+	if onc = Recognise(s, slice.GenerateRandomAddrPortIPv6()); onc == nil {
 		t.Error("did not unwrap")
 		t.FailNow()
 	}
@@ -81,20 +82,23 @@ func TestOnionSkins_Exit(t *testing.T) {
 }
 
 func TestClient_SendExit(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+	log2.SetLogLevel(log2.Trace)
 	var clients []*Engine
 	var e error
 	if clients, e = CreateNMockCircuitsWithSessions(2, 2); check(e) {
 		t.Error(e)
 		t.FailNow()
 	}
+	client := clients[0]
+	log.D.Ln("client", client.GetLocalNodeAddressString())
+	// peers := clients[1:]
 	// set up forwarding port service
 	const port = 3455
 	sim := NewSim(0)
 	for i := range clients {
-		if i == 0 {
-			continue
-		}
+		// if i == 0 {
+		// 	continue
+		// }
 		e = clients[i].AddServiceToLocalNode(&Service{
 			Port:      port,
 			Transport: sim,
@@ -134,10 +138,18 @@ out:
 			t.Error(e)
 			t.FailNow()
 		}
-		sess := clients[0].Sessions[i]
-		// c[sess.Hop] = clients[0].Sessions[i]
+		bob := clients[0].Sessions[i]
+		returnHops := client.SessionManager.GetSessionsAtHop(5)
+		var alice *SessionData
+		if len(returnHops) > 1 {
+			cryptorand.Shuffle(len(returnHops), func(i, j int) {
+				returnHops[i], returnHops[j] = returnHops[j],
+					returnHops[i]
+			})
+		}
+		alice = returnHops[0] // c[bob.Hop] = clients[0].Sessions[i]
 		id := nonce.NewID()
-		clients[0].SendExit(port, msg, id, sess, func(idd nonce.ID,
+		client.SendExit(port, msg, id, bob, alice, func(idd nonce.ID,
 			k *pub.Bytes, b slice.Bytes) (e error) {
 			if sha256.Single(b) != respHash {
 				t.Error("failed to receive expected message")

@@ -120,12 +120,12 @@ func (x *Exit) Handle(s *zip.Splice, p Onion,
 }
 
 type ExitParams struct {
-	Port    uint16
-	Payload slice.Bytes
-	ID      nonce.ID
-	Target  *SessionData
-	S       Circuit
-	KS      *signer.KeySet
+	Port       uint16
+	Payload    slice.Bytes
+	ID         nonce.ID
+	Alice, Bob *SessionData
+	S          Circuit
+	KS         *signer.KeySet
 }
 
 // MakeExit constructs a message containing an arbitrary payload to a node (3rd
@@ -141,7 +141,7 @@ type ExitParams struct {
 // their section at the top, moves the next crypt header to the top and pads the
 // remainder with noise, so it always looks like the first hop.
 func MakeExit(p ExitParams) Skins {
-	headers := GetHeaders(p.Target, p.S, p.KS)
+	headers := GetHeaders(p.Alice, p.Bob, p.S, p.KS)
 	return Skins{}.
 		RoutingHeader(headers.Forward).
 		Exit(p.ID, p.Port, p.Payload, headers.ExitPoint()).
@@ -149,15 +149,16 @@ func MakeExit(p ExitParams) Skins {
 }
 
 func (ng *Engine) SendExit(port uint16, msg slice.Bytes, id nonce.ID,
-	target *SessionData, hook Callback) {
+	alice, bob *SessionData, hook Callback) {
 	
 	hops := StandardCircuit()
 	s := make(Sessions, len(hops))
-	// s[2] = target
+	s[2] = bob
+	s[5] = alice
 	se := ng.SelectHops(hops, s)
 	var c Circuit
 	copy(c[:], se)
-	o := MakeExit(ExitParams{port, msg, id, se[len(se)-1], c, ng.KeySet})
+	o := MakeExit(ExitParams{port, msg, id, bob, alice, c, ng.KeySet})
 	// log.D.S(ng.GetLocalNodeAddress().String()+" sending out exit onion", o)
 	res := ng.PostAcctOnion(o)
 	ng.SendWithOneHook(c[0].AddrPort, res, hook, ng.PendingResponses)

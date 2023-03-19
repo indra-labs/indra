@@ -88,17 +88,16 @@ func (ng *Engine) Shutdown() {
 
 func (ng *Engine) HandleMessage(s *zip.Splice, pr Onion) {
 	log.D.F("%s handling received message", ng.GetLocalNodeAddressString())
-	log.D.S(s)
 	s.SetCursor(0)
-	// s.Segments = s.Segments[:0]
-	on := Recognise(s)
-	// log.D.Ln(s)
+	s.Segments = s.Segments[:0]
+	on := Recognise(s, ng.GetLocalNodeAddress())
 	if on != nil {
 		if check(on.Decode(s)) {
 			return
 		}
-		log.D.Ln(s)
-		log.D.S(s.GetRange(-1, -1).ToBytes())
+		if on.Magic() != IntroMagic {
+			log.D.Ln(s)
+		}
 		if check(on.Handle(s, pr, ng)) {
 			log.W.S("unrecognised packet", s.GetRange(-1, -1).ToBytes())
 		}

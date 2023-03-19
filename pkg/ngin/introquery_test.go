@@ -17,6 +17,8 @@ import (
 )
 
 func TestOnionSkins_IntroQuery(t *testing.T) {
+	log2.SetLogLevel(log2.Trace)
+	log2.App = ""
 	var e error
 	prvs, pubs := GetCipherSet(t)
 	ciphers := GenCiphers(prvs, pubs)
@@ -38,7 +40,7 @@ func TestOnionSkins_IntroQuery(t *testing.T) {
 	s := Encode(on)
 	s.SetCursor(0)
 	var onc Onion
-	if onc = Recognise(s); onc == nil {
+	if onc = Recognise(s, slice.GenerateRandomAddrPortIPv6()); onc == nil {
 		t.Error("did not unwrap")
 		t.FailNow()
 	}
@@ -46,6 +48,7 @@ func TestOnionSkins_IntroQuery(t *testing.T) {
 		t.Error("did not decode")
 		t.FailNow()
 	}
+	log.D.Ln(s)
 	var ex *IntroQuery
 	var ok bool
 	if ex, ok = onc.(*IntroQuery); !ok {
@@ -76,7 +79,7 @@ func TestOnionSkins_IntroQuery(t *testing.T) {
 
 func TestEngine_SendIntroQuery(t *testing.T) {
 	log2.SetLogLevel(log2.Info)
-	log2.App = "test"
+	log2.App = ""
 	var clients []*Engine
 	var e error
 	const nCircuits = 10
@@ -93,18 +96,20 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 	var counter atomic.Int32
 	quit := qu.T()
 	go func() {
-		select {
-		case <-time.After(time.Second * 4):
-			quit.Q()
-			t.Error("MakeHiddenService test failed")
-		case <-quit:
-			for i := 0; i < int(counter.Load()); i++ {
-				wg.Done()
+		for {
+			select {
+			case <-time.After(time.Second * 4):
+				quit.Q()
+				t.Error("MakeHiddenService test failed")
+			case <-quit:
+				for i := 0; i < int(counter.Load()); i++ {
+					wg.Done()
+				}
+				for _, v := range clients {
+					v.Shutdown()
+				}
+				return
 			}
-			for _, v := range clients {
-				v.Shutdown()
-			}
-			return
 		}
 	}()
 	for i := 0; i < nCircuits*nCircuits/2; i++ {
@@ -132,39 +137,47 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 			introducerHops[i], introducerHops[j] = introducerHops[j], introducerHops[i]
 		})
 	}
-	// There must be at least one, and if there was more than one the first
-	// index of introducerHops will be a randomly selected one.
 	introducer = introducerHops[0]
+	returnHops := client.SessionManager.GetSessionsAtHop(5)
+	var returner *SessionData
+	if len(returnHops) > 1 {
+		cryptorand.Shuffle(len(returnHops), func(i, j int) {
+			returnHops[i], returnHops[j] = returnHops[j],
+				returnHops[i]
+		})
+	}
+	returner = returnHops[0] // c[exiter.Hop] = clients[0].Sessions[i]
 	client.SendHiddenService(make(slice.Bytes, RoutingHeaderLen), id, idPrv,
-		time.Now().Add(time.Hour), introducer, 2342,
+		time.Now().Add(time.Hour), returner, introducer, 2342,
 		func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
 			log.I.S("hidden service callback", id, k, b.ToBytes())
 			return
 		})
-	for i := range clients {
-		log.D.S("known intros", clients[i].KnownIntros)
-	}
+	// time.Sleep(time.Second)
 	log2.SetLogLevel(log2.Trace)
 	// Now query everyone for the intro.
 	idPub := pub.Derive(idPrv)
 	peers := clients[1:]
 	log.D.Ln("client address", client.GetLocalNodeAddressString())
-	delete(client.HiddenRouting.KnownIntros, idPub.ToBytes())
 	for i := range peers {
 		wg.Add(1)
 		counter.Inc()
 		log.I.Ln("peer", i)
-		returnHops := client.SessionManager.GetSessionsAtHop(2)
 		if len(returnHops) > 1 {
 			cryptorand.Shuffle(len(returnHops), func(i, j int) {
 				returnHops[i], returnHops[j] = returnHops[j], returnHops[i]
 			})
 		}
-		client.SendIntroQuery(id, idPub, returnHops[0],
+		if len(introducerHops) > 1 {
+			cryptorand.Shuffle(len(introducerHops), func(i, j int) {
+				introducerHops[i], introducerHops[j] = introducerHops[j], introducerHops[i]
+			})
+		}
+		client.SendIntroQuery(id, idPub, introducerHops[0], returnHops[0],
 			func(in *Intro) {
 				wg.Done()
 				counter.Dec()
-				log.D.S("onion",
+				log.D.Ln("success",
 					in.ID, in.Key.ToBase32Abbreviated(), in.AddrPort)
 			})
 		wg.Wait()

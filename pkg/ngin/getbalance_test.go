@@ -12,6 +12,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -42,7 +43,7 @@ func TestOnionSkins_GetBalance(t *testing.T) {
 	s := Encode(on)
 	s.SetCursor(0)
 	var onc Onion
-	if onc = Recognise(s); onc == nil {
+	if onc = Recognise(s, slice.GenerateRandomAddrPortIPv6()); onc == nil {
 		t.Error("did not unwrap")
 		t.FailNow()
 	}
@@ -82,6 +83,8 @@ func TestClient_SendGetBalance(t *testing.T) {
 		t.Error(e)
 		t.FailNow()
 	}
+	client := clients[0]
+	log.D.Ln("client", client.GetLocalNodeAddressString())
 	// Start up the clients.
 	for _, v := range clients {
 		go v.Start()
@@ -96,14 +99,25 @@ func TestClient_SendGetBalance(t *testing.T) {
 		}
 		quit.Q()
 		t.Error("SendGetBalance test failed")
+		t.FailNow()
 	}()
 out:
 	for i := 1; i < len(clients[0].Sessions)-1; i++ {
 		wg.Add(1)
-		clients[0].SendGetBalance(clients[0].Sessions[i],
+		returnHops := client.SessionManager.GetSessionsAtHop(5)
+		var returner *SessionData
+		if len(returnHops) > 1 {
+			cryptorand.Shuffle(len(returnHops), func(i, j int) {
+				returnHops[i], returnHops[j] = returnHops[j],
+					returnHops[i]
+			})
+		}
+		returner = returnHops[0] // c[exiter.Hop] = clients[0].Sessions[i]
+		clients[0].SendGetBalance(returner, clients[0].Sessions[i],
 			func(cf nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
 				log.I.Ln("success")
 				wg.Done()
+				quit.Q()
 				return
 			})
 		select {
