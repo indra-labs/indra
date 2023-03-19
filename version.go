@@ -1,15 +1,5 @@
 package indra
 
-
-// Put invocations to run all the generators in here (
-// check cmd/bumper/ to add them, and they will automatically run with:
-//
-// $ go generate .
-//
-// which will run all these generators below and finish with a go install.
-//go:generate go run ./pkg/relay/gen/main.go
-//go:generate go install ./...
-
 import (
 	"fmt"
 )
@@ -18,15 +8,15 @@ var (
 	// URL is the git URL for the repository.
 	URL = ""
 	// GitRef is the gitref, as in refs/heads/branchname.
-	GitRef = "refs/heads/main"
+	GitRef = "refs/heads/protocol"
 	// ParentGitCommit is the commit hash of the parent HEAD.
-	ParentGitCommit = "5bfbf9739202bf7e11b81c3a3f7dfad25d8aaf1a"
+	ParentGitCommit = "f4ab7375e81843ce440c02f57526b3b144c931cb"
 	// BuildTime stores the time when the current binary was built.
-	BuildTime = "2023-03-04T05:19:59Z"
+	BuildTime = "2023-03-18T21:05:09Z"
 	// SemVer lists the (latest) git tag on the release.
 	SemVer = "v0.0.11"
 	// PathBase is the path base returned from runtime caller.
-	PathBase = "/opt/indra-labs/indra/"
+	PathBase = "/indra/"
 	// Major is the major number from the tag.
 	Major = 0
 	// Minor is the minor number from the tag.

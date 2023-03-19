@@ -1,0 +1,104 @@
+package ngin
+
+import (
+	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
+	
+	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/ngin/magic"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/util/zip"
+)
+
+const (
+	BalanceMagic = "ba"
+	BalanceLen   = magic.Len + nonce.IDLen*2 + slice.Uint64Len
+)
+
+type Balance struct {
+	nonce.ID
+	ConfID nonce.ID
+	lnwire.MilliSatoshi
+}
+
+func balancePrototype() Onion { return &Balance{} }
+
+func init() { Register(BalanceMagic, balancePrototype) }
+
+func (o Skins) Balance(id, confID nonce.ID,
+	amt lnwire.MilliSatoshi) Skins {
+	
+	return append(o, &Balance{
+		ID:           id,
+		ConfID:       confID,
+		MilliSatoshi: amt,
+	})
+}
+
+func (x *Balance) Magic() string { return BalanceMagic }
+
+func (x *Balance) Encode(s *zip.Splice) (e error) {
+	log.D.S("encoding", x.ID, x.ConfID, x.MilliSatoshi)
+	s.
+		Magic(BalanceMagic).
+		ID(x.ID).
+		ID(x.ConfID).
+		Uint64(uint64(x.MilliSatoshi))
+	return
+}
+
+func (x *Balance) Decode(s *zip.Splice) (e error) {
+	if e = magic.TooShort(s.Remaining(), BalanceLen-magic.Len,
+		BalanceMagic); check(e) {
+		return
+	}
+	s.
+		ReadID(&x.ID).
+		ReadID(&x.ConfID).
+		ReadMilliSatoshi(&x.MilliSatoshi)
+	return
+}
+
+func (x *Balance) Len() int { return BalanceLen }
+
+func (x *Balance) Wrap(inner Onion) {}
+
+func (x *Balance) Handle(s *zip.Splice, p Onion,
+	ng *Engine) (e error) {
+	
+	// log.D.S("balance", x.ID, x.ConfID, x.MilliSatoshi)
+	if pending := ng.PendingResponses.Find(x.ID); pending != nil {
+		log.D.S("found pending", pending.ID)
+		for i := range pending.Billable {
+			session := ng.FindSession(pending.Billable[i])
+			out := session.RelayRate * s.Len()
+			if session != nil {
+				in := session.RelayRate * pending.SentSize
+				switch {
+				case i < 2:
+					ng.DecSession(session.ID, in, true, "reverse")
+				case i == 2:
+					ng.DecSession(session.ID, (in+out)/2, true, "getbalance")
+				case i > 2:
+					ng.DecSession(session.ID, out, true, "reverse")
+				}
+			}
+		}
+		var se *SessionData
+		ng.IterateSessions(func(s *SessionData) bool {
+			if s.ID == x.ID {
+				log.D.F("received balance %s for session %s %s was %s",
+					x.MilliSatoshi, x.ID, x.ConfID, s.Remaining)
+				se = s
+				return true
+			}
+			return false
+		})
+		if se != nil {
+			log.D.F("got %v, expected %v", se.Remaining, x.MilliSatoshi)
+			se.Remaining = x.MilliSatoshi
+		}
+		ng.PendingResponses.ProcessAndDelete(pending.ID, nil, s.GetRange(-1,
+			-1))
+	}
+	return
+}
