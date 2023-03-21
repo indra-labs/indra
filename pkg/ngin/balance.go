@@ -1,14 +1,11 @@
 package ngin
 
 import (
-	"reflect"
-	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/ngin/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
-	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
 const (
@@ -17,7 +14,7 @@ const (
 )
 
 type Balance struct {
-	nonce.ID
+	ID     nonce.ID
 	ConfID nonce.ID
 	lnwire.MilliSatoshi
 }
@@ -38,10 +35,10 @@ func (o Skins) Balance(id, confID nonce.ID,
 
 func (x *Balance) Magic() string { return BalanceMagic }
 
-func (x *Balance) Encode(s *zip.Splice) (e error) {
-	log.T.S("encoding", reflect.TypeOf(x),
-		x.ID, x.ConfID, x.MilliSatoshi,
-	)
+func (x *Balance) Encode(s *Splice) (e error) {
+	// log.T.S("encoding", reflect.TypeOf(x),
+	// 	x.ID, x.ConfID, x.MilliSatoshi,
+	// )
 	s.
 		Magic(BalanceMagic).
 		ID(x.ID).
@@ -50,7 +47,7 @@ func (x *Balance) Encode(s *zip.Splice) (e error) {
 	return
 }
 
-func (x *Balance) Decode(s *zip.Splice) (e error) {
+func (x *Balance) Decode(s *Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), BalanceLen-magic.Len,
 		BalanceMagic); check(e) {
 		return
@@ -66,7 +63,7 @@ func (x *Balance) Len() int { return BalanceLen }
 
 func (x *Balance) Wrap(inner Onion) {}
 
-func (x *Balance) Handle(s *zip.Splice, p Onion,
+func (x *Balance) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	// log.D.S("balance", x.ID, x.ConfID, x.MilliSatoshi)

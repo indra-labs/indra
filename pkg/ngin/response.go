@@ -1,12 +1,9 @@
 package ngin
 
 import (
-	"reflect"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/ngin/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
-	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
 const (
@@ -16,7 +13,7 @@ const (
 )
 
 type Response struct {
-	nonce.ID
+	ID   nonce.ID
 	Port uint16
 	Load byte
 	slice.Bytes
@@ -32,10 +29,10 @@ func (o Skins) Response(id nonce.ID, res slice.Bytes, port uint16) Skins {
 
 func (x *Response) Magic() string { return ResponseMagic }
 
-func (x *Response) Encode(s *zip.Splice) (e error) {
-	log.T.S("encoding", reflect.TypeOf(x),
-		x.ID, x.Port, x.Load, x.Bytes.ToBytes(),
-	)
+func (x *Response) Encode(s *Splice) (e error) {
+	// log.T.S("encoding", reflect.TypeOf(x),
+	// 	x.ID, x.Port, x.Load, x.Bytes.ToBytes(),
+	// )
 	s.
 		Magic(ResponseMagic).
 		ID(x.ID).
@@ -45,7 +42,7 @@ func (x *Response) Encode(s *zip.Splice) (e error) {
 	return
 }
 
-func (x *Response) Decode(s *zip.Splice) (e error) {
+func (x *Response) Decode(s *Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), ResponseLen-magic.Len,
 		ResponseMagic); check(e) {
 		return
@@ -62,7 +59,7 @@ func (x *Response) Len() int { return ResponseLen + len(x.Bytes) }
 
 func (x *Response) Wrap(inner Onion) {}
 
-func (x *Response) Handle(s *zip.Splice, p Onion,
+func (x *Response) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	pending := ng.PendingResponses.Find(x.ID)

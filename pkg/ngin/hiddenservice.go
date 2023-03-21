@@ -1,7 +1,6 @@
 package ngin
 
 import (
-	"reflect"
 	"time"
 	
 	"github.com/gookit/color"
@@ -12,7 +11,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/ngin/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
-	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
 const (
@@ -44,22 +42,22 @@ func (o Skins) HiddenService(in *Intro, point *ExitPoint) Skins {
 		Intro:   *in,
 		Ciphers: GenCiphers(point.Keys, point.ReturnPubs),
 		Nonces:  point.Nonces,
-		Onion:   NewTmpl(),
+		Onion:   NewEnd(),
 	})
 }
 
 func (x *HiddenService) Magic() string { return HiddenServiceMagic }
 
-func (x *HiddenService) Encode(s *zip.Splice) (e error) {
-	log.T.S("encoding", reflect.TypeOf(x),
-		x.Intro.ID,
-		x.Intro.ID,
-		x.Intro.AddrPort.String(),
-		x.Intro.Expiry,
-		x.Intro.Sig,
-		x.Ciphers,
-		x.Nonces,
-	)
+func (x *HiddenService) Encode(s *Splice) (e error) {
+	// log.T.S("encoding", reflect.TypeOf(x),
+	// 	x.Intro.ID,
+	// 	x.Intro.ID,
+	// 	x.Intro.AddrPort.String(),
+	// 	x.Intro.Expiry,
+	// 	x.Intro.Sig,
+	// 	x.Ciphers,
+	// 	x.Nonces,
+	// )
 	return x.Onion.Encode(s.Magic(HiddenServiceMagic).
 		ID(x.Intro.ID).
 		Pubkey(x.Intro.Key).
@@ -70,7 +68,7 @@ func (x *HiddenService) Encode(s *zip.Splice) (e error) {
 		IVTriple(x.Nonces))
 }
 
-func (x *HiddenService) Decode(s *zip.Splice) (e error) {
+func (x *HiddenService) Decode(s *Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), HiddenServiceLen-magic.Len,
 		HiddenServiceMagic); check(e) {
 		return
@@ -93,7 +91,7 @@ func (x *HiddenService) Len() int { return HiddenServiceLen + x.Onion.Len() }
 
 func (x *HiddenService) Wrap(inner Onion) { x.Onion = inner }
 
-func (x *HiddenService) Handle(s *zip.Splice, p Onion, ng *Engine) (e error) {
+func (x *HiddenService) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 	log.D.F("%s adding introduction for key %s",
 		ng.GetLocalNodeAddressString(), x.Key.ToBase32Abbreviated())
 	ng.HiddenRouting.AddIntro(x.Key, &Introduction{
@@ -142,7 +140,8 @@ func (ng *Engine) SendHiddenService(
 		color.Yellow.Sprint(alice.Node.AddrPort.String()))
 	res := ng.PostAcctOnion(o)
 	// log.D.S("hs onion binary", res.B.ToBytes())
-	ng.HiddenRouting.AddHiddenService(key, localPort, ng.GetLocalNodeAddressString())
+	ng.HiddenRouting.AddHiddenService(key, in, localPort,
+		ng.GetLocalNodeAddressString())
 	// log.D.S("storing hidden service info", ng.HiddenRouting)
 	ng.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.PendingResponses)
 }

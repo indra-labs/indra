@@ -27,28 +27,19 @@ func TestEngine_Route(t *testing.T) {
 		t.FailNow()
 	}
 	client := clients[0]
-	log.I.Ln("client at", client.GetLocalNodeAddressString())
 	// Start up the clients.
 	for _, v := range clients {
 		go v.Start()
 	}
 	var wg sync.WaitGroup
 	var counter atomic.Int32
-	wgdec := func() {
-		wg.Done()
-		counter.Dec()
-	}
-	wginc := func() {
-		wg.Add(1)
-		counter.Inc()
-	}
 	quit := qu.T()
 	go func() {
 		for {
 			select {
-			case <-time.After(time.Second * 5):
+			case <-time.After(time.Second * 4):
 				quit.Q()
-				t.Error("Route test failed")
+				t.Error("MakeHiddenService test failed")
 			case <-quit:
 				for i := 0; i < int(counter.Load()); i++ {
 					wg.Done()
@@ -60,13 +51,16 @@ func TestEngine_Route(t *testing.T) {
 			}
 		}
 	}()
-	for i := 0; i < nCircuits; i++ {
-		wginc()
+	for i := 0; i < nCircuits*nCircuits/2; i++ {
+		wg.Add(1)
+		counter.Inc()
 		e = clients[0].BuyNewSessions(1000000, func() {
-			wgdec()
+			wg.Done()
+			counter.Dec()
 		})
 		if check(e) {
-			wgdec()
+			wg.Done()
+			counter.Dec()
 		}
 		wg.Wait()
 	}
@@ -96,32 +90,36 @@ func TestEngine_Route(t *testing.T) {
 	}
 	returner = returnHops[0]
 	const localPort = 25234
-	var introClient *Engine
+	// var introClient *Engine
 	// log.I.F("introducer %s", color.Yellow.Sprint(introducer.AddrPort.String()))
 	log.D.Ln("getting sessions for introducer...")
 	for i := range clients {
 		if introducer.Node.ID == clients[i].GetLocalNode().ID {
-			introClient = clients[i]
+			// introClient = clients[i]
 			for j := 0; j < nCircuits; j++ {
-				wginc()
+				wg.Add(1)
+				counter.Inc()
 				e = clients[i].BuyNewSessions(1000000, func() {
-					wgdec()
+					wg.Done()
+					counter.Dec()
 				})
 				if check(e) {
-					wgdec()
+					wg.Done()
+					counter.Dec()
 				}
 			}
 			wg.Wait()
 			break
 		}
 	}
-	wginc()
+	wg.Add(1)
+	counter.Inc()
 	client.SendHiddenService(id, idPrv, time.Now().Add(time.Hour), returner,
 		introducer, localPort,
 		func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
-			log.I.S("hidden service callback", client.GetLocalNodeAddressString(),
-				id, k, b.ToBytes())
-			wgdec()
+			log.I.F("hidden service %s successfully propagated", k)
+			wg.Done()
+			counter.Dec()
 			return
 		})
 	wg.Wait()
@@ -150,7 +148,8 @@ func TestEngine_Route(t *testing.T) {
 		}
 		returner = returnHops[0]
 		client.SendIntroQuery(id, idPub, introducer, returner, func(in *Intro) {
-			wgdec()
+			wg.Done()
+			counter.Dec()
 			ini = in
 			if ini == nil {
 				t.Error("got empty intro query answer")
@@ -160,15 +159,15 @@ func TestEngine_Route(t *testing.T) {
 	}
 	wg.Wait()
 	wg.Add(1)
-	log.I.Ln("all peers know about the hidden service")
-	log.I.S("introclient", introClient.HiddenRouting.HiddenServices,
-		introClient.HiddenRouting.MyIntros, introClient.HiddenRouting.KnownIntros)
+	// log.I.S("introclient", introClient.HiddenRouting.HiddenServices,
+	// 	introClient.HiddenRouting.MyIntros, introClient.HiddenRouting.KnownIntros)
 	log2.SetLogLevel(log2.Trace)
 	log.D.Ln("intro", ini.ID, ini.AddrPort.String(), ini.Key.ToBase32Abbreviated(),
 		ini.Expiry, ini.Validate())
 	client.SendRoute(ini.Key, ini.AddrPort,
 		func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
 			log.I.S("success", id, k, b.ToBytes())
+			counter.Dec()
 			wg.Done()
 			return
 		})

@@ -3,7 +3,6 @@ package ngin
 import (
 	"crypto/cipher"
 	"net/netip"
-	"reflect"
 	"time"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
@@ -13,13 +12,13 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/ngin/magic"
-	"git-indra.lan/indra-labs/indra/pkg/util/zip"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 const (
 	RouteMagic = "ro"
 	RouteLen   = magic.Len + cloak.Len + pub.KeyLen + nonce.IVLen +
-		zip.ReplyLen
+		ReplyLen
 )
 
 func RoutePrototype() Onion { return &Route{} }
@@ -33,7 +32,8 @@ type Route struct {
 	SenderPub     *pub.Key
 	nonce.IV
 	// ------- the rest is encrypted to the HiddenService/Sender keys.
-	*zip.Reply
+	*Reply
+	Header slice.Bytes
 	Onion
 }
 
@@ -44,31 +44,30 @@ func (o Skins) Route(id nonce.ID, k *pub.Key, ks *signer.KeySet,
 		HiddenService: k,
 		Sender:        ks.Next(),
 		IV:            nonce.New(),
-		Reply: &zip.Reply{
+		Reply: &Reply{
 			ID:      id,
 			Ciphers: GenCiphers(ep.Keys, ep.ReturnPubs),
 			Nonces:  ep.Nonces,
 		},
+		Onion: &End{},
 	}
 	oo.SenderPub = pub.Derive(oo.Sender)
 	oo.HiddenCloaked = cloak.GetCloak(k)
 	return append(o, oo)
 }
 
-func (x *Route) Magic() string { return TmplMagic }
+func (x *Route) Magic() string { return EndMagic }
 
-func (x *Route) Encode(s *zip.Splice) (e error) {
-	iv := nonce.New()
-	log.T.S("encoding", reflect.TypeOf(x),
-		cloak.GetCloak(x.HiddenService), pub.Derive(x.Sender), iv,
-		x.Reply,
-	)
+func (x *Route) Encode(s *Splice) (e error) {
 	s.Magic(RouteMagic).
 		Cloak(x.HiddenService).
 		Pubkey(pub.Derive(x.Sender)).
-		IV(iv)
+		IV(x.IV)
 	start := s.GetCursor()
 	s.Reply(x.Reply)
+	if e = x.Onion.Encode(s); check(e) {
+		return
+	}
 	var blk cipher.Block
 	// Encrypt the message!
 	if blk = ciph.GetBlock(x.Sender, x.HiddenService); check(e) {
@@ -78,7 +77,7 @@ func (x *Route) Encode(s *zip.Splice) (e error) {
 	return
 }
 
-func (x *Route) Decode(s *zip.Splice) (e error) {
+func (x *Route) Decode(s *Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), RouteLen-magic.Len,
 		RouteMagic); check(e) {
 		return
@@ -91,25 +90,24 @@ func (x *Route) Decode(s *zip.Splice) (e error) {
 
 // Decrypt decrypts the rest of a message after the Route segment if the
 // recipient has the hidden service private key.
-func (x *Route) Decrypt(prk *prv.Key, s *zip.Splice) {
-	ciph.Encipher(ciph.GetBlock(prk, x.HiddenService), x.IV,
+func (x *Route) Decrypt(prk *prv.Key, s *Splice) {
+	log.D.S(s.GetRange(-1, s.GetCursor()), s.GetRange(s.GetCursor(), -1))
+	ciph.Encipher(ciph.GetBlock(prk, x.SenderPub), x.IV,
 		s.GetCursorToEnd())
 	// And now we can see the reply field for the return trip.
 	if x.Reply == nil {
-		x.Reply = &zip.Reply{}
+		x.Reply = &Reply{}
 	}
-	s.ReadReply(x.Reply)
+	s.ReadReply(x.Reply).ReadRoutingHeader(&x.Header)
 }
 
-func (x *Route) Len() int { return RouteLen }
+func (x *Route) Len() int { return RouteLen + x.Onion.Len() }
 
-func (x *Route) Wrap(inner Onion) {}
+func (x *Route) Wrap(inner Onion) { x.Onion = inner }
 
-func (x *Route) Handle(s *zip.Splice, p Onion, ng *Engine) (e error) {
+func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 	
-	log.D.Ln(ng.GetLocalNodeAddressString(), "handling route",
-		// ng.HiddenRouting.KnownIntros, ng.HiddenRouting.MyIntros,
-	)
+	log.D.Ln(ng.GetLocalNodeAddressString(), "handling route")
 	hc := ng.FindCloakedHiddenService(x.HiddenCloaked)
 	if hc == nil {
 		log.T.Ln("no matching hidden service key found from cloaked key")
@@ -119,8 +117,9 @@ func (x *Route) Handle(s *zip.Splice, p Onion, ng *Engine) (e error) {
 	log.D.Ln("route key", *hc)
 	hcl := *hc
 	if hh, ok := ng.HiddenRouting.HiddenServices[hcl]; ok {
-		log.D.S("we are the hidden service", hh)
+		log.D.F("we are the hidden service %s", hh.CurrentIntros[0].Key)
 		// We have the keys to unwrap this one.
+		log.D.Ln(s)
 		x.Decrypt(hh.Prv, s)
 		log.D.Ln(s)
 		// ng.HandleMessage(s, x)
@@ -210,7 +209,7 @@ func (ng *Engine) SendRoute(k *pub.Key, ap *netip.AddrPort,
 	var c Circuit
 	copy(c[:], se)
 	o := MakeRoute(nonce.NewID(), k, ng.KeySet, c[4], ss, c)
-	log.D.Ln("doing accounting")
+	log.D.S("doing accounting", o)
 	res := ng.PostAcctOnion(o)
 	log.D.Ln("sending out route request onion")
 	ng.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.PendingResponses)

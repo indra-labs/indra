@@ -1,4 +1,4 @@
-package zip
+package ngin
 
 import (
 	"encoding/hex"
@@ -11,7 +11,6 @@ import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	"github.com/gookit/color"
 	
-	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/b32/based32"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/cloak"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
@@ -20,13 +19,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	magic2 "git-indra.lan/indra-labs/indra/pkg/ngin/magic"
-	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
-)
-
-var (
-	log   = log2.GetLogger(indra.PathBase)
-	check = log.E.Chk
 )
 
 const AddrLen = net.IPv6len + 2
@@ -130,7 +123,7 @@ func (s *Splice) String() (o string) {
 	return
 }
 
-func New(length int) (splicer *Splice) {
+func NewSplice(length int) (splicer *Splice) {
 	splicer = &Splice{make(slice.Bytes, length), slice.NewCursor(), Segments{}}
 	return
 }
@@ -430,7 +423,7 @@ func (s *Splice) ReadHashTriple(h *[3]sha256.Hash) *Splice {
 }
 
 type Reply struct {
-	nonce.ID
+	ID nonce.ID
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
 	Ciphers [3]sha256.Hash
@@ -439,13 +432,6 @@ type Reply struct {
 	// they are common with the crypts in the header.
 	Nonces [3]nonce.IV
 }
-
-const (
-	ReverseLen       = magic2.Len + 1 + AddrLen
-	CryptLen         = magic2.Len + nonce.IVLen + cloak.Len + pub.KeyLen
-	ReverseCryptLen  = ReverseLen + CryptLen
-	RoutingHeaderLen = 3 * ReverseCryptLen
-)
 
 func (s *Splice) RoutingHeader(b slice.Bytes) *Splice {
 	copy(s.b[*s.c:s.c.Inc(RoutingHeaderLen)], b[:RoutingHeaderLen])

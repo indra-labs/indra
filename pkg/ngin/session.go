@@ -1,14 +1,11 @@
 package ngin
 
 import (
-	"reflect"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/ngin/magic"
-	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
 const (
@@ -17,8 +14,8 @@ const (
 )
 
 type Session struct {
-	nonce.ID             // only used by a client
-	Hop             byte // only used by a client
+	ID              nonce.ID // only used by a client
+	Hop             byte     // only used by a client
 	Header, Payload *prv.Key
 	Onion
 }
@@ -54,7 +51,7 @@ func (o Skins) Session(sess *Session) Skins {
 	return append(o, &Session{
 		Header:  sess.Header,
 		Payload: sess.Payload,
-		Onion:   &Tmpl{},
+		Onion:   &End{},
 	})
 }
 
@@ -77,10 +74,10 @@ func NewSessionKeys(hop byte) (x *Session) {
 
 func (x *Session) Magic() string { return SessionMagic }
 
-func (x *Session) Encode(s *zip.Splice) (e error) {
-	log.T.S("encoding", reflect.TypeOf(x),
-		x.ID, x.Header, x.Payload,
-	)
+func (x *Session) Encode(s *Splice) (e error) {
+	// log.T.S("encoding", reflect.TypeOf(x),
+	// 	x.ID, x.Header, x.Payload,
+	// )
 	return x.Onion.Encode(s.Magic(SessionMagic).
 		ID(x.ID).
 		Prvkey(x.Header).
@@ -88,7 +85,7 @@ func (x *Session) Encode(s *zip.Splice) (e error) {
 	)
 }
 
-func (x *Session) Decode(s *zip.Splice) (e error) {
+func (x *Session) Decode(s *Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), SessionLen-magic.Len,
 		SessionMagic); check(e) {
 		return
@@ -104,7 +101,7 @@ func (x *Session) Len() int { return SessionLen + x.Onion.Len() }
 
 func (x *Session) Wrap(inner Onion) { x.Onion = inner }
 
-func (x *Session) Handle(s *zip.Splice, p Onion, ng *Engine) (e error) {
+func (x *Session) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 	
 	log.T.F("incoming session %s", x.PreimageHash())
 	pi := ng.FindPendingPreimage(x.PreimageHash())

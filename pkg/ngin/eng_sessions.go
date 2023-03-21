@@ -16,7 +16,9 @@ import (
 // the list of sessions inside them and attaches accounting operations to
 // apply when the associated confirmation(s) or response hooks are executed.
 func (sm *SessionManager) PostAcctOnion(o Skins) (res SendData) {
-	res.B = Encode(o.Assemble()).GetRange(-1, -1)
+	assembled := o.Assemble()
+	// log.T.S(assembled)
+	res.B = Encode(assembled).GetRange(-1, -1)
 	// do client accounting
 	skip := false
 	for i := range o {

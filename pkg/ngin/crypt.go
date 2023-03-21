@@ -2,7 +2,6 @@ package ngin
 
 import (
 	"crypto/cipher"
-	"reflect"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/cloak"
@@ -10,7 +9,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/ngin/magic"
-	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
 const (
@@ -51,10 +49,10 @@ func (o Skins) Crypt(toHdr, toPld *pub.Key, from *prv.Key, n nonce.IV,
 
 func (x *Crypt) Magic() string { return CryptMagic }
 
-func (x *Crypt) Encode(s *zip.Splice) (e error) {
-	log.T.S("encoding", reflect.TypeOf(x),
-		x.Nonce, x.Cloak, pub.Derive(x.From),
-	)
+func (x *Crypt) Encode(s *Splice) (e error) {
+	// log.T.S("encoding", reflect.TypeOf(x),
+	// 	x.Nonce, x.Cloak, pub.Derive(x.From),
+	// )
 	s.Magic(CryptMagic).
 		IV(x.Nonce).Cloak(x.ToHeaderPub).Pubkey(pub.Derive(x.From))
 	// Then we can encrypt the message segment
@@ -85,7 +83,7 @@ func (x *Crypt) Encode(s *zip.Splice) (e error) {
 	return e
 }
 
-func (x *Crypt) Decode(s *zip.Splice) (e error) {
+func (x *Crypt) Decode(s *Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), CryptLen-magic.Len, CryptMagic); check(e) {
 		return
 	}
@@ -99,7 +97,7 @@ func (x *Crypt) Len() int {
 
 func (x *Crypt) Wrap(inner Onion) { x.Onion = inner }
 
-func (x *Crypt) Handle(s *zip.Splice, p Onion,
+func (x *Crypt) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	// this is probably an encrypted crypt for us.
@@ -126,7 +124,7 @@ func (x *Crypt) Handle(s *zip.Splice, p Onion,
 
 // Decrypt requires the prv.Key to be located from the Cloak, using the FromPub
 // key to derive the shared secret, and then decrypts the rest of the message.
-func (x *Crypt) Decrypt(prk *prv.Key, s *zip.Splice) {
+func (x *Crypt) Decrypt(prk *prv.Key, s *Splice) {
 	ciph.Encipher(ciph.GetBlock(prk, x.FromPub), x.Nonce,
 		s.GetRange(s.GetCursor(), -1))
 }

@@ -8,7 +8,7 @@ import (
 )
 
 type Payment struct {
-	nonce.ID
+	ID          nonce.ID
 	Preimage    sha256.Hash
 	Amount      lnwire.MilliSatoshi
 	ConfirmChan chan bool

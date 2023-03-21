@@ -2,21 +2,19 @@ package ngin
 
 import (
 	"net/netip"
-	"reflect"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/ngin/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
-	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
 const (
 	ReverseMagic = "rv"
-	ReverseLen   = magic.Len + 1 + zip.AddrLen
+	ReverseLen   = magic.Len + 1 + AddrLen
 )
 
 type Reverse struct {
-	*netip.AddrPort
+	AddrPort *netip.AddrPort
 	Onion
 }
 
@@ -30,14 +28,16 @@ func (o Skins) Reverse(ip *netip.AddrPort) Skins {
 
 func (x *Reverse) Magic() string { return ReverseMagic }
 
-func (x *Reverse) Encode(s *zip.Splice) error {
-	log.T.S("encoding", reflect.TypeOf(x),
-		x.AddrPort,
+func (x *Reverse) Encode(s *Splice) error {
+	// log.T.S("encoding", reflect.TypeOf(x),
+	// 	x.AddrPort,
+	// )
+	return x.Onion.Encode(
+		s.Magic(ReverseMagic).AddrPort(x.AddrPort),
 	)
-	return x.Onion.Encode(s.Magic(ReverseMagic).AddrPort(x.AddrPort))
 }
 
-func (x *Reverse) Decode(s *zip.Splice) (e error) {
+func (x *Reverse) Decode(s *Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), ReverseLen-magic.Len,
 		ReverseMagic); check(e) {
 		return
@@ -50,7 +50,7 @@ func (x *Reverse) Len() int { return ReverseLen + x.Onion.Len() }
 
 func (x *Reverse) Wrap(inner Onion) { x.Onion = inner }
 
-func (x *Reverse) Handle(s *zip.Splice, p Onion,
+func (x *Reverse) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	if x.AddrPort.String() == ng.GetLocalNodeAddress().String() {

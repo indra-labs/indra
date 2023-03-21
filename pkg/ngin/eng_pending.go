@@ -14,7 +14,7 @@ import (
 type Callback func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error)
 
 type PendingResponse struct {
-	nonce.ID
+	ID       nonce.ID
 	SentSize int
 	Port     uint16
 	Billable []nonce.ID

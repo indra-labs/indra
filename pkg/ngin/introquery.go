@@ -1,15 +1,12 @@
 package ngin
 
 import (
-	"reflect"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/ngin/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
-	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
 const (
@@ -19,7 +16,7 @@ const (
 )
 
 type IntroQuery struct {
-	zip.Reply
+	Reply
 	Key *pub.Key
 	Onion
 }
@@ -30,7 +27,7 @@ func init() { Register(IntroQueryMagic, introQueryPrototype) }
 
 func (o Skins) IntroQuery(id nonce.ID, hsk *pub.Key, exit *ExitPoint) Skins {
 	return append(o, &IntroQuery{
-		Reply: zip.Reply{
+		Reply: Reply{
 			ID:      id,
 			Ciphers: GenCiphers(exit.Keys, exit.ReturnPubs),
 			Nonces:  exit.Nonces,
@@ -42,10 +39,10 @@ func (o Skins) IntroQuery(id nonce.ID, hsk *pub.Key, exit *ExitPoint) Skins {
 
 func (x *IntroQuery) Magic() string { return IntroQueryMagic }
 
-func (x *IntroQuery) Encode(s *zip.Splice) (e error) {
-	log.T.S("encoding", reflect.TypeOf(x),
-		x.Reply, x.Key,
-	)
+func (x *IntroQuery) Encode(s *Splice) (e error) {
+	// log.T.S("encoding", reflect.TypeOf(x),
+	// 	x.Reply, x.Key,
+	// )
 	return x.Onion.Encode(s.
 		Magic(IntroQueryMagic).
 		Reply(&x.Reply).
@@ -53,7 +50,7 @@ func (x *IntroQuery) Encode(s *zip.Splice) (e error) {
 	)
 }
 
-func (x *IntroQuery) Decode(s *zip.Splice) (e error) {
+func (x *IntroQuery) Decode(s *Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), IntroQueryLen-magic.Len,
 		IntroQueryMagic); check(e) {
 		return
@@ -66,7 +63,7 @@ func (x *IntroQuery) Len() int { return IntroQueryLen + x.Onion.Len() }
 
 func (x *IntroQuery) Wrap(inner Onion) { x.Onion = inner }
 
-func (x *IntroQuery) Handle(s *zip.Splice, p Onion,
+func (x *IntroQuery) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	ng.HiddenRouting.Lock()
@@ -116,7 +113,7 @@ func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *pub.Key,
 	
 	fn := func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
 		log.D.S("sendintroquery callback", id, k, b.ToBytes())
-		s := zip.Load(b, slice.NewCursor())
+		s := Load(b, slice.NewCursor())
 		on := Recognise(s, ng.GetLocalNodeAddress())
 		if e = on.Decode(s); check(e) {
 			return

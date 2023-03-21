@@ -2,7 +2,6 @@ package ngin
 
 import (
 	"net/netip"
-	"reflect"
 	"time"
 	
 	"github.com/gookit/color"
@@ -14,13 +13,12 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/ngin/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
-	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
 const (
 	IntroMagic = "in"
 	IntroLen   = magic.Len + nonce.IDLen + pub.KeyLen + 1 +
-		zip.AddrLen + slice.Uint64Len + sig.Len
+		AddrLen + slice.Uint64Len + sig.Len
 )
 
 type Intro struct {
@@ -43,7 +41,7 @@ func (o Skins) Intro(id nonce.ID, key *prv.Key, ap *netip.AddrPort,
 func NewIntro(id nonce.ID, key *prv.Key, ap *netip.AddrPort,
 	expires time.Time) (in *Intro) {
 	pk := pub.Derive(key)
-	s := zip.New(IntroLen - magic.Len)
+	s := NewSplice(IntroLen - magic.Len)
 	s.ID(id).Pubkey(pk).AddrPort(ap).Uint64(uint64(expires.
 		UnixNano()))
 	hash := sha256.Single(s.GetRange(-1, s.GetCursor()))
@@ -63,7 +61,7 @@ func NewIntro(id nonce.ID, key *prv.Key, ap *netip.AddrPort,
 }
 
 func (x *Intro) Validate() bool {
-	s := zip.New(IntroLen - magic.Len)
+	s := NewSplice(IntroLen - magic.Len)
 	s.ID(x.ID).Pubkey(x.Key).AddrPort(x.AddrPort).Uint64(uint64(x.Expiry.
 		UnixNano()))
 	hash := sha256.Single(s.GetRange(-1, s.GetCursor()))
@@ -79,10 +77,10 @@ func (x *Intro) Validate() bool {
 
 func (x *Intro) Magic() string { return IntroMagic }
 
-func (x *Intro) Encode(s *zip.Splice) (e error) {
-	log.T.S("encoding", reflect.TypeOf(x),
-		x.ID, x.AddrPort.String(), x.Expiry, x.Sig,
-	)
+func (x *Intro) Encode(s *Splice) (e error) {
+	// log.T.S("encoding", reflect.TypeOf(x),
+	// 	x.ID, x.AddrPort.String(), x.Expiry, x.Sig,
+	// )
 	s.Magic(IntroMagic).
 		ID(x.ID).
 		Pubkey(x.Key).
@@ -92,7 +90,7 @@ func (x *Intro) Encode(s *zip.Splice) (e error) {
 	return
 }
 
-func (x *Intro) Decode(s *zip.Splice) (e error) {
+func (x *Intro) Decode(s *Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), IntroLen-magic.Len,
 		IntroMagic); check(e) {
 		
@@ -110,7 +108,7 @@ func (x *Intro) Len() int { return IntroLen }
 
 func (x *Intro) Wrap(inner Onion) {}
 
-func (x *Intro) Handle(s *zip.Splice, p Onion,
+func (x *Intro) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	ng.HiddenRouting.Lock()

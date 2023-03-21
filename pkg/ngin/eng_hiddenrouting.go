@@ -12,7 +12,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
-	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
 type Introduction struct {
@@ -60,8 +59,8 @@ func NewHiddenrouting() *HiddenRouting {
 	}
 }
 
-func (hr *HiddenRouting) AddHiddenService(key *prv.Key, forward uint16,
-	addr string) {
+func (hr *HiddenRouting) AddHiddenService(key *prv.Key, in *Intro,
+	forward uint16, addr string) {
 	
 	pk := pub.Derive(key).ToBytes()
 	hr.Lock()
@@ -70,6 +69,8 @@ func (hr *HiddenRouting) AddHiddenService(key *prv.Key, forward uint16,
 		Prv:     key,
 		Forward: forward,
 	}
+	hr.HiddenServices[pk].CurrentIntros = append(hr.HiddenServices[pk].
+		CurrentIntros, in)
 	hr.Unlock()
 }
 
@@ -207,7 +208,7 @@ func GossipIntro(intro *Intro, sm *SessionManager, c qu.C) {
 	log.D.F("propagating hidden service intro for %s",
 		intro.Key.ToBase32Abbreviated())
 	done := qu.T()
-	msg := zip.New(IntroLen)
+	msg := NewSplice(IntroLen)
 	if check(intro.Encode(msg)) {
 		return
 	}

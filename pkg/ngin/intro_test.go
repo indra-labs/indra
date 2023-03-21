@@ -29,7 +29,7 @@ func TestOnionSkins_Intro(t *testing.T) {
 	}
 	on1 := Skins{}.
 		Intro(id, pr, in.AddrPort, time.Now().Add(time.Hour))
-	on1 = append(on1, &Tmpl{})
+	on1 = append(on1, &End{})
 	on := on1.Assemble()
 	s := Encode(on)
 	log.D.S(s.GetRange(-1, -1).ToBytes())

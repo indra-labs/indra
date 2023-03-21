@@ -22,7 +22,7 @@ func TestOnionSkins_Response(t *testing.T) {
 	port := uint16(cryptorand.IntN(65536))
 	on := Skins{}.
 		Response(id, msg, port).
-		Tmpl().Assemble()
+		End().Assemble()
 	s := Encode(on)
 	s.SetCursor(0)
 	var onc Onion

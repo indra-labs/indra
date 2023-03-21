@@ -1,48 +1,39 @@
 package ngin
 
-import (
-	"git-indra.lan/indra-labs/indra/pkg/ngin/magic"
-	"git-indra.lan/indra-labs/indra/pkg/util/zip"
-)
-
 const (
-	TmplMagic = "!!"
-	TmplLen   = 0
+	EndMagic = "!!"
+	EndLen   = 0
 )
 
-func TmplPrototype() Onion { return &Tmpl{} }
+func EndPrototype() Onion { return &End{} }
 
-func init() { Register(TmplMagic, TmplPrototype) }
+func init() { Register(EndMagic, EndPrototype) }
 
-type Tmpl struct{}
+type End struct{}
 
-func (o Skins) Tmpl() Skins {
-	return append(o, &Tmpl{})
+func (o Skins) End() Skins {
+	return append(o, &End{})
 }
 
-func NewTmpl() *Tmpl {
-	return &Tmpl{}
+func NewEnd() *End {
+	return &End{}
 }
 
-func (x *Tmpl) Magic() string { return TmplMagic }
+func (x *End) Magic() string { return EndMagic }
 
-func (x *Tmpl) Encode(s *zip.Splice) (e error) {
+func (x *End) Encode(s *Splice) (e error) {
 	return
 }
 
-func (x *Tmpl) Decode(s *zip.Splice) (e error) {
-	if e = magic.TooShort(s.Remaining(), TmplLen-magic.Len,
-		TmplMagic); check(e) {
-		return
-	}
+func (x *End) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *Tmpl) Len() int { return TmplLen }
+func (x *End) Len() int { return EndLen }
 
-func (x *Tmpl) Wrap(inner Onion) {}
+func (x *End) Wrap(inner Onion) {}
 
-func (x *Tmpl) Handle(s *zip.Splice, p Onion,
+func (x *End) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	return

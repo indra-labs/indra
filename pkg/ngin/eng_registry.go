@@ -6,8 +6,6 @@ import (
 	"sync"
 	
 	"github.com/gookit/color"
-	
-	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
 var registry = NewRegistry()
@@ -29,7 +27,7 @@ func Register(magicString string, on func() Onion) {
 	registry.Onions[magicString] = on
 }
 
-func Recognise(s *zip.Splice, addr *netip.AddrPort) (on Onion) {
+func Recognise(s *Splice, addr *netip.AddrPort) (on Onion) {
 	registry.Lock()
 	defer registry.Unlock()
 	var magic string

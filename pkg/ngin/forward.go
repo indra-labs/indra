@@ -2,19 +2,17 @@ package ngin
 
 import (
 	"net/netip"
-	"reflect"
 	
 	"git-indra.lan/indra-labs/indra/pkg/ngin/magic"
-	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
 const (
 	ForwardMagic = "fw"
-	ForwardLen   = magic.Len + 1 + zip.AddrLen
+	ForwardLen   = magic.Len + 1 + AddrLen
 )
 
 type Forward struct {
-	*netip.AddrPort
+	AddrPort *netip.AddrPort
 	Onion
 }
 
@@ -23,19 +21,19 @@ func forwardPrototype() Onion { return &Forward{} }
 func init() { Register(ForwardMagic, forwardPrototype) }
 
 func (o Skins) Forward(addr *netip.AddrPort) Skins {
-	return append(o, &Forward{AddrPort: addr, Onion: &Tmpl{}})
+	return append(o, &Forward{AddrPort: addr, Onion: &End{}})
 }
 
 func (x *Forward) Magic() string { return ForwardMagic }
 
-func (x *Forward) Encode(s *zip.Splice) error {
-	log.T.S("encoding", reflect.TypeOf(x),
-		x.AddrPort.String(),
-	)
+func (x *Forward) Encode(s *Splice) error {
+	// log.T.S("encoding", reflect.TypeOf(x),
+	// 	x.AddrPort.String(),
+	// )
 	return x.Onion.Encode(s.Magic(ForwardMagic).AddrPort(x.AddrPort))
 }
 
-func (x *Forward) Decode(s *zip.Splice) (e error) {
+func (x *Forward) Decode(s *Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), ForwardLen-magic.Len,
 		ForwardMagic); check(e) {
 		return
@@ -48,7 +46,7 @@ func (x *Forward) Len() int { return ForwardLen + x.Onion.Len() }
 
 func (x *Forward) Wrap(inner Onion) { x.Onion = inner }
 
-func (x *Forward) Handle(s *zip.Splice, p Onion,
+func (x *Forward) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	// Forward the whole buffer received onwards. Usually there will be a

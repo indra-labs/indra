@@ -1,14 +1,11 @@
 package ngin
 
 import (
-	"reflect"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/ngin/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
-	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
 const (
@@ -19,7 +16,7 @@ const (
 
 type GetBalance struct {
 	ID nonce.ID
-	zip.Reply
+	Reply
 	Onion
 }
 
@@ -63,7 +60,7 @@ func (ng *Engine) SendGetBalance(alice, bob *SessionData, hook Callback) {
 func (o Skins) GetBalance(id, confID nonce.ID, ep *ExitPoint) Skins {
 	return append(o, &GetBalance{
 		ID: id,
-		Reply: zip.Reply{
+		Reply: Reply{
 			ID:      confID,
 			Ciphers: GenCiphers(ep.Keys, ep.ReturnPubs),
 			Nonces:  ep.Nonces,
@@ -74,16 +71,16 @@ func (o Skins) GetBalance(id, confID nonce.ID, ep *ExitPoint) Skins {
 
 func (x *GetBalance) Magic() string { return GetBalanceMagic }
 
-func (x *GetBalance) Encode(s *zip.Splice) (e error) {
-	log.T.S("encoding", reflect.TypeOf(x),
-		x.ID, x.Reply.ID, x.Reply.Ciphers, x.Reply.Nonces,
-	)
+func (x *GetBalance) Encode(s *Splice) (e error) {
+	// log.T.S("encoding", reflect.TypeOf(x),
+	// 	x.ID, x.Reply.ID, x.Reply.Ciphers, x.Reply.Nonces,
+	// )
 	return x.Onion.Encode(s.
 		Magic(GetBalanceMagic).ID(x.ID).Reply(&x.Reply),
 	)
 }
 
-func (x *GetBalance) Decode(s *zip.Splice) (e error) {
+func (x *GetBalance) Decode(s *Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), GetBalanceLen-magic.Len,
 		GetBalanceMagic); check(e) {
 		return
@@ -96,7 +93,7 @@ func (x *GetBalance) Len() int { return GetBalanceLen + x.Onion.Len() }
 
 func (x *GetBalance) Wrap(inner Onion) { x.Onion = inner }
 
-func (x *GetBalance) Handle(s *zip.Splice, p Onion,
+func (x *GetBalance) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	log.T.S(x)
@@ -150,6 +147,6 @@ func (x *GetBalance) Handle(s *zip.Splice, p Onion,
 	rbb = FormatReply(header,
 		Encode(bal).GetRange(-1, -1), x.Ciphers, x.Nonces)
 	rb = append(rbb.GetRange(-1, -1), slice.NoisePad(714-len(rb))...)
-	ng.HandleMessage(zip.Load(rb, slice.NewCursor()), x)
+	ng.HandleMessage(Load(rb, slice.NewCursor()), x)
 	return
 }

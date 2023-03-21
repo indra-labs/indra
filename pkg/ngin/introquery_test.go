@@ -36,7 +36,7 @@ func TestOnionSkins_IntroQuery(t *testing.T) {
 	id := nonce.NewID()
 	on := Skins{}.
 		IntroQuery(id, pub.Derive(prv1), ep).
-		Tmpl().Assemble()
+		End().Assemble()
 	s := Encode(on)
 	s.SetCursor(0)
 	var onc Onion
@@ -162,7 +162,7 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 	for i := range peers {
 		wg.Add(1)
 		counter.Inc()
-		log.I.Ln("peer", i)
+		log.T.Ln("peer", i)
 		if len(returnHops) > 1 {
 			cryptorand.Shuffle(len(returnHops), func(i, j int) {
 				returnHops[i], returnHops[j] = returnHops[j], returnHops[i]
@@ -177,7 +177,7 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 			func(in *Intro) {
 				wg.Done()
 				counter.Dec()
-				log.D.Ln("success",
+				log.I.Ln("success",
 					in.ID, in.Key.ToBase32Abbreviated(), in.AddrPort)
 			})
 		wg.Wait()

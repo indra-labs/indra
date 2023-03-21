@@ -9,7 +9,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
-	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
 type Engine struct {
@@ -86,7 +85,7 @@ func (ng *Engine) Shutdown() {
 	log.D.Ln("finished shutdown for", ng.GetLocalNodeAddressString())
 }
 
-func (ng *Engine) HandleMessage(s *zip.Splice, pr Onion) {
+func (ng *Engine) HandleMessage(s *Splice, pr Onion) {
 	log.D.F("%s handling received message", ng.GetLocalNodeAddressString())
 	s.SetCursor(0)
 	s.Segments = s.Segments[:0]
@@ -116,7 +115,7 @@ func (ng *Engine) Handler() (out bool) {
 		out = true
 		break
 	case b := <-ng.ReceiveToLocalNode(0):
-		s := zip.Load(b, slice.NewCursor())
+		s := Load(b, slice.NewCursor())
 		ng.HandleMessage(s, prev)
 	case p := <-ng.GetLocalNode().PaymentChan.Receive():
 		log.D.F("incoming payment for %s: %v", p.ID, p.Amount)

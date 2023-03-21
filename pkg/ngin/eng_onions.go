@@ -5,15 +5,14 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
 type Skins []Onion
 
-var nop = &Tmpl{}
+var nop = &End{}
 
-func Encode(on Onion) (s *zip.Splice) {
-	s = zip.New(on.Len())
+func Encode(on Onion) (s *Splice) {
+	s = NewSplice(on.Len())
 	check(on.Encode(s))
 	return
 }

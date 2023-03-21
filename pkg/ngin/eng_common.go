@@ -12,7 +12,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
-	"git-indra.lan/indra-labs/indra/pkg/util/zip"
 )
 
 var (
@@ -20,7 +19,7 @@ var (
 	check = log.E.Chk
 )
 
-func BudgeUp(s *zip.Splice) (o *zip.Splice) {
+func BudgeUp(s *Splice) (o *Splice) {
 	o = s
 	start := o.GetCursor()
 	copy(o.GetRange(-1, -1), s.GetRange(start, -1))
@@ -29,10 +28,10 @@ func BudgeUp(s *zip.Splice) (o *zip.Splice) {
 }
 
 func FormatReply(header, res slice.Bytes, ciphers [3]sha256.Hash,
-	nonces [3]nonce.IV) (rb *zip.Splice) {
+	nonces [3]nonce.IV) (rb *Splice) {
 	
 	rl := RoutingHeaderLen
-	rb = zip.New(rl + len(res))
+	rb = NewSplice(rl + len(res))
 	copy(rb.GetRange(-1, rl), header[:rl])
 	copy(rb.GetRange(rl, -1), res)
 	// log.D.S("before", rb.GetRange(-1, -1).ToBytes())
@@ -81,7 +80,7 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 		if i == 0 {
 			local = true
 		}
-		nodes[i], _ = New(addr, idPub, idPrv, tpts[i], 50000, local)
+		nodes[i], _ = NewNode(addr, idPub, idPrv, tpts[i], 50000, local)
 		if cl[i], e = NewEngine(Params{
 			tpts[i],
 			idPrv,
