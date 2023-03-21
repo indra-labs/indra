@@ -69,7 +69,7 @@ func (p *PendingResponses) Add(pr ResponseParams) {
 		Success:  qu.T(),
 	}
 	p.responses = append(p.responses, r)
-	log.D.S("pending", p.responses)
+	// log.D.S("pending", p.responses)
 }
 
 func (p *PendingResponses) FindOlder(t time.Time) (r []*PendingResponse) {
@@ -102,7 +102,7 @@ func (p *PendingResponses) ProcessAndDelete(id nonce.ID, k *pub.Bytes,
 	p.Lock()
 	defer p.Unlock()
 	log.D.Ln("deleting pending", id)
-	log.D.S("pending", p.responses)
+	// log.D.S("pending", p.responses)
 	for i := range p.responses {
 		if p.responses[i].ID == id {
 			log.D.F("deleting response %s", id)

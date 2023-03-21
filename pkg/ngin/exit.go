@@ -1,6 +1,7 @@
 package ngin
 
 import (
+	"reflect"
 	"time"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
@@ -54,6 +55,9 @@ func (o Skins) Exit(id nonce.ID, port uint16, payload slice.Bytes,
 func (x *Exit) Magic() string { return ExitMagic }
 
 func (x *Exit) Encode(s *zip.Splice) (e error) {
+	log.T.S("encoding", reflect.TypeOf(x),
+		x.Reply.ID, x.Reply.Ciphers, x.Reply.Nonces, x.Port, x.Bytes.ToBytes(),
+	)
 	return x.Onion.Encode(s.
 		Magic(ExitMagic).Reply(&x.Reply).Uint16(x.Port).Bytes(x.Bytes),
 	)
@@ -105,12 +109,12 @@ func (x *Exit) Handle(s *zip.Splice, p Onion,
 		if sess == nil {
 			return
 		}
-		for i := range sess.Services {
-			if x.Port != sess.Services[i].Port {
+		for i := range sess.Node.Services {
+			if x.Port != sess.Node.Services[i].Port {
 				continue
 			}
-			in := sess.Services[i].RelayRate * s.Len() / 2
-			out := sess.Services[i].RelayRate * rb.Len() / 2
+			in := sess.Node.Services[i].RelayRate * s.Len() / 2
+			out := sess.Node.Services[i].RelayRate * rb.Len() / 2
 			ng.DecSession(sess.ID, in+out, false, "exit")
 			break
 		}
@@ -161,5 +165,5 @@ func (ng *Engine) SendExit(port uint16, msg slice.Bytes, id nonce.ID,
 	o := MakeExit(ExitParams{port, msg, id, bob, alice, c, ng.KeySet})
 	// log.D.S(ng.GetLocalNodeAddress().String()+" sending out exit onion", o)
 	res := ng.PostAcctOnion(o)
-	ng.SendWithOneHook(c[0].AddrPort, res, hook, ng.PendingResponses)
+	ng.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.PendingResponses)
 }

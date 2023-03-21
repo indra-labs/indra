@@ -116,8 +116,8 @@ func TestEngine_Route(t *testing.T) {
 		}
 	}
 	wginc()
-	client.SendHiddenService(make(slice.Bytes, RoutingHeaderLen), id, idPrv,
-		time.Now().Add(time.Hour), returner, introducer, localPort,
+	client.SendHiddenService(id, idPrv, time.Now().Add(time.Hour), returner,
+		introducer, localPort,
 		func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
 			log.I.S("hidden service callback", client.GetLocalNodeAddressString(),
 				id, k, b.ToBytes())

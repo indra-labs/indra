@@ -37,13 +37,13 @@ func (o Skins) Assemble() (on Onion) {
 }
 
 func (o Skins) ForwardCrypt(s *SessionData, k *prv.Key, n nonce.IV) Skins {
-	return o.Forward(s.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, 0)
+	return o.Forward(s.Node.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, 0)
 }
 
 func (o Skins) ReverseCrypt(s *SessionData, k *prv.Key, n nonce.IV,
 	seq int) Skins {
 	
-	return o.Reverse(s.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, seq)
+	return o.Reverse(s.Node.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, seq)
 }
 
 type Routing struct {

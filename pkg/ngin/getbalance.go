@@ -1,6 +1,8 @@
 package ngin
 
 import (
+	"reflect"
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
@@ -16,7 +18,7 @@ const (
 )
 
 type GetBalance struct {
-	nonce.ID
+	ID nonce.ID
 	zip.Reply
 	Onion
 }
@@ -55,11 +57,10 @@ func (ng *Engine) SendGetBalance(alice, bob *SessionData, hook Callback) {
 		ng.KeySet})
 	log.D.Ln("sending out getbalance onion")
 	res := ng.PostAcctOnion(o)
-	ng.SendWithOneHook(c[0].AddrPort, res, hook, ng.PendingResponses)
+	ng.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.PendingResponses)
 }
 
 func (o Skins) GetBalance(id, confID nonce.ID, ep *ExitPoint) Skins {
-	
 	return append(o, &GetBalance{
 		ID: id,
 		Reply: zip.Reply{
@@ -74,6 +75,9 @@ func (o Skins) GetBalance(id, confID nonce.ID, ep *ExitPoint) Skins {
 func (x *GetBalance) Magic() string { return GetBalanceMagic }
 
 func (x *GetBalance) Encode(s *zip.Splice) (e error) {
+	log.T.S("encoding", reflect.TypeOf(x),
+		x.ID, x.Reply.ID, x.Reply.Ciphers, x.Reply.Nonces,
+	)
 	return x.Onion.Encode(s.
 		Magic(GetBalanceMagic).ID(x.ID).Reply(&x.Reply),
 	)
@@ -117,7 +121,8 @@ func (x *GetBalance) Handle(s *zip.Splice, p Onion,
 		return
 	}
 	log.D.Ln("session found", x.ID)
-	header := s.GetRange(s.GetCursor(), s.Advance(RoutingHeaderLen))
+	header := s.GetRange(s.GetCursor(), s.Advance(RoutingHeaderLen,
+		"routing header"))
 	rbb := FormatReply(header,
 		Encode(bal).GetRange(-1, -1), x.Ciphers, x.Nonces)
 	rb := append(rbb.GetRange(-1, -1), slice.NoisePad(714-rbb.Len())...)
@@ -125,8 +130,8 @@ func (x *GetBalance) Handle(s *zip.Splice, p Onion,
 	case *Crypt:
 		sess := ng.FindSessionByHeader(on1.ToPriv)
 		if sess != nil {
-			in := sess.RelayRate * s.Len() / 2
-			out := sess.RelayRate * len(rb) / 2
+			in := sess.Node.RelayRate * s.Len() / 2
+			out := sess.Node.RelayRate * len(rb) / 2
 			ng.DecSession(sess.ID, in+out, false, "getbalance")
 		}
 	}

@@ -1,6 +1,8 @@
 package ngin
 
 import (
+	"reflect"
+	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -37,7 +39,9 @@ func (o Skins) Balance(id, confID nonce.ID,
 func (x *Balance) Magic() string { return BalanceMagic }
 
 func (x *Balance) Encode(s *zip.Splice) (e error) {
-	log.D.S("encoding", x.ID, x.ConfID, x.MilliSatoshi)
+	log.T.S("encoding", reflect.TypeOf(x),
+		x.ID, x.ConfID, x.MilliSatoshi,
+	)
 	s.
 		Magic(BalanceMagic).
 		ID(x.ID).
@@ -70,9 +74,9 @@ func (x *Balance) Handle(s *zip.Splice, p Onion,
 		log.D.S("found pending", pending.ID)
 		for i := range pending.Billable {
 			session := ng.FindSession(pending.Billable[i])
-			out := session.RelayRate * s.Len()
+			out := session.Node.RelayRate * s.Len()
 			if session != nil {
-				in := session.RelayRate * pending.SentSize
+				in := session.Node.RelayRate * pending.SentSize
 				switch {
 				case i < 2:
 					ng.DecSession(session.ID, in, true, "reverse")

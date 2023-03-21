@@ -68,7 +68,7 @@ out:
 	cryptorand.Shuffle(len(ws), func(i, j int) {
 		ws[i], ws[j] = ws[j], ws[i]
 	})
-	log.D.Ln("shuffled", len(ws), "candidate sessions")
+	log.T.Ln("shuffled", len(ws), "candidate sessions")
 	// Iterate the available sessions picking the first matching hop, then
 	// prune it from the temporary slice and advance the cursor, wrapping
 	// around at end.
@@ -90,7 +90,7 @@ out:
 			}
 			if ws[cur].Hop == hops[i] {
 				for _, v := range so[:i] {
-					if v.AddrPort.String() == ws[cur].AddrPort.String() {
+					if v.Node.AddrPort.String() == ws[cur].Node.AddrPort.String() {
 						continue
 					}
 				}
@@ -107,7 +107,7 @@ out:
 	}
 	var str string
 	for i := range so {
-		str += so[i].AddrPort.String() + " "
+		str += so[i].Node.AddrPort.String() + " "
 	}
 	log.D.F("circuit\n%s", str)
 	return

@@ -36,5 +36,5 @@ func (ng *Engine) SendPing(c Circuit, hook Callback) {
 	confID := nonce.NewID()
 	o := Ping(confID, se[len(se)-1], c, ng.KeySet)
 	res := ng.PostAcctOnion(o)
-	ng.SendWithOneHook(c[0].AddrPort, res, hook, ng.PendingResponses)
+	ng.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.PendingResponses)
 }

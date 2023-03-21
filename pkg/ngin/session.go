@@ -1,6 +1,8 @@
 package ngin
 
 import (
+	"reflect"
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -76,6 +78,9 @@ func NewSessionKeys(hop byte) (x *Session) {
 func (x *Session) Magic() string { return SessionMagic }
 
 func (x *Session) Encode(s *zip.Splice) (e error) {
+	log.T.S("encoding", reflect.TypeOf(x),
+		x.ID, x.Header, x.Payload,
+	)
 	return x.Onion.Encode(s.Magic(SessionMagic).
 		ID(x.ID).
 		Prvkey(x.Header).

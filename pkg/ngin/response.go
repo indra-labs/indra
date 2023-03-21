@@ -1,6 +1,8 @@
 package ngin
 
 import (
+	"reflect"
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/ngin/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -31,6 +33,9 @@ func (o Skins) Response(id nonce.ID, res slice.Bytes, port uint16) Skins {
 func (x *Response) Magic() string { return ResponseMagic }
 
 func (x *Response) Encode(s *zip.Splice) (e error) {
+	log.T.S("encoding", reflect.TypeOf(x),
+		x.ID, x.Port, x.Load, x.Bytes.ToBytes(),
+	)
 	s.
 		Magic(ResponseMagic).
 		ID(x.ID).
@@ -67,15 +72,15 @@ func (x *Response) Handle(s *zip.Splice, p Onion,
 			se := ng.FindSession(pending.Billable[i])
 			if se != nil {
 				typ := "response"
-				relayRate := se.RelayRate
+				relayRate := se.Node.RelayRate
 				dataSize := s.Len()
 				switch i {
 				case 0, 1:
 					dataSize = pending.SentSize
 				case 2:
-					for j := range se.Services {
-						if se.Services[j].Port == x.Port {
-							relayRate = se.Services[j].RelayRate / 2
+					for j := range se.Node.Services {
+						if se.Node.Services[j].Port == x.Port {
+							relayRate = se.Node.Services[j].RelayRate / 2
 							typ = "exit"
 						}
 					}

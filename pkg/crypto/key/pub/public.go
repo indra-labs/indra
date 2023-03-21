@@ -51,6 +51,10 @@ func (pb Bytes) String() (s string) {
 	return color.LightGreen.Sprint(string(ss))
 }
 
+func (k *Key) String() (s string) {
+	return k.ToBase32()
+}
+
 // Derive generates a public key from the prv.Key.
 func Derive(prv *prv.Key) *Key {
 	return (*Key)((*secp256k1.PrivateKey)(prv).PubKey())
@@ -69,20 +73,20 @@ func FromBytes(b []byte) (pub *Key, e error) {
 
 // ToBytes returns the compressed 33 byte form of the pubkey as used in wire and
 // storage forms.
-func (pub *Key) ToBytes() (p Bytes) {
-	b := (*secp256k1.PublicKey)(pub).SerializeCompressed()
+func (k *Key) ToBytes() (p Bytes) {
+	b := (*secp256k1.PublicKey)(k).SerializeCompressed()
 	copy(p[:], b)
 	return
 }
 
-func (pub *Key) ToHex() (s string, e error) {
-	b := pub.ToBytes()
+func (k *Key) ToHex() (s string, e error) {
+	b := k.ToBytes()
 	s = hex.EncodeToString(b[:])
 	return
 }
 
-func (pub *Key) ToBase32() (s string) {
-	b := pub.ToBytes()
+func (k *Key) ToBase32() (s string) {
+	b := k.ToBytes()
 	var e error
 	if s, e = based32.Codec.Encode(b[:]); check(e) {
 	}
@@ -91,11 +95,11 @@ func (pub *Key) ToBase32() (s string) {
 	for i := 0; i < len(s)/2; i++ {
 		ss[i], ss[len(s)-i-1] = ss[len(s)-i-1], ss[i]
 	}
-	return string(ss)
+	return color.LightGreen.Sprint(string(ss))
 }
 
-func (pub *Key) ToBase32Abbreviated() (s string) {
-	b := pub.ToBytes()
+func (k *Key) ToBase32Abbreviated() (s string) {
+	b := k.ToBytes()
 	var e error
 	if s, e = based32.Codec.Encode(b[:]); check(e) {
 	}
@@ -121,11 +125,11 @@ func FromBase32(s string) (k *Key, e error) {
 
 func (pb Bytes) Equals(qb Bytes) bool { return pb == qb }
 
-func (pub *Key) ToPublicKey() *secp256k1.PublicKey {
-	return (*secp256k1.PublicKey)(pub)
+func (k *Key) ToPublicKey() *secp256k1.PublicKey {
+	return (*secp256k1.PublicKey)(k)
 }
 
 // Equals returns true if two public keys are the same.
-func (pub *Key) Equals(pub2 *Key) bool {
-	return pub.ToPublicKey().IsEqual(pub2.ToPublicKey())
+func (k *Key) Equals(pub2 *Key) bool {
+	return k.ToPublicKey().IsEqual(pub2.ToPublicKey())
 }

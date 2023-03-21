@@ -1,6 +1,8 @@
 package ngin
 
 import (
+	"reflect"
+	
 	"git-indra.lan/indra-labs/indra/pkg/ngin/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 	"git-indra.lan/indra-labs/indra/pkg/util/zip"
@@ -30,7 +32,11 @@ func (x *Triple) Magic() string { return TripleMagic }
 // receives it, it will not register this type as that has been commented out
 // above.
 func (x *Triple) Encode(s *zip.Splice) (e error) {
-	s.GetRange(s.GetCursor(), s.Advance(TripleLen))
+	log.T.S("encoding", reflect.TypeOf(x),
+		x.Bytes,
+	)
+	s.GetRange(s.GetCursor(), s.Advance(TripleLen,
+		"routing header"))
 	return
 }
 

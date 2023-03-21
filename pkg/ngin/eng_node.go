@@ -22,7 +22,7 @@ type Services []*Service
 
 // Node is a representation of a messaging counterparty.
 type Node struct {
-	nonce.ID
+	ID nonce.ID
 	sync.Mutex
 	AddrPort      *netip.AddrPort
 	IdentityPub   *pub.Key

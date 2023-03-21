@@ -2,6 +2,7 @@ package ngin
 
 import (
 	"crypto/cipher"
+	"reflect"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/cloak"
@@ -51,6 +52,9 @@ func (o Skins) Crypt(toHdr, toPld *pub.Key, from *prv.Key, n nonce.IV,
 func (x *Crypt) Magic() string { return CryptMagic }
 
 func (x *Crypt) Encode(s *zip.Splice) (e error) {
+	log.T.S("encoding", reflect.TypeOf(x),
+		x.Nonce, x.Cloak, pub.Derive(x.From),
+	)
 	s.Magic(CryptMagic).
 		IV(x.Nonce).Cloak(x.ToHeaderPub).Pubkey(pub.Derive(x.From))
 	// Then we can encrypt the message segment

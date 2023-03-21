@@ -2,6 +2,7 @@ package ngin
 
 import (
 	"net/netip"
+	"reflect"
 	"time"
 	
 	"github.com/gookit/color"
@@ -23,7 +24,7 @@ const (
 )
 
 type Intro struct {
-	nonce.ID // This ensures never a repeated signed message.
+	ID       nonce.ID // This ensures never a repeated signed message.
 	Key      *pub.Key
 	AddrPort *netip.AddrPort
 	Expiry   time.Time
@@ -79,6 +80,9 @@ func (x *Intro) Validate() bool {
 func (x *Intro) Magic() string { return IntroMagic }
 
 func (x *Intro) Encode(s *zip.Splice) (e error) {
+	log.T.S("encoding", reflect.TypeOf(x),
+		x.ID, x.AddrPort.String(), x.Expiry, x.Sig,
+	)
 	s.Magic(IntroMagic).
 		ID(x.ID).
 		Pubkey(x.Key).

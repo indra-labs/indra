@@ -1,6 +1,8 @@
 package ngin
 
 import (
+	"reflect"
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/ngin/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/zip"
@@ -12,7 +14,7 @@ const (
 )
 
 type Confirmation struct {
-	nonce.ID
+	ID   nonce.ID
 	Load byte
 }
 
@@ -27,6 +29,9 @@ func (o Skins) Confirmation(id nonce.ID, load byte) Skins {
 func (x *Confirmation) Magic() string { return ConfirmationMagic }
 
 func (x *Confirmation) Encode(s *zip.Splice) (e error) {
+	log.T.S("encoding", reflect.TypeOf(x),
+		x.ID, x.Load,
+	)
 	s.Magic(ConfirmationMagic).ID(x.ID).Byte(x.Load)
 	return
 }

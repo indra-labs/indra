@@ -83,9 +83,9 @@ func (s *Splice) String() (o string) {
 				o += color.Gray.Sprint(oe) + " "
 				
 			}
-			if len(v) > 72 {
-				o += "\n "
-			}
+			// if len(v) > 72 {
+			// 	o += "\n "
+			// }
 			if prevString != "remainder" {
 				hexed := hex.EncodeToString(v.ToBytes())
 				var oHexed string
@@ -172,10 +172,10 @@ func (s *Splice) GetCursor() int { return int(*s.c) }
 
 func (s *Splice) Remaining() int { return s.Len() - s.GetCursor() }
 
-func (s *Splice) Advance(n int) int {
+func (s *Splice) Advance(n int, name string) int {
 	s.c.Inc(n)
 	s.Segments = append(s.Segments,
-		NameOffset{Offset: int(*s.c), Name: "unknown"})
+		NameOffset{Offset: int(*s.c), Name: name})
 	return int(*s.c)
 }
 

@@ -1,6 +1,7 @@
 package ngin
 
 import (
+	"reflect"
 	"time"
 	
 	"git-indra.lan/indra-labs/indra/pkg/ngin/magic"
@@ -29,6 +30,9 @@ func (o Skins) Delay(d time.Duration) Skins {
 func (x *Delay) Magic() string { return DelayMagic }
 
 func (x *Delay) Encode(s *zip.Splice) (e error) {
+	log.T.S("encoding", reflect.TypeOf(x),
+		x.Duration,
+	)
 	return x.Onion.Encode(s.Magic(DelayMagic).Uint64(uint64(x.Duration)))
 }
 

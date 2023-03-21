@@ -16,8 +16,8 @@ import (
 // account of available bandwidth allocation before it needs to be recharged
 // with new credit, and the current state of the encryption.
 type SessionData struct {
-	ID nonce.ID
-	*Node
+	ID                        nonce.ID
+	Node                      *Node
 	Remaining                 lnwire.MilliSatoshi
 	HeaderPrv, PayloadPrv     *prv.Key
 	HeaderPub, PayloadPub     *pub.Key

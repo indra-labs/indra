@@ -1,6 +1,8 @@
 package ngin
 
 import (
+	"reflect"
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -41,6 +43,9 @@ func (o Skins) IntroQuery(id nonce.ID, hsk *pub.Key, exit *ExitPoint) Skins {
 func (x *IntroQuery) Magic() string { return IntroQueryMagic }
 
 func (x *IntroQuery) Encode(s *zip.Splice) (e error) {
+	log.T.S("encoding", reflect.TypeOf(x),
+		x.Reply, x.Key,
+	)
 	return x.Onion.Encode(s.
 		Magic(IntroQueryMagic).
 		Reply(&x.Reply).
@@ -80,14 +85,15 @@ func (x *IntroQuery) Handle(s *zip.Splice, p Onion,
 	ng.HiddenRouting.Unlock()
 	// log.D.S(il.ID, il.Key, il.Expiry, il.Sig)
 	iqr := Encode(il)
-	rb := FormatReply(s.GetRange(s.GetCursor(), s.Advance(RoutingHeaderLen)),
+	rb := FormatReply(s.GetRange(s.GetCursor(), s.Advance(RoutingHeaderLen,
+		"routing header")),
 		iqr.GetRange(-1, -1), x.Ciphers, x.Nonces)
 	switch on1 := p.(type) {
 	case *Crypt:
 		sess := ng.FindSessionByHeader(on1.ToPriv)
 		if sess != nil {
-			in := sess.RelayRate * s.Len() / 2
-			out := sess.RelayRate * rb.Len() / 2
+			in := sess.Node.RelayRate * s.Len() / 2
+			out := sess.Node.RelayRate * rb.Len() / 2
 			ng.DecSession(sess.ID, in+out, false, "introquery")
 		}
 	}
@@ -134,5 +140,5 @@ func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *pub.Key,
 	o := MakeIntroQuery(id, hsk, bob, alice, c, ng.KeySet)
 	res := ng.PostAcctOnion(o)
 	log.D.Ln(res.Last)
-	ng.SendWithOneHook(c[0].AddrPort, res, fn, ng.PendingResponses)
+	ng.SendWithOneHook(c[0].Node.AddrPort, res, fn, ng.PendingResponses)
 }

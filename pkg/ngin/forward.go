@@ -2,6 +2,7 @@ package ngin
 
 import (
 	"net/netip"
+	"reflect"
 	
 	"git-indra.lan/indra-labs/indra/pkg/ngin/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/zip"
@@ -28,6 +29,9 @@ func (o Skins) Forward(addr *netip.AddrPort) Skins {
 func (x *Forward) Magic() string { return ForwardMagic }
 
 func (x *Forward) Encode(s *zip.Splice) error {
+	log.T.S("encoding", reflect.TypeOf(x),
+		x.AddrPort.String(),
+	)
 	return x.Onion.Encode(s.Magic(ForwardMagic).AddrPort(x.AddrPort))
 }
 

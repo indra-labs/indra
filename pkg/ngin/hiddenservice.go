@@ -1,6 +1,7 @@
 package ngin
 
 import (
+	"reflect"
 	"time"
 	
 	"github.com/gookit/color"
@@ -37,14 +38,12 @@ func hiddenServicePrototype() Onion { return &HiddenService{} }
 
 func init() { Register(HiddenServiceMagic, hiddenServicePrototype) }
 
-func (o Skins) HiddenService(in *Intro, point *ExitPoint,
-	header slice.Bytes) Skins {
+func (o Skins) HiddenService(in *Intro, point *ExitPoint) Skins {
 	
 	return append(o, &HiddenService{
 		Intro:   *in,
 		Ciphers: GenCiphers(point.Keys, point.ReturnPubs),
 		Nonces:  point.Nonces,
-		Bytes:   header,
 		Onion:   NewTmpl(),
 	})
 }
@@ -52,16 +51,23 @@ func (o Skins) HiddenService(in *Intro, point *ExitPoint,
 func (x *HiddenService) Magic() string { return HiddenServiceMagic }
 
 func (x *HiddenService) Encode(s *zip.Splice) (e error) {
-	s.Magic(HiddenServiceMagic).
+	log.T.S("encoding", reflect.TypeOf(x),
+		x.Intro.ID,
+		x.Intro.ID,
+		x.Intro.AddrPort.String(),
+		x.Intro.Expiry,
+		x.Intro.Sig,
+		x.Ciphers,
+		x.Nonces,
+	)
+	return x.Onion.Encode(s.Magic(HiddenServiceMagic).
 		ID(x.Intro.ID).
 		Pubkey(x.Intro.Key).
 		AddrPort(x.Intro.AddrPort).
 		Uint64(uint64(x.Intro.Expiry.UnixNano())).
 		Signature(&x.Intro.Sig).
 		HashTriple(x.Ciphers).
-		IVTriple(x.Nonces).
-		RoutingHeader(x.Bytes)
-	return
+		IVTriple(x.Nonces))
 }
 
 func (x *HiddenService) Decode(s *zip.Splice) (e error) {
@@ -76,7 +82,10 @@ func (x *HiddenService) Decode(s *zip.Splice) (e error) {
 		ReadSignature(&x.Intro.Sig).
 		ReadHashTriple(&x.Ciphers).
 		ReadIVTriple(&x.Nonces).
-		ReadRoutingHeader(&x.Bytes)
+		// This is always stored, and must always follow a HiddenService
+		// message, and in fact there is never any more data after the routing
+		// header after the HiddenService.
+		RoutingHeader(s.GetCursorToEnd())
 	return
 }
 
@@ -91,26 +100,26 @@ func (x *HiddenService) Handle(s *zip.Splice, p Onion, ng *Engine) (e error) {
 		Intro:   &x.Intro,
 		Ciphers: x.Ciphers,
 		Nonces:  x.Nonces,
-		Bytes:   s.GetCursorToEnd(),
+		Bytes:   x.Bytes,
 	})
-	log.D.S(ng.GetLocalNodeAddressString(), ng.HiddenRouting)
+	// log.D.S("intros", ng.HiddenRouting)
+	// log.D.S(ng.GetLocalNodeAddressString(), ng.HiddenRouting)
 	log.D.Ln("stored new introduction, starting broadcast")
 	go GossipIntro(&x.Intro, ng.SessionManager, ng.C)
 	return
 }
 
-func MakeHiddenService(header slice.Bytes, in *Intro, alice, bob *SessionData,
+func MakeHiddenService(in *Intro, alice, bob *SessionData,
 	c Circuit, ks *signer.KeySet) Skins {
 	
 	headers := GetHeaders(alice, bob, c, ks)
 	return Skins{}.
 		RoutingHeader(headers.Forward).
-		HiddenService(in, headers.ExitPoint(), header).
+		HiddenService(in, headers.ExitPoint()).
 		RoutingHeader(headers.Return)
 }
 
 func (ng *Engine) SendHiddenService(
-	header slice.Bytes,
 	id nonce.ID,
 	key *prv.Key,
 	expiry time.Time,
@@ -124,14 +133,16 @@ func (ng *Engine) SendHiddenService(
 	se := ng.SelectHops(hops, s)
 	var c Circuit
 	copy(c[:], se[:len(c)])
-	in := NewIntro(id, key, alice.AddrPort, expiry)
-	log.D.Ln("intro", in, in.Validate())
-	o := MakeHiddenService(header, in, alice, bob, c, ng.KeySet)
+	in := NewIntro(id, key, alice.Node.AddrPort, expiry)
+	// log.D.S("intro", in, in.Validate())
+	o := MakeHiddenService(in, alice, bob, c, ng.KeySet)
+	// log.D.S("hidden service onion", o)
 	log.D.F("%s sending out hidden service onion %s",
 		ng.GetLocalNodeAddressString(),
-		color.Yellow.Sprint(alice.AddrPort.String()))
+		color.Yellow.Sprint(alice.Node.AddrPort.String()))
 	res := ng.PostAcctOnion(o)
-	log.D.Ln("storing hidden service info")
+	// log.D.S("hs onion binary", res.B.ToBytes())
 	ng.HiddenRouting.AddHiddenService(key, localPort, ng.GetLocalNodeAddressString())
-	ng.SendWithOneHook(c[0].AddrPort, res, hook, ng.PendingResponses)
+	// log.D.S("storing hidden service info", ng.HiddenRouting)
+	ng.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.PendingResponses)
 }

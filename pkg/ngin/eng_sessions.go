@@ -40,15 +40,15 @@ func (sm *SessionManager) PostAcctOnion(o Skins) (res SendData) {
 			}
 			switch on2 := o[i+1].(type) {
 			case *Exit:
-				for j := range s.Services {
-					if s.Services[j].Port != on2.Port {
+				for j := range s.Node.Services {
+					if s.Node.Services[j].Port != on2.Port {
 						continue
 					}
 					res.Port = on2.Port
 					res.PostAcct = append(res.PostAcct,
 						func() {
 							sm.DecSession(s.ID,
-								s.Services[j].RelayRate*len(res.B)/2, true, "exit")
+								s.Node.Services[j].RelayRate*len(res.B)/2, true, "exit")
 						})
 					break
 				}
@@ -59,7 +59,7 @@ func (sm *SessionManager) PostAcctOnion(o Skins) (res SendData) {
 				res.Billable = append(res.Billable, s.ID)
 				res.PostAcct = append(res.PostAcct,
 					func() {
-						sm.DecSession(s.ID, s.RelayRate*len(res.B),
+						sm.DecSession(s.ID, s.Node.RelayRate*len(res.B),
 							true, "forward")
 					})
 			case *GetBalance:

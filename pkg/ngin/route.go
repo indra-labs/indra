@@ -3,6 +3,7 @@ package ngin
 import (
 	"crypto/cipher"
 	"net/netip"
+	"reflect"
 	"time"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
@@ -57,10 +58,15 @@ func (o Skins) Route(id nonce.ID, k *pub.Key, ks *signer.KeySet,
 func (x *Route) Magic() string { return TmplMagic }
 
 func (x *Route) Encode(s *zip.Splice) (e error) {
+	iv := nonce.New()
+	log.T.S("encoding", reflect.TypeOf(x),
+		cloak.GetCloak(x.HiddenService), pub.Derive(x.Sender), iv,
+		x.Reply,
+	)
 	s.Magic(RouteMagic).
 		Cloak(x.HiddenService).
 		Pubkey(pub.Derive(x.Sender)).
-		IV(nonce.New())
+		IV(iv)
 	start := s.GetCursor()
 	s.Reply(x.Reply)
 	var blk cipher.Block
@@ -135,7 +141,7 @@ func (x *Route) Handle(s *zip.Splice, p Onion, ng *Engine) (e error) {
 			ss := make(Sessions, len(hops))
 			ng.SelectHops(hops, ss)
 			for i := range ss {
-				log.D.Ln(ss[i].Hop, ss[i].AddrPort.String())
+				log.D.Ln(ss[i].Hop, ss[i].Node.AddrPort.String())
 			}
 			log.D.S("formulating reply...",
 				s.GetRange(-1, s.GetCursor()).ToBytes(),
@@ -207,5 +213,5 @@ func (ng *Engine) SendRoute(k *pub.Key, ap *netip.AddrPort,
 	log.D.Ln("doing accounting")
 	res := ng.PostAcctOnion(o)
 	log.D.Ln("sending out route request onion")
-	ng.SendWithOneHook(c[0].AddrPort, res, hook, ng.PendingResponses)
+	ng.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.PendingResponses)
 }
