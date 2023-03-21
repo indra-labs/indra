@@ -22,23 +22,23 @@ var (
 func BudgeUp(s *Splice) (o *Splice) {
 	o = s
 	start := o.GetCursor()
-	copy(o.GetRange(-1, -1), s.GetRange(start, -1))
-	copy(s.GetRange(o.Len()-start, -1), slice.NoisePad(start))
+	copy(o.GetAll(), s.GetFrom(start))
+	copy(s.GetFrom(o.Len()-start), slice.NoisePad(start))
 	return
 }
 
-func FormatReply(header, res slice.Bytes, ciphers [3]sha256.Hash,
-	nonces [3]nonce.IV) (rb *Splice) {
+func FormatReply(header slice.Bytes, ciphers [3]sha256.Hash,
+	nonces [3]nonce.IV, res slice.Bytes) (rb *Splice) {
 	
 	rl := RoutingHeaderLen
 	rb = NewSplice(rl + len(res))
-	copy(rb.GetRange(-1, rl), header[:rl])
-	copy(rb.GetRange(rl, -1), res)
-	// log.D.S("before", rb.GetRange(-1, -1).ToBytes())
+	copy(rb.GetUntil(rl), header[:rl])
+	copy(rb.GetFrom(rl), res)
+	// log.D.S("before", rb.GetAll().ToBytes())
 	for i := range ciphers {
 		blk := ciph.BlockFromHash(ciphers[i])
-		ciph.Encipher(blk, nonces[2-i], rb.GetRange(rl, -1))
-		// log.D.S("after", i, rb.GetRange(-1, -1).ToBytes())
+		ciph.Encipher(blk, nonces[2-i], rb.GetFrom(rl))
+		// log.D.S("after", i, rb.GetAll().ToBytes())
 	}
 	return
 }

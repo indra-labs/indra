@@ -200,6 +200,17 @@ func (s *Splice) GetRange(start, end int) slice.Bytes {
 	return s.b[start:end]
 }
 
+// GetAll returns the whole of the buffer.
+func (s *Splice) GetAll() slice.Bytes { return s.b }
+
+func (s *Splice) GetFrom(p int) slice.Bytes {
+	return s.b[p:]
+}
+
+func (s *Splice) GetUntil(p int) slice.Bytes {
+	return s.b[:p]
+}
+
 func (s *Splice) GetCursorToEnd() slice.Bytes {
 	return s.b[s.GetCursor():]
 }
@@ -269,6 +280,10 @@ func (s *Splice) ReadIVTriple(iv *[3]nonce.IV) *Splice {
 }
 
 func (s *Splice) Cloak(pk *pub.Key) *Splice {
+	if pk == nil {
+		s.Advance(cloak.Len, "nil receiver pubkey")
+		return s
+	}
 	to := cloak.GetCloak(pk)
 	copy(s.b[*s.c:s.c.Inc(cloak.Len)], to[:])
 	s.Segments = append(s.Segments,
@@ -460,6 +475,10 @@ func (s *Splice) ReadReply(rpl *Reply) *Splice {
 }
 
 func (s *Splice) AddrPort(a *netip.AddrPort) *Splice {
+	if a == nil {
+		s.Advance(AddrLen, "nil AddrPort")
+		return s
+	}
 	var ap []byte
 	var e error
 	if ap, e = a.MarshalBinary(); check(e) {

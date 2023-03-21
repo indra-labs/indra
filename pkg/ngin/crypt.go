@@ -53,6 +53,10 @@ func (x *Crypt) Encode(s *Splice) (e error) {
 	// log.T.S("encoding", reflect.TypeOf(x),
 	// 	x.Nonce, x.Cloak, pub.Derive(x.From),
 	// )
+	if x.ToHeaderPub == nil || x.From == nil {
+		s.Advance(CryptLen, "crypt")
+		return
+	}
 	s.Magic(CryptMagic).
 		IV(x.Nonce).Cloak(x.ToHeaderPub).Pubkey(pub.Derive(x.From))
 	// Then we can encrypt the message segment
@@ -70,15 +74,17 @@ func (x *Crypt) Encode(s *Splice) (e error) {
 	default:
 		panic("incorrect value for crypt sequence")
 	}
-	if e = x.Onion.Encode(s); check(e) {
-		return
+	if x.Onion != nil {
+		if e = x.Onion.Encode(s); check(e) {
+			return
+		}
 	}
 	ciph.Encipher(blk, x.Nonce, s.GetRange(start, end))
 	if end != s.Len() {
 		if blk = ciph.GetBlock(x.From, x.ToPayloadPub); check(e) {
 			return
 		}
-		ciph.Encipher(blk, x.Nonce, s.GetRange(end, -1))
+		ciph.Encipher(blk, x.Nonce, s.GetFrom(end))
 	}
 	return e
 }
@@ -109,7 +115,7 @@ func (x *Crypt) Handle(s *Splice, p Onion,
 	x.ToPriv = hdr
 	x.Decrypt(hdr, s)
 	if identity {
-		if string(s.GetRange(s.GetCursor(), -1)[:magic.Len]) != SessionMagic {
+		if string(s.GetCursorToEnd()[:magic.Len]) != SessionMagic {
 			log.T.Ln("dropping message due to identity key with" +
 				" no following session")
 			return e
@@ -126,5 +132,5 @@ func (x *Crypt) Handle(s *Splice, p Onion,
 // key to derive the shared secret, and then decrypts the rest of the message.
 func (x *Crypt) Decrypt(prk *prv.Key, s *Splice) {
 	ciph.Encipher(ciph.GetBlock(prk, x.FromPub), x.Nonce,
-		s.GetRange(s.GetCursor(), -1))
+		s.GetFrom(s.GetCursor()))
 }

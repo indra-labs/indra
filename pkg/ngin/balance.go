@@ -98,8 +98,7 @@ func (x *Balance) Handle(s *Splice, p Onion,
 			log.D.F("got %v, expected %v", se.Remaining, x.MilliSatoshi)
 			se.Remaining = x.MilliSatoshi
 		}
-		ng.PendingResponses.ProcessAndDelete(pending.ID, nil, s.GetRange(-1,
-			-1))
+		ng.PendingResponses.ProcessAndDelete(pending.ID, nil, s.GetAll())
 	}
 	return
 }

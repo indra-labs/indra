@@ -99,8 +99,7 @@ func (x *Exit) Handle(s *Splice, p Onion,
 		Load:  byte(ng.Load.Load()),
 		Bytes: result,
 	})
-	rb := FormatReply(s.GetRange(s.GetCursor(), RoutingHeaderLen),
-		res.GetRange(-1, -1), x.Ciphers, x.Nonces)
+	rb := FormatReply(s.GetRange(s.GetCursor(), RoutingHeaderLen), x.Ciphers, x.Nonces, res.GetAll())
 	switch on := p.(type) {
 	case *Crypt:
 		sess := ng.FindSessionByHeader(on.ToPriv)

@@ -82,7 +82,6 @@ func (ng *Engine) Shutdown() {
 	ng.ShuttingDown.Store(true)
 	ng.Cleanup()
 	ng.C.Q()
-	log.D.Ln("finished shutdown for", ng.GetLocalNodeAddressString())
 }
 
 func (ng *Engine) HandleMessage(s *Splice, pr Onion) {
@@ -94,11 +93,11 @@ func (ng *Engine) HandleMessage(s *Splice, pr Onion) {
 		if check(on.Decode(s)) {
 			return
 		}
-		if on.Magic() != IntroMagic {
+		if pr != nil && on.Magic() != pr.Magic() {
 			log.D.Ln(s)
 		}
 		if check(on.Handle(s, pr, ng)) {
-			log.W.S("unrecognised packet", s.GetRange(-1, -1).ToBytes())
+			log.W.S("unrecognised packet", s.GetAll().ToBytes())
 		}
 	}
 }
@@ -110,7 +109,6 @@ func (ng *Engine) Handler() (out bool) {
 	var prev Onion
 	select {
 	case <-ng.C.Wait():
-		log.D.Ln("shutting down engine", ng.GetLocalNodeAddressString())
 		ng.Shutdown()
 		out = true
 		break

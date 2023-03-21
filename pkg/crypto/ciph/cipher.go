@@ -26,7 +26,7 @@ var (
 // keys using ECDH.
 func GetBlock(from *prv.Key, to *pub.Key) (block cipher.Block) {
 	secret := ecdh.Compute(from, to)
-	log.T.S("secret", secret)
+	// log.T.Ln("secret", secret)
 	block, _ = aes.NewCipher(secret[:])
 	return
 }

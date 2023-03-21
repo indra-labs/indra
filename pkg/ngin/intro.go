@@ -44,7 +44,7 @@ func NewIntro(id nonce.ID, key *prv.Key, ap *netip.AddrPort,
 	s := NewSplice(IntroLen - magic.Len)
 	s.ID(id).Pubkey(pk).AddrPort(ap).Uint64(uint64(expires.
 		UnixNano()))
-	hash := sha256.Single(s.GetRange(-1, s.GetCursor()))
+	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	var e error
 	var sign sig.Bytes
 	if sign, e = sig.Sign(key, hash); check(e) {
@@ -64,7 +64,7 @@ func (x *Intro) Validate() bool {
 	s := NewSplice(IntroLen - magic.Len)
 	s.ID(x.ID).Pubkey(x.Key).AddrPort(x.AddrPort).Uint64(uint64(x.Expiry.
 		UnixNano()))
-	hash := sha256.Single(s.GetRange(-1, s.GetCursor()))
+	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	key, e := x.Sig.Recover(hash)
 	if check(e) {
 		return false
@@ -115,11 +115,11 @@ func (x *Intro) Handle(s *Splice, p Onion,
 	valid := x.Validate()
 	if valid {
 		log.T.Ln(ng.GetLocalNodeAddressString(), "validated intro", x.ID)
-		// ng.PendingResponses.ProcessAndDelete(x.ID, s.GetRange(-1, -1))
+		// ng.PendingResponses.ProcessAndDelete(x.ID, s.GetAll())
 		kb := x.Key.ToBytes()
 		if _, ok := ng.HiddenRouting.KnownIntros[x.Key.ToBytes()]; ok {
 			log.D.Ln(ng.GetLocalNodeAddressString(), "already have intro")
-			ng.PendingResponses.ProcessAndDelete(x.ID, &kb, s.GetRange(-1, -1))
+			ng.PendingResponses.ProcessAndDelete(x.ID, &kb, s.GetAll())
 			ng.HiddenRouting.Unlock()
 			return
 		}
@@ -128,7 +128,7 @@ func (x *Intro) Handle(s *Splice, p Onion,
 		ng.HiddenRouting.KnownIntros[x.Key.ToBytes()] = x
 		var ok bool
 		if ok, e = ng.PendingResponses.ProcessAndDelete(x.ID, &kb,
-			s.GetRange(-1, -1)); ok || check(e) {
+			s.GetAll()); ok || check(e) {
 			
 			ng.HiddenRouting.Unlock()
 			log.D.Ln("deleted pending response", x.ID)
@@ -150,7 +150,7 @@ func (x *Intro) Handle(s *Splice, p Onion,
 		for i := range nn {
 			log.T.F("sending intro to %s", color.Yellow.Sprint(nn[i].AddrPort.
 				String()))
-			nn[i].Transport.Send(s.GetRange(-1, -1))
+			nn[i].Transport.Send(s.GetAll())
 			counter++
 			if counter < 2 {
 				continue

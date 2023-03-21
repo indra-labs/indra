@@ -120,9 +120,8 @@ func (x *GetBalance) Handle(s *Splice, p Onion,
 	log.D.Ln("session found", x.ID)
 	header := s.GetRange(s.GetCursor(), s.Advance(RoutingHeaderLen,
 		"routing header"))
-	rbb := FormatReply(header,
-		Encode(bal).GetRange(-1, -1), x.Ciphers, x.Nonces)
-	rb := append(rbb.GetRange(-1, -1), slice.NoisePad(714-rbb.Len())...)
+	rbb := FormatReply(header, x.Ciphers, x.Nonces, Encode(bal).GetAll())
+	rb := append(rbb.GetAll(), slice.NoisePad(714-rbb.Len())...)
 	switch on1 := p.(type) {
 	case *Crypt:
 		sess := ng.FindSessionByHeader(on1.ToPriv)
@@ -144,9 +143,8 @@ func (x *GetBalance) Handle(s *Splice, p Onion,
 		}
 		return false
 	})
-	rbb = FormatReply(header,
-		Encode(bal).GetRange(-1, -1), x.Ciphers, x.Nonces)
-	rb = append(rbb.GetRange(-1, -1), slice.NoisePad(714-len(rb))...)
+	rbb = FormatReply(header, x.Ciphers, x.Nonces, Encode(bal).GetAll())
+	rb = append(rbb.GetAll(), slice.NoisePad(714-len(rb))...)
 	ng.HandleMessage(Load(rb, slice.NewCursor()), x)
 	return
 }

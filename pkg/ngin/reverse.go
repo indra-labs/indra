@@ -28,13 +28,19 @@ func (o Skins) Reverse(ip *netip.AddrPort) Skins {
 
 func (x *Reverse) Magic() string { return ReverseMagic }
 
-func (x *Reverse) Encode(s *Splice) error {
+func (x *Reverse) Encode(s *Splice) (e error) {
 	// log.T.S("encoding", reflect.TypeOf(x),
 	// 	x.AddrPort,
 	// )
-	return x.Onion.Encode(
-		s.Magic(ReverseMagic).AddrPort(x.AddrPort),
-	)
+	if x.AddrPort == nil {
+		s.Advance(ReverseLen, "reverse")
+	} else {
+		s.Magic(ReverseMagic).AddrPort(x.AddrPort)
+	}
+	if x.Onion != nil {
+		e = x.Onion.Encode(s)
+	}
+	return
 }
 
 func (x *Reverse) Decode(s *Splice) (e error) {
@@ -85,7 +91,7 @@ func (x *Reverse) Handle(s *Splice, p Onion,
 		s.CopyIntoRange(slice.NoisePad(ReverseCryptLen), second, last)
 		if last != s.Len() {
 			ciph.Encipher(ciph.GetBlock(pld, on.FromPub), on.Nonce,
-				s.GetRange(last, -1))
+				s.GetFrom(last))
 		}
 		if string(s.GetRange(start, start+magic.Len)) != ReverseMagic {
 			// It's for us!

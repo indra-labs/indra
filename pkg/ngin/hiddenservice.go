@@ -123,7 +123,7 @@ func (ng *Engine) SendHiddenService(
 	expiry time.Time,
 	alice, bob *SessionData,
 	localPort uint16,
-	hook Callback) {
+	hook Callback) (in *Intro) {
 	
 	hops := StandardCircuit()
 	s := make(Sessions, len(hops))
@@ -131,7 +131,7 @@ func (ng *Engine) SendHiddenService(
 	se := ng.SelectHops(hops, s)
 	var c Circuit
 	copy(c[:], se[:len(c)])
-	in := NewIntro(id, key, alice.Node.AddrPort, expiry)
+	in = NewIntro(id, key, alice.Node.AddrPort, expiry)
 	// log.D.S("intro", in, in.Validate())
 	o := MakeHiddenService(in, alice, bob, c, ng.KeySet)
 	// log.D.S("hidden service onion", o)
@@ -144,4 +144,5 @@ func (ng *Engine) SendHiddenService(
 		ng.GetLocalNodeAddressString())
 	// log.D.S("storing hidden service info", ng.HiddenRouting)
 	ng.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.PendingResponses)
+	return
 }

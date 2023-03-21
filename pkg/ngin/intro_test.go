@@ -32,7 +32,7 @@ func TestOnionSkins_Intro(t *testing.T) {
 	on1 = append(on1, &End{})
 	on := on1.Assemble()
 	s := Encode(on)
-	log.D.S(s.GetRange(-1, -1).ToBytes())
+	log.D.S(s.GetAll().ToBytes())
 	s.SetCursor(0)
 	var onc Onion
 	if onc = Recognise(s, slice.GenerateRandomAddrPortIPv6()); onc == nil {

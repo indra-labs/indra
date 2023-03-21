@@ -57,6 +57,9 @@ func (k *Key) String() (s string) {
 
 // Derive generates a public key from the prv.Key.
 func Derive(prv *prv.Key) *Key {
+	if prv == nil {
+		return nil
+	}
 	return (*Key)((*secp256k1.PrivateKey)(prv).PubKey())
 }
 

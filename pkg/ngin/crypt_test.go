@@ -22,7 +22,7 @@ func TestOnionSkins_SimpleCrypt(t *testing.T) {
 		Assemble()
 	s := Encode(on)
 	s.SetCursor(0)
-	log.D.S("encoded, encrypted onion:\n", s.GetRange(-1, -1).ToBytes())
+	log.D.S("encoded, encrypted onion:\n", s.GetAll().ToBytes())
 	var oncr Onion
 	if oncr = Recognise(s, slice.GenerateRandomAddrPortIPv6()); oncr == nil {
 		t.Error("did not unwrap")

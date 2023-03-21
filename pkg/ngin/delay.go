@@ -31,7 +31,11 @@ func (x *Delay) Encode(s *Splice) (e error) {
 	// log.T.S("encoding", reflect.TypeOf(x),
 	// 	x.Duration,
 	// )
-	return x.Onion.Encode(s.Magic(DelayMagic).Uint64(uint64(x.Duration)))
+	s.Magic(DelayMagic).Uint64(uint64(x.Duration))
+	if x.Onion != nil {
+		e = x.Onion.Encode(s)
+	}
+	return
 }
 
 func (x *Delay) Decode(s *Splice) (e error) {

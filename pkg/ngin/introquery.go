@@ -83,8 +83,7 @@ func (x *IntroQuery) Handle(s *Splice, p Onion,
 	// log.D.S(il.ID, il.Key, il.Expiry, il.Sig)
 	iqr := Encode(il)
 	rb := FormatReply(s.GetRange(s.GetCursor(), s.Advance(RoutingHeaderLen,
-		"routing header")),
-		iqr.GetRange(-1, -1), x.Ciphers, x.Nonces)
+		"routing header")), x.Ciphers, x.Nonces, iqr.GetAll())
 	switch on1 := p.(type) {
 	case *Crypt:
 		sess := ng.FindSessionByHeader(on1.ToPriv)
@@ -112,7 +111,7 @@ func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *pub.Key,
 	alice, bob *SessionData, hook func(in *Intro)) {
 	
 	fn := func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
-		log.D.S("sendintroquery callback", id, k, b.ToBytes())
+		// log.D.S("sendintroquery callback", id, k, b.ToBytes())
 		s := Load(b, slice.NewCursor())
 		on := Recognise(s, ng.GetLocalNodeAddress())
 		if e = on.Decode(s); check(e) {

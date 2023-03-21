@@ -18,7 +18,7 @@ import (
 func (sm *SessionManager) PostAcctOnion(o Skins) (res SendData) {
 	assembled := o.Assemble()
 	// log.T.S(assembled)
-	res.B = Encode(assembled).GetRange(-1, -1)
+	res.B = Encode(assembled).GetAll()
 	// do client accounting
 	skip := false
 	for i := range o {
@@ -82,7 +82,7 @@ func (sm *SessionManager) PostAcctOnion(o Skins) (res SendData) {
 			case *Reverse:
 				res.Billable = append(res.Billable, s.ID)
 			case *Route:
-				copy(res.Last[:], on2.ID[:])
+				copy(res.Last[:], on2.Reply.ID[:])
 				res.Billable = append(res.Billable, s.ID)
 			}
 		case *Confirmation:

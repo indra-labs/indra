@@ -32,7 +32,7 @@ type Route struct {
 	SenderPub     *pub.Key
 	nonce.IV
 	// ------- the rest is encrypted to the HiddenService/Sender keys.
-	*Reply
+	Reply  *Reply
 	Header slice.Bytes
 	Onion
 }
@@ -73,7 +73,7 @@ func (x *Route) Encode(s *Splice) (e error) {
 	if blk = ciph.GetBlock(x.Sender, x.HiddenService); check(e) {
 		return
 	}
-	ciph.Encipher(blk, x.IV, s.GetRange(start, -1))
+	ciph.Encipher(blk, x.IV, s.GetFrom(start))
 	return
 }
 
@@ -91,7 +91,7 @@ func (x *Route) Decode(s *Splice) (e error) {
 // Decrypt decrypts the rest of a message after the Route segment if the
 // recipient has the hidden service private key.
 func (x *Route) Decrypt(prk *prv.Key, s *Splice) {
-	log.D.S(s.GetRange(-1, s.GetCursor()), s.GetRange(s.GetCursor(), -1))
+	// log.D.S(s.GetRange(-1, s.GetCursor()), s.GetRange(s.GetCursor(), -1))
 	ciph.Encipher(ciph.GetBlock(prk, x.SenderPub), x.IV,
 		s.GetCursorToEnd())
 	// And now we can see the reply field for the return trip.
@@ -117,12 +117,27 @@ func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 	log.D.Ln("route key", *hc)
 	hcl := *hc
 	if hh, ok := ng.HiddenRouting.HiddenServices[hcl]; ok {
-		log.D.F("we are the hidden service %s", hh.CurrentIntros[0].Key)
+		log.D.F("we are the hidden service %s - decrypting...",
+			hh.CurrentIntros[0].Key)
 		// We have the keys to unwrap this one.
-		log.D.Ln(s)
+		// log.D.Ln(s)
 		x.Decrypt(hh.Prv, s)
 		log.D.Ln(s)
-		// ng.HandleMessage(s, x)
+		// Add another two hops for security against unmasking.
+		hops := []byte{0, 1}
+		path := make(Sessions, 2)
+		ng.SelectHops(hops, path)
+		n := GenNonces(2)
+		mr := Skins{}.
+			ForwardCrypt(path[0], ng.KeySet.Next(), n[0]).
+			ForwardCrypt(path[1], ng.KeySet.Next(), n[1]).
+			Ready(x.Header, x.Reply)
+		log.D.S("makeready", mr)
+		assembled := mr.Assemble()
+		log.D.S("assembled", assembled)
+		reply := Encode(assembled)
+		log.D.Ln(reply)
+		ng.HandleMessage(reply, x)
 		return
 	}
 	// If we aren't the hidden service then we have maybe got the header to
@@ -143,14 +158,12 @@ func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 				log.D.Ln(ss[i].Hop, ss[i].Node.AddrPort.String())
 			}
 			log.D.S("formulating reply...",
-				s.GetRange(-1, s.GetCursor()).ToBytes(),
-				s.GetRange(s.GetCursor(), -1).ToBytes(),
+				s.GetUntil(s.GetCursor()).ToBytes(),
+				s.GetFrom(s.GetCursor()).ToBytes(),
 			)
-			rb := FormatReply(hb.Bytes, s.GetRange(-1, -1),
-				hb.Ciphers, hb.Nonces)
-			log.D.S(rb.GetRange(-1, -1).ToBytes())
+			rb := FormatReply(hb.Bytes, hb.Ciphers, hb.Nonces, s.GetAll())
+			log.D.S(rb.GetAll().ToBytes())
 			ng.HandleMessage(rb, x)
-			
 			// We have to get another one before we can do this again.
 			ng.HiddenRouting.Delete(hcl)
 			log.D.Ln("deleted", hb.Intro.Key.ToBase32Abbreviated())
@@ -178,6 +191,7 @@ func MakeRoute(id nonce.ID, k *pub.Key, ks *signer.KeySet,
 	alice, bob *SessionData, c Circuit) Skins {
 	
 	headers := GetHeaders(alice, bob, c, ks)
+	// log.T.S("headers", headers)
 	return Skins{}.
 		RoutingHeader(headers.Forward).
 		Route(id, k, ks, headers.ExitPoint()).
@@ -201,14 +215,17 @@ func (ng *Engine) SendRoute(k *pub.Key, ap *netip.AddrPort,
 			"could not find session for address", ap.String())
 		return
 	}
-	log.D.Ln("sending route", k.ToBase32Abbreviated())
+	log.D.Ln(ng.GetLocalNodeAddressString(), "sending route",
+		k.ToBase32Abbreviated())
 	hops := StandardCircuit()
 	s := make(Sessions, len(hops))
 	s[2] = ss
+	// log.D.S("sessions before", s)
 	se := ng.SelectHops(hops, s)
 	var c Circuit
 	copy(c[:], se)
-	o := MakeRoute(nonce.NewID(), k, ng.KeySet, c[4], ss, c)
+	// log.D.S("sessions after", c)
+	o := MakeRoute(nonce.NewID(), k, ng.KeySet, se[5], c[2], c)
 	log.D.S("doing accounting", o)
 	res := ng.PostAcctOnion(o)
 	log.D.Ln("sending out route request onion")
