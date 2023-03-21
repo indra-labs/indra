@@ -124,17 +124,43 @@ func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 		x.Decrypt(hh.Prv, s)
 		log.D.Ln(s)
 		// Add another two hops for security against unmasking.
-		hops := []byte{0, 1}
+		preHops := []byte{0, 1}
 		path := make(Sessions, 2)
-		ng.SelectHops(hops, path)
+		ng.SelectHops(preHops, path)
 		n := GenNonces(2)
+		
+		rvKeys := ng.KeySet.Next3()
+		hops := []byte{3, 4, 5}
+		sessions := make(Sessions, 3)
+		ng.SelectHops(hops, sessions)
+		rt := &Routing{
+			Sessions: [3]*SessionData{sessions[0], sessions[1], sessions[2]},
+			Keys:     [3]*prv.Key{rvKeys[0], rvKeys[1], rvKeys[2]},
+			Nonces:   [3]nonce.IV{nonce.New(), nonce.New(), nonce.New()},
+		}
+		ep := ExitPoint{
+			Routing: rt,
+			ReturnPubs: [3]*pub.Key{
+				pub.Derive(rvKeys[0]),
+				pub.Derive(rvKeys[1]),
+				pub.Derive(rvKeys[2]),
+			},
+		}
+		ng.SelectHops(hops, sessions)
+		r := &Reply{
+			ID:      nonce.NewID(),
+			Ciphers: GenCiphers(ep.Keys, ep.ReturnPubs),
+			Nonces:  ep.Nonces,
+		}
+		rh := Skins{}.RoutingHeader(rt)
+		rhb := Encode(rh.Assemble()).GetAll()
 		mr := Skins{}.
 			ForwardCrypt(path[0], ng.KeySet.Next(), n[0]).
 			ForwardCrypt(path[1], ng.KeySet.Next(), n[1]).
-			Ready(x.Header, x.Reply)
-		log.D.S("makeready", mr)
+			Ready(x.Header, rhb, x.Reply, r)
+		// log.D.S("makeready", mr)
 		assembled := mr.Assemble()
-		log.D.S("assembled", assembled)
+		// log.D.S("assembled", assembled)
 		reply := Encode(assembled)
 		log.D.Ln(reply)
 		ng.HandleMessage(reply, x)
@@ -226,7 +252,7 @@ func (ng *Engine) SendRoute(k *pub.Key, ap *netip.AddrPort,
 	copy(c[:], se)
 	// log.D.S("sessions after", c)
 	o := MakeRoute(nonce.NewID(), k, ng.KeySet, se[5], c[2], c)
-	log.D.S("doing accounting", o)
+	// log.D.S("doing accounting", o)
 	res := ng.PostAcctOnion(o)
 	log.D.Ln("sending out route request onion")
 	ng.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.PendingResponses)

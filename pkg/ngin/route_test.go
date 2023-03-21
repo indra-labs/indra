@@ -137,7 +137,7 @@ func TestEngine_Route(t *testing.T) {
 		ini.Expiry, ini.Validate())
 	client.SendRoute(ini.Key, ini.AddrPort,
 		func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
-			log.I.S("success", id, k, b.ToBytes())
+			log.I.S("success", id)
 			counter.Dec()
 			wg.Done()
 			return

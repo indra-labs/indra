@@ -54,7 +54,7 @@ func (x *Exit) Magic() string { return ExitMagic }
 
 func (x *Exit) Encode(s *Splice) (e error) {
 	// log.T.S("encoding", reflect.TypeOf(x),
-	// 	x.Reply.ID, x.Reply.Ciphers, x.Reply.Nonces, x.Port, x.Bytes.ToBytes(),
+	// 	x.FwReply.ID, x.FwReply.Ciphers, x.FwReply.Nonces, x.Port, x.Bytes.ToBytes(),
 	// )
 	return x.Onion.Encode(s.
 		Magic(ExitMagic).Reply(&x.Reply).Uint16(x.Port).Bytes(x.Bytes),

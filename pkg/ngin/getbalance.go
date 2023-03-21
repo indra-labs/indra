@@ -73,7 +73,7 @@ func (x *GetBalance) Magic() string { return GetBalanceMagic }
 
 func (x *GetBalance) Encode(s *Splice) (e error) {
 	// log.T.S("encoding", reflect.TypeOf(x),
-	// 	x.ID, x.Reply.ID, x.Reply.Ciphers, x.Reply.Nonces,
+	// 	x.ID, x.FwReply.ID, x.FwReply.Ciphers, x.FwReply.Nonces,
 	// )
 	return x.Onion.Encode(s.
 		Magic(GetBalanceMagic).ID(x.ID).Reply(&x.Reply),

@@ -41,7 +41,7 @@ func (x *IntroQuery) Magic() string { return IntroQueryMagic }
 
 func (x *IntroQuery) Encode(s *Splice) (e error) {
 	// log.T.S("encoding", reflect.TypeOf(x),
-	// 	x.Reply, x.Key,
+	// 	x.FwReply, x.Key,
 	// )
 	return x.Onion.Encode(s.
 		Magic(IntroQueryMagic).

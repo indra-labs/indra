@@ -76,7 +76,7 @@ func (x *Session) Magic() string { return SessionMagic }
 
 func (x *Session) Encode(s *Splice) (e error) {
 	// log.T.S("encoding", reflect.TypeOf(x),
-	// 	x.ID, x.RoutingHeader, x.Payload,
+	// 	x.ID, x.FwHeader, x.Payload,
 	// )
 	return x.Onion.Encode(s.Magic(SessionMagic).
 		ID(x.ID).
