@@ -147,9 +147,14 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 		})
 	}
 	returner = returnHops[0] // c[exiter.Hop] = clients[0].Sessions[i]
-	client.SendHiddenService(id, idPrv,
-		time.Now().Add(time.Hour), returner, introducer, 2342,
-		func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
+	svc := &Service{
+		Port:      2345,
+		RelayRate: 43523,
+		Transport: NewSim(64),
+	}
+	client.SendHiddenService(id, idPrv, time.Now().Add(time.Hour), returner,
+		introducer, svc, func(id nonce.ID, k *pub.Bytes,
+			b slice.Bytes) (e error) {
 			log.I.S("hidden service callback", id, k, b.ToBytes())
 			return
 		})

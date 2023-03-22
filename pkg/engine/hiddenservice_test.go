@@ -90,9 +90,14 @@ func TestEngine_SendHiddenService(t *testing.T) {
 	// log.D.S("parties", introducer, returner)
 	wg.Add(1)
 	counter.Inc()
+	svc := &Service{
+		Port:      2345,
+		RelayRate: 43523,
+		Transport: NewSim(64),
+	}
 	clients[0].SendHiddenService(id, idPrv, time.Now().Add(time.Hour),
-		returner, introducer, 23405,
-		func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
+		returner, introducer, svc, func(id nonce.ID, k *pub.Bytes,
+			b slice.Bytes) (e error) {
 			log.W.Ln("Test passed")
 			// This happens when the gossip gets back to us.
 			wg.Done()

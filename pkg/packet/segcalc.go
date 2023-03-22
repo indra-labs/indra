@@ -2,7 +2,7 @@ package packet
 
 import (
 	"fmt"
-
+	
 	"github.com/templexxx/reedsolomon"
 )
 
@@ -12,14 +12,14 @@ type Segment struct {
 
 // This is an expanded printer for debugging
 // func (s Segment) String() (o string) {
-// 	slast := (s.PEnd-s.DEnd)*s.SLen - s.SLen + s.Last
+// 	slast := (s.PEnd-s.DEnd)*s.SLen - s.SLen + s.ID
 // 	if s.PEnd-s.DEnd == 0 {
 // 		slast = 0
 // 	}
 // 	o = fmt.Sprintf("%5d (%5d, %5d) %5d [%5d, %5d] %5d (%5d; %5d)",
-// 		s.DStart, s.DEnd-s.DStart, (s.DEnd-s.DStart-1)*s.SLen+s.Last,
+// 		s.DStart, s.DEnd-s.DStart, (s.DEnd-s.DStart-1)*s.SLen+s.ID,
 // 		s.DEnd, s.PEnd-s.DEnd, slast, s.PEnd,
-// 		s.SLen, s.Last)
+// 		s.SLen, s.ID)
 // 	return
 // }
 
@@ -27,7 +27,7 @@ type Segment struct {
 // Segment.
 func (s Segment) String() (o string) {
 	o = fmt.Sprintf(
-		"\t\tSegment{ DStart: %d, DEnd: %d, PEnd: %d, SLen: %d, Last: %d},", s.DStart, s.DEnd, s.PEnd, s.SLen, s.Last)
+		"\t\tSegment{ DStart: %d, DEnd: %d, PEnd: %d, SLen: %d, ID: %d},", s.DStart, s.DEnd, s.PEnd, s.SLen, s.Last)
 	return
 }
 

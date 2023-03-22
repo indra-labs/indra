@@ -40,10 +40,10 @@ out:
 	return
 }
 
-func (sm *SessionManager) SelectHops(hops []byte,
-	alreadyHave Sessions) (so Sessions) {
+func (sm *SessionManager) SelectHops(hops []byte, alreadyHave Sessions,
+	note string) (so Sessions) {
 	
-	log.T.Ln(sm.GetLocalNodeAddressString(), "selecting hops")
+	log.T.Ln(sm.GetLocalNodeAddressString(), "selecting hops", note)
 	sm.Lock()
 	defer sm.Unlock()
 	ws := make(Sessions, 0)

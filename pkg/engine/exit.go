@@ -99,7 +99,8 @@ func (x *Exit) Handle(s *Splice, p Onion,
 		Load:  byte(ng.Load.Load()),
 		Bytes: result,
 	})
-	rb := FormatReply(s.GetRange(s.GetCursor(), RoutingHeaderLen), x.Ciphers, x.Nonces, res.GetAll())
+	rb := FormatReply(s.GetRange(s.GetCursor(), RoutingHeaderLen),
+		x.Ciphers, x.Nonces, res.GetAll())
 	switch on := p.(type) {
 	case *Crypt:
 		sess := ng.FindSessionByHeader(on.ToPriv)
@@ -156,7 +157,7 @@ func (ng *Engine) SendExit(port uint16, msg slice.Bytes, id nonce.ID,
 	s := make(Sessions, len(hops))
 	s[2] = bob
 	s[5] = alice
-	se := ng.SelectHops(hops, s)
+	se := ng.SelectHops(hops, s, "exit")
 	var c Circuit
 	copy(c[:], se)
 	o := MakeExit(ExitParams{port, msg, id, bob, alice, c, ng.KeySet})

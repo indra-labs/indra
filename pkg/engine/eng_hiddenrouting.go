@@ -31,19 +31,14 @@ type KnownIntros map[pub.Bytes]*Intro
 
 type LocalHiddenService struct {
 	Prv           *prv.Key
-	Forward       uint16
 	CurrentIntros []*Intro
+	*Service
 }
 
 type HiddenServices map[pub.Bytes]*LocalHiddenService
 
-// HiddenRouting is a map of existing known hidden service keys and the
-// routing header for requesting a new one on behalf of the client.
-//
-// After a header is retrieved, the relay sends back a request to the hidden
-// service using the headers in this store with the provided public key from the
-// client which is then used to encrypt the provided header and prevent the
-// introducing relay from also using the provided header.
+// HiddenRouting is a collection of data related to hidden services.
+// Introductions both own and other, hidden services.
 type HiddenRouting struct {
 	sync.Mutex
 	MyIntros
@@ -59,15 +54,15 @@ func NewHiddenrouting() *HiddenRouting {
 	}
 }
 
-func (hr *HiddenRouting) AddHiddenService(key *prv.Key, in *Intro,
-	forward uint16, addr string) {
+func (hr *HiddenRouting) AddHiddenService(svc *Service, key *prv.Key,
+	in *Intro, addr string) {
 	
 	pk := pub.Derive(key).ToBytes()
 	hr.Lock()
 	log.I.F("%s added hidden service with key %s", addr, pk)
 	hr.HiddenServices[pk] = &LocalHiddenService{
 		Prv:     key,
-		Forward: forward,
+		Service: svc,
 	}
 	hr.HiddenServices[pk].CurrentIntros = append(hr.HiddenServices[pk].
 		CurrentIntros, in)

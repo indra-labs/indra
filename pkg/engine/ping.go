@@ -31,7 +31,7 @@ func (ng *Engine) SendPing(c Circuit, hook Callback) {
 	hops := StandardCircuit()
 	s := make(Sessions, len(hops))
 	copy(s, c[:])
-	se := ng.SelectHops(hops, s)
+	se := ng.SelectHops(hops, s, "sendping")
 	copy(c[:], se)
 	confID := nonce.NewID()
 	o := Ping(confID, se[len(se)-1], c, ng.KeySet)

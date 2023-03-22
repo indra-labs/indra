@@ -117,7 +117,7 @@ func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 	hcl := *hc
 	if hh, ok := ng.HiddenRouting.HiddenServices[hcl]; ok {
 		log.D.F("we are the hidden service %s - decrypting...",
-			hh.CurrentIntros[0].Key)
+			hh.CurrentIntros[0].Key.ToBase32Abbreviated())
 		// We have the keys to unwrap this one.
 		// log.D.Ln(s)
 		x.Decrypt(hh.Prv, s)
@@ -125,91 +125,44 @@ func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 		// Add another two hops for security against unmasking.
 		preHops := []byte{0, 1}
 		path := make(Sessions, 2)
-		ng.SelectHops(preHops, path)
-		n := GenNonces(2)
-		
+		ng.SelectHops(preHops, path, "route prehops")
+		n := GenNonces(5)
 		rvKeys := ng.KeySet.Next3()
-		hops := []byte{3, 4, 5}
-		sessions := make(Sessions, 3)
-		ng.SelectHops(hops, sessions)
+		hops := []byte{0, 1, 3, 4, 5}
+		sessions := make(Sessions, len(hops))
+		ng.SelectHops(hops, sessions, "route reply header")
 		rt := &Routing{
-			Sessions: [3]*SessionData{sessions[0], sessions[1], sessions[2]},
+			Sessions: [3]*SessionData{sessions[2], sessions[3], sessions[4]},
 			Keys:     [3]*prv.Key{rvKeys[0], rvKeys[1], rvKeys[2]},
-			Nonces:   [3]nonce.IV{nonce.New(), nonce.New(), nonce.New()},
+			Nonces:   [3]nonce.IV{n[0], n[1], n[2]},
 		}
 		ep := ExitPoint{
 			Routing: rt,
 			ReturnPubs: [3]*pub.Key{
-				pub.Derive(rvKeys[0]),
-				pub.Derive(rvKeys[1]),
-				pub.Derive(rvKeys[2]),
+				pub.Derive(sessions[0].HeaderPrv),
+				pub.Derive(sessions[1].HeaderPrv),
+				pub.Derive(sessions[2].HeaderPrv),
 			},
 		}
-		ng.SelectHops(hops, sessions)
-		r := &Reply{
+		returnReply := &Reply{
 			ID:      nonce.NewID(),
 			Ciphers: GenCiphers(ep.Keys, ep.ReturnPubs),
 			Nonces:  ep.Nonces,
 		}
 		rh := Skins{}.RoutingHeader(rt)
-		rhb := Encode(rh.Assemble()).GetAll()
+		returnHeader := Encode(rh.Assemble()).GetAll()
 		mr := Skins{}.
-			ForwardCrypt(path[0], ng.KeySet.Next(), n[0]).
-			ForwardCrypt(path[1], ng.KeySet.Next(), n[1]).
-			Ready(x.Header, rhb, x.Reply, r)
+			ForwardCrypt(sessions[0], ng.KeySet.Next(), n[3]).
+			ForwardCrypt(sessions[1], ng.KeySet.Next(), n[4]).
+			Ready(x.Header, returnHeader, x.Reply, returnReply)
+		log.D.S("mr", mr)
 		// log.D.S("makeready", mr)
 		assembled := mr.Assemble()
 		// log.D.S("assembled", assembled)
 		reply := Encode(assembled)
-		log.D.Ln(reply)
 		ng.HandleMessage(reply, x)
 	}
 	return
-	// // If we aren't the hidden service then we have maybe got the header to
-	// // open a connection from the hidden client to the hidden service.
-	// // The message is encrypted to them and will be recognised and accepted.
-	// var tryCount int
-	// for {
-	// 	log.I.Ln("trycount", tryCount)
-	// 	hb := ng.HiddenRouting.FindIntroduction(hcl)
-	// 	if hb != nil {
-	// 		log.D.S("found route", hb.ID, hb.AddrPort.String(),
-	// 			hb.Bytes.ToBytes())
-	//
-	// 		hops := []byte{3, 4, 5}
-	// 		ss := make(Sessions, len(hops))
-	// 		ng.SelectHops(hops, ss)
-	// 		for i := range ss {
-	// 			log.D.Ln(ss[i].Hop, ss[i].Node.AddrPort.String())
-	// 		}
-	// 		log.D.S("formulating reply...",
-	// 			s.GetUntil(s.GetCursor()).ToBytes(),
-	// 			s.GetFrom(s.GetCursor()).ToBytes(),
-	// 		)
-	// 		rb := FormatReply(hb.Bytes, hb.Ciphers, hb.Nonces, s.GetAll())
-	// 		log.D.S(rb.GetAll().ToBytes())
-	// 		ng.HandleMessage(rb, x)
-	// 		// We have to get another one before we can do this again.
-	// 		ng.HiddenRouting.Delete(hcl)
-	// 		log.D.Ln("deleted", hb.Intro.Key.ToBase32Abbreviated())
-	// 		return
-	// 	}
-	// 	// We have to retry a few times before giving up if the intro isn't
-	// 	// found.
-	// 	tryCount++
-	// 	if tryCount > 2 {
-	// 		log.D.Ln("finished handling route")
-	// 		log.D.S("HiddenRouting", ng.HiddenRouting.KnownIntros,
-	// 			ng.HiddenRouting.MyIntros, ng.HiddenRouting.HiddenServices)
-	// 		return
-	// 	}
-	// 	select {
-	// 	case <-time.After(time.Second): // * time.Duration(tryCount*tryCount)):
-	// 		continue
-	// 	case <-ng.C.Wait():
-	// 		return
-	// 	}
-	// }
 }
 
 func MakeRoute(id nonce.ID, k *pub.Key, ks *signer.KeySet,
@@ -246,7 +199,7 @@ func (ng *Engine) SendRoute(k *pub.Key, ap *netip.AddrPort,
 	s := make(Sessions, len(hops))
 	s[2] = ss
 	// log.D.S("sessions before", s)
-	se := ng.SelectHops(hops, s)
+	se := ng.SelectHops(hops, s, "sendroute")
 	var c Circuit
 	copy(c[:], se)
 	// log.D.S("sessions after", c)

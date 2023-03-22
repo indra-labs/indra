@@ -130,11 +130,11 @@ func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *pub.Key,
 	s := make(Sessions, len(hops))
 	s[2] = bob
 	s[5] = alice
-	se := ng.SelectHops(hops, s)
+	se := ng.SelectHops(hops, s, "sendintroquery")
 	var c Circuit
 	copy(c[:], se)
 	o := MakeIntroQuery(id, hsk, bob, alice, c, ng.KeySet)
 	res := ng.PostAcctOnion(o)
-	log.D.Ln(res.Last)
+	log.D.Ln(res.ID)
 	ng.SendWithOneHook(c[0].Node.AddrPort, res, fn, ng.PendingResponses)
 }

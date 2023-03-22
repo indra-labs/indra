@@ -118,18 +118,21 @@ func TestEngine_Message(t *testing.T) {
 	}
 	wg.Add(1)
 	counter.Inc()
+	svc := &Service{
+		Port:      2345,
+		RelayRate: 43523,
+		Transport: NewSim(64),
+	}
 	ini := client.SendHiddenService(id, idPrv, time.Now().Add(time.Hour),
-		returner,
-		introducer, localPort,
-		func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
+		returner, introducer, svc, func(id nonce.ID, k *pub.Bytes,
+			b slice.Bytes) (e error) {
 			log.I.F("hidden service %s successfully propagated", k)
+			time.Sleep(time.Second)
 			wg.Done()
 			counter.Dec()
 			return
 		})
-	_ = ini
 	wg.Wait()
-	time.Sleep(time.Second)
 	log2.SetLogLevel(log2.Trace)
 	wg.Add(1)
 	counter.Inc()
@@ -137,12 +140,13 @@ func TestEngine_Message(t *testing.T) {
 		ini.Expiry, ini.Validate())
 	client.SendRoute(ini.Key, ini.AddrPort,
 		func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
-			log.I.S("success", id)
+			log.I.Ln("success", id)
 			counter.Dec()
 			wg.Done()
 			return
 		})
 	wg.Wait()
+	
 	quit.Q()
 	log.W.Ln("fin")
 }

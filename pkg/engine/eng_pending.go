@@ -101,7 +101,6 @@ func (p *PendingResponses) ProcessAndDelete(id nonce.ID, k *pub.Bytes,
 	
 	p.Lock()
 	defer p.Unlock()
-	log.D.Ln("deleting pending", id)
 	// log.D.S("pending", p.responses)
 	for i := range p.responses {
 		if p.responses[i].ID == id {

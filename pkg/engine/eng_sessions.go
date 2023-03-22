@@ -55,7 +55,7 @@ func (sm *SessionManager) PostAcctOnion(o Skins) (res SendData) {
 					break
 				}
 				res.Billable = append(res.Billable, s.ID)
-				res.Last = on2.ID
+				res.ID = on2.ID
 				skip = true
 			case *Forward:
 				res.Billable = append(res.Billable, s.ID)
@@ -65,36 +65,40 @@ func (sm *SessionManager) PostAcctOnion(o Skins) (res SendData) {
 							true, "forward")
 					})
 			case *GetBalance:
-				res.Last = s.ID
+				res.ID = s.ID
 				res.Billable = append(res.Billable, s.ID)
 				skip = true
 			case *HiddenService:
-				res.Last = on2.Intro.ID
+				res.ID = on2.Intro.ID
 				res.Billable = append(res.Billable, s.ID)
 				skip = true
 			case *Intro:
 				log.D.Ln("intro in crypt")
-				res.Last = on2.ID
+				res.ID = on2.ID
 			case *IntroQuery:
-				res.Last = on2.ID
+				res.ID = on2.ID
+				res.Billable = append(res.Billable, s.ID)
+				skip = true
+			case *Message:
+				res.ID = on2.ID
 				res.Billable = append(res.Billable, s.ID)
 				skip = true
 			case *Reverse:
 				res.Billable = append(res.Billable, s.ID)
 			case *Route:
-				copy(res.Last[:], on2.Reply.ID[:])
+				copy(res.ID[:], on2.Reply.ID[:])
 				res.Billable = append(res.Billable, s.ID)
 			}
 		case *Confirmation:
-			res.Last = on.ID
+			res.ID = on.ID
 		case *Balance:
-			res.Last = on.ID
+			res.ID = on.ID
 		case *Intro:
 			log.D.Ln("intro not in crypt")
-			res.Last = on.ID
+			res.ID = on.ID
 		case *IntroQuery:
 			log.D.Ln("introquery not in crypt")
-			res.Last = on.ID
+			res.ID = on.ID
 		}
 	}
 	return

@@ -66,6 +66,7 @@ func (x *Ready) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	log.D.Ln(ng.GetLocalNodeAddressString(), x.FwReply.ID)
+	log.T.S("ready", x.RvHeader, x.RvReply)
 	ng.PendingResponses.ProcessAndDelete(x.FwReply.ID, nil, s.GetAll())
 	return
 }

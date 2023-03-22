@@ -24,9 +24,8 @@ type HiddenService struct {
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
 	Ciphers [3]sha256.Hash
-	// Nonces are the nonces to use with the cipher when creating the
-	// encryption for the reply message,
-	// they are common with the crypts in the header.
+	// Nonces are the nonces to use with the cipher when creating the encryption
+	// for the reply message, they are common with the crypts in the header.
 	Nonces [3]nonce.IV
 	slice.Bytes
 	Onion
@@ -37,7 +36,6 @@ func hiddenServicePrototype() Onion { return &HiddenService{} }
 func init() { Register(HiddenServiceMagic, hiddenServicePrototype) }
 
 func (o Skins) HiddenService(in *Intro, point *ExitPoint) Skins {
-	
 	return append(o, &HiddenService{
 		Intro:   *in,
 		Ciphers: GenCiphers(point.Keys, point.ReturnPubs),
@@ -49,15 +47,6 @@ func (o Skins) HiddenService(in *Intro, point *ExitPoint) Skins {
 func (x *HiddenService) Magic() string { return HiddenServiceMagic }
 
 func (x *HiddenService) Encode(s *Splice) (e error) {
-	// log.T.S("encoding", reflect.TypeOf(x),
-	// 	x.Intro.ID,
-	// 	x.Intro.ID,
-	// 	x.Intro.AddrPort.String(),
-	// 	x.Intro.Expiry,
-	// 	x.Intro.Sig,
-	// 	x.Ciphers,
-	// 	x.IVs,
-	// )
 	return x.Onion.Encode(s.Magic(HiddenServiceMagic).
 		ID(x.Intro.ID).
 		Pubkey(x.Intro.Key).
@@ -117,18 +106,14 @@ func MakeHiddenService(in *Intro, alice, bob *SessionData,
 		RoutingHeader(headers.Return)
 }
 
-func (ng *Engine) SendHiddenService(
-	id nonce.ID,
-	key *prv.Key,
-	expiry time.Time,
-	alice, bob *SessionData,
-	localPort uint16,
-	hook Callback) (in *Intro) {
+func (ng *Engine) SendHiddenService(id nonce.ID, key *prv.Key,
+	expiry time.Time, alice, bob *SessionData,
+	svc *Service, hook Callback) (in *Intro) {
 	
 	hops := StandardCircuit()
 	s := make(Sessions, len(hops))
 	s[2] = alice
-	se := ng.SelectHops(hops, s)
+	se := ng.SelectHops(hops, s, "sendhiddenservice")
 	var c Circuit
 	copy(c[:], se[:len(c)])
 	in = NewIntro(id, key, alice.Node.AddrPort, expiry)
@@ -140,7 +125,7 @@ func (ng *Engine) SendHiddenService(
 		color.Yellow.Sprint(alice.Node.AddrPort.String()))
 	res := ng.PostAcctOnion(o)
 	// log.D.S("hs onion binary", res.B.ToBytes())
-	ng.HiddenRouting.AddHiddenService(key, in, localPort,
+	ng.HiddenRouting.AddHiddenService(svc, key, in,
 		ng.GetLocalNodeAddressString())
 	// log.D.S("storing hidden service info", ng.HiddenRouting)
 	ng.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.PendingResponses)

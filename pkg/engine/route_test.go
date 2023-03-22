@@ -118,10 +118,14 @@ func TestEngine_Route(t *testing.T) {
 	}
 	wg.Add(1)
 	counter.Inc()
+	svc := &Service{
+		Port:      localPort,
+		RelayRate: 43523,
+		Transport: NewSim(64),
+	}
 	ini := client.SendHiddenService(id, idPrv, time.Now().Add(time.Hour),
-		returner,
-		introducer, localPort,
-		func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
+		returner, introducer, svc, func(id nonce.ID, k *pub.Bytes,
+			b slice.Bytes) (e error) {
 			log.I.F("hidden service %s successfully propagated", k)
 			wg.Done()
 			counter.Dec()

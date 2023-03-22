@@ -46,7 +46,7 @@ func (ng *Engine) SendGetBalance(alice, bob *SessionData, hook Callback) {
 	s := make(Sessions, len(hops))
 	s[2] = bob
 	s[5] = alice
-	se := ng.SelectHops(hops, s)
+	se := ng.SelectHops(hops, s, "sendgetbalance")
 	var c Circuit
 	copy(c[:], se)
 	confID := nonce.NewID()

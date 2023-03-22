@@ -12,12 +12,12 @@ import (
 )
 
 type SendData struct {
-	B         slice.Bytes
-	Sessions  Sessions
-	Billable  []nonce.ID
-	Ret, Last nonce.ID
-	Port      uint16
-	PostAcct  []func()
+	B        slice.Bytes
+	Sessions Sessions
+	Billable []nonce.ID
+	Ret, ID  nonce.ID
+	Port     uint16
+	PostAcct []func()
 }
 
 // Send a message to a peer via their AddrPort.
@@ -48,7 +48,7 @@ func (sm *SessionManager) SendWithOneHook(ap *netip.AddrPort,
 		}
 	}
 	p.Add(ResponseParams{
-		ID:       res.Last,
+		ID:       res.ID,
 		SentSize: res.B.Len(),
 		S:        res.Sessions,
 		Billable: res.Billable,
@@ -57,7 +57,7 @@ func (sm *SessionManager) SendWithOneHook(ap *netip.AddrPort,
 		Callback: responseHook,
 		PostAcct: res.PostAcct},
 	)
-	log.T.Ln(sm.GetLocalNodeAddressString(), "sending out onion", res.Last,
+	log.T.Ln(sm.GetLocalNodeAddressString(), "sending out onion", res.ID,
 		"to", color.Yellow.Sprint(ap.String()))
 	sm.Send(ap, Load(res.B, slice.NewCursor()))
 }
