@@ -9,7 +9,6 @@ import (
 	"go.uber.org/atomic"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
@@ -124,9 +123,9 @@ func TestEngine_Message(t *testing.T) {
 		Transport: NewSim(64),
 	}
 	ini := client.SendHiddenService(id, idPrv, time.Now().Add(time.Hour),
-		returner, introducer, svc, func(id nonce.ID, k *pub.Bytes,
+		returner, introducer, svc, func(id nonce.ID, ifc interface{},
 			b slice.Bytes) (e error) {
-			log.I.F("hidden service %s successfully propagated", k)
+			log.I.F("hidden service %s successfully propagated", ifc)
 			time.Sleep(time.Second)
 			wg.Done()
 			counter.Dec()
@@ -139,8 +138,9 @@ func TestEngine_Message(t *testing.T) {
 	log.D.Ln("intro", ini.ID, ini.AddrPort.String(), ini.Key.ToBase32Abbreviated(),
 		ini.Expiry, ini.Validate())
 	client.SendRoute(ini.Key, ini.AddrPort,
-		func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
+		func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
 			log.I.Ln("success", id)
+			log.D.S("route pending", ifc, b.ToBytes())
 			counter.Dec()
 			wg.Done()
 			return

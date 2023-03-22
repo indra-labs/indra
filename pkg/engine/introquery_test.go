@@ -153,9 +153,9 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 		Transport: NewSim(64),
 	}
 	client.SendHiddenService(id, idPrv, time.Now().Add(time.Hour), returner,
-		introducer, svc, func(id nonce.ID, k *pub.Bytes,
+		introducer, svc, func(id nonce.ID, ifc interface{},
 			b slice.Bytes) (e error) {
-			log.I.S("hidden service callback", id, k, b.ToBytes())
+			log.I.S("hidden service callback", id, ifc, b.ToBytes())
 			return
 		})
 	// time.Sleep(time.Second)

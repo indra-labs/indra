@@ -6,7 +6,6 @@ import (
 	
 	"github.com/gookit/color"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -42,7 +41,7 @@ func (sm *SessionManager) SendWithOneHook(ap *netip.AddrPort,
 	res SendData, responseHook Callback, p *PendingResponses) {
 	
 	if responseHook == nil {
-		responseHook = func(_ nonce.ID, _ *pub.Bytes, _ slice.Bytes) (e error) {
+		responseHook = func(_ nonce.ID, _ interface{}, _ slice.Bytes) (e error) {
 			log.D.Ln("nil response hook")
 			return errors.New("nil response hook")
 		}

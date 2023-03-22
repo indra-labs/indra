@@ -155,7 +155,6 @@ func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 			ForwardCrypt(sessions[0], ng.KeySet.Next(), n[3]).
 			ForwardCrypt(sessions[1], ng.KeySet.Next(), n[4]).
 			Ready(x.Header, returnHeader, x.Reply, returnReply)
-		log.D.S("mr", mr)
 		// log.D.S("makeready", mr)
 		assembled := mr.Assemble()
 		// log.D.S("assembled", assembled)

@@ -5,8 +5,6 @@ import (
 	"encoding/base32"
 	
 	"github.com/gookit/color"
-	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 )
 
 const IDLen = 8
@@ -23,22 +21,9 @@ func (id ID) String() string {
 	return color.LightBlue.Sprint(enc(id[:])[:13])
 }
 
-var seed sha256.Hash
-var counter uint32
-
-func reseed() {
-	if c, e := rand.Read(seed[:]); check(e) && c != IDLen {
-	}
-	counter++
-}
-
 // NewID returns a random 8 byte nonce to be used as identifiers.
 func NewID() (t ID) {
-	if counter == 0 {
-		reseed()
+	if read, e := rand.Read(t[:]); check(e) && read != IDLen {
 	}
-	s := sha256.Single(seed[:])
-	copy(seed[:], s[:])
-	copy(t[:], seed[:IDLen])
 	return
 }

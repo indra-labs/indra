@@ -9,7 +9,6 @@ import (
 	"go.uber.org/atomic"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
@@ -96,7 +95,7 @@ func TestEngine_SendHiddenService(t *testing.T) {
 		Transport: NewSim(64),
 	}
 	clients[0].SendHiddenService(id, idPrv, time.Now().Add(time.Hour),
-		returner, introducer, svc, func(id nonce.ID, k *pub.Bytes,
+		returner, introducer, svc, func(id nonce.ID, ifc interface{},
 			b slice.Bytes) (e error) {
 			log.W.Ln("Test passed")
 			// This happens when the gossip gets back to us.

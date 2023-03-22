@@ -11,7 +11,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
-type Callback func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error)
+type Callback func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error)
 
 type PendingResponse struct {
 	ID       nonce.ID

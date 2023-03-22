@@ -6,7 +6,6 @@ import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	"github.com/gookit/color"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -172,7 +171,7 @@ func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 	// todo: handle payment failures!
 	o := MakeSession(conf, s, returnSession, nodes[:], ng.KeySet)
 	res := ng.PostAcctOnion(o)
-	ng.SendWithOneHook(nodes[0].AddrPort, res, func(id nonce.ID, k *pub.Bytes,
+	ng.SendWithOneHook(nodes[0].AddrPort, res, func(id nonce.ID, ifc interface{},
 		b slice.Bytes) (e error) {
 		ng.SessionManager.Lock()
 		defer ng.SessionManager.Unlock()

@@ -114,7 +114,7 @@ out:
 		}
 		returner = returnHops[0] // c[exiter.Hop] = clients[0].Sessions[i]
 		clients[0].SendGetBalance(returner, clients[0].Sessions[i],
-			func(cf nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
+			func(cf nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
 				log.I.Ln("success")
 				wg.Done()
 				quit.Q()

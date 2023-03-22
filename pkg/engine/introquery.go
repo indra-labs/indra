@@ -110,7 +110,7 @@ func MakeIntroQuery(id nonce.ID, hsk *pub.Key, alice, bob *SessionData,
 func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *pub.Key,
 	alice, bob *SessionData, hook func(in *Intro)) {
 	
-	fn := func(id nonce.ID, k *pub.Bytes, b slice.Bytes) (e error) {
+	fn := func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
 		// log.D.S("sendintroquery callback", id, k, b.ToBytes())
 		s := Load(b, slice.NewCursor())
 		on := Recognise(s, ng.GetLocalNodeAddress())
