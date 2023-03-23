@@ -71,8 +71,8 @@ func (x *Message) Decode(s *Splice) (e error) {
 	s.ReadPubkey(&x.Address).
 		ReadID(&x.ID).ReadID(&x.Re).
 		ReadRoutingHeader(&x.Return.Header).
-		ReadHashTriple(&x.Return.Ciphers).
-		ReadIVTriple(&x.Return.IVs).
+		ReadCiphers(&x.Return.Ciphers).
+		ReadNonces(&x.Return.IVs).
 		ReadBytes(&x.Payload)
 	return
 }

@@ -272,7 +272,7 @@ func (s *Splice) ReadIV(iv *nonce.IV) *Splice {
 	return s
 }
 
-func (s *Splice) ReadIVTriple(iv *[3]nonce.IV) *Splice {
+func (s *Splice) ReadNonces(iv *[3]nonce.IV) *Splice {
 	for i := range iv {
 		s.ReadIV(&iv[i])
 	}
@@ -430,7 +430,7 @@ func (s *Splice) ReadHash(h *sha256.Hash) *Splice {
 	return s
 }
 
-func (s *Splice) ReadHashTriple(h *[3]sha256.Hash) *Splice {
+func (s *Splice) ReadCiphers(h *[3]sha256.Hash) *Splice {
 	for i := range h {
 		s.ReadHash(&h[i])
 	}
@@ -470,7 +470,7 @@ func (s *Splice) Reply(rpl *Reply) *Splice {
 }
 
 func (s *Splice) ReadReply(rpl *Reply) *Splice {
-	s.ReadID(&rpl.ID).ReadHashTriple(&rpl.Ciphers).ReadIVTriple(&rpl.Nonces)
+	s.ReadID(&rpl.ID).ReadCiphers(&rpl.Ciphers).ReadNonces(&rpl.Nonces)
 	return s
 }
 

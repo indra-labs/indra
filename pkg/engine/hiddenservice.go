@@ -67,8 +67,8 @@ func (x *HiddenService) Decode(s *Splice) (e error) {
 		ReadAddrPort(&x.Intro.AddrPort).
 		ReadTime(&x.Intro.Expiry).
 		ReadSignature(&x.Intro.Sig).
-		ReadHashTriple(&x.Ciphers).
-		ReadIVTriple(&x.Nonces).
+		ReadCiphers(&x.Ciphers).
+		ReadNonces(&x.Nonces).
 		// This is always stored, and must always follow a HiddenService
 		// message, and in fact there is never any more data after the routing
 		// header after the HiddenService.

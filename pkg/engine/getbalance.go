@@ -15,8 +15,22 @@ const (
 )
 
 type GetBalance struct {
-	ID nonce.ID
-	Reply
+	ID     nonce.ID
+	ConfID nonce.ID
+	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
+	// given order over the reply message from the service.
+	Ciphers [3]sha256.Hash
+	// Nonces are the nonces to use with the cipher when creating the
+	// encryption for the reply message,
+	// they are common with the crypts in the header.
+	Nonces [3]nonce.IV
+	// Port identifies the type of service as well as being the port used by
+	// the service to be relayed to. Notice there is no IP address, this is
+	// because Indranet only forwards to exits of decentralised services
+	// also running on the same machine. This service could be a proxy, of
+	// course, if configured this way. This could be done by tunneling from
+	// a local Socks5 proxy into Indranet and the exit node also having
+	// this.
 	Onion
 }
 
@@ -59,13 +73,11 @@ func (ng *Engine) SendGetBalance(alice, bob *SessionData, hook Callback) {
 
 func (o Skins) GetBalance(id, confID nonce.ID, ep *ExitPoint) Skins {
 	return append(o, &GetBalance{
-		ID: id,
-		Reply: Reply{
-			ID:      confID,
-			Ciphers: GenCiphers(ep.Keys, ep.ReturnPubs),
-			Nonces:  ep.Nonces,
-		},
-		Onion: nop,
+		ID:      id,
+		ConfID:  confID,
+		Ciphers: GenCiphers(ep.Keys, ep.ReturnPubs),
+		Nonces:  ep.Nonces,
+		Onion:   nop,
 	})
 }
 
@@ -76,7 +88,9 @@ func (x *GetBalance) Encode(s *Splice) (e error) {
 	// 	x.ID, x.FwReply.ID, x.FwReply.Ciphers, x.FwReply.IVs,
 	// )
 	return x.Onion.Encode(s.
-		Magic(GetBalanceMagic).ID(x.ID).Reply(&x.Reply),
+		Magic(GetBalanceMagic).
+		ID(x.ID).
+		ID(x.ConfID).Ciphers(x.Ciphers).Nonces(x.Nonces),
 	)
 }
 
@@ -85,7 +99,8 @@ func (x *GetBalance) Decode(s *Splice) (e error) {
 		GetBalanceMagic); check(e) {
 		return
 	}
-	s.ReadID(&x.ID).ReadReply(&x.Reply)
+	s.ReadID(&x.ID).
+		ReadID(&x.ConfID).ReadCiphers(&x.Ciphers).ReadNonces(&x.Nonces)
 	return
 }
 
@@ -104,7 +119,7 @@ func (x *GetBalance) Handle(s *Splice, p Onion,
 			log.D.S("sessiondata", sd.ID, sd.Remaining)
 			bal = &Balance{
 				ID:           x.ID,
-				ConfID:       x.Reply.ID,
+				ConfID:       x.ConfID,
 				MilliSatoshi: sd.Remaining,
 			}
 			found = true
@@ -135,7 +150,7 @@ func (x *GetBalance) Handle(s *Splice, p Onion,
 		if sd.ID == x.ID {
 			bal = &Balance{
 				ID:           x.ID,
-				ConfID:       x.Reply.ID,
+				ConfID:       x.ConfID,
 				MilliSatoshi: sd.Remaining,
 			}
 			found = true

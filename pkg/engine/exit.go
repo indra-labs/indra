@@ -61,9 +61,11 @@ func (x *Exit) Encode(s *Splice) (e error) {
 	// log.T.S("encoding", reflect.TypeOf(x),
 	// 	x.FwReply.ID, x.FwReply.Ciphers, x.FwReply.IVs, x.Port, x.Bytes.ToBytes(),
 	// )
-	return x.Onion.Encode(s.Magic(ExitMagic).
+	return x.Onion.Encode(s.
+		Magic(ExitMagic).
 		ID(x.ID).Ciphers(x.Ciphers).Nonces(x.Nonces).
-		Uint16(x.Port).Bytes(x.Bytes),
+		Uint16(x.Port).
+		Bytes(x.Bytes),
 	)
 }
 
@@ -73,8 +75,8 @@ func (x *Exit) Decode(s *Splice) (e error) {
 		
 		return
 	}
-	s.ReadID(&x.ID).
-		ReadHashTriple(&x.Ciphers).ReadIVTriple(&x.Nonces).
+	s.
+		ReadID(&x.ID).ReadCiphers(&x.Ciphers).ReadNonces(&x.Nonces).
 		ReadUint16(&x.Port).ReadBytes(&x.Bytes)
 	return
 }
