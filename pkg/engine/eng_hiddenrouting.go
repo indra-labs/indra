@@ -11,7 +11,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
-	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 type Introduction struct {
@@ -22,7 +21,7 @@ type Introduction struct {
 	// Nonces are the nonces to use with the cipher when creating the
 	// encryption for the reply message.
 	types.Nonces
-	slice.Bytes
+	RoutingHeaderBytes
 }
 
 type MyIntros map[pub.Bytes]*Introduction

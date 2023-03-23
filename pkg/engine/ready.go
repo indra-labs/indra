@@ -6,7 +6,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/engine/types"
-	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 const (
@@ -20,7 +19,7 @@ func ReadyPrototype() Onion { return &Ready{} }
 func init() { Register(ReadyMagic, ReadyPrototype) }
 
 type ReplyHeader struct {
-	Header slice.Bytes
+	RoutingHeaderBytes
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
 	types.Ciphers
@@ -35,7 +34,7 @@ type Ready struct {
 	Forward, Reverse ReplyHeader
 }
 
-func (o Skins) Ready(id nonce.ID, fwHeader, rvHeader slice.Bytes,
+func (o Skins) Ready(id nonce.ID, fwHeader, rvHeader RoutingHeaderBytes,
 	fc, rc types.Ciphers, fn, rn types.Nonces) Skins {
 	return append(o, &Ready{id,
 		ReplyHeader{fwHeader, fc, fn},
@@ -46,11 +45,11 @@ func (o Skins) Ready(id nonce.ID, fwHeader, rvHeader slice.Bytes,
 func (x *Ready) Magic() string { return ReadyMagic }
 
 func (x *Ready) Encode(s *Splice) (e error) {
-	s.RoutingHeader(x.Forward.Header)
+	s.RoutingHeader(x.Forward.RoutingHeaderBytes)
 	start := s.GetCursor()
 	s.Magic(ReadyMagic).
 		ID(x.ID).
-		RoutingHeader(x.Reverse.Header).
+		RoutingHeader(x.Reverse.RoutingHeaderBytes).
 		Ciphers(x.Reverse.Ciphers).
 		Nonces(x.Reverse.Nonces)
 	for i := range x.Forward.Ciphers {
@@ -67,7 +66,7 @@ func (x *Ready) Decode(s *Splice) (e error) {
 	}
 	s.
 		ReadID(&x.ID).
-		ReadRoutingHeader(&x.Reverse.Header).
+		ReadRoutingHeader(&x.Reverse.RoutingHeaderBytes).
 		ReadCiphers(&x.Reverse.Ciphers).
 		ReadNonces(&x.Reverse.Nonces)
 	return
@@ -81,7 +80,7 @@ func (x *Ready) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	log.D.Ln(ng.GetLocalNodeAddressString(), x.ID)
-	log.T.S("ready", x.Reverse.Header, x.Reverse)
+	log.T.S("ready", x.Reverse.RoutingHeaderBytes, x.Reverse)
 	ng.PendingResponses.ProcessAndDelete(x.ID, nil, s.GetAll())
 	return
 }

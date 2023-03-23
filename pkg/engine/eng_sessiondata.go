@@ -30,6 +30,25 @@ func (s *SessionData) String() string {
 	return fmt.Sprintf("sesssion %s node %s hop %d", s.ID, s.Node.ID, s.Hop)
 }
 
+// A Circuit is the generic fixed length path used for most messages.
+type Circuit [5]*SessionData
+
+func (c Circuit) String() (o string) {
+	o += "[ "
+	for i := range c {
+		if c[i] == nil {
+			o += "              "
+		} else {
+			o += c[i].ID.String() + " "
+		}
+	}
+	o += "]"
+	return
+}
+
+// Sessions are arbitrary length lists of
+type Sessions []*SessionData
+
 // NewSessionData creates a new SessionData, generating cached public key bytes and
 // preimage.
 func NewSessionData(
@@ -99,22 +118,3 @@ func (s *SessionData) DecSats(sats lnwire.MilliSatoshi, sender bool,
 	s.Remaining -= sats
 	return true
 }
-
-// A Circuit is the generic fixed length path used for most messages.
-type Circuit [5]*SessionData
-
-func (c Circuit) String() (o string) {
-	o += "[ "
-	for i := range c {
-		if c[i] == nil {
-			o += "              "
-		} else {
-			o += c[i].ID.String() + " "
-		}
-	}
-	o += "]"
-	return
-}
-
-// Sessions are arbitrary length lists of 
-type Sessions []*SessionData

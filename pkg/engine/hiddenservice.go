@@ -11,7 +11,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/engine/types"
-	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 const (
@@ -28,7 +27,7 @@ type HiddenService struct {
 	// Nonces are the nonces to use with the cipher when creating the encryption
 	// for the reply message, they are common with the crypts in the header.
 	types.Nonces
-	slice.Bytes
+	RoutingHeaderBytes
 	Onion
 }
 
@@ -73,7 +72,7 @@ func (x *HiddenService) Decode(s *Splice) (e error) {
 		// This is always stored, and must always follow a HiddenService
 		// message, and in fact there is never any more data after the routing
 		// header after the HiddenService.
-		RoutingHeader(s.GetCursorToEnd())
+		RoutingHeader(s.GetRoutingHeaderFromCursor())
 	return
 }
 
@@ -85,10 +84,10 @@ func (x *HiddenService) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 	log.D.F("%s adding introduction for key %s",
 		ng.GetLocalNodeAddressString(), x.Key.ToBase32Abbreviated())
 	ng.HiddenRouting.AddIntro(x.Key, &Introduction{
-		Intro:   &x.Intro,
-		Ciphers: x.Ciphers,
-		Nonces:  x.Nonces,
-		Bytes:   x.Bytes,
+		Intro:              &x.Intro,
+		Ciphers:            x.Ciphers,
+		Nonces:             x.Nonces,
+		RoutingHeaderBytes: x.RoutingHeaderBytes,
 	})
 	// log.D.S("intros", ng.HiddenRouting)
 	// log.D.S(ng.GetLocalNodeAddressString(), ng.HiddenRouting)

@@ -445,15 +445,15 @@ func (s *Splice) ReadCiphers(h *types.Ciphers) *Splice {
 	return s
 }
 
-func (s *Splice) RoutingHeader(b slice.Bytes) *Splice {
-	copy(s.b[*s.c:s.c.Inc(RoutingHeaderLen)], b[:RoutingHeaderLen])
+func (s *Splice) RoutingHeader(b RoutingHeaderBytes) *Splice {
+	copy(s.b[*s.c:s.c.Inc(RoutingHeaderLen)], b[:])
 	s.Segments = append(s.Segments,
 		NameOffset{Offset: int(*s.c), Name: "routingheader"})
 	return s
 }
 
-func (s *Splice) ReadRoutingHeader(b *slice.Bytes) *Splice {
-	*b = s.b[*s.c:s.c.Inc(RoutingHeaderLen)]
+func (s *Splice) ReadRoutingHeader(b *RoutingHeaderBytes) *Splice {
+	*b = s.GetRoutingHeaderFromCursor()
 	s.Segments = append(s.Segments,
 		NameOffset{Offset: int(*s.c), Name: "routingheader"})
 	return s

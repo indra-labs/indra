@@ -10,21 +10,21 @@ import (
 
 var registry = NewRegistry()
 
-type Onions map[string]func() Onion
+type OnionGenerators map[string]func() Onion
 
 type Registry struct {
 	sync.Mutex
-	Onions
+	OnionGenerators
 }
 
 func NewRegistry() *Registry {
-	return &Registry{Onions: make(Onions)}
+	return &Registry{OnionGenerators: make(OnionGenerators)}
 }
 
 func Register(magicString string, on func() Onion) {
 	registry.Lock()
 	defer registry.Unlock()
-	registry.Onions[magicString] = on
+	registry.OnionGenerators[magicString] = on
 }
 
 func Recognise(s *Splice, addr *netip.AddrPort) (on Onion) {
@@ -34,7 +34,7 @@ func Recognise(s *Splice, addr *netip.AddrPort) (on Onion) {
 	s.ReadMagic(&magic)
 	var ok bool
 	var in func() Onion
-	if in, ok = registry.Onions[magic]; ok {
+	if in, ok = registry.OnionGenerators[magic]; ok {
 		on = in()
 	}
 	if !ok {

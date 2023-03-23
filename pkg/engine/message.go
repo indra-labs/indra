@@ -23,7 +23,7 @@ func MessagePrototype() Onion { return &Message{} }
 func init() { Register(MessageMagic, MessagePrototype) }
 
 type ReplyCiphers struct {
-	Header slice.Bytes
+	RoutingHeaderBytes
 	types.Ciphers
 	types.Nonces
 }
@@ -48,12 +48,12 @@ func (x *Message) Len() int         { return MessageLen + x.Payload.Len() }
 func (x *Message) Wrap(inner Onion) {}
 
 func (x *Message) Encode(s *Splice) (e error) {
-	s.RoutingHeader(x.Forward.Header)
+	s.RoutingHeader(x.Forward.RoutingHeaderBytes)
 	start := s.GetCursor()
 	s.Magic(MessageMagic).
 		Pubkey(x.Address).
 		ID(x.ID).ID(x.Re).
-		RoutingHeader(x.Return.Header).
+		RoutingHeader(x.Return.RoutingHeaderBytes).
 		Ciphers(x.Return.Ciphers).
 		Nonces(x.Return.Nonces).
 		Bytes(x.Payload)
@@ -71,7 +71,7 @@ func (x *Message) Decode(s *Splice) (e error) {
 	}
 	s.ReadPubkey(&x.Address).
 		ReadID(&x.ID).ReadID(&x.Re).
-		ReadRoutingHeader(&x.Return.Header).
+		ReadRoutingHeader(&x.Return.RoutingHeaderBytes).
 		ReadCiphers(&x.Return.Ciphers).
 		ReadNonces(&x.Return.Nonces).
 		ReadBytes(&x.Payload)

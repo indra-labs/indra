@@ -13,7 +13,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/engine/types"
-	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 const (
@@ -41,7 +40,7 @@ type Route struct {
 	// encryption for the reply message,
 	// they are common with the crypts in the header.
 	types.Nonces
-	Header slice.Bytes
+	RoutingHeaderBytes
 	Onion
 }
 
@@ -102,7 +101,7 @@ func (x *Route) Decrypt(prk *prv.Key, s *Splice) {
 		s.GetCursorToEnd())
 	// And now we can see the reply field for the return trip.
 	s.ReadID(&x.ID).ReadCiphers(&x.Ciphers).ReadNonces(&x.Nonces).
-		ReadRoutingHeader(&x.Header)
+		ReadRoutingHeader(&x.RoutingHeaderBytes)
 }
 
 func (x *Route) Len() int { return RouteLen + x.Onion.Len() }
@@ -155,11 +154,12 @@ func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 		// 	Nonces:  ep.Nonces,
 		// }
 		rh := Skins{}.RoutingHeader(rt)
-		returnHeader := Encode(rh.Assemble()).GetAll()
+		returnHeader := Encode(rh.Assemble())
+		returnHeader.SetCursor(0)
 		mr := Skins{}.
 			ForwardCrypt(sessions[0], ng.KeySet.Next(), n[3]).
 			ForwardCrypt(sessions[1], ng.KeySet.Next(), n[4]).
-			Ready(x.ID, x.Header, returnHeader,
+			Ready(x.ID, x.RoutingHeaderBytes, returnHeader.GetRoutingHeaderFromCursor(),
 				x.Ciphers, GenCiphers(ep.Keys, ep.ReturnPubs),
 				x.Nonces, ep.Nonces)
 		// log.D.S("makeready", mr)

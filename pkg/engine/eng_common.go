@@ -21,6 +21,15 @@ var (
 
 type RoutingHeaderBytes [RoutingHeaderLen]byte
 
+type RoutingLayer struct {
+	*Reverse
+	*Crypt
+}
+
+type RoutingHeader struct {
+	Layers [3]RoutingLayer
+}
+
 func BudgeUp(s *Splice) (o *Splice) {
 	o = s
 	start := o.GetCursor()
