@@ -53,8 +53,8 @@ func (x *HiddenService) Encode(s *Splice) (e error) {
 		AddrPort(x.Intro.AddrPort).
 		Uint64(uint64(x.Intro.Expiry.UnixNano())).
 		Signature(&x.Intro.Sig).
-		HashTriple(x.Ciphers).
-		IVTriple(x.Nonces))
+		Ciphers(x.Ciphers).
+		Nonces(x.Nonces))
 }
 
 func (x *HiddenService) Decode(s *Splice) (e error) {

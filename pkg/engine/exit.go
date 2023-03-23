@@ -17,7 +17,14 @@ const (
 )
 
 type Exit struct {
-	Reply
+	ID nonce.ID
+	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
+	// given order over the reply message from the service.
+	Ciphers [3]sha256.Hash
+	// Nonces are the nonces to use with the cipher when creating the
+	// encryption for the reply message,
+	// they are common with the crypts in the header.
+	Nonces [3]nonce.IV
 	// Port identifies the type of service as well as being the port used by
 	// the service to be relayed to. Notice there is no IP address, this is
 	// because Indranet only forwards to exits of decentralised services
@@ -39,14 +46,12 @@ func (o Skins) Exit(id nonce.ID, port uint16, payload slice.Bytes,
 	ep *ExitPoint) Skins {
 	
 	return append(o, &Exit{
-		Reply: Reply{
-			ID:      id,
-			Ciphers: GenCiphers(ep.Keys, ep.ReturnPubs),
-			Nonces:  ep.Nonces,
-		},
-		Port:  port,
-		Bytes: payload,
-		Onion: nop,
+		ID:      id,
+		Ciphers: GenCiphers(ep.Keys, ep.ReturnPubs),
+		Nonces:  ep.Nonces,
+		Port:    port,
+		Bytes:   payload,
+		Onion:   nop,
 	})
 }
 
@@ -56,8 +61,9 @@ func (x *Exit) Encode(s *Splice) (e error) {
 	// log.T.S("encoding", reflect.TypeOf(x),
 	// 	x.FwReply.ID, x.FwReply.Ciphers, x.FwReply.IVs, x.Port, x.Bytes.ToBytes(),
 	// )
-	return x.Onion.Encode(s.
-		Magic(ExitMagic).Reply(&x.Reply).Uint16(x.Port).Bytes(x.Bytes),
+	return x.Onion.Encode(s.Magic(ExitMagic).
+		ID(x.ID).Ciphers(x.Ciphers).Nonces(x.Nonces).
+		Uint16(x.Port).Bytes(x.Bytes),
 	)
 }
 
@@ -67,7 +73,9 @@ func (x *Exit) Decode(s *Splice) (e error) {
 		
 		return
 	}
-	s.ReadReply(&x.Reply).ReadUint16(&x.Port).ReadBytes(&x.Bytes)
+	s.ReadID(&x.ID).
+		ReadHashTriple(&x.Ciphers).ReadIVTriple(&x.Nonces).
+		ReadUint16(&x.Port).ReadBytes(&x.Bytes)
 	return
 }
 

@@ -53,8 +53,8 @@ func (x *Message) Encode(s *Splice) (e error) {
 		Pubkey(x.Address).
 		ID(x.ID).ID(x.Re).
 		RoutingHeader(x.Return.Header).
-		HashTriple(x.Return.Ciphers).
-		IVTriple(x.Return.IVs).
+		Ciphers(x.Return.Ciphers).
+		Nonces(x.Return.IVs).
 		Bytes(x.Payload)
 	for i := range x.Forward.Ciphers {
 		blk := ciph.BlockFromHash(x.Forward.Ciphers[i])

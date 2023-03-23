@@ -258,7 +258,7 @@ func (s *Splice) IV(iv nonce.IV) *Splice {
 	return s
 }
 
-func (s *Splice) IVTriple(iv [3]nonce.IV) *Splice {
+func (s *Splice) Nonces(iv [3]nonce.IV) *Splice {
 	for i := range iv {
 		s.IV(iv[i])
 	}
@@ -414,7 +414,7 @@ func (s *Splice) Hash(h sha256.Hash) *Splice {
 	return s
 }
 
-func (s *Splice) HashTriple(h [3]sha256.Hash) *Splice {
+func (s *Splice) Ciphers(h [3]sha256.Hash) *Splice {
 	for i := range h {
 		s.Hash(h[i])
 	}
@@ -437,17 +437,6 @@ func (s *Splice) ReadHashTriple(h *[3]sha256.Hash) *Splice {
 	return s
 }
 
-type Reply struct {
-	ID nonce.ID
-	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
-	// given order over the reply message from the service.
-	Ciphers [3]sha256.Hash
-	// Nonces are the nonces to use with the cipher when creating the
-	// encryption for the reply message,
-	// they are common with the crypts in the header.
-	Nonces [3]nonce.IV
-}
-
 func (s *Splice) RoutingHeader(b slice.Bytes) *Splice {
 	copy(s.b[*s.c:s.c.Inc(RoutingHeaderLen)], b[:RoutingHeaderLen])
 	s.Segments = append(s.Segments,
@@ -464,8 +453,19 @@ func (s *Splice) ReadRoutingHeader(b *slice.Bytes) *Splice {
 
 const ReplyLen = nonce.IDLen + 3*sha256.Len + 3*nonce.IVLen
 
+type Reply struct {
+	ID nonce.ID
+	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
+	// given order over the reply message from the service.
+	Ciphers [3]sha256.Hash
+	// Nonces are the nonces to use with the cipher when creating the
+	// encryption for the reply message,
+	// they are common with the crypts in the header.
+	Nonces [3]nonce.IV
+}
+
 func (s *Splice) Reply(rpl *Reply) *Splice {
-	s.ID(rpl.ID).HashTriple(rpl.Ciphers).IVTriple(rpl.Nonces)
+	s.ID(rpl.ID).Ciphers(rpl.Ciphers).Nonces(rpl.Nonces)
 	return s
 }
 
