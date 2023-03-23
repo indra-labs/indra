@@ -17,30 +17,36 @@ func ReadyPrototype() Onion { return &Ready{} }
 
 func init() { Register(ReadyMagic, ReadyPrototype) }
 
+type ReplyHeader struct {
+	Header slice.Bytes
+	Reply  *Reply
+}
+
 type Ready struct {
-	FwReply  *Reply
-	FwHeader slice.Bytes
-	RvReply  *Reply
-	RvHeader slice.Bytes
+	Forward, Reverse ReplyHeader
 }
 
 func (o Skins) Ready(fwHeader, rvHeader slice.Bytes, fwReply,
 	rvReply *Reply) Skins {
-	return append(o, &Ready{fwReply, fwHeader, rvReply, rvHeader})
+	return append(o, &Ready{
+		ReplyHeader{fwHeader, fwReply},
+		ReplyHeader{rvHeader, rvReply},
+	})
 }
 
 func (x *Ready) Magic() string { return ReadyMagic }
 
 func (x *Ready) Encode(s *Splice) (e error) {
-	s.RoutingHeader(x.FwHeader)
+	s.RoutingHeader(x.Forward.Header)
 	start := s.GetCursor()
 	s.Magic(ReadyMagic).
-		ID(x.FwReply.ID).
-		Reply(x.RvReply).
-		RoutingHeader(x.RvHeader)
-	for i := range x.FwReply.Ciphers {
-		blk := ciph.BlockFromHash(x.FwReply.Ciphers[i])
-		ciph.Encipher(blk, x.FwReply.Nonces[2-i], s.GetFrom(start))
+		ID(x.Forward.Reply.ID).
+		Ciphers(x.Reverse.Reply.Ciphers).
+		Nonces(x.Reverse.Reply.Nonces).
+		RoutingHeader(x.Reverse.Header)
+	for i := range x.Forward.Reply.Ciphers {
+		blk := ciph.BlockFromHash(x.Forward.Reply.Ciphers[i])
+		ciph.Encipher(blk, x.Forward.Reply.Nonces[2-i], s.GetFrom(start))
 	}
 	return
 }
@@ -50,11 +56,13 @@ func (x *Ready) Decode(s *Splice) (e error) {
 		ReadyMagic); check(e) {
 		return
 	}
-	x.FwReply = &Reply{}
-	x.RvReply = &Reply{}
-	s.ReadID(&x.FwReply.ID).
-		ReadReply(x.RvReply).
-		ReadRoutingHeader(&x.RvHeader)
+	x.Forward.Reply = &Reply{}
+	x.Reverse.Reply = &Reply{}
+	s.
+		ReadID(&x.Forward.Reply.ID).
+		ReadCiphers(&x.Reverse.Reply.Ciphers).
+		ReadNonces(&x.Reverse.Reply.Nonces).
+		ReadRoutingHeader(&x.Reverse.Header)
 	return
 }
 
@@ -65,8 +73,8 @@ func (x *Ready) Wrap(inner Onion) {}
 func (x *Ready) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {
 	
-	log.D.Ln(ng.GetLocalNodeAddressString(), x.FwReply.ID)
-	log.T.S("ready", x.RvHeader, x.RvReply)
-	ng.PendingResponses.ProcessAndDelete(x.FwReply.ID, nil, s.GetAll())
+	log.D.Ln(ng.GetLocalNodeAddressString(), x.Forward.Reply.ID)
+	log.T.S("ready", x.Reverse.Header, x.Reverse.Reply)
+	ng.PendingResponses.ProcessAndDelete(x.Forward.Reply.ID, nil, s.GetAll())
 	return
 }
