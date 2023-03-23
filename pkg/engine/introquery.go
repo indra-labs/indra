@@ -16,7 +16,21 @@ const (
 )
 
 type IntroQuery struct {
-	Reply
+	ID nonce.ID
+	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
+	// given order over the reply message from the service.
+	Ciphers [3]sha256.Hash
+	// Nonces are the nonces to use with the cipher when creating the
+	// encryption for the reply message,
+	// they are common with the crypts in the header.
+	Nonces [3]nonce.IV
+	// Port identifies the type of service as well as being the port used by
+	// the service to be relayed to. Notice there is no IP address, this is
+	// because Indranet only forwards to exits of decentralised services
+	// also running on the same machine. This service could be a proxy, of
+	// course, if configured this way. This could be done by tunneling from
+	// a local Socks5 proxy into Indranet and the exit node also having
+	// this.
 	Key *pub.Key
 	Onion
 }
@@ -27,13 +41,11 @@ func init() { Register(IntroQueryMagic, introQueryPrototype) }
 
 func (o Skins) IntroQuery(id nonce.ID, hsk *pub.Key, exit *ExitPoint) Skins {
 	return append(o, &IntroQuery{
-		Reply: Reply{
-			ID:      id,
-			Ciphers: GenCiphers(exit.Keys, exit.ReturnPubs),
-			Nonces:  exit.Nonces,
-		},
-		Key:   hsk,
-		Onion: nop,
+		ID:      id,
+		Ciphers: GenCiphers(exit.Keys, exit.ReturnPubs),
+		Nonces:  exit.Nonces,
+		Key:     hsk,
+		Onion:   nop,
 	})
 }
 
@@ -45,7 +57,7 @@ func (x *IntroQuery) Encode(s *Splice) (e error) {
 	// )
 	return x.Onion.Encode(s.
 		Magic(IntroQueryMagic).
-		Reply(&x.Reply).
+		ID(x.ID).Ciphers(x.Ciphers).Nonces(x.Nonces).
 		Pubkey(x.Key),
 	)
 }
@@ -55,7 +67,8 @@ func (x *IntroQuery) Decode(s *Splice) (e error) {
 		IntroQueryMagic); check(e) {
 		return
 	}
-	s.ReadReply(&x.Reply).ReadPubkey(&x.Key)
+	s.ReadID(&x.ID).ReadCiphers(&x.Ciphers).ReadNonces(&x.Nonces).
+		ReadPubkey(&x.Key)
 	return
 }
 
