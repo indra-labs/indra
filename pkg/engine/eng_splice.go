@@ -451,29 +451,6 @@ func (s *Splice) ReadRoutingHeader(b *slice.Bytes) *Splice {
 	return s
 }
 
-const ReplyLen = nonce.IDLen + 3*sha256.Len + 3*nonce.IVLen
-
-type Reply struct {
-	ID nonce.ID
-	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
-	// given order over the reply message from the service.
-	Ciphers [3]sha256.Hash
-	// Nonces are the nonces to use with the cipher when creating the
-	// encryption for the reply message,
-	// they are common with the crypts in the header.
-	Nonces [3]nonce.IV
-}
-
-func (s *Splice) Reply(rpl *Reply) *Splice {
-	s.ID(rpl.ID).Ciphers(rpl.Ciphers).Nonces(rpl.Nonces)
-	return s
-}
-
-func (s *Splice) ReadReply(rpl *Reply) *Splice {
-	s.ReadID(&rpl.ID).ReadCiphers(&rpl.Ciphers).ReadNonces(&rpl.Nonces)
-	return s
-}
-
 func (s *Splice) AddrPort(a *netip.AddrPort) *Splice {
 	if a == nil {
 		s.Advance(AddrLen, "nil AddrPort")

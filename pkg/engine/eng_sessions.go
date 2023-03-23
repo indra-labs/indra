@@ -85,7 +85,7 @@ func (sm *SessionManager) PostAcctOnion(o Skins) (res SendData) {
 			case *Reverse:
 				res.Billable = append(res.Billable, s.ID)
 			case *Route:
-				copy(res.ID[:], on2.Reply.ID[:])
+				copy(res.ID[:], on2.ID[:])
 				res.Billable = append(res.Billable, s.ID)
 			}
 		case *Confirmation:

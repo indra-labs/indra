@@ -10,6 +10,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -17,7 +18,7 @@ import (
 const (
 	RouteMagic = "ro"
 	RouteLen   = magic.Len + cloak.Len + pub.KeyLen + nonce.IVLen +
-		ReplyLen
+		nonce.IDLen + 3*sha256.Len + 3*nonce.IVLen
 )
 
 func RoutePrototype() Onion { return &Route{} }
@@ -31,7 +32,14 @@ type Route struct {
 	SenderPub     *pub.Key
 	nonce.IV
 	// ------- the rest is encrypted to the HiddenService/Sender keys.
-	Reply  *Reply
+	ID nonce.ID
+	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
+	// given order over the reply message from the service.
+	Ciphers [3]sha256.Hash
+	// Nonces are the nonces to use with the cipher when creating the
+	// encryption for the reply message,
+	// they are common with the crypts in the header.
+	Nonces [3]nonce.IV
 	Header slice.Bytes
 	Onion
 }
@@ -43,12 +51,10 @@ func (o Skins) Route(id nonce.ID, k *pub.Key, ks *signer.KeySet,
 		HiddenService: k,
 		Sender:        ks.Next(),
 		IV:            nonce.New(),
-		Reply: &Reply{
-			ID:      id,
-			Ciphers: GenCiphers(ep.Keys, ep.ReturnPubs),
-			Nonces:  ep.Nonces,
-		},
-		Onion: &End{},
+		ID:            id,
+		Ciphers:       GenCiphers(ep.Keys, ep.ReturnPubs),
+		Nonces:        ep.Nonces,
+		Onion:         &End{},
 	}
 	oo.SenderPub = pub.Derive(oo.Sender)
 	oo.HiddenCloaked = cloak.GetCloak(k)
@@ -63,7 +69,7 @@ func (x *Route) Encode(s *Splice) (e error) {
 		Pubkey(pub.Derive(x.Sender)).
 		IV(x.IV)
 	start := s.GetCursor()
-	s.Reply(x.Reply)
+	s.ID(x.ID).Ciphers(x.Ciphers).Nonces(x.Nonces)
 	if e = x.Onion.Encode(s); check(e) {
 		return
 	}
@@ -94,10 +100,8 @@ func (x *Route) Decrypt(prk *prv.Key, s *Splice) {
 	ciph.Encipher(ciph.GetBlock(prk, x.SenderPub), x.IV,
 		s.GetCursorToEnd())
 	// And now we can see the reply field for the return trip.
-	if x.Reply == nil {
-		x.Reply = &Reply{}
-	}
-	s.ReadReply(x.Reply).ReadRoutingHeader(&x.Header)
+	s.ReadID(&x.ID).ReadCiphers(&x.Ciphers).ReadNonces(&x.Nonces).
+		ReadRoutingHeader(&x.Header)
 }
 
 func (x *Route) Len() int { return RouteLen + x.Onion.Len() }
@@ -144,17 +148,19 @@ func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 				pub.Derive(sessions[2].HeaderPrv),
 			},
 		}
-		returnReply := &Reply{
-			ID:      nonce.NewID(),
-			Ciphers: GenCiphers(ep.Keys, ep.ReturnPubs),
-			Nonces:  ep.Nonces,
-		}
+		// returnReply := &Reply{
+		// 	ID:      nonce.NewID(),
+		// 	Ciphers: GenCiphers(ep.Keys, ep.ReturnPubs),
+		// 	Nonces:  ep.Nonces,
+		// }
 		rh := Skins{}.RoutingHeader(rt)
 		returnHeader := Encode(rh.Assemble()).GetAll()
 		mr := Skins{}.
 			ForwardCrypt(sessions[0], ng.KeySet.Next(), n[3]).
 			ForwardCrypt(sessions[1], ng.KeySet.Next(), n[4]).
-			Ready(x.Header, returnHeader, x.Reply, returnReply)
+			Ready(x.ID, x.Header, returnHeader,
+				x.Ciphers, GenCiphers(ep.Keys, ep.ReturnPubs),
+				x.Nonces, ep.Nonces)
 		// log.D.S("makeready", mr)
 		assembled := mr.Assemble()
 		// log.D.S("assembled", assembled)

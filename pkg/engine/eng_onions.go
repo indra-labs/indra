@@ -5,7 +5,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 type Skins []Onion
@@ -93,10 +92,6 @@ func GetHeaders(alice, bob *SessionData, c Circuit,
 		},
 		ReturnPubs: returnPubs,
 	}
-	return
-}
-
-func GetReplyAndHeader() (r *Reply, h slice.Bytes) {
 	return
 }
 
