@@ -5,6 +5,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -19,11 +20,11 @@ type GetBalance struct {
 	ConfID nonce.ID
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
-	Ciphers [3]sha256.Hash
+	types.Ciphers
 	// Nonces are the nonces to use with the cipher when creating the
 	// encryption for the reply message,
 	// they are common with the crypts in the header.
-	Nonces [3]nonce.IV
+	types.Nonces
 	// Port identifies the type of service as well as being the port used by
 	// the service to be relayed to. Notice there is no IP address, this is
 	// because Indranet only forwards to exits of decentralised services
@@ -85,7 +86,7 @@ func (x *GetBalance) Magic() string { return GetBalanceMagic }
 
 func (x *GetBalance) Encode(s *Splice) (e error) {
 	// log.T.S("encoding", reflect.TypeOf(x),
-	// 	x.ID, x.FwReply.ID, x.FwReply.Ciphers, x.FwReply.IVs,
+	// 	x.ID, x.FwReply.ID, x.FwReply.Ciphers, x.FwReply.Nonces,
 	// )
 	return x.Onion.Encode(s.
 		Magic(GetBalanceMagic).
@@ -133,8 +134,7 @@ func (x *GetBalance) Handle(s *Splice, p Onion,
 		return
 	}
 	log.D.Ln("session found", x.ID)
-	header := s.GetRange(s.GetCursor(), s.Advance(RoutingHeaderLen,
-		"routing header"))
+	header := s.GetRoutingHeaderFromCursor()
 	rbb := FormatReply(header, x.Ciphers, x.Nonces, Encode(bal).GetAll())
 	rb := append(rbb.GetAll(), slice.NoisePad(714-rbb.Len())...)
 	switch on1 := p.(type) {

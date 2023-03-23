@@ -6,8 +6,8 @@ import (
 	"sync"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/ring"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -24,15 +24,13 @@ type Services []*Service
 type Node struct {
 	ID nonce.ID
 	sync.Mutex
-	AddrPort      *netip.AddrPort
-	IdentityPub   *pub.Key
-	IdentityBytes pub.Bytes
-	IdentityPrv   *prv.Key
-	RelayRate     int                 // Base relay price/Mb.
-	Services      Services            // Services offered by this peer.
-	Load          *ring.BufferLoad    // Relay load.
-	Latency       *ring.BufferLatency // Latency to peer.
-	Failure       *ring.BufferFailure // Times of tx failure.
+	AddrPort  *netip.AddrPort
+	Identity  *types.Keys
+	RelayRate int                 // Base relay price/Mb.
+	Services  Services            // Services offered by this peer.
+	Load      *ring.BufferLoad    // Relay load.
+	Latency   *ring.BufferLatency // Latency to peer.
+	Failure   *ring.BufferFailure // Times of tx failure.
 	PaymentChan
 	Transport
 }
@@ -49,19 +47,17 @@ const (
 // as only the node embedded in a client and not the peer node list has one
 // available. The Node for a client's self should use true in the local
 // parameter to not initialise the peer state ring buffers as it won't use them.
-func NewNode(addr *netip.AddrPort, idPub *pub.Key, idPrv *prv.Key,
+func NewNode(addr *netip.AddrPort, idPrv *prv.Key,
 	tpt Transport, relayRate int, local bool) (n *Node, id nonce.ID) {
 	
 	id = nonce.NewID()
 	n = &Node{
-		ID:            id,
-		AddrPort:      addr,
-		IdentityPub:   idPub,
-		IdentityBytes: idPub.ToBytes(),
-		IdentityPrv:   idPrv,
-		RelayRate:     relayRate,
-		PaymentChan:   make(PaymentChan, PaymentChanBuffers),
-		Transport:     tpt,
+		ID:          id,
+		AddrPort:    addr,
+		Identity:    types.MakeKeys(idPrv),
+		RelayRate:   relayRate,
+		PaymentChan: make(PaymentChan, PaymentChanBuffers),
+		Transport:   tpt,
 	}
 	if !local {
 		// These ring buffers are needed to evaluate these metrics for remote

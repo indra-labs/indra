@@ -7,6 +7,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -22,9 +23,9 @@ func MessagePrototype() Onion { return &Message{} }
 func init() { Register(MessageMagic, MessagePrototype) }
 
 type ReplyCiphers struct {
-	Header  slice.Bytes
-	Ciphers [3]sha256.Hash
-	IVs     [3]nonce.IV
+	Header slice.Bytes
+	types.Ciphers
+	types.Nonces
 }
 
 type Message struct {
@@ -54,11 +55,11 @@ func (x *Message) Encode(s *Splice) (e error) {
 		ID(x.ID).ID(x.Re).
 		RoutingHeader(x.Return.Header).
 		Ciphers(x.Return.Ciphers).
-		Nonces(x.Return.IVs).
+		Nonces(x.Return.Nonces).
 		Bytes(x.Payload)
 	for i := range x.Forward.Ciphers {
 		blk := ciph.BlockFromHash(x.Forward.Ciphers[i])
-		ciph.Encipher(blk, x.Forward.IVs[2-i], s.GetFrom(start))
+		ciph.Encipher(blk, x.Forward.Nonces[2-i], s.GetFrom(start))
 	}
 	return
 }
@@ -72,7 +73,7 @@ func (x *Message) Decode(s *Splice) (e error) {
 		ReadID(&x.ID).ReadID(&x.Re).
 		ReadRoutingHeader(&x.Return.Header).
 		ReadCiphers(&x.Return.Ciphers).
-		ReadNonces(&x.Return.IVs).
+		ReadNonces(&x.Return.Nonces).
 		ReadBytes(&x.Payload)
 	return
 }

@@ -33,8 +33,8 @@ type Params struct {
 
 func NewEngine(p Params) (c *Engine, e error) {
 	p.Node.Transport = p.Tpt
-	p.Node.IdentityPrv = p.IDPrv
-	p.Node.IdentityPub = pub.Derive(p.IDPrv)
+	p.Node.Identity.Prv = p.IDPrv
+	p.Node.Identity.Pub = pub.Derive(p.IDPrv)
 	var ks *signer.KeySet
 	if _, ks, e = signer.New(); check(e) {
 		return

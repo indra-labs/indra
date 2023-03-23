@@ -12,6 +12,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -35,11 +36,11 @@ type Route struct {
 	ID nonce.ID
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
-	Ciphers [3]sha256.Hash
+	types.Ciphers
 	// Nonces are the nonces to use with the cipher when creating the
 	// encryption for the reply message,
 	// they are common with the crypts in the header.
-	Nonces [3]nonce.IV
+	types.Nonces
 	Header slice.Bytes
 	Onion
 }
@@ -137,12 +138,12 @@ func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 		ng.SelectHops(hops, sessions, "route reply header")
 		rt := &Routing{
 			Sessions: [3]*SessionData{sessions[2], sessions[3], sessions[4]},
-			Keys:     [3]*prv.Key{rvKeys[0], rvKeys[1], rvKeys[2]},
-			Nonces:   [3]nonce.IV{n[0], n[1], n[2]},
+			Keys:     types.Privs{rvKeys[0], rvKeys[1], rvKeys[2]},
+			Nonces:   types.Nonces{n[0], n[1], n[2]},
 		}
 		ep := ExitPoint{
 			Routing: rt,
-			ReturnPubs: [3]*pub.Key{
+			ReturnPubs: types.Pubs{
 				pub.Derive(sessions[0].HeaderPrv),
 				pub.Derive(sessions[1].HeaderPrv),
 				pub.Derive(sessions[2].HeaderPrv),

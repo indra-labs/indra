@@ -9,7 +9,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -18,10 +18,10 @@ type Introduction struct {
 	*Intro
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
-	Ciphers [3]sha256.Hash
+	types.Ciphers
 	// Nonces are the nonces to use with the cipher when creating the
 	// encryption for the reply message.
-	Nonces [3]nonce.IV
+	types.Nonces
 	slice.Bytes
 }
 

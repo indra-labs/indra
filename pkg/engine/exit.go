@@ -7,6 +7,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -20,11 +21,11 @@ type Exit struct {
 	ID nonce.ID
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
-	Ciphers [3]sha256.Hash
+	types.Ciphers
 	// Nonces are the nonces to use with the cipher when creating the
 	// encryption for the reply message,
 	// they are common with the crypts in the header.
-	Nonces [3]nonce.IV
+	types.Nonces
 	// Port identifies the type of service as well as being the port used by
 	// the service to be relayed to. Notice there is no IP address, this is
 	// because Indranet only forwards to exits of decentralised services
@@ -59,7 +60,7 @@ func (x *Exit) Magic() string { return ExitMagic }
 
 func (x *Exit) Encode(s *Splice) (e error) {
 	// log.T.S("encoding", reflect.TypeOf(x),
-	// 	x.FwReply.ID, x.FwReply.Ciphers, x.FwReply.IVs, x.Port, x.Bytes.ToBytes(),
+	// 	x.FwReply.ID, x.FwReply.Ciphers, x.FwReply.Nonces, x.Port, x.Bytes.ToBytes(),
 	// )
 	return x.Onion.Encode(s.
 		Magic(ExitMagic).
@@ -109,7 +110,7 @@ func (x *Exit) Handle(s *Splice, p Onion,
 		Load:  byte(ng.Load.Load()),
 		Bytes: result,
 	})
-	rb := FormatReply(s.GetRange(s.GetCursor(), RoutingHeaderLen),
+	rb := FormatReply(s.GetRoutingHeaderFromCursor(),
 		x.Ciphers, x.Nonces, res.GetAll())
 	switch on := p.(type) {
 	case *Crypt:

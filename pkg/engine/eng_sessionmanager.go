@@ -314,13 +314,13 @@ func (sm *SessionManager) GetLocalNodeRelayRate() (rate int) {
 func (sm *SessionManager) GetLocalNodeIdentityBytes() (ident pub.Bytes) {
 	sm.Lock()
 	defer sm.Unlock()
-	return sm.GetLocalNode().IdentityBytes
+	return sm.GetLocalNode().Identity.Bytes
 }
 
 func (sm *SessionManager) GetLocalNodeIdentityPrv() (ident *prv.Key) {
 	sm.Lock()
 	defer sm.Unlock()
-	return sm.GetLocalNode().IdentityPrv
+	return sm.GetLocalNode().Identity.Prv
 }
 
 // SetLocalNode sets the engine's local Node.

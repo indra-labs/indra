@@ -31,7 +31,7 @@ func MakeSession(id nonce.ID, s [5]*Session,
 	sk := Skins{}
 	for i := range s {
 		if i == 0 {
-			sk = sk.Crypt(hop[i].IdentityPub, nil, ks.Next(),
+			sk = sk.Crypt(hop[i].Identity.Pub, nil, ks.Next(),
 				n[i], 0).Session(s[i])
 		} else {
 			sk = sk.ForwardSession(hop[i], ks.Next(), n[i], s[i])

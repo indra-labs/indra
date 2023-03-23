@@ -97,6 +97,13 @@ func (x *Crypt) Decode(s *Splice) (e error) {
 	return
 }
 
+// Decrypt requires the prv.Key to be located from the Cloak, using the FromPub
+// key to derive the shared secret, and then decrypts the rest of the message.
+func (x *Crypt) Decrypt(prk *prv.Key, s *Splice) {
+	ciph.Encipher(ciph.GetBlock(prk, x.FromPub), x.Nonce,
+		s.GetFrom(s.GetCursor()))
+}
+
 func (x *Crypt) Len() int {
 	return CryptLen + x.Onion.Len()
 }
@@ -126,11 +133,4 @@ func (x *Crypt) Handle(s *Splice, p Onion,
 	ng.HandleMessage(BudgeUp(s), x)
 	
 	return e
-}
-
-// Decrypt requires the prv.Key to be located from the Cloak, using the FromPub
-// key to derive the shared secret, and then decrypts the rest of the message.
-func (x *Crypt) Decrypt(prk *prv.Key, s *Splice) {
-	ciph.Encipher(ciph.GetBlock(prk, x.FromPub), x.Nonce,
-		s.GetFrom(s.GetCursor()))
 }

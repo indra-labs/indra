@@ -19,6 +19,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	magic2 "git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -200,6 +201,13 @@ func (s *Splice) GetRange(start, end int) slice.Bytes {
 	return s.b[start:end]
 }
 
+func (s *Splice) GetRoutingHeaderFromCursor() (r RoutingHeaderBytes) {
+	rh := s.GetRange(s.GetCursor(), s.Advance(RoutingHeaderLen,
+		"routing header"))
+	copy(r[:], rh)
+	return
+}
+
 // GetAll returns the whole of the buffer.
 func (s *Splice) GetAll() slice.Bytes { return s.b }
 
@@ -258,7 +266,7 @@ func (s *Splice) IV(iv nonce.IV) *Splice {
 	return s
 }
 
-func (s *Splice) Nonces(iv [3]nonce.IV) *Splice {
+func (s *Splice) Nonces(iv types.Nonces) *Splice {
 	for i := range iv {
 		s.IV(iv[i])
 	}
@@ -272,7 +280,7 @@ func (s *Splice) ReadIV(iv *nonce.IV) *Splice {
 	return s
 }
 
-func (s *Splice) ReadNonces(iv *[3]nonce.IV) *Splice {
+func (s *Splice) ReadNonces(iv *types.Nonces) *Splice {
 	for i := range iv {
 		s.ReadIV(&iv[i])
 	}
@@ -414,7 +422,7 @@ func (s *Splice) Hash(h sha256.Hash) *Splice {
 	return s
 }
 
-func (s *Splice) Ciphers(h [3]sha256.Hash) *Splice {
+func (s *Splice) Ciphers(h types.Ciphers) *Splice {
 	for i := range h {
 		s.Hash(h[i])
 	}
@@ -430,7 +438,7 @@ func (s *Splice) ReadHash(h *sha256.Hash) *Splice {
 	return s
 }
 
-func (s *Splice) ReadCiphers(h *[3]sha256.Hash) *Splice {
+func (s *Splice) ReadCiphers(h *types.Ciphers) *Splice {
 	for i := range h {
 		s.ReadHash(&h[i])
 	}

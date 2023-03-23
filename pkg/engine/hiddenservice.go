@@ -10,6 +10,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -23,10 +24,10 @@ type HiddenService struct {
 	Intro
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
-	Ciphers [3]sha256.Hash
+	types.Ciphers
 	// Nonces are the nonces to use with the cipher when creating the encryption
 	// for the reply message, they are common with the crypts in the header.
-	Nonces [3]nonce.IV
+	types.Nonces
 	slice.Bytes
 	Onion
 }

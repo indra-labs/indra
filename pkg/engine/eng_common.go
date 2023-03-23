@@ -9,7 +9,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -19,6 +19,8 @@ var (
 	check = log.E.Chk
 )
 
+type RoutingHeaderBytes [RoutingHeaderLen]byte
+
 func BudgeUp(s *Splice) (o *Splice) {
 	o = s
 	start := o.GetCursor()
@@ -27,8 +29,8 @@ func BudgeUp(s *Splice) (o *Splice) {
 	return
 }
 
-func FormatReply(header slice.Bytes, ciphers [3]sha256.Hash,
-	nonces [3]nonce.IV, res slice.Bytes) (rb *Splice) {
+func FormatReply(header RoutingHeaderBytes, ciphers types.Ciphers,
+	nonces types.Nonces, res slice.Bytes) (rb *Splice) {
 	
 	rl := RoutingHeaderLen
 	rb = NewSplice(rl + len(res))
@@ -43,7 +45,7 @@ func FormatReply(header slice.Bytes, ciphers [3]sha256.Hash,
 	return
 }
 
-func GenCiphers(prvs [3]*prv.Key, pubs [3]*pub.Key) (ciphers [3]sha256.Hash) {
+func GenCiphers(prvs types.Privs, pubs types.Pubs) (ciphers types.Ciphers) {
 	for i := range prvs {
 		ciphers[2-i] = ecdh.Compute(prvs[i], pubs[i])
 	}
@@ -74,13 +76,12 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 		if idPrv, e = prv.GenerateKey(); check(e) {
 			return
 		}
-		idPub := pub.Derive(idPrv)
 		addr := slice.GenerateRandomAddrPortIPv4()
 		var local bool
 		if i == 0 {
 			local = true
 		}
-		nodes[i], _ = NewNode(addr, idPub, idPrv, tpts[i], 50000, local)
+		nodes[i], _ = NewNode(addr, idPrv, tpts[i], 50000, local)
 		if cl[i], e = NewEngine(Params{
 			tpts[i],
 			idPrv,
@@ -140,7 +141,7 @@ func GetTwoPrvKeys(t *testing.T) (prv1, prv2 *prv.Key) {
 	return
 }
 
-func GetCipherSet(t *testing.T) (prvs [3]*prv.Key, pubs [3]*pub.Key) {
+func GetCipherSet(t *testing.T) (prvs types.Privs, pubs types.Pubs) {
 	for i := range prvs {
 		prv1, prv2 := GetTwoPrvKeys(t)
 		prvs[i] = prv1
@@ -149,7 +150,7 @@ func GetCipherSet(t *testing.T) (prvs [3]*prv.Key, pubs [3]*pub.Key) {
 	return
 }
 
-func Gen3Nonces() (n [3]nonce.IV) {
+func Gen3Nonces() (n types.Nonces) {
 	for i := range n {
 		n[i] = nonce.New()
 	}
