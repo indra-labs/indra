@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"crypto/cipher"
 	"net/netip"
 	"reflect"
 	
@@ -20,11 +21,9 @@ const (
 		nonce.IDLen + 3*sha256.Len + 3*nonce.IVLen
 )
 
-func RoutePrototype() Onion       { return &Route{} }
-func init()                       { Register(RouteMagic, RoutePrototype) }
-func (x *Route) Magic() string    { return EndMagic }
-func (x *Route) Len() int         { return RouteLen + x.Onion.Len() }
-func (x *Route) Wrap(inner Onion) { x.Onion = inner }
+func RoutePrototype() Onion { return &Route{} }
+
+func init() { Register(RouteMagic, RoutePrototype) }
 
 type Route struct {
 	HiddenService *pub.Key
@@ -34,7 +33,14 @@ type Route struct {
 	nonce.IV
 	// ------- the rest is encrypted to the HiddenService/Sender keys.
 	ID nonce.ID
-	ReplyHeader
+	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
+	// given order over the reply message from the service.
+	Ciphers Ciphers
+	// Nonces are the nonces to use with the cipher when creating the
+	// encryption for the reply message,
+	// they are common with the crypts in the header.
+	Nonces
+	RoutingHeaderBytes
 	Onion
 }
 
@@ -46,16 +52,16 @@ func (o Skins) Route(id nonce.ID, k *pub.Key, ks *signer.KeySet,
 		Sender:        ks.Next(),
 		IV:            nonce.New(),
 		ID:            id,
-		ReplyHeader: ReplyHeader{
-			Ciphers: GenCiphers(ep.Keys, ep.ReturnPubs),
-			Nonces:  ep.Nonces,
-		},
-		Onion: &End{},
+		Ciphers:       GenCiphers(ep.Keys, ep.ReturnPubs),
+		Nonces:        ep.Nonces,
+		Onion:         &End{},
 	}
 	oo.SenderPub = pub.Derive(oo.Sender)
 	oo.HiddenCloaked = cloak.GetCloak(k)
 	return append(o, oo)
 }
+
+func (x *Route) Magic() string { return EndMagic }
 
 func (x *Route) Encode(s *Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
@@ -67,16 +73,16 @@ func (x *Route) Encode(s *Splice) (e error) {
 		Pubkey(pub.Derive(x.Sender)).
 		IV(x.IV)
 	start := s.GetCursor()
-	s.
-		ID(x.ID).
-		Ciphers(x.Ciphers).
-		Nonces(x.Nonces)
+	s.ID(x.ID).Ciphers(x.Ciphers).Nonces(x.Nonces)
 	if e = x.Onion.Encode(s); check(e) {
 		return
 	}
+	var blk cipher.Block
 	// Encrypt the message!
-	ciph.Encipher(ciph.GetBlock(x.Sender, x.HiddenService, "route"),
-		x.IV, s.GetFrom(start))
+	if blk = ciph.GetBlock(x.Sender, x.HiddenService, "route"); check(e) {
+		return
+	}
+	ciph.Encipher(blk, x.IV, s.GetFrom(start))
 	return
 }
 
@@ -94,14 +100,17 @@ func (x *Route) Decode(s *Splice) (e error) {
 // Decrypt decrypts the rest of a message after the Route segment if the
 // recipient has the hidden service private key.
 func (x *Route) Decrypt(prk *prv.Key, s *Splice) {
+	// log.D.S(s.GetRange(-1, s.GetCursor()), s.GetRange(s.GetCursor(), -1))
 	ciph.Encipher(ciph.GetBlock(prk, x.SenderPub, "route decrypt"), x.IV,
 		s.GetCursorToEnd())
 	// And now we can see the reply field for the return trip.
-	s.ReadID(&x.ID).
-		ReadCiphers(&x.Ciphers).
-		ReadNonces(&x.Nonces).
+	s.ReadID(&x.ID).ReadCiphers(&x.Ciphers).ReadNonces(&x.Nonces).
 		ReadRoutingHeader(&x.RoutingHeaderBytes)
 }
+
+func (x *Route) Len() int { return RouteLen + x.Onion.Len() }
+
+func (x *Route) Wrap(inner Onion) { x.Onion = inner }
 
 func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 	
@@ -121,9 +130,13 @@ func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 		log.D.F("we are the hidden service %s - decrypting...",
 			hh.CurrentIntros[0].Key.ToBase32Abbreviated())
 		// We have the keys to unwrap this one.
+		// log.D.Ln(s)
 		x.Decrypt(hh.Prv, s)
 		log.D.Ln(s)
 		// Add another two hops for security against unmasking.
+		// preHops := []byte{0, 1}
+		// path := make(Sessions, 2)
+		// ng.SelectHops(preHops, path, "route prehops")
 		n := GenNonces(5)
 		rvKeys := ng.KeySet.Next3()
 		hops := []byte{3, 4, 5, 0, 1}
@@ -155,7 +168,9 @@ func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 				GenCiphers(ep.Keys, ep.ReturnPubs),
 				x.Nonces,
 				ep.Nonces)
+		// log.D.S("makeready", mr)
 		assembled := mr.Assemble()
+		// log.D.S("assembled", assembled)
 		reply := Encode(assembled)
 		ng.HandleMessage(reply, x)
 	}
@@ -166,6 +181,7 @@ func MakeRoute(id nonce.ID, k *pub.Key, ks *signer.KeySet,
 	alice, bob *SessionData, c Circuit) Skins {
 	
 	headers := GetHeaders(alice, bob, c, ks)
+	// log.T.S("headers", headers)
 	return Skins{}.
 		RoutingHeader(headers.Forward).
 		Route(id, k, ks, headers.ExitPoint()).
@@ -194,10 +210,13 @@ func (ng *Engine) SendRoute(k *pub.Key, ap *netip.AddrPort,
 	hops := StandardCircuit()
 	s := make(Sessions, len(hops))
 	s[2] = ss
+	// log.D.S("sessions before", s)
 	se := ng.SelectHops(hops, s, "sendroute")
 	var c Circuit
 	copy(c[:], se)
+	// log.D.S("sessions after", c)
 	o := MakeRoute(nonce.NewID(), k, ng.KeySet, se[5], c[2], c)
+	// log.D.S("doing accounting", o)
 	res := ng.PostAcctOnion(o)
 	log.D.Ln("sending out route request onion")
 	ng.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.PendingResponses)

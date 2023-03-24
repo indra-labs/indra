@@ -21,36 +21,37 @@ const (
 
 type HiddenService struct {
 	Intro
-	ReplyHeader
+	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
+	// given order over the reply message from the service.
+	Ciphers
+	// Nonces are the nonces to use with the cipher when creating the encryption
+	// for the reply message, they are common with the crypts in the header.
+	Nonces
+	RoutingHeaderBytes
 	Onion
 }
 
-func hiddenServicePrototype() Onion       { return &HiddenService{} }
-func init()                               { Register(HiddenServiceMagic, hiddenServicePrototype) }
-func (x *HiddenService) Magic() string    { return HiddenServiceMagic }
-func (x *HiddenService) Len() int         { return HiddenServiceLen + x.Onion.Len() }
-func (x *HiddenService) Wrap(inner Onion) { x.Onion = inner }
+func hiddenServicePrototype() Onion { return &HiddenService{} }
+
+func init() { Register(HiddenServiceMagic, hiddenServicePrototype) }
 
 func (o Skins) HiddenService(in *Intro, point *ExitPoint) Skins {
 	return append(o, &HiddenService{
-		Intro: *in,
-		ReplyHeader: ReplyHeader{
-			Ciphers: GenCiphers(point.Keys, point.ReturnPubs),
-			Nonces:  point.Nonces,
-		},
-		Onion: NewEnd(),
+		Intro:   *in,
+		Ciphers: GenCiphers(point.Keys, point.ReturnPubs),
+		Nonces:  point.Nonces,
+		Onion:   NewEnd(),
 	})
 }
+
+func (x *HiddenService) Magic() string { return HiddenServiceMagic }
 
 func (x *HiddenService) Encode(s *Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.Key, x.AddrPort, x.Ciphers, x.Nonces, x.RoutingHeaderBytes,
 	)
 	SpliceIntro(s.Magic(HiddenServiceMagic), &x.Intro)
-	s.
-		Ciphers(x.Ciphers).
-		Nonces(x.Nonces)
-	return x.Onion.Encode(s)
+	return x.Onion.Encode(s.Ciphers(x.Ciphers).Nonces(x.Nonces))
 }
 
 func (x *HiddenService) Decode(s *Splice) (e error) {
@@ -68,6 +69,10 @@ func (x *HiddenService) Decode(s *Splice) (e error) {
 	return
 }
 
+func (x *HiddenService) Len() int { return HiddenServiceLen + x.Onion.Len() }
+
+func (x *HiddenService) Wrap(inner Onion) { x.Onion = inner }
+
 func (x *HiddenService) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 	log.D.F("%s adding introduction for key %s",
 		ng.GetLocalNodeAddressString(), x.Key.ToBase32Abbreviated())
@@ -79,6 +84,8 @@ func (x *HiddenService) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 			RoutingHeaderBytes: x.RoutingHeaderBytes,
 		},
 	})
+	// log.D.S("intros", ng.HiddenRouting)
+	// log.D.S(ng.GetLocalNodeAddressString(), ng.HiddenRouting)
 	log.D.Ln("stored new introduction, starting broadcast")
 	go GossipIntro(&x.Intro, ng.SessionManager, ng.C)
 	return
@@ -105,13 +112,17 @@ func (ng *Engine) SendHiddenService(id nonce.ID, key *prv.Key,
 	var c Circuit
 	copy(c[:], se[:len(c)])
 	in = NewIntro(id, key, alice.Node.AddrPort, expiry)
+	// log.D.S("intro", in, in.Validate())
 	o := MakeHiddenService(in, alice, bob, c, ng.KeySet)
+	// log.D.S("hidden service onion", o)
 	log.D.F("%s sending out hidden service onion %s",
 		ng.GetLocalNodeAddressString(),
 		color.Yellow.Sprint(alice.Node.AddrPort.String()))
 	res := ng.PostAcctOnion(o)
+	// log.D.S("hs onion binary", res.B.ToBytes())
 	ng.HiddenRouting.AddHiddenService(svc, key, in,
 		ng.GetLocalNodeAddressString())
+	// log.D.S("storing hidden service info", ng.HiddenRouting)
 	ng.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.PendingResponses)
 	return
 }

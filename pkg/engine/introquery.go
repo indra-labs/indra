@@ -37,11 +37,9 @@ type IntroQuery struct {
 	Onion
 }
 
-func introQueryPrototype() Onion       { return &IntroQuery{} }
-func init()                            { Register(IntroQueryMagic, introQueryPrototype) }
-func (x *IntroQuery) Magic() string    { return IntroQueryMagic }
-func (x *IntroQuery) Len() int         { return IntroQueryLen + x.Onion.Len() }
-func (x *IntroQuery) Wrap(inner Onion) { x.Onion = inner }
+func introQueryPrototype() Onion { return &IntroQuery{} }
+
+func init() { Register(IntroQueryMagic, introQueryPrototype) }
 
 func (o Skins) IntroQuery(id nonce.ID, hsk *pub.Key, exit *ExitPoint) Skins {
 	return append(o, &IntroQuery{
@@ -53,16 +51,16 @@ func (o Skins) IntroQuery(id nonce.ID, hsk *pub.Key, exit *ExitPoint) Skins {
 	})
 }
 
+func (x *IntroQuery) Magic() string { return IntroQueryMagic }
+
 func (x *IntroQuery) Encode(s *Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.Key, x.Ciphers, x.Nonces,
 	)
 	return x.Onion.Encode(s.
 		Magic(IntroQueryMagic).
-		ID(x.ID).
-		Pubkey(x.Key).
-		Ciphers(x.Ciphers).
-		Nonces(x.Nonces),
+		ID(x.ID).Ciphers(x.Ciphers).Nonces(x.Nonces).
+		Pubkey(x.Key),
 	)
 }
 
@@ -71,13 +69,14 @@ func (x *IntroQuery) Decode(s *Splice) (e error) {
 		IntroQueryMagic); check(e) {
 		return
 	}
-	s.
-		ReadID(&x.ID).
-		ReadPubkey(&x.Key).
-		ReadCiphers(&x.Ciphers).
-		ReadNonces(&x.Nonces)
+	s.ReadID(&x.ID).ReadCiphers(&x.Ciphers).ReadNonces(&x.Nonces).
+		ReadPubkey(&x.Key)
 	return
 }
+
+func (x *IntroQuery) Len() int { return IntroQueryLen + x.Onion.Len() }
+
+func (x *IntroQuery) Wrap(inner Onion) { x.Onion = inner }
 
 func (x *IntroQuery) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {
@@ -127,6 +126,7 @@ func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *pub.Key,
 	alice, bob *SessionData, hook func(in *Intro)) {
 	
 	fn := func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
+		// log.D.S("sendintroquery callback", id, k, b.ToBytes())
 		s := Load(b, slice.NewCursor())
 		on := Recognise(s, ng.GetLocalNodeAddress())
 		if e = on.Decode(s); check(e) {

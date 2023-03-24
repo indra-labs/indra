@@ -77,11 +77,8 @@ func (x *Exit) Decode(s *Splice) (e error) {
 		return
 	}
 	s.
-		ReadID(&x.ID).
-		ReadCiphers(&x.Ciphers).
-		ReadNonces(&x.Nonces).
-		ReadUint16(&x.Port).
-		ReadBytes(&x.Bytes)
+		ReadID(&x.ID).ReadCiphers(&x.Ciphers).ReadNonces(&x.Nonces).
+		ReadUint16(&x.Port).ReadBytes(&x.Bytes)
 	return
 }
 
@@ -175,6 +172,7 @@ func (ng *Engine) SendExit(port uint16, msg slice.Bytes, id nonce.ID,
 	var c Circuit
 	copy(c[:], se)
 	o := MakeExit(ExitParams{port, msg, id, bob, alice, c, ng.KeySet})
+	// log.D.S(ng.GetLocalNodeAddress().String()+" sending out exit onion", o)
 	res := ng.PostAcctOnion(o)
 	ng.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.PendingResponses)
 }

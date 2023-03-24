@@ -16,6 +16,7 @@ import (
 // apply when the associated confirmation(s) or response hooks are executed.
 func (sm *SessionManager) PostAcctOnion(o Skins) (res SendData) {
 	assembled := o.Assemble()
+	// log.T.S(assembled)
 	sp := Encode(assembled)
 	res.B = sp.GetAll()
 	// do client accounting

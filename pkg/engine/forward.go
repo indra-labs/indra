@@ -17,27 +17,21 @@ type Forward struct {
 	Onion
 }
 
-func forwardPrototype() Onion       { return &Forward{} }
-func init()                         { Register(ForwardMagic, forwardPrototype) }
-func (x *Forward) Magic() string    { return ForwardMagic }
-func (x *Forward) Len() int         { return ForwardLen + x.Onion.Len() }
-func (x *Forward) Wrap(inner Onion) { x.Onion = inner }
+func forwardPrototype() Onion { return &Forward{} }
+
+func init() { Register(ForwardMagic, forwardPrototype) }
 
 func (o Skins) Forward(addr *netip.AddrPort) Skins {
 	return append(o, &Forward{AddrPort: addr, Onion: &End{}})
 }
 
-func (x *Forward) Encode(s *Splice) (e error) {
+func (x *Forward) Magic() string { return ForwardMagic }
+
+func (x *Forward) Encode(s *Splice) error {
 	log.T.F("encoding %s %s", reflect.TypeOf(x),
 		x.AddrPort.String(),
 	)
-	s.
-		Magic(ForwardMagic).
-		AddrPort(x.AddrPort)
-	if x.Onion != nil {
-		e = x.Onion.Encode(s)
-	}
-	return
+	return x.Onion.Encode(s.Magic(ForwardMagic).AddrPort(x.AddrPort))
 }
 
 func (x *Forward) Decode(s *Splice) (e error) {
@@ -48,6 +42,10 @@ func (x *Forward) Decode(s *Splice) (e error) {
 	s.ReadAddrPort(&x.AddrPort)
 	return
 }
+
+func (x *Forward) Len() int { return ForwardLen + x.Onion.Len() }
+
+func (x *Forward) Wrap(inner Onion) { x.Onion = inner }
 
 func (x *Forward) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {

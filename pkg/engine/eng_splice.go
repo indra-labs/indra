@@ -76,6 +76,9 @@ func (s *Splice) String() (o string) {
 				o += color.Gray.Sprint(oe) + " "
 				
 			}
+			// if len(v) > 72 {
+			// 	o += "\n "
+			// }
 			if prevString != "remainder" {
 				hexed := hex.EncodeToString(v.ToBytes())
 				var oHexed string

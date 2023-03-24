@@ -16,15 +16,14 @@ const (
 )
 
 type Balance struct {
-	ID, ConfID nonce.ID
+	ID     nonce.ID
+	ConfID nonce.ID
 	lnwire.MilliSatoshi
 }
 
-func balancePrototype() Onion       { return &Balance{} }
-func init()                         { Register(BalanceMagic, balancePrototype) }
-func (x *Balance) Magic() string    { return BalanceMagic }
-func (x *Balance) Len() int         { return BalanceLen }
-func (x *Balance) Wrap(inner Onion) {}
+func balancePrototype() Onion { return &Balance{} }
+
+func init() { Register(BalanceMagic, balancePrototype) }
 
 func (o Skins) Balance(id, confID nonce.ID,
 	amt lnwire.MilliSatoshi) Skins {
@@ -35,6 +34,8 @@ func (o Skins) Balance(id, confID nonce.ID,
 		MilliSatoshi: amt,
 	})
 }
+
+func (x *Balance) Magic() string { return BalanceMagic }
 
 func (x *Balance) Encode(s *Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
@@ -59,6 +60,10 @@ func (x *Balance) Decode(s *Splice) (e error) {
 		ReadMilliSatoshi(&x.MilliSatoshi)
 	return
 }
+
+func (x *Balance) Len() int { return BalanceLen }
+
+func (x *Balance) Wrap(inner Onion) {}
 
 func (x *Balance) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {

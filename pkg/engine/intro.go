@@ -30,11 +30,9 @@ type Intro struct {
 	Sig      sig.Bytes
 }
 
-func introPrototype() Onion       { return &Intro{} }
-func init()                       { Register(IntroMagic, introPrototype) }
-func (x *Intro) Magic() string    { return IntroMagic }
-func (x *Intro) Len() int         { return IntroLen }
-func (x *Intro) Wrap(inner Onion) {}
+func introPrototype() Onion { return &Intro{} }
+
+func init() { Register(IntroMagic, introPrototype) }
 
 func (o Skins) Intro(id nonce.ID, key *prv.Key, ap *netip.AddrPort,
 	expires time.Time) (sk Skins) {
@@ -78,9 +76,10 @@ func (x *Intro) Validate() bool {
 	return false
 }
 
+func (x *Intro) Magic() string { return IntroMagic }
+
 func SpliceIntro(s *Splice, x *Intro) *Splice {
-	return s.
-		ID(x.ID).
+	return s.ID(x.ID).
 		Pubkey(x.Key).
 		AddrPort(x.AddrPort).
 		Uint64(uint64(x.Expiry.UnixNano())).
@@ -110,6 +109,10 @@ func (x *Intro) Decode(s *Splice) (e error) {
 	return
 }
 
+func (x *Intro) Len() int { return IntroLen }
+
+func (x *Intro) Wrap(inner Onion) {}
+
 func (x *Intro) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {
 	
@@ -117,6 +120,7 @@ func (x *Intro) Handle(s *Splice, p Onion,
 	valid := x.Validate()
 	if valid {
 		log.T.Ln(ng.GetLocalNodeAddressString(), "validated intro", x.ID)
+		// ng.PendingResponses.ProcessAndDelete(x.ID, s.GetAll())
 		kb := x.Key.ToBytes()
 		if _, ok := ng.HiddenRouting.KnownIntros[x.Key.ToBytes()]; ok {
 			log.D.Ln(ng.GetLocalNodeAddressString(), "already have intro")
