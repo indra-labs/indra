@@ -42,8 +42,7 @@ func (o Skins) ReverseCrypt(s *SessionData, k *prv.Key, n nonce.IV,
 	seq int) (oo Skins) {
 	
 	if s == nil || k == nil {
-		oo = append(o, &Reverse{})
-		oo = append(oo, &Crypt{})
+		oo = append(o, &Reverse{}, &Crypt{})
 		return
 	}
 	return o.Reverse(s.Node.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, seq)

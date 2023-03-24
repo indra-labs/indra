@@ -99,7 +99,6 @@ func (sm *SessionManager) AddSession(s *SessionData) {
 		}
 	}
 	sm.Sessions = append(sm.Sessions, s)
-	// log.D.S(s.ID, sm.Sessions)
 	// Hop 5, the return session( s) are not added to the SessionCache as they
 	// are not Billable and are only related to the node of the Engine.
 	if s.Hop < 5 {

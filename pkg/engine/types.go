@@ -19,6 +19,5 @@ type Keys struct {
 
 func MakeKeys(pr *prv.Key) *Keys {
 	pubkey := pub.Derive(pr)
-	pubBytes := pubkey.ToBytes()
-	return &Keys{pubkey, pubBytes, pr}
+	return &Keys{pubkey, pubkey.ToBytes(), pr}
 }

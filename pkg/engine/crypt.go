@@ -31,9 +31,11 @@ type Crypt struct {
 	Onion
 }
 
-func cryptPrototype() Onion { return &Crypt{} }
-
-func init() { Register(CryptMagic, cryptPrototype) }
+func cryptPrototype() Onion       { return &Crypt{} }
+func init()                       { Register(CryptMagic, cryptPrototype) }
+func (x *Crypt) Len() int         { return CryptLen + x.Onion.Len() }
+func (x *Crypt) Wrap(inner Onion) { x.Onion = inner }
+func (x *Crypt) Magic() string    { return CryptMagic }
 
 func (o Skins) Crypt(toHdr, toPld *pub.Key, from *prv.Key, n nonce.IV,
 	depth int) Skins {
@@ -48,8 +50,6 @@ func (o Skins) Crypt(toHdr, toPld *pub.Key, from *prv.Key, n nonce.IV,
 	})
 }
 
-func (x *Crypt) Magic() string { return CryptMagic }
-
 func (x *Crypt) Encode(s *Splice) (e error) {
 	log.T.F("encoding %s %s %x %x", reflect.TypeOf(x),
 		x.ToHeaderPub, x.From.ToBytes(), x.Nonce,
@@ -59,7 +59,9 @@ func (x *Crypt) Encode(s *Splice) (e error) {
 		return
 	}
 	s.Magic(CryptMagic).
-		IV(x.Nonce).Cloak(x.ToHeaderPub).Pubkey(pub.Derive(x.From))
+		IV(x.Nonce).
+		Cloak(x.ToHeaderPub).
+		Pubkey(pub.Derive(x.From))
 	// Then we can encrypt the message segment
 	var blk cipher.Block
 	if blk = ciph.GetBlock(x.From, x.ToHeaderPub, "crypt header"); check(e) {
@@ -67,7 +69,6 @@ func (x *Crypt) Encode(s *Splice) (e error) {
 	}
 	start := s.GetCursor()
 	end := s.Len()
-	// log.T.Ln("start", start, "end", end)
 	switch {
 	case x.Depth == 0:
 	case x.Depth > 0:
@@ -105,12 +106,6 @@ func (x *Crypt) Decrypt(prk *prv.Key, s *Splice) {
 	ciph.Encipher(ciph.GetBlock(prk, x.FromPub, "decrypt crypt header"),
 		x.Nonce, s.GetFrom(s.GetCursor()))
 }
-
-func (x *Crypt) Len() int {
-	return CryptLen + x.Onion.Len()
-}
-
-func (x *Crypt) Wrap(inner Onion) { x.Onion = inner }
 
 func (x *Crypt) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {

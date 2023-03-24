@@ -19,15 +19,15 @@ type Reverse struct {
 	Onion
 }
 
-func reversePrototype() Onion { return &Reverse{} }
-
-func init() { Register(ReverseMagic, reversePrototype) }
+func reversePrototype() Onion       { return &Reverse{} }
+func init()                         { Register(ReverseMagic, reversePrototype) }
+func (x *Reverse) Magic() string    { return ReverseMagic }
+func (x *Reverse) Len() int         { return ReverseLen + x.Onion.Len() }
+func (x *Reverse) Wrap(inner Onion) { x.Onion = inner }
 
 func (o Skins) Reverse(ip *netip.AddrPort) Skins {
 	return append(o, &Reverse{AddrPort: ip, Onion: nop})
 }
-
-func (x *Reverse) Magic() string { return ReverseMagic }
 
 func (x *Reverse) Encode(s *Splice) (e error) {
 	log.T.Ln("encoding", reflect.TypeOf(x), x.AddrPort)
@@ -50,10 +50,6 @@ func (x *Reverse) Decode(s *Splice) (e error) {
 	s.ReadAddrPort(&x.AddrPort)
 	return
 }
-
-func (x *Reverse) Len() int { return ReverseLen + x.Onion.Len() }
-
-func (x *Reverse) Wrap(inner Onion) { x.Onion = inner }
 
 func (x *Reverse) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {
@@ -94,9 +90,7 @@ func (x *Reverse) Handle(s *Splice, p Onion,
 		}
 		if string(s.GetRange(start, start+magic.Len)) != ReverseMagic {
 			// It's for us!
-			log.T.S("handling response",
-				// s.GetRange(last, -1).ToBytes(),
-			)
+			log.T.S("handling response")
 			ng.HandleMessage(BudgeUp(s.SetCursor(last)), on)
 			return e
 		}

@@ -14,13 +14,7 @@ import (
 
 type Introduction struct {
 	*Intro
-	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
-	// given order over the reply message from the service.
-	Ciphers
-	// Nonces are the nonces to use with the cipher when creating the
-	// encryption for the reply message.
-	Nonces
-	RoutingHeaderBytes
+	ReplyHeader
 }
 
 type MyIntros map[pub.Bytes]*Introduction

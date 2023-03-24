@@ -16,9 +16,11 @@ const (
 		3*sha256.Len + 3*nonce.IVLen
 )
 
-func ReadyPrototype() Onion { return &Ready{} }
-
-func init() { Register(ReadyMagic, ReadyPrototype) }
+func ReadyPrototype() Onion       { return &Ready{} }
+func init()                       { Register(ReadyMagic, ReadyPrototype) }
+func (x *Ready) Magic() string    { return ReadyMagic }
+func (x *Ready) Len() int         { return ReadyLen }
+func (x *Ready) Wrap(inner Onion) {}
 
 type Ready struct {
 	ID              nonce.ID
@@ -35,15 +37,15 @@ func (o Skins) Ready(id nonce.ID, addr *pub.Key, fwHeader,
 	})
 }
 
-func (x *Ready) Magic() string { return ReadyMagic }
-
 func (x *Ready) Encode(s *Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.Address, x.Forward,
 	)
-	s.RoutingHeader(x.Forward.RoutingHeaderBytes)
+	s.
+		RoutingHeader(x.Forward.RoutingHeaderBytes)
 	start := s.GetCursor()
-	s.Magic(ReadyMagic).
+	s.
+		Magic(ReadyMagic).
 		ID(x.ID).
 		Pubkey(x.Address).
 		RoutingHeader(x.Return.RoutingHeaderBytes).
@@ -63,17 +65,14 @@ func (x *Ready) Decode(s *Splice) (e error) {
 		return
 	}
 	x.Return = &ReplyHeader{}
-	s.ReadID(&x.ID).
+	s.
+		ReadID(&x.ID).
 		ReadPubkey(&x.Address).
 		ReadRoutingHeader(&x.Return.RoutingHeaderBytes).
 		ReadCiphers(&x.Return.Ciphers).
 		ReadNonces(&x.Return.Nonces)
 	return
 }
-
-func (x *Ready) Len() int { return ReadyLen }
-
-func (x *Ready) Wrap(inner Onion) {}
 
 func (x *Ready) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {

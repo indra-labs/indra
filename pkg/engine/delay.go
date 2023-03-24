@@ -18,21 +18,23 @@ type Delay struct {
 	Onion
 }
 
-func delayPrototype() Onion { return &Delay{} }
-
-func init() { Register(DelayMagic, delayPrototype) }
+func delayPrototype() Onion       { return &Delay{} }
+func init()                       { Register(DelayMagic, delayPrototype) }
+func (x *Delay) Magic() string    { return DelayMagic }
+func (x *Delay) Len() int         { return DelayLen + x.Onion.Len() }
+func (x *Delay) Wrap(inner Onion) { x.Onion = inner }
 
 func (o Skins) Delay(d time.Duration) Skins {
 	return append(o, &Delay{Duration: d, Onion: nop})
 }
 
-func (x *Delay) Magic() string { return DelayMagic }
-
 func (x *Delay) Encode(s *Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.Duration,
 	)
-	s.Magic(DelayMagic).Uint64(uint64(x.Duration))
+	s.
+		Magic(DelayMagic).
+		Uint64(uint64(x.Duration))
 	if x.Onion != nil {
 		e = x.Onion.Encode(s)
 	}
@@ -46,10 +48,6 @@ func (x *Delay) Decode(s *Splice) (e error) {
 	s.ReadDuration(&x.Duration)
 	return
 }
-
-func (x *Delay) Len() int { return DelayLen + x.Onion.Len() }
-
-func (x *Delay) Wrap(inner Onion) { x.Onion = inner }
 
 func (x *Delay) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 	

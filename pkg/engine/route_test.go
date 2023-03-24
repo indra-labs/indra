@@ -134,7 +134,7 @@ func TestEngine_Route(t *testing.T) {
 		})
 	_ = ini
 	wg.Wait()
-	time.Sleep(time.Second)
+	time.Sleep(time.Second / 2)
 	log2.SetLogLevel(log2.Trace)
 	wg.Add(1)
 	counter.Inc()

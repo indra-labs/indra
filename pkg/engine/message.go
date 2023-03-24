@@ -21,9 +21,11 @@ const (
 		ReplyCiphersLen
 )
 
-func MessagePrototype() Onion { return &Message{} }
-
-func init() { Register(MessageMagic, MessagePrototype) }
+func MessagePrototype() Onion       { return &Message{} }
+func init()                         { Register(MessageMagic, MessagePrototype) }
+func (x *Message) Magic() string    { return MessageMagic }
+func (x *Message) Len() int         { return MessageLen + x.Payload.Len() }
+func (x *Message) Wrap(inner Onion) {}
 
 type Message struct {
 	Forwards        [2]*SessionData
@@ -40,10 +42,6 @@ func (o Skins) Message(msg *Message, ks *signer.KeySet) Skins {
 		msg)
 }
 
-func (x *Message) Magic() string    { return MessageMagic }
-func (x *Message) Len() int         { return MessageLen + x.Payload.Len() }
-func (x *Message) Wrap(inner Onion) {}
-
 func (x *Message) Encode(s *Splice) (e error) {
 	log.T.F("encoding %s %x %x %v %s", reflect.TypeOf(x),
 		x.ID, x.Re, x.Address, spew.Sdump(x.Forward, x.Return,
@@ -51,7 +49,8 @@ func (x *Message) Encode(s *Splice) (e error) {
 	)
 	s.RoutingHeader(x.Forward.RoutingHeaderBytes)
 	start := s.GetCursor()
-	s.Magic(MessageMagic).
+	s.
+		Magic(MessageMagic).
 		Pubkey(x.Address).
 		ID(x.ID).ID(x.Re).
 		RoutingHeader(x.Return.RoutingHeaderBytes).
@@ -72,7 +71,8 @@ func (x *Message) Decode(s *Splice) (e error) {
 		return
 	}
 	x.Return = &ReplyHeader{}
-	s.ReadPubkey(&x.Address).
+	s.
+		ReadPubkey(&x.Address).
 		ReadID(&x.ID).ReadID(&x.Re).
 		ReadRoutingHeader(&x.Return.RoutingHeaderBytes).
 		ReadCiphers(&x.Return.Ciphers).
@@ -95,7 +95,6 @@ func (ng *Engine) SendMessage(mp *Message, hook Callback) (id nonce.ID) {
 	oo := ng.SelectHops(preHops, mp.Forwards[:], "sendmessage")
 	mp.Forwards = [2]*SessionData{oo[0], oo[1]}
 	o := Skins{}.Message(mp, ng.KeySet)
-	// log.D.S("message", o)
 	res := ng.PostAcctOnion(o)
 	log.D.Ln("sending out message onion")
 	ng.SendWithOneHook(mp.Forwards[0].Node.AddrPort, res, hook,

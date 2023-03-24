@@ -80,7 +80,8 @@ func (x *Session) Encode(s *Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.Hop, x.Header, x.Payload,
 	)
-	return x.Onion.Encode(s.Magic(SessionMagic).
+	return x.Onion.Encode(s.
+		Magic(SessionMagic).
 		ID(x.ID).
 		Prvkey(x.Header).
 		Prvkey(x.Payload),
