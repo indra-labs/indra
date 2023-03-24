@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"reflect"
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 )
@@ -26,9 +28,9 @@ func (o Skins) Confirmation(id nonce.ID, load byte) Skins {
 func (x *Confirmation) Magic() string { return ConfirmationMagic }
 
 func (x *Confirmation) Encode(s *Splice) (e error) {
-	// log.T.S("encoding", reflect.TypeOf(x),
-	// 	x.ID, x.Load,
-	// )
+	log.T.S("encoding", reflect.TypeOf(x),
+		x.ID, x.Load,
+	)
 	s.Magic(ConfirmationMagic).ID(x.ID).Byte(x.Load)
 	return
 }

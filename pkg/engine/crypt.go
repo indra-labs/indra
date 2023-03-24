@@ -2,6 +2,7 @@ package engine
 
 import (
 	"crypto/cipher"
+	"reflect"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/cloak"
@@ -50,9 +51,9 @@ func (o Skins) Crypt(toHdr, toPld *pub.Key, from *prv.Key, n nonce.IV,
 func (x *Crypt) Magic() string { return CryptMagic }
 
 func (x *Crypt) Encode(s *Splice) (e error) {
-	// log.T.S("encoding", reflect.TypeOf(x),
-	// 	x.Nonce, x.Cloak, pub.Derive(x.From),
-	// )
+	log.T.F("encoding %s %s %x %x", reflect.TypeOf(x),
+		x.ToHeaderPub, x.From.ToBytes(), x.Nonce,
+	)
 	if x.ToHeaderPub == nil || x.From == nil {
 		s.Advance(CryptLen, "crypt")
 		return
@@ -61,7 +62,7 @@ func (x *Crypt) Encode(s *Splice) (e error) {
 		IV(x.Nonce).Cloak(x.ToHeaderPub).Pubkey(pub.Derive(x.From))
 	// Then we can encrypt the message segment
 	var blk cipher.Block
-	if blk = ciph.GetBlock(x.From, x.ToHeaderPub); check(e) {
+	if blk = ciph.GetBlock(x.From, x.ToHeaderPub, "crypt header"); check(e) {
 		panic(e)
 	}
 	start := s.GetCursor()
@@ -81,7 +82,8 @@ func (x *Crypt) Encode(s *Splice) (e error) {
 	}
 	ciph.Encipher(blk, x.Nonce, s.GetRange(start, end))
 	if end != s.Len() {
-		if blk = ciph.GetBlock(x.From, x.ToPayloadPub); check(e) {
+		if blk = ciph.GetBlock(x.From, x.ToPayloadPub,
+			"crypt payload"); check(e) {
 			return
 		}
 		ciph.Encipher(blk, x.Nonce, s.GetFrom(end))
@@ -100,8 +102,8 @@ func (x *Crypt) Decode(s *Splice) (e error) {
 // Decrypt requires the prv.Key to be located from the Cloak, using the FromPub
 // key to derive the shared secret, and then decrypts the rest of the message.
 func (x *Crypt) Decrypt(prk *prv.Key, s *Splice) {
-	ciph.Encipher(ciph.GetBlock(prk, x.FromPub), x.Nonce,
-		s.GetFrom(s.GetCursor()))
+	ciph.Encipher(ciph.GetBlock(prk, x.FromPub, "decrypt crypt header"),
+		x.Nonce, s.GetFrom(s.GetCursor()))
 }
 
 func (x *Crypt) Len() int {

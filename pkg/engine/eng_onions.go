@@ -4,7 +4,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 )
 
 type Skins []Onion
@@ -52,13 +51,13 @@ func (o Skins) ReverseCrypt(s *SessionData, k *prv.Key, n nonce.IV,
 
 type Routing struct {
 	Sessions [3]*SessionData
-	Keys     types.Privs
-	types.Nonces
+	Keys     Privs
+	Nonces
 }
 
 type Headers struct {
 	Forward, Return *Routing
-	ReturnPubs      types.Pubs
+	ReturnPubs      Pubs
 }
 
 func GetHeaders(alice, bob *SessionData, c Circuit,
@@ -75,7 +74,7 @@ func GetHeaders(alice, bob *SessionData, c Circuit,
 	fwSessions[2] = bob
 	copy(rtSessions[:], c[3:])
 	rtSessions[2] = alice
-	var returnPubs types.Pubs
+	var returnPubs Pubs
 	returnPubs[0] = c[3].PayloadPub
 	returnPubs[1] = c[4].PayloadPub
 	returnPubs[2] = alice.PayloadPub
@@ -97,7 +96,7 @@ func GetHeaders(alice, bob *SessionData, c Circuit,
 
 type ExitPoint struct {
 	*Routing
-	ReturnPubs types.Pubs
+	ReturnPubs Pubs
 }
 
 func (h *Headers) ExitPoint() *ExitPoint {

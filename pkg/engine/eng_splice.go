@@ -19,7 +19,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	magic2 "git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -102,7 +101,7 @@ func (s *Splice) String() (o string) {
 					o += "<error: " + e.Error() + " >"
 				}
 				tmp := make(slice.Bytes, len(oo))
-				// Reverse the order.
+				// Return the order.
 				for j := range tmp {
 					tmp[len(oo)-1-j] = oo[j]
 				}
@@ -266,7 +265,7 @@ func (s *Splice) IV(iv nonce.IV) *Splice {
 	return s
 }
 
-func (s *Splice) Nonces(iv types.Nonces) *Splice {
+func (s *Splice) Nonces(iv Nonces) *Splice {
 	for i := range iv {
 		s.IV(iv[i])
 	}
@@ -280,7 +279,7 @@ func (s *Splice) ReadIV(iv *nonce.IV) *Splice {
 	return s
 }
 
-func (s *Splice) ReadNonces(iv *types.Nonces) *Splice {
+func (s *Splice) ReadNonces(iv *Nonces) *Splice {
 	for i := range iv {
 		s.ReadIV(&iv[i])
 	}
@@ -422,7 +421,7 @@ func (s *Splice) Hash(h sha256.Hash) *Splice {
 	return s
 }
 
-func (s *Splice) Ciphers(h types.Ciphers) *Splice {
+func (s *Splice) Ciphers(h Ciphers) *Splice {
 	for i := range h {
 		s.Hash(h[i])
 	}
@@ -438,7 +437,7 @@ func (s *Splice) ReadHash(h *sha256.Hash) *Splice {
 	return s
 }
 
-func (s *Splice) ReadCiphers(h *types.Ciphers) *Splice {
+func (s *Splice) ReadCiphers(h *Ciphers) *Splice {
 	for i := range h {
 		s.ReadHash(&h[i])
 	}

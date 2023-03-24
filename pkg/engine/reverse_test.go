@@ -47,7 +47,7 @@ func TestOnionSkins_Reverse(t *testing.T) {
 		}
 		var cf *Reverse
 		if cf, ok = onr.(*Reverse); !ok {
-			t.Error("did not unwrap expected type expected *Reverse got",
+			t.Error("did not unwrap expected type expected *Return got",
 				reflect.TypeOf(onr))
 			t.FailNow()
 		}

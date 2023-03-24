@@ -8,7 +8,7 @@ import (
 	"crypto/cipher"
 	"fmt"
 	"time"
-
+	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
@@ -95,7 +95,7 @@ func (ep EP) GetOverhead() int {
 // the signature to the end.
 func Encode(ep EP) (pkt []byte, e error) {
 	var blk cipher.Block
-	if blk = ciph.GetBlock(ep.From, ep.To); check(e) {
+	if blk = ciph.GetBlock(ep.From, ep.To, "packet encode"); check(e) {
 		return
 	}
 	nonc := nonce.New()
@@ -181,7 +181,7 @@ func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Packet, e error) {
 	c := new(slice.Cursor)
 	copy(nonc[:], d[c.Inc(4):c.Inc(nonce.IVLen)])
 	var blk cipher.Block
-	if blk = ciph.GetBlock(to, from); check(e) {
+	if blk = ciph.GetBlock(to, from, "packet decode"); check(e) {
 		return
 	}
 	// This decrypts the rest of the packet, which is encrypted for

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"reflect"
 	"time"
 	
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
@@ -28,9 +29,9 @@ func (o Skins) Delay(d time.Duration) Skins {
 func (x *Delay) Magic() string { return DelayMagic }
 
 func (x *Delay) Encode(s *Splice) (e error) {
-	// log.T.S("encoding", reflect.TypeOf(x),
-	// 	x.Duration,
-	// )
+	log.T.S("encoding", reflect.TypeOf(x),
+		x.Duration,
+	)
 	s.Magic(DelayMagic).Uint64(uint64(x.Duration))
 	if x.Onion != nil {
 		e = x.Onion.Encode(s)

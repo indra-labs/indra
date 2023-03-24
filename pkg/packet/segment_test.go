@@ -4,7 +4,7 @@ import (
 	"errors"
 	"math/rand"
 	"testing"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
@@ -91,14 +91,14 @@ func BenchmarkSplit(b *testing.B) {
 			Parity: 64,
 			Data:   payload,
 		}
-
+		
 		var splitted [][]byte
 		if splitted, e = Split(params, segSize); check(e) {
 			b.Error(e)
 		}
 		_ = splitted
 	}
-
+	
 	// Example benchmark results show about 10Mb/s/thread throughput
 	// handling 64Kb messages.
 	//
@@ -149,9 +149,9 @@ func TestSplitJoinFEC(t *testing.T) {
 	for i := range parity {
 		var payload []byte
 		var pHash sha256.Hash
-
+		
 		if payload, pHash, e = tests.GenMessage(msgSize, ""); check(e) {
-
+			
 			t.FailNow()
 		}
 		var punctures []int

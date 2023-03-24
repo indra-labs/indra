@@ -27,7 +27,9 @@ type SessionData struct {
 }
 
 func (s *SessionData) String() string {
-	return fmt.Sprintf("sesssion %s node %s hop %d", s.ID, s.Node.ID, s.Hop)
+	return fmt.Sprintf("%s sesssion %s node %s hop %d",
+		s.Node.AddrPort.String(), s.ID,
+		s.Node.ID, s.Hop)
 }
 
 // A Circuit is the generic fixed length path used for most messages.

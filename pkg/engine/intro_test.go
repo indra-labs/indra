@@ -7,7 +7,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -19,11 +18,11 @@ func TestOnionSkins_Intro(t *testing.T) {
 	id := nonce.NewID()
 	in := NewIntro(id, pr, slice.GenerateRandomAddrPortIPv6(),
 		time.Now().Add(time.Hour))
-	var prvs types.Privs
+	var prvs Privs
 	for i := range prvs {
 		prvs[i] = ks.Next()
 	}
-	var pubs types.Pubs
+	var pubs Pubs
 	for i := range pubs {
 		pubs[i] = pub.Derive(prvs[i])
 	}

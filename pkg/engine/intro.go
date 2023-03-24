@@ -2,6 +2,7 @@ package engine
 
 import (
 	"net/netip"
+	"reflect"
 	"time"
 	
 	"github.com/gookit/color"
@@ -77,16 +78,19 @@ func (x *Intro) Validate() bool {
 
 func (x *Intro) Magic() string { return IntroMagic }
 
-func (x *Intro) Encode(s *Splice) (e error) {
-	// log.T.S("encoding", reflect.TypeOf(x),
-	// 	x.ID, x.AddrPort.String(), x.Expiry, x.Sig,
-	// )
-	s.Magic(IntroMagic).
-		ID(x.ID).
+func SpliceIntro(s *Splice, x *Intro) *Splice {
+	return s.ID(x.ID).
 		Pubkey(x.Key).
 		AddrPort(x.AddrPort).
 		Uint64(uint64(x.Expiry.UnixNano())).
 		Signature(&x.Sig)
+}
+
+func (x *Intro) Encode(s *Splice) (e error) {
+	log.T.S("encoding", reflect.TypeOf(x),
+		x.ID, x.AddrPort.String(), x.Expiry, x.Sig,
+	)
+	SpliceIntro(s.Magic(IntroMagic), x)
 	return
 }
 
@@ -96,7 +100,8 @@ func (x *Intro) Decode(s *Splice) (e error) {
 		
 		return
 	}
-	s.ReadID(&x.ID).
+	s.
+		ReadID(&x.ID).
 		ReadPubkey(&x.Key).
 		ReadAddrPort(&x.AddrPort).
 		ReadTime(&x.Expiry).

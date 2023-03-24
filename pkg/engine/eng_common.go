@@ -9,7 +9,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -20,6 +19,48 @@ var (
 )
 
 type RoutingHeaderBytes [RoutingHeaderLen]byte
+
+type ReplyHeader struct {
+	RoutingHeaderBytes
+	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
+	// given order over the reply message from the service.
+	Ciphers
+	// Nonces are the nonces to use with the cipher when creating the
+	// encryption for the reply message,
+	// they are common with the crypts in the header.
+	Nonces
+}
+
+func MakeReplyHeader(ng *Engine) (returnHeader *ReplyHeader) {
+	n := GenNonces(3)
+	rvKeys := ng.KeySet.Next3()
+	hops := []byte{3, 4, 5}
+	sessions := make(Sessions, len(hops))
+	ng.SelectHops(hops, sessions, "make message reply header")
+	log.I.S("sessions", sessions)
+	rt := &Routing{
+		Sessions: [3]*SessionData{sessions[0], sessions[1], sessions[2]},
+		Keys:     Privs{rvKeys[0], rvKeys[1], rvKeys[2]},
+		Nonces:   Nonces{n[0], n[1], n[2]},
+	}
+	rh := Skins{}.RoutingHeader(rt)
+	rHdr := Encode(rh.Assemble())
+	rHdr.SetCursor(0)
+	ep := ExitPoint{
+		Routing: rt,
+		ReturnPubs: Pubs{
+			pub.Derive(sessions[0].HeaderPrv),
+			pub.Derive(sessions[1].HeaderPrv),
+			pub.Derive(sessions[2].HeaderPrv),
+		},
+	}
+	returnHeader = &ReplyHeader{
+		RoutingHeaderBytes: rHdr.GetRoutingHeaderFromCursor(),
+		Ciphers:            GenCiphers(ep.Routing.Keys, ep.ReturnPubs),
+		Nonces:             ep.Routing.Nonces,
+	}
+	return
+}
 
 type RoutingLayer struct {
 	*Reverse
@@ -38,8 +79,8 @@ func BudgeUp(s *Splice) (o *Splice) {
 	return
 }
 
-func FormatReply(header RoutingHeaderBytes, ciphers types.Ciphers,
-	nonces types.Nonces, res slice.Bytes) (rb *Splice) {
+func FormatReply(header RoutingHeaderBytes, ciphers Ciphers,
+	nonces Nonces, res slice.Bytes) (rb *Splice) {
 	
 	rl := RoutingHeaderLen
 	rb = NewSplice(rl + len(res))
@@ -48,15 +89,16 @@ func FormatReply(header RoutingHeaderBytes, ciphers types.Ciphers,
 	// log.D.S("before", rb.GetAll().ToBytes())
 	for i := range ciphers {
 		blk := ciph.BlockFromHash(ciphers[i])
-		ciph.Encipher(blk, nonces[2-i], rb.GetFrom(rl))
+		ciph.Encipher(blk, nonces[i], rb.GetFrom(rl))
 		// log.D.S("after", i, rb.GetAll().ToBytes())
 	}
 	return
 }
 
-func GenCiphers(prvs types.Privs, pubs types.Pubs) (ciphers types.Ciphers) {
+func GenCiphers(prvs Privs, pubs Pubs) (ciphers Ciphers) {
 	for i := range prvs {
-		ciphers[2-i] = ecdh.Compute(prvs[i], pubs[i])
+		ciphers[i] = ecdh.Compute(prvs[i], pubs[i])
+		log.T.Ln("cipher", i, ciphers[i])
 	}
 	return
 }
@@ -150,7 +192,7 @@ func GetTwoPrvKeys(t *testing.T) (prv1, prv2 *prv.Key) {
 	return
 }
 
-func GetCipherSet(t *testing.T) (prvs types.Privs, pubs types.Pubs) {
+func GetCipherSet(t *testing.T) (prvs Privs, pubs Pubs) {
 	for i := range prvs {
 		prv1, prv2 := GetTwoPrvKeys(t)
 		prvs[i] = prv1
@@ -159,7 +201,7 @@ func GetCipherSet(t *testing.T) (prvs types.Privs, pubs types.Pubs) {
 	return
 }
 
-func Gen3Nonces() (n types.Nonces) {
+func Gen3Nonces() (n Nonces) {
 	for i := range n {
 		n[i] = nonce.New()
 	}

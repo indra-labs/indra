@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"reflect"
+	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -36,9 +38,9 @@ func (o Skins) Balance(id, confID nonce.ID,
 func (x *Balance) Magic() string { return BalanceMagic }
 
 func (x *Balance) Encode(s *Splice) (e error) {
-	// log.T.S("encoding", reflect.TypeOf(x),
-	// 	x.ID, x.ConfID, x.MilliSatoshi,
-	// )
+	log.T.S("encoding", reflect.TypeOf(x),
+		x.ID, x.ConfID, x.MilliSatoshi,
+	)
 	s.
 		Magic(BalanceMagic).
 		ID(x.ID).

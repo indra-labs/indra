@@ -7,7 +7,6 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/ring"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -25,7 +24,7 @@ type Node struct {
 	ID nonce.ID
 	sync.Mutex
 	AddrPort  *netip.AddrPort
-	Identity  *types.Keys
+	Identity  *Keys
 	RelayRate int                 // Base relay price/Mb.
 	Services  Services            // Services offered by this peer.
 	Load      *ring.BufferLoad    // Relay load.
@@ -54,7 +53,7 @@ func NewNode(addr *netip.AddrPort, idPrv *prv.Key,
 	n = &Node{
 		ID:          id,
 		AddrPort:    addr,
-		Identity:    types.MakeKeys(idPrv),
+		Identity:    MakeKeys(idPrv),
 		RelayRate:   relayRate,
 		PaymentChan: make(PaymentChan, PaymentChanBuffers),
 		Transport:   tpt,

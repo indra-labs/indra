@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -97,7 +98,7 @@ func TestEngine_SendHiddenService(t *testing.T) {
 	clients[0].SendHiddenService(id, idPrv, time.Now().Add(time.Hour),
 		returner, introducer, svc, func(id nonce.ID, ifc interface{},
 			b slice.Bytes) (e error) {
-			log.W.Ln("Test passed")
+			log.W.S("received intro", reflect.TypeOf(ifc), b.ToBytes())
 			// This happens when the gossip gets back to us.
 			wg.Done()
 			counter.Dec()

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"reflect"
 	"time"
 	
 	"github.com/gookit/color"
@@ -10,7 +11,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 )
 
 const (
@@ -23,10 +23,10 @@ type HiddenService struct {
 	Intro
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
-	types.Ciphers
+	Ciphers
 	// Nonces are the nonces to use with the cipher when creating the encryption
 	// for the reply message, they are common with the crypts in the header.
-	types.Nonces
+	Nonces
 	RoutingHeaderBytes
 	Onion
 }
@@ -47,14 +47,11 @@ func (o Skins) HiddenService(in *Intro, point *ExitPoint) Skins {
 func (x *HiddenService) Magic() string { return HiddenServiceMagic }
 
 func (x *HiddenService) Encode(s *Splice) (e error) {
-	return x.Onion.Encode(s.Magic(HiddenServiceMagic).
-		ID(x.Intro.ID).
-		Pubkey(x.Intro.Key).
-		AddrPort(x.Intro.AddrPort).
-		Uint64(uint64(x.Intro.Expiry.UnixNano())).
-		Signature(&x.Intro.Sig).
-		Ciphers(x.Ciphers).
-		Nonces(x.Nonces))
+	log.T.S("encoding", reflect.TypeOf(x),
+		x.ID, x.Key, x.AddrPort, x.Ciphers, x.Nonces, x.RoutingHeaderBytes,
+	)
+	SpliceIntro(s.Magic(HiddenServiceMagic), &x.Intro)
+	return x.Onion.Encode(s.Ciphers(x.Ciphers).Nonces(x.Nonces))
 }
 
 func (x *HiddenService) Decode(s *Splice) (e error) {
@@ -62,16 +59,12 @@ func (x *HiddenService) Decode(s *Splice) (e error) {
 		HiddenServiceMagic); check(e) {
 		return
 	}
-	s.ReadID(&x.Intro.ID).
-		ReadPubkey(&x.Intro.Key).
-		ReadAddrPort(&x.Intro.AddrPort).
-		ReadTime(&x.Intro.Expiry).
-		ReadSignature(&x.Intro.Sig).
+	if e = x.Intro.Decode(s); check(e) {
+		return
+	}
+	s.
 		ReadCiphers(&x.Ciphers).
 		ReadNonces(&x.Nonces).
-		// This is always stored, and must always follow a HiddenService
-		// message, and in fact there is never any more data after the routing
-		// header after the HiddenService.
 		RoutingHeader(s.GetRoutingHeaderFromCursor())
 	return
 }

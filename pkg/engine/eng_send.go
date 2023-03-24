@@ -25,7 +25,7 @@ func (sm *SessionManager) Send(addr *netip.AddrPort, s *Splice) {
 	as := addr.String()
 	sm.ForEachNode(func(n *Node) bool {
 		if as == n.AddrPort.String() {
-			log.T.F("%s sending message to %v",
+			log.D.F("%s sending message to %v",
 				sm.GetLocalNodeAddressString(), color.Yellow.Sprint(addr))
 			n.Transport.Send(s.GetAll())
 			return true

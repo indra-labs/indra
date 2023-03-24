@@ -1,12 +1,13 @@
 package engine
 
 import (
+	"reflect"
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -20,11 +21,11 @@ type IntroQuery struct {
 	ID nonce.ID
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
-	types.Ciphers
+	Ciphers
 	// Nonces are the nonces to use with the cipher when creating the
 	// encryption for the reply message,
 	// they are common with the crypts in the header.
-	types.Nonces
+	Nonces
 	// Port identifies the type of service as well as being the port used by
 	// the service to be relayed to. Notice there is no IP address, this is
 	// because Indranet only forwards to exits of decentralised services
@@ -53,9 +54,9 @@ func (o Skins) IntroQuery(id nonce.ID, hsk *pub.Key, exit *ExitPoint) Skins {
 func (x *IntroQuery) Magic() string { return IntroQueryMagic }
 
 func (x *IntroQuery) Encode(s *Splice) (e error) {
-	// log.T.S("encoding", reflect.TypeOf(x),
-	// 	x.FwReply, x.Key,
-	// )
+	log.T.S("encoding", reflect.TypeOf(x),
+		x.ID, x.Key, x.Ciphers, x.Nonces,
+	)
 	return x.Onion.Encode(s.
 		Magic(IntroQueryMagic).
 		ID(x.ID).Ciphers(x.Ciphers).Nonces(x.Nonces).

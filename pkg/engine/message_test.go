@@ -13,6 +13,7 @@ import (
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/util/tests"
 )
 
 func TestEngine_Message(t *testing.T) {
@@ -125,28 +126,43 @@ func TestEngine_Message(t *testing.T) {
 	ini := client.SendHiddenService(id, idPrv, time.Now().Add(time.Hour),
 		returner, introducer, svc, func(id nonce.ID, ifc interface{},
 			b slice.Bytes) (e error) {
-			log.I.F("hidden service %s successfully propagated", ifc)
+			log.I.F("hidden service %s successfully propagated %s", ifc)
 			time.Sleep(time.Second)
 			wg.Done()
 			counter.Dec()
 			return
 		})
 	wg.Wait()
-	log2.SetLogLevel(log2.Trace)
+	time.Sleep(time.Second)
+	log2.SetLogLevel(log2.Debug)
 	wg.Add(1)
 	counter.Inc()
 	log.D.Ln("intro", ini.ID, ini.AddrPort.String(), ini.Key.ToBase32Abbreviated(),
 		ini.Expiry, ini.Validate())
+	var rd *Ready
 	client.SendRoute(ini.Key, ini.AddrPort,
 		func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
-			log.I.Ln("success", id)
-			log.D.S("route pending", ifc, b.ToBytes())
+			rd = ifc.(*Ready)
+			log.D.S("route pending", rd.Address, rd.Return)
 			counter.Dec()
 			wg.Done()
 			return
 		})
 	wg.Wait()
-	
+	log2.SetLogLevel(log2.Trace)
+	msg, _, _ := tests.GenMessage(256, "hidden service message test")
+	client.SendMessage(&Message{
+		Address: rd.Address,
+		ID:      nonce.NewID(),
+		Re:      rd.ID,
+		Forward: rd.Return,
+		Return:  MakeReplyHeader(client),
+		Payload: msg,
+	}, func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
+		log.D.S("sendmessage test", id, ifc, b.ToBytes())
+		return
+	})
+	time.Sleep(time.Second * 5)
 	quit.Q()
 	log.W.Ln("fin")
 }

@@ -1,13 +1,16 @@
 package engine
 
 import (
+	"reflect"
+	
+	"github.com/davecgh/go-spew/spew"
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -22,17 +25,11 @@ func MessagePrototype() Onion { return &Message{} }
 
 func init() { Register(MessageMagic, MessagePrototype) }
 
-type ReplyCiphers struct {
-	RoutingHeaderBytes
-	types.Ciphers
-	types.Nonces
-}
-
 type Message struct {
 	Forwards        [2]*SessionData
 	Address         *pub.Key
 	ID, Re          nonce.ID
-	Forward, Return *ReplyCiphers
+	Forward, Return *ReplyHeader
 	Payload         slice.Bytes
 }
 
@@ -48,6 +45,10 @@ func (x *Message) Len() int         { return MessageLen + x.Payload.Len() }
 func (x *Message) Wrap(inner Onion) {}
 
 func (x *Message) Encode(s *Splice) (e error) {
+	log.T.F("encoding %s %x %x %v %s", reflect.TypeOf(x),
+		x.ID, x.Re, x.Address, spew.Sdump(x.Forward, x.Return,
+			x.Payload.ToBytes()),
+	)
 	s.RoutingHeader(x.Forward.RoutingHeaderBytes)
 	start := s.GetCursor()
 	s.Magic(MessageMagic).
@@ -59,7 +60,8 @@ func (x *Message) Encode(s *Splice) (e error) {
 		Bytes(x.Payload)
 	for i := range x.Forward.Ciphers {
 		blk := ciph.BlockFromHash(x.Forward.Ciphers[i])
-		ciph.Encipher(blk, x.Forward.Nonces[2-i], s.GetFrom(start))
+		log.D.F("encrypting %s", x.Forward.Ciphers[i].String())
+		ciph.Encipher(blk, x.Forward.Nonces[i], s.GetFrom(start))
 	}
 	return
 }
@@ -92,8 +94,10 @@ func (x *Message) Handle(s *Splice, p Onion,
 func (ng *Engine) SendMessage(mp *Message, hook Callback) (id nonce.ID) {
 	// Add another two hops for security against unmasking.
 	preHops := []byte{0, 1}
-	ng.SelectHops(preHops, mp.Forwards[:], "sendmessage")
+	oo := ng.SelectHops(preHops, mp.Forwards[:], "sendmessage")
+	mp.Forwards = [2]*SessionData{oo[0], oo[1]}
 	o := Skins{}.Message(mp, ng.KeySet)
+	log.D.S("message", o)
 	res := ng.PostAcctOnion(o)
 	log.D.Ln("sending out message onion")
 	ng.SendWithOneHook(mp.Forwards[0].Node.AddrPort, res, hook,

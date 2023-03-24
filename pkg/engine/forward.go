@@ -2,6 +2,7 @@ package engine
 
 import (
 	"net/netip"
+	"reflect"
 	
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 )
@@ -27,9 +28,9 @@ func (o Skins) Forward(addr *netip.AddrPort) Skins {
 func (x *Forward) Magic() string { return ForwardMagic }
 
 func (x *Forward) Encode(s *Splice) error {
-	// log.T.S("encoding", reflect.TypeOf(x),
-	// 	x.AddrPort.String(),
-	// )
+	log.T.F("encoding %s %s", reflect.TypeOf(x),
+		x.AddrPort.String(),
+	)
 	return x.Onion.Encode(s.Magic(ForwardMagic).AddrPort(x.AddrPort))
 }
 
@@ -51,7 +52,7 @@ func (x *Forward) Handle(s *Splice, p Onion,
 	
 	// Forward the whole buffer received onwards. Usually there will be a
 	// crypt.Layer under this which will be unwrapped by the receiver.
-	if x.AddrPort.String() == ng.GetLocalNodeAddressString() {
+	if x.AddrPort.String() == ng.GetLocalNodeAddress().String() {
 		// it is for us, we want to unwrap the next part.
 		ng.HandleMessage(BudgeUp(s), x)
 	} else {

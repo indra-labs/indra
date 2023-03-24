@@ -6,7 +6,6 @@ import (
 	
 	"github.com/cybriq/qu"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -96,7 +95,7 @@ func (p *PendingResponses) Find(id nonce.ID) (pr *PendingResponse) {
 
 // ProcessAndDelete runs the callback and post accounting function list and
 // deletes the pending response.
-func (p *PendingResponses) ProcessAndDelete(id nonce.ID, k *pub.Bytes,
+func (p *PendingResponses) ProcessAndDelete(id nonce.ID, ifc interface{},
 	b slice.Bytes) (found bool, e error) {
 	
 	p.Lock()
@@ -110,7 +109,7 @@ func (p *PendingResponses) ProcessAndDelete(id nonce.ID, k *pub.Bytes,
 			for _, fn := range p.responses[i].PostAcct {
 				fn()
 			}
-			e = p.responses[i].Callback(id, k, b)
+			e = p.responses[i].Callback(id, ifc, b)
 			if i < 1 {
 				p.responses = p.responses[1:]
 			} else {

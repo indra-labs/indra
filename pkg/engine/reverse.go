@@ -2,6 +2,7 @@ package engine
 
 import (
 	"net/netip"
+	"reflect"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
@@ -29,9 +30,7 @@ func (o Skins) Reverse(ip *netip.AddrPort) Skins {
 func (x *Reverse) Magic() string { return ReverseMagic }
 
 func (x *Reverse) Encode(s *Splice) (e error) {
-	// log.T.S("encoding", reflect.TypeOf(x),
-	// 	x.AddrPort,
-	// )
+	log.T.Ln("encoding", reflect.TypeOf(x), x.AddrPort)
 	if x.AddrPort == nil {
 		s.Advance(ReverseLen, "reverse")
 	} else {
@@ -82,16 +81,16 @@ func (x *Reverse) Handle(s *Splice, p Onion,
 		on.ToPriv = hdr
 		// Decrypt using the Payload key and header nonce.
 		c := s.GetCursor()
-		ciph.Encipher(ciph.GetBlock(on.ToPriv, on.FromPub), on.Nonce,
-			s.GetRange(c, c+2*ReverseCryptLen))
+		ciph.Encipher(ciph.GetBlock(on.ToPriv, on.FromPub, "reverse header"),
+			on.Nonce, s.GetRange(c, c+2*ReverseCryptLen))
 		// shift the header segment upwards and pad the
 		// remainder.
 		s.CopyRanges(start, first, first, second)
 		s.CopyRanges(first, second, second, last)
 		s.CopyIntoRange(slice.NoisePad(ReverseCryptLen), second, last)
 		if last != s.Len() {
-			ciph.Encipher(ciph.GetBlock(pld, on.FromPub), on.Nonce,
-				s.GetFrom(last))
+			ciph.Encipher(ciph.GetBlock(pld, on.FromPub, "reverse payload"),
+				on.Nonce, s.GetFrom(last))
 		}
 		if string(s.GetRange(start, start+magic.Len)) != ReverseMagic {
 			// It's for us!

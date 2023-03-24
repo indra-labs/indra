@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"reflect"
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -30,9 +32,9 @@ func (o Skins) Response(id nonce.ID, res slice.Bytes, port uint16) Skins {
 func (x *Response) Magic() string { return ResponseMagic }
 
 func (x *Response) Encode(s *Splice) (e error) {
-	// log.T.S("encoding", reflect.TypeOf(x),
-	// 	x.ID, x.Port, x.Load, x.Bytes.ToBytes(),
-	// )
+	log.T.S("encoding", reflect.TypeOf(x),
+		x.ID, x.Port, x.Load, x.Bytes.ToBytes(),
+	)
 	s.
 		Magic(ResponseMagic).
 		ID(x.ID).

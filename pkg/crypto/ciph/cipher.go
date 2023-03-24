@@ -7,6 +7,9 @@ package ciph
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"encoding/base32"
+	
+	"github.com/gookit/color"
 	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/ecdh"
@@ -22,11 +25,17 @@ var (
 	check = log.E.Chk
 )
 
+const Charset = "abcdefghijklmnopqrstuvwxyz234679"
+
+var enc = base32.NewEncoding(Charset).EncodeToString
+
 // GetBlock returns a block cipher with a secret generated from the provided
 // keys using ECDH.
-func GetBlock(from *prv.Key, to *pub.Key) (block cipher.Block) {
+func GetBlock(from *prv.Key, to *pub.Key, note string) (block cipher.Block) {
 	secret := ecdh.Compute(from, to)
-	// log.T.Ln("secret", secret)
+	fb := from.ToBytes()
+	log.T.Ln(note, "secret", color.Red.Sprint(enc(secret[:])[:52]), "<-",
+		color.Blue.Sprint(enc(fb[:])[:52]), "+", to.ToBase32())
 	block, _ = aes.NewCipher(secret[:])
 	return
 }

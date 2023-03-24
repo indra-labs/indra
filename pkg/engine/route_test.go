@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"runtime"
 	"sync"
 	"testing"
 	"time"
@@ -18,6 +19,7 @@ import (
 func TestEngine_Route(t *testing.T) {
 	log2.SetLogLevel(log2.Info)
 	log2.App = ""
+	runtime.GOMAXPROCS(1)
 	var clients []*Engine
 	var e error
 	const nCircuits = 10

@@ -17,7 +17,9 @@ import (
 func (sm *SessionManager) PostAcctOnion(o Skins) (res SendData) {
 	assembled := o.Assemble()
 	// log.T.S(assembled)
-	res.B = Encode(assembled).GetAll()
+	sp := Encode(assembled)
+	log.D.Ln(sp)
+	res.B = sp.GetAll()
 	// do client accounting
 	skip := false
 	for i := range o {

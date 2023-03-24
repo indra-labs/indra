@@ -10,7 +10,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/engine/types"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -21,11 +20,11 @@ func TestOnionSkins_GetBalance(t *testing.T) {
 	n3 := Gen3Nonces()
 	id, confID := nonce.NewID(), nonce.NewID()
 	_, ks, _ := signer.New()
-	var prvs types.Privs
+	var prvs Privs
 	for i := range prvs {
 		prvs[i] = ks.Next()
 	}
-	var pubs types.Pubs
+	var pubs Pubs
 	for i := range pubs {
 		pubs[i] = pub.Derive(prvs[i])
 	}
