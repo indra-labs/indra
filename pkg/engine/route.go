@@ -35,7 +35,7 @@ type Route struct {
 	ID nonce.ID
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
-	Ciphers
+	Ciphers Ciphers
 	// Nonces are the nonces to use with the cipher when creating the
 	// encryption for the reply message,
 	// they are common with the crypts in the header.
@@ -139,11 +139,11 @@ func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 		// ng.SelectHops(preHops, path, "route prehops")
 		n := GenNonces(5)
 		rvKeys := ng.KeySet.Next3()
-		hops := []byte{0, 1, 3, 4, 5}
+		hops := []byte{3, 4, 5, 0, 1}
 		sessions := make(Sessions, len(hops))
 		ng.SelectHops(hops, sessions, "route reply header")
 		rt := &Routing{
-			Sessions: [3]*SessionData{sessions[2], sessions[3], sessions[4]},
+			Sessions: [3]*SessionData{sessions[0], sessions[1], sessions[2]},
 			Keys:     Privs{rvKeys[0], rvKeys[1], rvKeys[2]},
 			Nonces:   Nonces{n[0], n[1], n[2]},
 		}
@@ -153,19 +153,22 @@ func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 		ep := ExitPoint{
 			Routing: rt,
 			ReturnPubs: Pubs{
-				pub.Derive(sessions[2].HeaderPrv),
-				pub.Derive(sessions[3].HeaderPrv),
-				pub.Derive(sessions[4].HeaderPrv),
+				pub.Derive(sessions[0].PayloadPrv),
+				pub.Derive(sessions[1].PayloadPrv),
+				pub.Derive(sessions[2].PayloadPrv),
 			},
 		}
 		mr := Skins{}.
-			ForwardCrypt(sessions[0], ng.KeySet.Next(), n[3]).
-			ForwardCrypt(sessions[1], ng.KeySet.Next(), n[4]).
-			Ready(x.ID, x.HiddenService, x.RoutingHeaderBytes,
+			ForwardCrypt(sessions[3], ng.KeySet.Next(), n[3]).
+			ForwardCrypt(sessions[4], ng.KeySet.Next(), n[4]).
+			Ready(x.ID, x.HiddenService,
+				x.RoutingHeaderBytes,
 				rHdr.GetRoutingHeaderFromCursor(),
-				x.Ciphers, GenCiphers(ep.Keys, ep.ReturnPubs),
-				x.Nonces, ep.Nonces)
-		log.D.S("makeready", mr)
+				x.Ciphers,
+				GenCiphers(ep.Keys, ep.ReturnPubs),
+				x.Nonces,
+				ep.Nonces)
+		// log.D.S("makeready", mr)
 		assembled := mr.Assemble()
 		// log.D.S("assembled", assembled)
 		reply := Encode(assembled)
@@ -213,7 +216,7 @@ func (ng *Engine) SendRoute(k *pub.Key, ap *netip.AddrPort,
 	copy(c[:], se)
 	// log.D.S("sessions after", c)
 	o := MakeRoute(nonce.NewID(), k, ng.KeySet, se[5], c[2], c)
-	log.D.S("doing accounting", o)
+	// log.D.S("doing accounting", o)
 	res := ng.PostAcctOnion(o)
 	log.D.Ln("sending out route request onion")
 	ng.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.PendingResponses)

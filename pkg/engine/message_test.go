@@ -38,7 +38,7 @@ func TestEngine_Message(t *testing.T) {
 	go func() {
 		for {
 			select {
-			case <-time.After(time.Second * 4):
+			case <-time.After(time.Second * 3):
 				quit.Q()
 				t.Error("MakeHiddenService test failed")
 			case <-quit:
@@ -126,19 +126,16 @@ func TestEngine_Message(t *testing.T) {
 	ini := client.SendHiddenService(id, idPrv, time.Now().Add(time.Hour),
 		returner, introducer, svc, func(id nonce.ID, ifc interface{},
 			b slice.Bytes) (e error) {
-			log.I.F("hidden service %s successfully propagated %s", ifc)
-			time.Sleep(time.Second)
+			log.I.F("hidden service %s successfully propagated", ifc)
 			wg.Done()
 			counter.Dec()
 			return
 		})
 	wg.Wait()
 	time.Sleep(time.Second)
-	log2.SetLogLevel(log2.Debug)
+	// log2.SetLogLevel(log2.Debug)
 	wg.Add(1)
 	counter.Inc()
-	log.D.Ln("intro", ini.ID, ini.AddrPort.String(), ini.Key.ToBase32Abbreviated(),
-		ini.Expiry, ini.Validate())
 	var rd *Ready
 	client.SendRoute(ini.Key, ini.AddrPort,
 		func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
@@ -151,6 +148,9 @@ func TestEngine_Message(t *testing.T) {
 	wg.Wait()
 	log2.SetLogLevel(log2.Trace)
 	msg, _, _ := tests.GenMessage(256, "hidden service message test")
+	wg.Add(1)
+	counter.Inc()
+	var ms *Message
 	client.SendMessage(&Message{
 		Address: rd.Address,
 		ID:      nonce.NewID(),
@@ -159,10 +159,30 @@ func TestEngine_Message(t *testing.T) {
 		Return:  MakeReplyHeader(client),
 		Payload: msg,
 	}, func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
-		log.D.S("sendmessage test", id, ifc, b.ToBytes())
+		log.D.S("request success", id, ifc)
+		ms = ifc.(*Message)
+		counter.Dec()
+		wg.Done()
 		return
 	})
-	time.Sleep(time.Second * 5)
+	wg.Wait()
+	wg.Add(1)
+	counter.Inc()
+	client.SendMessage(&Message{
+		Address: ms.Address,
+		ID:      nonce.NewID(),
+		Re:      ms.ID,
+		Forward: ms.Return,
+		Return:  MakeReplyHeader(client),
+		Payload: msg,
+	}, func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
+		log.D.S("response success", id, ifc)
+		counter.Dec()
+		wg.Done()
+		return
+	})
+	wg.Wait()
+	time.Sleep(time.Second)
 	quit.Q()
 	log.W.Ln("fin")
 }

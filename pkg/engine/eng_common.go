@@ -37,7 +37,6 @@ func MakeReplyHeader(ng *Engine) (returnHeader *ReplyHeader) {
 	hops := []byte{3, 4, 5}
 	sessions := make(Sessions, len(hops))
 	ng.SelectHops(hops, sessions, "make message reply header")
-	log.I.S("sessions", sessions)
 	rt := &Routing{
 		Sessions: [3]*SessionData{sessions[0], sessions[1], sessions[2]},
 		Keys:     Privs{rvKeys[0], rvKeys[1], rvKeys[2]},
@@ -49,9 +48,9 @@ func MakeReplyHeader(ng *Engine) (returnHeader *ReplyHeader) {
 	ep := ExitPoint{
 		Routing: rt,
 		ReturnPubs: Pubs{
-			pub.Derive(sessions[0].HeaderPrv),
-			pub.Derive(sessions[1].HeaderPrv),
-			pub.Derive(sessions[2].HeaderPrv),
+			pub.Derive(sessions[0].PayloadPrv),
+			pub.Derive(sessions[1].PayloadPrv),
+			pub.Derive(sessions[2].PayloadPrv),
 		},
 	}
 	returnHeader = &ReplyHeader{

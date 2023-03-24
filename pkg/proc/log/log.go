@@ -215,7 +215,7 @@ func StopLogToFile() (err error) {
 	defer writerMx.Unlock()
 	writer = tty
 	if file != nil {
-		err = file.Close()
+		// err = file.Close()
 		file = nil
 	}
 	return
@@ -338,7 +338,8 @@ func logPrint(
 			formatString = "%-58v%s%s%-6v %s"
 			loc = GetLoc(3, subsystem)
 			tsf = LocTimeStampFormat
-			timeText = getTimeText(LocTimeStampFormat)
+			// timeText = getTimeText(LocTimeStampFormat)
+			timeText = ""
 		}
 		var app string
 		if len(App) > 0 {

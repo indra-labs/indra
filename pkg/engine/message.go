@@ -71,6 +71,7 @@ func (x *Message) Decode(s *Splice) (e error) {
 		MessageMagic); check(e) {
 		return
 	}
+	x.Return = &ReplyHeader{}
 	s.ReadPubkey(&x.Address).
 		ReadID(&x.ID).ReadID(&x.Re).
 		ReadRoutingHeader(&x.Return.RoutingHeaderBytes).
@@ -83,11 +84,8 @@ func (x *Message) Decode(s *Splice) (e error) {
 func (x *Message) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {
 	
-	log.D.Ln(x.Address.ToBase32Abbreviated(), "handling message", s)
-	log.D.S("message", x)
 	// Forward payload out to service port.
-	
-	_, e = ng.PendingResponses.ProcessAndDelete(x.ID, nil, s.GetAll())
+	_, e = ng.PendingResponses.ProcessAndDelete(x.ID, x, s.GetAll())
 	return
 }
 
@@ -97,7 +95,7 @@ func (ng *Engine) SendMessage(mp *Message, hook Callback) (id nonce.ID) {
 	oo := ng.SelectHops(preHops, mp.Forwards[:], "sendmessage")
 	mp.Forwards = [2]*SessionData{oo[0], oo[1]}
 	o := Skins{}.Message(mp, ng.KeySet)
-	log.D.S("message", o)
+	// log.D.S("message", o)
 	res := ng.PostAcctOnion(o)
 	log.D.Ln("sending out message onion")
 	ng.SendWithOneHook(mp.Forwards[0].Node.AddrPort, res, hook,

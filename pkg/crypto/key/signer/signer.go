@@ -41,7 +41,7 @@ func (ks *KeySet) Next() (n *prv.Key) {
 	ks.Mutex.Lock()
 	next := ks.Base.Key.Add(&ks.Increment.Key)
 	ks.Base.Key = *next
-	n = ks.Base
+	n = &prv.Key{Key: *next}
 	ks.Mutex.Unlock()
 	return
 }
