@@ -36,9 +36,11 @@ type GetBalance struct {
 	Onion
 }
 
-func getBalancePrototype() Onion { return &GetBalance{} }
-
-func init() { Register(GetBalanceMagic, getBalancePrototype) }
+func getBalancePrototype() Onion       { return &GetBalance{} }
+func init()                            { Register(GetBalanceMagic, getBalancePrototype) }
+func (x *GetBalance) Magic() string    { return GetBalanceMagic }
+func (x *GetBalance) Len() int         { return GetBalanceLen + x.Onion.Len() }
+func (x *GetBalance) Wrap(inner Onion) { x.Onion = inner }
 
 type GetBalanceParams struct {
 	ID, ConfID nonce.ID
@@ -83,8 +85,6 @@ func (o Skins) GetBalance(id, confID nonce.ID, ep *ExitPoint) Skins {
 	})
 }
 
-func (x *GetBalance) Magic() string { return GetBalanceMagic }
-
 func (x *GetBalance) Encode(s *Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.ConfID, x.Ciphers, x.Nonces,
@@ -105,10 +105,6 @@ func (x *GetBalance) Decode(s *Splice) (e error) {
 		ReadID(&x.ConfID).ReadCiphers(&x.Ciphers).ReadNonces(&x.Nonces)
 	return
 }
-
-func (x *GetBalance) Len() int { return GetBalanceLen + x.Onion.Len() }
-
-func (x *GetBalance) Wrap(inner Onion) { x.Onion = inner }
 
 func (x *GetBalance) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {

@@ -39,9 +39,11 @@ type Exit struct {
 	Onion
 }
 
-func exitPrototype() Onion { return &Exit{} }
-
-func init() { Register(ExitMagic, exitPrototype) }
+func exitPrototype() Onion       { return &Exit{} }
+func init()                      { Register(ExitMagic, exitPrototype) }
+func (x *Exit) Magic() string    { return ExitMagic }
+func (x *Exit) Len() int         { return ExitLen + x.Bytes.Len() + x.Onion.Len() }
+func (x *Exit) Wrap(inner Onion) { x.Onion = inner }
 
 func (o Skins) Exit(id nonce.ID, port uint16, payload slice.Bytes,
 	ep *ExitPoint) Skins {
@@ -55,8 +57,6 @@ func (o Skins) Exit(id nonce.ID, port uint16, payload slice.Bytes,
 		Onion:   nop,
 	})
 }
-
-func (x *Exit) Magic() string { return ExitMagic }
 
 func (x *Exit) Encode(s *Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
@@ -81,10 +81,6 @@ func (x *Exit) Decode(s *Splice) (e error) {
 		ReadUint16(&x.Port).ReadBytes(&x.Bytes)
 	return
 }
-
-func (x *Exit) Len() int { return ExitLen + x.Bytes.Len() + x.Onion.Len() }
-
-func (x *Exit) Wrap(inner Onion) { x.Onion = inner }
 
 func (x *Exit) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {

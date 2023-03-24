@@ -31,9 +31,11 @@ type HiddenService struct {
 	Onion
 }
 
-func hiddenServicePrototype() Onion { return &HiddenService{} }
-
-func init() { Register(HiddenServiceMagic, hiddenServicePrototype) }
+func hiddenServicePrototype() Onion       { return &HiddenService{} }
+func init()                               { Register(HiddenServiceMagic, hiddenServicePrototype) }
+func (x *HiddenService) Magic() string    { return HiddenServiceMagic }
+func (x *HiddenService) Len() int         { return HiddenServiceLen + x.Onion.Len() }
+func (x *HiddenService) Wrap(inner Onion) { x.Onion = inner }
 
 func (o Skins) HiddenService(in *Intro, point *ExitPoint) Skins {
 	return append(o, &HiddenService{
@@ -43,8 +45,6 @@ func (o Skins) HiddenService(in *Intro, point *ExitPoint) Skins {
 		Onion:   NewEnd(),
 	})
 }
-
-func (x *HiddenService) Magic() string { return HiddenServiceMagic }
 
 func (x *HiddenService) Encode(s *Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
@@ -68,10 +68,6 @@ func (x *HiddenService) Decode(s *Splice) (e error) {
 		RoutingHeader(s.GetRoutingHeaderFromCursor())
 	return
 }
-
-func (x *HiddenService) Len() int { return HiddenServiceLen + x.Onion.Len() }
-
-func (x *HiddenService) Wrap(inner Onion) { x.Onion = inner }
 
 func (x *HiddenService) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 	log.D.F("%s adding introduction for key %s",

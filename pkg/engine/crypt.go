@@ -31,9 +31,10 @@ type Crypt struct {
 	Onion
 }
 
-func cryptPrototype() Onion { return &Crypt{} }
-
-func init() { Register(CryptMagic, cryptPrototype) }
+func cryptPrototype() Onion       { return &Crypt{} }
+func init()                       { Register(CryptMagic, cryptPrototype) }
+func (x *Crypt) Len() int         { return CryptLen + x.Onion.Len() }
+func (x *Crypt) Wrap(inner Onion) { x.Onion = inner }
 
 func (o Skins) Crypt(toHdr, toPld *pub.Key, from *prv.Key, n nonce.IV,
 	depth int) Skins {
@@ -105,12 +106,6 @@ func (x *Crypt) Decrypt(prk *prv.Key, s *Splice) {
 	ciph.Encipher(ciph.GetBlock(prk, x.FromPub, "decrypt crypt header"),
 		x.Nonce, s.GetFrom(s.GetCursor()))
 }
-
-func (x *Crypt) Len() int {
-	return CryptLen + x.Onion.Len()
-}
-
-func (x *Crypt) Wrap(inner Onion) { x.Onion = inner }
 
 func (x *Crypt) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {

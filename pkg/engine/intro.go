@@ -30,9 +30,11 @@ type Intro struct {
 	Sig      sig.Bytes
 }
 
-func introPrototype() Onion { return &Intro{} }
-
-func init() { Register(IntroMagic, introPrototype) }
+func introPrototype() Onion       { return &Intro{} }
+func init()                       { Register(IntroMagic, introPrototype) }
+func (x *Intro) Magic() string    { return IntroMagic }
+func (x *Intro) Len() int         { return IntroLen }
+func (x *Intro) Wrap(inner Onion) {}
 
 func (o Skins) Intro(id nonce.ID, key *prv.Key, ap *netip.AddrPort,
 	expires time.Time) (sk Skins) {
@@ -76,8 +78,6 @@ func (x *Intro) Validate() bool {
 	return false
 }
 
-func (x *Intro) Magic() string { return IntroMagic }
-
 func SpliceIntro(s *Splice, x *Intro) *Splice {
 	return s.ID(x.ID).
 		Pubkey(x.Key).
@@ -108,10 +108,6 @@ func (x *Intro) Decode(s *Splice) (e error) {
 		ReadSignature(&x.Sig)
 	return
 }
-
-func (x *Intro) Len() int { return IntroLen }
-
-func (x *Intro) Wrap(inner Onion) {}
 
 func (x *Intro) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {

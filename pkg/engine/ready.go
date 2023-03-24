@@ -16,9 +16,11 @@ const (
 		3*sha256.Len + 3*nonce.IVLen
 )
 
-func ReadyPrototype() Onion { return &Ready{} }
-
-func init() { Register(ReadyMagic, ReadyPrototype) }
+func ReadyPrototype() Onion       { return &Ready{} }
+func init()                       { Register(ReadyMagic, ReadyPrototype) }
+func (x *Ready) Magic() string    { return ReadyMagic }
+func (x *Ready) Len() int         { return ReadyLen }
+func (x *Ready) Wrap(inner Onion) {}
 
 type Ready struct {
 	ID              nonce.ID
@@ -34,8 +36,6 @@ func (o Skins) Ready(id nonce.ID, addr *pub.Key, fwHeader,
 		&ReplyHeader{rvHeader, rc, rn},
 	})
 }
-
-func (x *Ready) Magic() string { return ReadyMagic }
 
 func (x *Ready) Encode(s *Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
@@ -70,10 +70,6 @@ func (x *Ready) Decode(s *Splice) (e error) {
 		ReadNonces(&x.Return.Nonces)
 	return
 }
-
-func (x *Ready) Len() int { return ReadyLen }
-
-func (x *Ready) Wrap(inner Onion) {}
 
 func (x *Ready) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {

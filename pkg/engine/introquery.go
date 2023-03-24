@@ -37,9 +37,11 @@ type IntroQuery struct {
 	Onion
 }
 
-func introQueryPrototype() Onion { return &IntroQuery{} }
-
-func init() { Register(IntroQueryMagic, introQueryPrototype) }
+func introQueryPrototype() Onion       { return &IntroQuery{} }
+func init()                            { Register(IntroQueryMagic, introQueryPrototype) }
+func (x *IntroQuery) Magic() string    { return IntroQueryMagic }
+func (x *IntroQuery) Len() int         { return IntroQueryLen + x.Onion.Len() }
+func (x *IntroQuery) Wrap(inner Onion) { x.Onion = inner }
 
 func (o Skins) IntroQuery(id nonce.ID, hsk *pub.Key, exit *ExitPoint) Skins {
 	return append(o, &IntroQuery{
@@ -50,8 +52,6 @@ func (o Skins) IntroQuery(id nonce.ID, hsk *pub.Key, exit *ExitPoint) Skins {
 		Onion:   nop,
 	})
 }
-
-func (x *IntroQuery) Magic() string { return IntroQueryMagic }
 
 func (x *IntroQuery) Encode(s *Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
@@ -74,10 +74,6 @@ func (x *IntroQuery) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *IntroQuery) Len() int { return IntroQueryLen + x.Onion.Len() }
-
-func (x *IntroQuery) Wrap(inner Onion) { x.Onion = inner }
-
 func (x *IntroQuery) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {
 	
@@ -95,7 +91,6 @@ func (x *IntroQuery) Handle(s *Splice, p Onion,
 		return
 	}
 	ng.HiddenRouting.Unlock()
-	// log.D.S(il.ID, il.Key, il.Expiry, il.Sig)
 	iqr := Encode(il)
 	rb := FormatReply(s.GetRoutingHeaderFromCursor(), x.Ciphers, x.Nonces,
 		iqr.GetAll())
@@ -126,7 +121,6 @@ func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *pub.Key,
 	alice, bob *SessionData, hook func(in *Intro)) {
 	
 	fn := func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
-		// log.D.S("sendintroquery callback", id, k, b.ToBytes())
 		s := Load(b, slice.NewCursor())
 		on := Recognise(s, ng.GetLocalNodeAddress())
 		if e = on.Decode(s); check(e) {

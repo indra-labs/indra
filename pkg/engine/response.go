@@ -21,15 +21,15 @@ type Response struct {
 	slice.Bytes
 }
 
-func responsePrototype() Onion { return &Response{} }
-
-func init() { Register(ResponseMagic, responsePrototype) }
+func responsePrototype() Onion       { return &Response{} }
+func init()                          { Register(ResponseMagic, responsePrototype) }
+func (x *Response) Magic() string    { return ResponseMagic }
+func (x *Response) Len() int         { return ResponseLen + len(x.Bytes) }
+func (x *Response) Wrap(inner Onion) {}
 
 func (o Skins) Response(id nonce.ID, res slice.Bytes, port uint16) Skins {
 	return append(o, &Response{ID: id, Port: port, Bytes: res})
 }
-
-func (x *Response) Magic() string { return ResponseMagic }
 
 func (x *Response) Encode(s *Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
@@ -56,10 +56,6 @@ func (x *Response) Decode(s *Splice) (e error) {
 		ReadBytes(&x.Bytes)
 	return
 }
-
-func (x *Response) Len() int { return ResponseLen + len(x.Bytes) }
-
-func (x *Response) Wrap(inner Onion) {}
 
 func (x *Response) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {

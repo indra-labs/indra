@@ -22,9 +22,11 @@ type Session struct {
 	Onion
 }
 
-func sessionPrototype() Onion { return &Session{} }
-
-func init() { Register(SessionMagic, sessionPrototype) }
+func sessionPrototype() Onion       { return &Session{} }
+func init()                         { Register(SessionMagic, sessionPrototype) }
+func (x *Session) Magic() string    { return SessionMagic }
+func (x *Session) Len() int         { return SessionLen + x.Onion.Len() }
+func (x *Session) Wrap(inner Onion) { x.Onion = inner }
 
 func MakeSession(id nonce.ID, s [5]*Session,
 	client *SessionData, hop []*Node, ks *signer.KeySet) Skins {
@@ -74,8 +76,6 @@ func NewSessionKeys(hop byte) (x *Session) {
 	}
 }
 
-func (x *Session) Magic() string { return SessionMagic }
-
 func (x *Session) Encode(s *Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.Hop, x.Header, x.Payload,
@@ -98,10 +98,6 @@ func (x *Session) Decode(s *Splice) (e error) {
 		ReadPrvkey(&x.Payload)
 	return
 }
-
-func (x *Session) Len() int { return SessionLen + x.Onion.Len() }
-
-func (x *Session) Wrap(inner Onion) { x.Onion = inner }
 
 func (x *Session) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 	

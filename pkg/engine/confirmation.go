@@ -17,9 +17,10 @@ type Confirmation struct {
 	Load byte
 }
 
-func confirmationPrototype() Onion { return &Confirmation{} }
-
-func init() { Register(ConfirmationMagic, confirmationPrototype) }
+func confirmationPrototype() Onion       { return &Confirmation{} }
+func init()                              { Register(ConfirmationMagic, confirmationPrototype) }
+func (x *Confirmation) Len() int         { return ConfirmationLen }
+func (x *Confirmation) Wrap(inner Onion) {}
 
 func (o Skins) Confirmation(id nonce.ID, load byte) Skins {
 	return append(o, &Confirmation{ID: id, Load: load})
@@ -43,10 +44,6 @@ func (x *Confirmation) Decode(s *Splice) (e error) {
 	s.ReadID(&x.ID).ReadByte(&x.Load)
 	return
 }
-
-func (x *Confirmation) Len() int { return ConfirmationLen }
-
-func (x *Confirmation) Wrap(inner Onion) {}
 
 func (x *Confirmation) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {

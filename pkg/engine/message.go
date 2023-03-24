@@ -21,9 +21,11 @@ const (
 		ReplyCiphersLen
 )
 
-func MessagePrototype() Onion { return &Message{} }
-
-func init() { Register(MessageMagic, MessagePrototype) }
+func MessagePrototype() Onion       { return &Message{} }
+func init()                         { Register(MessageMagic, MessagePrototype) }
+func (x *Message) Magic() string    { return MessageMagic }
+func (x *Message) Len() int         { return MessageLen + x.Payload.Len() }
+func (x *Message) Wrap(inner Onion) {}
 
 type Message struct {
 	Forwards        [2]*SessionData
@@ -39,10 +41,6 @@ func (o Skins) Message(msg *Message, ks *signer.KeySet) Skins {
 		ForwardCrypt(msg.Forwards[1], ks.Next(), nonce.New()),
 		msg)
 }
-
-func (x *Message) Magic() string    { return MessageMagic }
-func (x *Message) Len() int         { return MessageLen + x.Payload.Len() }
-func (x *Message) Wrap(inner Onion) {}
 
 func (x *Message) Encode(s *Splice) (e error) {
 	log.T.F("encoding %s %x %x %v %s", reflect.TypeOf(x),

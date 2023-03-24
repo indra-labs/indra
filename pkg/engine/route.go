@@ -21,9 +21,11 @@ const (
 		nonce.IDLen + 3*sha256.Len + 3*nonce.IVLen
 )
 
-func RoutePrototype() Onion { return &Route{} }
-
-func init() { Register(RouteMagic, RoutePrototype) }
+func RoutePrototype() Onion       { return &Route{} }
+func init()                       { Register(RouteMagic, RoutePrototype) }
+func (x *Route) Magic() string    { return EndMagic }
+func (x *Route) Len() int         { return RouteLen + x.Onion.Len() }
+func (x *Route) Wrap(inner Onion) { x.Onion = inner }
 
 type Route struct {
 	HiddenService *pub.Key
@@ -60,8 +62,6 @@ func (o Skins) Route(id nonce.ID, k *pub.Key, ks *signer.KeySet,
 	oo.HiddenCloaked = cloak.GetCloak(k)
 	return append(o, oo)
 }
-
-func (x *Route) Magic() string { return EndMagic }
 
 func (x *Route) Encode(s *Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
@@ -107,10 +107,6 @@ func (x *Route) Decrypt(prk *prv.Key, s *Splice) {
 	s.ReadID(&x.ID).ReadCiphers(&x.Ciphers).ReadNonces(&x.Nonces).
 		ReadRoutingHeader(&x.RoutingHeaderBytes)
 }
-
-func (x *Route) Len() int { return RouteLen + x.Onion.Len() }
-
-func (x *Route) Wrap(inner Onion) { x.Onion = inner }
 
 func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 	
