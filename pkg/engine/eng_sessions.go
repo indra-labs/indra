@@ -14,7 +14,8 @@ import (
 // PostAcctOnion takes a slice of Skins and calculates their costs and
 // the list of sessions inside them and attaches accounting operations to
 // apply when the associated confirmation(s) or response hooks are executed.
-func (sm *SessionManager) PostAcctOnion(o Skins) (res SendData) {
+func (sm *SessionManager) PostAcctOnion(o Skins) (res *SendData) {
+	res = &SendData{}
 	assembled := o.Assemble()
 	sp := Encode(assembled)
 	res.B = sp.GetAll()
@@ -32,11 +33,11 @@ func (sm *SessionManager) PostAcctOnion(o Skins) (res SendData) {
 				last = true
 			}
 			var s *SessionData
-			skip, s = on.Account(&res, sm, nil, last)
+			skip, s = on.Account(res, sm, nil, last)
 			if last {
 				break
 			}
-			o[i+1].Account(&res, sm, s, last)
+			o[i+1].Account(res, sm, s, last)
 		}
 	}
 	return

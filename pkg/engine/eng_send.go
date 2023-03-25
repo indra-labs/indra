@@ -38,7 +38,7 @@ func (sm *SessionManager) Send(addr *netip.AddrPort, s *Splice) {
 // as returned from PostAcctOnion this is the last, confirmation or response
 // layer in an onion.Skins.
 func (sm *SessionManager) SendWithOneHook(ap *netip.AddrPort,
-	res SendData, responseHook Callback, p *PendingResponses) {
+	res *SendData, responseHook Callback, p *PendingResponses) {
 	
 	if responseHook == nil {
 		responseHook = func(_ nonce.ID, _ interface{}, _ slice.Bytes) (e error) {
