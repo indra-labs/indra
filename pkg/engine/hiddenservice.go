@@ -122,3 +122,11 @@ func (ng *Engine) SendHiddenService(id nonce.ID, key *prv.Key,
 	ng.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.PendingResponses)
 	return
 }
+
+func (x *HiddenService) Account(res *SendData, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
+	
+	res.ID = x.Intro.ID
+	res.Billable = append(res.Billable, s.ID)
+	skip = true
+	return
+}

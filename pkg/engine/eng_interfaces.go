@@ -13,10 +13,11 @@ type Onion interface {
 	Len() int
 	Wrap(inner Onion)
 	Handle(s *Splice, p Onion, ng *Engine) (e error)
+	Account(res *SendData, sm *SessionManager, s *SessionData,
+		last bool) (skip bool, sd *SessionData)
 }
 
 type Transport interface {
-	Chain(t Transport) Transport
 	Send(b slice.Bytes)
 	Receive() <-chan slice.Bytes
 }

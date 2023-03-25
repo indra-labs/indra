@@ -100,3 +100,11 @@ func (ng *Engine) SendMessage(mp *Message, hook Callback) (id nonce.ID) {
 		ng.PendingResponses)
 	return res.ID
 }
+
+func (x *Message) Account(res *SendData, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
+	
+	res.ID = x.ID
+	res.Billable = append(res.Billable, s.ID)
+	skip = true
+	return
+}

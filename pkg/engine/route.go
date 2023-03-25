@@ -217,3 +217,10 @@ func (ng *Engine) SendRoute(k *pub.Key, ap *netip.AddrPort,
 	log.D.Ln("sending out route request onion")
 	ng.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.PendingResponses)
 }
+
+func (x *Route) Account(res *SendData, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
+	
+	copy(res.ID[:], x.ID[:])
+	res.Billable = append(res.Billable, s.ID)
+	return
+}

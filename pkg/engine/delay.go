@@ -60,3 +60,7 @@ func (x *Delay) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 	ng.HandleMessage(BudgeUp(s), x)
 	return
 }
+
+func (x *Delay) Account(res *SendData, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
+	return
+}

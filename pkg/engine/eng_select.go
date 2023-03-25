@@ -114,8 +114,5 @@ out:
 		str += so[i].Node.AddrPort.String() + " "
 	}
 	log.D.F("circuit\n%s", str)
-	// for i := range so {
-	// 	log.D.S("circuit", so[i].HeaderPub, so[i].PayloadPub)
-	// }
 	return
 }

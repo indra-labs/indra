@@ -160,3 +160,11 @@ func (x *GetBalance) Handle(s *Splice, p Onion,
 	ng.HandleMessage(Load(rb, slice.NewCursor()), x)
 	return
 }
+
+func (x *GetBalance) Account(res *SendData, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
+	
+	res.ID = s.ID
+	res.Billable = append(res.Billable, s.ID)
+	skip = true
+	return
+}

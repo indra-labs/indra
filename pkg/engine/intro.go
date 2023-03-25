@@ -162,3 +162,9 @@ func (x *Intro) Handle(s *Splice, p Onion,
 	ng.HiddenRouting.Unlock()
 	return
 }
+
+func (x *Intro) Account(res *SendData, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
+	
+	res.ID = x.ID
+	return
+}

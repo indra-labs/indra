@@ -172,3 +172,23 @@ func (ng *Engine) SendExit(port uint16, msg slice.Bytes, id nonce.ID,
 	res := ng.PostAcctOnion(o)
 	ng.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.PendingResponses)
 }
+
+func (x *Exit) Account(res *SendData, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
+	
+	for j := range s.Node.Services {
+		if s.Node.Services[j].Port != x.Port {
+			continue
+		}
+		res.Port = x.Port
+		res.PostAcct = append(res.PostAcct,
+			func() {
+				sm.DecSession(s.ID,
+					s.Node.Services[j].RelayRate*len(res.B)/2, true, "exit")
+			})
+		break
+	}
+	res.Billable = append(res.Billable, s.ID)
+	res.ID = x.ID
+	skip = true
+	return
+}

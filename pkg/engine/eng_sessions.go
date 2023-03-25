@@ -16,11 +16,11 @@ import (
 // apply when the associated confirmation(s) or response hooks are executed.
 func (sm *SessionManager) PostAcctOnion(o Skins) (res SendData) {
 	assembled := o.Assemble()
-	// log.T.S(assembled)
 	sp := Encode(assembled)
 	res.B = sp.GetAll()
 	// do client accounting
 	skip := false
+	var last bool
 	for i := range o {
 		if skip {
 			skip = false
@@ -28,77 +28,15 @@ func (sm *SessionManager) PostAcctOnion(o Skins) (res SendData) {
 		}
 		switch on := o[i].(type) {
 		case *Crypt:
-			s := sm.FindSessionByHeaderPub(on.ToHeaderPub)
-			if s == nil {
-				continue
-			}
-			res.Sessions = append(res.Sessions, s)
-			// The last hop needs no accounting as it's us!
 			if i == len(o)-1 {
-				// The session used for the last hop is stored, however.
-				res.Ret = s.ID
-				res.Billable = append(res.Billable, s.ID)
+				last = true
+			}
+			var s *SessionData
+			skip, s = on.Account(&res, sm, nil, last)
+			if last {
 				break
 			}
-			switch on2 := o[i+1].(type) {
-			case *Exit:
-				for j := range s.Node.Services {
-					if s.Node.Services[j].Port != on2.Port {
-						continue
-					}
-					res.Port = on2.Port
-					res.PostAcct = append(res.PostAcct,
-						func() {
-							sm.DecSession(s.ID,
-								s.Node.Services[j].RelayRate*len(res.B)/2, true, "exit")
-						})
-					break
-				}
-				res.Billable = append(res.Billable, s.ID)
-				res.ID = on2.ID
-				skip = true
-			case *Forward:
-				res.Billable = append(res.Billable, s.ID)
-				res.PostAcct = append(res.PostAcct,
-					func() {
-						sm.DecSession(s.ID, s.Node.RelayRate*len(res.B),
-							true, "forward")
-					})
-			case *GetBalance:
-				res.ID = s.ID
-				res.Billable = append(res.Billable, s.ID)
-				skip = true
-			case *HiddenService:
-				res.ID = on2.Intro.ID
-				res.Billable = append(res.Billable, s.ID)
-				skip = true
-			case *Intro:
-				log.D.Ln("intro in crypt")
-				res.ID = on2.ID
-			case *IntroQuery:
-				res.ID = on2.ID
-				res.Billable = append(res.Billable, s.ID)
-				skip = true
-			case *Message:
-				res.ID = on2.ID
-				res.Billable = append(res.Billable, s.ID)
-				skip = true
-			case *Reverse:
-				res.Billable = append(res.Billable, s.ID)
-			case *Route:
-				copy(res.ID[:], on2.ID[:])
-				res.Billable = append(res.Billable, s.ID)
-			}
-		case *Confirmation:
-			res.ID = on.ID
-		case *Balance:
-			res.ID = on.ID
-		case *Intro:
-			log.D.Ln("intro not in crypt")
-			res.ID = on.ID
-		case *IntroQuery:
-			log.D.Ln("introquery not in crypt")
-			res.ID = on.ID
+			o[i+1].Account(&res, sm, s, last)
 		}
 	}
 	return

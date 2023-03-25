@@ -147,3 +147,11 @@ func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *pub.Key,
 	log.D.Ln(res.ID)
 	ng.SendWithOneHook(c[0].Node.AddrPort, res, fn, ng.PendingResponses)
 }
+
+func (x *IntroQuery) Account(res *SendData, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
+	
+	res.ID = x.ID
+	res.Billable = append(res.Billable, s.ID)
+	skip = true
+	return
+}

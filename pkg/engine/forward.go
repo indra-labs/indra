@@ -66,3 +66,14 @@ func (x *Forward) Handle(s *Splice, p Onion,
 	}
 	return e
 }
+
+func (x *Forward) Account(res *SendData, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
+	
+	res.Billable = append(res.Billable, s.ID)
+	res.PostAcct = append(res.PostAcct,
+		func() {
+			sm.DecSession(s.ID, s.Node.RelayRate*len(res.B),
+				true, "forward")
+		})
+	return
+}

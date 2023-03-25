@@ -53,3 +53,9 @@ func (x *Confirmation) Handle(s *Splice, p Onion,
 	ng.PendingResponses.ProcessAndDelete(x.ID, nil, s.GetAll())
 	return
 }
+
+func (x *Confirmation) Account(res *SendData, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
+	
+	res.ID = x.ID
+	return
+}

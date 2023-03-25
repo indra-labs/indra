@@ -131,3 +131,18 @@ func (x *Crypt) Handle(s *Splice, p Onion,
 	
 	return e
 }
+
+func (x *Crypt) Account(res *SendData, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
+	
+	sd = sm.FindSessionByHeaderPub(x.ToHeaderPub)
+	if sd == nil {
+		return
+	}
+	res.Sessions = append(res.Sessions, sd)
+	// The last hop needs no accounting as it's us!
+	if last {
+		res.Ret = sd.ID
+		res.Billable = append(res.Billable, sd.ID)
+	}
+	return
+}

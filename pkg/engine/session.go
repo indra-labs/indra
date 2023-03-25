@@ -121,3 +121,8 @@ func (x *Session) PreimageHash() sha256.Hash {
 	h, p := x.Header.ToBytes(), x.Payload.ToBytes()
 	return sha256.Single(append(h[:], p[:]...))
 }
+
+func (x *Session) Account(res *SendData, sm *SessionManager, s *SessionData,
+	last bool) (skip bool, sd *SessionData) {
+	return
+}
