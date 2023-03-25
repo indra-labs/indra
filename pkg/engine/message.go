@@ -93,7 +93,6 @@ func (ng *Engine) SendMessage(mp *Message, hook Callback) (id nonce.ID) {
 	oo := ng.SelectHops(preHops, mp.Forwards[:], "sendmessage")
 	mp.Forwards = [2]*SessionData{oo[0], oo[1]}
 	o := Skins{}.Message(mp, ng.KeySet)
-	// log.D.S("message", o)
 	res := ng.PostAcctOnion(o)
 	log.D.Ln("sending out message onion")
 	ng.SendWithOneHook(mp.Forwards[0].Node.AddrPort, res, hook,

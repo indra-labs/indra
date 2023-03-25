@@ -87,7 +87,6 @@ func TestEngine_SendHiddenService(t *testing.T) {
 	// index of introducerHops will be a randomly selected one.
 	introducer = introducerHops[0]
 	returner = returnHops[0]
-	// log.D.S("parties", introducer, returner)
 	wg.Add(1)
 	counter.Inc()
 	svc := &Service{

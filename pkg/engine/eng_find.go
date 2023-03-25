@@ -21,17 +21,14 @@ func (sm *SessionManager) FindCloaked(clk cloak.PubKey) (hdr *prv.Key,
 		identity = true
 		return
 	}
-	var i int
 	sm.IterateSessions(func(s *SessionData) (stop bool) {
 		hash = cloak.Cloak(b, s.HeaderBytes)
 		if hash == clk {
-			// log.T.F("found cloaked key in session %d", i)
 			hdr = s.HeaderPrv
 			pld = s.PayloadPrv
 			sess = s
 			return true
 		}
-		i++
 		return
 	})
 	return

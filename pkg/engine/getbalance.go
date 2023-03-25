@@ -161,7 +161,8 @@ func (x *GetBalance) Handle(s *Splice, p Onion,
 	return
 }
 
-func (x *GetBalance) Account(res *SendData, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
+func (x *GetBalance) Account(res *SendData, sm *SessionManager,
+	s *SessionData, last bool) (skip bool, sd *SessionData) {
 	
 	res.ID = s.ID
 	res.Billable = append(res.Billable, s.ID)

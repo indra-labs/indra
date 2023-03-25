@@ -100,7 +100,6 @@ func (x *Route) Decode(s *Splice) (e error) {
 // Decrypt decrypts the rest of a message after the Route segment if the
 // recipient has the hidden service private key.
 func (x *Route) Decrypt(prk *prv.Key, s *Splice) {
-	// log.D.S(s.GetRange(-1, s.GetCursor()), s.GetRange(s.GetCursor(), -1))
 	ciph.Encipher(ciph.GetBlock(prk, x.SenderPub, "route decrypt"), x.IV,
 		s.GetCursorToEnd())
 	// And now we can see the reply field for the return trip.
@@ -116,8 +115,7 @@ func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 		log.T.Ln("no matching hidden service key found from cloaked key")
 		return
 	}
-	x.HiddenService, e = pub.FromBytes((*hc)[:])
-	if check(e) {
+	if x.HiddenService, e = pub.FromBytes((*hc)[:]); check(e) {
 		return
 	}
 	log.D.Ln("route key", *hc)
@@ -126,13 +124,8 @@ func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 		log.D.F("we are the hidden service %s - decrypting...",
 			hh.CurrentIntros[0].Key.ToBase32Abbreviated())
 		// We have the keys to unwrap this one.
-		// log.D.Ln(s)
 		x.Decrypt(hh.Prv, s)
 		log.D.Ln(s)
-		// Add another two hops for security against unmasking.
-		// preHops := []byte{0, 1}
-		// path := make(Sessions, 2)
-		// ng.SelectHops(preHops, path, "route prehops")
 		n := GenNonces(5)
 		rvKeys := ng.KeySet.Next3()
 		hops := []byte{3, 4, 5, 0, 1}
@@ -164,9 +157,7 @@ func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 				GenCiphers(ep.Keys, ep.ReturnPubs),
 				x.Nonces,
 				ep.Nonces)
-		// log.D.S("makeready", mr)
 		assembled := mr.Assemble()
-		// log.D.S("assembled", assembled)
 		reply := Encode(assembled)
 		ng.HandleMessage(reply, x)
 	}
@@ -177,7 +168,6 @@ func MakeRoute(id nonce.ID, k *pub.Key, ks *signer.KeySet,
 	alice, bob *SessionData, c Circuit) Skins {
 	
 	headers := GetHeaders(alice, bob, c, ks)
-	// log.T.S("headers", headers)
 	return Skins{}.
 		RoutingHeader(headers.Forward).
 		Route(id, k, ks, headers.ExitPoint()).
@@ -206,13 +196,10 @@ func (ng *Engine) SendRoute(k *pub.Key, ap *netip.AddrPort,
 	hops := StandardCircuit()
 	s := make(Sessions, len(hops))
 	s[2] = ss
-	// log.D.S("sessions before", s)
 	se := ng.SelectHops(hops, s, "sendroute")
 	var c Circuit
 	copy(c[:], se)
-	// log.D.S("sessions after", c)
 	o := MakeRoute(nonce.NewID(), k, ng.KeySet, se[5], c[2], c)
-	// log.D.S("doing accounting", o)
 	res := ng.PostAcctOnion(o)
 	log.D.Ln("sending out route request onion")
 	ng.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.PendingResponses)

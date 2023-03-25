@@ -95,12 +95,9 @@ func TestEngine_Route(t *testing.T) {
 	}
 	returner = returnHops[0]
 	const localPort = 25234
-	// var introClient *Engine
-	// log.I.F("introducer %s", color.Yellow.Sprint(introducer.AddrPort.String()))
 	log.D.Ln("getting sessions for introducer...")
 	for i := range clients {
 		if introducer.Node.ID == clients[i].GetLocalNode().ID {
-			// introClient = clients[i]
 			for j := 0; j < nCircuits; j++ {
 				wg.Add(1)
 				counter.Inc()

@@ -90,14 +90,10 @@ func TestClient_SendExit(t *testing.T) {
 	}
 	client := clients[0]
 	log.D.Ln("client", client.GetLocalNodeAddressString())
-	// peers := clients[1:]
 	// set up forwarding port service
 	const port = 3455
 	sim := NewSim(0)
 	for i := range clients {
-		// if i == 0 {
-		// 	continue
-		// }
 		e = clients[i].AddServiceToLocalNode(&Service{
 			Port:      port,
 			Transport: sim,

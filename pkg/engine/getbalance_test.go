@@ -111,7 +111,7 @@ out:
 					returnHops[i]
 			})
 		}
-		returner = returnHops[0] // c[exiter.Hop] = clients[0].Sessions[i]
+		returner = returnHops[0]
 		clients[0].SendGetBalance(returner, clients[0].Sessions[i],
 			func(cf nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
 				log.I.Ln("success")

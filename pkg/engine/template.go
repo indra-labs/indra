@@ -35,6 +35,7 @@ func (x *End) Handle(s *Splice, p Onion,
 	return
 }
 
-func (x *End) Account(res *SendData, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
+func (x *End) Account(res *SendData, sm *SessionManager,
+	s *SessionData, last bool) (skip bool, sd *SessionData) {
 	return
 }

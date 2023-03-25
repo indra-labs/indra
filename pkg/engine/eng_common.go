@@ -85,11 +85,9 @@ func FormatReply(header RoutingHeaderBytes, ciphers Ciphers,
 	rb = NewSplice(rl + len(res))
 	copy(rb.GetUntil(rl), header[:rl])
 	copy(rb.GetFrom(rl), res)
-	// log.D.S("before", rb.GetAll().ToBytes())
 	for i := range ciphers {
 		blk := ciph.BlockFromHash(ciphers[i])
 		ciph.Encipher(blk, nonces[i], rb.GetFrom(rl))
-		// log.D.S("after", i, rb.GetAll().ToBytes())
 	}
 	return
 }

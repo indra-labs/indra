@@ -72,8 +72,6 @@ func TestClient_SendSessionKeys(t *testing.T) {
 		}
 		t.Error("SendSessionKeys test failed")
 		quit.Q()
-		// time.Sleep(time.Second)
-		// os.Exit(1)
 	}()
 	for i := 0; i < 10; i++ {
 		log.D.Ln("buying sessions", i)

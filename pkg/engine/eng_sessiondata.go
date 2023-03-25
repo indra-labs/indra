@@ -48,7 +48,7 @@ func (c Circuit) String() (o string) {
 	return
 }
 
-// Sessions are arbitrary length lists of
+// Sessions are arbitrary length lists of SessionData.
 type Sessions []*SessionData
 
 // NewSessionData creates a new SessionData, generating cached public key bytes and

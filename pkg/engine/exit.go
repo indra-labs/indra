@@ -168,12 +168,12 @@ func (ng *Engine) SendExit(port uint16, msg slice.Bytes, id nonce.ID,
 	var c Circuit
 	copy(c[:], se)
 	o := MakeExit(ExitParams{port, msg, id, bob, alice, c, ng.KeySet})
-	// log.D.S(ng.GetLocalNodeAddress().String()+" sending out exit onion", o)
 	res := ng.PostAcctOnion(o)
 	ng.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.PendingResponses)
 }
 
-func (x *Exit) Account(res *SendData, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
+func (x *Exit) Account(res *SendData, sm *SessionManager,
+	s *SessionData, last bool) (skip bool, sd *SessionData) {
 	
 	for j := range s.Node.Services {
 		if s.Node.Services[j].Port != x.Port {

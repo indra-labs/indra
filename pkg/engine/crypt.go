@@ -68,7 +68,6 @@ func (x *Crypt) Encode(s *Splice) (e error) {
 	}
 	start := s.GetCursor()
 	end := s.Len()
-	// log.T.Ln("start", start, "end", end)
 	switch {
 	case x.Depth == 0:
 	case x.Depth > 0:
@@ -110,7 +109,6 @@ func (x *Crypt) Decrypt(prk *prv.Key, s *Splice) {
 func (x *Crypt) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {
 	
-	// this is probably an encrypted crypt for us.
 	hdr, _, _, identity := ng.FindCloaked(x.Cloak)
 	if hdr == nil {
 		log.T.Ln("no matching key found from cloaked key")

@@ -90,9 +90,7 @@ func (x *Reverse) Handle(s *Splice, p Onion,
 		}
 		if string(s.GetRange(start, start+magic.Len)) != ReverseMagic {
 			// It's for us!
-			log.T.S("handling response",
-				// s.GetRange(last, -1).ToBytes(),
-			)
+			log.T.S("handling response")
 			ng.HandleMessage(BudgeUp(s.SetCursor(last)), on)
 			return e
 		}
@@ -112,7 +110,8 @@ func (x *Reverse) Handle(s *Splice, p Onion,
 	return e
 }
 
-func (x *Reverse) Account(res *SendData, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
+func (x *Reverse) Account(res *SendData, sm *SessionManager,
+	s *SessionData, last bool) (skip bool, sd *SessionData) {
 	
 	res.Billable = append(res.Billable, s.ID)
 	return

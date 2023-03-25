@@ -64,7 +64,6 @@ func (x *Balance) Decode(s *Splice) (e error) {
 func (x *Balance) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {
 	
-	// log.D.S("balance", x.ID, x.ConfID, x.MilliSatoshi)
 	if pending := ng.PendingResponses.Find(x.ID); pending != nil {
 		log.D.S("found pending", pending.ID)
 		for i := range pending.Billable {

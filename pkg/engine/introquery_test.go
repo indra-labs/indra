@@ -146,7 +146,7 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 				returnHops[i]
 		})
 	}
-	returner = returnHops[0] // c[exiter.Hop] = clients[0].Sessions[i]
+	returner = returnHops[0]
 	svc := &Service{
 		Port:      2345,
 		RelayRate: 43523,
@@ -158,7 +158,6 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 			log.I.S("hidden service callback", id, ifc, b.ToBytes())
 			return
 		})
-	// time.Sleep(time.Second)
 	log2.SetLogLevel(log2.Trace)
 	// Now query everyone for the intro.
 	idPub := pub.Derive(idPrv)

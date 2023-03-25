@@ -54,7 +54,8 @@ func (x *Confirmation) Handle(s *Splice, p Onion,
 	return
 }
 
-func (x *Confirmation) Account(res *SendData, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
+func (x *Confirmation) Account(res *SendData, sm *SessionManager,
+	s *SessionData, last bool) (skip bool, sd *SessionData) {
 	
 	res.ID = x.ID
 	return

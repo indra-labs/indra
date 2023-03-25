@@ -15,17 +15,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
-// SessionData management functions
-//
-// In order to enable scaling client processing the session data will be
-// accessed by multiple goroutines, and thus we use the node's mutex to prevent
-// race conditions on this data. This is the only mutable data. A relay's
-// identity is its keys so a different key is a different relay, even if it is
-// on the same IP address. Because we use netip.AddrPort as network addresses
-// there can be more than one relay at an IP address, though hop selection will
-// consider the IP address as the unique identifier and not select more than one
-// relay on the same IP address. (todo:)
-
 type SessionManager struct {
 	nodes           []*Node
 	PendingPayments PendingPayments
@@ -99,7 +88,6 @@ func (sm *SessionManager) AddSession(s *SessionData) {
 		}
 	}
 	sm.Sessions = append(sm.Sessions, s)
-	// log.D.S(s.ID, sm.Sessions)
 	// Hop 5, the return session( s) are not added to the SessionCache as they
 	// are not Billable and are only related to the node of the Engine.
 	if s.Hop < 5 {

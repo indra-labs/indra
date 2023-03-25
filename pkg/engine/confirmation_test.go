@@ -18,7 +18,9 @@ func TestOnionSkins_Confirmation(t *testing.T) {
 	s := Encode(on)
 	s.SetCursor(0)
 	var onc Onion
-	if onc = Recognise(s, slice.GenerateRandomAddrPortIPv6()); onc == nil {
+	if onc = Recognise(s,
+		slice.GenerateRandomAddrPortIPv6()); onc == nil {
+		
 		t.Error("did not unwrap")
 		t.FailNow()
 	}

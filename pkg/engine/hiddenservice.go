@@ -80,8 +80,6 @@ func (x *HiddenService) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 			RoutingHeaderBytes: x.RoutingHeaderBytes,
 		},
 	})
-	// log.D.S("intros", ng.HiddenRouting)
-	// log.D.S(ng.GetLocalNodeAddressString(), ng.HiddenRouting)
 	log.D.Ln("stored new introduction, starting broadcast")
 	go GossipIntro(&x.Intro, ng.SessionManager, ng.C)
 	return
@@ -108,17 +106,13 @@ func (ng *Engine) SendHiddenService(id nonce.ID, key *prv.Key,
 	var c Circuit
 	copy(c[:], se[:len(c)])
 	in = NewIntro(id, key, alice.Node.AddrPort, expiry)
-	// log.D.S("intro", in, in.Validate())
 	o := MakeHiddenService(in, alice, bob, c, ng.KeySet)
-	// log.D.S("hidden service onion", o)
 	log.D.F("%s sending out hidden service onion %s",
 		ng.GetLocalNodeAddressString(),
 		color.Yellow.Sprint(alice.Node.AddrPort.String()))
 	res := ng.PostAcctOnion(o)
-	// log.D.S("hs onion binary", res.B.ToBytes())
 	ng.HiddenRouting.AddHiddenService(svc, key, in,
 		ng.GetLocalNodeAddressString())
-	// log.D.S("storing hidden service info", ng.HiddenRouting)
 	ng.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.PendingResponses)
 	return
 }

@@ -130,7 +130,6 @@ func TestEngine_Message(t *testing.T) {
 		})
 	wg.Wait()
 	time.Sleep(time.Second)
-	// log2.SetLogLevel(log2.Debug)
 	wg.Add(1)
 	counter.Inc()
 	var rd *Ready

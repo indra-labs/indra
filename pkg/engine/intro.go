@@ -116,7 +116,6 @@ func (x *Intro) Handle(s *Splice, p Onion,
 	valid := x.Validate()
 	if valid {
 		log.T.Ln(ng.GetLocalNodeAddressString(), "validated intro", x.ID)
-		// ng.PendingResponses.ProcessAndDelete(x.ID, s.GetAll())
 		kb := x.Key.ToBytes()
 		if _, ok := ng.HiddenRouting.KnownIntros[x.Key.ToBytes()]; ok {
 			log.D.Ln(ng.GetLocalNodeAddressString(), "already have intro")
@@ -163,7 +162,8 @@ func (x *Intro) Handle(s *Splice, p Onion,
 	return
 }
 
-func (x *Intro) Account(res *SendData, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
+func (x *Intro) Account(res *SendData, sm *SessionManager,
+	s *SessionData, last bool) (skip bool, sd *SessionData) {
 	
 	res.ID = x.ID
 	return
