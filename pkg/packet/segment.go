@@ -60,7 +60,7 @@ func Join(packets Packets) (msg []byte, e error) {
 	lp := len(packets)
 	p := packets[0]
 	// Construct the segments map.
-	overhead := p.GetOverhead()
+	overhead := Overhead
 	segMap := NewSegments(int(p.Length), len(p.Data)+overhead, overhead,
 		int(p.Parity))
 	segCount := segMap[len(segMap)-1].PEnd

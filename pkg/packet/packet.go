@@ -37,12 +37,6 @@ type Packet struct {
 	Data []byte
 }
 
-// GetOverhead returns the packet frame overhead given the settings found in the
-// packet.
-func (p *Packet) GetOverhead() int {
-	return Overhead
-}
-
 // Overhead is the base overhead on a packet, use GetOverhead to add any extra
 // as found in a Packet.
 const Overhead = 4 + nonce.IVLen + pub.KeyLen + cloak.Len
