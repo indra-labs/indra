@@ -18,22 +18,22 @@ const ErrEmptyBytes = "cannot encode empty bytes"
 // reply.
 //
 // The last packet that falls short of the segmentSize is padded random bytes.
-func Split(ep EP, segSize int) (packets [][]byte, e error) {
-	if ep.Data == nil || len(ep.Data) == 0 {
+func Split(pp Params, segSize int) (packets [][]byte, e error) {
+	if pp.Data == nil || len(pp.Data) == 0 {
 		e = fmt.Errorf(ErrEmptyBytes)
 		return
 	}
-	ep.Length = len(ep.Data)
-	overhead := ep.GetOverhead()
+	pp.Length = len(pp.Data)
+	overhead := Overhead
 	ss := segSize - overhead
-	segments := slice.Segment(ep.Data, ss)
-	segMap := NewSegments(ep.Length, segSize, ep.GetOverhead(), ep.Parity)
+	segments := slice.Segment(pp.Data, ss)
+	segMap := NewSegments(pp.Length, segSize, Overhead, pp.Parity)
 	var p [][]byte
 	p, e = segMap.AddParity(segments)
 	for i := range p {
-		ep.Data, ep.Seq = p[i], i
+		pp.Data, pp.Seq = p[i], i
 		var s []byte
-		if s, e = Encode(ep); check(e) {
+		if s, e = Encode(pp); check(e) {
 			return
 		}
 		packets = append(packets, s)
@@ -67,12 +67,11 @@ func Join(packets Packets) (msg []byte, e error) {
 	length, red := p.Length, p.Parity
 	prevSeq := p.Seq
 	var discard []int
-	// Check that the data that should be common to all packets is common,
-	// and no sequence number is repeated.
+	// Check that the data that should be common to all packets is common, and
+	// no sequence number is repeated.
 	for i, ps := range packets {
 		// Skip the first because we are comparing the rest to it. It is
-		// arbitrary which item is reference because all should be the
-		// same.
+		// arbitrary which item is reference because all should be the same.
 		if i == 0 {
 			continue
 		}
@@ -82,8 +81,8 @@ func Join(packets Packets) (msg []byte, e error) {
 				e = fmt.Errorf(ErrDupe)
 				return
 			}
-			// Check the data is the same, then discard the second
-			// if they match.
+			// Check the data is the same, then discard the second if they
+			// match.
 			if sha256.Single(ps.Data) ==
 				sha256.Single(packets[prevSeq].Data) {
 				
@@ -108,8 +107,8 @@ func Join(packets Packets) (msg []byte, e error) {
 	}
 	// Duplicates somehow found. Remove them.
 	for i := range discard {
-		// Subtracting the iterator accounts for the backwards shift of
-		// the shortened slice.
+		// Subtracting the iterator accounts for the backwards shift of the
+		// shortened slice.
 		packets = RemovePacket(packets, discard[i]-i)
 		lp--
 	}
@@ -119,7 +118,7 @@ func Join(packets Packets) (msg []byte, e error) {
 		return
 	}
 	msg = make([]byte, 0, length)
-	// If all segments were received we can just concatenate the data shards
+	// If all segments were received we can just concatenate the data shards.
 	if segCount == lp {
 		for _, sm := range segMap {
 			segments := make([][]byte, 0, sm.DEnd-sm.DStart)
@@ -135,8 +134,8 @@ func Join(packets Packets) (msg []byte, e error) {
 	for i := range packets {
 		pkts[packets[i].Seq] = packets[i]
 	}
-	// Count and collate found and lost segments, adding empty segments if
-	// there is lost.
+	// Count and collate found and lost segments, adding empty segments if there
+	// is lost.
 	for si, sm := range segMap {
 		var lD, lP, hD, hP []int
 		var segments [][]byte
@@ -163,8 +162,7 @@ func Join(packets Packets) (msg []byte, e error) {
 			e = fmt.Errorf(ErrNotEnough, si, lhD+lhP, dLen)
 			return
 		}
-		// if we have all the data segments we can just assemble and
-		// return.
+		// if we have all the data segments we can just assemble and return.
 		if lhD == dLen {
 			for i := sm.DStart; i < sm.DEnd; i++ {
 				segments = append(segments, pkts[i].Data)

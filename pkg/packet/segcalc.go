@@ -51,8 +51,8 @@ func NewSegments(payloadLen, segmentSize, overhead, redundancy int) (s Segments)
 	sectsD := 256 - redundancy
 	sectsP := redundancy
 	withR := nSegs + nSegs*sectsP/sectsD
-	// If any redundancy is specified, if it rounds to zero, it must be
-	// bumped up to 1 in order to work with the rs encoder.
+	// If any redundancy is specified, if it rounds to zero, it must be bumped
+	// up to 1 in order to work with the rs encoder.
 	if withR == nSegs && redundancy > 0 {
 		withR++
 	}
@@ -76,8 +76,7 @@ func NewSegments(payloadLen, segmentSize, overhead, redundancy int) (s Segments)
 	}
 	if lastSect > 0 {
 		endD := start + lastSect
-		// if there is redundancy the DEnd must be at least one less
-		// than PEnd.
+		// if there is redundancy the DEnd must be at least one less than PEnd.
 		if withR == endD && redundancy > 0 {
 			withR++
 		}

@@ -29,7 +29,7 @@ func TestEncode_Decode(t *testing.T) {
 	}
 	addr := rP
 	var pkt []byte
-	params := EP{
+	params := Params{
 		To:     addr,
 		From:   sp,
 		Data:   payload,

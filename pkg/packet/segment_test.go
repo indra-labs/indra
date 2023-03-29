@@ -27,7 +27,7 @@ func TestSplitJoin(t *testing.T) {
 		t.FailNow()
 	}
 	addr := rP
-	params := EP{
+	params := Params{
 		To:     addr,
 		From:   sp,
 		Length: len(payload),
@@ -88,7 +88,7 @@ func BenchmarkSplit(b *testing.B) {
 	}
 	addr := rP
 	for n := 0; n < b.N; n++ {
-		params := EP{
+		params := Params{
 			To:     addr,
 			From:   sp,
 			Parity: 64,
@@ -172,7 +172,7 @@ func TestSplitJoinFEC(t *testing.T) {
 		addr := rP
 		for p := range punctures {
 			var splitted [][]byte
-			ep := EP{
+			ep := Params{
 				To:     addr,
 				From:   sp,
 				Parity: parity[i],
@@ -182,7 +182,7 @@ func TestSplitJoinFEC(t *testing.T) {
 			if splitted, e = Split(ep, segSize); check(e) {
 				t.FailNow()
 			}
-			overhead := ep.GetOverhead()
+			overhead := Overhead
 			segMap := NewSegments(len(ep.Data), segSize, overhead,
 				ep.Parity)
 			for segs := range segMap {
