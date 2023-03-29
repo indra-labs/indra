@@ -4,8 +4,8 @@ import (
 	"crypto/rand"
 	"errors"
 	"testing"
-	"time"
-
+	
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/cloak"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
@@ -30,19 +30,20 @@ func TestEncode_Decode(t *testing.T) {
 	addr := rP
 	var pkt []byte
 	params := EP{
-		To:       addr,
-		From:     sp,
-		Data:     payload,
-		Seq:      234,
-		Parity:   64,
-		Deadline: time.Now().Add(time.Minute),
-		Length:   msgSize,
+		To:     addr,
+		From:   sp,
+		Data:   payload,
+		Seq:    234,
+		Parity: 64,
+		Length: msgSize,
 	}
 	if pkt, e = Encode(params); check(e) {
 		t.Error(e)
 	}
 	var from *pub.Key
-	if from, e = GetKeys(pkt); check(e) {
+	var to cloak.PubKey
+	_ = to
+	if from, to, e = GetKeys(pkt); check(e) {
 		t.Error(e)
 	}
 	if !sP.ToBytes().Equals(from.ToBytes()) {

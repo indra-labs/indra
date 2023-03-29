@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"testing"
 	
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/cloak"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
@@ -42,7 +43,9 @@ func TestSplitJoin(t *testing.T) {
 	for i := range splitted {
 		var pkt *Packet
 		var from *pub.Key
-		if from, e = GetKeys(splitted[i]); check(e) {
+		var to cloak.PubKey
+		_ = to
+		if from, to, e = GetKeys(splitted[i]); check(e) {
 			log.I.Ln(i)
 			continue
 		}
@@ -209,7 +212,9 @@ func TestSplitJoinFEC(t *testing.T) {
 			for s := range splitted {
 				var pkt *Packet
 				var from *pub.Key
-				if from, e = GetKeys(
+				var to cloak.PubKey
+				_ = to
+				if from, to, e = GetKeys(
 					splitted[s]); e != nil {
 					// we are puncturing, they some will
 					// fail to decode
