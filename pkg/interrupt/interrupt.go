@@ -8,12 +8,13 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
-
+	
 	"go.uber.org/atomic"
-
+	"golang.org/x/sys/unix"
+	
 	"git-indra.lan/indra-labs/indra"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-
+	
 	"github.com/kardianos/osext"
 )
 
@@ -33,7 +34,7 @@ var (
 	// ch is used to receive SIGINT (Ctrl+C) signals.
 	ch chan os.Signal
 	// signals is the list of signals that cause the interrupt
-	signals = []os.Signal{os.Interrupt}
+	signals = []os.Signal{syscall.SIGINT}
 	// ShutdownRequestChan is a channel that can receive shutdown requests
 	ShutdownRequestChan = make(chan struct{})
 	// addHandlerChan is used to add an interrupt handler to the list of
@@ -75,17 +76,17 @@ func Listener() {
 			}
 			log.I.Ln("restarting")
 			if runtime.GOOS != "windows" {
-				e = syscall.Exec(file, os.Args, os.Environ())
+				e = unix.Exec(file, os.Args, os.Environ())
 				if e != nil {
 					log.I.Ln(e)
 				}
 			} else {
 				log.I.Ln("doing windows restart")
-
+				
 				// procAttr := new(os.ProcAttr)
 				// procAttr.Files = []*os.File{os.Stdin, os.Stdout, os.Stderr}
 				// os.StartProcess(os.Args[0], os.Args[1:], procAttr)
-
+				
 				var s []string
 				// s = []string{"cmd.exe", "/C", "start"}
 				s = append(s, os.Args[0])

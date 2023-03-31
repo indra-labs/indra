@@ -44,10 +44,13 @@ func TestSplitJoin(t *testing.T) {
 		var pkt *Packet
 		var from *pub.Key
 		var to cloak.PubKey
-		_ = to
 		if from, to, e = GetKeys(splitted[i]); check(e) {
 			log.I.Ln(i)
 			continue
+		}
+		if !cloak.Match(to, rP.ToBytes()) {
+			t.Error("failed to match cloak")
+			t.FailNow()
 		}
 		if pkt, e = Decode(splitted[i], from, rp); check(e) {
 			t.Error(e)
