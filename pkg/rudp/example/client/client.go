@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"time"
 	
-	"git-indra.lan/indra-labs/rudp"
+	"git-indra.lan/indra-labs/indra/pkg/rudp"
 )
 
 func main() {

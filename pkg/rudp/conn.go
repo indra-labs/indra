@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-func NewConn(conn *net.UDPConn, rudp *Rudp) *RudpConn {
-	con := &RudpConn{conn: conn, rudp: rudp,
+func NewConn(conn *net.UDPConn, rudp *Rudp) *Conn {
+	con := &Conn{conn: conn, rudp: rudp,
 		recvChan: make(chan []byte, 1<<16), recvErr: make(chan error, 2),
 		sendChan: make(chan []byte, 1<<16), sendErr: make(chan error, 2),
 		SendTick: make(chan int, 2),
@@ -15,8 +15,8 @@ func NewConn(conn *net.UDPConn, rudp *Rudp) *RudpConn {
 	return con
 }
 
-func NewUnConn(conn *net.UDPConn, remoteAddr *net.UDPAddr, rudp *Rudp, close func(string)) *RudpConn {
-	con := &RudpConn{conn: conn, rudp: rudp, SendTick: make(chan int, 2),
+func NewUnConn(conn *net.UDPConn, remoteAddr *net.UDPAddr, rudp *Rudp, close func(string)) *Conn {
+	con := &Conn{conn: conn, rudp: rudp, SendTick: make(chan int, 2),
 		recvChan: make(chan []byte, 1<<16), recvErr: make(chan error, 2),
 		sendChan: make(chan []byte, 1<<16), sendErr: make(chan error, 2),
 		closef: close, remoteAddr: remoteAddr, in: make(chan []byte, 1<<16),
@@ -25,37 +25,37 @@ func NewUnConn(conn *net.UDPConn, remoteAddr *net.UDPAddr, rudp *Rudp, close fun
 	return con
 }
 
-type RudpConn struct {
+type Conn struct {
 	conn *net.UDPConn
-
+	
 	rudp *Rudp
-
+	
 	recvChan chan []byte
 	recvErr  chan error
-
+	
 	sendChan chan []byte
 	sendErr  chan error
-
+	
 	SendTick chan int
-
-	//unconected
+	
+	// unconected
 	remoteAddr *net.UDPAddr
 	closef     func(addr string)
 	in         chan []byte
 }
 
-func (rc *RudpConn) SetDeadline(t time.Time) error      { return nil }
-func (rc *RudpConn) SetReadDeadline(t time.Time) error  { return nil }
-func (rc *RudpConn) SetWriteDeadline(t time.Time) error { return nil }
-func (rc *RudpConn) LocalAddr() net.Addr                { return rc.conn.LocalAddr() }
-func (rc *RudpConn) Connected() bool                    { return rc.remoteAddr == nil }
-func (rc *RudpConn) RemoteAddr() net.Addr {
+func (rc *Conn) SetDeadline(t time.Time) error      { return nil }
+func (rc *Conn) SetReadDeadline(t time.Time) error  { return nil }
+func (rc *Conn) SetWriteDeadline(t time.Time) error { return nil }
+func (rc *Conn) LocalAddr() net.Addr                { return rc.conn.LocalAddr() }
+func (rc *Conn) Connected() bool                    { return rc.remoteAddr == nil }
+func (rc *Conn) RemoteAddr() net.Addr {
 	if rc.remoteAddr != nil {
 		return rc.remoteAddr
 	}
 	return rc.conn.RemoteAddr()
 }
-func (rc *RudpConn) Close() error {
+func (rc *Conn) Close() error {
 	var err error
 	if rc.remoteAddr != nil {
 		if rc.closef != nil {
@@ -69,7 +69,7 @@ func (rc *RudpConn) Close() error {
 	checkErr(err)
 	return err
 }
-func (rc *RudpConn) Read(bts []byte) (n int, err error) {
+func (rc *Conn) Read(bts []byte) (n int, err error) {
 	select {
 	case data := <-rc.recvChan:
 		copy(bts, data)
@@ -79,7 +79,7 @@ func (rc *RudpConn) Read(bts []byte) (n int, err error) {
 	}
 }
 
-func (rc *RudpConn) send(bts []byte) (err error) {
+func (rc *Conn) send(bts []byte) (err error) {
 	select {
 	case rc.sendChan <- bts:
 		return nil
@@ -87,7 +87,7 @@ func (rc *RudpConn) send(bts []byte) (err error) {
 		return err
 	}
 }
-func (rc *RudpConn) Write(bts []byte) (n int, err error) {
+func (rc *Conn) Write(bts []byte) (n int, err error) {
 	sz := len(bts)
 	for len(bts)+MAX_MSG_HEAD > GENERAL_PACKAGE {
 		if err := rc.send(bts[:GENERAL_PACKAGE-MAX_MSG_HEAD]); err != nil {
@@ -98,7 +98,7 @@ func (rc *RudpConn) Write(bts []byte) (n int, err error) {
 	return sz, rc.send(bts)
 }
 
-func (rc *RudpConn) rudpRecv(data []byte) error {
+func (rc *Conn) rudpRecv(data []byte) error {
 	for {
 		n, err := rc.rudp.Recv(data)
 		if err != nil {
@@ -113,7 +113,7 @@ func (rc *RudpConn) rudpRecv(data []byte) error {
 	}
 	return nil
 }
-func (rc *RudpConn) conectedRecvLoop() {
+func (rc *Conn) conectedRecvLoop() {
 	data := make([]byte, MAX_PACKAGE)
 	for {
 		n, err := rc.conn.Read(data)
@@ -127,7 +127,7 @@ func (rc *RudpConn) conectedRecvLoop() {
 		}
 	}
 }
-func (rc *RudpConn) unconectedRecvLoop() {
+func (rc *Conn) unconectedRecvLoop() {
 	data := make([]byte, MAX_PACKAGE)
 	for {
 		select {
@@ -139,7 +139,7 @@ func (rc *RudpConn) unconectedRecvLoop() {
 		}
 	}
 }
-func (rc *RudpConn) sendLoop() {
+func (rc *Conn) sendLoop() {
 	var sendNum int
 	for {
 		select {
@@ -186,7 +186,7 @@ func (rc *RudpConn) sendLoop() {
 		}
 	}
 }
-func (rc *RudpConn) run() {
+func (rc *Conn) run() {
 	if autoSend && sendTick > 0 {
 		go func() {
 			tick := time.Tick(sendTick)

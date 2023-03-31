@@ -142,9 +142,9 @@ func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 		ep := ExitPoint{
 			Routing: rt,
 			ReturnPubs: Pubs{
-				pub.Derive(sessions[0].PayloadPrv),
-				pub.Derive(sessions[1].PayloadPrv),
-				pub.Derive(sessions[2].PayloadPrv),
+				pub.Derive(sessions[0].Payload.Prv),
+				pub.Derive(sessions[1].Payload.Prv),
+				pub.Derive(sessions[2].Payload.Prv),
 			},
 		}
 		mr := Skins{}.

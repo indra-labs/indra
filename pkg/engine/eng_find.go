@@ -22,10 +22,10 @@ func (sm *SessionManager) FindCloaked(clk cloak.PubKey) (hdr *prv.Key,
 		return
 	}
 	sm.IterateSessions(func(s *SessionData) (stop bool) {
-		hash = cloak.Cloak(b, s.HeaderBytes)
+		hash = cloak.Cloak(b, s.Header.Bytes)
 		if hash == clk {
-			hdr = s.HeaderPrv
-			pld = s.PayloadPrv
+			hdr = s.Header.Prv
+			pld = s.Payload.Prv
 			sess = s
 			return true
 		}

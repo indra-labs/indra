@@ -18,7 +18,7 @@ func Ping(id nonce.ID, client *SessionData, s Circuit,
 	
 	n := GenPingNonces()
 	return Skins{}.
-		Crypt(s[0].HeaderPub, nil, ks.Next(), n[0], 0).
+		Crypt(s[0].Header.Pub, nil, ks.Next(), n[0], 0).
 		ForwardCrypt(s[1], ks.Next(), n[1]).
 		ForwardCrypt(s[2], ks.Next(), n[2]).
 		ForwardCrypt(s[3], ks.Next(), n[3]).

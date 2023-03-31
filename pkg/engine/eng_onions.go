@@ -35,7 +35,8 @@ func (o Skins) Assemble() (on Onion) {
 }
 
 func (o Skins) ForwardCrypt(s *SessionData, k *prv.Key, n nonce.IV) Skins {
-	return o.Forward(s.Node.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, 0)
+	return o.Forward(s.Node.AddrPort).Crypt(s.Header.Pub, s.Payload.Pub, k,
+		n, 0)
 }
 
 func (o Skins) ReverseCrypt(s *SessionData, k *prv.Key, n nonce.IV,
@@ -46,7 +47,8 @@ func (o Skins) ReverseCrypt(s *SessionData, k *prv.Key, n nonce.IV,
 		oo = append(oo, &Crypt{})
 		return
 	}
-	return o.Reverse(s.Node.AddrPort).Crypt(s.HeaderPub, s.PayloadPub, k, n, seq)
+	return o.Reverse(s.Node.AddrPort).Crypt(s.Header.Pub, s.Payload.Pub, k, n,
+		seq)
 }
 
 type Routing struct {
@@ -75,9 +77,9 @@ func GetHeaders(alice, bob *SessionData, c Circuit,
 	copy(rtSessions[:], c[3:])
 	rtSessions[2] = alice
 	var returnPubs Pubs
-	returnPubs[0] = c[3].PayloadPub
-	returnPubs[1] = c[4].PayloadPub
-	returnPubs[2] = alice.PayloadPub
+	returnPubs[0] = c[3].Payload.Pub
+	returnPubs[1] = c[4].Payload.Pub
+	returnPubs[2] = alice.Payload.Pub
 	h = &Headers{
 		Forward: &Routing{
 			Sessions: fwSessions,

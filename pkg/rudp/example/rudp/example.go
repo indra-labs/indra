@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	
-	"git-indra.lan/indra-labs/rudp"
+	"git-indra.lan/indra-labs/indra/pkg/rudp"
 )
 
 var dumpIdx int

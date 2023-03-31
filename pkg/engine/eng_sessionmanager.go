@@ -108,7 +108,7 @@ func (sm *SessionManager) FindSessionByHeader(prvKey *prv.Key) *SessionData {
 	sm.Lock()
 	defer sm.Unlock()
 	for i := range sm.Sessions {
-		if sm.Sessions[i].HeaderPrv.Key.Equals(&prvKey.Key) {
+		if sm.Sessions[i].Header.Prv.Key.Equals(&prvKey.Key) {
 			return sm.Sessions[i]
 		}
 	}
@@ -118,7 +118,7 @@ func (sm *SessionManager) FindSessionByHeaderPub(pubKey *pub.Key) *SessionData {
 	sm.Lock()
 	defer sm.Unlock()
 	for i := range sm.Sessions {
-		if sm.Sessions[i].HeaderPub.Equals(pubKey) {
+		if sm.Sessions[i].Header.Pub.Equals(pubKey) {
 			return sm.Sessions[i]
 		}
 	}

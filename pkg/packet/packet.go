@@ -53,9 +53,7 @@ func (p Packets) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 // Params defines the parameters for creating a (split) packet given a set of
 // keys, cipher, and data. To, From, Blk and Data are required, Parity is
 // optional, set it to define a level of Reed Solomon redundancy on the split
-// packets. Seen should be populated to send a signal to the other side of keys
-// that have been seen at time of constructing this packet that can now be
-// discarded as they will not be used to generate a cipher again.
+// packets.
 type Params struct {
 	To     *pub.Key
 	From   *prv.Key
@@ -100,14 +98,14 @@ func Encode(p Params) (pkt []byte, e error) {
 	return
 }
 
-// GetKeys returns the ToHeaderPub field of the message in order, checks the
-// packet checksum and recovers the public key.
+// GetKeys returns the ToHeaderPub field of the message, checks the packet
+// checksum and recovers the public key.
 //
 // After this, if the matching private key to the cloaked address returned is
 // found, it is combined with the public key to generate the cipher and the
 // entire packet should then be decrypted.
-func GetKeys(d []byte) (from *pub.Key, to cloak.PubKey, e error) {
-	pktLen := len(d)
+func GetKeys(b []byte) (from *pub.Key, to cloak.PubKey, e error) {
+	pktLen := len(b)
 	if pktLen < Overhead {
 		// If this isn't checked the slice operations later can hit bounds
 		// errors.
@@ -116,14 +114,13 @@ func GetKeys(d []byte) (from *pub.Key, to cloak.PubKey, e error) {
 		log.E.Ln(e)
 		return
 	}
-	// split off the signature and recover the public key
 	var k pub.Bytes
 	var chek []byte
 	c := new(slice.Cursor)
-	chek = d[:c.Inc(4)]
-	copy(to[:], d[c.Inc(nonce.IVLen):c.Inc(cloak.Len)])
-	copy(k[:], d[*c:c.Inc(pub.KeyLen)])
-	checkHash := sha256.Single(d[4:])
+	chek = b[:c.Inc(4)]
+	copy(to[:], b[c.Inc(nonce.IVLen):c.Inc(cloak.Len)])
+	copy(k[:], b[*c:c.Inc(pub.KeyLen)])
+	checkHash := sha256.Single(b[4:])
 	if string(chek) != string(checkHash[:4]) {
 		e = fmt.Errorf("check failed: got '%v', expected '%v'",
 			chek, checkHash[:4])

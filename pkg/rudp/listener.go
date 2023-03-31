@@ -7,9 +7,9 @@ import (
 
 func NewListener(conn *net.UDPConn) *RudpListener {
 	listen := &RudpListener{conn: conn,
-		newRudpConn: make(chan *RudpConn, 1024),
+		newRudpConn: make(chan *Conn, 1024),
 		newRudpErr:  make(chan error, 12),
-		rudpConnMap: make(map[string]*RudpConn)}
+		rudpConnMap: make(map[string]*Conn)}
 	go listen.run()
 	return listen
 }
@@ -17,13 +17,13 @@ func NewListener(conn *net.UDPConn) *RudpListener {
 type RudpListener struct {
 	conn *net.UDPConn
 	lock sync.RWMutex
-
-	newRudpConn chan *RudpConn
+	
+	newRudpConn chan *Conn
 	newRudpErr  chan error
-	rudpConnMap map[string]*RudpConn
+	rudpConnMap map[string]*Conn
 }
 
-//net listener interface
+// net listener interface
 func (this *RudpListener) Accept() (net.Conn, error) { return this.AcceptRudp() }
 func (this *RudpListener) Close() error {
 	this.CloseAllRudp()
@@ -45,7 +45,7 @@ func (this *RudpListener) CloseAllRudp() {
 	}
 	this.lock.Unlock()
 }
-func (this *RudpListener) AcceptRudp() (*RudpConn, error) {
+func (this *RudpListener) AcceptRudp() (*Conn, error) {
 	select {
 	case c := <-this.newRudpConn:
 		return c, nil

@@ -8,8 +8,9 @@ type ByteChan chan slice.Bytes
 
 func NewSim(bufs int) ByteChan { return make(ByteChan, bufs) }
 
-func (s ByteChan) Send(b slice.Bytes) {
+func (s ByteChan) Send(b slice.Bytes) error {
 	s <- b
+	return nil
 }
 
 func (s ByteChan) Receive() <-chan slice.Bytes {

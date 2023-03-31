@@ -18,6 +18,6 @@ type Onion interface {
 }
 
 type Transport interface {
-	Send(b slice.Bytes)
+	Send(b slice.Bytes) (e error)
 	Receive() <-chan slice.Bytes
 }

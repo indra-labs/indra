@@ -8,10 +8,10 @@ import (
 	"os/signal"
 	"syscall"
 	
-	"git-indra.lan/indra-labs/rudp"
+	"git-indra.lan/indra-labs/indra/pkg/rudp"
 )
 
-func read(conn *rudp.RudpConn) {
+func read(conn *rudp.Conn) {
 	for {
 		data := make([]byte, rudp.MAX_PACKAGE)
 		n, err := conn.Read(data)

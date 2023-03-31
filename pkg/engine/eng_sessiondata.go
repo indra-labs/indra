@@ -16,14 +16,12 @@ import (
 // account of available bandwidth allocation before it needs to be recharged
 // with new credit, and the current state of the encryption.
 type SessionData struct {
-	ID                        nonce.ID
-	Node                      *Node
-	Remaining                 lnwire.MilliSatoshi
-	HeaderPrv, PayloadPrv     *prv.Key
-	HeaderPub, PayloadPub     *pub.Key
-	HeaderBytes, PayloadBytes pub.Bytes
-	Preimage                  sha256.Hash
-	Hop                       byte
+	ID              nonce.ID
+	Node            *Node
+	Remaining       lnwire.MilliSatoshi
+	Header, Payload Keys
+	Preimage        sha256.Hash
+	Hop             byte
 }
 
 func (s *SessionData) String() string {
@@ -73,17 +71,21 @@ func NewSessionData(
 	pldPub := pub.Derive(pldPrv)
 	h, p := hdrPrv.ToBytes(), pldPrv.ToBytes()
 	s = &SessionData{
-		ID:           id,
-		Node:         node,
-		Remaining:    rem,
-		HeaderPub:    hdrPub,
-		HeaderBytes:  hdrPub.ToBytes(),
-		PayloadPub:   pldPub,
-		PayloadBytes: pldPub.ToBytes(),
-		HeaderPrv:    hdrPrv,
-		PayloadPrv:   pldPrv,
-		Preimage:     sha256.Single(append(h[:], p[:]...)),
-		Hop:          hop,
+		ID:        id,
+		Node:      node,
+		Remaining: rem,
+		Header: Keys{
+			Pub:   hdrPub,
+			Bytes: hdrPub.ToBytes(),
+			Prv:   hdrPrv,
+		},
+		Payload: Keys{
+			Pub:   pldPub,
+			Bytes: pldPub.ToBytes(),
+			Prv:   pldPrv,
+		},
+		Preimage: sha256.Single(append(h[:], p[:]...)),
+		Hop:      hop,
 	}
 	return
 }
