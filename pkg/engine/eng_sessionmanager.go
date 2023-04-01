@@ -44,25 +44,25 @@ func (sm *SessionManager) ClearSessions() {
 	sm.Sessions = sm.Sessions[:1]
 }
 
-func (sm *SessionManager) IncSession(id nonce.ID, sats lnwire.MilliSatoshi,
+func (sm *SessionManager) IncSession(id nonce.ID, msats lnwire.MilliSatoshi,
 	sender bool, typ string) {
 	
 	sess := sm.FindSession(id)
 	if sess != nil {
 		sm.Lock()
 		defer sm.Unlock()
-		sess.IncSats(sats, sender, typ)
+		sess.IncSats(msats, sender, typ)
 	}
 }
 
-func (sm *SessionManager) DecSession(id nonce.ID, sats int,
+func (sm *SessionManager) DecSession(id nonce.ID, msats int,
 	sender bool, typ string) bool {
 	
 	sess := sm.FindSession(id)
 	if sess != nil {
 		sm.Lock()
 		defer sm.Unlock()
-		return sess.DecSats(lnwire.MilliSatoshi(sats/1024/1024),
+		return sess.DecSats(lnwire.MilliSatoshi(msats/1024/1024),
 			sender, typ)
 	}
 	return false
@@ -403,7 +403,7 @@ func (sm *SessionManager) ForEachNode(fn func(n *Node) bool) {
 	}
 }
 
-// A SessionCache stores each of the 5 hops
+// A SessionCache stores each of the 5 hops of a peer node.
 type SessionCache map[nonce.ID]*Circuit
 
 func (sm *SessionManager) UpdateSessionCache() {

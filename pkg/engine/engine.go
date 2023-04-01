@@ -113,7 +113,7 @@ func (ng *Engine) Handler() (out bool) {
 		out = true
 		break
 	case b := <-ng.ReceiveToLocalNode(0):
-		s := Load(b, slice.NewCursor())
+		s := LoadSplice(b, slice.NewCursor())
 		ng.HandleMessage(s, prev)
 	case p := <-ng.GetLocalNode().PaymentChan.Receive():
 		log.D.F("incoming payment for %s: %v", p.ID, p.Amount)

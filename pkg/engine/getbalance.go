@@ -157,7 +157,7 @@ func (x *GetBalance) Handle(s *Splice, p Onion,
 	})
 	rbb = FormatReply(header, x.Ciphers, x.Nonces, Encode(bal).GetAll())
 	rb = append(rbb.GetAll(), slice.NoisePad(714-len(rb))...)
-	ng.HandleMessage(Load(rb, slice.NewCursor()), x)
+	ng.HandleMessage(LoadSplice(rb, slice.NewCursor()), x)
 	return
 }
 

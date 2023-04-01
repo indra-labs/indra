@@ -58,5 +58,5 @@ func (sm *SessionManager) SendWithOneHook(ap *netip.AddrPort,
 	)
 	log.T.Ln(sm.GetLocalNodeAddressString(), "sending out onion", res.ID,
 		"to", color.Yellow.Sprint(ap.String()))
-	sm.Send(ap, Load(res.B, slice.NewCursor()))
+	sm.Send(ap, LoadSplice(res.B, slice.NewCursor()))
 }

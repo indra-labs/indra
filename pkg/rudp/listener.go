@@ -24,53 +24,53 @@ type RudpListener struct {
 }
 
 // net listener interface
-func (this *RudpListener) Accept() (net.Conn, error) { return this.AcceptRudp() }
-func (this *RudpListener) Close() error {
-	this.CloseAllRudp()
-	return this.conn.Close()
+func (rl *RudpListener) Accept() (net.Conn, error) { return rl.AcceptRudp() }
+func (rl *RudpListener) Close() error {
+	rl.CloseAllRudp()
+	return rl.conn.Close()
 }
-func (this *RudpListener) Addr() net.Addr { return this.conn.LocalAddr() }
+func (rl *RudpListener) Addr() net.Addr { return rl.conn.LocalAddr() }
 
-func (this *RudpListener) CloseRudp(addr string) {
-	this.lock.Lock()
-	delete(this.rudpConnMap, addr)
-	this.lock.Unlock()
+func (rl *RudpListener) CloseRudp(addr string) {
+	rl.lock.Lock()
+	delete(rl.rudpConnMap, addr)
+	rl.lock.Unlock()
 }
 
-func (this *RudpListener) CloseAllRudp() {
-	this.lock.Lock()
-	for _, rconn := range this.rudpConnMap {
+func (rl *RudpListener) CloseAllRudp() {
+	rl.lock.Lock()
+	for _, rconn := range rl.rudpConnMap {
 		rconn.closef = nil
 		rconn.Close()
 	}
-	this.lock.Unlock()
+	rl.lock.Unlock()
 }
-func (this *RudpListener) AcceptRudp() (*Conn, error) {
+func (rl *RudpListener) AcceptRudp() (*Conn, error) {
 	select {
-	case c := <-this.newRudpConn:
+	case c := <-rl.newRudpConn:
 		return c, nil
-	case e := <-this.newRudpErr:
+	case e := <-rl.newRudpErr:
 		return nil, e
 	}
 }
-func (this *RudpListener) run() {
+func (rl *RudpListener) run() {
 	data := make([]byte, MAX_PACKAGE)
 	for {
-		n, remoteAddr, err := this.conn.ReadFromUDP(data)
+		n, remoteAddr, err := rl.conn.ReadFromUDP(data)
 		if err != nil {
-			this.CloseAllRudp()
-			this.newRudpErr <- err
+			rl.CloseAllRudp()
+			rl.newRudpErr <- err
 			return
 		}
-		this.lock.RLock()
-		rudpConn, ok := this.rudpConnMap[remoteAddr.String()]
-		this.lock.RUnlock()
+		rl.lock.RLock()
+		rudpConn, ok := rl.rudpConnMap[remoteAddr.String()]
+		rl.lock.RUnlock()
 		if !ok {
-			rudpConn = NewUnConn(this.conn, remoteAddr, New(), this.CloseRudp)
-			this.lock.Lock()
-			this.rudpConnMap[remoteAddr.String()] = rudpConn
-			this.lock.Unlock()
-			this.newRudpConn <- rudpConn
+			rudpConn = NewUnConn(rl.conn, remoteAddr, New(), rl.CloseRudp)
+			rl.lock.Lock()
+			rl.rudpConnMap[remoteAddr.String()] = rudpConn
+			rl.lock.Unlock()
+			rl.newRudpConn <- rudpConn
 		}
 		bts := make([]byte, n)
 		copy(bts, data[:n])

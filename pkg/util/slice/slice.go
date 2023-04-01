@@ -151,12 +151,14 @@ func (c *Cursor) Inc(v int) Cursor {
 
 type Bytes []byte
 
+func (b Bytes) String() string { return string(b) }
+
 func ToBytes(b []byte) (msg Bytes) { return b }
-func (m Bytes) ToBytes() []byte    { return m }
-func (m Bytes) Len() int           { return len(m) }
-func (m Bytes) Zero() {
-	for i := range m {
-		m[i] = 0
+func (b Bytes) ToBytes() []byte    { return b }
+func (b Bytes) Len() int           { return len(b) }
+func (b Bytes) Zero() {
+	for i := range b {
+		b[i] = 0
 	}
 }
 
@@ -174,8 +176,8 @@ func (u U64Slice) Copy() (o U64Slice) {
 // intended to be used with short byte slices like cipher nonces and hashes, so
 // it usually won't trigger allocations off stack and very often won't trigger
 // a copy on stack, saving a lot of time in a short, oft repeated operations.
-func (m Bytes) ToU64Slice() (u U64Slice) {
-	mLen := uint64(len(m))
+func (b Bytes) ToU64Slice() (u U64Slice) {
+	mLen := uint64(len(b))
 	uLen := int(mLen / 8)
 	mMod := mLen % 8
 	if mMod != 0 {
@@ -185,7 +187,7 @@ func (m Bytes) ToU64Slice() (u U64Slice) {
 	for i := uint64(0); i < 8-mMod+8; i++ {
 		// We could use make with mMod+8 length to extend and ... but
 		// this does the same thing in practice.
-		m = append(m, 0)
+		b = append(b, 0)
 	}
 	u = make([]uint64, 0, 0)
 	// With the slice now long enough to be safely converted to []uint64
@@ -195,7 +197,7 @@ func (m Bytes) ToU64Slice() (u U64Slice) {
 	// First we convert our empty []uint64 header
 	header := (*reflect.SliceHeader)(unsafe.Pointer(&u))
 	// then we point its memory location to the extended byte slice data
-	header.Data = (*reflect.SliceHeader)(unsafe.Pointer(&m)).Data
+	header.Data = (*reflect.SliceHeader)(unsafe.Pointer(&b)).Data
 	// Update the element length and capacity
 	header.Len = uLen
 	header.Cap = uLen

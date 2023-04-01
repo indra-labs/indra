@@ -25,7 +25,7 @@ type Node struct {
 	sync.Mutex
 	AddrPort  *netip.AddrPort
 	Identity  *Keys
-	RelayRate int                 // Base relay price/Mb.
+	RelayRate int                 // Base relay price mSAT/Mb.
 	Services  Services            // Services offered by this peer.
 	Load      *ring.BufferLoad    // Relay load.
 	Latency   *ring.BufferLatency // Latency to peer.

@@ -12,8 +12,8 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 )
 
-// A SessionData keeps track of a connection session. It specifically maintains the
-// account of available bandwidth allocation before it needs to be recharged
+// A SessionData keeps track of a connection session. It specifically maintains
+// the account of available bandwidth allocation before it needs to be recharged
 // with new credit, and the current state of the encryption.
 type SessionData struct {
 	ID              nonce.ID
@@ -30,7 +30,7 @@ func (s *SessionData) String() string {
 		s.Node.ID, s.Hop)
 }
 
-// A Circuit is the generic fixed length path used for most messages.
+// A Circuit is the generic fixed-length path used for most messages.
 type Circuit [5]*SessionData
 
 func (c Circuit) String() (o string) {
@@ -49,8 +49,8 @@ func (c Circuit) String() (o string) {
 // Sessions are arbitrary length lists of SessionData.
 type Sessions []*SessionData
 
-// NewSessionData creates a new SessionData, generating cached public key bytes and
-// preimage.
+// NewSessionData creates a new SessionData, generating cached public key bytes
+// and preimage.
 func NewSessionData(
 	id nonce.ID,
 	node *Node,
@@ -102,9 +102,9 @@ func (s *SessionData) IncSats(sats lnwire.MilliSatoshi, sender bool, typ string)
 	s.Remaining += sats
 }
 
-// DecSats reduces the amount Remaining, if the requested amount would put
-// the total below zero it returns false, signalling that new data allowance
-// needs to be purchased before any further messages can be sent.
+// DecSats reduces the amount Remaining, if the requested amount would put the
+// total below zero it returns false, signalling that new data allowance needs
+// to be purchased before any further messages can be sent.
 func (s *SessionData) DecSats(sats lnwire.MilliSatoshi, sender bool,
 	typ string) bool {
 	

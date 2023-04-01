@@ -14,9 +14,12 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+)
+
+const (
+	Magic = "INDR"
 )
 
 var (
@@ -82,7 +85,8 @@ func Encode(p Params) (pkt []byte, e error) {
 	cloaked := cloak.GetCloak(p.To)
 	// Copy nonce, address and key over top of the header.
 	c := new(slice.Cursor)
-	copy(pkt[c.Inc(4):c.Inc(nonce.IVLen)], nonc[:])
+	copy(pkt[*c:c.Inc(4)], Magic)
+	copy(pkt[*c:c.Inc(nonce.IVLen)], nonc[:])
 	copy(pkt[*c:c.Inc(cloak.Len)], cloaked[:])
 	copy(pkt[*c:c.Inc(pub.KeyLen)], k[:])
 	copy(pkt[*c:c.Inc(slice.Uint16Len)], Seq)
@@ -91,10 +95,6 @@ func Encode(p Params) (pkt []byte, e error) {
 	copy(pkt[c.Inc(1):], p.Data)
 	// Encrypt the encrypted part of the data.
 	ciph.Encipher(blk, nonc, pkt[Overhead:])
-	// last but not least, the packet check header, which protects the entire
-	// packet.
-	checkBytes := sha256.Single(pkt[4:])
-	copy(pkt[:4], checkBytes[:4])
 	return
 }
 
@@ -115,17 +115,15 @@ func GetKeys(b []byte) (from *pub.Key, to cloak.PubKey, e error) {
 		return
 	}
 	var k pub.Bytes
-	var chek []byte
 	c := new(slice.Cursor)
-	chek = b[:c.Inc(4)]
-	copy(to[:], b[c.Inc(nonce.IVLen):c.Inc(cloak.Len)])
-	copy(k[:], b[*c:c.Inc(pub.KeyLen)])
-	checkHash := sha256.Single(b[4:])
-	if string(chek) != string(checkHash[:4]) {
-		e = fmt.Errorf("check failed: got '%v', expected '%v'",
-			chek, checkHash[:4])
+	prefix := string(b[:c.Inc(4)])
+	if prefix != Magic {
+		e = fmt.Errorf("packet magic bytes not found, expected '%v' got'%v'",
+			prefix, Magic)
 		return
 	}
+	copy(to[:], b[c.Inc(nonce.IVLen):c.Inc(cloak.Len)])
+	copy(k[:], b[*c:c.Inc(pub.KeyLen)])
 	if from, e = pub.FromBytes(k[:]); check(e) {
 		return
 	}
