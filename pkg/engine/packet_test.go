@@ -9,11 +9,13 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/tests"
 )
 
 func TestEncode_Decode(t *testing.T) {
-	msgSize := 1382
+	log2.SetLogLevel(log2.Trace)
+	msgSize := 5120
 	payload := make([]byte, msgSize)
 	var e error
 	var n int
@@ -45,16 +47,21 @@ func TestEncode_Decode(t *testing.T) {
 	_ = to
 	if from, to, e = GetPacketKeys(pkt); fails(e) {
 		t.Error(e)
+		t.FailNow()
 	}
 	if !sP.ToBytes().Equals(from.ToBytes()) {
 		t.Error(e)
+		t.FailNow()
 	}
 	var f *Packet
 	if f, e = DecodePacket(pkt, from, rp); fails(e) {
 		t.Error(e)
+		t.FailNow()
 	}
+	log.D.S("diff", payload, f.Data)
 	dHash := sha256.Single(f.Data)
 	if pHash != dHash {
 		t.Error(errors.New("encode/decode unsuccessful"))
+		t.FailNow()
 	}
 }

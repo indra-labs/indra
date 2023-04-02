@@ -32,7 +32,7 @@ type Packet struct {
 
 // PacketOverhead is the base overhead on a packet, use GetOverhead to add any extra
 // as found in a Packet.
-const PacketOverhead = 4 + nonce.IVLen + pub.KeyLen + cloak.Len
+const PacketOverhead = 4 + pub.KeyLen + cloak.Len + nonce.IVLen
 
 // Packets is a slice of pointers to packets.
 type Packets []*Packet
@@ -70,22 +70,22 @@ func EncodePacket(p PacketParams) (pkt []byte, e error) {
 	slice.EncodeUint16(Seq, p.Seq)
 	Length := slice.NewUint32()
 	slice.EncodeUint32(Length, p.Length)
-	pkt = make([]byte, slice.SumLen(Seq, Length, p.Data)+1+PacketOverhead)
+	pkt = make([]byte, slice.SumLen(Seq, Length,
+		p.Data)+1+PacketOverhead+nonce.IDLen)
 	// Append pubkey used for encryption key derivation.
-	k := pub.Derive(p.From).ToBytes()
-	cloaked := cloak.GetCloak(p.To)
+	k := pub.Derive(p.From)
+	// cloaked := cloak.GetCloak(p.To)
 	// Copy nonce, address and key over top of the header.
-	c := new(slice.Cursor)
-	copy(pkt[*c:c.Inc(4)], PacketMagic)
-	copy(pkt[*c:c.Inc(nonce.IVLen)], nonc[:])
-	copy(pkt[*c:c.Inc(cloak.Len)], cloaked[:])
-	copy(pkt[*c:c.Inc(pub.KeyLen)], k[:])
-	// From here on gets encrypted for security reasons.
-	copy(pkt[*c:c.Inc(slice.Uint16Len)], Seq)
-	copy(pkt[*c:c.Inc(slice.Uint32Len)], Length)
-	pkt[*c] = byte(p.Parity)
-	copy(pkt[c.Inc(1):c.Inc(nonce.IDLen)], p.ID[:])
-	copy(pkt[:], p.Data)
+	s := NewSpliceFrom(pkt).
+		Magic4(PacketMagic).
+		Pubkey(k).
+		Cloak(p.To).
+		IV(nonc).
+		Byte(byte(p.Parity)).
+		Uint16(uint16(p.Seq)).
+		Uint32(uint32(p.Length)).
+		ID(p.ID)
+	copy(pkt[s.GetCursor():], p.Data)
 	// Encrypt the encrypted part of the data.
 	ciph.Encipher(blk, nonc, pkt[PacketOverhead:])
 	return
@@ -115,8 +115,8 @@ func GetPacketKeys(b []byte) (from *pub.Key, to cloak.PubKey, e error) {
 			prefix, PacketMagic)
 		return
 	}
-	copy(to[:], b[c.Inc(nonce.IVLen):c.Inc(cloak.Len)])
 	copy(k[:], b[*c:c.Inc(pub.KeyLen)])
+	copy(to[:], b[*c:c.Inc(cloak.Len)])
 	if from, e = pub.FromBytes(k[:]); fails(e) {
 		return
 	}
@@ -139,15 +139,15 @@ func DecodePacket(d []byte, from *pub.Key, to *prv.Key) (p *Packet, e error) {
 	p = &Packet{}
 	// copy the nonce
 	var nonc nonce.IV
-	c := new(slice.Cursor)
-	copy(nonc[:], d[c.Inc(4):c.Inc(nonce.IVLen)])
+	copy(nonc[:], d[4+pub.KeyLen+cloak.Len:PacketOverhead])
 	var blk cipher.Block
 	if blk = ciph.GetBlock(to, from, "packet decode"); fails(e) {
 		return
 	}
 	// This decrypts the rest of the packet, which is encrypted for security.
-	data := d[c.Inc(pub.KeyLen+cloak.Len):]
+	data := d[PacketOverhead:]
 	ciph.Encipher(blk, nonc, data)
+	
 	seq := slice.NewUint16()
 	length := slice.NewUint32()
 	seq, data = slice.Cut(data, slice.Uint16Len)
@@ -156,7 +156,6 @@ func DecodePacket(d []byte, from *pub.Key, to *prv.Key) (p *Packet, e error) {
 	p.Length = uint32(slice.DecodeUint32(length))
 	p.Parity, data = data[0], data[1:]
 	copy(p.ID[:], data[:nonce.IDLen])
-	data = data[nonce.IDLen:]
-	p.Data = data
+	p.Data = data[nonce.IDLen:]
 	return
 }
