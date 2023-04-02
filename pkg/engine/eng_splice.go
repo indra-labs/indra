@@ -445,8 +445,6 @@ func (s *Splice) Ciphers(h Ciphers) *Splice {
 
 func (s *Splice) ReadHash(h *sha256.Hash) *Splice {
 	copy((*h)[:], s.b[*s.c:s.c.Inc(sha256.Len)])
-	// zh := sha256.Hash{}
-	// copy(s.b[*s.c-sha256.Len:*s.c], zh[:])
 	s.SpliceSegments = append(s.SpliceSegments,
 		NameOffset{Offset: int(*s.c), Name: "hash"})
 	return s

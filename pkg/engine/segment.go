@@ -19,6 +19,7 @@ const (
 		" in field %s value: got %v expected %v"
 	ErrNotEnough = "too many lost to recover in section %d, have %d, need " +
 		"%d minimum"
+	ErrDifferentID = "different ID"
 )
 
 // Split creates a series of packets including the defined Reed Solomon
@@ -47,8 +48,11 @@ func Split(pp PacketParams, segSize int) (packets [][]byte, e error) {
 	return
 }
 
-// Join a collection of Packets together.
-func Join(packets Packets) (msg []byte, e error) {
+// JoinPackets joins a collection of Packets together.
+func JoinPackets(packets Packets) (pkts Packets, msg []byte, e error) {
+	// We return this because cleaning shouldn't be done twice on old stale
+	// data so failed joins still return the cleaned packet slice.
+	pkts = packets
 	if len(packets) == 0 {
 		e = errors.New("empty packets")
 		return
@@ -64,6 +68,7 @@ func Join(packets Packets) (msg []byte, e error) {
 		int(p.Parity))
 	segCount := segMap[len(segMap)-1].PEnd
 	length, red := p.Length, p.Parity
+	id := p.ID
 	prevSeq := p.Seq
 	var discard []int
 	// Check that the data that should be common to all packets is common, and
@@ -103,6 +108,13 @@ func Join(packets Packets) (msg []byte, e error) {
 				ps.Length, length)
 			return
 		}
+		// This should never happen but if it does the entire packet batch is
+		// lost. Precautionary, since such an event is a bug and unsanitary
+		// data.
+		if ps.ID != id {
+			e = fmt.Errorf(ErrDifferentID)
+			return
+		}
 	}
 	// Duplicates somehow found. Remove them.
 	for i := range discard {
@@ -128,7 +140,7 @@ func Join(packets Packets) (msg []byte, e error) {
 		}
 		return
 	}
-	pkts := make(Packets, segCount)
+	pkts = make(Packets, segCount)
 	// Collate to correctly ordered, so gaps are easy to find
 	for i := range packets {
 		pkts[packets[i].Seq] = packets[i]

@@ -67,7 +67,7 @@ func TestSplitJoin(t *testing.T) {
 		prev = k
 	}
 	var msg []byte
-	if msg, e = Join(pkts); fails(e) {
+	if pkts, msg, e = JoinPackets(pkts); fails(e) {
 		t.Error(e)
 	}
 	rHash := sha256.Single(msg)
@@ -239,7 +239,7 @@ func TestSplitJoinFEC(t *testing.T) {
 				prev = k
 			}
 			var msg []byte
-			if msg, e = Join(pkts); fails(e) {
+			if pkts, msg, e = JoinPackets(pkts); fails(e) {
 				t.FailNow()
 			}
 			rHash := sha256.Single(msg)

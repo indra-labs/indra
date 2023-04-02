@@ -19,6 +19,7 @@ const (
 // Packet is the standard format for an encrypted, possibly segmented message
 // container with parameters for Reed Solomon Forward Error Correction.
 type Packet struct {
+	ID nonce.ID
 	// Seq specifies the segment number of the message, 4 bytes long.
 	Seq uint16
 	// Length is the number of segments in the batch
@@ -47,6 +48,7 @@ func (p Packets) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 // optional, set it to define a level of Reed Solomon redundancy on the split
 // packets.
 type PacketParams struct {
+	ID     nonce.ID
 	To     *pub.Key
 	From   *prv.Key
 	Parity int
@@ -78,10 +80,12 @@ func EncodePacket(p PacketParams) (pkt []byte, e error) {
 	copy(pkt[*c:c.Inc(nonce.IVLen)], nonc[:])
 	copy(pkt[*c:c.Inc(cloak.Len)], cloaked[:])
 	copy(pkt[*c:c.Inc(pub.KeyLen)], k[:])
+	// From here on gets encrypted for security reasons.
 	copy(pkt[*c:c.Inc(slice.Uint16Len)], Seq)
 	copy(pkt[*c:c.Inc(slice.Uint32Len)], Length)
 	pkt[*c] = byte(p.Parity)
-	copy(pkt[c.Inc(1):], p.Data)
+	copy(pkt[c.Inc(1):c.Inc(nonce.IDLen)], p.ID[:])
+	copy(pkt[:], p.Data)
 	// Encrypt the encrypted part of the data.
 	ciph.Encipher(blk, nonc, pkt[PacketOverhead:])
 	return
@@ -151,6 +155,8 @@ func DecodePacket(d []byte, from *pub.Key, to *prv.Key) (p *Packet, e error) {
 	length, data = slice.Cut(data, slice.Uint32Len)
 	p.Length = uint32(slice.DecodeUint32(length))
 	p.Parity, data = data[0], data[1:]
+	copy(p.ID[:], data[:nonce.IDLen])
+	data = data[nonce.IDLen:]
 	p.Data = data
 	return
 }

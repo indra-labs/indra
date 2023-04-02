@@ -22,7 +22,7 @@ const (
 	KeychangeMagic   = "KEYC"
 )
 
-type RUDPBuffer map[nonce.IV][]slice.Bytes
+type RUDPBuffer map[nonce.ID][]*Packet
 
 type KeySlot struct {
 	*Keys
@@ -53,7 +53,7 @@ func (r *RUDP) Mx(fn func()) {
 func (r *RUDP) GetParity() (parity byte) {
 	fr := r.failRate.Load()
 	p := fr * 10 / 11 // 10% higher than fail rate.
-	if p > 256 {
+	if p > 255 {
 		p = 255
 	}
 	parity = byte(256 - p)
@@ -63,7 +63,7 @@ func (r *RUDP) GetParity() (parity byte) {
 func NewListenerRUDP(idKeys *Keys, bindAddress net.IP, bufs,
 	mtu int, quit qu.C) (r *RUDP, e error) {
 	
-	if mtu <= 0 {
+	if mtu <= 512 {
 		// Conservative packet size limit.
 		mtu = 1382
 	}
@@ -88,7 +88,7 @@ func (r *RUDP) listen(conn *net.UDPConn, buf slice.Bytes,
 		total := r.good.Load() + r.corrupt.Load()
 		// Compute average out of 256 as 100% vs 0% and average
 		// with previous failRate.
-		ratio := 256*total/(1+r.corrupt.Load()) - 1 // avoiding divide by zero
+		ratio := 256 * total / (1 + r.corrupt.Load()) // avoiding divide by zero
 		r.failRate.Store(uint32(byte((ratio + uint64(r.failRate.Load())) / 2)))
 		if total > 1<<24 {
 			// After 16mb of traffic we reset the counters.
@@ -119,30 +119,75 @@ func (r *RUDP) listen(conn *net.UDPConn, buf slice.Bytes,
 			if fromPub, toCloak, e = GetPacketKeys(s.GetAll()); fails(e) {
 				continue
 			}
-			_ = fromPub
-			_ = toCloak
-			// todo: collect and manage packet buffers.
-			r.in <- s.GetAll()
+			var to *prv.Key
+			r.Mx(func() {
+				for i := range r.recvKeys {
+					if cloak.Match(toCloak, r.recvKeys[i].Bytes) {
+						to = r.recvKeys[i].Prv
+						return
+					}
+				}
+			})
+			var pkt *Packet
+			if pkt, e = DecodePacket(s.GetAll(), fromPub, to); fails(e) {
+				continue
+			}
+			// The minimum pieces need to recover the packet are computable
+			// by the length field and the length of the data field.
+			// If the number in the buffer exceeds this number we want to
+			// attempt reassembly.
+			lq := int(pkt.Length) / len(pkt.Data)
+			lm := int(pkt.Length) % len(pkt.Data)
+			if lm != 0 {
+				lq++
+			}
+			var buffers []*Packet
+			r.Mx(func() {
+				r.buffers[pkt.ID] = append(r.buffers[pkt.ID], pkt)
+				if len(r.buffers[pkt.ID]) >= lq {
+					buffers = r.buffers[pkt.ID]
+				}
+			})
+			if buffers != nil {
+				var msg []byte
+				if buffers, msg, e = JoinPackets(buffers); fails(e) {
+					// Pass it back afterwards as the JoinPackets function
+					// cleans stuff that doesn't need to be done twice.
+					r.Mx(func() { r.buffers[pkt.ID] = buffers })
+					continue
+				}
+				// todo: handling stale stuff that never decoded.
+				r.in <- msg
+			}
 		case KeychangeMagic:
+			if s.Len() < 4+pub.KeyLen {
+				log.D.F("message too short to contain a public key")
+				continue
+			}
+			var peerKey *pub.Key
+			s.ReadPubkey(&peerKey)
+			r.Mx(func() {
+				if _, ok := r.sendKeys[addr]; ok {
+					r.sendKeys[addr] = LoadKeySlot(nil, peerKey)
+				}
+			})
 		default:
+			// If it is not a message, it is the delivery of a receiver public
+			// key for the client, and we generate a new one and send it back
+			// encrypted in a packet addressed to the provided key.
 			if n < RUDPHandshakeLen {
 				log.D.Ln("message too short for handshake")
 				continue
 			}
 			s.SetCursor(0)
-			// If it is not a message, it is the delivery of a receiver public
-			// key for the client, and we generate a new one and send it back
-			// encrypted in a packet.
-			var iv nonce.IV
-			// The message format is: initialisation vector, sender public key,
-			// receiver key is the identity key of the node.
-			s.ReadIV(&iv)
 			var pK *pub.Key
 			s.ReadPubkey(&pK)
 			if pK == nil {
 				continue
 			}
-			if fails(Encipher(s.GetRest(), iv, r.Prv, pK, "handshake encode")) {
+			var iv nonce.IV
+			s.ReadIV(&iv)
+			if fails(Encipher(s.GetRest(), iv, r.Prv, pK, "handshake decode")) {
 				continue
 			}
 			var peerKey *pub.Key
@@ -154,7 +199,7 @@ func (r *RUDP) listen(conn *net.UDPConn, buf slice.Bytes,
 			}
 			recvPub := pub.Derive(recvPrv)
 			r.Mx(func() { r.recvKeys[addr] = LoadKeySlot(recvPrv, recvPub) })
-			// EncodePacket the reply.
+			// Encode the reply.
 			o := NewSplice(pub.KeyLen + 4).Magic4(KeychangeMagic).Pubkey(recvPub)
 			var pkt slice.Bytes
 			if pkt, e = EncodePacket(PacketParams{
@@ -170,7 +215,7 @@ func (r *RUDP) listen(conn *net.UDPConn, buf slice.Bytes,
 				n != len(pkt) {
 				continue
 			}
-			
+			log.D.Ln("sent key change message reply")
 		}
 		select {
 		case <-quit:
@@ -186,7 +231,7 @@ func NewOutboundRUDP(idKeys *Keys, remote *netip.AddrPort,
 	rKey *pub.Key, local net.IP, bufs, mtu int, quit qu.C) (r *RUDP,
 	e error) {
 	
-	if mtu <= 0 {
+	if mtu <= 512 {
 		mtu = 1382 // Conservative packet size limit.
 	}
 	raddr, laddr := net.UDPAddrFromAddrPort(*remote), &net.UDPAddr{IP: local}
@@ -195,17 +240,16 @@ func NewOutboundRUDP(idKeys *Keys, remote *netip.AddrPort,
 		return
 	}
 	r = MakeRUDP(idKeys, remote, rudp.NewConn(conn, rudp.New()), bufs, quit)
-	// Prv exchange handshake.
-	var sendKey, ciphKey *Keys
-	if sendKey, ciphKey, e = Generate2Keys(); fails(e) {
+	var recvKey, ciphKey *Keys
+	if recvKey, ciphKey, e = Generate2Keys(); fails(e) {
 		return
 	}
 	reply, iv := NewSplice(RUDPHandshakeLen), nonce.New()
-	reply.IV(iv).Pubkey(ciphKey.Pub)
+	reply.Pubkey(ciphKey.Pub).IV(iv)
 	start := reply.GetCursor()
-	reply.Pubkey(sendKey.Pub)
-	if e = Encipher(reply.GetFrom(start), iv, ciphKey.Prv, rKey,
-		"handshake encode"); fails(e) {
+	reply.Pubkey(recvKey.Pub)
+	if fails(Encipher(reply.GetFrom(start), iv, ciphKey.Prv, rKey,
+		"handshake encode")) {
 		return
 	}
 	var n int
@@ -214,13 +258,13 @@ func NewOutboundRUDP(idKeys *Keys, remote *netip.AddrPort,
 		n != RUDPHandshakeLen {
 		return
 	}
+	addr := raddr.String()
+	r.Mx(func() {
+		r.recvKeys[addr] = LoadKeySlot(recvKey.Prv, recvKey.Pub)
+		// Populate so the listener loads the reply key in here:
+		r.sendKeys[addr] = LoadKeySlot(nil, nil)
+	})
 	buf := slice.NewBytes(mtu)
-	// Other side should respond with a Packet containing their receiver
-	// public key.
-	if n, e = r.conn.Read(buf); fails(e) {
-		return
-	}
-	
 	go r.listen(conn, buf, quit)
 	return
 }
