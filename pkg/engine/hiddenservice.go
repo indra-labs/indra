@@ -56,10 +56,10 @@ func (x *HiddenService) Encode(s *Splice) (e error) {
 
 func (x *HiddenService) Decode(s *Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), HiddenServiceLen-magic.Len,
-		HiddenServiceMagic); check(e) {
+		HiddenServiceMagic); fails(e) {
 		return
 	}
-	if e = x.Intro.Decode(s); check(e) {
+	if e = x.Intro.Decode(s); fails(e) {
 		return
 	}
 	s.

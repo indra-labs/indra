@@ -98,7 +98,7 @@ func (x *GetBalance) Encode(s *Splice) (e error) {
 
 func (x *GetBalance) Decode(s *Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), GetBalanceLen-magic.Len,
-		GetBalanceMagic); check(e) {
+		GetBalanceMagic); fails(e) {
 		return
 	}
 	s.ReadID(&x.ID).

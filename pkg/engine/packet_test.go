@@ -1,4 +1,4 @@
-package packet
+package engine
 
 import (
 	"crypto/rand"
@@ -17,19 +17,19 @@ func TestEncode_Decode(t *testing.T) {
 	payload := make([]byte, msgSize)
 	var e error
 	var n int
-	if n, e = rand.Read(payload); check(e) && n != msgSize {
+	if n, e = rand.Read(payload); fails(e) && n != msgSize {
 		t.Error(e)
 	}
 	payload = append([]byte("payload"), payload...)
 	pHash := sha256.Single(payload)
 	var sp, rp *prv.Key
 	var sP, rP *pub.Key
-	if sp, rp, sP, rP, e = tests.GenerateTestKeyPairs(); check(e) {
+	if sp, rp, sP, rP, e = tests.GenerateTestKeyPairs(); fails(e) {
 		t.FailNow()
 	}
 	addr := rP
 	var pkt []byte
-	params := Params{
+	params := PacketParams{
 		To:     addr,
 		From:   sp,
 		Data:   payload,
@@ -37,20 +37,20 @@ func TestEncode_Decode(t *testing.T) {
 		Parity: 64,
 		Length: msgSize,
 	}
-	if pkt, e = Encode(params); check(e) {
+	if pkt, e = EncodePacket(params); fails(e) {
 		t.Error(e)
 	}
 	var from *pub.Key
 	var to cloak.PubKey
 	_ = to
-	if from, to, e = GetKeys(pkt); check(e) {
+	if from, to, e = GetPacketKeys(pkt); fails(e) {
 		t.Error(e)
 	}
 	if !sP.ToBytes().Equals(from.ToBytes()) {
 		t.Error(e)
 	}
 	var f *Packet
-	if f, e = Decode(pkt, from, rp); check(e) {
+	if f, e = DecodePacket(pkt, from, rp); fails(e) {
 		t.Error(e)
 	}
 	dHash := sha256.Single(f.Data)

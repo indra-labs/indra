@@ -74,12 +74,12 @@ func (x *Route) Encode(s *Splice) (e error) {
 		IV(x.IV)
 	start := s.GetCursor()
 	s.ID(x.ID).Ciphers(x.Ciphers).Nonces(x.Nonces)
-	if e = x.Onion.Encode(s); check(e) {
+	if e = x.Onion.Encode(s); fails(e) {
 		return
 	}
 	var blk cipher.Block
 	// Encrypt the message!
-	if blk = ciph.GetBlock(x.Sender, x.HiddenService, "route"); check(e) {
+	if blk = ciph.GetBlock(x.Sender, x.HiddenService, "route"); fails(e) {
 		return
 	}
 	ciph.Encipher(blk, x.IV, s.GetFrom(start))
@@ -88,7 +88,7 @@ func (x *Route) Encode(s *Splice) (e error) {
 
 func (x *Route) Decode(s *Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), RouteLen-magic.Len,
-		RouteMagic); check(e) {
+		RouteMagic); fails(e) {
 		return
 	}
 	s.ReadCloak(&x.HiddenCloaked).
@@ -101,7 +101,7 @@ func (x *Route) Decode(s *Splice) (e error) {
 // recipient has the hidden service private key.
 func (x *Route) Decrypt(prk *prv.Key, s *Splice) {
 	ciph.Encipher(ciph.GetBlock(prk, x.SenderPub, "route decrypt"), x.IV,
-		s.GetCursorToEnd())
+		s.GetRest())
 	// And now we can see the reply field for the return trip.
 	s.ReadID(&x.ID).ReadCiphers(&x.Ciphers).ReadNonces(&x.Nonces).
 		ReadRoutingHeader(&x.RoutingHeaderBytes)
@@ -115,7 +115,7 @@ func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 		log.T.Ln("no matching hidden service key found from cloaked key")
 		return
 	}
-	if x.HiddenService, e = pub.FromBytes((*hc)[:]); check(e) {
+	if x.HiddenService, e = pub.FromBytes((*hc)[:]); fails(e) {
 		return
 	}
 	log.D.Ln("route key", *hc)

@@ -63,7 +63,7 @@ func (x *Crypt) Encode(s *Splice) (e error) {
 		IV(x.Nonce).Cloak(x.ToHeaderPub).Pubkey(pub.Derive(x.From))
 	// Then we can encrypt the message segment
 	var blk cipher.Block
-	if blk = ciph.GetBlock(x.From, x.ToHeaderPub, "crypt header"); check(e) {
+	if blk = ciph.GetBlock(x.From, x.ToHeaderPub, "crypt header"); fails(e) {
 		panic(e)
 	}
 	start := s.GetCursor()
@@ -76,14 +76,14 @@ func (x *Crypt) Encode(s *Splice) (e error) {
 		panic("incorrect value for crypt sequence")
 	}
 	if x.Onion != nil {
-		if e = x.Onion.Encode(s); check(e) {
+		if e = x.Onion.Encode(s); fails(e) {
 			return
 		}
 	}
 	ciph.Encipher(blk, x.Nonce, s.GetRange(start, end))
 	if end != s.Len() {
 		if blk = ciph.GetBlock(x.From, x.ToPayloadPub,
-			"crypt payload"); check(e) {
+			"crypt payload"); fails(e) {
 			return
 		}
 		ciph.Encipher(blk, x.Nonce, s.GetFrom(end))
@@ -92,7 +92,7 @@ func (x *Crypt) Encode(s *Splice) (e error) {
 }
 
 func (x *Crypt) Decode(s *Splice) (e error) {
-	if e = magic.TooShort(s.Remaining(), CryptLen-magic.Len, CryptMagic); check(e) {
+	if e = magic.TooShort(s.Remaining(), CryptLen-magic.Len, CryptMagic); fails(e) {
 		return
 	}
 	s.ReadIV(&x.Nonce).ReadCloak(&x.Cloak).ReadPubkey(&x.FromPub)
@@ -117,7 +117,7 @@ func (x *Crypt) Handle(s *Splice, p Onion,
 	x.ToPriv = hdr
 	x.Decrypt(hdr, s)
 	if identity {
-		if string(s.GetCursorToEnd()[:magic.Len]) != SessionMagic {
+		if string(s.GetRest()[:magic.Len]) != SessionMagic {
 			log.T.Ln("dropping message due to identity key with" +
 				" no following session")
 			return e

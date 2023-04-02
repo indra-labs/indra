@@ -38,7 +38,7 @@ func (x *Confirmation) Encode(s *Splice) (e error) {
 
 func (x *Confirmation) Decode(s *Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), ConfirmationLen-magic.Len,
-		ConfirmationMagic); check(e) {
+		ConfirmationMagic); fails(e) {
 		return
 	}
 	s.ReadID(&x.ID).ReadByte(&x.Load)

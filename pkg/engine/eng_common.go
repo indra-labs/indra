@@ -15,7 +15,7 @@ import (
 
 var (
 	log   = log2.GetLogger(indra.PathBase)
-	check = log.E.Chk
+	fails = log.E.Chk
 )
 
 type RoutingHeaderBytes [RoutingHeaderLen]byte
@@ -121,7 +121,7 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 	}
 	for i := range nodes {
 		var idPrv *prv.Key
-		if idPrv, e = prv.GenerateKey(); check(e) {
+		if idPrv, e = prv.GenerateKey(); fails(e) {
 			return
 		}
 		addr := slice.GenerateRandomAddrPortIPv4()
@@ -136,7 +136,7 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 			nodes[i],
 			nil,
 			nReturnSessions},
-		); check(e) {
+		); fails(e) {
 			return
 		}
 		cl[i].SetLocalNodeAddress(nodes[i].AddrPort)
@@ -180,10 +180,10 @@ func CreateNMockCircuitsWithSessions(nCirc int, nReturns int) (cl []*Engine,
 
 func GetTwoPrvKeys(t *testing.T) (prv1, prv2 *prv.Key) {
 	var e error
-	if prv1, e = prv.GenerateKey(); check(e) {
+	if prv1, e = prv.GenerateKey(); fails(e) {
 		t.FailNow()
 	}
-	if prv2, e = prv.GenerateKey(); check(e) {
+	if prv2, e = prv.GenerateKey(); fails(e) {
 		t.FailNow()
 	}
 	return

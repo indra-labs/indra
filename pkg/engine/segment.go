@@ -1,4 +1,4 @@
-package packet
+package engine
 
 import (
 	"errors"
@@ -24,22 +24,22 @@ const (
 // Split creates a series of packets including the defined Reed Solomon
 // parameters for extra parity shards and the return encryption public key for a
 // reply.
-func Split(pp Params, segSize int) (packets [][]byte, e error) {
+func Split(pp PacketParams, segSize int) (packets [][]byte, e error) {
 	if pp.Data == nil || len(pp.Data) == 0 {
 		e = fmt.Errorf(ErrEmptyBytes)
 		return
 	}
 	pp.Length = len(pp.Data)
-	overhead := Overhead
+	overhead := PacketOverhead
 	ss := segSize - overhead
 	segments := slice.Segment(pp.Data, ss)
-	segMap := NewSegments(pp.Length, segSize, Overhead, pp.Parity)
+	segMap := NewPacketSegments(pp.Length, segSize, PacketOverhead, pp.Parity)
 	var p [][]byte
 	p, e = segMap.AddParity(segments)
 	for i := range p {
 		pp.Data, pp.Seq = p[i], i
 		var s []byte
-		if s, e = Encode(pp); check(e) {
+		if s, e = EncodePacket(pp); fails(e) {
 			return
 		}
 		packets = append(packets, s)
@@ -59,8 +59,8 @@ func Join(packets Packets) (msg []byte, e error) {
 	lp := len(packets)
 	p := packets[0]
 	// Construct the segments map.
-	overhead := Overhead
-	segMap := NewSegments(int(p.Length), len(p.Data)+overhead, overhead,
+	overhead := PacketOverhead
+	segMap := NewPacketSegments(int(p.Length), len(p.Data)+overhead, overhead,
 		int(p.Parity))
 	segCount := segMap[len(segMap)-1].PEnd
 	length, red := p.Length, p.Parity
@@ -74,7 +74,7 @@ func Join(packets Packets) (msg []byte, e error) {
 		if i == 0 {
 			continue
 		}
-		// check that the sequence number isn't repeated.
+		// fail that the sequence number isn't repeated.
 		if ps.Seq == prevSeq {
 			if red == 0 {
 				e = fmt.Errorf(ErrDupe)
@@ -111,7 +111,7 @@ func Join(packets Packets) (msg []byte, e error) {
 		packets = RemovePacket(packets, discard[i]-i)
 		lp--
 	}
-	// check there is all pieces if there is no redundancy.
+	// fail there is all pieces if there is no redundancy.
 	if red == 0 && lp < segCount {
 		e = fmt.Errorf(ErrLostNoRedundant, segCount-lp, segCount)
 		return
@@ -180,11 +180,11 @@ func Join(packets Packets) (msg []byte, e error) {
 			}
 		}
 		var rs *reedsolomon.RS
-		if rs, e = reedsolomon.New(dLen, sm.PEnd-sm.DEnd); check(e) {
+		if rs, e = reedsolomon.New(dLen, sm.PEnd-sm.DEnd); fails(e) {
 			return
 		}
 		have := append(hD, hP...)
-		if e = rs.Reconst(segments, have, lD); check(e) {
+		if e = rs.Reconst(segments, have, lD); fails(e) {
 			return
 		}
 		msg = join(msg, segments[:dLen], sm.SLen, sm.Last)

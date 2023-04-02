@@ -36,7 +36,7 @@ func (x *Forward) Encode(s *Splice) error {
 
 func (x *Forward) Decode(s *Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), ForwardLen-magic.Len,
-		ForwardMagic); check(e) {
+		ForwardMagic); fails(e) {
 		return
 	}
 	s.ReadAddrPort(&x.AddrPort)

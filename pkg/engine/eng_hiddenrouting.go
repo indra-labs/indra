@@ -196,7 +196,7 @@ func GossipIntro(intro *Intro, sm *SessionManager, c qu.C) {
 		intro.Key.ToBase32Abbreviated())
 	done := qu.T()
 	msg := NewSplice(IntroLen)
-	if check(intro.Encode(msg)) {
+	if fails(intro.Encode(msg)) {
 		return
 	}
 	nPeers := sm.NodesLen()

@@ -16,7 +16,7 @@ func TestClient_SendPing(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuitsWithSessions(1, 2); check(e) {
+	if clients, e = CreateNMockCircuitsWithSessions(1, 2); fails(e) {
 		t.Error(e)
 		t.FailNow()
 	}

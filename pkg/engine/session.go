@@ -62,10 +62,10 @@ func (o Skins) Session(sess *Session) Skins {
 func NewSessionKeys(hop byte) (x *Session) {
 	var e error
 	var hdrPrv, pldPrv *prv.Key
-	if hdrPrv, e = prv.GenerateKey(); check(e) {
+	if hdrPrv, e = prv.GenerateKey(); fails(e) {
 		return
 	}
-	if pldPrv, e = prv.GenerateKey(); check(e) {
+	if pldPrv, e = prv.GenerateKey(); fails(e) {
 		return
 	}
 	return &Session{
@@ -89,7 +89,7 @@ func (x *Session) Encode(s *Splice) (e error) {
 
 func (x *Session) Decode(s *Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), SessionLen-magic.Len,
-		SessionMagic); check(e) {
+		SessionMagic); fails(e) {
 		return
 	}
 	s.

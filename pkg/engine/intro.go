@@ -50,7 +50,7 @@ func NewIntro(id nonce.ID, key *prv.Key, ap *netip.AddrPort,
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	var e error
 	var sign sig.Bytes
-	if sign, e = sig.Sign(key, hash); check(e) {
+	if sign, e = sig.Sign(key, hash); fails(e) {
 		return nil
 	}
 	in = &Intro{
@@ -69,7 +69,7 @@ func (x *Intro) Validate() bool {
 		UnixNano()))
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	key, e := x.Sig.Recover(hash)
-	if check(e) {
+	if fails(e) {
 		return false
 	}
 	if key.Equals(x.Key) && x.Expiry.After(time.Now()) {
@@ -96,7 +96,7 @@ func (x *Intro) Encode(s *Splice) (e error) {
 
 func (x *Intro) Decode(s *Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), IntroLen-magic.Len,
-		IntroMagic); check(e) {
+		IntroMagic); fails(e) {
 		
 		return
 	}
@@ -128,7 +128,7 @@ func (x *Intro) Handle(s *Splice, p Onion,
 		ng.HiddenRouting.KnownIntros[x.Key.ToBytes()] = x
 		var ok bool
 		if ok, e = ng.PendingResponses.ProcessAndDelete(x.ID, &kb,
-			s.GetAll()); ok || check(e) {
+			s.GetAll()); ok || fails(e) {
 			
 			ng.HiddenRouting.Unlock()
 			log.D.Ln("deleted pending response", x.ID)

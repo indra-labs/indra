@@ -1,4 +1,4 @@
-package packet
+package engine
 
 import (
 	"errors"
@@ -18,16 +18,16 @@ func TestSplitJoin(t *testing.T) {
 	var e error
 	var payload []byte
 	var pHash sha256.Hash
-	if payload, pHash, e = tests.GenMessage(msgSize, ""); check(e) {
+	if payload, pHash, e = tests.GenMessage(msgSize, ""); fails(e) {
 		t.FailNow()
 	}
 	var sp, rp *prv.Key
 	var rP *pub.Key
-	if sp, rp, _, rP, e = tests.GenerateTestKeyPairs(); check(e) {
+	if sp, rp, _, rP, e = tests.GenerateTestKeyPairs(); fails(e) {
 		t.FailNow()
 	}
 	addr := rP
-	params := Params{
+	params := PacketParams{
 		To:     addr,
 		From:   sp,
 		Length: len(payload),
@@ -35,7 +35,7 @@ func TestSplitJoin(t *testing.T) {
 		Parity: 128,
 	}
 	var splitted [][]byte
-	if splitted, e = Split(params, segSize); check(e) {
+	if splitted, e = Split(params, segSize); fails(e) {
 		t.Error(e)
 	}
 	var pkts Packets
@@ -44,7 +44,7 @@ func TestSplitJoin(t *testing.T) {
 		var pkt *Packet
 		var from *pub.Key
 		var to cloak.PubKey
-		if from, to, e = GetKeys(splitted[i]); check(e) {
+		if from, to, e = GetPacketKeys(splitted[i]); fails(e) {
 			log.I.Ln(i)
 			continue
 		}
@@ -52,14 +52,14 @@ func TestSplitJoin(t *testing.T) {
 			t.Error("failed to match cloak")
 			t.FailNow()
 		}
-		if pkt, e = Decode(splitted[i], from, rp); check(e) {
+		if pkt, e = DecodePacket(splitted[i], from, rp); fails(e) {
 			t.Error(e)
 		}
 		pkts = append(pkts, pkt)
 		keys = append(keys, from)
 	}
 	prev := keys[0]
-	// check all keys are the same
+	// fail all keys are the same
 	for _, k := range keys[1:] {
 		if !prev.Equals(k) {
 			t.Error(e)
@@ -67,7 +67,7 @@ func TestSplitJoin(t *testing.T) {
 		prev = k
 	}
 	var msg []byte
-	if msg, e = Join(pkts); check(e) {
+	if msg, e = Join(pkts); fails(e) {
 		t.Error(e)
 	}
 	rHash := sha256.Single(msg)
@@ -81,17 +81,17 @@ func BenchmarkSplit(b *testing.B) {
 	segSize := 1382
 	var e error
 	var payload []byte
-	if payload, _, e = tests.GenMessage(msgSize, ""); check(e) {
+	if payload, _, e = tests.GenMessage(msgSize, ""); fails(e) {
 		b.Error(e)
 	}
 	var sp *prv.Key
 	var rP *pub.Key
-	if sp, _, _, rP, e = tests.GenerateTestKeyPairs(); check(e) {
+	if sp, _, _, rP, e = tests.GenerateTestKeyPairs(); fails(e) {
 		b.FailNow()
 	}
 	addr := rP
 	for n := 0; n < b.N; n++ {
-		params := Params{
+		params := PacketParams{
 			To:     addr,
 			From:   sp,
 			Parity: 64,
@@ -99,7 +99,7 @@ func BenchmarkSplit(b *testing.B) {
 		}
 		
 		var splitted [][]byte
-		if splitted, e = Split(params, segSize); check(e) {
+		if splitted, e = Split(params, segSize); fails(e) {
 			b.Error(e)
 		}
 		_ = splitted
@@ -144,7 +144,7 @@ func TestSplitJoinFEC(t *testing.T) {
 	var e error
 	var sp, rp, Rp *prv.Key
 	var sP, rP, RP *pub.Key
-	if sp, rp, sP, rP, e = tests.GenerateTestKeyPairs(); check(e) {
+	if sp, rp, sP, rP, e = tests.GenerateTestKeyPairs(); fails(e) {
 		t.FailNow()
 	}
 	_, _, _, _ = sP, Rp, RP, rp
@@ -156,7 +156,7 @@ func TestSplitJoinFEC(t *testing.T) {
 		var payload []byte
 		var pHash sha256.Hash
 		
-		if payload, pHash, e = tests.GenMessage(msgSize, ""); check(e) {
+		if payload, pHash, e = tests.GenMessage(msgSize, ""); fails(e) {
 			
 			t.FailNow()
 		}
@@ -175,18 +175,18 @@ func TestSplitJoinFEC(t *testing.T) {
 		addr := rP
 		for p := range punctures {
 			var splitted [][]byte
-			ep := Params{
+			ep := PacketParams{
 				To:     addr,
 				From:   sp,
 				Parity: parity[i],
 				Length: len(payload),
 				Data:   payload,
 			}
-			if splitted, e = Split(ep, segSize); check(e) {
+			if splitted, e = Split(ep, segSize); fails(e) {
 				t.FailNow()
 			}
-			overhead := Overhead
-			segMap := NewSegments(len(ep.Data), segSize, overhead,
+			overhead := PacketOverhead
+			segMap := NewPacketSegments(len(ep.Data), segSize, overhead,
 				ep.Parity)
 			for segs := range segMap {
 				start := segMap[segs].DStart
@@ -217,20 +217,20 @@ func TestSplitJoinFEC(t *testing.T) {
 				var from *pub.Key
 				var to cloak.PubKey
 				_ = to
-				if from, to, e = GetKeys(
+				if from, to, e = GetPacketKeys(
 					splitted[s]); e != nil {
 					// we are puncturing, they some will
 					// fail to decode
 					continue
 				}
-				if pkt, e = Decode(splitted[s],
-					from, rp); check(e) {
+				if pkt, e = DecodePacket(splitted[s],
+					from, rp); fails(e) {
 					continue
 				}
 				pkts = append(pkts, pkt)
 				keys = append(keys, from)
 			}
-			// check all keys are the same
+			// fail all keys are the same
 			prev := keys[0]
 			for _, k := range keys[1:] {
 				if !prev.Equals(k) {
@@ -239,7 +239,7 @@ func TestSplitJoinFEC(t *testing.T) {
 				prev = k
 			}
 			var msg []byte
-			if msg, e = Join(pkts); check(e) {
+			if msg, e = Join(pkts); fails(e) {
 				t.FailNow()
 			}
 			rHash := sha256.Single(msg)

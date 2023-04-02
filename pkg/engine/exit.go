@@ -72,7 +72,7 @@ func (x *Exit) Encode(s *Splice) (e error) {
 
 func (x *Exit) Decode(s *Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), ExitLen-magic.Len,
-		ExitMagic); check(e) {
+		ExitMagic); fails(e) {
 		
 		return
 	}
@@ -91,7 +91,7 @@ func (x *Exit) Handle(s *Splice, p Onion,
 	h := sha256.Single(x.Bytes)
 	log.T.S(h)
 	log.T.F("%s received exit id %s", ng.GetLocalNodeAddressString(), x.ID)
-	if e = ng.SendFromLocalNode(x.Port, x.Bytes); check(e) {
+	if e = ng.SendFromLocalNode(x.Port, x.Bytes); fails(e) {
 		return
 	}
 	timer := time.NewTicker(time.Second * 5)

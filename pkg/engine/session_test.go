@@ -25,7 +25,7 @@ func TestOnionSkins_Session(t *testing.T) {
 		t.Error("did not unwrap")
 		t.FailNow()
 	}
-	if e := onc.Decode(s); check(e) {
+	if e := onc.Decode(s); fails(e) {
 		t.Error("did not decode")
 		t.FailNow()
 		
@@ -50,7 +50,7 @@ func TestClient_SendSessionKeys(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuits(2, 2); check(e) {
+	if clients, e = CreateNMockCircuits(2, 2); fails(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -81,7 +81,7 @@ func TestClient_SendSessionKeys(t *testing.T) {
 			wg.Done()
 			counter.Dec()
 		})
-		if check(e) {
+		if fails(e) {
 			wg.Done()
 			counter.Dec()
 		}

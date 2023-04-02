@@ -22,7 +22,7 @@ func TestEngine_Message(t *testing.T) {
 	var clients []*Engine
 	var e error
 	const nCircuits = 10
-	if clients, e = CreateNMockCircuits(nCircuits, nCircuits); check(e) {
+	if clients, e = CreateNMockCircuits(nCircuits, nCircuits); fails(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -59,7 +59,7 @@ func TestEngine_Message(t *testing.T) {
 			wg.Done()
 			counter.Dec()
 		})
-		if check(e) {
+		if fails(e) {
 			wg.Done()
 			counter.Dec()
 		}
@@ -67,7 +67,7 @@ func TestEngine_Message(t *testing.T) {
 	}
 	var idPrv *prv.Key
 	_ = idPrv
-	if idPrv, e = prv.GenerateKey(); check(e) {
+	if idPrv, e = prv.GenerateKey(); fails(e) {
 		return
 	}
 	id := nonce.NewID()
@@ -104,7 +104,7 @@ func TestEngine_Message(t *testing.T) {
 					wg.Done()
 					counter.Dec()
 				})
-				if check(e) {
+				if fails(e) {
 					wg.Done()
 					counter.Dec()
 				}

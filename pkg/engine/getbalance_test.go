@@ -46,7 +46,7 @@ func TestOnionSkins_GetBalance(t *testing.T) {
 		t.Error("did not unwrap")
 		t.FailNow()
 	}
-	if e = onc.Decode(s); check(e) {
+	if e = onc.Decode(s); fails(e) {
 		t.Error("did not decode")
 		t.FailNow()
 	}
@@ -78,7 +78,7 @@ func TestClient_SendGetBalance(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuitsWithSessions(2, 2); check(e) {
+	if clients, e = CreateNMockCircuitsWithSessions(2, 2); fails(e) {
 		t.Error(e)
 		t.FailNow()
 	}

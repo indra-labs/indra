@@ -44,7 +44,7 @@ func TestOnionSkins_IntroQuery(t *testing.T) {
 		t.Error("did not unwrap")
 		t.FailNow()
 	}
-	if e = onc.Decode(s); check(e) {
+	if e = onc.Decode(s); fails(e) {
 		t.Error("did not decode")
 		t.FailNow()
 	}
@@ -83,7 +83,7 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 	var clients []*Engine
 	var e error
 	const nCircuits = 10
-	if clients, e = CreateNMockCircuits(nCircuits, nCircuits); check(e) {
+	if clients, e = CreateNMockCircuits(nCircuits, nCircuits); fails(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -119,14 +119,14 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 			wg.Done()
 			counter.Dec()
 		})
-		if check(e) {
+		if fails(e) {
 			wg.Done()
 			counter.Dec()
 		}
 		wg.Wait()
 	}
 	var idPrv *prv.Key
-	if idPrv, e = prv.GenerateKey(); check(e) {
+	if idPrv, e = prv.GenerateKey(); fails(e) {
 		return
 	}
 	id := nonce.NewID()

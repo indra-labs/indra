@@ -12,7 +12,7 @@ var nop = &End{}
 
 func Encode(on Onion) (s *Splice) {
 	s = NewSplice(on.Len())
-	check(on.Encode(s))
+	fails(on.Encode(s))
 	return
 }
 

@@ -66,7 +66,7 @@ func (x *IntroQuery) Encode(s *Splice) (e error) {
 
 func (x *IntroQuery) Decode(s *Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), IntroQueryLen-magic.Len,
-		IntroQueryMagic); check(e) {
+		IntroQueryMagic); fails(e) {
 		return
 	}
 	s.ReadID(&x.ID).ReadCiphers(&x.Ciphers).ReadNonces(&x.Nonces).
@@ -123,7 +123,7 @@ func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *pub.Key,
 	fn := func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
 		s := LoadSplice(b, slice.NewCursor())
 		on := Recognise(s, ng.GetLocalNodeAddress())
-		if e = on.Decode(s); check(e) {
+		if e = on.Decode(s); fails(e) {
 			return
 		}
 		var oni *Intro

@@ -40,7 +40,7 @@ func TestOnionSkins_Reverse(t *testing.T) {
 			t.Error("did not unwrap")
 			t.FailNow()
 		}
-		if e := onr.Decode(s); check(e) {
+		if e := onr.Decode(s); fails(e) {
 			t.Error("did not decode")
 			t.FailNow()
 			

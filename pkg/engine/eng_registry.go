@@ -38,7 +38,7 @@ func Recognise(s *Splice, addr *netip.AddrPort) (on Onion) {
 		on = in()
 	}
 	if !ok {
-		log.D.S("decryption failure", s.GetCursorToEnd())
+		log.D.S("decryption failure", s.GetRest())
 	}
 	log.D.F("%s recognised magic %s for type %v",
 		color.Yellow.Sprint(addr.String()), color.Red.Sprint(magic),

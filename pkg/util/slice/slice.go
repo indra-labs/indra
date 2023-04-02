@@ -153,6 +153,10 @@ type Bytes []byte
 
 func (b Bytes) String() string { return string(b) }
 
+func NewBytes(length int) Bytes {
+	return make(Bytes, length)
+}
+
 func ToBytes(b []byte) (msg Bytes) { return b }
 func (b Bytes) ToBytes() []byte    { return b }
 func (b Bytes) Len() int           { return len(b) }

@@ -62,9 +62,9 @@ func NewSessionData(
 	
 	var e error
 	if hdrPrv == nil || pldPrv == nil {
-		if hdrPrv, e = prv.GenerateKey(); check(e) {
+		if hdrPrv, e = prv.GenerateKey(); fails(e) {
 		}
-		if pldPrv, e = prv.GenerateKey(); check(e) {
+		if pldPrv, e = prv.GenerateKey(); fails(e) {
 		}
 	}
 	hdrPub := pub.Derive(hdrPrv)

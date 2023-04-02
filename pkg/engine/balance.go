@@ -51,7 +51,7 @@ func (x *Balance) Encode(s *Splice) (e error) {
 
 func (x *Balance) Decode(s *Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), BalanceLen-magic.Len,
-		BalanceMagic); check(e) {
+		BalanceMagic); fails(e) {
 		return
 	}
 	s.

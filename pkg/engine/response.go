@@ -46,7 +46,7 @@ func (x *Response) Encode(s *Splice) (e error) {
 
 func (x *Response) Decode(s *Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), ResponseLen-magic.Len,
-		ResponseMagic); check(e) {
+		ResponseMagic); fails(e) {
 		return
 	}
 	s.

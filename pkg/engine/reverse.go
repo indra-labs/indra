@@ -44,7 +44,7 @@ func (x *Reverse) Encode(s *Splice) (e error) {
 
 func (x *Reverse) Decode(s *Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), ReverseLen-magic.Len,
-		ReverseMagic); check(e) {
+		ReverseMagic); fails(e) {
 		return
 	}
 	s.ReadAddrPort(&x.AddrPort)
@@ -56,7 +56,7 @@ func (x *Reverse) Handle(s *Splice, p Onion,
 	
 	if x.AddrPort.String() == ng.GetLocalNodeAddress().String() {
 		in := Recognise(s, ng.GetLocalNodeAddress())
-		if e = in.Decode(s); check(e) {
+		if e = in.Decode(s); fails(e) {
 			return e
 		}
 		if in.Magic() != CryptMagic {

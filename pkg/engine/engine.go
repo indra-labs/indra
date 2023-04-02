@@ -36,7 +36,7 @@ func NewEngine(p Params) (c *Engine, e error) {
 	p.Node.Identity.Prv = p.IDPrv
 	p.Node.Identity.Pub = pub.Derive(p.IDPrv)
 	var ks *signer.KeySet
-	if _, ks, e = signer.New(); check(e) {
+	if _, ks, e = signer.New(); fails(e) {
 		return
 	}
 	c = &Engine{
@@ -87,16 +87,16 @@ func (ng *Engine) Shutdown() {
 func (ng *Engine) HandleMessage(s *Splice, pr Onion) {
 	log.D.F("%s handling received message", ng.GetLocalNodeAddressString())
 	s.SetCursor(0)
-	s.Segments = s.Segments[:0]
+	s.SpliceSegments = s.SpliceSegments[:0]
 	on := Recognise(s, ng.GetLocalNodeAddress())
 	if on != nil {
-		if check(on.Decode(s)) {
+		if fails(on.Decode(s)) {
 			return
 		}
 		if pr != nil && on.Magic() != pr.Magic() {
 			log.D.Ln(s)
 		}
-		if check(on.Handle(s, pr, ng)) {
+		if fails(on.Handle(s, pr, ng)) {
 			log.W.S("unrecognised packet", s.GetAll().ToBytes())
 		}
 	}

@@ -40,7 +40,7 @@ func (x *Delay) Encode(s *Splice) (e error) {
 }
 
 func (x *Delay) Decode(s *Splice) (e error) {
-	if e = magic.TooShort(s.Remaining(), DelayLen-magic.Len, DelayMagic); check(e) {
+	if e = magic.TooShort(s.Remaining(), DelayLen-magic.Len, DelayMagic); fails(e) {
 		return
 	}
 	s.ReadDuration(&x.Duration)

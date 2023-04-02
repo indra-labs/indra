@@ -38,7 +38,7 @@ func TestOnionSkins_Intro(t *testing.T) {
 		t.Error("did not unwrap")
 		t.FailNow()
 	}
-	if e = onc.Decode(s); check(e) {
+	if e = onc.Decode(s); fails(e) {
 		t.Error("did not decode")
 		t.FailNow()
 	}

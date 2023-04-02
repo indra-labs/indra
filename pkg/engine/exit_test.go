@@ -22,7 +22,7 @@ func TestOnionSkins_Exit(t *testing.T) {
 	ciphers := GenCiphers(prvs, pubs)
 	var msg slice.Bytes
 	var hash sha256.Hash
-	if msg, hash, e = tests.GenMessage(512, "aoeu"); check(e) {
+	if msg, hash, e = tests.GenMessage(512, "aoeu"); fails(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -47,7 +47,7 @@ func TestOnionSkins_Exit(t *testing.T) {
 		t.Error("did not unwrap")
 		t.FailNow()
 	}
-	if e = onc.Decode(s); check(e) {
+	if e = onc.Decode(s); fails(e) {
 		t.Error("did not decode")
 		t.FailNow()
 	}
@@ -84,7 +84,7 @@ func TestClient_SendExit(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuitsWithSessions(2, 2); check(e) {
+	if clients, e = CreateNMockCircuitsWithSessions(2, 2); fails(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -99,7 +99,7 @@ func TestClient_SendExit(t *testing.T) {
 			Transport: sim,
 			RelayRate: 58000,
 		})
-		if check(e) {
+		if fails(e) {
 			t.Error(e)
 			t.FailNow()
 		}
@@ -123,13 +123,13 @@ out:
 	for i := 3; i < len(clients[0].Sessions)-1; i++ {
 		wg.Add(1)
 		var msg slice.Bytes
-		if msg, _, e = tests.GenMessage(64, "request"); check(e) {
+		if msg, _, e = tests.GenMessage(64, "request"); fails(e) {
 			t.Error(e)
 			t.FailNow()
 		}
 		var respMsg slice.Bytes
 		var respHash sha256.Hash
-		if respMsg, respHash, e = tests.GenMessage(32, "response"); check(e) {
+		if respMsg, respHash, e = tests.GenMessage(32, "response"); fails(e) {
 			t.Error(e)
 			t.FailNow()
 		}
@@ -158,7 +158,7 @@ out:
 		})
 		bb := <-clients[3].ReceiveToLocalNode(port)
 		log.T.S(bb.ToBytes())
-		if e = clients[3].SendFromLocalNode(port, respMsg); check(e) {
+		if e = clients[3].SendFromLocalNode(port, respMsg); fails(e) {
 			t.Error("fail send")
 		}
 		log.T.Ln("response sent")

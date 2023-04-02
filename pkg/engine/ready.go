@@ -59,7 +59,7 @@ func (x *Ready) Encode(s *Splice) (e error) {
 
 func (x *Ready) Decode(s *Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), ReadyLen-magic.Len,
-		ReadyMagic); check(e) {
+		ReadyMagic); fails(e) {
 		return
 	}
 	x.Return = &ReplyHeader{}

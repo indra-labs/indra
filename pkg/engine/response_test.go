@@ -15,7 +15,7 @@ func TestOnionSkins_Response(t *testing.T) {
 	id := nonce.NewID()
 	var msg slice.Bytes
 	var hash sha256.Hash
-	if msg, hash, e = tests.GenMessage(10000, ""); check(e) {
+	if msg, hash, e = tests.GenMessage(10000, ""); fails(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -30,7 +30,7 @@ func TestOnionSkins_Response(t *testing.T) {
 		t.Error("did not unwrap")
 		t.FailNow()
 	}
-	if e = onc.Decode(s); check(e) {
+	if e = onc.Decode(s); fails(e) {
 		t.Error("did not decode")
 		t.FailNow()
 	}

@@ -28,7 +28,7 @@ func TestOnionSkins_SimpleCrypt(t *testing.T) {
 		t.Error("did not unwrap")
 		t.FailNow()
 	}
-	if e = oncr.Decode(s); check(e) {
+	if e = oncr.Decode(s); fails(e) {
 		t.Error("did not decode")
 		t.FailNow()
 	}
@@ -38,7 +38,7 @@ func TestOnionSkins_SimpleCrypt(t *testing.T) {
 		t.Error("did not unwrap")
 		t.FailNow()
 	}
-	if e = oncn.Decode(s); check(e) {
+	if e = oncn.Decode(s); fails(e) {
 		t.Error("did not decode")
 		t.FailNow()
 	}

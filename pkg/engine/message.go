@@ -66,7 +66,7 @@ func (x *Message) Encode(s *Splice) (e error) {
 
 func (x *Message) Decode(s *Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), MessageLen-magic.Len,
-		MessageMagic); check(e) {
+		MessageMagic); fails(e) {
 		return
 	}
 	x.Return = &ReplyHeader{}
