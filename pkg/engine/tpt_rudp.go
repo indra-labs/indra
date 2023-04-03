@@ -116,7 +116,8 @@ func (r *RUDP) listen(conn *net.UDPConn, buf slice.Bytes,
 		case PacketMagic:
 			var fromPub *pub.Key
 			var toCloak cloak.PubKey
-			if fromPub, toCloak, e = GetPacketKeys(s.GetAll()); fails(e) {
+			var iv nonce.IV
+			if fromPub, toCloak, iv, e = GetPacketKeys(s.GetAll()); fails(e) {
 				continue
 			}
 			var to *prv.Key
@@ -129,7 +130,7 @@ func (r *RUDP) listen(conn *net.UDPConn, buf slice.Bytes,
 				}
 			})
 			var pkt *Packet
-			if pkt, e = DecodePacket(s.GetAll(), fromPub, to); fails(e) {
+			if pkt, e = DecodePacket(s.GetAll(), fromPub, to, iv); fails(e) {
 				continue
 			}
 			// The minimum pieces need to recover the packet are computable

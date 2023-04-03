@@ -27,9 +27,17 @@ const AddrLen = net.IPv6len + 2
 type NameOffset struct {
 	Offset int
 	Name   string
+	slice.Bytes
 }
 
 type SpliceSegments []NameOffset
+
+func (s SpliceSegments) String() (o string) {
+	for i := range s {
+		o += fmt.Sprintf("%s %d ", s[i].Name, s[i].Offset)
+	}
+	return
+}
 
 func (s SpliceSegments) Len() int           { return len(s) }
 func (s SpliceSegments) Less(i, j int) bool { return s[i].Offset < s[j].Offset }
@@ -385,8 +393,8 @@ func (s *Splice) Uint32(v uint32) *Splice {
 	return s
 }
 
-func (s *Splice) ReadUint32(v *uint16) *Splice {
-	*v = uint16(slice.DecodeUint32(s.b[*s.c:s.c.Inc(slice.Uint32Len)]))
+func (s *Splice) ReadUint32(v *uint32) *Splice {
+	*v = uint32(slice.DecodeUint32(s.b[*s.c:s.c.Inc(slice.Uint32Len)]))
 	s.SpliceSegments = append(s.SpliceSegments,
 		NameOffset{Offset: int(*s.c), Name: "uint32"})
 	return s
@@ -399,8 +407,8 @@ func (s *Splice) Uint64(v uint64) *Splice {
 	return s
 }
 
-func (s *Splice) ReadUint64(v *uint16) *Splice {
-	*v = uint16(slice.DecodeUint64(s.b[*s.c:s.c.Inc(slice.Uint64Len)]))
+func (s *Splice) ReadUint64(v *uint64) *Splice {
+	*v = slice.DecodeUint64(s.b[*s.c:s.c.Inc(slice.Uint64Len)])
 	s.SpliceSegments = append(s.SpliceSegments,
 		NameOffset{Offset: int(*s.c), Name: "uint64"})
 	return s
@@ -552,8 +560,30 @@ func (s *Splice) ReadSignature(sb *sig.Bytes) *Splice {
 	return s
 }
 
+func (s *Splice) Check(c slice.Bytes) *Splice {
+	copy(s.b[*s.c:s.c.Inc(4)], c[:4])
+	s.SpliceSegments = append(s.SpliceSegments,
+		NameOffset{Offset: int(*s.c), Name: "check"})
+	return s
+}
+
+func (s *Splice) ReadCheck(c *slice.Bytes) *Splice {
+	copy((*c)[:4], s.b[*s.c:s.c.Inc(4)])
+	return s
+}
+
 func (s *Splice) Done() {}
 
 func (s *Splice) Len() int {
 	return len(s.b)
+}
+
+func (s *Splice) TrailingBytes(b slice.Bytes) *Splice {
+	copy(s.b[*s.c:], b)
+	return s
+}
+
+func (s *Splice) StoreCursor(c *int) *Splice {
+	*c = int(*s.c)
+	return s
 }

@@ -4,10 +4,11 @@
 package ecdh
 
 import (
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 
 // Compute computes an Elliptic Curve Diffie-Hellman shared secret that can be

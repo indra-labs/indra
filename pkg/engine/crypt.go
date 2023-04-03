@@ -23,7 +23,7 @@ type Crypt struct {
 	Depth                     int
 	ToHeaderPub, ToPayloadPub *pub.Key
 	From                      *prv.Key
-	Nonce                     nonce.IV
+	IV                        nonce.IV
 	// The remainder here are for Decode.
 	Cloak   cloak.PubKey
 	ToPriv  *prv.Key
@@ -36,7 +36,7 @@ func init()                       { Register(CryptMagic, cryptPrototype) }
 func (x *Crypt) Len() int         { return CryptLen + x.Onion.Len() }
 func (x *Crypt) Wrap(inner Onion) { x.Onion = inner }
 
-func (o Skins) Crypt(toHdr, toPld *pub.Key, from *prv.Key, n nonce.IV,
+func (o Skins) Crypt(toHdr, toPld *pub.Key, from *prv.Key, iv nonce.IV,
 	depth int) Skins {
 	
 	return append(o, &Crypt{
@@ -44,7 +44,7 @@ func (o Skins) Crypt(toHdr, toPld *pub.Key, from *prv.Key, n nonce.IV,
 		ToHeaderPub:  toHdr,
 		ToPayloadPub: toPld,
 		From:         from,
-		Nonce:        n,
+		IV:           iv,
 		Onion:        nop,
 	})
 }
@@ -53,14 +53,14 @@ func (x *Crypt) Magic() string { return CryptMagic }
 
 func (x *Crypt) Encode(s *Splice) (e error) {
 	log.T.F("encoding %s %s %x %x", reflect.TypeOf(x),
-		x.ToHeaderPub, x.From.ToBytes(), x.Nonce,
+		x.ToHeaderPub, x.From.ToBytes(), x.IV,
 	)
 	if x.ToHeaderPub == nil || x.From == nil {
 		s.Advance(CryptLen, "crypt")
 		return
 	}
 	s.Magic(CryptMagic).
-		IV(x.Nonce).Cloak(x.ToHeaderPub).Pubkey(pub.Derive(x.From))
+		IV(x.IV).Cloak(x.ToHeaderPub).Pubkey(pub.Derive(x.From))
 	// Then we can encrypt the message segment
 	var blk cipher.Block
 	if blk = ciph.GetBlock(x.From, x.ToHeaderPub, "crypt header"); fails(e) {
@@ -80,13 +80,13 @@ func (x *Crypt) Encode(s *Splice) (e error) {
 			return
 		}
 	}
-	ciph.Encipher(blk, x.Nonce, s.GetRange(start, end))
+	ciph.Encipher(blk, x.IV, s.GetRange(start, end))
 	if end != s.Len() {
 		if blk = ciph.GetBlock(x.From, x.ToPayloadPub,
 			"crypt payload"); fails(e) {
 			return
 		}
-		ciph.Encipher(blk, x.Nonce, s.GetFrom(end))
+		ciph.Encipher(blk, x.IV, s.GetFrom(end))
 	}
 	return e
 }
@@ -95,7 +95,7 @@ func (x *Crypt) Decode(s *Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), CryptLen-magic.Len, CryptMagic); fails(e) {
 		return
 	}
-	s.ReadIV(&x.Nonce).ReadCloak(&x.Cloak).ReadPubkey(&x.FromPub)
+	s.ReadIV(&x.IV).ReadCloak(&x.Cloak).ReadPubkey(&x.FromPub)
 	return
 }
 
@@ -103,7 +103,7 @@ func (x *Crypt) Decode(s *Splice) (e error) {
 // key to derive the shared secret, and then decrypts the rest of the message.
 func (x *Crypt) Decrypt(prk *prv.Key, s *Splice) {
 	ciph.Encipher(ciph.GetBlock(prk, x.FromPub, "decrypt crypt header"),
-		x.Nonce, s.GetFrom(s.GetCursor()))
+		x.IV, s.GetRest())
 }
 
 func (x *Crypt) Handle(s *Splice, p Onion,

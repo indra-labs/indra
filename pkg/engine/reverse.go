@@ -78,7 +78,7 @@ func (x *Reverse) Handle(s *Splice, p Onion,
 		// Decrypt using the Payload key and header nonce.
 		c := s.GetCursor()
 		ciph.Encipher(ciph.GetBlock(on.ToPriv, on.FromPub, "reverse header"),
-			on.Nonce, s.GetRange(c, c+2*ReverseCryptLen))
+			on.IV, s.GetRange(c, c+2*ReverseCryptLen))
 		// shift the header segment upwards and pad the
 		// remainder.
 		s.CopyRanges(start, first, first, second)
@@ -86,7 +86,7 @@ func (x *Reverse) Handle(s *Splice, p Onion,
 		s.CopyIntoRange(slice.NoisePad(ReverseCryptLen), second, last)
 		if last != s.Len() {
 			ciph.Encipher(ciph.GetBlock(pld, on.FromPub, "reverse payload"),
-				on.Nonce, s.GetFrom(last))
+				on.IV, s.GetFrom(last))
 		}
 		if string(s.GetRange(start, start+magic.Len)) != ReverseMagic {
 			// It's for us!

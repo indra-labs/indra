@@ -1,4 +1,4 @@
-package engine
+package packet
 
 import (
 	"fmt"
@@ -6,37 +6,36 @@ import (
 	"github.com/templexxx/reedsolomon"
 )
 
-type PacketSegment struct {
+type Segment struct {
 	DStart, DEnd, PEnd, SLen, Last int
 }
 
-// // This is an expanded printer for debugging
-// func (s PacketSegment) String() (o string) {
-// 	slast := (s.PEnd-s.DEnd)*s.SLen - s.SLen + s.Last
+// This is an expanded printer for debugging
+// func (s Segment) String() (o string) {
+// 	slast := (s.PEnd-s.DEnd)*s.SLen - s.SLen + s.ID
 // 	if s.PEnd-s.DEnd == 0 {
 // 		slast = 0
 // 	}
 // 	o = fmt.Sprintf("%5d (%5d, %5d) %5d [%5d, %5d] %5d (%5d; %5d)",
-// 		s.DStart, s.DEnd-s.DStart, (s.DEnd-s.DStart-1)*s.SLen+s.Last,
+// 		s.DStart, s.DEnd-s.DStart, (s.DEnd-s.DStart-1)*s.SLen+s.ID,
 // 		s.DEnd, s.PEnd-s.DEnd, slast, s.PEnd,
-// 		s.SLen, s.Last)
+// 		s.SLen, s.ID)
 // 	return
 // }
 
 // String is a printer that produces a Go syntax formatted version of the
-// PacketSegment.
-func (s PacketSegment) String() (o string) {
+// Segment.
+func (s Segment) String() (o string) {
 	o = fmt.Sprintf(
-		"\t\tSegment{ DStart: %d, DEnd: %d, PEnd: %d, SLen: %d, Last: %d},",
-		s.DStart, s.DEnd, s.PEnd, s.SLen, s.Last)
+		"\t\tSegment{ DStart: %d, DEnd: %d, PEnd: %d, SLen: %d, ID: %d},", s.DStart, s.DEnd, s.PEnd, s.SLen, s.Last)
 	return
 }
 
-type PacketSegments []PacketSegment
+type Segments []Segment
 
 // String is a printer that produces a Go syntax formatted version of the
-// PacketSegments.
-func (s PacketSegments) String() (o string) {
+// Segments.
+func (s Segments) String() (o string) {
 	o += "\n\tSegments{"
 	for _, si := range s {
 		o += fmt.Sprintf("\n%s", si.String())
@@ -45,16 +44,16 @@ func (s PacketSegments) String() (o string) {
 	return
 }
 
-func NewPacketSegments(payloadLen, segmentSize, overhead, parity int) (s PacketSegments) {
+func NewSegments(payloadLen, segmentSize, overhead, redundancy int) (s Segments) {
 	segSize := segmentSize - overhead
 	nSegs := payloadLen/segSize + 1
 	lastSeg := payloadLen % segSize
-	sectsD := 256 - parity
-	sectsP := parity
+	sectsD := 256 - redundancy
+	sectsP := redundancy
 	withR := nSegs + nSegs*sectsP/sectsD
-	// If any redundancy is specified, if it rounds to zero, it must be bumped
-	// up to 1 in order to work with the rs encoder.
-	if withR == nSegs && parity > 0 {
+	// If any redundancy is specified, if it rounds to zero, it must be
+	// bumped up to 1 in order to work with the rs encoder.
+	if withR == nSegs && redundancy > 0 {
 		withR++
 	}
 	sects := nSegs / sectsD
@@ -67,7 +66,7 @@ func NewPacketSegments(payloadLen, segmentSize, overhead, parity int) (s PacketS
 		}
 		for i := 0; i < sects; i++ {
 			s = append(s,
-				PacketSegment{DStart: start,
+				Segment{DStart: start,
 					DEnd: start + sectsD,
 					PEnd: start + 256,
 					SLen: segSize,
@@ -77,11 +76,12 @@ func NewPacketSegments(payloadLen, segmentSize, overhead, parity int) (s PacketS
 	}
 	if lastSect > 0 {
 		endD := start + lastSect
-		// if there is redundancy the DEnd must be at least one less than PEnd.
-		if withR == endD && parity > 0 {
+		// if there is redundancy the DEnd must be at least one less
+		// than PEnd.
+		if withR == endD && redundancy > 0 {
 			withR++
 		}
-		s = append(s, PacketSegment{
+		s = append(s, Segment{
 			DStart: start,
 			DEnd:   endD,
 			PEnd:   withR,
@@ -92,7 +92,7 @@ func NewPacketSegments(payloadLen, segmentSize, overhead, parity int) (s PacketS
 	return
 }
 
-func (s PacketSegments) AddParity(segs [][]byte) (shards [][]byte, e error) {
+func (s Segments) AddParity(segs [][]byte) (shards [][]byte, e error) {
 	var segLen int
 	for i := range s {
 		segLen += s[i].DEnd - s[i].DStart
@@ -111,10 +111,10 @@ func (s PacketSegments) AddParity(segs [][]byte) (shards [][]byte, e error) {
 		}
 		if pLen > 0 {
 			var rs *reedsolomon.RS
-			if rs, e = reedsolomon.New(dLen, pLen); fails(e) {
+			if rs, e = reedsolomon.New(dLen, pLen); check(e) {
 				return
 			}
-			if e = rs.Encode(section); fails(e) {
+			if e = rs.Encode(section); check(e) {
 				return
 			}
 		}
