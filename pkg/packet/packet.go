@@ -21,7 +21,11 @@ import (
 
 var (
 	log   = log2.GetLogger(indra.PathBase)
-	check = log.E.Chk
+	fails = log.E.Chk
+)
+
+const (
+	PacketMagic = "npkt"
 )
 
 // Packet is the standard format for an encrypted, possibly segmented message
@@ -46,7 +50,7 @@ func (p *Packet) GetOverhead() int {
 
 // Overhead is the base overhead on a packet, use GetOverhead to add any extra
 // as found in a Packet.
-const Overhead = 4 + nonce.IVLen + pub.KeyLen + cloak.Len
+const Overhead = 4 + pub.KeyLen + cloak.Len + nonce.IVLen
 
 // Packets is a slice of pointers to packets.
 type Packets []*Packet
@@ -84,7 +88,7 @@ func (ep PacketParams) GetOverhead() int {
 // the signature to the end.
 func Encode(ep PacketParams) (pkt []byte, e error) {
 	var blk cipher.Block
-	if blk = ciph.GetBlock(ep.From, ep.To, "packet encode"); check(e) {
+	if blk = ciph.GetBlock(ep.From, ep.To, "packet encode"); fails(e) {
 		return
 	}
 	nonc := nonce.New()
@@ -92,7 +96,8 @@ func Encode(ep PacketParams) (pkt []byte, e error) {
 	slice.EncodeUint16(Seq, ep.Seq)
 	Length := slice.NewUint32()
 	slice.EncodeUint32(Length, ep.Length)
-	pkt = make([]byte, slice.SumLen(Seq, Length, ep.Data)+1+Overhead)
+	pkt = make([]byte, slice.SumLen(Seq, Length,
+		ep.Data)+1+Overhead+nonce.IDLen)
 	// Append pubkey used for encryption key derivation.
 	k := pub.Derive(ep.From).ToBytes()
 	cloaked := cloak.GetCloak(ep.To)
@@ -102,13 +107,14 @@ func Encode(ep PacketParams) (pkt []byte, e error) {
 	copy(pkt[*c:c.Inc(pub.KeyLen)], k[:])
 	copy(pkt[*c:c.Inc(cloak.Len)], cloaked[:])
 	copy(pkt[*c:c.Inc(nonce.IVLen)], nonc[:])
+	copy(pkt[*c:c.Inc(nonce.IDLen)], ep.ID[:])
 	copy(pkt[*c:c.Inc(slice.Uint16Len)], Seq)
 	copy(pkt[*c:c.Inc(slice.Uint32Len)], Length)
 	pkt[*c] = byte(ep.Parity)
 	copy(pkt[c.Inc(1):], ep.Data)
 	// Encrypt the encrypted part of the data.
 	ciph.Encipher(blk, nonc, pkt[Overhead:])
-	// last but not least, the packet check header, which protects the
+	// last but not least, the packet fails header, which protects the
 	// entire packet.
 	checkBytes := sha256.Single(pkt[4:])
 	copy(pkt[:4], checkBytes[:4])
@@ -137,15 +143,15 @@ func GetKeys(d []byte) (from *pub.Key, to cloak.PubKey, e error) {
 	var chek []byte
 	c := new(slice.Cursor)
 	chek = d[:c.Inc(4)]
-	copy(k[:], d[*c:c.Inc(pub.KeyLen)])
-	copy(to[:], d[*c:c.Inc(cloak.Len)])
-	checkHash := sha256.Single(d[4:])
+	checkHash := sha256.Single(d[*c:])
 	if string(chek) != string(checkHash[:4]) {
-		e = fmt.Errorf("check failed: got '%v', expected '%v'",
+		e = fmt.Errorf("fails failed: got '%v', expected '%v'",
 			chek, checkHash[:4])
 		return
 	}
-	if from, e = pub.FromBytes(k[:]); check(e) {
+	copy(k[:], d[*c:c.Inc(pub.KeyLen)])
+	copy(to[:], d[*c:c.Inc(cloak.Len)])
+	if from, e = pub.FromBytes(k[:]); fails(e) {
 		return
 	}
 	return
@@ -170,14 +176,15 @@ func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Packet, e error) {
 	c := new(slice.Cursor)
 	copy(nonc[:], d[c.Inc(4+pub.KeyLen+cloak.Len):c.Inc(nonce.IVLen)])
 	var blk cipher.Block
-	if blk = ciph.GetBlock(to, from, "packet decode"); check(e) {
+	if blk = ciph.GetBlock(to, from, "packet decode"); fails(e) {
 		return
 	}
-	// This decrypts the rest of the packet, which is encrypted for
-	// security.
+	// This decrypts the rest of the packet.
 	data := d[*c:]
 	ciph.Encipher(blk, nonc, data)
-	
+	var id slice.Bytes
+	id, data = slice.Cut(data, nonce.IDLen)
+	copy(f.ID[:], id)
 	seq := slice.NewUint16()
 	length := slice.NewUint32()
 	seq, data = slice.Cut(data, slice.Uint16Len)

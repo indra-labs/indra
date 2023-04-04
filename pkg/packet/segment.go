@@ -33,7 +33,7 @@ func Split(pp PacketParams, segSize int) (packets [][]byte, e error) {
 	for i := range p {
 		pp.Data, pp.Seq = p[i], i
 		var s []byte
-		if s, e = Encode(pp); check(e) {
+		if s, e = Encode(pp); fails(e) {
 			return
 		}
 		packets = append(packets, s)
@@ -79,7 +79,7 @@ func Join(packets Packets) (msg []byte, e error) {
 		if i == 0 {
 			continue
 		}
-		// check that the sequence number isn't repeated.
+		// fails that the sequence number isn't repeated.
 		if ps.Seq == prevSeq {
 			if red == 0 {
 				e = fmt.Errorf(ErrDupe)
@@ -116,7 +116,7 @@ func Join(packets Packets) (msg []byte, e error) {
 		packets = RemovePacket(packets, discard[i]-i)
 		lp--
 	}
-	// check there is all pieces if there is no redundancy.
+	// fails there is all pieces if there is no redundancy.
 	log.D.Ln("red", red, "lp", lp, "segCount", segCount)
 	if red == 0 && lp < segCount {
 		e = fmt.Errorf(ErrLostNoRedundant, segCount-lp, segCount)
@@ -188,11 +188,11 @@ func Join(packets Packets) (msg []byte, e error) {
 			}
 		}
 		var rs *reedsolomon.RS
-		if rs, e = reedsolomon.New(dLen, sm.PEnd-sm.DEnd); check(e) {
+		if rs, e = reedsolomon.New(dLen, sm.PEnd-sm.DEnd); fails(e) {
 			return
 		}
 		have := append(hD, hP...)
-		if e = rs.Reconst(segments, have, lD); check(e) {
+		if e = rs.Reconst(segments, have, lD); fails(e) {
 			return
 		}
 		msg = join(msg, segments[:dLen], sm.SLen, sm.Last)

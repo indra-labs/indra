@@ -17,6 +17,10 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
+func LoadKeySlot(pr *prv.Key, pb *pub.Key) (k *packet.KeySlot) {
+	return &packet.KeySlot{&Keys{Pub: pb, Bytes: pb.ToBytes(), Prv: pr}, time.Now()}
+}
+
 const (
 	RUDPHandshakeLen = nonce.IVLen + 2*pub.KeyLen
 	KeychangeMagic   = "KEYC"

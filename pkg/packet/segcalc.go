@@ -111,10 +111,10 @@ func (s Segments) AddParity(segs [][]byte) (shards [][]byte, e error) {
 		}
 		if pLen > 0 {
 			var rs *reedsolomon.RS
-			if rs, e = reedsolomon.New(dLen, pLen); check(e) {
+			if rs, e = reedsolomon.New(dLen, pLen); fails(e) {
 				return
 			}
-			if e = rs.Encode(section); check(e) {
+			if e = rs.Encode(section); fails(e) {
 				return
 			}
 		}

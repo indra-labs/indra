@@ -2,7 +2,6 @@ package engine
 
 import (
 	"crypto/cipher"
-	"time"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
@@ -45,10 +44,6 @@ func Generate2Keys() (one, two *Keys, e error) {
 func MakeKeys(pr *prv.Key) *Keys {
 	pubkey := pub.Derive(pr)
 	return &Keys{pubkey, pubkey.ToBytes(), pr}
-}
-
-func LoadKeySlot(pr *prv.Key, pb *pub.Key) (k *KeySlot) {
-	return &KeySlot{&Keys{Pub: pb, Bytes: pb.ToBytes(), Prv: pr}, time.Now()}
 }
 
 func Encipher(b slice.Bytes, iv nonce.IV, from *prv.Key, to *pub.Key,
