@@ -9,8 +9,6 @@ import (
 	"crypto/cipher"
 	"encoding/base32"
 	
-	"github.com/gookit/color"
-	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/ecdh"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
@@ -33,9 +31,9 @@ var enc = base32.NewEncoding(Charset).EncodeToString
 // keys using ECDH.
 func GetBlock(from *prv.Key, to *pub.Key, note string) (block cipher.Block) {
 	secret := ecdh.Compute(from, to)
-	fb := from.ToBytes()
-	log.T.Ln(note, "secret", color.Red.Sprint(enc(secret[:])[:52]), "<-",
-		color.Blue.Sprint(enc(fb[:])[:52]), "+", to.ToBase32())
+	// fb := from.ToBytes()
+	// log.T.Ln(note, "secret", color.Red.Sprint(enc(secret[:])[:52]), "<-",
+	// 	color.Blue.Sprint(enc(fb[:])[:52]), "+", to.ToBase32())
 	block, _ = aes.NewCipher(secret[:])
 	return
 }

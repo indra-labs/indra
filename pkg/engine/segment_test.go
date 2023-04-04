@@ -17,7 +17,7 @@ import (
 func TestSplitJoinFEC(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	_, ks, _ := signer.New()
-	msgSize := 2 << 10
+	msgSize := 1 << 11
 	segSize := 1382
 	var e error
 	var sp, rp, Rp *prv.Key
@@ -31,11 +31,13 @@ func TestSplitJoinFEC(t *testing.T) {
 		parity = append(parity, i)
 	}
 	for i := range parity {
+		log.D.Ln("parity", i)
 		var payload []byte
 		var pHash sha256.Hash
 		if payload, pHash, e = tests.GenMessage(msgSize, "b0rk"); fails(e) {
 			t.FailNow()
 		}
+		// log.D.S("original", payload)
 		var punctures []int
 		// Generate a set of numbers of punctures starting from equal to
 		// parity in a halving sequence to reduce the number but see it
@@ -50,6 +52,7 @@ func TestSplitJoinFEC(t *testing.T) {
 		}
 		addr := rP
 		for p := range punctures {
+			log.D.Ln("punctures", p)
 			var splitted [][]byte
 			params := Packet{
 				To:     addr,
@@ -65,6 +68,7 @@ func TestSplitJoinFEC(t *testing.T) {
 			overhead := PacketHeaderLen
 			segMap := NewPacketSegments(len(params.Data), segSize, overhead,
 				int(params.Parity))
+			log.D.Ln("segmap", segMap)
 			for segs := range segMap {
 				start := segMap[segs].DStart
 				end := segMap[segs].PEnd
@@ -93,18 +97,18 @@ func TestSplitJoinFEC(t *testing.T) {
 				pkt := &Packet{}
 				// log.D.S("prepacket", splitted[i])
 				s := NewSpliceFrom(splitted[spl])
-				if fails(pkt.Decode(s)) {
-					// we are puncturing, they some will
+				if pkt.Decode(s) != nil {
+					// we are puncturing, some will
 					// fail to decode
 					continue
 				}
 				if !cloak.Match(pkt.CloakTo, rP.ToBytes()) {
-					// we are puncturing, they some will
+					// we are puncturing, some will
 					// fail to decode
 					continue
 				}
-				if fails(pkt.Decrypt(rp, s)) {
-					// we are puncturing, they some will
+				if pkt.Decrypt(rp, s) != nil {
+					// we are puncturing, some will
 					// fail to decode
 					continue
 				}
@@ -117,6 +121,7 @@ func TestSplitJoinFEC(t *testing.T) {
 			}
 			rHash := sha256.Single(msg)
 			if pHash != rHash {
+				// log.D.S("msg", msg)
 				t.Error(errors.New("message did not decode" +
 					" correctly"))
 			}

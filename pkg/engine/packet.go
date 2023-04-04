@@ -88,15 +88,16 @@ func (x *Packet) Decode(s *Splice) (e error) {
 	check := make(slice.Bytes, 4)
 	s.
 		ReadMagic4(&magic).
-		ReadCheck(&check).
-		ReadPubkey(&x.fromPub).
-		ReadCloak(&x.CloakTo).
-		ReadIV(&x.iv)
+		ReadCheck(&check)
 	kb := string(kk.ToBytes())
 	cb := string(check.ToBytes())
 	if kb != cb {
 		return errors.New("packet integrity check failed")
 	}
+	s.
+		ReadPubkey(&x.fromPub).
+		ReadCloak(&x.CloakTo).
+		ReadIV(&x.iv)
 	if x.fromPub == nil {
 		return errors.New("did not parse valid public key")
 	}
