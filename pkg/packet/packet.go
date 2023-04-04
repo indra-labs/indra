@@ -27,6 +27,7 @@ var (
 // Packet is the standard format for an encrypted, possibly segmented message
 // container with parameters for Reed Solomon Forward Error Correction.
 type Packet struct {
+	ID nonce.ID
 	// Seq specifies the segment number of the message, 4 bytes long.
 	Seq uint16
 	// Length is the number of segments in the batch
@@ -63,6 +64,7 @@ func (p Packets) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 // that have been seen at time of constructing this packet that can now be
 // discarded as they will not be used to generate a cipher again.
 type PacketParams struct {
+	ID     nonce.ID
 	To     *pub.Key
 	From   *prv.Key
 	Parity int
@@ -96,9 +98,10 @@ func Encode(ep PacketParams) (pkt []byte, e error) {
 	cloaked := cloak.GetCloak(ep.To)
 	// Copy nonce, address and key over top of the header.
 	c := new(slice.Cursor)
-	copy(pkt[c.Inc(4):c.Inc(nonce.IVLen)], nonc[:])
-	copy(pkt[*c:c.Inc(cloak.Len)], cloaked[:])
+	c.Inc(4)
 	copy(pkt[*c:c.Inc(pub.KeyLen)], k[:])
+	copy(pkt[*c:c.Inc(cloak.Len)], cloaked[:])
+	copy(pkt[*c:c.Inc(nonce.IVLen)], nonc[:])
 	copy(pkt[*c:c.Inc(slice.Uint16Len)], Seq)
 	copy(pkt[*c:c.Inc(slice.Uint32Len)], Length)
 	pkt[*c] = byte(ep.Parity)
@@ -134,8 +137,8 @@ func GetKeys(d []byte) (from *pub.Key, to cloak.PubKey, e error) {
 	var chek []byte
 	c := new(slice.Cursor)
 	chek = d[:c.Inc(4)]
-	copy(to[:], d[c.Inc(nonce.IVLen):c.Inc(cloak.Len)])
 	copy(k[:], d[*c:c.Inc(pub.KeyLen)])
+	copy(to[:], d[*c:c.Inc(cloak.Len)])
 	checkHash := sha256.Single(d[4:])
 	if string(chek) != string(checkHash[:4]) {
 		e = fmt.Errorf("check failed: got '%v', expected '%v'",
@@ -165,14 +168,14 @@ func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Packet, e error) {
 	// copy the nonce
 	var nonc nonce.IV
 	c := new(slice.Cursor)
-	copy(nonc[:], d[c.Inc(4):c.Inc(nonce.IVLen)])
+	copy(nonc[:], d[c.Inc(4+pub.KeyLen+cloak.Len):c.Inc(nonce.IVLen)])
 	var blk cipher.Block
 	if blk = ciph.GetBlock(to, from, "packet decode"); check(e) {
 		return
 	}
 	// This decrypts the rest of the packet, which is encrypted for
 	// security.
-	data := d[c.Inc(pub.KeyLen+cloak.Len):]
+	data := d[*c:]
 	ciph.Encipher(blk, nonc, data)
 	
 	seq := slice.NewUint16()
