@@ -36,6 +36,7 @@ func Split(pp Packet, segSize int, ks *signer.KeySet) (packets [][]byte, e error
 	ss := segSize - overhead
 	segments := slice.Segment(pp.Data, ss)
 	segMap := NewPacketSegments(int(pp.Length), segSize, overhead, int(pp.Parity))
+	log.D.Ln("segMap", segMap, int(pp.Length), segSize, overhead, int(pp.Parity))
 	var pkts [][]byte
 	pkts, e = segMap.AddParity(segments)
 	for i := range pkts {
@@ -60,29 +61,34 @@ func Split(pp Packet, segSize int, ks *signer.KeySet) (packets [][]byte, e error
 
 // JoinPackets joins a collection of Packets together.
 func JoinPackets(packets Packets) (pact Packets, msg []byte, e error) {
+	pact = packets
 	// We return this because cleaning shouldn't be done twice on old stale
 	// data so failed joins still return the cleaned packet slice.
-	if len(packets) == 0 {
+	if len(pact) == 0 {
 		e = errors.New("empty packets")
 		return
 	}
 	// By sorting the packets we know we can iterate through them and detect
 	// missing and duplicated items by simple rules.
-	sort.Sort(packets)
-	lp := len(packets)
-	p := packets[0]
+	sort.Sort(pact)
+	lp := len(pact)
+	p := pact[0]
 	// Construct the segments map.
 	overhead := PacketHeaderLen
 	segMap := NewPacketSegments(
 		int(p.Length), len(p.Data)+overhead, overhead, int(p.Parity))
+	log.D.S("joinSegmap", segMap, int(p.Length), int(p.Length)+overhead,
+		overhead,
+		int(p.Parity))
 	segCount := segMap[len(segMap)-1].PEnd
 	length, red := p.Length, p.Parity
+	log.D.Ln("length", length)
 	id := p.ID
 	prevSeq := p.Seq
 	var discard []int
-	// Check that the data that should be common to all packets is common, and
+	// Check that the data that should be common to all pact is common, and
 	// no sequence number is repeated.
-	for i, ps := range packets {
+	for i, ps := range pact {
 		// Skip the first because we are comparing the rest to it. It is
 		// arbitrary which item is reference because all should be the same.
 		if i == 0 {
@@ -97,7 +103,7 @@ func JoinPackets(packets Packets) (pact Packets, msg []byte, e error) {
 			// Check the data is the same, then discard the second if they
 			// match.
 			if sha256.Single(ps.Data) ==
-				sha256.Single(packets[prevSeq].Data) {
+				sha256.Single(pact[prevSeq].Data) {
 				
 				discard = append(discard, int(ps.Seq))
 				// Node need to go on, we will discard this one.
@@ -129,9 +135,10 @@ func JoinPackets(packets Packets) (pact Packets, msg []byte, e error) {
 	for i := range discard {
 		// Subtracting the iterator accounts for the backwards shift of the
 		// shortened slice.
-		packets = RemovePacket(packets, discard[i]-i)
+		pact = RemovePacket(pact, discard[i]-i)
 		lp--
 	}
+	log.D.Ln("length", length)
 	// check there is all pieces if there is no redundancy.
 	if red == 0 && lp < segCount {
 		e = fmt.Errorf(ErrLostNoRedundant, segCount-lp, segCount)
@@ -140,34 +147,37 @@ func JoinPackets(packets Packets) (pact Packets, msg []byte, e error) {
 	msg = make([]byte, 0, length)
 	// If all segments were received we can just concatenate the data shards.
 	if segCount == lp {
-		log.D.Ln("all segments available")
+		log.T.Ln("all segments available")
 		for _, sm := range segMap {
 			segments := make([][]byte, 0, sm.DEnd-sm.DStart)
 			for i := sm.DStart; i < sm.DEnd; i++ {
-				segments = append(segments, packets[i].Data)
+				segments = append(segments, pact[i].Data)
 			}
-			msg = join(msg, segments, sm.SLen, sm.Last)
+			msg = join(msg, segments, sm.SLen, sm.Last)[:length]
+			// log.D.S("length", length, msg)
 		}
 		return
 	}
-	// pact = make(Packets, len(packets))
+	log.D.Ln("length", length)
+	// pact = make(Packets, len(pact))
 	// Collate to correctly ordered, so gaps are easy to find
-	// for i := range packets {
-	// 	pact[packets[i].Seq] = packets[i]
+	// for i := range pact {
+	// 	pact[pact[i].Seq] = pact[i]
 	// }
-	pact = packets
-	for i := range packets {
-		log.D.Ln("pkts", i, packets[i].Seq)
-	}
+	// for i := range pact {
+	// 	log.D.S("pkts", i, pact[i].Seq, pact[i].Data)
+	// 	log.D.Ln("pact", i)
+	// }
 	// Count and collate found and lost segments, adding empty segments if there
 	// is lost.
 	for si, sm := range segMap {
+		dSegs := sm.DEnd - sm.DStart
 		var lD, lP, hD, hP []int
 		var segments [][]byte
 		log.D.S("sm", sm)
-		// log.D.S("packets", pkts)
+		// log.D.S("pact", pkts)
+		log.D.Ln("number data", dSegs)
 		for i := sm.DStart; i < sm.DEnd; i++ {
-			log.D.Ln("i", i, len(pact))
 			if i > len(pact)-1 {
 				break
 			}
@@ -178,31 +188,39 @@ func JoinPackets(packets Packets) (pact Packets, msg []byte, e error) {
 				hD = append(hD, idx)
 			}
 		}
+		lhD, lhP := len(hD), len(hP)
+		log.D.Ln("data lhD lhP pkts", lhD, lhP, len(pact))
+		log.D.S("index", sm)
 		for i := sm.DEnd; i < sm.PEnd; i++ {
-			if i > len(pact) {
+			log.D.Ln("collating", i)
+			if i > len(pact)-1 {
 				break
 			}
 			idx := i - sm.DStart
+			log.D.Ln("idx", i, idx, sm.DStart, sm.DEnd, sm.PEnd)
 			if pact[i] == nil {
 				lP = append(lP, idx)
 			} else {
 				hP = append(hP, idx)
 			}
 		}
-		lhD, lhP := len(hD), len(hP)
-		log.D.Ln("lhD lhP pkts", lhD, lhP, len(pact))
-		if lhD+lhP < len(pact) {
+		lhD, lhP = len(hD), len(hP)
+		log.D.Ln("parity lhD lhP pkts", lhD, lhP, dSegs,
+			len(pact))
+		if lhD+lhP < dSegs {
 			// segment cannot be corrected
 			e = fmt.Errorf(ErrNotEnough, si, lhD+lhP, len(pact))
 			return
 		}
 		// if we have all the data segments we can just assemble and return.
-		if lhD == len(pact) {
+		if lhD == dSegs {
 			log.D.Ln("wut", sm.DStart, sm.DEnd)
+			log.D.S("smap", sm)
 			for i := sm.DStart; i < sm.DEnd; i++ {
 				segments = append(segments, pact[i].Data)
 			}
-			msg = join(msg, segments, sm.SLen, sm.Last)
+			msg = join(msg, segments, sm.SLen, sm.Last)[:length]
+			log.D.S("length", length, msg)
 			continue
 		}
 		// We have enough to do correction
