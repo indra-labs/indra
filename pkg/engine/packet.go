@@ -3,6 +3,7 @@ package engine
 import (
 	"crypto/cipher"
 	"fmt"
+	"time"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/cloak"
@@ -28,7 +29,8 @@ type Packet struct {
 	// Parity is the ratio of redundancy. In each 256 segment
 	Parity byte
 	// Data is the message.
-	Data []byte
+	Data      []byte
+	TimeStamp time.Time
 }
 
 // GetOverhead returns the packet frame overhead given the settings found in the
@@ -163,7 +165,7 @@ func DecodePacket(d []byte, from *pub.Key, to *prv.Key,
 		log.E.Ln(e)
 		return
 	}
-	f = &Packet{}
+	f = &Packet{TimeStamp: time.Now()}
 	// copy the nonce
 	c := new(slice.Cursor)
 	copy(iv[:], d[c.Inc(4+pub.KeyLen+cloak.Len):c.Inc(nonce.IVLen)])

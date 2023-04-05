@@ -17,52 +17,31 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
-func LoadKeySlot(pr *prv.Key, pb *pub.Key) (k *KeySlot) {
-	return &KeySlot{&Keys{Pub: pb, Bytes: pb.ToBytes(), Prv: pr}, time.Now()}
-}
-
 const (
 	RUDPHandshakeLen = nonce.IVLen + 2*pub.KeyLen
 	KeychangeMagic   = "KEYC"
 )
 
-type RUDPBuffer map[nonce.ID][]*Packet
-
-type KeySlot struct {
-	*Keys
-	lastUsed time.Time
-}
-
-type KeyChain map[string]*KeySlot
-
-type RUDP struct {
-	*Keys
-	recvKeys, sendKeys KeyChain
-	endpoint           *netip.AddrPort
-	in                 ByteChan
-	conn               *rudp.Conn
-	good, corrupt      atomic.Uint64
-	failRate           atomic.Uint32
-	bufMx              sync.Mutex
-	buffers            RUDPBuffer
-	quit               qu.C
-}
-
-func (r *RUDP) Mx(fn func()) {
-	r.bufMx.Lock()
-	fn()
-	r.bufMx.Unlock()
-}
-
-func (r *RUDP) GetParity() (parity byte) {
-	fr := r.failRate.Load()
-	p := fr * 10 / 11 // 10% higher than fail rate.
-	if p > 255 {
-		p = 255
+type (
+	RUDPBuffer map[nonce.ID][]*Packet
+	KeySlot    struct {
+		*Keys
+		lastUsed time.Time
 	}
-	parity = byte(256 - p)
-	return
-}
+	KeyChain map[string]*KeySlot
+	RUDP     struct {
+		*Keys
+		recvKeys, sendKeys KeyChain
+		endpoint           *netip.AddrPort
+		in                 ByteChan
+		conn               *rudp.Conn
+		good, corrupt      atomic.Uint64
+		failRate           atomic.Uint32
+		bufMx              sync.Mutex
+		buffers            RUDPBuffer
+		quit               qu.C
+	}
+)
 
 func NewListenerRUDP(idKeys *Keys, bindAddress net.IP, bufs,
 	mtu int, quit qu.C) (r *RUDP, e error) {
@@ -80,6 +59,72 @@ func NewListenerRUDP(idKeys *Keys, bindAddress net.IP, bufs,
 	r = MakeRUDP(idKeys, nil, rUDPConn, bufs, quit)
 	buf := slice.NewBytes(mtu)
 	go r.listen(conn, buf, quit)
+	return
+}
+
+func NewOutboundRUDP(idKeys *Keys, remote *netip.AddrPort,
+	rKey *pub.Key, local net.IP, bufs, mtu int, quit qu.C) (r *RUDP,
+	e error) {
+	
+	if mtu <= 512 {
+		mtu = 1382 // Conservative packet size limit.
+	}
+	raddr, laddr := net.UDPAddrFromAddrPort(*remote), &net.UDPAddr{IP: local}
+	var conn *net.UDPConn
+	if conn, e = net.DialUDP("udp", laddr, raddr); fails(e) {
+		return
+	}
+	r = MakeRUDP(idKeys, remote, rudp.NewConn(conn, rudp.New()), bufs, quit)
+	var recvKey, ciphKey *Keys
+	if recvKey, ciphKey, e = Generate2Keys(); fails(e) {
+		return
+	}
+	reply, iv := NewSplice(RUDPHandshakeLen), nonce.New()
+	reply.Pubkey(ciphKey.Pub).IV(iv)
+	start := reply.GetCursor()
+	reply.Pubkey(recvKey.Pub)
+	if fails(Encipher(reply.GetFrom(start), iv, ciphKey.Prv, rKey,
+		"handshake encode")) {
+		return
+	}
+	var n int
+	// Send the connection receiver public key to the other side.
+	if n, e = r.conn.Write(reply.GetAll()); fails(e) &&
+		n != RUDPHandshakeLen {
+		return
+	}
+	addr := raddr.String()
+	r.Mx(func() {
+		r.recvKeys[addr] = LoadKeySlot(recvKey.Prv, recvKey.Pub)
+		// Populate so the listener loads the reply key in here:
+		r.sendKeys[addr] = LoadKeySlot(nil, nil)
+	})
+	buf := slice.NewBytes(mtu)
+	go r.listen(conn, buf, quit)
+	return
+}
+
+func (r *RUDP) Send(b slice.Bytes) (e error) {
+	// todo: split into packets.
+	if _, e = r.conn.Write(b); fails(e) {
+	}
+	return
+}
+func (r *RUDP) Receive() <-chan slice.Bytes { return r.in }
+func (r *RUDP) Stop()                       { r.quit.Q() }
+
+func MakeRUDP(idKeys *Keys, remote *netip.AddrPort, conn *rudp.Conn,
+	bufs int, quit qu.C) (r *RUDP) {
+	r = &RUDP{
+		Keys:     idKeys,
+		recvKeys: make(KeyChain),
+		sendKeys: make(KeyChain),
+		endpoint: remote,
+		in:       make(ByteChan, bufs),
+		conn:     conn,
+		buffers:  make(RUDPBuffer),
+		quit:     quit,
+	}
 	return
 }
 
@@ -161,8 +206,8 @@ func (r *RUDP) listen(conn *net.UDPConn, buf slice.Bytes,
 					r.Mx(func() { r.buffers[pkt.ID] = buffers })
 					continue
 				}
-				// todo: handling stale stuff that never decoded.
 				r.in <- msg
+				// todo: handling stale stuff that never decoded.
 			}
 		case KeychangeMagic:
 			if s.Len() < 4+pub.KeyLen {
@@ -171,6 +216,9 @@ func (r *RUDP) listen(conn *net.UDPConn, buf slice.Bytes,
 			}
 			var peerKey *pub.Key
 			s.ReadPubkey(&peerKey)
+			if peerKey == nil {
+				continue
+			}
 			r.Mx(func() {
 				if _, ok := r.sendKeys[addr]; ok {
 					r.sendKeys[addr] = LoadKeySlot(nil, peerKey)
@@ -205,7 +253,9 @@ func (r *RUDP) listen(conn *net.UDPConn, buf slice.Bytes,
 			recvPub := pub.Derive(recvPrv)
 			r.Mx(func() { r.recvKeys[addr] = LoadKeySlot(recvPrv, recvPub) })
 			// Encode the reply.
-			o := NewSplice(pub.KeyLen + 4).Magic4(KeychangeMagic).Pubkey(recvPub)
+			o := NewSplice(pub.KeyLen + 4).
+				Magic4(KeychangeMagic).
+				Pubkey(recvPub)
 			var pkt slice.Bytes
 			if pkt, e = EncodePacket(PacketParams{
 				To:     pK,
@@ -218,8 +268,10 @@ func (r *RUDP) listen(conn *net.UDPConn, buf slice.Bytes,
 			}
 			if n, e = r.conn.Write(pkt); fails(e) &&
 				n != len(pkt) {
+				r.corrupt.Add(uint64(n))
 				continue
 			}
+			r.good.Add(uint64(n))
 			log.D.Ln("sent key change message reply")
 		}
 		select {
@@ -232,69 +284,22 @@ func (r *RUDP) listen(conn *net.UDPConn, buf slice.Bytes,
 	}
 }
 
-func NewOutboundRUDP(idKeys *Keys, remote *netip.AddrPort,
-	rKey *pub.Key, local net.IP, bufs, mtu int, quit qu.C) (r *RUDP,
-	e error) {
-	
-	if mtu <= 512 {
-		mtu = 1382 // Conservative packet size limit.
+func (r *RUDP) Mx(fn func()) {
+	r.bufMx.Lock()
+	fn()
+	r.bufMx.Unlock()
+}
+
+func (r *RUDP) GetParity() (parity byte) {
+	fr := r.failRate.Load()
+	p := fr * 10 / 11 // 10% higher than fail rate.
+	if p > 255 {
+		p = 255
 	}
-	raddr, laddr := net.UDPAddrFromAddrPort(*remote), &net.UDPAddr{IP: local}
-	var conn *net.UDPConn
-	if conn, e = net.DialUDP("udp", laddr, raddr); fails(e) {
-		return
-	}
-	r = MakeRUDP(idKeys, remote, rudp.NewConn(conn, rudp.New()), bufs, quit)
-	var recvKey, ciphKey *Keys
-	if recvKey, ciphKey, e = Generate2Keys(); fails(e) {
-		return
-	}
-	reply, iv := NewSplice(RUDPHandshakeLen), nonce.New()
-	reply.Pubkey(ciphKey.Pub).IV(iv)
-	start := reply.GetCursor()
-	reply.Pubkey(recvKey.Pub)
-	if fails(Encipher(reply.GetFrom(start), iv, ciphKey.Prv, rKey,
-		"handshake encode")) {
-		return
-	}
-	var n int
-	// Send the connection receiver public key to the other side.
-	if n, e = r.conn.Write(reply.GetAll()); fails(e) &&
-		n != RUDPHandshakeLen {
-		return
-	}
-	addr := raddr.String()
-	r.Mx(func() {
-		r.recvKeys[addr] = LoadKeySlot(recvKey.Prv, recvKey.Pub)
-		// Populate so the listener loads the reply key in here:
-		r.sendKeys[addr] = LoadKeySlot(nil, nil)
-	})
-	buf := slice.NewBytes(mtu)
-	go r.listen(conn, buf, quit)
+	parity = byte(256 - p)
 	return
 }
 
-func MakeRUDP(idKeys *Keys, remote *netip.AddrPort, conn *rudp.Conn,
-	bufs int, quit qu.C) (r *RUDP) {
-	r = &RUDP{
-		Keys:     idKeys,
-		recvKeys: make(KeyChain),
-		sendKeys: make(KeyChain),
-		endpoint: remote,
-		in:       make(ByteChan, bufs),
-		conn:     conn,
-		buffers:  make(RUDPBuffer),
-		quit:     quit,
-	}
-	return
+func LoadKeySlot(pr *prv.Key, pb *pub.Key) (k *KeySlot) {
+	return &KeySlot{&Keys{Pub: pb, Bytes: pb.ToBytes(), Prv: pr}, time.Now()}
 }
-
-func (r *RUDP) Send(b slice.Bytes) (e error) {
-	// todo: split into packets.
-	if _, e = r.conn.Write(b); fails(e) {
-	}
-	return
-}
-
-func (r *RUDP) Receive() <-chan slice.Bytes { return r.in }
-func (r *RUDP) Stop()                       { r.quit.Q() }
