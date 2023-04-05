@@ -1,4 +1,4 @@
-package packet
+package engine
 
 import (
 	"errors"
@@ -8,6 +8,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/cloak"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/tests"
@@ -37,7 +38,7 @@ func TestSplitJoin(t *testing.T) {
 		Parity: 128,
 	}
 	var splitted [][]byte
-	if splitted, e = Split(params, segSize); fails(e) {
+	if _, splitted, e = SplitToPackets(params, segSize); fails(e) {
 		t.Error(e)
 	}
 	// log.D.S("splittid", splitted)
@@ -48,11 +49,12 @@ func TestSplitJoin(t *testing.T) {
 		var from *pub.Key
 		var to cloak.PubKey
 		_ = to
-		if from, to, e = GetKeys(splitted[i]); fails(e) {
+		var iv nonce.IV
+		if from, to, iv, e = GetKeysFromPacket(splitted[i]); fails(e) {
 			log.I.Ln(i)
 			continue
 		}
-		if pkt, e = Decode(splitted[i], from, rp); fails(e) {
+		if pkt, e = DecodePacket(splitted[i], from, rp, iv); fails(e) {
 			t.Error(e)
 		}
 		pkts = append(pkts, pkt)
@@ -67,7 +69,7 @@ func TestSplitJoin(t *testing.T) {
 		prev = k
 	}
 	var msg []byte
-	if msg, e = Join(pkts); fails(e) {
+	if pkts, msg, e = JoinPackets(pkts); fails(e) {
 		t.Error(e)
 	}
 	rHash := sha256.Single(msg)
@@ -99,7 +101,7 @@ func BenchmarkSplit(b *testing.B) {
 		}
 		
 		var splitted [][]byte
-		if splitted, e = Split(params, segSize); fails(e) {
+		if _, splitted, e = SplitToPackets(params, segSize); fails(e) {
 			b.Error(e)
 		}
 		_ = splitted
@@ -181,12 +183,12 @@ func TestSplitJoinFEC(t *testing.T) {
 				Length: len(payload),
 				Data:   payload,
 			}
-			if splitted, e = Split(ep, segSize); fails(e) {
+			if _, splitted, e = SplitToPackets(ep, segSize); fails(e) {
 				t.Error(e)
 				t.FailNow()
 			}
 			overhead := ep.GetOverhead()
-			segMap := NewSegments(len(ep.Data), segSize, overhead,
+			segMap := NewPacketSegments(len(ep.Data), segSize, overhead,
 				ep.Parity)
 			for segs := range segMap {
 				start := segMap[segs].DStart
@@ -217,21 +219,22 @@ func TestSplitJoinFEC(t *testing.T) {
 				var from *pub.Key
 				var to cloak.PubKey
 				_ = to
-				if from, to, e = GetKeys(
+				var iv nonce.IV
+				if from, to, iv, e = GetKeysFromPacket(
 					splitted[s]); e != nil {
 					// we are puncturing, they some will
 					// fail to decode
 					continue
 				}
-				if pkt, e = Decode(splitted[s],
-					from, rp); fails(e) {
+				if pkt, e = DecodePacket(splitted[s],
+					from, rp, iv); fails(e) {
 					continue
 				}
 				pkts = append(pkts, pkt)
 				keys = append(keys, from)
 			}
 			var msg []byte
-			if msg, e = Join(pkts); fails(e) {
+			if pkts, msg, e = JoinPackets(pkts); fails(e) {
 				t.FailNow()
 			}
 			rHash := sha256.Single(msg)

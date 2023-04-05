@@ -1,27 +1,16 @@
-// Package packet provides a standard message binary serialised data format and
-// message segmentation scheme which includes address.Sender cloaked public
-// key and address.Receiver private keys for generating a shared cipher and applying
-// to messages/message segments.
-package packet
+package engine
 
 import (
 	"crypto/cipher"
 	"fmt"
 	
-	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/cloak"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
-	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
-)
-
-var (
-	log   = log2.GetLogger(indra.PathBase)
-	fails = log.E.Chk
 )
 
 const (
@@ -83,10 +72,10 @@ func (ep PacketParams) GetOverhead() int {
 	return Overhead
 }
 
-// Encode creates a Packet, encrypts the payload using the given private from
+// EncodePacket creates a Packet, encrypts the payload using the given private from
 // key and the public to key, serializes the form, signs the bytes and appends
 // the signature to the end.
-func Encode(ep PacketParams) (pkt []byte, e error) {
+func EncodePacket(ep PacketParams) (pkt []byte, e error) {
 	var blk cipher.Block
 	if blk = ciph.GetBlock(ep.From, ep.To, "packet encode"); fails(e) {
 		return
@@ -121,14 +110,16 @@ func Encode(ep PacketParams) (pkt []byte, e error) {
 	return
 }
 
-// GetKeys returns the ToHeaderPub field of the message in order, checks the packet
+// GetKeysFromPacket returns the ToHeaderPub field of the message in order, checks the packet
 // checksum and recovers the public key.
 //
 // After this, if the matching private key to the cloaked address returned is
 // found, it is combined with the public key to generate the cipher and the
-// entire packet should then be decrypted, and the Decode function will then
+// entire packet should then be decrypted, and the DecodePacket function will then
 // decode a OnionSkin.
-func GetKeys(d []byte) (from *pub.Key, to cloak.PubKey, e error) {
+func GetKeysFromPacket(d []byte) (from *pub.Key, to cloak.PubKey, iv nonce.IV,
+	e error) {
+	
 	pktLen := len(d)
 	if pktLen < Overhead {
 		// If this isn't checked the slice operations later can hit
@@ -157,10 +148,12 @@ func GetKeys(d []byte) (from *pub.Key, to cloak.PubKey, e error) {
 	return
 }
 
-// Decode a packet and return the Packet with encrypted payload and signer's
-// public key. This assumes GetKeys succeeded and the matching private key was
+// DecodePacket a packet and return the Packet with encrypted payload and signer's
+// public key. This assumes GetKeysFromPacket succeeded and the matching private key was
 // found.
-func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Packet, e error) {
+func DecodePacket(d []byte, from *pub.Key, to *prv.Key,
+	iv nonce.IV) (f *Packet, e error) {
+	
 	pktLen := len(d)
 	if pktLen < Overhead {
 		// If this isn't checked the slice operations later can hit
@@ -172,16 +165,15 @@ func Decode(d []byte, from *pub.Key, to *prv.Key) (f *Packet, e error) {
 	}
 	f = &Packet{}
 	// copy the nonce
-	var nonc nonce.IV
 	c := new(slice.Cursor)
-	copy(nonc[:], d[c.Inc(4+pub.KeyLen+cloak.Len):c.Inc(nonce.IVLen)])
+	copy(iv[:], d[c.Inc(4+pub.KeyLen+cloak.Len):c.Inc(nonce.IVLen)])
 	var blk cipher.Block
 	if blk = ciph.GetBlock(to, from, "packet decode"); fails(e) {
 		return
 	}
 	// This decrypts the rest of the packet.
 	data := d[*c:]
-	ciph.Encipher(blk, nonc, data)
+	ciph.Encipher(blk, iv, data)
 	var id slice.Bytes
 	id, data = slice.Cut(data, nonce.IDLen)
 	copy(f.ID[:], id)

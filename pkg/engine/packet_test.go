@@ -1,4 +1,4 @@
-package packet
+package engine
 
 import (
 	"crypto/rand"
@@ -8,6 +8,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/cloak"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/util/tests"
 )
@@ -37,20 +38,21 @@ func TestEncode_Decode(t *testing.T) {
 		Parity: 64,
 		Length: msgSize,
 	}
-	if pkt, e = Encode(params); fails(e) {
+	if pkt, e = EncodePacket(params); fails(e) {
 		t.Error(e)
 	}
 	var from *pub.Key
 	var to cloak.PubKey
 	_ = to
-	if from, to, e = GetKeys(pkt); fails(e) {
+	var iv nonce.IV
+	if from, to, iv, e = GetKeysFromPacket(pkt); fails(e) {
 		t.Error(e)
 	}
 	if !sP.ToBytes().Equals(from.ToBytes()) {
 		t.Error(e)
 	}
 	var f *Packet
-	if f, e = Decode(pkt, from, rp); fails(e) {
+	if f, e = DecodePacket(pkt, from, rp, iv); fails(e) {
 		t.Error(e)
 	}
 	dHash := sha256.Single(f.Data)

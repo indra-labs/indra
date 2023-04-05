@@ -1,4 +1,4 @@
-package packet
+package engine
 
 import (
 	"errors"
@@ -13,12 +13,14 @@ import (
 
 const ErrEmptyBytes = "cannot encode empty bytes"
 
-// Split creates a series of packets including the defined Reed Solomon
+// SplitToPackets creates a series of packets including the defined Reed Solomon
 // parameters for extra parity shards and the return encryption public key for a
 // reply.
 //
 // The last packet that falls short of the segmentSize is padded random bytes.
-func Split(pp PacketParams, segSize int) (packets [][]byte, e error) {
+func SplitToPackets(pp PacketParams,
+	segSize int) (pkts Packets, packets [][]byte, e error) {
+	
 	if pp.Data == nil || len(pp.Data) == 0 {
 		e = fmt.Errorf(ErrEmptyBytes)
 		return
@@ -27,13 +29,13 @@ func Split(pp PacketParams, segSize int) (packets [][]byte, e error) {
 	overhead := pp.GetOverhead()
 	ss := segSize - overhead
 	segments := slice.Segment(pp.Data, ss)
-	segMap := NewSegments(pp.Length, segSize, pp.GetOverhead(), pp.Parity)
+	segMap := NewPacketSegments(pp.Length, segSize, pp.GetOverhead(), pp.Parity)
 	var p [][]byte
 	p, e = segMap.AddParity(segments)
 	for i := range p {
 		pp.Data, pp.Seq = p[i], i
 		var s []byte
-		if s, e = Encode(pp); fails(e) {
+		if s, e = EncodePacket(pp); fails(e) {
 			return
 		}
 		packets = append(packets, s)
@@ -48,8 +50,8 @@ const ErrMismatch = "found disagreement about common data in segment %d of %d" +
 const ErrNotEnough = "too many lost to recover in section %d, have %d, need " +
 	"%d minimum"
 
-// Join a collection of Packets together.
-func Join(packets Packets) (msg []byte, e error) {
+// JoinPackets a collection of Packets together.
+func JoinPackets(packets Packets) (pkts Packets, msg []byte, e error) {
 	if len(packets) == 0 {
 		e = errors.New("empty packets")
 		return
@@ -63,7 +65,7 @@ func Join(packets Packets) (msg []byte, e error) {
 	overhead := p.GetOverhead()
 	log.D.Ln(
 		int(p.Length), len(p.Data)+overhead, overhead, int(p.Parity))
-	segMap := NewSegments(
+	segMap := NewPacketSegments(
 		int(p.Length), len(p.Data)+overhead, overhead, int(p.Parity))
 	segCount := segMap[len(segMap)-1].PEnd
 	log.D.S("segMap", segMap)
@@ -134,7 +136,7 @@ func Join(packets Packets) (msg []byte, e error) {
 		}
 		return
 	}
-	pkts := make(Packets, segCount)
+	pkts = make(Packets, segCount)
 	// Collate to correctly ordered, so gaps are easy to find
 	for i := range packets {
 		pkts[packets[i].Seq] = packets[i]

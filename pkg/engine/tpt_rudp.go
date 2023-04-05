@@ -17,8 +17,8 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
-func LoadKeySlot(pr *prv.Key, pb *pub.Key) (k *packet.KeySlot) {
-	return &packet.KeySlot{&Keys{Pub: pb, Bytes: pb.ToBytes(), Prv: pr}, time.Now()}
+func LoadKeySlot(pr *prv.Key, pb *pub.Key) (k *KeySlot) {
+	return &KeySlot{&Keys{Pub: pb, Bytes: pb.ToBytes(), Prv: pr}, time.Now()}
 }
 
 const (
@@ -121,7 +121,7 @@ func (r *RUDP) listen(conn *net.UDPConn, buf slice.Bytes,
 			var fromPub *pub.Key
 			var toCloak cloak.PubKey
 			var iv nonce.IV
-			if fromPub, toCloak, iv, e = GetPacketKeys(s.GetAll()); fails(e) {
+			if fromPub, toCloak, iv, e = GetKeysFromPacket(s.GetAll()); fails(e) {
 				continue
 			}
 			var to *prv.Key
