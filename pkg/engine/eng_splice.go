@@ -105,11 +105,8 @@ func (s *Splice) String() (o string) {
 				if oo, e = based32.Codec.Encode(v.ToBytes()); fails(e) {
 					o += "<error: " + e.Error() + " >"
 				}
-				tmp := make(slice.Bytes, len(oo))
-				// Return the order.
-				for j := range tmp {
-					tmp[len(oo)-1-j] = oo[j]
-				}
+				oo = oo[3:]
+				tmp := make(slice.Bytes, 0, len(oo))
 				tmp = append(tmp[:13], append([]byte("..."),
 					tmp[len(tmp)-8:]...)...)
 				oo = string(tmp)

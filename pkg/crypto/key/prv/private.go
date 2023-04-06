@@ -4,9 +4,11 @@ package prv
 
 import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-
+	
 	"git-indra.lan/indra-labs/indra"
+	"git-indra.lan/indra-labs/indra/pkg/b32/based32"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 var (
@@ -29,6 +31,23 @@ func GenerateKey() (prv *Key, e error) {
 		return
 	}
 	return (*Key)(p), e
+}
+
+func (k *Key) ToBase32() (s string) {
+	b := k.ToBytes()
+	var e error
+	if s, e = based32.Codec.Encode(b[:]); check(e) {
+	}
+	ss := []byte(s[1:])
+	return string(ss)
+}
+
+func FromBase32(s string) (k *Key, e error) {
+	ss := []byte(s)
+	var b slice.Bytes
+	b, e = based32.Codec.Decode("a" + string(ss))
+	k = PrivkeyFromBytes(b)
+	return
 }
 
 // PrivkeyFromBytes converts a byte slice into a private key.

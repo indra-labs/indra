@@ -94,7 +94,7 @@ func (ng *Engine) HandleMessage(s *Splice, pr Onion) {
 			return
 		}
 		if pr != nil && on.Magic() != pr.Magic() {
-			log.D.Ln(s)
+			log.D.S(s.b.ToBytes())
 		}
 		if fails(on.Handle(s, pr, ng)) {
 			log.W.S("unrecognised packet", s.GetAll().ToBytes())

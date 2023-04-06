@@ -93,36 +93,24 @@ func (k *Key) ToBase32() (s string) {
 	var e error
 	if s, e = based32.Codec.Encode(b[:]); check(e) {
 	}
-	ss := []byte(s)
-	// Reverse text order to get all starting ciphers.
-	for i := 0; i < len(s)/2; i++ {
-		ss[i], ss[len(s)-i-1] = ss[len(s)-i-1], ss[i]
-	}
-	return color.LightGreen.Sprint(string(ss))
+	ss := []byte(s)[3:]
+	// // Reverse text order to get all starting ciphers.
+	// for i := 0; i < len(s)/2; i++ {
+	// 	ss[i], ss[len(s)-i-1] = ss[len(s)-i-1], ss[i]
+	// }
+	return string(ss)
 }
 
 func (k *Key) ToBase32Abbreviated() (s string) {
-	b := k.ToBytes()
-	var e error
-	if s, e = based32.Codec.Encode(b[:]); check(e) {
-	}
-	ss := []byte(s)
-	// Reverse text order to get all starting ciphers.
-	for i := 0; i < len(s)/2; i++ {
-		ss[i], ss[len(s)-i-1] = ss[len(s)-i-1], ss[i]
-	}
-	ss = append(ss[:13], append([]byte("..."), ss[len(ss)-8:]...)...)
-	return color.LightGreen.Sprint(string(ss))
+	s = k.ToBase32()
+	s = s[:13] + "..." + s[len(s)-8:]
+	return color.LightGreen.Sprint(string(s))
 }
 
 func FromBase32(s string) (k *Key, e error) {
 	ss := []byte(s)
-	// Reverse text order to get all starting ciphers.
-	for i := 0; i < len(s)/2; i++ {
-		ss[i], ss[len(s)-i-1] = ss[len(s)-i-1], ss[i]
-	}
 	var b slice.Bytes
-	b, e = based32.Codec.Decode(string(ss))
+	b, e = based32.Codec.Decode("ayb" + string(ss))
 	return FromBytes(b)
 }
 

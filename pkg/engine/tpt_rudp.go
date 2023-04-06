@@ -18,19 +18,24 @@ import (
 )
 
 const (
-	RUDPHandshakeLen = nonce.IVLen + 2*pub.KeyLen
-	KeychangeMagic   = "KEYC"
+	RCPHandshakeLen = nonce.IVLen + 2*pub.KeyLen
+	KeychangeMagic  = "KEYC"
 )
 
 type (
-	RUDPBuffer map[nonce.ID][]*Packet
-	KeySlot    struct {
+	RCPBuffer map[nonce.ID][]*Packet
+	KeySlot   struct {
 		*Keys
 		lastUsed time.Time
 	}
 	KeyChain map[string]*KeySlot
-	RUDP     struct {
+	// RCP - Resilient Communication Protocol is a protocol based on rUDP from
+	// Plan 9 OS that adds dynamic error correction redundancy to messages
+	// aiming to avoid retransmission, minimising latency by trading off
+	// bandwidth capacity.
+	RCP struct {
 		*Keys
+		mtu                int
 		recvKeys, sendKeys KeyChain
 		endpoint           *netip.AddrPort
 		in                 ByteChan
@@ -38,13 +43,13 @@ type (
 		good, corrupt      atomic.Uint64
 		failRate           atomic.Uint32
 		bufMx              sync.Mutex
-		buffers            RUDPBuffer
+		buffers            RCPBuffer
 		quit               qu.C
 	}
 )
 
-func NewListenerRUDP(idKeys *Keys, bindAddress net.IP, bufs,
-	mtu int, quit qu.C) (r *RUDP, e error) {
+func NewListenerRCP(idKeys *Keys, bindAddress net.IP, bufs,
+	mtu int, quit qu.C) (r *RCP, e error) {
 	
 	if mtu <= 512 {
 		// Conservative packet size limit.
@@ -56,14 +61,14 @@ func NewListenerRUDP(idKeys *Keys, bindAddress net.IP, bufs,
 		return
 	}
 	rUDPConn := rudp.NewConn(conn, rudp.New())
-	r = MakeRUDP(idKeys, nil, rUDPConn, bufs, quit)
+	r = MakeRCP(idKeys, nil, rUDPConn, bufs, mtu, quit)
 	buf := slice.NewBytes(mtu)
 	go r.listen(conn, buf, quit)
 	return
 }
 
-func NewOutboundRUDP(idKeys *Keys, remote *netip.AddrPort,
-	rKey *pub.Key, local net.IP, bufs, mtu int, quit qu.C) (r *RUDP,
+func NewOutboundRCP(idKeys *Keys, remote *netip.AddrPort,
+	rKey *pub.Key, local net.IP, bufs, mtu int, quit qu.C) (r *RCP,
 	e error) {
 	
 	if mtu <= 512 {
@@ -74,12 +79,13 @@ func NewOutboundRUDP(idKeys *Keys, remote *netip.AddrPort,
 	if conn, e = net.DialUDP("udp", laddr, raddr); fails(e) {
 		return
 	}
-	r = MakeRUDP(idKeys, remote, rudp.NewConn(conn, rudp.New()), bufs, quit)
+	r = MakeRCP(idKeys, remote, rudp.NewConn(conn, rudp.New()), bufs, mtu,
+		quit)
 	var recvKey, ciphKey *Keys
 	if recvKey, ciphKey, e = Generate2Keys(); fails(e) {
 		return
 	}
-	reply, iv := NewSplice(RUDPHandshakeLen), nonce.New()
+	reply, iv := NewSplice(RCPHandshakeLen), nonce.New()
 	reply.Pubkey(ciphKey.Pub).IV(iv)
 	start := reply.GetCursor()
 	reply.Pubkey(recvKey.Pub)
@@ -89,8 +95,8 @@ func NewOutboundRUDP(idKeys *Keys, remote *netip.AddrPort,
 	}
 	var n int
 	// Send the connection receiver public key to the other side.
-	if n, e = r.conn.Write(reply.GetAll()); fails(e) &&
-		n != RUDPHandshakeLen {
+	if n, e = r.conn.Write(reply.GetAll()); fails(e) ||
+		n != RCPHandshakeLen {
 		return
 	}
 	addr := raddr.String()
@@ -104,33 +110,35 @@ func NewOutboundRUDP(idKeys *Keys, remote *netip.AddrPort,
 	return
 }
 
-func (r *RUDP) Send(b slice.Bytes) (e error) {
+func (r *RCP) Send(b slice.Bytes) (e error) {
 	// todo: split into packets.
 	if _, e = r.conn.Write(b); fails(e) {
 	}
 	return
 }
-func (r *RUDP) Receive() <-chan slice.Bytes { return r.in }
-func (r *RUDP) Stop()                       { r.quit.Q() }
+func (r *RCP) Receive() <-chan slice.Bytes { return r.in }
+func (r *RCP) Stop()                       { r.quit.Q() }
 
-func MakeRUDP(idKeys *Keys, remote *netip.AddrPort, conn *rudp.Conn,
-	bufs int, quit qu.C) (r *RUDP) {
-	r = &RUDP{
+func MakeRCP(idKeys *Keys, remote *netip.AddrPort, conn *rudp.Conn,
+	bufs, mtu int, quit qu.C) (r *RCP) {
+	r = &RCP{
 		Keys:     idKeys,
+		mtu:      mtu,
 		recvKeys: make(KeyChain),
 		sendKeys: make(KeyChain),
 		endpoint: remote,
 		in:       make(ByteChan, bufs),
 		conn:     conn,
-		buffers:  make(RUDPBuffer),
+		buffers:  make(RCPBuffer),
 		quit:     quit,
 	}
 	return
 }
 
-func (r *RUDP) listen(conn *net.UDPConn, buf slice.Bytes,
+func (r *RCP) listen(conn *net.UDPConn, buf slice.Bytes,
 	quit qu.C) {
 	
+	log.T.F("starting rudp listener for %s", r.conn.LocalAddr().String())
 	var e error
 	listener := rudp.NewListener(conn)
 	for {
@@ -182,33 +190,34 @@ func (r *RUDP) listen(conn *net.UDPConn, buf slice.Bytes,
 			if pkt, e = DecodePacket(s.GetAll(), fromPub, to, iv); fails(e) {
 				continue
 			}
-			// The minimum pieces need to recover the packet are computable
-			// by the length field and the length of the data field.
-			// If the number in the buffer exceeds this number we want to
-			// attempt reassembly.
+			// The minimum pieces need to recover the packet are computable by
+			// the length field and the length of the data field. If the number
+			// in the buffer exceeds the data shards required we want to attempt
+			// reassembly.
 			lq := int(pkt.Length) / len(pkt.Data)
 			lm := int(pkt.Length) % len(pkt.Data)
 			if lm != 0 {
 				lq++
 			}
 			var buffers []*Packet
+			var msg []byte
 			r.Mx(func() {
 				r.buffers[pkt.ID] = append(r.buffers[pkt.ID], pkt)
 				if len(r.buffers[pkt.ID]) >= lq {
 					buffers = r.buffers[pkt.ID]
 				}
-			})
-			if buffers != nil {
-				var msg []byte
-				if buffers, msg, e = JoinPackets(buffers); fails(e) {
-					// Pass it back afterwards as the JoinPackets function
-					// cleans stuff that doesn't need to be done twice.
-					r.Mx(func() { r.buffers[pkt.ID] = buffers })
-					continue
+				if buffers != nil {
+					if buffers, msg, e = JoinPackets(buffers); fails(e) {
+						// Pass it back afterwards as the JoinPackets function
+						// cleans stuff that doesn't need to be done twice.
+						r.buffers[pkt.ID] = buffers
+					}
 				}
+			})
+			if msg != nil {
 				r.in <- msg
-				// todo: handling stale stuff that never decoded.
 			}
+			// todo: handling stale stuff that never decoded.
 		case KeychangeMagic:
 			if s.Len() < 4+pub.KeyLen {
 				log.D.F("message too short to contain a public key")
@@ -228,7 +237,7 @@ func (r *RUDP) listen(conn *net.UDPConn, buf slice.Bytes,
 			// If it is not a message, it is the delivery of a receiver public
 			// key for the client, and we generate a new one and send it back
 			// encrypted in a packet addressed to the provided key.
-			if n < RUDPHandshakeLen {
+			if n < RCPHandshakeLen {
 				log.D.Ln("message too short for handshake")
 				continue
 			}
@@ -284,13 +293,13 @@ func (r *RUDP) listen(conn *net.UDPConn, buf slice.Bytes,
 	}
 }
 
-func (r *RUDP) Mx(fn func()) {
+func (r *RCP) Mx(fn func()) {
 	r.bufMx.Lock()
 	fn()
 	r.bufMx.Unlock()
 }
 
-func (r *RUDP) GetParity() (parity byte) {
+func (r *RCP) GetParity() (parity byte) {
 	fr := r.failRate.Load()
 	p := fr * 10 / 11 // 10% higher than fail rate.
 	if p > 255 {
