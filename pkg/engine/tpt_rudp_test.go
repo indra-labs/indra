@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"net"
 	"testing"
 	"time"
 	
@@ -10,7 +9,7 @@ import (
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 )
 
-func TestRUDP(t *testing.T) {
+func TestRCP(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	var e error
 	var one, two *Keys
@@ -20,9 +19,13 @@ func TestRUDP(t *testing.T) {
 	}
 	_ = two
 	quit := qu.T()
-	if lis, e = NewListenerRCP(one, net.ParseIP(""), 64, 1382, quit); fails(e) {
+	listenerAddress := "0.0.0.0"
+	if lis, e = NewListenerRCP(one, listenerAddress, 64, 1382,
+		quit); fails(e) {
 		t.FailNow()
 	}
-	time.Sleep(time.Second)
+	
 	lis.Stop()
+	time.Sleep(10 * time.Second)
+	<-quit
 }

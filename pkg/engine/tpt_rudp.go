@@ -48,35 +48,46 @@ type (
 	}
 )
 
-func NewListenerRCP(idKeys *Keys, bindAddress net.IP, bufs,
+func NewListenerRCP(idKeys *Keys, address string, bufs,
 	mtu int, quit qu.C) (r *RCP, e error) {
 	
 	if mtu <= 512 {
 		// Conservative packet size limit.
 		mtu = 1382
 	}
+	bindAddress := net.ParseIP(address)
+	network := "udp"
+	if bindAddress.To4() != nil {
+		network = "udp4"
+	}
 	addr := &net.UDPAddr{IP: bindAddress, Port: 0}
 	var conn *net.UDPConn
-	if conn, e = net.ListenUDP("udp", addr); fails(e) {
+	if conn, e = net.ListenUDP(network, addr); fails(e) {
 		return
 	}
 	rUDPConn := rudp.NewConn(conn, rudp.New())
 	r = MakeRCP(idKeys, nil, rUDPConn, bufs, mtu, quit)
 	buf := slice.NewBytes(mtu)
-	go r.listen(conn, buf, quit)
+	go r.listen(conn, buf)
 	return
 }
 
 func NewOutboundRCP(idKeys *Keys, remote *netip.AddrPort,
-	rKey *pub.Key, local net.IP, bufs, mtu int, quit qu.C) (r *RCP,
+	rKey *pub.Key, local string, bufs, mtu int, quit qu.C) (r *RCP,
 	e error) {
 	
 	if mtu <= 512 {
 		mtu = 1382 // Conservative packet size limit.
 	}
-	raddr, laddr := net.UDPAddrFromAddrPort(*remote), &net.UDPAddr{IP: local}
+	bindAddress := net.ParseIP(local)
+	network := "udp"
+	if bindAddress.To4() == nil {
+		network = "udp4"
+	}
+	raddr, laddr := net.UDPAddrFromAddrPort(*remote),
+		&net.UDPAddr{IP: bindAddress}
 	var conn *net.UDPConn
-	if conn, e = net.DialUDP("udp", laddr, raddr); fails(e) {
+	if conn, e = net.DialUDP(network, laddr, raddr); fails(e) {
 		return
 	}
 	r = MakeRCP(idKeys, remote, rudp.NewConn(conn, rudp.New()), bufs, mtu,
@@ -106,7 +117,7 @@ func NewOutboundRCP(idKeys *Keys, remote *netip.AddrPort,
 		r.sendKeys[addr] = LoadKeySlot(nil, nil)
 	})
 	buf := slice.NewBytes(mtu)
-	go r.listen(conn, buf, quit)
+	go r.listen(conn, buf)
 	return
 }
 
@@ -135,13 +146,13 @@ func MakeRCP(idKeys *Keys, remote *netip.AddrPort, conn *rudp.Conn,
 	return
 }
 
-func (r *RCP) listen(conn *net.UDPConn, buf slice.Bytes,
-	quit qu.C) {
+func (r *RCP) listen(conn *net.UDPConn, buf slice.Bytes) {
 	
-	log.T.F("starting rudp listener for %s", r.conn.LocalAddr().String())
 	var e error
 	listener := rudp.NewListener(conn)
+out:
 	for {
+		log.T.F("starting RCP listener for %s", r.conn.LocalAddr())
 		total := r.good.Load() + r.corrupt.Load()
 		// Compute average out of 256 as 100% vs 0% and average
 		// with previous failRate.
@@ -284,13 +295,14 @@ func (r *RCP) listen(conn *net.UDPConn, buf slice.Bytes,
 			log.D.Ln("sent key change message reply")
 		}
 		select {
-		case <-quit:
+		case <-r.quit:
 			if e = rConn.Close(); fails(e) {
 			}
-			return
+			break out
 		default:
 		}
 	}
+	log.W.F("stopped RCP listener for %s", r.conn.LocalAddr().String())
 }
 
 func (r *RCP) Mx(fn func()) {

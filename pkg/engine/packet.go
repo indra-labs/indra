@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	PacketMagic = "npkt"
+	PacketMagic = "rpkt"
 )
 
 // Packet is the standard format for an encrypted, possibly segmented message
@@ -26,7 +26,8 @@ type Packet struct {
 	Seq uint16
 	// Length is the number of segments in the batch
 	Length uint32
-	// Parity is the ratio of redundancy. In each 256 segment
+	// Parity is the ratio of redundancy. The remainder from 256 is the
+	// proportion from 256 of data shards in a packet batch.
 	Parity byte
 	// Data is the message.
 	Data      []byte
@@ -53,11 +54,9 @@ func (p Packets) Less(i, j int) bool { return p[i].Seq < p[j].Seq }
 func (p Packets) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
 // PacketParams defines the parameters for creating a ( split) packet given a
-// set of keys, cipher, and data. To, From, Blk and Data are required, Parity is
+// set of keys, cipher, and data. To, From, Data are required, Parity is
 // optional, set it to define a level of Reed Solomon redundancy on the split
-// packets. Seen should be populated to send a signal to the other side of keys
-// that have been seen at time of constructing this packet that can now be
-// discarded as they will not be used to generate a cipher again.
+// packets.
 type PacketParams struct {
 	ID     nonce.ID
 	To     *pub.Key
@@ -74,9 +73,9 @@ func (ep PacketParams) GetOverhead() int {
 	return Overhead
 }
 
-// EncodePacket creates a Packet, encrypts the payload using the given private from
-// key and the public to key, serializes the form, signs the bytes and appends
-// the signature to the end.
+// EncodePacket creates a Packet, encrypts the payload using the given private
+// from key and the public to key, serializes the form and signs the bytes. the
+// signature to the end.
 func EncodePacket(ep PacketParams) (pkt []byte, e error) {
 	var blk cipher.Block
 	if blk = ciph.GetBlock(ep.From, ep.To, "packet encode"); fails(e) {
@@ -105,20 +104,20 @@ func EncodePacket(ep PacketParams) (pkt []byte, e error) {
 	copy(pkt[c.Inc(1):], ep.Data)
 	// Encrypt the encrypted part of the data.
 	ciph.Encipher(blk, nonc, pkt[Overhead:])
-	// last but not least, the packet fails header, which protects the
-	// entire packet.
+	// last but not least, the packet fails header, which protects the entire
+	// packet.
 	checkBytes := sha256.Single(pkt[4:])
 	copy(pkt[:4], checkBytes[:4])
 	return
 }
 
-// GetKeysFromPacket returns the ToHeaderPub field of the message in order, checks the packet
-// checksum and recovers the public key.
+// GetKeysFromPacket returns the ToHeaderPub field of the message in order,
+// checks the packet checksum and recovers the public key.
 //
 // After this, if the matching private key to the cloaked address returned is
 // found, it is combined with the public key to generate the cipher and the
-// entire packet should then be decrypted, and the DecodePacket function will then
-// decode a OnionSkin.
+// entire packet should then be decrypted, and the DecodePacket function will
+// then decode a OnionSkin.
 func GetKeysFromPacket(d []byte) (from *pub.Key, to cloak.PubKey, iv nonce.IV,
 	e error) {
 	
@@ -150,16 +149,16 @@ func GetKeysFromPacket(d []byte) (from *pub.Key, to cloak.PubKey, iv nonce.IV,
 	return
 }
 
-// DecodePacket a packet and return the Packet with encrypted payload and signer's
-// public key. This assumes GetKeysFromPacket succeeded and the matching private key was
-// found.
+// DecodePacket a packet and return the Packet with encrypted payload and
+// signer's public key. This assumes GetKeysFromPacket succeeded and the
+// matching private key was found.
 func DecodePacket(d []byte, from *pub.Key, to *prv.Key,
 	iv nonce.IV) (f *Packet, e error) {
 	
 	pktLen := len(d)
 	if pktLen < Overhead {
-		// If this isn't checked the slice operations later can hit
-		// bounds errors.
+		// If this isn't checked the slice operations later can hit bounds
+		// errors.
 		e = fmt.Errorf("packet too small, min %d, got %d",
 			Overhead, pktLen)
 		log.E.Ln(e)
