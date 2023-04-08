@@ -76,7 +76,7 @@ func (ep PacketParams) GetOverhead() int {
 // EncodePacket creates a Packet, encrypts the payload using the given private
 // from key and the public to key, serializes the form and signs the bytes. the
 // signature to the end.
-func EncodePacket(ep PacketParams) (pkt []byte, e error) {
+func EncodePacket(ep *PacketParams) (pkt []byte, e error) {
 	var blk cipher.Block
 	if blk = ciph.GetBlock(ep.From, ep.To, "packet encode"); fails(e) {
 		return

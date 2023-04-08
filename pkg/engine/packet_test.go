@@ -30,7 +30,7 @@ func TestEncode_Decode(t *testing.T) {
 	}
 	addr := rP
 	var pkt []byte
-	params := PacketParams{
+	params := &PacketParams{
 		To:     addr,
 		From:   sp,
 		Data:   payload,

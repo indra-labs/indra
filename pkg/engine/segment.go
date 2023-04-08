@@ -18,7 +18,7 @@ const ErrEmptyBytes = "cannot encode empty bytes"
 // reply.
 //
 // The last packet that falls short of the segmentSize is padded random bytes.
-func SplitToPackets(pp PacketParams,
+func SplitToPackets(pp *PacketParams,
 	segSize int) (pkts Packets, packets [][]byte, e error) {
 	
 	if pp.Data == nil || len(pp.Data) == 0 {

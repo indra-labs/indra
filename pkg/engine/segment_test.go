@@ -30,7 +30,7 @@ func TestSplitJoin(t *testing.T) {
 		t.FailNow()
 	}
 	addr := rP
-	params := PacketParams{
+	params := &PacketParams{
 		To:     addr,
 		From:   sp,
 		Length: len(payload),
@@ -93,7 +93,7 @@ func BenchmarkSplit(b *testing.B) {
 	}
 	addr := rP
 	for n := 0; n < b.N; n++ {
-		params := PacketParams{
+		params := &PacketParams{
 			To:     addr,
 			From:   sp,
 			Parity: 64,
@@ -176,7 +176,7 @@ func TestSplitJoinFEC(t *testing.T) {
 		addr := rP
 		for p := range punctures {
 			var splitted [][]byte
-			ep := PacketParams{
+			ep := &PacketParams{
 				To:     addr,
 				From:   sp,
 				Parity: parity[i],

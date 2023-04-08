@@ -22,7 +22,7 @@ func read(conn *rudp.Conn) {
 		fmt.Printf("receive ")
 		for i := range data[:n] {
 			v := int(data[i])
-			fmt.Printf("%d", v)
+			fmt.Printf("%d,", v)
 		}
 		fmt.Printf(" from <%v>\n", conn.RemoteAddr())
 	}

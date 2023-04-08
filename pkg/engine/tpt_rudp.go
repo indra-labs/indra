@@ -12,6 +12,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/cloak"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/rudp"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -39,17 +40,19 @@ type (
 		recvKeys, sendKeys KeyChain
 		endpoint           *netip.AddrPort
 		in                 ByteChan
+		uConn              *net.UDPConn
 		conn               *rudp.Conn
 		good, corrupt      atomic.Uint64
 		failRate           atomic.Uint32
 		bufMx              sync.Mutex
 		buffers            RCPBuffer
+		ks                 *signer.KeySet
 		quit               qu.C
 	}
 )
 
 func NewListenerRCP(idKeys *Keys, address string, bufs,
-	mtu int, quit qu.C) (r *RCP, e error) {
+	mtu int, ks *signer.KeySet, quit qu.C) (r *RCP, e error) {
 	
 	if mtu <= 512 {
 		// Conservative packet size limit.
@@ -65,17 +68,17 @@ func NewListenerRCP(idKeys *Keys, address string, bufs,
 	if conn, e = net.ListenUDP(network, addr); fails(e) {
 		return
 	}
-	rUDPConn := rudp.NewConn(conn, rudp.New())
-	r = MakeRCP(idKeys, nil, rUDPConn, bufs, mtu, quit)
+	r = MakeRCP(idKeys, nil, conn, bufs, mtu, ks, quit)
 	buf := slice.NewBytes(mtu)
-	go r.listen(conn, buf)
+	go r.listen(buf)
 	return
 }
 
-func NewOutboundRCP(idKeys *Keys, remote *netip.AddrPort,
-	rKey *pub.Key, local string, bufs, mtu int, quit qu.C) (r *RCP,
-	e error) {
+func NewOutboundRCP(idKeys *Keys, remote string,
+	rKey *pub.Key, local string, bufs, mtu int, ks *signer.KeySet,
+	quit qu.C) (r *RCP, e error) {
 	
+	log.D.Ln("opening connection to", remote, "from", local)
 	if mtu <= 512 {
 		mtu = 1382 // Conservative packet size limit.
 	}
@@ -84,14 +87,19 @@ func NewOutboundRCP(idKeys *Keys, remote *netip.AddrPort,
 	if bindAddress.To4() == nil {
 		network = "udp4"
 	}
-	raddr, laddr := net.UDPAddrFromAddrPort(*remote),
+	var ap netip.AddrPort
+	if ap, e = netip.ParseAddrPort(remote); fails(e) {
+		return
+	}
+	raddr, laddr := net.UDPAddrFromAddrPort(ap),
 		&net.UDPAddr{IP: bindAddress}
 	var conn *net.UDPConn
 	if conn, e = net.DialUDP(network, laddr, raddr); fails(e) {
 		return
 	}
-	r = MakeRCP(idKeys, remote, rudp.NewConn(conn, rudp.New()), bufs, mtu,
-		quit)
+	
+	r = MakeRCP(idKeys, &ap, conn, bufs, mtu, ks, quit)
+	log.D.Ln("connection open", r.conn.LocalAddr(), "->", r.conn.RemoteAddr())
 	var recvKey, ciphKey *Keys
 	if recvKey, ciphKey, e = Generate2Keys(); fails(e) {
 		return
@@ -106,6 +114,7 @@ func NewOutboundRCP(idKeys *Keys, remote *netip.AddrPort,
 	}
 	var n int
 	// Send the connection receiver public key to the other side.
+	log.D.S("writing data to "+remote, reply.GetAll().ToBytes())
 	if n, e = r.conn.Write(reply.GetAll()); fails(e) ||
 		n != RCPHandshakeLen {
 		return
@@ -117,21 +126,36 @@ func NewOutboundRCP(idKeys *Keys, remote *netip.AddrPort,
 		r.sendKeys[addr] = LoadKeySlot(nil, nil)
 	})
 	buf := slice.NewBytes(mtu)
-	go r.listen(conn, buf)
+	go r.listen(buf)
 	return
 }
 
 func (r *RCP) Send(b slice.Bytes) (e error) {
-	// todo: split into packets.
-	if _, e = r.conn.Write(b); fails(e) {
+	pp := &PacketParams{
+		ID:     nonce.NewID(),
+		To:     r.recvKeys[r.endpoint.String()].Pub,
+		From:   r.ks.Next(),
+		Parity: 24,
+		Seq:    0,
+		Length: len(b),
+		Data:   b,
 	}
+	var bytes [][]byte
+	_, bytes, e = SplitToPackets(pp, r.mtu)
+	for i := range bytes {
+		log.D.S("sending", r.endpoint.String(), bytes[i])
+		if _, e = r.conn.Write(bytes[i]); fails(e) {
+			return
+		}
+	}
+	log.D.S("sent")
 	return
 }
 func (r *RCP) Receive() <-chan slice.Bytes { return r.in }
 func (r *RCP) Stop()                       { r.quit.Q() }
 
-func MakeRCP(idKeys *Keys, remote *netip.AddrPort, conn *rudp.Conn,
-	bufs, mtu int, quit qu.C) (r *RCP) {
+func MakeRCP(idKeys *Keys, remote *netip.AddrPort, conn *net.UDPConn,
+	bufs, mtu int, ks *signer.KeySet, quit qu.C) (r *RCP) {
 	r = &RCP{
 		Keys:     idKeys,
 		mtu:      mtu,
@@ -139,34 +163,40 @@ func MakeRCP(idKeys *Keys, remote *netip.AddrPort, conn *rudp.Conn,
 		sendKeys: make(KeyChain),
 		endpoint: remote,
 		in:       make(ByteChan, bufs),
-		conn:     conn,
+		uConn:    conn,
+		conn:     rudp.NewConn(conn, rudp.New()),
 		buffers:  make(RCPBuffer),
+		ks:       ks,
 		quit:     quit,
 	}
 	return
 }
 
-func (r *RCP) listen(conn *net.UDPConn, buf slice.Bytes) {
+func (r *RCP) listen(buf slice.Bytes) {
 	
 	var e error
-	listener := rudp.NewListener(conn)
+	listener := rudp.NewListener(r.uConn)
 out:
 	for {
-		log.T.F("starting RCP listener for %s", r.conn.LocalAddr())
+		log.T.F("starting RCP listener for %s %s", r.conn.LocalAddr(),
+			r.Keys.Pub.ToBase32())
 		total := r.good.Load() + r.corrupt.Load()
 		// Compute average out of 256 as 100% vs 0% and average
 		// with previous failRate.
 		ratio := 256 * total / (1 + r.corrupt.Load()) // avoiding divide by zero
-		r.failRate.Store(uint32(byte((ratio + uint64(r.failRate.Load())) / 2)))
+		r.failRate.Store(uint32(byte((ratio +
+			uint64(r.failRate.Load())) / 2)))
 		if total > 1<<24 {
 			// After 16mb of traffic we reset the counters.
 			r.good.Store(0)
 			r.corrupt.Store(0)
 		}
 		var rConn *rudp.Conn
+		log.D.Ln("accepting connections at", listener.Addr().String())
 		if rConn, e = listener.AcceptRudp(); fails(e) {
 			break
 		}
+		log.D.Ln("accepting connection on", rConn.LocalAddr().String())
 		var n int
 		addr := rConn.RemoteAddr().String()
 		if n, e = rConn.Read(buf); fails(e) {
@@ -176,12 +206,15 @@ out:
 			}
 			continue
 		}
+		log.D.Ln("read", n, "bytes")
 		r.good.Add(uint64(n))
 		s := NewSpliceFrom(buf[:n])
+		log.D.S("splice", s.GetAll().ToBytes())
 		var magic string
 		s.ReadMagic4(&magic)
 		switch magic {
 		case PacketMagic:
+			log.D.S("incoming", s.GetAll())
 			var fromPub *pub.Key
 			var toCloak cloak.PubKey
 			var iv nonce.IV
@@ -230,6 +263,7 @@ out:
 			}
 			// todo: handling stale stuff that never decoded.
 		case KeychangeMagic:
+			log.D.S("incoming", s.GetAll())
 			if s.Len() < 4+pub.KeyLen {
 				log.D.F("message too short to contain a public key")
 				continue
@@ -245,6 +279,7 @@ out:
 				}
 			})
 		default:
+			log.D.S("incoming", s.GetAll())
 			// If it is not a message, it is the delivery of a receiver public
 			// key for the client, and we generate a new one and send it back
 			// encrypted in a packet addressed to the provided key.
@@ -277,7 +312,7 @@ out:
 				Magic4(KeychangeMagic).
 				Pubkey(recvPub)
 			var pkt slice.Bytes
-			if pkt, e = EncodePacket(PacketParams{
+			if pkt, e = EncodePacket(&PacketParams{
 				To:     pK,
 				From:   recvPrv,
 				Parity: int(r.GetParity()),
@@ -286,7 +321,7 @@ out:
 			}); fails(e) {
 				continue
 			}
-			if n, e = r.conn.Write(pkt); fails(e) &&
+			if n, e = r.uConn.Write(pkt); fails(e) &&
 				n != len(pkt) {
 				r.corrupt.Add(uint64(n))
 				continue
@@ -302,7 +337,7 @@ out:
 		default:
 		}
 	}
-	log.W.F("stopped RCP listener for %s", r.conn.LocalAddr().String())
+	log.W.F("stopped RCP listener for %s", r.uConn.LocalAddr().String())
 }
 
 func (r *RCP) Mx(fn func()) {
@@ -322,5 +357,9 @@ func (r *RCP) GetParity() (parity byte) {
 }
 
 func LoadKeySlot(pr *prv.Key, pb *pub.Key) (k *KeySlot) {
-	return &KeySlot{&Keys{Pub: pb, Bytes: pb.ToBytes(), Prv: pr}, time.Now()}
+	var pBytes pub.Bytes
+	if pb != nil {
+		pBytes = pb.ToBytes()
+	}
+	return &KeySlot{&Keys{Pub: pb, Bytes: pBytes, Prv: pr}, time.Now()}
 }

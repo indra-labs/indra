@@ -23,9 +23,9 @@ func main() {
 	rconn := rudp.NewConn(conn, rudp.New())
 	defer func() { fmt.Println("defer close", rconn.Close()) }()
 	go func() {
-		bts := make([]byte, 1)
+		bts := make([]byte, 4)
 		for i := uint8(0); ; i++ {
-			bts[0] = byte(i)
+			bts = []byte{i, i, i, i}
 			_, err := rconn.Write(bts)
 			if err != nil {
 				fmt.Printf("write err %v\n", err)
