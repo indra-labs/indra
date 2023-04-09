@@ -74,6 +74,7 @@ func TestRCPGeneral(t *testing.T) {
 	// log.D.S("rConn", rConn)
 	var rc *rudp.Conn
 	listener := rudp.NewListener(lConn)
+	sema := qu.T()
 	go func() {
 		for {
 			data := make([]byte, 1382)
@@ -83,22 +84,21 @@ func TestRCPGeneral(t *testing.T) {
 			n, _ := rc.Read(data)
 			log.D.S("received "+rc.LocalAddr().String()+" from "+
 				rc.RemoteAddr().String(), data[:n])
+			sema.Signal()
 		}
 	}()
-	time.Sleep(time.Second)
 	for i := 0; i < 8; i++ {
 		var sConn *net.UDPConn
 		if sConn, e = net.DialUDP("udp4", laddr, sAddr); fails(e) {
 			t.FailNow()
 		}
 		sc := rudp.NewConn(sConn, rudp.New())
-		msg, _, _ := tests.GenMessage(256, "")
+		msg, _, _ := tests.GenMessage(32, "")
 		var n int
 		if n, e = sc.Write(msg[:]); fails(e) {
 			t.FailNow()
 		}
 		log.D.S("wrote", msg[:n])
-		time.Sleep(time.Second / 4)
+		<-sema
 	}
-	time.Sleep(time.Second)
 }
