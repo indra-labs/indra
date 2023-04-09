@@ -165,7 +165,7 @@ var (
 	logLevel = Info
 	// App is the name of the application. Change this at the beginning of
 	// an application main.
-	App = "  main"
+	App = ""
 	// allSubsystems stores all package subsystem names found in the current
 	// application.
 	allSubsystems []string

@@ -66,37 +66,39 @@ func TestRCPGeneral(t *testing.T) {
 	if lConn, e = net.ListenUDP("udp4", laddr); fails(e) {
 		t.FailNow()
 	}
-	var rAddrPort netip.AddrPort
-	rAddrPort, e = netip.ParseAddrPort(lConn.LocalAddr().String())
-	raddr := &net.UDPAddr{IP: net.ParseIP(rAddrPort.Addr().String()),
-		Port: int(rAddrPort.Port())}
+	var sAddrPort netip.AddrPort
+	sAddrPort, e = netip.ParseAddrPort(lConn.LocalAddr().String())
+	sAddr := &net.UDPAddr{IP: net.ParseIP(sAddrPort.Addr().String()),
+		Port: int(sAddrPort.Port())}
 	log.D.S("lConn", lConn.LocalAddr().String())
-	var rConn *net.UDPConn
-	if rConn, e = net.DialUDP("udp4", laddr, raddr); fails(e) {
-		t.FailNow()
-	}
-	sc := rudp.NewConn(rConn, rudp.New())
 	// log.D.S("rConn", rConn)
 	var rc *rudp.Conn
 	listener := rudp.NewListener(lConn)
 	go func() {
 		for {
-			log.D.Ln("starting listener")
-			data := make([]byte, rudp.MAX_PACKAGE)
-			log.D.Ln("accepting rudp")
+			data := make([]byte, 1382)
+			log.D.Ln("ready rudp", lConn.LocalAddr().String())
 			rc, e = listener.AcceptRudp()
-			log.D.Ln("reading from rudp")
-			n, err := rc.Read(data)
-			log.D.S("received", n, err, data[:n])
+			log.D.Ln("reading from rudp", lConn.LocalAddr().String())
+			n, _ := rc.Read(data)
+			log.D.S("received "+rc.LocalAddr().String()+" from "+
+				rc.RemoteAddr().String(), data[:n])
 		}
 	}()
 	time.Sleep(time.Second)
-	_, msg, _ := tests.GenMessage(256, "alpha")
-	_ = msg
-	var n int
-	if n, e = sc.Write(msg[:]); fails(e) {
-		t.FailNow()
+	for i := 0; i < 8; i++ {
+		var sConn *net.UDPConn
+		if sConn, e = net.DialUDP("udp4", laddr, sAddr); fails(e) {
+			t.FailNow()
+		}
+		sc := rudp.NewConn(sConn, rudp.New())
+		msg, _, _ := tests.GenMessage(256, "")
+		var n int
+		if n, e = sc.Write(msg[:]); fails(e) {
+			t.FailNow()
+		}
+		log.D.S("wrote", msg[:n])
+		time.Sleep(time.Second / 4)
 	}
-	log.D.S("wrote", msg[:n])
 	time.Sleep(time.Second)
 }
