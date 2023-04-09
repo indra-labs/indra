@@ -31,7 +31,7 @@ type Node struct {
 	Latency   *ring.BufferLatency // Latency to peer.
 	Failure   *ring.BufferFailure // Times of tx failure.
 	PaymentChan
-	Transport
+	Sender, Receiver Transport
 }
 
 const (
@@ -46,8 +46,8 @@ const (
 // as only the node embedded in a client and not the peer node list has one
 // available. The Node for a client's self should use true in the local
 // parameter to not initialise the peer state ring buffers as it won't use them.
-func NewNode(addr *netip.AddrPort, idPrv *prv.Key,
-	tpt Transport, relayRate int, local bool) (n *Node, id nonce.ID) {
+func NewNode(addr *netip.AddrPort, idPrv *prv.Key, snd, rcv Transport,
+	relayRate int, local bool) (n *Node, id nonce.ID) {
 	
 	id = nonce.NewID()
 	n = &Node{
@@ -56,7 +56,8 @@ func NewNode(addr *netip.AddrPort, idPrv *prv.Key,
 		Identity:    MakeKeys(idPrv),
 		RelayRate:   relayRate,
 		PaymentChan: make(PaymentChan, PaymentChanBuffers),
-		Transport:   tpt,
+		Sender:      snd,
+		Receiver:    rcv,
 	}
 	if !local {
 		// These ring buffers are needed to evaluate these metrics for remote
@@ -114,8 +115,7 @@ func (n *Node) SendTo(port uint16, b slice.Bytes) (e error) {
 	e = fmt.Errorf("%s port not registered %d", n.AddrPort.String(), port)
 	for i := range n.Services {
 		if n.Services[i].Port == port {
-			n.Services[i].Send(b)
-			e = nil
+			e = n.Services[i].Send(b)
 			return
 		}
 	}

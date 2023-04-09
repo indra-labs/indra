@@ -129,8 +129,9 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 		if i == 0 {
 			local = true
 		}
-		nodes[i], _ = NewNode(addr, idPrv, tpts[i], 50000, local)
+		nodes[i], _ = NewNode(addr, idPrv, tpts[i], tpts[i], 50000, local)
 		if cl[i], e = NewEngine(Params{
+			tpts[i],
 			tpts[i],
 			idPrv,
 			nodes[i],

@@ -70,7 +70,7 @@ type PacketParams struct {
 // GetOverhead returns the amount of the message that will not be part of the
 // payload.
 func (ep PacketParams) GetOverhead() int {
-	return Overhead
+	return Overhead + nonce.IDLen + 7
 }
 
 // EncodePacket creates a Packet, encrypts the payload using the given private

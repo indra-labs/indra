@@ -114,12 +114,15 @@ func (x *Exit) Handle(s *Splice, p Onion,
 		if sess == nil {
 			return
 		}
+		sess.Node.Lock()
 		for i := range sess.Node.Services {
 			if x.Port != sess.Node.Services[i].Port {
+				sess.Node.Unlock()
 				continue
 			}
 			in := sess.Node.Services[i].RelayRate * s.Len() / 2
 			out := sess.Node.Services[i].RelayRate * rb.Len() / 2
+			sess.Node.Unlock()
 			ng.DecSession(sess.ID, in+out, false, "exit")
 			break
 		}
@@ -174,11 +177,13 @@ func (ng *Engine) SendExit(port uint16, msg slice.Bytes, id nonce.ID,
 
 func (x *Exit) Account(res *SendData, sm *SessionManager,
 	s *SessionData, last bool) (skip bool, sd *SessionData) {
-	
+	s.Node.Lock()
 	for j := range s.Node.Services {
 		if s.Node.Services[j].Port != x.Port {
+			s.Node.Unlock()
 			continue
 		}
+		s.Node.Unlock()
 		res.Port = x.Port
 		res.PostAcct = append(res.PostAcct,
 			func() {

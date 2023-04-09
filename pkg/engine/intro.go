@@ -150,7 +150,7 @@ func (x *Intro) Handle(s *Splice, p Onion,
 		for i := range nn {
 			log.T.F("sending intro to %s", color.Yellow.Sprint(nn[i].AddrPort.
 				String()))
-			nn[i].Transport.Send(s.GetAll())
+			nn[i].Sender.Send(s.GetAll())
 			counter++
 			if counter < 2 {
 				continue

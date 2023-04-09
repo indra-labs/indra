@@ -73,12 +73,15 @@ func (x *Response) Handle(s *Splice, p Onion,
 				case 0, 1:
 					dataSize = pending.SentSize
 				case 2:
+					se.Node.Lock()
 					for j := range se.Node.Services {
 						if se.Node.Services[j].Port == x.Port {
 							relayRate = se.Node.Services[j].RelayRate / 2
 							typ = "exit"
+							break
 						}
 					}
+					se.Node.Unlock()
 				}
 				ng.DecSession(se.ID, relayRate*dataSize, true, typ)
 			}

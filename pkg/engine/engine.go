@@ -24,15 +24,16 @@ type Engine struct {
 }
 
 type Params struct {
-	Tpt             Transport
-	IDPrv           *prv.Key
-	Node            *Node
-	Nodes           []*Node
-	NReturnSessions int
+	Sender, Receiver Transport
+	IDPrv            *prv.Key
+	Node             *Node
+	Nodes            []*Node
+	NReturnSessions  int
 }
 
 func NewEngine(p Params) (c *Engine, e error) {
-	p.Node.Transport = p.Tpt
+	p.Node.Sender = p.Sender
+	p.Node.Receiver = p.Receiver
 	p.Node.Identity.Prv = p.IDPrv
 	p.Node.Identity.Pub = pub.Derive(p.IDPrv)
 	var ks *signer.KeySet
