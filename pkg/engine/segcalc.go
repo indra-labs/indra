@@ -27,7 +27,8 @@ type PacketSegment struct {
 // PacketSegment.
 func (s PacketSegment) String() (o string) {
 	o = fmt.Sprintf(
-		"\t\tSegment{ DStart: %d, DEnd: %d, PEnd: %d, SLen: %d, ID: %d},", s.DStart, s.DEnd, s.PEnd, s.SLen, s.Last)
+		"\t\tSegment{ DStart: %d, DEnd: %d, PEnd: %d, SLen: %d, Last: %d},",
+		s.DStart, s.DEnd, s.PEnd, s.SLen, s.Last)
 	return
 }
 

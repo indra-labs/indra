@@ -8,6 +8,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/cloak"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
@@ -16,7 +17,7 @@ import (
 
 func TestSplitJoin(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
-	msgSize := 1 << 12
+	msgSize := 1 << 19
 	segSize := 1382
 	var e error
 	var payload []byte
@@ -38,10 +39,10 @@ func TestSplitJoin(t *testing.T) {
 		Parity: 128,
 	}
 	var splitted [][]byte
-	if _, splitted, e = SplitToPackets(params, segSize); fails(e) {
+	_, ks, _ := signer.New()
+	if _, splitted, e = SplitToPackets(params, segSize, ks); fails(e) {
 		t.Error(e)
 	}
-	// log.D.S("splittid", splitted)
 	var pkts Packets
 	var keys []*pub.Key
 	for i := range splitted {
@@ -54,19 +55,15 @@ func TestSplitJoin(t *testing.T) {
 			log.I.Ln(i)
 			continue
 		}
+		if !cloak.Match(to, rP.ToBytes()) {
+			t.Error("did not match cloaked receiver key")
+			t.FailNow()
+		}
 		if pkt, e = DecodePacket(splitted[i], from, rp, iv); fails(e) {
 			t.Error(e)
 		}
 		pkts = append(pkts, pkt)
 		keys = append(keys, from)
-	}
-	prev := keys[0]
-	// fails all keys are the same
-	for _, k := range keys[1:] {
-		if !prev.Equals(k) {
-			t.Error(e)
-		}
-		prev = k
 	}
 	var msg []byte
 	if pkts, msg, e = JoinPackets(pkts); fails(e) {
@@ -101,7 +98,8 @@ func BenchmarkSplit(b *testing.B) {
 		}
 		
 		var splitted [][]byte
-		if _, splitted, e = SplitToPackets(params, segSize); fails(e) {
+		_, ks, _ := signer.New()
+		if _, splitted, e = SplitToPackets(params, segSize, ks); fails(e) {
 			b.Error(e)
 		}
 		_ = splitted
@@ -174,6 +172,7 @@ func TestSplitJoinFEC(t *testing.T) {
 				punctures[len(punctures)-p-1], punctures[p]
 		}
 		addr := rP
+		_, ks, _ := signer.New()
 		for p := range punctures {
 			var splitted [][]byte
 			ep := &PacketParams{
@@ -183,7 +182,7 @@ func TestSplitJoinFEC(t *testing.T) {
 				Length: len(payload),
 				Data:   payload,
 			}
-			if _, splitted, e = SplitToPackets(ep, segSize); fails(e) {
+			if _, splitted, e = SplitToPackets(ep, segSize, ks); fails(e) {
 				t.Error(e)
 				t.FailNow()
 			}

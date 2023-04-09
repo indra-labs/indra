@@ -104,7 +104,7 @@ func EncodePacket(ep *PacketParams) (pkt []byte, e error) {
 	copy(pkt[c.Inc(1):], ep.Data)
 	// Encrypt the encrypted part of the data.
 	ciph.Encipher(blk, nonc, pkt[Overhead:])
-	// last but not least, the packet fails header, which protects the entire
+	// last but not least, the packet check header, which protects the entire
 	// packet.
 	checkBytes := sha256.Single(pkt[4:])
 	copy(pkt[:4], checkBytes[:4])
