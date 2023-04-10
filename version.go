@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-var (
+const (
 	// URL is the git URL for the repository.
 	URL = ""
 	// GitRef is the gitref, as in refs/heads/branchname.

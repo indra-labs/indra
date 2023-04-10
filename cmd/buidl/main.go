@@ -10,11 +10,11 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
+	
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
-
+	
 	"git-indra.lan/indra-labs/indra"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 )
@@ -68,7 +68,7 @@ func main() {
 				URL = rsss[0]
 				break
 			}
-
+			
 		}
 	}
 	var tr *git.Worktree
@@ -125,7 +125,7 @@ import (
 	"fmt"
 )
 
-var (
+const (
 	// URL is the git URL for the repository.
 	URL = "%s"
 	// GitRef is the gitref, as in refs/heads/branchname.
