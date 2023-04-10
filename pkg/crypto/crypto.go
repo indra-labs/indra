@@ -38,7 +38,7 @@ func ComputeSharedSecret(prv *Prv, pub *Pub) sha256.Hash {
 const (
 	BlindLen = 3
 	HashLen  = 5
-	Len      = BlindLen + HashLen
+	CloakLen = BlindLen + HashLen
 )
 
 func (c PubKey) CopyBlinder() (blinder Blinder) {
@@ -48,7 +48,7 @@ func (c PubKey) CopyBlinder() (blinder Blinder) {
 
 // PubKey is the blinded hash of a public key used to conceal a message public
 // key from attackers.
-type PubKey [Len]byte
+type PubKey [CloakLen]byte
 
 type Blinder [BlindLen]byte
 type Hash [HashLen]byte
@@ -165,8 +165,10 @@ type (
 	PubBytes [PubKeyLen]byte
 )
 
+// the key types must satisfy these interfaces.
 var _ crypto.Key = &Prv{}
 var _ crypto.Key = &Pub{}
+var _ crypto.PubKey = &Pub{}
 var _ crypto.PrivKey = &Prv{}
 
 func (p *Prv) Equals(key crypto.Key) (eq bool) {
@@ -276,9 +278,7 @@ func (pb PubBytes) String() (s string) {
 	return color.LightGreen.Sprint(string(ss))
 }
 
-func (k *Pub) String() (s string) {
-	return k.ToBase32()
-}
+func (k *Pub) String() (s string) { return k.ToBase32() }
 
 // DerivePub generates a public key from the prv.Pub.
 func DerivePub(prv *Prv) *Pub {
@@ -319,10 +319,6 @@ func (k *Pub) ToBase32() (s string) {
 	if s, e = based32.Codec.Encode(b[:]); fails(e) {
 	}
 	ss := []byte(s)[3:]
-	// // Reverse text order to get all starting ciphers.
-	// for i := 0; i < len(s)/2; i++ {
-	// 	ss[i], ss[len(s)-i-1] = ss[len(s)-i-1], ss[i]
-	// }
 	return string(ss)
 }
 
@@ -344,11 +340,6 @@ func (pb PubBytes) Equals(qb PubBytes) bool { return pb == qb }
 func (k *Pub) ToPublicKey() *secp256k1.PublicKey {
 	return (*secp256k1.PublicKey)(k)
 }
-
-// // Equals returns true if two public keys are the same.
-// func (k *Pub) Equals(pub2 *Pub) bool {
-// 	return k.ToPublicKey().IsEqual(pub2.ToPublicKey())
-// }
 
 // SigLen is the length of the signatures used in Indra, compact keys that can have
 // the public key extracted from them.

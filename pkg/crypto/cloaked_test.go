@@ -20,7 +20,7 @@ func TestAddress(t *testing.T) {
 		t.Error("failed to recognise cloaked address")
 	}
 	rand.Seed(time.Now().Unix())
-	flip := rand.Intn(Len)
+	flip := rand.Intn(CloakLen)
 	var broken PubKey
 	copy(broken[:], cloaked[:])
 	broken[flip] = ^broken[flip]

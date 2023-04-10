@@ -40,7 +40,7 @@ func (p *Packet) GetOverhead() int {
 
 // Overhead is the base overhead on a packet, use GetOverhead to add any extra
 // as found in a Packet.
-const Overhead = 4 + crypto.PubKeyLen + crypto.Len + nonce.IVLen
+const Overhead = 4 + crypto.PubKeyLen + crypto.CloakLen + nonce.IVLen
 
 // Packets is a slice of pointers to packets.
 type Packets []*Packet
@@ -93,7 +93,7 @@ func EncodePacket(ep *PacketParams) (pkt []byte, e error) {
 	c := new(slice.Cursor)
 	c.Inc(4)
 	copy(pkt[*c:c.Inc(crypto.PubKeyLen)], k[:])
-	copy(pkt[*c:c.Inc(crypto.Len)], cloaked[:])
+	copy(pkt[*c:c.Inc(crypto.CloakLen)], cloaked[:])
 	copy(pkt[*c:c.Inc(nonce.IVLen)], nonc[:])
 	copy(pkt[*c:c.Inc(nonce.IDLen)], ep.ID[:])
 	copy(pkt[*c:c.Inc(slice.Uint16Len)], Seq)
@@ -140,7 +140,7 @@ func GetKeysFromPacket(d []byte) (from *crypto.Pub, to crypto.PubKey, iv nonce.I
 		return
 	}
 	copy(k[:], d[*c:c.Inc(crypto.PubKeyLen)])
-	copy(to[:], d[*c:c.Inc(crypto.Len)])
+	copy(to[:], d[*c:c.Inc(crypto.CloakLen)])
 	if from, e = crypto.PubFromBytes(k[:]); fails(e) {
 		return
 	}
@@ -165,7 +165,7 @@ func DecodePacket(d []byte, from *crypto.Pub, to *crypto.Prv,
 	f = &Packet{TimeStamp: time.Now()}
 	// copy the nonce
 	c := new(slice.Cursor)
-	copy(iv[:], d[c.Inc(4+crypto.PubKeyLen+crypto.Len):c.Inc(nonce.IVLen)])
+	copy(iv[:], d[c.Inc(4+crypto.PubKeyLen+crypto.CloakLen):c.Inc(nonce.IVLen)])
 	var blk cipher.Block
 	if blk = ciph.GetBlock(to, from, "packet decode"); fails(e) {
 		return

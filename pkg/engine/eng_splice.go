@@ -305,18 +305,18 @@ func (s *Splice) ReadNonces(iv *Nonces) *Splice {
 
 func (s *Splice) Cloak(pk *crypto.Pub) *Splice {
 	if pk == nil {
-		s.Advance(crypto.Len, "nil receiver pubkey")
+		s.Advance(crypto.CloakLen, "nil receiver pubkey")
 		return s
 	}
 	to := crypto.GetCloak(pk)
-	copy(s.b[*s.c:s.c.Inc(crypto.Len)], to[:])
+	copy(s.b[*s.c:s.c.Inc(crypto.CloakLen)], to[:])
 	s.SpliceSegments = append(s.SpliceSegments,
 		NameOffset{Offset: int(*s.c), Name: "cloak"})
 	return s
 }
 
 func (s *Splice) ReadCloak(ck *crypto.PubKey) *Splice {
-	copy((*ck)[:], s.b[*s.c:s.c.Inc(crypto.Len)])
+	copy((*ck)[:], s.b[*s.c:s.c.Inc(crypto.CloakLen)])
 	s.SpliceSegments = append(s.SpliceSegments,
 		NameOffset{Offset: int(*s.c), Name: "cloak"})
 	return s
