@@ -11,7 +11,7 @@ func TestBase32(t *testing.T) {
 	for i := 0; i < 10000; i++ {
 		var k *Prv
 		var e error
-		if k, e = GeneratePrvKey(); check(e) {
+		if k, e = GeneratePrvKey(); fails(e) {
 			t.Error(e)
 			t.FailNow()
 		}

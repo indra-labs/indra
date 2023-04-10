@@ -19,7 +19,7 @@ const (
 
 var (
 	log   = log2.GetLogger(indra.PathBase)
-	check = log.E.Chk
+	fails = log.E.Chk
 )
 
 var enc = base32.NewEncoding(Charset).EncodeToString

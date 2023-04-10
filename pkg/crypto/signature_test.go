@@ -19,16 +19,16 @@ func TestSignRecover(t *testing.T) {
 	}
 	var prv1 *Prv
 	var pub1, rec1 *Pub
-	if prv1, e = GeneratePrvKey(); check(e) {
+	if prv1, e = GeneratePrvKey(); fails(e) {
 		t.Error(e)
 	}
 	pub1 = DerivePub(prv1)
 	var s SigBytes
 	hash := sha256.Single(payload)
-	if s, e = Sign(prv1, hash); check(e) {
+	if s, e = Sign(prv1, hash); fails(e) {
 		t.Error(e)
 	}
-	if rec1, e = s.Recover(hash); check(e) {
+	if rec1, e = s.Recover(hash); fails(e) {
 		t.Error(e)
 	}
 	if !pub1.Equals(rec1) {
@@ -46,18 +46,18 @@ func TestSignRecoverFail(t *testing.T) {
 	}
 	var prv1 *Prv
 	var pub1, rec1 *Pub
-	if prv1, e = GeneratePrvKey(); check(e) {
+	if prv1, e = GeneratePrvKey(); fails(e) {
 		t.Error(e)
 	}
 	pub1 = DerivePub(prv1)
 	var s SigBytes
 	hash := sha256.Single(payload)
-	if s, e = Sign(prv1, hash); check(e) {
+	if s, e = Sign(prv1, hash); fails(e) {
 		t.Error(e)
 	}
 	copy(payload, make([]byte, 10))
 	hash2 := sha256.Single(payload)
-	if rec1, e = s.Recover(hash2); check(e) {
+	if rec1, e = s.Recover(hash2); fails(e) {
 		t.Error(e)
 	}
 	if pub1.Equals(rec1) {

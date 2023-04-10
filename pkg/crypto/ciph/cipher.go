@@ -18,7 +18,7 @@ import (
 
 var (
 	log   = log2.GetLogger(indra.PathBase)
-	check = log.E.Chk
+	fails = log.E.Chk
 )
 
 const Charset = "abcdefghijklmnopqrstuvwxyz234679"

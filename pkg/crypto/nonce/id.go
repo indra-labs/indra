@@ -23,7 +23,7 @@ func (id ID) String() string {
 
 // NewID returns a random 8 byte nonce to be used as identifiers.
 func NewID() (t ID) {
-	if read, e := rand.Read(t[:]); check(e) && read != IDLen {
+	if read, e := rand.Read(t[:]); fails(e) && read != IDLen {
 	}
 	return
 }

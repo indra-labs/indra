@@ -11,11 +11,11 @@ import (
 func TestKeySet_Next(t *testing.T) {
 	for rounds := 0; rounds < 1000; rounds++ {
 		key, ks, e := NewSigner()
-		if check(e) {
+		if fails(e) {
 			t.FailNow()
 		}
 		var hx PubBytes
-		if hx = DerivePub(key).ToBytes(); check(e) {
+		if hx = DerivePub(key).ToBytes(); fails(e) {
 			t.Error(e)
 		}
 		oddness := hx[0]
@@ -34,7 +34,7 @@ func TestKeySet_Next(t *testing.T) {
 
 func BenchmarkKeySet_Next(b *testing.B) {
 	_, ks, e := NewSigner()
-	if check(e) {
+	if fails(e) {
 		b.FailNow()
 	}
 	for n := 0; n < b.N; n++ {
@@ -44,7 +44,7 @@ func BenchmarkKeySet_Next(b *testing.B) {
 
 func BenchmarkKeySet_Next_Derive(b *testing.B) {
 	_, ks, e := NewSigner()
-	if check(e) {
+	if fails(e) {
 		b.FailNow()
 	}
 	for n := 0; n < b.N; n++ {
@@ -56,7 +56,7 @@ func BenchmarkKeySet_Next_Derive(b *testing.B) {
 func GenerateTestMessage(msgSize int) (msg []byte, hash sha256.Hash, e error) {
 	msg = make([]byte, msgSize)
 	var n int
-	if n, e = rand.Read(msg); check(e) && n != msgSize {
+	if n, e = rand.Read(msg); fails(e) && n != msgSize {
 		return
 	}
 	copy(msg, "payload")
@@ -66,7 +66,7 @@ func GenerateTestMessage(msgSize int) (msg []byte, hash sha256.Hash, e error) {
 
 func BenchmarkKeySet_Next_Sign(b *testing.B) {
 	_, ks, e := NewSigner()
-	if check(e) {
+	if fails(e) {
 		b.FailNow()
 	}
 	var msg []byte
@@ -75,7 +75,7 @@ func BenchmarkKeySet_Next_Sign(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		k := ks.Next()
 		hash := sha256.Single(msg)
-		if _, e = Sign(k, hash); check(e) {
+		if _, e = Sign(k, hash); fails(e) {
 			b.Error("failed to sign")
 		}
 	}
