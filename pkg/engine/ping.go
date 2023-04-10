@@ -1,7 +1,7 @@
 package engine
 
 import (
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 )
 
@@ -14,7 +14,7 @@ import (
 // offline their scores will fall to zero after a time whereas live nodes will
 // have steadily increasing scores from successful pings.
 func Ping(id nonce.ID, client *SessionData, s Circuit,
-	ks *signer.KeySet) Skins {
+	ks *crypto.KeySet) Skins {
 	
 	n := GenPingNonces()
 	return Skins{}.

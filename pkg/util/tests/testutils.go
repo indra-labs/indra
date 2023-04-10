@@ -2,10 +2,9 @@ package tests
 
 import (
 	"crypto/rand"
-
+	
 	"git-indra.lan/indra-labs/indra"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 )
@@ -29,16 +28,16 @@ func GenMessage(msgSize int, hrp string) (msg []byte, hash sha256.Hash, e error)
 	return
 }
 
-func GenerateTestKeyPairs() (sp, rp *prv.Key, sP, rP *pub.Key, e error) {
+func GenerateTestKeyPairs() (sp, rp *crypto.Prv, sP, rP *crypto.Pub, e error) {
 	sp, sP, e = GenerateTestKeyPair()
 	rp, rP, e = GenerateTestKeyPair()
 	return
 }
 
-func GenerateTestKeyPair() (sp *prv.Key, sP *pub.Key, e error) {
-	if sp, e = prv.GenerateKey(); check(e) {
+func GenerateTestKeyPair() (sp *crypto.Prv, sP *crypto.Pub, e error) {
+	if sp, e = crypto.GeneratePrvKey(); check(e) {
 		return
 	}
-	sP = pub.Derive(sp)
+	sP = crypto.DerivePub(sp)
 	return
 }

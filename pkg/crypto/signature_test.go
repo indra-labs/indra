@@ -1,13 +1,11 @@
-package sig
+package crypto
 
 import (
 	"crypto/rand"
 	"errors"
 	mrand "math/rand"
 	"testing"
-
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 )
 
@@ -19,13 +17,13 @@ func TestSignRecover(t *testing.T) {
 	if n, e = rand.Read(payload); log.E.Chk(e) && n != msgSize {
 		t.Error(e)
 	}
-	var prv1 *prv.Key
-	var pub1, rec1 *pub.Key
-	if prv1, e = prv.GenerateKey(); check(e) {
+	var prv1 *Prv
+	var pub1, rec1 *Pub
+	if prv1, e = GeneratePrvKey(); check(e) {
 		t.Error(e)
 	}
-	pub1 = pub.Derive(prv1)
-	var s Bytes
+	pub1 = DerivePub(prv1)
+	var s SigBytes
 	hash := sha256.Single(payload)
 	if s, e = Sign(prv1, hash); check(e) {
 		t.Error(e)
@@ -46,13 +44,13 @@ func TestSignRecoverFail(t *testing.T) {
 	if n, e = rand.Read(payload); log.E.Chk(e) && n != msgSize {
 		t.Error(e)
 	}
-	var prv1 *prv.Key
-	var pub1, rec1 *pub.Key
-	if prv1, e = prv.GenerateKey(); check(e) {
+	var prv1 *Prv
+	var pub1, rec1 *Pub
+	if prv1, e = GeneratePrvKey(); check(e) {
 		t.Error(e)
 	}
-	pub1 = pub.Derive(prv1)
-	var s Bytes
+	pub1 = DerivePub(prv1)
+	var s SigBytes
 	hash := sha256.Single(payload)
 	if s, e = Sign(prv1, hash); check(e) {
 		t.Error(e)

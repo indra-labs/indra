@@ -4,10 +4,8 @@ import (
 	"testing"
 	
 	"git-indra.lan/indra-labs/indra"
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/ecdh"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -48,9 +46,9 @@ func MakeReplyHeader(ng *Engine) (returnHeader *ReplyHeader) {
 	ep := ExitPoint{
 		Routing: rt,
 		ReturnPubs: Pubs{
-			pub.Derive(sessions[0].Payload.Prv),
-			pub.Derive(sessions[1].Payload.Prv),
-			pub.Derive(sessions[2].Payload.Prv),
+			crypto.DerivePub(sessions[0].Payload.Prv),
+			crypto.DerivePub(sessions[1].Payload.Prv),
+			crypto.DerivePub(sessions[2].Payload.Prv),
 		},
 	}
 	returnHeader = &ReplyHeader{
@@ -94,7 +92,7 @@ func FormatReply(header RoutingHeaderBytes, ciphers Ciphers,
 
 func GenCiphers(prvs Privs, pubs Pubs) (ciphers Ciphers) {
 	for i := range prvs {
-		ciphers[i] = ecdh.Compute(prvs[i], pubs[i])
+		ciphers[i] = crypto.ComputeSharedSecret(prvs[i], pubs[i])
 		log.T.Ln("cipher", i, ciphers[i])
 	}
 	return
@@ -120,8 +118,8 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 		tpts[i] = NewSim(nTotal)
 	}
 	for i := range nodes {
-		var idPrv *prv.Key
-		if idPrv, e = prv.GenerateKey(); fails(e) {
+		var idPrv *crypto.Prv
+		if idPrv, e = crypto.GeneratePrvKey(); fails(e) {
 			return
 		}
 		addr := slice.GenerateRandomAddrPortIPv4()
@@ -179,12 +177,12 @@ func CreateNMockCircuitsWithSessions(nCirc int, nReturns int) (cl []*Engine,
 	return createNMockCircuits(true, nCirc, nReturns)
 }
 
-func GetTwoPrvKeys(t *testing.T) (prv1, prv2 *prv.Key) {
+func GetTwoPrvKeys(t *testing.T) (prv1, prv2 *crypto.Prv) {
 	var e error
-	if prv1, e = prv.GenerateKey(); fails(e) {
+	if prv1, e = crypto.GeneratePrvKey(); fails(e) {
 		t.FailNow()
 	}
-	if prv2, e = prv.GenerateKey(); fails(e) {
+	if prv2, e = crypto.GeneratePrvKey(); fails(e) {
 		t.FailNow()
 	}
 	return
@@ -194,7 +192,7 @@ func GetCipherSet(t *testing.T) (prvs Privs, pubs Pubs) {
 	for i := range prvs {
 		prv1, prv2 := GetTwoPrvKeys(t)
 		prvs[i] = prv1
-		pubs[i] = pub.Derive(prv2)
+		pubs[i] = crypto.DerivePub(prv2)
 	}
 	return
 }

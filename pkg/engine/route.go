@@ -5,11 +5,8 @@ import (
 	"net/netip"
 	"reflect"
 	
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/cloak"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
@@ -17,7 +14,7 @@ import (
 
 const (
 	RouteMagic = "ro"
-	RouteLen   = magic.Len + cloak.Len + pub.KeyLen + nonce.IVLen +
+	RouteLen   = magic.Len + crypto.Len + crypto.PubKeyLen + nonce.IVLen +
 		nonce.IDLen + 3*sha256.Len + 3*nonce.IVLen
 )
 
@@ -28,10 +25,10 @@ func (x *Route) Len() int         { return RouteLen + x.Onion.Len() }
 func (x *Route) Wrap(inner Onion) { x.Onion = inner }
 
 type Route struct {
-	HiddenService *pub.Key
-	HiddenCloaked cloak.PubKey
-	Sender        *prv.Key
-	SenderPub     *pub.Key
+	HiddenService *crypto.Pub
+	HiddenCloaked crypto.PubKey
+	Sender        *crypto.Prv
+	SenderPub     *crypto.Pub
 	nonce.IV
 	// ------- the rest is encrypted to the HiddenService/Sender keys.
 	ID nonce.ID
@@ -46,7 +43,7 @@ type Route struct {
 	Onion
 }
 
-func (o Skins) Route(id nonce.ID, k *pub.Key, ks *signer.KeySet,
+func (o Skins) Route(id nonce.ID, k *crypto.Pub, ks *crypto.KeySet,
 	ep *ExitPoint) Skins {
 	
 	oo := &Route{
@@ -58,8 +55,8 @@ func (o Skins) Route(id nonce.ID, k *pub.Key, ks *signer.KeySet,
 		Nonces:        ep.Nonces,
 		Onion:         &End{},
 	}
-	oo.SenderPub = pub.Derive(oo.Sender)
-	oo.HiddenCloaked = cloak.GetCloak(k)
+	oo.SenderPub = crypto.DerivePub(oo.Sender)
+	oo.HiddenCloaked = crypto.GetCloak(k)
 	return append(o, oo)
 }
 
@@ -70,7 +67,7 @@ func (x *Route) Encode(s *Splice) (e error) {
 	)
 	s.Magic(RouteMagic).
 		Cloak(x.HiddenService).
-		Pubkey(pub.Derive(x.Sender)).
+		Pubkey(crypto.DerivePub(x.Sender)).
 		IV(x.IV)
 	start := s.GetCursor()
 	s.ID(x.ID).Ciphers(x.Ciphers).Nonces(x.Nonces)
@@ -99,7 +96,7 @@ func (x *Route) Decode(s *Splice) (e error) {
 
 // Decrypt decrypts the rest of a message after the Route segment if the
 // recipient has the hidden service private key.
-func (x *Route) Decrypt(prk *prv.Key, s *Splice) {
+func (x *Route) Decrypt(prk *crypto.Prv, s *Splice) {
 	ciph.Encipher(ciph.GetBlock(prk, x.SenderPub, "route decrypt"), x.IV,
 		s.GetRest())
 	// And now we can see the reply field for the return trip.
@@ -115,7 +112,7 @@ func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 		log.T.Ln("no matching hidden service key found from cloaked key")
 		return
 	}
-	if x.HiddenService, e = pub.FromBytes((*hc)[:]); fails(e) {
+	if x.HiddenService, e = crypto.PubFromBytes((*hc)[:]); fails(e) {
 		return
 	}
 	log.D.Ln("route key", *hc)
@@ -142,9 +139,9 @@ func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 		ep := ExitPoint{
 			Routing: rt,
 			ReturnPubs: Pubs{
-				pub.Derive(sessions[0].Payload.Prv),
-				pub.Derive(sessions[1].Payload.Prv),
-				pub.Derive(sessions[2].Payload.Prv),
+				crypto.DerivePub(sessions[0].Payload.Prv),
+				crypto.DerivePub(sessions[1].Payload.Prv),
+				crypto.DerivePub(sessions[2].Payload.Prv),
 			},
 		}
 		mr := Skins{}.
@@ -164,7 +161,7 @@ func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 	return
 }
 
-func MakeRoute(id nonce.ID, k *pub.Key, ks *signer.KeySet,
+func MakeRoute(id nonce.ID, k *crypto.Pub, ks *crypto.KeySet,
 	alice, bob *SessionData, c Circuit) Skins {
 	
 	headers := GetHeaders(alice, bob, c, ks)
@@ -174,7 +171,7 @@ func MakeRoute(id nonce.ID, k *pub.Key, ks *signer.KeySet,
 		RoutingHeader(headers.Return)
 }
 
-func (ng *Engine) SendRoute(k *pub.Key, ap *netip.AddrPort,
+func (ng *Engine) SendRoute(k *crypto.Pub, ap *netip.AddrPort,
 	hook Callback) {
 	
 	ng.FindNodeByAddrPort(ap)

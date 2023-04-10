@@ -1,30 +1,28 @@
-package signer
+package crypto
 
 import (
 	"crypto/rand"
 	"testing"
-
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/sig"
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 )
 
 // this just really demonstrates how the keys generated are not linkable.
 func TestKeySet_Next(t *testing.T) {
 	for rounds := 0; rounds < 1000; rounds++ {
-		key, ks, e := New()
+		key, ks, e := NewSigner()
 		if check(e) {
 			t.FailNow()
 		}
-		var hx pub.Bytes
-		if hx = pub.Derive(key).ToBytes(); check(e) {
+		var hx PubBytes
+		if hx = DerivePub(key).ToBytes(); check(e) {
 			t.Error(e)
 		}
 		oddness := hx[0]
 		var counter int
 		for i := 0; i < 100; i++ {
 			key = ks.Next()
-			if hx = pub.Derive(key).ToBytes(); hx[0] == oddness {
+			if hx = DerivePub(key).ToBytes(); hx[0] == oddness {
 				counter++
 			}
 		}
@@ -35,7 +33,7 @@ func TestKeySet_Next(t *testing.T) {
 }
 
 func BenchmarkKeySet_Next(b *testing.B) {
-	_, ks, e := New()
+	_, ks, e := NewSigner()
 	if check(e) {
 		b.FailNow()
 	}
@@ -45,13 +43,13 @@ func BenchmarkKeySet_Next(b *testing.B) {
 }
 
 func BenchmarkKeySet_Next_Derive(b *testing.B) {
-	_, ks, e := New()
+	_, ks, e := NewSigner()
 	if check(e) {
 		b.FailNow()
 	}
 	for n := 0; n < b.N; n++ {
 		k := ks.Next()
-		pub.Derive(k)
+		DerivePub(k)
 	}
 }
 
@@ -67,17 +65,17 @@ func GenerateTestMessage(msgSize int) (msg []byte, hash sha256.Hash, e error) {
 }
 
 func BenchmarkKeySet_Next_Sign(b *testing.B) {
-	_, ks, e := New()
+	_, ks, e := NewSigner()
 	if check(e) {
 		b.FailNow()
 	}
 	var msg []byte
-	const msgLen = 1382 - 4 - sig.Len
+	const msgLen = 1382 - 4 - SigLen
 	msg, _, e = GenerateTestMessage(msgLen)
 	for n := 0; n < b.N; n++ {
 		k := ks.Next()
 		hash := sha256.Single(msg)
-		if _, e = sig.Sign(k, hash); check(e) {
+		if _, e = Sign(k, hash); check(e) {
 			b.Error("failed to sign")
 		}
 	}

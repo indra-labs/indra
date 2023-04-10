@@ -3,9 +3,8 @@ package engine
 import (
 	"crypto/cipher"
 	
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -13,20 +12,20 @@ import (
 
 type Ciphers [3]sha256.Hash
 type Nonces [3]nonce.IV
-type Privs [3]*prv.Key
-type Pubs [3]*pub.Key
+type Privs [3]*crypto.Prv
+type Pubs [3]*crypto.Pub
 type Keys struct {
-	Pub   *pub.Key
-	Bytes pub.Bytes
-	Prv   *prv.Key
+	Pub   *crypto.Pub
+	Bytes crypto.PubBytes
+	Prv   *crypto.Prv
 }
 
 func GenerateKeys() (k *Keys, e error) {
 	k = &Keys{}
-	if k.Prv, e = prv.GenerateKey(); fails(e) {
+	if k.Prv, e = crypto.GeneratePrvKey(); fails(e) {
 		return
 	}
-	k.Pub = pub.Derive(k.Prv)
+	k.Pub = crypto.DerivePub(k.Prv)
 	k.Bytes = k.Pub.ToBytes()
 	return
 }
@@ -41,12 +40,12 @@ func Generate2Keys() (one, two *Keys, e error) {
 	return
 }
 
-func MakeKeys(pr *prv.Key) *Keys {
-	pubkey := pub.Derive(pr)
+func MakeKeys(pr *crypto.Prv) *Keys {
+	pubkey := crypto.DerivePub(pr)
 	return &Keys{pubkey, pubkey.ToBytes(), pr}
 }
 
-func Encipher(b slice.Bytes, iv nonce.IV, from *prv.Key, to *pub.Key,
+func Encipher(b slice.Bytes, iv nonce.IV, from *crypto.Prv, to *crypto.Pub,
 	note string) (e error) {
 	
 	var blk cipher.Block

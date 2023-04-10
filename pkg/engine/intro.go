@@ -7,9 +7,7 @@ import (
 	
 	"github.com/gookit/color"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/sig"
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
@@ -18,16 +16,16 @@ import (
 
 const (
 	IntroMagic = "in"
-	IntroLen   = magic.Len + nonce.IDLen + pub.KeyLen + 1 +
-		AddrLen + slice.Uint64Len + sig.Len
+	IntroLen   = magic.Len + nonce.IDLen + crypto.PubKeyLen + 1 +
+		AddrLen + slice.Uint64Len + crypto.SigLen
 )
 
 type Intro struct {
 	ID       nonce.ID // This ensures never a repeated signed message.
-	Key      *pub.Key
+	Key      *crypto.Pub
 	AddrPort *netip.AddrPort
 	Expiry   time.Time
-	Sig      sig.Bytes
+	Sig      crypto.SigBytes
 }
 
 func introPrototype() Onion       { return &Intro{} }
@@ -36,21 +34,21 @@ func (x *Intro) Magic() string    { return IntroMagic }
 func (x *Intro) Len() int         { return IntroLen }
 func (x *Intro) Wrap(inner Onion) {}
 
-func (o Skins) Intro(id nonce.ID, key *prv.Key, ap *netip.AddrPort,
+func (o Skins) Intro(id nonce.ID, key *crypto.Prv, ap *netip.AddrPort,
 	expires time.Time) (sk Skins) {
 	return append(o, NewIntro(id, key, ap, expires))
 }
 
-func NewIntro(id nonce.ID, key *prv.Key, ap *netip.AddrPort,
+func NewIntro(id nonce.ID, key *crypto.Prv, ap *netip.AddrPort,
 	expires time.Time) (in *Intro) {
-	pk := pub.Derive(key)
+	pk := crypto.DerivePub(key)
 	s := NewSplice(IntroLen - magic.Len)
 	s.ID(id).Pubkey(pk).AddrPort(ap).Uint64(uint64(expires.
 		UnixNano()))
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	var e error
-	var sign sig.Bytes
-	if sign, e = sig.Sign(key, hash); fails(e) {
+	var sign crypto.SigBytes
+	if sign, e = crypto.Sign(key, hash); fails(e) {
 		return nil
 	}
 	in = &Intro{

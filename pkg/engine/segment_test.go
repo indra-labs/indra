@@ -5,10 +5,7 @@ import (
 	"math/rand"
 	"testing"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/cloak"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
@@ -25,8 +22,8 @@ func TestSplitJoin(t *testing.T) {
 	if payload, pHash, e = tests.GenMessage(msgSize, ""); fails(e) {
 		t.FailNow()
 	}
-	var sp, rp *prv.Key
-	var rP *pub.Key
+	var sp, rp *crypto.Prv
+	var rP *crypto.Pub
 	if sp, rp, _, rP, e = tests.GenerateTestKeyPairs(); fails(e) {
 		t.FailNow()
 	}
@@ -39,23 +36,23 @@ func TestSplitJoin(t *testing.T) {
 		Parity: 128,
 	}
 	var splitted [][]byte
-	_, ks, _ := signer.New()
+	_, ks, _ := crypto.NewSigner()
 	if _, splitted, e = SplitToPackets(params, segSize, ks); fails(e) {
 		t.Error(e)
 	}
 	var pkts Packets
-	var keys []*pub.Key
+	var keys []*crypto.Pub
 	for i := range splitted {
 		var pkt *Packet
-		var from *pub.Key
-		var to cloak.PubKey
+		var from *crypto.Pub
+		var to crypto.PubKey
 		_ = to
 		var iv nonce.IV
 		if from, to, iv, e = GetKeysFromPacket(splitted[i]); fails(e) {
 			log.I.Ln(i)
 			continue
 		}
-		if !cloak.Match(to, rP.ToBytes()) {
+		if !crypto.Match(to, rP.ToBytes()) {
 			t.Error("did not match cloaked receiver key")
 			t.FailNow()
 		}
@@ -83,8 +80,8 @@ func BenchmarkSplit(b *testing.B) {
 	if payload, _, e = tests.GenMessage(msgSize, ""); fails(e) {
 		b.Error(e)
 	}
-	var sp *prv.Key
-	var rP *pub.Key
+	var sp *crypto.Prv
+	var rP *crypto.Pub
 	if sp, _, _, rP, e = tests.GenerateTestKeyPairs(); fails(e) {
 		b.FailNow()
 	}
@@ -98,7 +95,7 @@ func BenchmarkSplit(b *testing.B) {
 		}
 		
 		var splitted [][]byte
-		_, ks, _ := signer.New()
+		_, ks, _ := crypto.NewSigner()
 		if _, splitted, e = SplitToPackets(params, segSize, ks); fails(e) {
 			b.Error(e)
 		}
@@ -143,8 +140,8 @@ func TestSplitJoinFEC(t *testing.T) {
 	msgSize := 2 << 15
 	segSize := 1382
 	var e error
-	var sp, rp, Rp *prv.Key
-	var sP, rP, RP *pub.Key
+	var sp, rp, Rp *crypto.Prv
+	var sP, rP, RP *crypto.Pub
 	if sp, rp, sP, rP, e = tests.GenerateTestKeyPairs(); fails(e) {
 		t.FailNow()
 	}
@@ -172,7 +169,7 @@ func TestSplitJoinFEC(t *testing.T) {
 				punctures[len(punctures)-p-1], punctures[p]
 		}
 		addr := rP
-		_, ks, _ := signer.New()
+		_, ks, _ := crypto.NewSigner()
 		for p := range punctures {
 			var splitted [][]byte
 			ep := &PacketParams{
@@ -212,11 +209,11 @@ func TestSplitJoinFEC(t *testing.T) {
 				}
 			}
 			var pkts Packets
-			var keys []*pub.Key
+			var keys []*crypto.Pub
 			for s := range splitted {
 				var pkt *Packet
-				var from *pub.Key
-				var to cloak.PubKey
+				var from *crypto.Pub
+				var to crypto.PubKey
 				_ = to
 				var iv nonce.IV
 				if from, to, iv, e = GetKeysFromPacket(

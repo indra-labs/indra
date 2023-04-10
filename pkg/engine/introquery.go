@@ -3,8 +3,7 @@ package engine
 import (
 	"reflect"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
@@ -13,7 +12,7 @@ import (
 
 const (
 	IntroQueryMagic = "iq"
-	IntroQueryLen   = magic.Len + nonce.IDLen + pub.KeyLen +
+	IntroQueryLen   = magic.Len + nonce.IDLen + crypto.PubKeyLen +
 		3*sha256.Len + nonce.IVLen*3
 )
 
@@ -33,7 +32,7 @@ type IntroQuery struct {
 	// course, if configured this way. This could be done by tunneling from
 	// a local Socks5 proxy into Indranet and the exit node also having
 	// this.
-	Key *pub.Key
+	Key *crypto.Pub
 	Onion
 }
 
@@ -43,7 +42,7 @@ func (x *IntroQuery) Magic() string    { return IntroQueryMagic }
 func (x *IntroQuery) Len() int         { return IntroQueryLen + x.Onion.Len() }
 func (x *IntroQuery) Wrap(inner Onion) { x.Onion = inner }
 
-func (o Skins) IntroQuery(id nonce.ID, hsk *pub.Key, exit *ExitPoint) Skins {
+func (o Skins) IntroQuery(id nonce.ID, hsk *crypto.Pub, exit *ExitPoint) Skins {
 	return append(o, &IntroQuery{
 		ID:      id,
 		Ciphers: GenCiphers(exit.Keys, exit.ReturnPubs),
@@ -107,8 +106,8 @@ func (x *IntroQuery) Handle(s *Splice, p Onion,
 	return
 }
 
-func MakeIntroQuery(id nonce.ID, hsk *pub.Key, alice, bob *SessionData,
-	c Circuit, ks *signer.KeySet) Skins {
+func MakeIntroQuery(id nonce.ID, hsk *crypto.Pub, alice, bob *SessionData,
+	c Circuit, ks *crypto.KeySet) Skins {
 	
 	headers := GetHeaders(alice, bob, c, ks)
 	return Skins{}.
@@ -117,7 +116,7 @@ func MakeIntroQuery(id nonce.ID, hsk *pub.Key, alice, bob *SessionData,
 		RoutingHeader(headers.Return)
 }
 
-func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *pub.Key,
+func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *crypto.Pub,
 	alice, bob *SessionData, hook func(in *Intro)) {
 	
 	fn := func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {

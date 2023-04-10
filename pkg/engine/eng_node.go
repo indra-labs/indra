@@ -5,7 +5,7 @@ import (
 	"net/netip"
 	"sync"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/ring"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -46,7 +46,7 @@ const (
 // as only the node embedded in a client and not the peer node list has one
 // available. The Node for a client's self should use true in the local
 // parameter to not initialise the peer state ring buffers as it won't use them.
-func NewNode(addr *netip.AddrPort, idPrv *prv.Key, snd, rcv Transport,
+func NewNode(addr *netip.AddrPort, idPrv *crypto.Prv, snd, rcv Transport,
 	relayRate int, local bool) (n *Node, id nonce.ID) {
 	
 	id = nonce.NewID()

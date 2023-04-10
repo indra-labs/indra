@@ -7,7 +7,7 @@ import (
 	
 	"github.com/templexxx/reedsolomon"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -20,7 +20,7 @@ const ErrEmptyBytes = "cannot encode empty bytes"
 //
 // The last packet that falls short of the segmentSize is padded random bytes.
 func SplitToPackets(pp *PacketParams,
-	segSize int, ks *signer.KeySet) (pkts Packets, packets [][]byte, e error) {
+	segSize int, ks *crypto.KeySet) (pkts Packets, packets [][]byte, e error) {
 	
 	if pp.Data == nil || len(pp.Data) == 0 {
 		e = fmt.Errorf(ErrEmptyBytes)

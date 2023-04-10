@@ -3,8 +3,8 @@ package engine
 import (
 	"reflect"
 	
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
@@ -12,7 +12,7 @@ import (
 
 const (
 	ReadyMagic = "rd"
-	ReadyLen   = magic.Len + nonce.IDLen + pub.KeyLen + 2*RoutingHeaderLen +
+	ReadyLen   = magic.Len + nonce.IDLen + crypto.PubKeyLen + 2*RoutingHeaderLen +
 		3*sha256.Len + 3*nonce.IVLen
 )
 
@@ -24,11 +24,11 @@ func (x *Ready) Wrap(inner Onion) {}
 
 type Ready struct {
 	ID              nonce.ID
-	Address         *pub.Key
+	Address         *crypto.Pub
 	Forward, Return *ReplyHeader
 }
 
-func (o Skins) Ready(id nonce.ID, addr *pub.Key, fwHeader,
+func (o Skins) Ready(id nonce.ID, addr *crypto.Pub, fwHeader,
 	rvHeader RoutingHeaderBytes,
 	fc, rc Ciphers, fn, rn Nonces) Skins {
 	return append(o, &Ready{id, addr,

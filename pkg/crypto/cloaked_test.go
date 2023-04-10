@@ -1,21 +1,18 @@
-package cloak
+package crypto
 
 import (
 	"math/rand"
 	"testing"
 	"time"
-
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 )
 
 func TestAddress(t *testing.T) {
 	var e error
-	var sendPriv *prv.Key
-	if sendPriv, e = prv.GenerateKey(); check(e) {
+	var sendPriv *Prv
+	if sendPriv, e = GeneratePrvKey(); fails(e) {
 		return
 	}
-	sendPub := pub.Derive(sendPriv)
+	sendPub := DerivePub(sendPriv)
 	sendBytes := sendPub.ToBytes()
 	var cloaked PubKey
 	cloaked = GetCloak(sendPub)

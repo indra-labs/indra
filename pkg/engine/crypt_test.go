@@ -3,7 +3,7 @@ package engine
 import (
 	"testing"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -15,7 +15,7 @@ func TestOnionSkins_SimpleCrypt(t *testing.T) {
 	n := nonce.NewID()
 	n1 := nonce.New()
 	prv1, prv2 := GetTwoPrvKeys(t)
-	pub1, pub2 := pub.Derive(prv1), pub.Derive(prv2)
+	pub1, pub2 := crypto.DerivePub(prv1), crypto.DerivePub(prv2)
 	on := Skins{}.
 		Crypt(pub1, pub2, prv2, n1, 0).
 		Confirmation(n, 0).

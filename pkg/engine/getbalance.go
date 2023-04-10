@@ -3,7 +3,7 @@ package engine
 import (
 	"reflect"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
@@ -46,7 +46,7 @@ type GetBalanceParams struct {
 	ID, ConfID nonce.ID
 	Alice, Bob *SessionData
 	S          Circuit
-	KS         *signer.KeySet
+	KS         *crypto.KeySet
 }
 
 // MakeGetBalance sends out a request in a similar way to Exit except the node

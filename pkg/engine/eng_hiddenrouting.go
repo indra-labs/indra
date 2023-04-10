@@ -5,9 +5,7 @@ import (
 	
 	"github.com/cybriq/qu"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/cloak"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 )
@@ -17,17 +15,17 @@ type Introduction struct {
 	ReplyHeader
 }
 
-type MyIntros map[pub.Bytes]*Introduction
+type MyIntros map[crypto.PubBytes]*Introduction
 
-type KnownIntros map[pub.Bytes]*Intro
+type KnownIntros map[crypto.PubBytes]*Intro
 
 type LocalHiddenService struct {
-	Prv           *prv.Key
+	Prv           *crypto.Prv
 	CurrentIntros []*Intro
 	*Service
 }
 
-type HiddenServices map[pub.Bytes]*LocalHiddenService
+type HiddenServices map[crypto.PubBytes]*LocalHiddenService
 
 // HiddenRouting is a collection of data related to hidden services.
 // Introductions both own and other, hidden services.
@@ -46,10 +44,10 @@ func NewHiddenrouting() *HiddenRouting {
 	}
 }
 
-func (hr *HiddenRouting) AddHiddenService(svc *Service, key *prv.Key,
+func (hr *HiddenRouting) AddHiddenService(svc *Service, key *crypto.Prv,
 	in *Intro, addr string) {
 	
-	pk := pub.Derive(key).ToBytes()
+	pk := crypto.DerivePub(key).ToBytes()
 	hr.Lock()
 	log.I.F("%s added hidden service with key %s", addr, pk)
 	hr.HiddenServices[pk] = &LocalHiddenService{
@@ -61,7 +59,7 @@ func (hr *HiddenRouting) AddHiddenService(svc *Service, key *prv.Key,
 	hr.Unlock()
 }
 
-func (hr *HiddenRouting) AddIntroToHiddenService(key pub.Bytes, in *Intro) {
+func (hr *HiddenRouting) AddIntroToHiddenService(key crypto.PubBytes, in *Intro) {
 	hr.Lock()
 	hr.HiddenServices[key].CurrentIntros = append(hr.HiddenServices[key].
 		CurrentIntros, in)
@@ -91,29 +89,29 @@ out:
 	
 }
 
-func (hr *HiddenRouting) FindCloakedHiddenService(key cloak.PubKey) (
-	pubKey *pub.Bytes) {
+func (hr *HiddenRouting) FindCloakedHiddenService(key crypto.PubKey) (
+	pubKey *crypto.PubBytes) {
 	
 	for i := range hr.MyIntros {
 		pubKey1 := hr.MyIntros[i].Key.ToBytes()
-		if cloak.Match(key, pubKey1) {
+		if crypto.Match(key, pubKey1) {
 			return &pubKey1
 		}
 	}
 	for i := range hr.HiddenServices {
-		if cloak.Match(key, i) {
+		if crypto.Match(key, i) {
 			return &i
 		}
 	}
 	for i := range hr.KnownIntros {
-		if cloak.Match(key, i) {
+		if crypto.Match(key, i) {
 			return &i
 		}
 	}
 	return
 }
 
-func (hr *HiddenRouting) FindHiddenService(key pub.Bytes) (
+func (hr *HiddenRouting) FindHiddenService(key crypto.PubBytes) (
 	hs *LocalHiddenService) {
 	
 	hr.Lock()
@@ -124,7 +122,7 @@ func (hr *HiddenRouting) FindHiddenService(key pub.Bytes) (
 	return
 }
 
-func (hr *HiddenRouting) FindIntroduction(key pub.Bytes) (intro *Introduction) {
+func (hr *HiddenRouting) FindIntroduction(key crypto.PubBytes) (intro *Introduction) {
 	hr.Lock()
 	var ok bool
 	if intro, ok = hr.MyIntros[key]; ok {
@@ -134,7 +132,7 @@ func (hr *HiddenRouting) FindIntroduction(key pub.Bytes) (intro *Introduction) {
 }
 
 func (hr *HiddenRouting) FindIntroductionUnsafe(
-	key pub.Bytes) (intro *Introduction) {
+	key crypto.PubBytes) (intro *Introduction) {
 	
 	var ok bool
 	if intro, ok = hr.MyIntros[key]; ok {
@@ -142,7 +140,7 @@ func (hr *HiddenRouting) FindIntroductionUnsafe(
 	return
 }
 
-func (hr *HiddenRouting) FindKnownIntro(key pub.Bytes) (intro *Intro) {
+func (hr *HiddenRouting) FindKnownIntro(key crypto.PubBytes) (intro *Intro) {
 	hr.Lock()
 	var ok bool
 	if intro, ok = hr.KnownIntros[key]; ok {
@@ -151,14 +149,14 @@ func (hr *HiddenRouting) FindKnownIntro(key pub.Bytes) (intro *Intro) {
 	return
 }
 
-func (hr *HiddenRouting) FindKnownIntroUnsafe(key pub.Bytes) (intro *Intro) {
+func (hr *HiddenRouting) FindKnownIntroUnsafe(key crypto.PubBytes) (intro *Intro) {
 	var ok bool
 	if intro, ok = hr.KnownIntros[key]; ok {
 	}
 	return
 }
 
-func (hr *HiddenRouting) Delete(key pub.Bytes) (header *Introduction) {
+func (hr *HiddenRouting) Delete(key crypto.PubBytes) (header *Introduction) {
 	hr.Lock()
 	var ok bool
 	if header, ok = hr.MyIntros[key]; ok {
@@ -168,7 +166,7 @@ func (hr *HiddenRouting) Delete(key pub.Bytes) (header *Introduction) {
 	return
 }
 
-func (hr *HiddenRouting) DeleteKnownIntro(key pub.Bytes) (
+func (hr *HiddenRouting) DeleteKnownIntro(key crypto.PubBytes) (
 	header *Introduction) {
 	hr.Lock()
 	var ok bool
@@ -179,7 +177,7 @@ func (hr *HiddenRouting) DeleteKnownIntro(key pub.Bytes) (
 	return
 }
 
-func (hr *HiddenRouting) AddIntro(pk *pub.Key, intro *Introduction) {
+func (hr *HiddenRouting) AddIntro(pk *crypto.Pub, intro *Introduction) {
 	hr.Lock()
 	var ok bool
 	key := pk.ToBytes()

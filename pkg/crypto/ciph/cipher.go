@@ -10,9 +10,7 @@ import (
 	"encoding/base32"
 	
 	"git-indra.lan/indra-labs/indra"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/ecdh"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
@@ -29,8 +27,8 @@ var enc = base32.NewEncoding(Charset).EncodeToString
 
 // GetBlock returns a block cipher with a secret generated from the provided
 // keys using ECDH.
-func GetBlock(from *prv.Key, to *pub.Key, note string) (block cipher.Block) {
-	secret := ecdh.Compute(from, to)
+func GetBlock(from *crypto.Prv, to *crypto.Pub, note string) (block cipher.Block) {
+	secret := crypto.ComputeSharedSecret(from, to)
 	// fb := from.ToBytes()
 	// log.T.Ln(note, "secret", color.Red.Sprint(enc(secret[:])[:52]), "<-",
 	// 	color.Blue.Sprint(enc(fb[:])[:52]), "+", to.ToBase32())

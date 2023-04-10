@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"time"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
@@ -137,7 +137,7 @@ type ExitParams struct {
 	ID         nonce.ID
 	Alice, Bob *SessionData
 	S          Circuit
-	KS         *signer.KeySet
+	KS         *crypto.KeySet
 }
 
 // MakeExit constructs a message containing an arbitrary payload to a node (3rd

@@ -7,8 +7,7 @@ import (
 	
 	"github.com/cybriq/qu"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
@@ -19,14 +18,14 @@ func TestOnionSkins_GetBalance(t *testing.T) {
 	var e error
 	n3 := Gen3Nonces()
 	id, confID := nonce.NewID(), nonce.NewID()
-	_, ks, _ := signer.New()
+	_, ks, _ := crypto.NewSigner()
 	var prvs Privs
 	for i := range prvs {
 		prvs[i] = ks.Next()
 	}
 	var pubs Pubs
 	for i := range pubs {
-		pubs[i] = pub.Derive(prvs[i])
+		pubs[i] = crypto.DerivePub(prvs[i])
 	}
 	ep := &ExitPoint{
 		Routing: &Routing{

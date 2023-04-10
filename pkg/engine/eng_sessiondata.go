@@ -6,8 +6,7 @@ import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	"github.com/gookit/color"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 )
@@ -55,20 +54,20 @@ func NewSessionData(
 	id nonce.ID,
 	node *Node,
 	rem lnwire.MilliSatoshi,
-	hdrPrv *prv.Key,
-	pldPrv *prv.Key,
+	hdrPrv *crypto.Prv,
+	pldPrv *crypto.Prv,
 	hop byte,
 ) (s *SessionData) {
 	
 	var e error
 	if hdrPrv == nil || pldPrv == nil {
-		if hdrPrv, e = prv.GenerateKey(); fails(e) {
+		if hdrPrv, e = crypto.GeneratePrvKey(); fails(e) {
 		}
-		if pldPrv, e = prv.GenerateKey(); fails(e) {
+		if pldPrv, e = crypto.GeneratePrvKey(); fails(e) {
 		}
 	}
-	hdrPub := pub.Derive(hdrPrv)
-	pldPub := pub.Derive(pldPrv)
+	hdrPub := crypto.DerivePub(hdrPrv)
+	pldPub := crypto.DerivePub(pldPrv)
 	h, p := hdrPrv.ToBytes(), pldPrv.ToBytes()
 	s = &SessionData{
 		ID:        id,

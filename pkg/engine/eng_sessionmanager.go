@@ -8,8 +8,7 @@ import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	"github.com/gookit/color"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -104,7 +103,7 @@ func (sm *SessionManager) FindSession(id nonce.ID) *SessionData {
 	}
 	return nil
 }
-func (sm *SessionManager) FindSessionByHeader(prvKey *prv.Key) *SessionData {
+func (sm *SessionManager) FindSessionByHeader(prvKey *crypto.Prv) *SessionData {
 	sm.Lock()
 	defer sm.Unlock()
 	for i := range sm.Sessions {
@@ -114,7 +113,7 @@ func (sm *SessionManager) FindSessionByHeader(prvKey *prv.Key) *SessionData {
 	}
 	return nil
 }
-func (sm *SessionManager) FindSessionByHeaderPub(pubKey *pub.Key) *SessionData {
+func (sm *SessionManager) FindSessionByHeaderPub(pubKey *crypto.Pub) *SessionData {
 	sm.Lock()
 	defer sm.Unlock()
 	for i := range sm.Sessions {
@@ -299,13 +298,13 @@ func (sm *SessionManager) GetLocalNodeRelayRate() (rate int) {
 	return sm.GetLocalNode().RelayRate
 }
 
-func (sm *SessionManager) GetLocalNodeIdentityBytes() (ident pub.Bytes) {
+func (sm *SessionManager) GetLocalNodeIdentityBytes() (ident crypto.PubBytes) {
 	sm.Lock()
 	defer sm.Unlock()
 	return sm.GetLocalNode().Identity.Bytes
 }
 
-func (sm *SessionManager) GetLocalNodeIdentityPrv() (ident *prv.Key) {
+func (sm *SessionManager) GetLocalNodeIdentityPrv() (ident *crypto.Prv) {
 	sm.Lock()
 	defer sm.Unlock()
 	return sm.GetLocalNode().Identity.Prv

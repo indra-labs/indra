@@ -4,8 +4,7 @@ import (
 	"testing"
 	"time"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -14,7 +13,7 @@ import (
 func TestOnionSkins_Intro(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	var e error
-	pr, ks, _ := signer.New()
+	pr, ks, _ := crypto.NewSigner()
 	id := nonce.NewID()
 	in := NewIntro(id, pr, slice.GenerateRandomAddrPortIPv6(),
 		time.Now().Add(time.Hour))
@@ -24,7 +23,7 @@ func TestOnionSkins_Intro(t *testing.T) {
 	}
 	var pubs Pubs
 	for i := range pubs {
-		pubs[i] = pub.Derive(prvs[i])
+		pubs[i] = crypto.DerivePub(prvs[i])
 	}
 	on1 := Skins{}.
 		Intro(id, pr, in.AddrPort, time.Now().Add(time.Hour))

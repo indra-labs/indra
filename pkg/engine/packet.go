@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"time"
 	
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/cloak"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -42,7 +40,7 @@ func (p *Packet) GetOverhead() int {
 
 // Overhead is the base overhead on a packet, use GetOverhead to add any extra
 // as found in a Packet.
-const Overhead = 4 + pub.KeyLen + cloak.Len + nonce.IVLen
+const Overhead = 4 + crypto.PubKeyLen + crypto.Len + nonce.IVLen
 
 // Packets is a slice of pointers to packets.
 type Packets []*Packet
@@ -59,8 +57,8 @@ func (p Packets) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 // packets.
 type PacketParams struct {
 	ID     nonce.ID
-	To     *pub.Key
-	From   *prv.Key
+	To     *crypto.Pub
+	From   *crypto.Prv
 	Parity int
 	Seq    int
 	Length int
@@ -89,13 +87,13 @@ func EncodePacket(ep *PacketParams) (pkt []byte, e error) {
 	pkt = make([]byte, slice.SumLen(Seq, Length,
 		ep.Data)+1+Overhead+nonce.IDLen)
 	// Append pubkey used for encryption key derivation.
-	k := pub.Derive(ep.From).ToBytes()
-	cloaked := cloak.GetCloak(ep.To)
+	k := crypto.DerivePub(ep.From).ToBytes()
+	cloaked := crypto.GetCloak(ep.To)
 	// Copy nonce, address and key over top of the header.
 	c := new(slice.Cursor)
 	c.Inc(4)
-	copy(pkt[*c:c.Inc(pub.KeyLen)], k[:])
-	copy(pkt[*c:c.Inc(cloak.Len)], cloaked[:])
+	copy(pkt[*c:c.Inc(crypto.PubKeyLen)], k[:])
+	copy(pkt[*c:c.Inc(crypto.Len)], cloaked[:])
 	copy(pkt[*c:c.Inc(nonce.IVLen)], nonc[:])
 	copy(pkt[*c:c.Inc(nonce.IDLen)], ep.ID[:])
 	copy(pkt[*c:c.Inc(slice.Uint16Len)], Seq)
@@ -118,7 +116,7 @@ func EncodePacket(ep *PacketParams) (pkt []byte, e error) {
 // found, it is combined with the public key to generate the cipher and the
 // entire packet should then be decrypted, and the DecodePacket function will
 // then decode a OnionSkin.
-func GetKeysFromPacket(d []byte) (from *pub.Key, to cloak.PubKey, iv nonce.IV,
+func GetKeysFromPacket(d []byte) (from *crypto.Pub, to crypto.PubKey, iv nonce.IV,
 	e error) {
 	
 	pktLen := len(d)
@@ -131,7 +129,7 @@ func GetKeysFromPacket(d []byte) (from *pub.Key, to cloak.PubKey, iv nonce.IV,
 		return
 	}
 	// split off the signature and recover the public key
-	var k pub.Bytes
+	var k crypto.PubBytes
 	var chek []byte
 	c := new(slice.Cursor)
 	chek = d[:c.Inc(4)]
@@ -141,9 +139,9 @@ func GetKeysFromPacket(d []byte) (from *pub.Key, to cloak.PubKey, iv nonce.IV,
 			chek, checkHash[:4])
 		return
 	}
-	copy(k[:], d[*c:c.Inc(pub.KeyLen)])
-	copy(to[:], d[*c:c.Inc(cloak.Len)])
-	if from, e = pub.FromBytes(k[:]); fails(e) {
+	copy(k[:], d[*c:c.Inc(crypto.PubKeyLen)])
+	copy(to[:], d[*c:c.Inc(crypto.Len)])
+	if from, e = crypto.PubFromBytes(k[:]); fails(e) {
 		return
 	}
 	return
@@ -152,7 +150,7 @@ func GetKeysFromPacket(d []byte) (from *pub.Key, to cloak.PubKey, iv nonce.IV,
 // DecodePacket a packet and return the Packet with encrypted payload and
 // signer's public key. This assumes GetKeysFromPacket succeeded and the
 // matching private key was found.
-func DecodePacket(d []byte, from *pub.Key, to *prv.Key,
+func DecodePacket(d []byte, from *crypto.Pub, to *crypto.Prv,
 	iv nonce.IV) (f *Packet, e error) {
 	
 	pktLen := len(d)
@@ -167,7 +165,7 @@ func DecodePacket(d []byte, from *pub.Key, to *prv.Key,
 	f = &Packet{TimeStamp: time.Now()}
 	// copy the nonce
 	c := new(slice.Cursor)
-	copy(iv[:], d[c.Inc(4+pub.KeyLen+cloak.Len):c.Inc(nonce.IVLen)])
+	copy(iv[:], d[c.Inc(4+crypto.PubKeyLen+crypto.Len):c.Inc(nonce.IVLen)])
 	var blk cipher.Block
 	if blk = ciph.GetBlock(to, from, "packet decode"); fails(e) {
 		return

@@ -4,30 +4,28 @@ import (
 	"crypto/cipher"
 	"reflect"
 	
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/cloak"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 )
 
 const (
 	CryptMagic       = "cr"
-	CryptLen         = magic.Len + nonce.IVLen + cloak.Len + pub.KeyLen
+	CryptLen         = magic.Len + nonce.IVLen + crypto.Len + crypto.PubKeyLen
 	ReverseCryptLen  = ReverseLen + CryptLen
 	RoutingHeaderLen = 3 * ReverseCryptLen
 )
 
 type Crypt struct {
 	Depth                     int
-	ToHeaderPub, ToPayloadPub *pub.Key
-	From                      *prv.Key
+	ToHeaderPub, ToPayloadPub *crypto.Pub
+	From                      *crypto.Prv
 	IV                        nonce.IV
 	// The remainder here are for Decode.
-	Cloak   cloak.PubKey
-	ToPriv  *prv.Key
-	FromPub *pub.Key
+	Cloak   crypto.PubKey
+	ToPriv  *crypto.Prv
+	FromPub *crypto.Pub
 	Onion
 }
 
@@ -36,7 +34,7 @@ func init()                       { Register(CryptMagic, cryptPrototype) }
 func (x *Crypt) Len() int         { return CryptLen + x.Onion.Len() }
 func (x *Crypt) Wrap(inner Onion) { x.Onion = inner }
 
-func (o Skins) Crypt(toHdr, toPld *pub.Key, from *prv.Key, iv nonce.IV,
+func (o Skins) Crypt(toHdr, toPld *crypto.Pub, from *crypto.Prv, iv nonce.IV,
 	depth int) Skins {
 	
 	return append(o, &Crypt{
@@ -60,7 +58,7 @@ func (x *Crypt) Encode(s *Splice) (e error) {
 		return
 	}
 	s.Magic(CryptMagic).
-		IV(x.IV).Cloak(x.ToHeaderPub).Pubkey(pub.Derive(x.From))
+		IV(x.IV).Cloak(x.ToHeaderPub).Pubkey(crypto.DerivePub(x.From))
 	// Then we can encrypt the message segment
 	var blk cipher.Block
 	if blk = ciph.GetBlock(x.From, x.ToHeaderPub, "crypt header"); fails(e) {
@@ -99,9 +97,9 @@ func (x *Crypt) Decode(s *Splice) (e error) {
 	return
 }
 
-// Decrypt requires the prv.Key to be located from the Cloak, using the FromPub
+// Decrypt requires the prv.Pub to be located from the Cloak, using the FromPub
 // key to derive the shared secret, and then decrypts the rest of the message.
-func (x *Crypt) Decrypt(prk *prv.Key, s *Splice) {
+func (x *Crypt) Decrypt(prk *crypto.Prv, s *Splice) {
 	ciph.Encipher(ciph.GetBlock(prk, x.FromPub, "decrypt crypt header"),
 		x.IV, s.GetRest())
 }

@@ -3,8 +3,7 @@ package engine
 import (
 	"reflect"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
@@ -12,13 +11,13 @@ import (
 
 const (
 	SessionMagic = "ss"
-	SessionLen   = magic.Len + nonce.IDLen + prv.KeyLen*2
+	SessionLen   = magic.Len + nonce.IDLen + crypto.PrvKeyLen*2
 )
 
 type Session struct {
 	ID              nonce.ID // only used by a client
 	Hop             byte     // only used by a client
-	Header, Payload *prv.Key
+	Header, Payload *crypto.Prv
 	Onion
 }
 
@@ -29,7 +28,7 @@ func (x *Session) Len() int         { return SessionLen + x.Onion.Len() }
 func (x *Session) Wrap(inner Onion) { x.Onion = inner }
 
 func MakeSession(id nonce.ID, s [5]*Session,
-	client *SessionData, hop []*Node, ks *signer.KeySet) Skins {
+	client *SessionData, hop []*Node, ks *crypto.KeySet) Skins {
 	
 	n := GenNonces(6)
 	sk := Skins{}
@@ -61,11 +60,11 @@ func (o Skins) Session(sess *Session) Skins {
 
 func NewSessionKeys(hop byte) (x *Session) {
 	var e error
-	var hdrPrv, pldPrv *prv.Key
-	if hdrPrv, e = prv.GenerateKey(); fails(e) {
+	var hdrPrv, pldPrv *crypto.Prv
+	if hdrPrv, e = crypto.GeneratePrvKey(); fails(e) {
 		return
 	}
-	if pldPrv, e = prv.GenerateKey(); fails(e) {
+	if pldPrv, e = crypto.GeneratePrvKey(); fails(e) {
 		return
 	}
 	return &Session{

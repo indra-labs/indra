@@ -5,9 +5,8 @@ import (
 	
 	"github.com/davecgh/go-spew/spew"
 	
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
@@ -29,13 +28,13 @@ func (x *Message) Wrap(inner Onion) {}
 
 type Message struct {
 	Forwards        [2]*SessionData
-	Address         *pub.Key
+	Address         *crypto.Pub
 	ID, Re          nonce.ID
 	Forward, Return *ReplyHeader
 	Payload         slice.Bytes
 }
 
-func (o Skins) Message(msg *Message, ks *signer.KeySet) Skins {
+func (o Skins) Message(msg *Message, ks *crypto.KeySet) Skins {
 	return append(o.
 		ForwardCrypt(msg.Forwards[0], ks.Next(), nonce.New()).
 		ForwardCrypt(msg.Forwards[1], ks.Next(), nonce.New()),

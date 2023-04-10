@@ -1,8 +1,7 @@
 package engine
 
 import (
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 )
 
@@ -34,12 +33,12 @@ func (o Skins) Assemble() (on Onion) {
 	return o[0]
 }
 
-func (o Skins) ForwardCrypt(s *SessionData, k *prv.Key, n nonce.IV) Skins {
+func (o Skins) ForwardCrypt(s *SessionData, k *crypto.Prv, n nonce.IV) Skins {
 	return o.Forward(s.Node.AddrPort).Crypt(s.Header.Pub, s.Payload.Pub, k,
 		n, 0)
 }
 
-func (o Skins) ReverseCrypt(s *SessionData, k *prv.Key, n nonce.IV,
+func (o Skins) ReverseCrypt(s *SessionData, k *crypto.Prv, n nonce.IV,
 	seq int) (oo Skins) {
 	
 	if s == nil || k == nil {
@@ -63,7 +62,7 @@ type Headers struct {
 }
 
 func GetHeaders(alice, bob *SessionData, c Circuit,
-	ks *signer.KeySet) (h *Headers) {
+	ks *crypto.KeySet) (h *Headers) {
 	
 	fwKeys := ks.Next3()
 	rtKeys := ks.Next3()
@@ -116,7 +115,7 @@ func (o Skins) RoutingHeader(r *Routing) Skins {
 }
 
 func (o Skins) ForwardSession(s *Node,
-	k *prv.Key, n nonce.IV, sess *Session) Skins {
+	k *crypto.Prv, n nonce.IV, sess *Session) Skins {
 	
 	return o.Forward(s.AddrPort).
 		Crypt(s.Identity.Pub, nil, k, n, 0).

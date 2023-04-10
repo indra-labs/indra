@@ -8,8 +8,7 @@ import (
 	"github.com/cybriq/qu"
 	"go.uber.org/atomic"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
@@ -23,7 +22,7 @@ func TestOnionSkins_IntroQuery(t *testing.T) {
 	prvs, pubs := GetCipherSet(t)
 	ciphers := GenCiphers(prvs, pubs)
 	prv1, _ := GetTwoPrvKeys(t)
-	pub1 := pub.Derive(prv1)
+	pub1 := crypto.DerivePub(prv1)
 	n3 := Gen3Nonces()
 	ep := &ExitPoint{
 		Routing: &Routing{
@@ -35,7 +34,7 @@ func TestOnionSkins_IntroQuery(t *testing.T) {
 	}
 	id := nonce.NewID()
 	on := Skins{}.
-		IntroQuery(id, pub.Derive(prv1), ep).
+		IntroQuery(id, crypto.DerivePub(prv1), ep).
 		End().Assemble()
 	s := Encode(on)
 	s.SetCursor(0)
@@ -125,8 +124,8 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 		}
 		wg.Wait()
 	}
-	var idPrv *prv.Key
-	if idPrv, e = prv.GenerateKey(); fails(e) {
+	var idPrv *crypto.Prv
+	if idPrv, e = crypto.GeneratePrvKey(); fails(e) {
 		return
 	}
 	id := nonce.NewID()
@@ -160,7 +159,7 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 		})
 	log2.SetLogLevel(log2.Trace)
 	// Now query everyone for the intro.
-	idPub := pub.Derive(idPrv)
+	idPub := crypto.DerivePub(idPrv)
 	peers := clients[1:]
 	log.D.Ln("client address", client.GetLocalNodeAddressString())
 	for i := range peers {

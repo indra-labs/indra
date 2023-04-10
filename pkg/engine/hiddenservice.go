@@ -6,8 +6,7 @@ import (
 	
 	"github.com/gookit/color"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
@@ -86,7 +85,7 @@ func (x *HiddenService) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 }
 
 func MakeHiddenService(in *Intro, alice, bob *SessionData,
-	c Circuit, ks *signer.KeySet) Skins {
+	c Circuit, ks *crypto.KeySet) Skins {
 	
 	headers := GetHeaders(alice, bob, c, ks)
 	return Skins{}.
@@ -95,7 +94,7 @@ func MakeHiddenService(in *Intro, alice, bob *SessionData,
 		RoutingHeader(headers.Return)
 }
 
-func (ng *Engine) SendHiddenService(id nonce.ID, key *prv.Key,
+func (ng *Engine) SendHiddenService(id nonce.ID, key *crypto.Prv,
 	expiry time.Time, alice, bob *SessionData,
 	svc *Service, hook Callback) (in *Intro) {
 	

@@ -4,9 +4,7 @@ import (
 	"github.com/cybriq/qu"
 	"go.uber.org/atomic"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/signer"
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -15,7 +13,7 @@ type Engine struct {
 	*PendingResponses
 	*SessionManager
 	*HiddenRouting
-	*signer.KeySet
+	*crypto.KeySet
 	Load          atomic.Uint32
 	TimeoutSignal qu.C
 	Pause         qu.C
@@ -25,7 +23,7 @@ type Engine struct {
 
 type Params struct {
 	Sender, Receiver Transport
-	IDPrv            *prv.Key
+	IDPrv            *crypto.Prv
 	Node             *Node
 	Nodes            []*Node
 	NReturnSessions  int
@@ -35,9 +33,9 @@ func NewEngine(p Params) (c *Engine, e error) {
 	p.Node.Sender = p.Sender
 	p.Node.Receiver = p.Receiver
 	p.Node.Identity.Prv = p.IDPrv
-	p.Node.Identity.Pub = pub.Derive(p.IDPrv)
-	var ks *signer.KeySet
-	if _, ks, e = signer.New(); fails(e) {
+	p.Node.Identity.Pub = crypto.DerivePub(p.IDPrv)
+	var ks *crypto.KeySet
+	if _, ks, e = crypto.NewSigner(); fails(e) {
 		return
 	}
 	c = &Engine{

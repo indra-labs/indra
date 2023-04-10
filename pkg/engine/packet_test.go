@@ -5,9 +5,7 @@ import (
 	"errors"
 	"testing"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/cloak"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/util/tests"
@@ -23,8 +21,8 @@ func TestEncode_Decode(t *testing.T) {
 	}
 	payload = append([]byte("payload"), payload...)
 	pHash := sha256.Single(payload)
-	var sp, rp *prv.Key
-	var sP, rP *pub.Key
+	var sp, rp *crypto.Prv
+	var sP, rP *crypto.Pub
 	if sp, rp, sP, rP, e = tests.GenerateTestKeyPairs(); fails(e) {
 		t.FailNow()
 	}
@@ -41,8 +39,8 @@ func TestEncode_Decode(t *testing.T) {
 	if pkt, e = EncodePacket(params); fails(e) {
 		t.Error(e)
 	}
-	var from *pub.Key
-	var to cloak.PubKey
+	var from *crypto.Pub
+	var to crypto.PubKey
 	_ = to
 	var iv nonce.IV
 	if from, to, iv, e = GetKeysFromPacket(pkt); fails(e) {

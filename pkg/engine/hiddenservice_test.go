@@ -9,7 +9,7 @@ import (
 	"github.com/cybriq/qu"
 	"go.uber.org/atomic"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
@@ -62,8 +62,8 @@ func TestEngine_SendHiddenService(t *testing.T) {
 		wg.Wait()
 	}
 	log2.SetLogLevel(log2.Debug)
-	var idPrv *prv.Key
-	if idPrv, e = prv.GenerateKey(); fails(e) {
+	var idPrv *crypto.Prv
+	if idPrv, e = crypto.GeneratePrvKey(); fails(e) {
 		return
 	}
 	id := nonce.NewID()

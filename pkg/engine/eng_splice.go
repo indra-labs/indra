@@ -12,10 +12,7 @@ import (
 	"github.com/gookit/color"
 	
 	"git-indra.lan/indra-labs/indra/pkg/b32/based32"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/cloak"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/sig"
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	magic2 "git-indra.lan/indra-labs/indra/pkg/engine/magic"
@@ -306,41 +303,41 @@ func (s *Splice) ReadNonces(iv *Nonces) *Splice {
 	return s
 }
 
-func (s *Splice) Cloak(pk *pub.Key) *Splice {
+func (s *Splice) Cloak(pk *crypto.Pub) *Splice {
 	if pk == nil {
-		s.Advance(cloak.Len, "nil receiver pubkey")
+		s.Advance(crypto.Len, "nil receiver pubkey")
 		return s
 	}
-	to := cloak.GetCloak(pk)
-	copy(s.b[*s.c:s.c.Inc(cloak.Len)], to[:])
+	to := crypto.GetCloak(pk)
+	copy(s.b[*s.c:s.c.Inc(crypto.Len)], to[:])
 	s.SpliceSegments = append(s.SpliceSegments,
 		NameOffset{Offset: int(*s.c), Name: "cloak"})
 	return s
 }
 
-func (s *Splice) ReadCloak(ck *cloak.PubKey) *Splice {
-	copy((*ck)[:], s.b[*s.c:s.c.Inc(cloak.Len)])
+func (s *Splice) ReadCloak(ck *crypto.PubKey) *Splice {
+	copy((*ck)[:], s.b[*s.c:s.c.Inc(crypto.Len)])
 	s.SpliceSegments = append(s.SpliceSegments,
 		NameOffset{Offset: int(*s.c), Name: "cloak"})
 	return s
 }
 
-func (s *Splice) Pubkey(from *pub.Key) *Splice {
+func (s *Splice) Pubkey(from *crypto.Pub) *Splice {
 	if from == nil {
 		log.E.Ln("given empty pubkey, doing nothing")
 		return s
 	}
 	pubKey := from.ToBytes()
-	copy(s.b[*s.c:s.c.Inc(pub.KeyLen)], pubKey[:])
+	copy(s.b[*s.c:s.c.Inc(crypto.PubKeyLen)], pubKey[:])
 	s.SpliceSegments = append(s.SpliceSegments,
 		NameOffset{Offset: int(*s.c), Name: "pubkey"})
 	return s
 }
 
-func (s *Splice) ReadPubkey(from **pub.Key) *Splice {
-	var f *pub.Key
+func (s *Splice) ReadPubkey(from **crypto.Pub) *Splice {
+	var f *crypto.Pub
 	var e error
-	if f, e = pub.FromBytes(s.b[*s.c:s.c.Inc(pub.KeyLen)]); !fails(e) {
+	if f, e = crypto.PubFromBytes(s.b[*s.c:s.c.Inc(crypto.PubKeyLen)]); !fails(e) {
 		*from = f
 	}
 	s.SpliceSegments = append(s.SpliceSegments,
@@ -348,16 +345,16 @@ func (s *Splice) ReadPubkey(from **pub.Key) *Splice {
 	return s
 }
 
-func (s *Splice) Prvkey(from *prv.Key) *Splice {
+func (s *Splice) Prvkey(from *crypto.Prv) *Splice {
 	b := from.ToBytes()
-	copy(s.b[*s.c:s.c.Inc(prv.KeyLen)], b[:])
+	copy(s.b[*s.c:s.c.Inc(crypto.PrvKeyLen)], b[:])
 	s.SpliceSegments = append(s.SpliceSegments,
 		NameOffset{Offset: int(*s.c), Name: "prvkey"})
 	return s
 }
 
-func (s *Splice) ReadPrvkey(out **prv.Key) *Splice {
-	if f := prv.PrivkeyFromBytes(s.b[*s.c:s.c.Inc(prv.KeyLen)]); f == nil {
+func (s *Splice) ReadPrvkey(out **crypto.Prv) *Splice {
+	if f := crypto.PrvKeyFromBytes(s.b[*s.c:s.c.Inc(crypto.PrvKeyLen)]); f == nil {
 		return s
 	} else {
 		*out = f
@@ -543,15 +540,15 @@ func (s *Splice) ReadBytes(b *slice.Bytes) *Splice {
 	return s
 }
 
-func (s *Splice) Signature(sb *sig.Bytes) *Splice {
-	copy(s.b[*s.c:s.c.Inc(sig.Len)], sb[:])
+func (s *Splice) Signature(sb *crypto.SigBytes) *Splice {
+	copy(s.b[*s.c:s.c.Inc(crypto.SigLen)], sb[:])
 	s.SpliceSegments = append(s.SpliceSegments,
 		NameOffset{Offset: int(*s.c), Name: "signature"})
 	return s
 }
 
-func (s *Splice) ReadSignature(sb *sig.Bytes) *Splice {
-	copy(sb[:], s.b[*s.c:s.c.Inc(sig.Len)])
+func (s *Splice) ReadSignature(sb *crypto.SigBytes) *Splice {
+	copy(sb[:], s.b[*s.c:s.c.Inc(crypto.SigLen)])
 	s.SpliceSegments = append(s.SpliceSegments,
 		NameOffset{Offset: int(*s.c), Name: "signature"})
 	return s

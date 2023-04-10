@@ -8,7 +8,7 @@ import (
 	"github.com/cybriq/qu"
 	"go.uber.org/atomic"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
@@ -65,9 +65,9 @@ func TestEngine_Message(t *testing.T) {
 		}
 		wg.Wait()
 	}
-	var idPrv *prv.Key
+	var idPrv *crypto.Prv
 	_ = idPrv
-	if idPrv, e = prv.GenerateKey(); fails(e) {
+	if idPrv, e = crypto.GeneratePrvKey(); fails(e) {
 		return
 	}
 	id := nonce.NewID()
