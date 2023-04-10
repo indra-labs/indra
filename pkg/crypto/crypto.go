@@ -165,7 +165,7 @@ type (
 	PubBytes [PubKeyLen]byte
 )
 
-// the key types must satisfy these interfaces.
+// The key types must satisfy these interfaces for libp2p.
 var _ crypto.Key = &Prv{}
 var _ crypto.Key = &Pub{}
 var _ crypto.PubKey = &Pub{}
@@ -271,11 +271,7 @@ func (pb PubBytes) String() (s string) {
 	if s, e = based32.Codec.Encode(pb[:]); fails(e) {
 	}
 	ss := []byte(s)
-	// Reverse text order to get all starting ciphers.
-	for i := 0; i < len(s)/2; i++ {
-		ss[i], ss[len(s)-i-1] = ss[len(s)-i-1], ss[i]
-	}
-	return color.LightGreen.Sprint(string(ss))
+	return color.LightGreen.Sprint(string(ss[3:]))
 }
 
 func (k *Pub) String() (s string) { return k.ToBase32() }

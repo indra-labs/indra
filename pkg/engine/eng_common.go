@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"net"
+	"net/netip"
 	"testing"
 	
 	"git-indra.lan/indra-labs/indra"
@@ -212,3 +214,18 @@ func GenPingNonces() (n [6]nonce.IV) {
 }
 
 func StandardCircuit() []byte { return []byte{0, 1, 2, 3, 4, 5} }
+
+func GetNetworkFromAddrPort(addr string) (nw string, u *net.UDPAddr,
+	e error) {
+	
+	nw = "udp"
+	var ap netip.AddrPort
+	if ap, e = netip.ParseAddrPort(addr); fails(e) {
+		return
+	}
+	u = &net.UDPAddr{IP: net.ParseIP(ap.Addr().String()), Port: int(ap.Port())}
+	if u.IP.To4() != nil {
+		nw = "udp4"
+	}
+	return
+}
