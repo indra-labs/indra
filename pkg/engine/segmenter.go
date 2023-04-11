@@ -1,15 +1,33 @@
 package engine
 
 import (
+	"sync"
 	"time"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 )
 
+// TxRecord is the details of a send operation in progress.
+// This is used with the data received in the acknowledgement,
+// which is a completed RxRecord..
 type TxRecord struct {
 	ID nonce.ID
-	// First is when the first packet arrived.
+	// First is the time the first piece was sent.
+	First time.Time
+	// Last is the time the last piece was sent.
+	Last time.Time
+	// Data is the amount of payload data.
+	Data int
+	// Redundancy is the amount of extra data that was sent.
+	Redundancy int
+}
+
+// RxRecord is the details of a message reception and mostly forms the
+// data sent in a message received acknowledgement.
+type RxRecord struct {
+	ID nonce.ID
+	// First is when the first packet was received.
 	First time.Time
 	// Last is when the last packet arrived that led to successful
 	// reconstruction.
@@ -21,6 +39,9 @@ type TxRecord struct {
 	Required int
 }
 
+// Segmenter is a message splitter/joiner and error correction adjustment
+// system that aims to minimise message latency by trading it for bandwidth
+// especially to cope with radio connections.
 type Segmenter struct {
 	*Listener
 	*crypto.KeySet
@@ -34,9 +55,11 @@ type Segmenter struct {
 	// measured. Shorter time can reduce redundancy, longer time needs to
 	// increase it. Combined with MinReq / ActualReq this guides the error
 	// correction parameter for a given transmission that minimises latency.
-	// Value is a binary fixed point value with 1<<1024 as "1".
-	PingDivergence int
-	PendingAcks    []*TxRecord
+	// Value is a binary, fixed point value with 1<<1024 as "1".
+	PingDivergence  int
+	PendingInbound  []*RxRecord
+	PendingOutbound []*TxRecord
+	sync.Mutex
 }
 
 func NewSegmenter(l *Listener, ks *crypto.KeySet) (s *Segmenter) {
@@ -46,9 +69,6 @@ func NewSegmenter(l *Listener, ks *crypto.KeySet) (s *Segmenter) {
 			select {
 			case <-l.Context.Done():
 				return
-			case c := <-l.newConns:
-				_ = c
-				// here start workers for connections.
 			}
 		}
 	}()
