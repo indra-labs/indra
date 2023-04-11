@@ -23,69 +23,25 @@ import (
 )
 
 const (
-	RCP_MTU         = 1440
-	RCP_Bufs        = 64
-	RCP_ID          = "/indra/relay/" + indra.SemVer
-	RCP_ServiceName = "org.indra.relay"
+	MTU              = 1440
+	ConnBufs         = 64
+	IndraLibP2PID    = "/indra/relay/" + indra.SemVer
+	IndraServiceName = "org.indra.relay"
 )
 
-type MessageFrom struct {
-	sender string
-	slice.Bytes
-}
-
-type RCPListener struct {
-	MsgChan     chan MessageFrom
+type Listener struct {
 	Host        host.Host
-	connections map[string]*RCPConn
+	connections map[string]*Conn
+	newConns    chan *Conn
 	sync.Mutex
 }
 
-func (l *RCPListener) GetConn(multiAddr string) (d *RCPConn) {
-	l.Lock()
-	var ok bool
-	if d, ok = l.connections[multiAddr]; ok {
-	}
-	l.Unlock()
-	return
-}
-
-func (l *RCPListener) AddConn(d *RCPConn) {
-	l.Lock()
-	l.connections[d.MultiAddr.String()] = d
-	l.Unlock()
-}
-
-func (l *RCPListener) DelConn(d *RCPConn) {
-	l.Lock()
-	delete(l.connections, d.MultiAddr.String())
-	l.Unlock()
-}
-
-func (l *RCPListener) GetConnSend(multiAddr string) (send ByteChan) {
-	l.Lock()
-	if _, ok := l.connections[multiAddr]; ok {
-		send = l.connections[multiAddr].Recv
-	}
-	l.Unlock()
-	return
-}
-
-func (l *RCPListener) GetConnRecv(multiAddr string) (recv ByteChan) {
-	l.Lock()
-	if _, ok := l.connections[multiAddr]; ok {
-		recv = l.connections[multiAddr].Recv
-	}
-	l.Unlock()
-	return
-}
-
-func NewRCPListener(rendezvous, multiAddr string,
-	prv *crypto.Prv, ctx context.Context) (c *RCPListener, e error) {
+func NewListener(rendezvous, multiAddr string,
+	prv *crypto.Prv, ctx context.Context) (c *Listener, e error) {
 	
-	c = &RCPListener{
-		MsgChan:     make(chan MessageFrom, RCP_Bufs),
-		connections: make(map[string]*RCPConn),
+	c = &Listener{
+		connections: make(map[string]*Conn),
+		newConns:    make(chan *Conn, ConnBufs),
 	}
 	var ma multiaddr.Multiaddr
 	if ma, e = multiaddr.NewMultiaddr(multiAddr); fails(e) {
@@ -107,19 +63,19 @@ func NewRCPListener(rendezvous, multiAddr string,
 	); fails(e) {
 		return
 	}
-	var dht *dht.IpfsDHT
-	if dht, e = NewDHT(ctx, c.Host, rdv); fails(e) {
+	var d *dht.IpfsDHT
+	if d, e = NewDHT(ctx, c.Host, rdv); fails(e) {
 		return
 	}
 	log.D.Ln("listener", getHostAddress(c.Host))
-	go Discover(ctx, c.Host, dht, rendezvous)
-	c.Host.SetStreamHandler(RCP_ID, c.handle)
+	go Discover(ctx, c.Host, d, rendezvous)
+	c.Host.SetStreamHandler(IndraLibP2PID, c.handle)
 	return
 }
 
-func (l *RCPListener) handle(s network.Stream) {
+func (l *Listener) handle(s network.Stream) {
 	for {
-		b := slice.NewBytes(RCP_MTU)
+		b := slice.NewBytes(MTU)
 		var e error
 		var n int
 		if n, e = s.Read(b); fails(e) {
@@ -133,13 +89,56 @@ func (l *RCPListener) handle(s network.Stream) {
 		ha := ai.Addrs[0].Encapsulate(hostAddr)
 		as := ha.String()
 		if l.GetConn(as) == nil {
-			l.AddConn(l.DialRCP(as))
+			l.AddConn(l.Dial(as))
 		}
 		l.GetConnRecv(as) <- b[:n]
 	}
 }
 
-type RCPConn struct {
+func (l *Listener) Accept() <-chan *Conn { return l.newConns }
+
+func (l *Listener) GetConn(multiAddr string) (d *Conn) {
+	l.Lock()
+	var ok bool
+	if d, ok = l.connections[multiAddr]; ok {
+	}
+	l.Unlock()
+	return
+}
+
+func (l *Listener) AddConn(d *Conn) {
+	l.newConns <- d
+	l.Lock()
+	l.connections[d.MultiAddr.String()] = d
+	l.Unlock()
+}
+
+func (l *Listener) DelConn(d *Conn) {
+	l.Lock()
+	l.connections[d.MultiAddr.String()].Q()
+	delete(l.connections, d.MultiAddr.String())
+	l.Unlock()
+}
+
+func (l *Listener) GetConnSend(multiAddr string) (send ByteChan) {
+	l.Lock()
+	if _, ok := l.connections[multiAddr]; ok {
+		send = l.connections[multiAddr].Recv
+	}
+	l.Unlock()
+	return
+}
+
+func (l *Listener) GetConnRecv(multiAddr string) (recv ByteChan) {
+	l.Lock()
+	if _, ok := l.connections[multiAddr]; ok {
+		recv = l.connections[multiAddr].Recv
+	}
+	l.Unlock()
+	return
+}
+
+type Conn struct {
 	MultiAddr  multiaddr.Multiaddr
 	Recv, Send ByteChan
 	Host       host.Host
@@ -157,7 +156,7 @@ func getHostAddress(ha host.Host) string {
 	return addr.Encapsulate(hostAddr).String()
 }
 
-func (l *RCPListener) DialRCP(multiAddr string) (d *RCPConn) {
+func (l *Listener) Dial(multiAddr string) (d *Conn) {
 	
 	var e error
 	var ma multiaddr.Multiaddr
@@ -170,37 +169,38 @@ func (l *RCPListener) DialRCP(multiAddr string) (d *RCPConn) {
 	}
 	l.Host.Peerstore().AddAddrs(info.ID, info.Addrs, peerstore.PermanentAddrTTL)
 	var s network.Stream
-	if s, e = l.Host.NewStream(context.Background(), info.ID, RCP_ID); fails(e) {
+	if s, e = l.Host.NewStream(context.Background(), info.ID, IndraLibP2PID); fails(e) {
 		return
 	}
-	d = &RCPConn{
+	d = &Conn{
 		MultiAddr: ma,
 		Host:      l.Host,
-		Recv:      make(ByteChan, RCP_Bufs),
-		Send:      make(ByteChan, RCP_Bufs),
+		Recv:      make(ByteChan, ConnBufs),
+		Send:      make(ByteChan, ConnBufs),
 		rw:        bufio.NewReadWriter(bufio.NewReader(s), bufio.NewWriter(s)),
 		C:         qu.T(),
 	}
 	l.Lock()
 	l.connections[multiAddr] = d
 	l.Unlock()
-	host := getHostAddress(d.Host)
+	hostAddress := getHostAddress(d.Host)
 	go func() {
 		var e error
 		for {
-			log.D.Ln("sender", host, "ready")
+			log.D.Ln("sender", hostAddress, "ready")
 			select {
 			case <-d.C:
 				return
 			case b := <-d.Send:
-				log.D.S(host+" sending...", b.ToBytes())
+				log.D.S(hostAddress+" sending to "+d.MultiAddr.String(),
+					b.ToBytes())
 				if _, e = d.rw.Write(b); fails(e) {
 					continue
 				}
 				if e = d.rw.Flush(); fails(e) {
 					continue
 				}
-				log.D.Ln(host, "sent")
+				log.D.Ln(hostAddress, "sent")
 			}
 		}
 	}()

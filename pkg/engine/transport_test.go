@@ -14,7 +14,7 @@ const localhostZeroIPv4 = "/ip4/127.0.0.1/tcp/0"
 func TestNewRCPListener(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	var e error
-	var l1, l2 *RCPListener
+	var l1, l2 *Listener
 	_ = l2
 	var k1, k2 *Keys
 	ctx, cancel := context.WithCancel(context.Background())
@@ -22,11 +22,11 @@ func TestNewRCPListener(t *testing.T) {
 	if k1, k2, e = Generate2Keys(); fails(e) {
 		t.FailNow()
 	}
-	l1, e = NewRCPListener("", localhostZeroIPv4, k1.Prv, ctx)
+	l1, e = NewListener("", localhostZeroIPv4, k1.Prv, ctx)
 	if fails(e) {
 		t.FailNow()
 	}
-	l2, e = NewRCPListener(getHostAddress(l1.Host), localhostZeroIPv4,
+	l2, e = NewListener(getHostAddress(l1.Host), localhostZeroIPv4,
 		k2.Prv, ctx)
 	if fails(e) {
 		t.FailNow()
@@ -37,15 +37,14 @@ func TestNewRCPListener(t *testing.T) {
 	msg2, _, e = tests.GenMessage(32, "RESPONSE")
 	hn1 := getHostAddress(l2.Host)
 	hn2 := getHostAddress(l1.Host)
-	d1 := l1.DialRCP(hn1)
-	d2 := l2.DialRCP(hn2)
+	d1 := l1.Dial(hn1)
+	d2 := l2.Dial(hn2)
 	c1, c2 := l1.GetConnRecv(hn1), l2.GetConnRecv(hn2)
 	go func() {
 		for {
 			select {
 			case b := <-c1:
 				log.D.S("received "+hn1, b.ToBytes())
-				// d1.Send <- msg2
 			case b := <-c2:
 				log.D.S("received "+hn2, b.ToBytes())
 				d2.Send <- msg2
