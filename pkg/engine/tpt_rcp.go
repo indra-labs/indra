@@ -35,15 +35,27 @@ type MessageFrom struct {
 }
 
 type RCPListener struct {
-	MsgChan chan MessageFrom
-	Host    host.Host
+	MsgChan     chan MessageFrom
+	Host        host.Host
+	Connections map[string]*RCPDialer
+	sync.Mutex
+}
+
+func (l *RCPListener) GetConn(multiAddr string) (d *RCPDialer) {
+	l.Lock()
+	var ok bool
+	if d, ok = l.Connections[multiAddr]; ok {
+	}
+	l.Unlock()
+	return
 }
 
 func NewRCPListener(rendezvous, multiAddr string,
 	prv *crypto.Prv, ctx context.Context) (c *RCPListener, e error) {
 	
 	c = &RCPListener{
-		MsgChan: make(chan MessageFrom, RCP_Bufs),
+		MsgChan:     make(chan MessageFrom, RCP_Bufs),
+		Connections: make(map[string]*RCPDialer),
 	}
 	var ma multiaddr.Multiaddr
 	if ma, e = multiaddr.NewMultiaddr(multiAddr); fails(e) {
@@ -83,9 +95,21 @@ func (l *RCPListener) handle(s network.Stream) {
 		if n, e = s.Read(b); fails(e) {
 			return
 		}
+		log.D.S(getHostAddress(l.Host)+" read from listener", b[:n].ToBytes())
 		id := s.Conn().RemotePeer()
 		ai := l.Host.Peerstore().PeerInfo(id)
-		l.MsgChan <- MessageFrom{ai.Addrs[0].String(), b[:n]}
+		aid := ai.ID.String()
+		hostAddr, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/p2p/%s", aid))
+		ha := ai.Addrs[0].Encapsulate(hostAddr)
+		as := ha.String()
+		if l.GetConn(as) == nil {
+			l.Lock()
+			l.Connections[as] = l.DialRCP(as)
+			l.Unlock()
+		}
+		l.Lock()
+		l.Connections[as].Recv <- b[:n]
+		l.Unlock()
 	}
 }
 
@@ -94,6 +118,16 @@ type RCPDialer struct {
 	Host       host.Host
 	rw         *bufio.ReadWriter
 	qu.C
+}
+
+func getHostAddress(ha host.Host) string {
+	hostAddr, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/p2p/%s",
+		ha.ID().String()))
+	
+	// Now we can build a full multiaddress to reach this host by encapsulating
+	// both addresses:
+	addr := ha.Addrs()[0]
+	return addr.Encapsulate(hostAddr).String()
 }
 
 func (l *RCPListener) DialRCP(multiAddr string) (d *RCPDialer) {
@@ -119,6 +153,9 @@ func (l *RCPListener) DialRCP(multiAddr string) (d *RCPDialer) {
 		rw:   bufio.NewReadWriter(bufio.NewReader(s), bufio.NewWriter(s)),
 		C:    qu.T(),
 	}
+	l.Lock()
+	l.Connections[multiAddr] = d
+	l.Unlock()
 	host := getHostAddress(d.Host)
 	go func() {
 		var e error
@@ -139,42 +176,7 @@ func (l *RCPListener) DialRCP(multiAddr string) (d *RCPDialer) {
 			}
 		}
 	}()
-	go func() {
-		var n int
-		var e error
-		for {
-			log.D.Ln("receiver", host, "ready")
-			buf := slice.NewBytes(RCP_MTU)
-			if n, e = d.rw.Read(buf); fails(e) {
-				d.C.Q()
-				break
-			}
-			log.D.S(host+" received", buf[:n])
-			if e = d.rw.Flush(); fails(e) {
-				continue
-			}
-			d.Recv <- buf[:n]
-			log.D.S("forwarding")
-			select {
-			case <-d.C:
-				fails(s.Close())
-				return
-			default:
-			}
-		}
-	}()
 	return
-}
-
-func getHostAddress(ha host.Host) string {
-	// Build host multiaddress
-	hostAddr, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/p2p/%s",
-		ha.ID().String()))
-	
-	// Now we can build a full multiaddress to reach this host by encapsulating
-	// both addresses:
-	addr := ha.Addrs()[0]
-	return addr.Encapsulate(hostAddr).String()
 }
 
 func NewDHT(ctx context.Context, host host.Host,

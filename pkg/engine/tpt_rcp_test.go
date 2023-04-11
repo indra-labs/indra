@@ -35,42 +35,35 @@ func TestNewRCPListener(t *testing.T) {
 	_ = msg2
 	msg1, _, e = tests.GenMessage(32, "REQUEST")
 	msg2, _, e = tests.GenMessage(32, "RESPONSE")
-	d1 := l1.DialRCP(getHostAddress(l2.Host))
-	d2 := l2.DialRCP(getHostAddress(l1.Host))
+	hn1 := getHostAddress(l2.Host)
+	hn2 := getHostAddress(l1.Host)
+	d1 := l1.DialRCP(hn1)
+	d2 := l2.DialRCP(hn2)
+	l1.Lock()
+	l2.Lock()
+	c1, c2 := l1.Connections[hn1].Recv, l2.Connections[hn2].Recv
+	l1.Unlock()
+	l2.Unlock()
 	go func() {
 		for {
-			log.D.Ln("recv loop")
 			select {
-			case b := <-d1.Recv:
-				log.D.S("d1", b)
-			case b := <-d2.Recv:
-				log.D.S("d2", b)
+			case b := <-c1:
+				log.D.S("received "+hn1, b.ToBytes())
+				// d1.Send <- msg2
+			case b := <-c2:
+				log.D.S("received "+hn2, b.ToBytes())
+				d2.Send <- msg2
 			case <-ctx.Done():
-				break
+				return
 			}
 		}
 	}()
 	time.Sleep(time.Second)
-	go func() {
-		for {
-			select {
-			case b := <-l1.MsgChan:
-				log.D.S(getHostAddress(l1.Host)+" received", b.sender,
-					b.ToBytes())
-				if b.String() != string(msg2) {
-					d1.Send <- msg2
-				}
-			case b := <-l2.MsgChan:
-				log.D.S(getHostAddress(l2.Host)+" received", b.sender,
-					b.ToBytes())
-				if b.String() != string(msg2) {
-					d2.Send <- msg2
-				}
-			case <-ctx.Done():
-				break
-			}
-		}
-	}()
+	l1.Lock()
+	l2.Lock()
+	log.D.Ln("connections", l1.Connections, l2.Connections)
+	l1.Unlock()
+	l2.Unlock()
 	d1.Send <- msg1
 	d2.Send <- msg1
 	time.Sleep(time.Second)
