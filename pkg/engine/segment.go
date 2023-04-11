@@ -12,7 +12,15 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
-const ErrEmptyBytes = "cannot encode empty bytes"
+const (
+	ErrEmptyBytes      = "cannot encode empty bytes"
+	ErrDupe            = "found duplicate packet, no redundancy, decoding failed"
+	ErrLostNoRedundant = "no redundancy with %d lost of %d"
+	ErrMismatch        = "found disagreement about common data in segment %d of %d" +
+		" in field %s value: got %v expected %v"
+	ErrNotEnough = "too many lost to recover in section %d, have %d, need " +
+		"%d minimum"
+)
 
 // SplitToPackets creates a series of packets including the defined Reed Solomon
 // parameters for extra parity shards and the return encryption public key for a
@@ -44,13 +52,6 @@ func SplitToPackets(pp *PacketParams,
 	}
 	return
 }
-
-const ErrDupe = "found duplicate packet, no redundancy, decoding failed"
-const ErrLostNoRedundant = "no redundancy with %d lost of %d"
-const ErrMismatch = "found disagreement about common data in segment %d of %d" +
-	" in field %s value: got %v expected %v"
-const ErrNotEnough = "too many lost to recover in section %d, have %d, need " +
-	"%d minimum"
 
 // JoinPackets a collection of Packets together.
 func JoinPackets(packets Packets) (pkts Packets, msg []byte, e error) {

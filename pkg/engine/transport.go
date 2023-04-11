@@ -23,25 +23,28 @@ import (
 )
 
 const (
-	MTU              = 1440
 	ConnBufs         = 64
 	IndraLibP2PID    = "/indra/relay/" + indra.SemVer
 	IndraServiceName = "org.indra.relay"
 )
 
 type Listener struct {
+	MTU         int
 	Host        host.Host
 	connections map[string]*Conn
 	newConns    chan *Conn
+	context.Context
 	sync.Mutex
 }
 
 func NewListener(rendezvous, multiAddr string,
-	prv *crypto.Prv, ctx context.Context) (c *Listener, e error) {
+	prv *crypto.Prv, ctx context.Context, mtu int) (c *Listener, e error) {
 	
 	c = &Listener{
+		MTU:         mtu,
 		connections: make(map[string]*Conn),
 		newConns:    make(chan *Conn, ConnBufs),
+		Context:     ctx,
 	}
 	var ma multiaddr.Multiaddr
 	if ma, e = multiaddr.NewMultiaddr(multiAddr); fails(e) {
@@ -72,10 +75,15 @@ func NewListener(rendezvous, multiAddr string,
 	c.Host.SetStreamHandler(IndraLibP2PID, c.handle)
 	return
 }
+func (l *Listener) SetMTU(mtu int) {
+	l.Lock()
+	l.MTU = mtu
+	l.Unlock()
+}
 
 func (l *Listener) handle(s network.Stream) {
 	for {
-		b := slice.NewBytes(MTU)
+		b := slice.NewBytes(l.MTU)
 		var e error
 		var n int
 		if n, e = s.Read(b); fails(e) {
