@@ -37,14 +37,44 @@ type MessageFrom struct {
 type RCPListener struct {
 	MsgChan     chan MessageFrom
 	Host        host.Host
-	Connections map[string]*RCPDialer
+	connections map[string]*RCPConn
 	sync.Mutex
 }
 
-func (l *RCPListener) GetConn(multiAddr string) (d *RCPDialer) {
+func (l *RCPListener) GetConn(multiAddr string) (d *RCPConn) {
 	l.Lock()
 	var ok bool
-	if d, ok = l.Connections[multiAddr]; ok {
+	if d, ok = l.connections[multiAddr]; ok {
+	}
+	l.Unlock()
+	return
+}
+
+func (l *RCPListener) AddConn(d *RCPConn) {
+	l.Lock()
+	l.connections[d.MultiAddr.String()] = d
+	l.Unlock()
+}
+
+func (l *RCPListener) DelConn(d *RCPConn) {
+	l.Lock()
+	delete(l.connections, d.MultiAddr.String())
+	l.Unlock()
+}
+
+func (l *RCPListener) GetConnSend(multiAddr string) (send ByteChan) {
+	l.Lock()
+	if _, ok := l.connections[multiAddr]; ok {
+		send = l.connections[multiAddr].Recv
+	}
+	l.Unlock()
+	return
+}
+
+func (l *RCPListener) GetConnRecv(multiAddr string) (recv ByteChan) {
+	l.Lock()
+	if _, ok := l.connections[multiAddr]; ok {
+		recv = l.connections[multiAddr].Recv
 	}
 	l.Unlock()
 	return
@@ -55,7 +85,7 @@ func NewRCPListener(rendezvous, multiAddr string,
 	
 	c = &RCPListener{
 		MsgChan:     make(chan MessageFrom, RCP_Bufs),
-		Connections: make(map[string]*RCPDialer),
+		connections: make(map[string]*RCPConn),
 	}
 	var ma multiaddr.Multiaddr
 	if ma, e = multiaddr.NewMultiaddr(multiAddr); fails(e) {
@@ -103,17 +133,14 @@ func (l *RCPListener) handle(s network.Stream) {
 		ha := ai.Addrs[0].Encapsulate(hostAddr)
 		as := ha.String()
 		if l.GetConn(as) == nil {
-			l.Lock()
-			l.Connections[as] = l.DialRCP(as)
-			l.Unlock()
+			l.AddConn(l.DialRCP(as))
 		}
-		l.Lock()
-		l.Connections[as].Recv <- b[:n]
-		l.Unlock()
+		l.GetConnRecv(as) <- b[:n]
 	}
 }
 
-type RCPDialer struct {
+type RCPConn struct {
+	MultiAddr  multiaddr.Multiaddr
 	Recv, Send ByteChan
 	Host       host.Host
 	rw         *bufio.ReadWriter
@@ -130,7 +157,7 @@ func getHostAddress(ha host.Host) string {
 	return addr.Encapsulate(hostAddr).String()
 }
 
-func (l *RCPListener) DialRCP(multiAddr string) (d *RCPDialer) {
+func (l *RCPListener) DialRCP(multiAddr string) (d *RCPConn) {
 	
 	var e error
 	var ma multiaddr.Multiaddr
@@ -146,15 +173,16 @@ func (l *RCPListener) DialRCP(multiAddr string) (d *RCPDialer) {
 	if s, e = l.Host.NewStream(context.Background(), info.ID, RCP_ID); fails(e) {
 		return
 	}
-	d = &RCPDialer{
-		Host: l.Host,
-		Recv: make(ByteChan, RCP_Bufs),
-		Send: make(ByteChan, RCP_Bufs),
-		rw:   bufio.NewReadWriter(bufio.NewReader(s), bufio.NewWriter(s)),
-		C:    qu.T(),
+	d = &RCPConn{
+		MultiAddr: ma,
+		Host:      l.Host,
+		Recv:      make(ByteChan, RCP_Bufs),
+		Send:      make(ByteChan, RCP_Bufs),
+		rw:        bufio.NewReadWriter(bufio.NewReader(s), bufio.NewWriter(s)),
+		C:         qu.T(),
 	}
 	l.Lock()
-	l.Connections[multiAddr] = d
+	l.connections[multiAddr] = d
 	l.Unlock()
 	host := getHostAddress(d.Host)
 	go func() {

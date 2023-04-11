@@ -39,11 +39,7 @@ func TestNewRCPListener(t *testing.T) {
 	hn2 := getHostAddress(l1.Host)
 	d1 := l1.DialRCP(hn1)
 	d2 := l2.DialRCP(hn2)
-	l1.Lock()
-	l2.Lock()
-	c1, c2 := l1.Connections[hn1].Recv, l2.Connections[hn2].Recv
-	l1.Unlock()
-	l2.Unlock()
+	c1, c2 := l1.GetConnRecv(hn1), l2.GetConnRecv(hn2)
 	go func() {
 		for {
 			select {
@@ -61,7 +57,7 @@ func TestNewRCPListener(t *testing.T) {
 	time.Sleep(time.Second)
 	l1.Lock()
 	l2.Lock()
-	log.D.Ln("connections", l1.Connections, l2.Connections)
+	log.D.Ln("connections", l1.connections, l2.connections)
 	l1.Unlock()
 	l2.Unlock()
 	d1.Send <- msg1
