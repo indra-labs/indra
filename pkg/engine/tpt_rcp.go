@@ -24,20 +24,27 @@ import (
 
 const (
 	RCP_MTU         = 1440
-	RCP_Bufs        = 32
+	RCP_Bufs        = 64
 	RCP_ID          = "/indra/relay/" + indra.SemVer
 	RCP_ServiceName = "org.indra.relay"
 )
 
+type MessageFrom struct {
+	sender string
+	slice.Bytes
+}
+
 type RCPListener struct {
-	C    ByteChan
-	Host host.Host
+	MsgChan chan MessageFrom
+	Host    host.Host
 }
 
 func NewRCPListener(rendezvous, multiAddr string,
 	prv *crypto.Prv, ctx context.Context) (c *RCPListener, e error) {
 	
-	c = &RCPListener{C: make(ByteChan, RCP_Bufs)}
+	c = &RCPListener{
+		MsgChan: make(chan MessageFrom, RCP_Bufs),
+	}
 	var ma multiaddr.Multiaddr
 	if ma, e = multiaddr.NewMultiaddr(multiAddr); fails(e) {
 		return
@@ -69,13 +76,17 @@ func NewRCPListener(rendezvous, multiAddr string,
 }
 
 func (l *RCPListener) handle(s network.Stream) {
-	b := slice.NewBytes(RCP_MTU)
-	var e error
-	var n int
-	if n, e = s.Read(b); fails(e) {
-		return
+	for {
+		b := slice.NewBytes(RCP_MTU)
+		var e error
+		var n int
+		if n, e = s.Read(b); fails(e) {
+			return
+		}
+		id := s.Conn().RemotePeer()
+		ai := l.Host.Peerstore().PeerInfo(id)
+		l.MsgChan <- MessageFrom{ai.Addrs[0].String(), b[:n]}
 	}
-	l.C <- b[:n]
 }
 
 type RCPDialer struct {
@@ -108,18 +119,23 @@ func (l *RCPListener) DialRCP(multiAddr string) (d *RCPDialer) {
 		rw:   bufio.NewReadWriter(bufio.NewReader(s), bufio.NewWriter(s)),
 		C:    qu.T(),
 	}
+	host := getHostAddress(d.Host)
 	go func() {
 		var e error
 		for {
-			log.D.Ln("sender")
+			log.D.Ln("sender", host, "ready")
 			select {
 			case <-d.C:
 				return
 			case b := <-d.Send:
-				log.D.Ln("sending...", b)
+				log.D.S(host+" sending...", b.ToBytes())
 				if _, e = d.rw.Write(b); fails(e) {
 					continue
 				}
+				if e = d.rw.Flush(); fails(e) {
+					continue
+				}
+				log.D.Ln(host, "sent")
 			}
 		}
 	}()
@@ -127,14 +143,18 @@ func (l *RCPListener) DialRCP(multiAddr string) (d *RCPDialer) {
 		var n int
 		var e error
 		for {
-			log.D.Ln("receiver")
+			log.D.Ln("receiver", host, "ready")
 			buf := slice.NewBytes(RCP_MTU)
 			if n, e = d.rw.Read(buf); fails(e) {
 				d.C.Q()
 				break
 			}
-			log.D.S("received", buf[:n])
+			log.D.S(host+" received", buf[:n])
+			if e = d.rw.Flush(); fails(e) {
+				continue
+			}
 			d.Recv <- buf[:n]
+			log.D.S("forwarding")
 			select {
 			case <-d.C:
 				fails(s.Close())
