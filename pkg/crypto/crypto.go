@@ -25,8 +25,9 @@ var (
 	fails = log.E.Chk
 )
 
-// ComputeSharedSecret computes an Elliptic Curve Diffie-Hellman shared secret that can be
-// decrypted by the holder of the private key matching the public key provided.
+// ComputeSharedSecret computes an Elliptic Curve Diffie-Hellman shared secret
+// that can be decrypted by the holder of the private key matching the public
+// key provided.
 func ComputeSharedSecret(prv *Prv, pub *Pub) sha256.Hash {
 	return sha256.Single(
 		secp256k1.GenerateSharedSecret(
@@ -131,12 +132,10 @@ func PrvKeyFromBytes(b []byte) *Prv {
 // Zero out a private key to prevent key scraping from memory.
 func (p *Prv) Zero() { (*secp256k1.PrivateKey)(p).Zero() }
 
-// ToBytes returns the Bytes serialized form. It zeroes the original bytes.
+// ToBytes returns the Bytes serialized form.
 func (p *Prv) ToBytes() (b PrvBytes) {
 	br := (*secp256k1.PrivateKey)(p).Serialize()
 	copy(b[:], br[:PrvKeyLen])
-	// // zero the original
-	// copy(br, zeroPrv())
 	return
 }
 
@@ -205,8 +204,8 @@ func (p *Prv) Type() crypto_pb.KeyType {
 
 func (p *Prv) Sign(bytes []byte) ([]byte, error) {
 	hash := sha256.Single(bytes)
-	s, e := Sign(p, hash)
-	return s[:], e
+	s := ecdsa.Sign((*secp256k1.PrivateKey)(p), hash[:])
+	return s.Serialize(), nil
 }
 
 func (p *Prv) GetPublic() crypto.PubKey {
@@ -215,8 +214,6 @@ func (p *Prv) GetPublic() crypto.PubKey {
 	}
 	return DerivePub(p)
 }
-
-var _ crypto.PubKey = &Pub{}
 
 func (k *Pub) Verify(data []byte, sigBytes []byte) (is bool,
 	e error) {
@@ -284,8 +281,8 @@ func DerivePub(prv *Prv) *Pub {
 	return (*Pub)((*secp256k1.PrivateKey)(prv).PubKey())
 }
 
-// PubFromBytes converts a byte slice into a public key, if it is valid and on the
-// secp256k1 elliptic curve.
+// PubFromBytes converts a byte slice into a public key, if it is valid and on
+// the secp256k1 elliptic curve.
 func PubFromBytes(b []byte) (pub *Pub, e error) {
 	var p *secp256k1.PublicKey
 	if p, e = secp256k1.ParsePubKey(b); fails(e) {
@@ -337,12 +334,12 @@ func (k *Pub) ToPublicKey() *secp256k1.PublicKey {
 	return (*secp256k1.PublicKey)(k)
 }
 
-// SigLen is the length of the signatures used in Indra, compact keys that can have
-// the public key extracted from them.
+// SigLen is the length of the signatures used in Indra, compact keys that can
+// have the public key extracted from them.
 const SigLen = 65
 
-// SigBytes is an ECDSA BIP62 formatted compact signature which allows the recovery
-// of the public key from the signature.
+// SigBytes is an ECDSA BIP62 formatted compact signature which allows the
+// recovery of the public key from the signature.
 type SigBytes [SigLen]byte
 
 // Sign produces an ECDSA BIP62 compact signature.
@@ -356,8 +353,7 @@ func Sign(prv *Prv, hash sha256.Hash) (sig SigBytes, e error) {
 // create a signature on the hash of a message.
 func (sig SigBytes) Recover(hash sha256.Hash) (p *Pub, e error) {
 	var pk *secp256k1.PublicKey
-	// We are only using compressed keys, so we can ignore the compressed
-	// bool.
+	// We are only using compressed keys, so we can ignore the compressed bool.
 	if pk, _, e = ecdsa.RecoverCompact(sig[:], hash[:]); !fails(e) {
 		p = (*Pub)(pk)
 	}
@@ -369,8 +365,8 @@ type KeySet struct {
 	Base, Increment *Prv
 }
 
-// NewSigner creates a new KeySet which enables (relatively) fast generation of new
-// private keys by using scalar addition.
+// NewSigner creates a new KeySet which enables (relatively) fast generation of
+// new private keys by using scalar addition.
 func NewSigner() (first *Prv, ks *KeySet, e error) {
 	ks = &KeySet{}
 	if ks.Base, e = GeneratePrvKey(); fails(e) {
