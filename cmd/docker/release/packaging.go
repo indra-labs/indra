@@ -50,39 +50,19 @@ var packagingConfigurations = []docker.BuildConfiguration{
 	//		PullParent:     false,
 	//	},
 	//},
-	//docker.BuildConfiguration{
-	//	Name:            defaultRepositoryName + "/" + "lnd-package",
-	//	ContextFilePath: "/tmp/lnd-package.tar",
-	//	BuildOpts: types.ImageBuildOptions{
-	//		Dockerfile: "docker/build/package.Dockerfile",
-	//		Tags: []string{
-	//			"v0.15.5-beta",
-	//		},
-	//		BuildArgs: map[string]*string{
-	//			"binaries_image":   strPtr("indralabs/lnd-build"),
-	//			"binaries_version": strPtr("v0.15.5-beta"),
-	//			"packaging_image":  strPtr(defaultPackagingContainer),
-	//			"target_name":      strPtr("lnd"),
-	//		},
-	//		SuppressOutput: false,
-	//		Remove:         true,
-	//		ForceRemove:    true,
-	//		PullParent:     false,
-	//	},
-	//},
 	docker.BuildConfiguration{
-		Name:            defaultRepositoryName + "/" + "indra-package",
-		ContextFilePath: "/tmp/indra-package.tar",
+		Name:            defaultRepositoryName + "/" + "lnd-package",
+		ContextFilePath: "/tmp/lnd-package.tar",
 		BuildOpts: types.ImageBuildOptions{
 			Dockerfile: "docker/build/package.Dockerfile",
 			Tags: []string{
-				"dev",
+				"v0.16.0-beta",
 			},
 			BuildArgs: map[string]*string{
-				"binaries_image":   strPtr("indralabs/indra-build"),
-				"binaries_version": strPtr("dev"),
+				"binaries_image":   strPtr("indralabs/lnd-build"),
+				"binaries_version": strPtr("v0.16.0-beta"),
 				"packaging_image":  strPtr(defaultPackagingContainer),
-				"target_name":      strPtr("indra"),
+				"target_name":      strPtr("lnd"),
 			},
 			SuppressOutput: false,
 			Remove:         true,
@@ -90,4 +70,24 @@ var packagingConfigurations = []docker.BuildConfiguration{
 			PullParent:     false,
 		},
 	},
+	//docker.BuildConfiguration{
+	//	Name:            defaultRepositoryName + "/" + "indra-package",
+	//	ContextFilePath: "/tmp/indra-package.tar",
+	//	BuildOpts: types.ImageBuildOptions{
+	//		Dockerfile: "docker/build/package.Dockerfile",
+	//		Tags: []string{
+	//			"dev",
+	//		},
+	//		BuildArgs: map[string]*string{
+	//			"binaries_image":   strPtr("indralabs/indra-build"),
+	//			"binaries_version": strPtr("dev"),
+	//			"packaging_image":  strPtr(defaultPackagingContainer),
+	//			"target_name":      strPtr("indra"),
+	//		},
+	//		SuppressOutput: false,
+	//		Remove:         true,
+	//		ForceRemove:    true,
+	//		PullParent:     false,
+	//	},
+	//},
 }
