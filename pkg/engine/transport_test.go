@@ -11,6 +11,8 @@ import (
 
 const localhostZeroIPv4 = "/ip4/127.0.0.1/tcp/0"
 
+const DefaultMTU = 1382
+
 func TestNewRCPListener(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	var e error
@@ -22,12 +24,12 @@ func TestNewRCPListener(t *testing.T) {
 	if k1, k2, e = Generate2Keys(); fails(e) {
 		t.FailNow()
 	}
-	l1, e = NewListener("", localhostZeroIPv4, k1.Prv, ctx)
+	l1, e = NewListener("", localhostZeroIPv4, k1.Prv, ctx, DefaultMTU)
 	if fails(e) {
 		t.FailNow()
 	}
 	l2, e = NewListener(getHostAddress(l1.Host), localhostZeroIPv4,
-		k2.Prv, ctx)
+		k2.Prv, ctx, DefaultMTU)
 	if fails(e) {
 		t.FailNow()
 	}

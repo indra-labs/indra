@@ -96,16 +96,17 @@ func (l *Listener) handle(s network.Stream) {
 		hostAddr, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/p2p/%s", aid))
 		ha := ai.Addrs[0].Encapsulate(hostAddr)
 		as := ha.String()
-		if l.GetConn(as) == nil {
-			l.AddConn(l.Dial(as))
+		nc := l.Dial(as)
+		if l.FindConn(as) == nil {
+			l.AddConn(nc)
 		}
-		l.GetConnRecv(as) <- b[:n]
+		nc.Recv <- b[:n]
 	}
 }
 
 func (l *Listener) Accept() <-chan *Conn { return l.newConns }
 
-func (l *Listener) GetConn(multiAddr string) (d *Conn) {
+func (l *Listener) FindConn(multiAddr string) (d *Conn) {
 	l.Lock()
 	var ok bool
 	if d, ok = l.connections[multiAddr]; ok {
@@ -131,7 +132,7 @@ func (l *Listener) DelConn(d *Conn) {
 func (l *Listener) GetConnSend(multiAddr string) (send ByteChan) {
 	l.Lock()
 	if _, ok := l.connections[multiAddr]; ok {
-		send = l.connections[multiAddr].Recv
+		send = l.connections[multiAddr].Send
 	}
 	l.Unlock()
 	return
@@ -146,11 +147,20 @@ func (l *Listener) GetConnRecv(multiAddr string) (recv ByteChan) {
 	return
 }
 
-type Conn struct {
-	MultiAddr  multiaddr.Multiaddr
+type DuplexByteChan struct {
 	Recv, Send ByteChan
-	Host       host.Host
-	rw         *bufio.ReadWriter
+}
+
+func NewDuplexByteChan(bufs int) *DuplexByteChan {
+	return &DuplexByteChan{make(ByteChan, bufs), make(ByteChan, bufs)}
+}
+
+type Conn struct {
+	MTU       int
+	MultiAddr multiaddr.Multiaddr
+	Host      host.Host
+	rw        *bufio.ReadWriter
+	*DuplexByteChan
 	qu.C
 }
 
@@ -181,12 +191,12 @@ func (l *Listener) Dial(multiAddr string) (d *Conn) {
 		return
 	}
 	d = &Conn{
-		MultiAddr: ma,
-		Host:      l.Host,
-		Recv:      make(ByteChan, ConnBufs),
-		Send:      make(ByteChan, ConnBufs),
-		rw:        bufio.NewReadWriter(bufio.NewReader(s), bufio.NewWriter(s)),
-		C:         qu.T(),
+		MTU:            l.MTU,
+		MultiAddr:      ma,
+		Host:           l.Host,
+		DuplexByteChan: NewDuplexByteChan(ConnBufs),
+		rw:             bufio.NewReadWriter(bufio.NewReader(s), bufio.NewWriter(s)),
+		C:              qu.T(),
 	}
 	l.Lock()
 	l.connections[multiAddr] = d

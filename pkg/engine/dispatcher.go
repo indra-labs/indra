@@ -1,12 +1,18 @@
 package engine
 
 import (
+	"context"
 	"sync"
 	"time"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+)
+
+const (
+	// DefaultStartingParity is set to 64, or 25%
+	DefaultStartingParity = 64
 )
 
 // TxRecord is the details of a send operation in progress. This is used with
@@ -26,8 +32,8 @@ type TxRecord struct {
 }
 
 // RxRecord is the details of a message reception and mostly forms the data sent
-// in a message received acknowledgement. The exported fields go into an
-// acknowledgement message.
+// in a message received acknowledgement. This data goes into an acknowledgement
+// message.
 type RxRecord struct {
 	ID nonce.ID
 	// Hash is the hash of the reconstructed message received.
@@ -48,16 +54,35 @@ type RxRecord struct {
 	Ping time.Duration
 }
 
-// Segmenter is a message splitter/joiner and error correction adjustment system
+// Dispatcher is a message splitter/joiner and error correction adjustment system
 // that aims to minimise message latency by trading it for bandwidth especially
 // to cope with radio connections.
-type Segmenter struct {
-	*Listener
-	*crypto.KeySet
-	// DataSent is the amount of actual bytes sent.
+//
+// In its initial implementation by necessity reliable network transports are
+// used, which means that the message transit time is increased for packet
+// retransmits, thus a longer transit time than the ping indicates packet
+// transmit failures.
+//
+// PingDivergence is adjusted with each acknowledgement from the message transit
+// time compared to the current ping, if it is within range of the ping RTT this
+// doesn't affect the adjustment.
+//
+// DataSent / ParitySent provides the ratio of redundancy the channel is using.
+// ParitySent is not from the parameters at send but from acknowledgements of
+// how much data was received before a message was reconstructed. Thus, it is
+// used in combination with the PingDivergence to recompute the Parity parameter
+// used for adjusting error correction redundancy as each message is decoded.
+type Dispatcher struct {
+	// Parity is the parity parameter to use in packet segments, this value
+	// should be adjusted up and down in proportion with collected data on how
+	// many packets led to a receive against the ratio of DataSent
+	// / ParitySent * PingDivergence.
+	Parity byte
+	// DataSent is the amount of payload bytes sent.
 	DataSent int
 	// ParitySent is the amount of bytes that were needed to successfully
-	// transmit, including packet overhead.
+	// transmit, including packet overhead. This is collected from
+	// acknowledgements.
 	ParitySent int
 	// PingDivergence represents the proportion of time between start of send
 	// and receiving acknowledgement, versus the ping RTT being actively
@@ -68,15 +93,26 @@ type Segmenter struct {
 	PingDivergence  int
 	PendingInbound  []*RxRecord
 	PendingOutbound []*TxRecord
+	*DuplexByteChan
+	*Conn
+	*crypto.KeySet
 	sync.Mutex
 }
 
-func NewSegmenter(l *Listener, ks *crypto.KeySet) (s *Segmenter) {
-	s = &Segmenter{Listener: l, KeySet: ks}
+func NewDispatcher(l *Conn, ctx context.Context,
+	ks *crypto.KeySet) (d *Dispatcher) {
+	
+	d = &Dispatcher{Conn: l, KeySet: ks, Parity: DefaultStartingParity,
+		DuplexByteChan: NewDuplexByteChan(ConnBufs)}
 	go func() {
 		for {
 			select {
-			case <-l.Context.Done():
+			case m := <-l.Recv:
+				log.D.S("received from conn to dispatcher", m.ToBytes())
+			case m := <-d.DuplexByteChan.Send:
+				// Data received for sending through the Conn.
+				_ = m
+			case <-ctx.Done():
 				return
 			}
 		}
@@ -84,12 +120,12 @@ func NewSegmenter(l *Listener, ks *crypto.KeySet) (s *Segmenter) {
 	return
 }
 
-func (s *Segmenter) Split(pp *PacketParams) (pkts Packets,
+func (d *Dispatcher) Split(pp *PacketParams) (pkts Packets,
 	packets [][]byte, e error) {
 	
-	return SplitToPackets(pp, s.Listener.MTU, s.KeySet)
+	return SplitToPackets(pp, d.MTU, d.KeySet)
 }
 
-func (s *Segmenter) Join(packets Packets) (pkts Packets, msg []byte, e error) {
+func (d *Dispatcher) Join(packets Packets) (pkts Packets, msg []byte, e error) {
 	return JoinPackets(packets)
 }
