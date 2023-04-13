@@ -125,11 +125,7 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 			return
 		}
 		addr := slice.GenerateRandomAddrPortIPv4()
-		var local bool
-		if i == 0 {
-			local = true
-		}
-		nodes[i], _ = NewNode(addr, idPrv, tpts[i], tpts[i], 50000, local)
+		nodes[i], _ = NewNode(addr, idPrv, tpts[i], tpts[i], 50000)
 		if cl[i], e = NewEngine(Params{
 			tpts[i],
 			tpts[i],

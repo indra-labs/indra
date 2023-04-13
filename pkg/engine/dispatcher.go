@@ -5,6 +5,10 @@ import (
 	"sync"
 	"time"
 	
+	"github.com/VividCortex/ewma"
+	"github.com/libp2p/go-libp2p/p2p/protocol/ping"
+	"go.uber.org/atomic"
+	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
@@ -75,9 +79,9 @@ type RxRecord struct {
 type Dispatcher struct {
 	// Parity is the parity parameter to use in packet segments, this value
 	// should be adjusted up and down in proportion with collected data on how
-	// many packets led to a receive against the ratio of DataSent
-	// / ParitySent * PingDivergence.
-	Parity byte
+	// many packets led to receipt against the ratio of DataSent / ParitySent *
+	// PingDivergence.
+	Parity atomic.Uint32
 	// DataSent is the amount of payload bytes sent.
 	DataSent int
 	// ParitySent is the amount of bytes that were needed to successfully
@@ -86,15 +90,20 @@ type Dispatcher struct {
 	ParitySent int
 	// PingDivergence represents the proportion of time between start of send
 	// and receiving acknowledgement, versus the ping RTT being actively
-	// measured concurrently. Shorter time can reduce redundancy, longer time
-	// needs to increase it. Combined with DataSent / ParitySent this guides the
-	// error correction parameter for a given transmission that minimises
-	// latency. Value is a binary, fixed point value with 1<<32 as "1".
+	// measured concurrently. Shorter/equal time means it can reduce redundancy,
+	// longer time needs to increase it.
+	//
+	// Combined with DataSent / ParitySent this guides the error correction
+	// parameter for a given transmission that minimises latency. Onion routing
+	// necessarily amplifies any latency so making a transmission get across
+	// before/without retransmits is as good as the path can provide.
 	PingDivergence  int
+	Ping            ewma.MovingAverage
 	PendingInbound  []*RxRecord
 	PendingOutbound []*TxRecord
-	*DuplexByteChan
+	Duplex          *DuplexByteChan
 	*Conn
+	*crypto.Prv
 	*crypto.KeySet
 	sync.Mutex
 }
@@ -102,30 +111,80 @@ type Dispatcher struct {
 func NewDispatcher(l *Conn, ctx context.Context,
 	ks *crypto.KeySet) (d *Dispatcher) {
 	
-	d = &Dispatcher{Conn: l, KeySet: ks, Parity: DefaultStartingParity,
-		DuplexByteChan: NewDuplexByteChan(ConnBufs)}
+	d = &Dispatcher{Conn: l, KeySet: ks,
+		Duplex: NewDuplexByteChan(ConnBufs), Ping: ewma.NewMovingAverage()}
+	d.Parity.Store(DefaultStartingParity)
+	ps := ping.NewPingService(l.Host)
+	pings := ps.Ping(ctx, l.Conn.RemotePeer())
 	go func() {
 		for {
 			select {
+			case p := <-pings:
+				d.Lock()
+				d.Ping.Add(float64(p.RTT))
+				d.Unlock()
 			case m := <-l.Recv:
 				log.D.S("received from conn to dispatcher", m.ToBytes())
-			case m := <-d.DuplexByteChan.Send:
+				// Packet received, decrypt, gather and send acks back and
+				// reconstructed messages to the Dispatcher.Recv channel.
+				from, to, iv, e := GetKeysFromPacket(m)
+				if fails(e) {
+					continue
+				}
+				if !crypto.Match(to, crypto.DerivePub(d.Prv).ToBytes()) {
+					// This connection should only receive messages with cloaked
+					// keys matching our private key.
+					continue
+				}
+				d.Lock()
+				var p *Packet
+				if p, e = DecodePacket(m, from, d.Prv, iv); fails(e) {
+					d.Unlock()
+					continue
+				}
+				d.Unlock()
+				// Find collection of existing fragments matching the message ID
+				// or make a new one and add this packet to it for later
+				// assembly.
+				
+				_ = p
+				log.D.Ln("forwarding to dispatcher receiver")
+				d.Recv <- m
+			case m := <-d.Duplex.Send:
+				log.D.S("message dispatching to conn", m.ToBytes())
 				// Data received for sending through the Conn.
-				_ = m
+				id := nonce.NewID()
+				hash := sha256.Single(m)
+				txr := &TxRecord{
+					ID:    id,
+					Hash:  hash,
+					First: time.Now(),
+					Size:  len(m),
+				}
+				pp := &PacketParams{
+					ID:     id,
+					To:     l.RemoteKey,
+					Parity: int(d.Parity.Load()),
+					Length: m.Len(),
+					Data:   m,
+				}
+				packets, e := SplitToPackets(pp, l.MTU, ks)
+				if fails(e) {
+					continue
+				}
+				for i := range packets {
+					l.DuplexByteChan.Send <- packets[i]
+				}
+				txr.Last = time.Now()
+				d.Lock()
+				txr.Ping = time.Duration(d.Ping.Value())
+				d.PendingOutbound = append(d.PendingOutbound, txr)
+				d.Unlock()
+				log.D.Ln("message dispatched")
 			case <-ctx.Done():
 				return
 			}
 		}
 	}()
 	return
-}
-
-func (d *Dispatcher) Split(pp *PacketParams) (pkts Packets,
-	packets [][]byte, e error) {
-	
-	return SplitToPackets(pp, d.MTU, d.KeySet)
-}
-
-func (d *Dispatcher) Join(packets Packets) (pkts Packets, msg []byte, e error) {
-	return JoinPackets(packets)
 }

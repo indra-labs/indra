@@ -156,7 +156,9 @@ func NewDuplexByteChan(bufs int) *DuplexByteChan {
 }
 
 type Conn struct {
+	network.Conn
 	MTU       int
+	RemoteKey *crypto.Pub
 	MultiAddr multiaddr.Multiaddr
 	Host      host.Host
 	rw        *bufio.ReadWriter
@@ -191,6 +193,7 @@ func (l *Listener) Dial(multiAddr string) (d *Conn) {
 		return
 	}
 	d = &Conn{
+		Conn:           s.Conn(),
 		MTU:            l.MTU,
 		MultiAddr:      ma,
 		Host:           l.Host,

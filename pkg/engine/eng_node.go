@@ -7,7 +7,6 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/ring"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -25,11 +24,8 @@ type Node struct {
 	sync.Mutex
 	AddrPort  *netip.AddrPort
 	Identity  *Keys
-	RelayRate int                 // Base relay price mSAT/Mb.
-	Services  Services            // Services offered by this peer.
-	Load      *ring.BufferLoad    // Relay load.
-	Latency   *ring.BufferLatency // Latency to peer.
-	Failure   *ring.BufferFailure // Times of tx failure.
+	RelayRate int      // Base relay price mSAT/Mb.
+	Services  Services // Services offered by this peer.
 	PaymentChan
 	Sender, Receiver Transport
 }
@@ -41,13 +37,13 @@ const (
 	PaymentChanBuffers      = 8
 )
 
-// NewNode creates a new Node. A netip.AddrPort is optional if the counterparty is
-// not in direct connection. Also, the IdentityPrv node private key can be nil,
-// as only the node embedded in a client and not the peer node list has one
+// NewNode creates a new Node. A netip.AddrPort is optional if the counterparty
+// is not in direct connection. Also, the IdentityPrv node private key can be
+// nil, as only the node embedded in a client and not the peer node list has one
 // available. The Node for a client's self should use true in the local
 // parameter to not initialise the peer state ring buffers as it won't use them.
 func NewNode(addr *netip.AddrPort, idPrv *crypto.Prv, snd, rcv Transport,
-	relayRate int, local bool) (n *Node, id nonce.ID) {
+	relayRate int) (n *Node, id nonce.ID) {
 	
 	id = nonce.NewID()
 	n = &Node{
@@ -58,13 +54,6 @@ func NewNode(addr *netip.AddrPort, idPrv *crypto.Prv, snd, rcv Transport,
 		PaymentChan: make(PaymentChan, PaymentChanBuffers),
 		Sender:      snd,
 		Receiver:    rcv,
-	}
-	if !local {
-		// These ring buffers are needed to evaluate these metrics for remote
-		// peers only.
-		n.Load = ring.NewBufferLoad(DefaultSampleBufferSize)
-		n.Latency = ring.NewBufferLatency(DefaultSampleBufferSize)
-		n.Failure = ring.NewBufferFailure(DefaultSampleBufferSize)
 	}
 	return
 }

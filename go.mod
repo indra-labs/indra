@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	git-indra.lan/indra-labs/lnd v0.15.6
+	github.com/VividCortex/ewma v1.2.0
 	github.com/btcsuite/btcd/btcutil v1.1.3
 	github.com/cybriq/qu v0.1.2
 	github.com/davecgh/go-spew v1.1.1
@@ -14,8 +15,6 @@ require (
 	github.com/gookit/color v1.5.2
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
 	github.com/libp2p/go-libp2p v0.24.2
-	github.com/libp2p/go-libp2p-core v0.20.1
-	github.com/libp2p/go-libp2p-discovery v0.7.0
 	github.com/libp2p/go-libp2p-kad-dht v0.20.0
 	github.com/libp2p/go-libp2p-record v0.2.0
 	github.com/minio/sha256-simd v1.0.0

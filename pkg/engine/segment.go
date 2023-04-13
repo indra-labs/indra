@@ -27,8 +27,8 @@ const (
 // reply.
 //
 // The last packet that falls short of the segmentSize is padded random bytes.
-func SplitToPackets(pp *PacketParams,
-	segSize int, ks *crypto.KeySet) (pkts Packets, packets [][]byte, e error) {
+func SplitToPackets(pp *PacketParams, segSize int,
+	ks *crypto.KeySet) (packets [][]byte, e error) {
 	
 	if pp.Data == nil || len(pp.Data) == 0 {
 		e = fmt.Errorf(ErrEmptyBytes)

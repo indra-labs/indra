@@ -37,7 +37,7 @@ func TestSplitJoin(t *testing.T) {
 	}
 	var splitted [][]byte
 	_, ks, _ := crypto.NewSigner()
-	if _, splitted, e = SplitToPackets(params, segSize, ks); fails(e) {
+	if splitted, e = SplitToPackets(params, segSize, ks); fails(e) {
 		t.Error(e)
 	}
 	var pkts Packets
@@ -96,7 +96,7 @@ func BenchmarkSplit(b *testing.B) {
 		
 		var splitted [][]byte
 		_, ks, _ := crypto.NewSigner()
-		if _, splitted, e = SplitToPackets(params, segSize, ks); fails(e) {
+		if splitted, e = SplitToPackets(params, segSize, ks); fails(e) {
 			b.Error(e)
 		}
 		_ = splitted
@@ -179,7 +179,7 @@ func TestSplitJoinFEC(t *testing.T) {
 				Length: len(payload),
 				Data:   payload,
 			}
-			if _, splitted, e = SplitToPackets(ep, segSize, ks); fails(e) {
+			if splitted, e = SplitToPackets(ep, segSize, ks); fails(e) {
 				t.Error(e)
 				t.FailNow()
 			}

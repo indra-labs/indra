@@ -135,7 +135,7 @@ func GetKeysFromPacket(d []byte) (from *crypto.Pub, to crypto.PubKey, iv nonce.I
 	chek = d[:c.Inc(4)]
 	checkHash := sha256.Single(d[*c:])
 	if string(chek) != string(checkHash[:4]) {
-		e = fmt.Errorf("fails failed: got '%v', expected '%v'",
+		e = fmt.Errorf("check failed: got '%v', expected '%v'",
 			chek, checkHash[:4])
 		return
 	}
