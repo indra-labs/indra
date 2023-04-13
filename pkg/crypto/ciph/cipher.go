@@ -7,7 +7,6 @@ package ciph
 import (
 	"crypto/aes"
 	"crypto/cipher"
-	"encoding/base32"
 	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
@@ -20,10 +19,6 @@ var (
 	log   = log2.GetLogger(indra.PathBase)
 	fails = log.E.Chk
 )
-
-const Charset = "abcdefghijklmnopqrstuvwxyz234679"
-
-var enc = base32.NewEncoding(Charset).EncodeToString
 
 // GetBlock returns a block cipher with a secret generated from the provided
 // keys using ECDH.

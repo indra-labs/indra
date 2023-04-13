@@ -4,8 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base32"
 	
-	"github.com/gookit/color"
-	
+	"git-indra.lan/indra-labs/indra/pkg/constant"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 )
 
@@ -16,12 +15,13 @@ const IDLen = 8
 // generates 2^16 (65536) new ID's.
 type ID [IDLen]byte
 
-var enc = base32.NewEncoding(Charset).EncodeToString
-
-const Charset = "abcdefghijklmnopqrstuvwxyz234679"
+// enc is a raw base32 encoder as IDs have a consistent set of extraneous
+// characters after 13 digits and do not need check bytes as they are compact
+// large numbers used as collision resistant nonces to identify items in lists.
+var enc = base32.NewEncoding(constant.Based32Ciphers).EncodeToString
 
 func (id ID) String() string {
-	return color.LightBlue.Sprint(enc(id[:])[:13])
+	return enc(id[:])[:13]
 }
 
 var seed sha256.Hash

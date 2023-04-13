@@ -12,6 +12,7 @@ import (
 	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/b32/codec"
+	"git-indra.lan/indra-labs/indra/pkg/constant"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 )
@@ -21,15 +22,10 @@ var (
 	check = log.E.Chk
 )
 
-// Charset is the set of characters used in the data section of bech32 strings.
-// Note that this is ordered, such that for a given Charset[i], i is the binary
-// value of the character.
-const Charset = "abcdefghijklmnopqrstuvwxyz234679"
-
 // Codec provides the encoder/decoder implementation created by makeCodec.
 var Codec = makeCodec(
 	"Base32Check",
-	Charset,
+	constant.Based32Ciphers,
 	"",
 )
 
@@ -42,7 +38,6 @@ func getCheckLen(length int) (checkLen int) {
 func getCutPoint(length, checkLen int) int {
 	return length - checkLen - 1
 }
-
 
 func makeCodec(
 	name string,

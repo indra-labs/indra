@@ -2,7 +2,6 @@ package crypto
 
 import (
 	"crypto/rand"
-	"encoding/base32"
 	"encoding/hex"
 	"fmt"
 	"sync"
@@ -152,10 +151,6 @@ const (
 	// key.
 	PubKeyLen = secp256k1.PubKeyBytesLenCompressed
 )
-
-var enc = base32.NewEncoding(Charset).EncodeToString
-
-const Charset = "abcdefghijklmnopqrstuvwxyz234679"
 
 type (
 	// Pub is a public key.

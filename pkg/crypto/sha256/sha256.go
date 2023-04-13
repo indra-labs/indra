@@ -10,6 +10,7 @@ import (
 	"github.com/minio/sha256-simd"
 	
 	"git-indra.lan/indra-labs/indra"
+	"git-indra.lan/indra-labs/indra/pkg/constant"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 )
 
@@ -22,9 +23,11 @@ var (
 	fails = log.E.Chk
 )
 
-var enc = base32.NewEncoding(Charset).EncodeToString
-
-const Charset = "abcdefghijklmnopqrstuvwxyz234679"
+// enc is a raw base32 encoder as 256 bit hashes have a consistent set of
+// extraneous characters after 52 digits from padding and do not need check
+// bytes as they are compact large numbers for logs and message digests for
+// other things.
+var enc = base32.NewEncoding(constant.Based32Ciphers).EncodeToString
 
 // Hash is just a 256-bit hash.
 type Hash [32]byte

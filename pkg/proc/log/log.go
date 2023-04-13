@@ -1,8 +1,6 @@
 package log
 
 import (
-	"encoding/base32"
-	"encoding/binary"
 	"fmt"
 	"io"
 	"os"
@@ -309,14 +307,6 @@ func joinStrings(sep string, a ...interface{}) func() (o string) {
 		}
 		return
 	}
-}
-
-const Charset = "abcdefghijklmnopqrstuvwxyz234679"
-
-func Base32(in uint64) (out string) {
-	o := make([]byte, 8)
-	binary.BigEndian.PutUint64(o, in)
-	return base32.NewEncoding(Charset).EncodeToString(o)[:13]
 }
 
 // logPrint is the generic log printing function that provides the base
