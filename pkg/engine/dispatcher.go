@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"math/big"
 	"sync"
 	"time"
 	
@@ -12,6 +13,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 )
 
 const (
@@ -71,29 +73,35 @@ type RxRecord struct {
 // time compared to the current ping, if it is within range of the ping RTT this
 // doesn't affect the adjustment.
 //
-// DataSent / ParitySent provides the ratio of redundancy the channel is using.
-// ParitySent is not from the parameters at send but from acknowledgements of
+// DataSent / TotalSent provides the ratio of redundancy the channel is using.
+// TotalSent is not from the parameters at send but from acknowledgements of
 // how much data was received before a message was reconstructed. Thus, it is
 // used in combination with the PingDivergence to recompute the Parity parameter
 // used for adjusting error correction redundancy as each message is decoded.
 type Dispatcher struct {
 	// Parity is the parity parameter to use in packet segments, this value
 	// should be adjusted up and down in proportion with collected data on how
-	// many packets led to receipt against the ratio of DataSent / ParitySent *
+	// many packets led to receipt against the ratio of DataSent / TotalSent *
 	// PingDivergence.
 	Parity atomic.Uint32
-	// DataSent is the amount of payload bytes sent.
-	DataSent int
-	// ParitySent is the amount of bytes that were needed to successfully
-	// transmit, including packet overhead. This is collected from
-	// acknowledgements.
-	ParitySent int
+	// DataSent is the amount of actual data sent in messages.
+	DataSent *big.Int
+	// DataReceived is the amount of actual data received in messages.
+	DataReceived *big.Int
+	// TotalSent is the amount of bytes that were needed to successfully
+	// transmit, including packet overhead. This is the raw size of the
+	// segmented packets that were sent.
+	TotalSent *big.Int
+	// TotalReceived is the amount of bytes that were needed to successfully
+	// transmit, including packet overhead. This is the raw size of the
+	// segmented packets that were sent.
+	TotalReceived *big.Int
 	// PingDivergence represents the proportion of time between start of send
 	// and receiving acknowledgement, versus the ping RTT being actively
 	// measured concurrently. Shorter/equal time means it can reduce redundancy,
 	// longer time needs to increase it.
 	//
-	// Combined with DataSent / ParitySent this guides the error correction
+	// Combined with DataSent / TotalSent this guides the error correction
 	// parameter for a given transmission that minimises latency. Onion routing
 	// necessarily amplifies any latency so making a transmission get across
 	// before/without retransmits is as good as the path can provide.
@@ -114,8 +122,12 @@ const TimeoutPingCount = 10
 func NewDispatcher(l *Conn, ctx context.Context,
 	ks *crypto.KeySet) (d *Dispatcher) {
 	
-	d = &Dispatcher{Conn: l, KeySet: ks,
-		Duplex: NewDuplexByteChan(ConnBufs), Ping: ewma.NewMovingAverage()}
+	d = &Dispatcher{
+		Conn:   l,
+		KeySet: ks,
+		Duplex: NewDuplexByteChan(ConnBufs),
+		Ping:   ewma.NewMovingAverage(),
+	}
 	d.Parity.Store(DefaultStartingParity)
 	ps := ping.NewPingService(l.Host)
 	pings := ps.Ping(ctx, l.Conn.RemotePeer())
@@ -202,6 +214,8 @@ func NewDispatcher(l *Conn, ctx context.Context,
 				// assembly.
 				log.D.Ln("collating packet")
 				d.Lock()
+				d.TotalReceived = d.TotalReceived.Add(d.TotalReceived,
+					big.NewInt(int64(len(m))))
 				d.Partials[p.ID] = append(d.Partials[p.ID], p)
 				segCount := int(p.Length) / d.Conn.MTU
 				mod := int(p.Length) % d.Conn.MTU
@@ -215,6 +229,14 @@ func NewDispatcher(l *Conn, ctx context.Context,
 						continue
 					}
 					log.D.Ln("message reconstructed; dispatching...")
+					d.DataReceived = d.DataReceived.Add(d.DataReceived,
+						big.NewInt(int64(len(m))))
+					for _, v := range d.Partials[p.ID] {
+						d.TotalReceived = d.TotalReceived.Add(
+							d.TotalReceived,
+							big.NewInt(int64(len(v.Data)+v.GetOverhead())),
+						)
+					}
 					d.Recv <- msg
 				}
 				d.Unlock()
@@ -240,12 +262,25 @@ func NewDispatcher(l *Conn, ctx context.Context,
 				if fails(e) {
 					continue
 				}
+				// Shuffle. This is both for anonymity and improving the
+				// chances of most error bursts to not cut through a whole
+				// segment (they are grouped by 256 for RS FEC).
+				cryptorand.Shuffle(len(packets), func(i, j int) {
+					packets[i], packets[j] = packets[j], packets[i]
+				})
+				// Send them out!
 				for i := range packets {
 					l.DuplexByteChan.Send <- packets[i]
 				}
 				txr.Last = time.Now()
 				txr.Ping = time.Duration(d.Ping.Value())
 				d.Lock()
+				d.DataSent = d.DataSent.Add(d.DataSent,
+					big.NewInt(int64(len(m))))
+				for _, v := range packets {
+					d.TotalSent = d.TotalSent.Add(d.TotalSent,
+						big.NewInt(int64(len(v))))
+				}
 				d.PendingOutbound = append(d.PendingOutbound, txr)
 				d.Unlock()
 				log.D.Ln("message dispatched")
