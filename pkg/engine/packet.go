@@ -147,8 +147,8 @@ func GetKeysFromPacket(d []byte) (from *crypto.Pub, to crypto.PubKey, iv nonce.I
 	return
 }
 
-// DecodePacket a packet and return the Packet with encrypted payload and
-// signer's public key. This assumes GetKeysFromPacket succeeded and the
+// DecodePacket decodes a packet and return the Packet with encrypted payload
+// and signer's public key. This assumes GetKeysFromPacket succeeded and the
 // matching private key was found.
 func DecodePacket(d []byte, from *crypto.Pub, to *crypto.Prv,
 	iv nonce.IV) (f *Packet, e error) {

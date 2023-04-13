@@ -97,16 +97,19 @@ type Dispatcher struct {
 	// parameter for a given transmission that minimises latency. Onion routing
 	// necessarily amplifies any latency so making a transmission get across
 	// before/without retransmits is as good as the path can provide.
-	PingDivergence  int
-	Ping            ewma.MovingAverage
-	PendingInbound  []*RxRecord
-	PendingOutbound []*TxRecord
-	Duplex          *DuplexByteChan
+	PingDivergence int
+	Duplex         *DuplexByteChan
 	*Conn
 	*crypto.Prv
 	*crypto.KeySet
 	sync.Mutex
+	Ping            ewma.MovingAverage
+	PendingInbound  []*RxRecord
+	PendingOutbound []*TxRecord
+	Partials        map[nonce.ID]Packets
 }
+
+const TimeoutPingCount = 10
 
 func NewDispatcher(l *Conn, ctx context.Context,
 	ks *crypto.KeySet) (d *Dispatcher) {
@@ -116,9 +119,54 @@ func NewDispatcher(l *Conn, ctx context.Context,
 	d.Parity.Store(DefaultStartingParity)
 	ps := ping.NewPingService(l.Host)
 	pings := ps.Ping(ctx, l.Conn.RemotePeer())
+	garbage := time.NewTicker(time.Second)
 	go func() {
 		for {
 			select {
+			case <-garbage.C:
+				// remove successful receives after they are finished or all
+				// pieces arrived.
+				go func() {
+					var rxr []*RxRecord
+					d.Lock()
+					for dpi, dp := range d.Partials {
+						// Find the oldest and newest.
+						oldest := time.Now()
+						newest := dp[0].TimeStamp
+						for _, ts := range dp {
+							if oldest.After(ts.TimeStamp) {
+								oldest = ts.TimeStamp
+							}
+							if newest.Before(ts.TimeStamp) {
+								newest = ts.TimeStamp
+							}
+						}
+						if newest.Sub(time.Now()) > time.Duration(d.Ping.Value())*
+							TimeoutPingCount {
+							
+							// after 10 pings of time elapse since last received we
+							// consider the transmission a failure, send back the
+							// failed RxRecord and delete the map entry.
+							var tmp []*RxRecord
+							for i := range d.PendingInbound {
+								if d.PendingInbound[i].ID == dp[0].ID {
+									rxr = append(rxr, d.PendingInbound[i])
+									break
+								} else {
+									tmp = append(tmp, d.PendingInbound[i])
+								}
+							}
+							delete(d.Partials, dpi)
+							d.PendingInbound = tmp
+						}
+					}
+					d.Unlock()
+					// With the lock released we now can dispatch the RxRecords.
+					for i := range rxr {
+						// send the RxRecord to the peer.
+						_ = rxr[i]
+					}
+				}()
 			case p := <-pings:
 				d.Lock()
 				d.Ping.Add(float64(p.RTT))
@@ -143,13 +191,33 @@ func NewDispatcher(l *Conn, ctx context.Context,
 					continue
 				}
 				d.Unlock()
+				// if the message only one packet we can send it out now:
+				if int(p.Length) == len(p.Data) {
+					log.D.Ln("forwarding single packet message")
+					d.Recv <- m
+					continue
+				}
 				// Find collection of existing fragments matching the message ID
 				// or make a new one and add this packet to it for later
 				// assembly.
-				
-				_ = p
-				log.D.Ln("forwarding to dispatcher receiver")
-				d.Recv <- m
+				log.D.Ln("collating packet")
+				d.Lock()
+				d.Partials[p.ID] = append(d.Partials[p.ID], p)
+				segCount := int(p.Length) / d.Conn.MTU
+				mod := int(p.Length) % d.Conn.MTU
+				if mod > 0 {
+					segCount++
+				}
+				if len(d.Partials[p.ID]) >= segCount {
+					// Enough to attempt reconstruction:
+					var msg []byte
+					if d.Partials[p.ID], msg, e = JoinPackets(d.Partials[p.ID]); fails(e) {
+						continue
+					}
+					log.D.Ln("message reconstructed; dispatching...")
+					d.Recv <- msg
+				}
+				d.Unlock()
 			case m := <-d.Duplex.Send:
 				log.D.S("message dispatching to conn", m.ToBytes())
 				// Data received for sending through the Conn.
@@ -176,8 +244,8 @@ func NewDispatcher(l *Conn, ctx context.Context,
 					l.DuplexByteChan.Send <- packets[i]
 				}
 				txr.Last = time.Now()
-				d.Lock()
 				txr.Ping = time.Duration(d.Ping.Value())
+				d.Lock()
 				d.PendingOutbound = append(d.PendingOutbound, txr)
 				d.Unlock()
 				log.D.Ln("message dispatched")
