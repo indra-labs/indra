@@ -45,9 +45,9 @@ func TestNewRCPListener(t *testing.T) {
 	go func() {
 		for {
 			select {
-			case b := <-c1:
+			case b := <-c1.Receive():
 				log.D.S("received "+hn1, b.ToBytes())
-			case b := <-c2:
+			case b := <-c2.Receive():
 				log.D.S("received "+hn2, b.ToBytes())
 				d2.Send <- msg2
 			case <-ctx.Done():

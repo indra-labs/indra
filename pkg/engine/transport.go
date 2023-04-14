@@ -97,8 +97,9 @@ func (l *Listener) handle(s network.Stream) {
 		hostAddr, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/p2p/%s", aid))
 		ha := ai.Addrs[0].Encapsulate(hostAddr)
 		as := ha.String()
-		nc := l.Dial(as)
-		if l.FindConn(as) == nil {
+		var nc *Conn
+		if nc = l.FindConn(as); nc == nil {
+			nc = l.Dial(as)
 			l.AddConn(nc)
 		}
 		nc.Recv <- b[:n]
@@ -277,8 +278,7 @@ func Discover(ctx context.Context, h host.Host, dht *dht.IpfsDHT,
 	var disco = routing.NewRoutingDiscovery(dht)
 	var e error
 	var peers <-chan peer.AddrInfo
-	if _, e = disco.Advertise(ctx, rendezvous); fails(e) {
-		// return
+	if _, e = disco.Advertise(ctx, rendezvous); e != nil {
 	}
 	ticker := time.NewTicker(time.Second * 1)
 	defer ticker.Stop()
