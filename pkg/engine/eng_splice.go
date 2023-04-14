@@ -416,10 +416,24 @@ func (s *Splice) ReadMilliSatoshi(v *lnwire.MilliSatoshi) *Splice {
 	return s
 }
 
+func (s *Splice) Duration(v time.Duration) *Splice {
+	slice.EncodeUint64(s.b[*s.c:s.c.Inc(slice.Uint64Len)], uint64(v))
+	s.SpliceSegments = append(s.SpliceSegments,
+		NameOffset{Offset: int(*s.c), Name: fmt.Sprint(v)})
+	return s
+}
+
 func (s *Splice) ReadDuration(v *time.Duration) *Splice {
 	*v = time.Duration(slice.DecodeUint64(s.b[*s.c:s.c.Inc(slice.Uint64Len)]))
 	s.SpliceSegments = append(s.SpliceSegments,
 		NameOffset{Offset: int(*s.c), Name: fmt.Sprint(*v)})
+	return s
+}
+
+func (s *Splice) Time(v time.Time) *Splice {
+	slice.EncodeUint64(s.b[*s.c:s.c.Inc(slice.Uint64Len)], uint64(v.UnixNano()))
+	s.SpliceSegments = append(s.SpliceSegments,
+		NameOffset{Offset: int(*s.c), Name: fmt.Sprint(v)})
 	return s
 }
 

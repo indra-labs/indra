@@ -54,7 +54,7 @@ type RxRecord struct {
 	Size int
 	// Received is the number of bytes received upon reconstruction, including
 	// packet overhead.
-	Received int
+	Received uint64
 	// Ping is the average ping RTT on the connection calculated at each packet
 	// receive, used with the total message transmit time to estimate an
 	// adjustment in the parity shards to be used in sending on this connection.
@@ -106,7 +106,7 @@ type Dispatcher struct {
 	// parameter for a given transmission that minimises latency. Onion routing
 	// necessarily amplifies any latency so making a transmission get across
 	// before/without retransmits is as good as the path can provide.
-	PingDivergence int
+	PingDivergence ewma.MovingAverage
 	Duplex         *DuplexByteChan
 	*Conn
 	*crypto.Prv
@@ -149,6 +149,21 @@ func NewDispatcher(l *Conn, ctx context.Context,
 			}
 		}
 	}()
+	return
+}
+
+func (d *Dispatcher) GetRxRecordAndPartials(id nonce.ID) (rxr *RxRecord,
+	pkts Packets) {
+	
+	for _, v := range d.PendingInbound {
+		if v.ID == id {
+			rxr = v
+			break
+		}
+	}
+	var ok bool
+	if pkts, ok = d.Partials[id]; ok {
+	}
 	return
 }
 
@@ -222,11 +237,28 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 		d.Unlock()
 		return
 	}
+	if rxr, prt := d.GetRxRecordAndPartials(p.ID); rxr != nil {
+		rxr.Received += uint64(len(m))
+		rxr.Last = time.Now()
+		prt = append(prt, p)
+	} else {
+		d.PendingInbound = append(d.PendingInbound, &RxRecord{
+			ID:       p.ID,
+			First:    time.Now(),
+			Last:     time.Now(),
+			Size:     int(p.Length),
+			Received: uint64(len(m)),
+			Ping:     time.Duration(d.Ping.Value()),
+		})
+		d.Partials[p.ID] = Packets{p}
+	}
 	d.Unlock()
 	// if the message only one packet we can send it out now:
 	if int(p.Length) == len(p.Data) {
 		log.D.Ln("forwarding single packet message")
 		d.Duplex.Recv <- m
+		// Send out and delete the RxRecord.
+		
 		return
 	}
 	// Find collection of existing fragments matching the message ID
@@ -257,7 +289,10 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 				big.NewInt(int64(len(v.Data)+v.GetOverhead())),
 			)
 		}
+		// Send the message on to the receiving channel.
 		d.Duplex.Recv <- msg
+		// Send out and delete the RxRecord.
+		
 	}
 	d.Unlock()
 }
