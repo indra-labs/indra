@@ -14,6 +14,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 const (
@@ -131,163 +132,176 @@ func NewDispatcher(l *Conn, ctx context.Context,
 	d.Parity.Store(DefaultStartingParity)
 	ps := ping.NewPingService(l.Host)
 	pings := ps.Ping(ctx, l.Conn.RemotePeer())
-	garbage := time.NewTicker(time.Second)
+	garbageTicker := time.NewTicker(time.Second)
 	go func() {
 		for {
 			select {
-			case <-garbage.C:
-				// remove successful receives after they are finished or all
-				// pieces arrived.
-				go func() {
-					var rxr []*RxRecord
-					d.Lock()
-					for dpi, dp := range d.Partials {
-						// Find the oldest and newest.
-						oldest := time.Now()
-						newest := dp[0].TimeStamp
-						for _, ts := range dp {
-							if oldest.After(ts.TimeStamp) {
-								oldest = ts.TimeStamp
-							}
-							if newest.Before(ts.TimeStamp) {
-								newest = ts.TimeStamp
-							}
-						}
-						if newest.Sub(time.Now()) > time.Duration(d.Ping.Value())*
-							TimeoutPingCount {
-							
-							// after 10 pings of time elapse since last received we
-							// consider the transmission a failure, send back the
-							// failed RxRecord and delete the map entry.
-							var tmp []*RxRecord
-							for i := range d.PendingInbound {
-								if d.PendingInbound[i].ID == dp[0].ID {
-									rxr = append(rxr, d.PendingInbound[i])
-									break
-								} else {
-									tmp = append(tmp, d.PendingInbound[i])
-								}
-							}
-							delete(d.Partials, dpi)
-							d.PendingInbound = tmp
-						}
-					}
-					d.Unlock()
-					// With the lock released we now can dispatch the RxRecords.
-					for i := range rxr {
-						// send the RxRecord to the peer.
-						_ = rxr[i]
-					}
-				}()
+			case <-garbageTicker.C:
+				go d.RunGC()
 			case p := <-pings:
-				d.Lock()
-				d.Ping.Add(float64(p.RTT))
-				d.Unlock()
+				go d.HandlePing(p)
 			case m := <-l.Recv:
-				log.D.S("received from conn to dispatcher", m.ToBytes())
-				// Packet received, decrypt, gather and send acks back and
-				// reconstructed messages to the Dispatcher.Recv channel.
-				from, to, iv, e := GetKeysFromPacket(m)
-				if fails(e) {
-					continue
-				}
-				if !crypto.Match(to, crypto.DerivePub(d.Prv).ToBytes()) {
-					// This connection should only receive messages with cloaked
-					// keys matching our private key.
-					continue
-				}
-				d.Lock()
-				var p *Packet
-				if p, e = DecodePacket(m, from, d.Prv, iv); fails(e) {
-					d.Unlock()
-					continue
-				}
-				d.Unlock()
-				// if the message only one packet we can send it out now:
-				if int(p.Length) == len(p.Data) {
-					log.D.Ln("forwarding single packet message")
-					d.Recv <- m
-					continue
-				}
-				// Find collection of existing fragments matching the message ID
-				// or make a new one and add this packet to it for later
-				// assembly.
-				log.D.Ln("collating packet")
-				d.Lock()
-				d.TotalReceived = d.TotalReceived.Add(d.TotalReceived,
-					big.NewInt(int64(len(m))))
-				d.Partials[p.ID] = append(d.Partials[p.ID], p)
-				segCount := int(p.Length) / d.Conn.MTU
-				mod := int(p.Length) % d.Conn.MTU
-				if mod > 0 {
-					segCount++
-				}
-				if len(d.Partials[p.ID]) >= segCount {
-					// Enough to attempt reconstruction:
-					var msg []byte
-					if d.Partials[p.ID], msg, e = JoinPackets(d.Partials[p.ID]); fails(e) {
-						continue
-					}
-					log.D.Ln("message reconstructed; dispatching...")
-					d.DataReceived = d.DataReceived.Add(d.DataReceived,
-						big.NewInt(int64(len(m))))
-					for _, v := range d.Partials[p.ID] {
-						d.TotalReceived = d.TotalReceived.Add(
-							d.TotalReceived,
-							big.NewInt(int64(len(v.Data)+v.GetOverhead())),
-						)
-					}
-					d.Recv <- msg
-				}
-				d.Unlock()
+				go d.RecvFromConn(m)
 			case m := <-d.Duplex.Send:
-				log.D.S("message dispatching to conn", m.ToBytes())
-				// Data received for sending through the Conn.
-				id := nonce.NewID()
-				hash := sha256.Single(m)
-				txr := &TxRecord{
-					ID:    id,
-					Hash:  hash,
-					First: time.Now(),
-					Size:  len(m),
-				}
-				pp := &PacketParams{
-					ID:     id,
-					To:     l.RemoteKey,
-					Parity: int(d.Parity.Load()),
-					Length: m.Len(),
-					Data:   m,
-				}
-				packets, e := SplitToPackets(pp, l.MTU, ks)
-				if fails(e) {
-					continue
-				}
-				// Shuffle. This is both for anonymity and improving the
-				// chances of most error bursts to not cut through a whole
-				// segment (they are grouped by 256 for RS FEC).
-				cryptorand.Shuffle(len(packets), func(i, j int) {
-					packets[i], packets[j] = packets[j], packets[i]
-				})
-				// Send them out!
-				for i := range packets {
-					l.DuplexByteChan.Send <- packets[i]
-				}
-				txr.Last = time.Now()
-				txr.Ping = time.Duration(d.Ping.Value())
-				d.Lock()
-				d.DataSent = d.DataSent.Add(d.DataSent,
-					big.NewInt(int64(len(m))))
-				for _, v := range packets {
-					d.TotalSent = d.TotalSent.Add(d.TotalSent,
-						big.NewInt(int64(len(v))))
-				}
-				d.PendingOutbound = append(d.PendingOutbound, txr)
-				d.Unlock()
-				log.D.Ln("message dispatched")
+				go d.SendToConn(m)
 			case <-ctx.Done():
 				return
 			}
 		}
 	}()
 	return
+}
+
+func (d *Dispatcher) HandlePing(p ping.Result) {
+	d.Lock()
+	d.Ping.Add(float64(p.RTT))
+	d.Unlock()
+}
+
+func (d *Dispatcher) SendToConn(m slice.Bytes) {
+	log.D.S("message dispatching to conn", m.ToBytes())
+	// Data received for sending through the Conn.
+	id := nonce.NewID()
+	hash := sha256.Single(m)
+	txr := &TxRecord{
+		ID:    id,
+		Hash:  hash,
+		First: time.Now(),
+		Size:  len(m),
+	}
+	pp := &PacketParams{
+		ID:     id,
+		To:     d.Conn.RemoteKey,
+		Parity: int(d.Parity.Load()),
+		Length: m.Len(),
+		Data:   m,
+	}
+	packets, e := SplitToPackets(pp, d.Conn.MTU, d.KeySet)
+	if fails(e) {
+		return
+	}
+	// Shuffle. This is both for anonymity and improving the
+	// chances of most error bursts to not cut through a whole
+	// segment (they are grouped by 256 for RS FEC).
+	cryptorand.Shuffle(len(packets), func(i, j int) {
+		packets[i], packets[j] = packets[j], packets[i]
+	})
+	// Send them out!
+	for i := range packets {
+		d.Conn.DuplexByteChan.Send <- packets[i]
+	}
+	txr.Last = time.Now()
+	txr.Ping = time.Duration(d.Ping.Value())
+	d.Lock()
+	d.DataSent = d.DataSent.Add(d.DataSent,
+		big.NewInt(int64(len(m))))
+	for _, v := range packets {
+		d.TotalSent = d.TotalSent.Add(d.TotalSent,
+			big.NewInt(int64(len(v))))
+	}
+	d.PendingOutbound = append(d.PendingOutbound, txr)
+	d.Unlock()
+	log.D.Ln("message dispatched")
+}
+
+func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
+	log.D.S("received from conn to dispatcher", m.ToBytes())
+	// Packet received, decrypt, gather and send acks back and
+	// reconstructed messages to the Dispatcher.RecvFromConn channel.
+	from, to, iv, e := GetKeysFromPacket(m)
+	if fails(e) {
+	}
+	if !crypto.Match(to, crypto.DerivePub(d.Prv).ToBytes()) {
+		// This connection should only receive messages with cloaked
+		// keys matching our private key of the connection.
+		return
+	}
+	d.Lock()
+	var p *Packet
+	if p, e = DecodePacket(m, from, d.Prv, iv); fails(e) {
+		d.Unlock()
+		return
+	}
+	d.Unlock()
+	// if the message only one packet we can send it out now:
+	if int(p.Length) == len(p.Data) {
+		log.D.Ln("forwarding single packet message")
+		d.Duplex.Recv <- m
+		return
+	}
+	// Find collection of existing fragments matching the message ID
+	// or make a new one and add this packet to it for later
+	// assembly.
+	log.D.Ln("collating packet")
+	d.Lock()
+	d.TotalReceived = d.TotalReceived.Add(d.TotalReceived,
+		big.NewInt(int64(len(m))))
+	d.Partials[p.ID] = append(d.Partials[p.ID], p)
+	segCount := int(p.Length) / d.Conn.MTU
+	mod := int(p.Length) % d.Conn.MTU
+	if mod > 0 {
+		segCount++
+	}
+	if len(d.Partials[p.ID]) >= segCount {
+		// Enough to attempt reconstruction:
+		var msg []byte
+		if d.Partials[p.ID], msg, e = JoinPackets(d.Partials[p.ID]); fails(e) {
+			return
+		}
+		log.D.Ln("message reconstructed; dispatching...")
+		d.DataReceived = d.DataReceived.Add(d.DataReceived,
+			big.NewInt(int64(len(m))))
+		for _, v := range d.Partials[p.ID] {
+			d.TotalReceived = d.TotalReceived.Add(
+				d.TotalReceived,
+				big.NewInt(int64(len(v.Data)+v.GetOverhead())),
+			)
+		}
+		d.Duplex.Recv <- msg
+	}
+	d.Unlock()
+}
+
+func (d *Dispatcher) RunGC() {
+	// remove successful receives after they are finished or all
+	// pieces arrived.
+	var rxr []*RxRecord
+	d.Lock()
+	for dpi, dp := range d.Partials {
+		// Find the oldest and newest.
+		oldest := time.Now()
+		newest := dp[0].TimeStamp
+		for _, ts := range dp {
+			if oldest.After(ts.TimeStamp) {
+				oldest = ts.TimeStamp
+			}
+			if newest.Before(ts.TimeStamp) {
+				newest = ts.TimeStamp
+			}
+		}
+		if newest.Sub(time.Now()) > time.Duration(d.Ping.Value())*
+			TimeoutPingCount {
+			
+			// after 10 pings of time elapse since last received we
+			// consider the transmission a failure, send back the
+			// failed RxRecord and delete the map entry.
+			var tmp []*RxRecord
+			for i := range d.PendingInbound {
+				if d.PendingInbound[i].ID == dp[0].ID {
+					rxr = append(rxr, d.PendingInbound[i])
+					break
+				} else {
+					tmp = append(tmp, d.PendingInbound[i])
+				}
+			}
+			delete(d.Partials, dpi)
+			d.PendingInbound = tmp
+		}
+	}
+	d.Unlock()
+	// With the lock released we now can dispatch the RxRecords.
+	for i := range rxr {
+		// send the RxRecord to the peer.
+		_ = rxr[i]
+	}
 }
