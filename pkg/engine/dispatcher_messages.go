@@ -13,6 +13,7 @@ const (
 	KeyChangeInitiateMagic = "kchi"
 	KeyChangeReplyMagic    = "kchr"
 	AcknowledgementMagic   = "ackn"
+	MungMagic              = "mung"
 )
 
 type KeyChangeInitiate struct {
@@ -114,4 +115,32 @@ func (a *Acknowledgement) Decode(s *Splice) (e error) {
 
 func (a *Acknowledgement) Len() int {
 	return 4 + nonce.IDLen + sha256.Len + 4*slice.Uint64Len
+}
+
+type Mung struct {
+	slice.Bytes
+}
+
+func (m *Mung) Encode(s *Splice) (e error) {
+	s.Magic4(MungMagic).Bytes(m.Bytes)
+	return
+}
+
+func (m *Mung) Decode(s *Splice) (e error) {
+	if s.Len() < m.Len() {
+		return fmt.Errorf("message too short, got %d, require %d", m.Len(),
+			s.Len())
+	}
+	var magic string
+	s.ReadMagic4(&magic)
+	if magic != MungMagic {
+		return fmt.Errorf("incorrect magic, got '%s', require '%s'", magic,
+			MungMagic)
+	}
+	s.ReadBytes(&m.Bytes)
+	return
+}
+
+func (m *Mung) Len() int {
+	return 4 + len(m.Bytes) + 4
 }

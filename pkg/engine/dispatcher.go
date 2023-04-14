@@ -153,7 +153,7 @@ func NewDispatcher(l *Conn, ctx context.Context,
 }
 
 func (d *Dispatcher) GetRxRecordAndPartials(id nonce.ID) (rxr *RxRecord,
-	pkts Packets) {
+	packets Packets) {
 	
 	for _, v := range d.PendingInbound {
 		if v.ID == id {
@@ -162,7 +162,7 @@ func (d *Dispatcher) GetRxRecordAndPartials(id nonce.ID) (rxr *RxRecord,
 		}
 	}
 	var ok bool
-	if pkts, ok = d.Partials[id]; ok {
+	if packets, ok = d.Partials[id]; ok {
 	}
 	return
 }
