@@ -20,8 +20,8 @@ const (
 		ReplyCiphersLen
 )
 
-func MessagePrototype() Codec      { return &Message{} }
-func init()                        { Register(MessageMagic, MessagePrototype) }
+func MessageGen() Codec            { return &Message{} }
+func init()                        { Register(MessageMagic, MessageGen) }
 func (x *Message) Magic() string   { return MessageMagic }
 func (x *Message) Len() int        { return MessageLen + x.Payload.Len() }
 func (x *Message) Wrap(inner Mung) {}

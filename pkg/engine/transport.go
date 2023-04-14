@@ -179,7 +179,6 @@ func getHostAddress(ha host.Host) string {
 }
 
 func (l *Listener) Dial(multiAddr string) (d *Conn) {
-	
 	var e error
 	var ma multiaddr.Multiaddr
 	if ma, e = multiaddr.NewMultiaddr(multiAddr); fails(e) {
@@ -189,9 +188,12 @@ func (l *Listener) Dial(multiAddr string) (d *Conn) {
 	if info, e = peer.AddrInfoFromP2pAddr(ma); fails(e) {
 		return
 	}
-	l.Host.Peerstore().AddAddrs(info.ID, info.Addrs, peerstore.PermanentAddrTTL)
+	l.Host.Peerstore().AddAddrs(info.ID, info.Addrs,
+		peerstore.PermanentAddrTTL)
 	var s network.Stream
-	if s, e = l.Host.NewStream(context.Background(), info.ID, IndraLibP2PID); fails(e) {
+	if s, e = l.Host.NewStream(context.Background(), info.ID,
+		IndraLibP2PID); fails(e) {
+		
 		return
 	}
 	d = &Conn{
@@ -200,8 +202,9 @@ func (l *Listener) Dial(multiAddr string) (d *Conn) {
 		MultiAddr:      ma,
 		Host:           l.Host,
 		DuplexByteChan: NewDuplexByteChan(ConnBufs),
-		rw:             bufio.NewReadWriter(bufio.NewReader(s), bufio.NewWriter(s)),
-		C:              qu.T(),
+		rw: bufio.NewReadWriter(bufio.NewReader(s),
+			bufio.NewWriter(s)),
+		C: qu.T(),
 	}
 	l.Lock()
 	l.connections[multiAddr] = d
@@ -231,42 +234,52 @@ func (l *Listener) Dial(multiAddr string) (d *Conn) {
 }
 
 func NewDHT(ctx context.Context, host host.Host,
-	bootstrapPeers []multiaddr.Multiaddr) (*dht.IpfsDHT, error) {
+	bootstrapPeers []multiaddr.Multiaddr) (d *dht.IpfsDHT, e error) {
 	
 	var options []dht.Option
 	if len(bootstrapPeers) == 0 {
 		options = append(options, dht.Mode(dht.ModeServer))
 	}
-	kdht, err := dht.New(ctx, host, options...)
-	if err != nil {
-		return nil, err
+	if d, e = dht.New(ctx, host, options...); fails(e) {
+		return
 	}
-	if err = kdht.Bootstrap(ctx); err != nil {
-		return nil, err
+	if e = d.Bootstrap(ctx); fails(e) {
+		return
 	}
 	var wg sync.WaitGroup
 	for _, peerAddr := range bootstrapPeers {
-		peerinfo, _ := peer.AddrInfoFromP2pAddr(peerAddr)
+		var peerinfo *peer.AddrInfo
+		if peerinfo, e = peer.AddrInfoFromP2pAddr(peerAddr); fails(e) {
+			continue
+		}
 		wg.Add(1)
 		go func() {
-			defer wg.Done()
 			if e := host.Connect(ctx, *peerinfo); fails(e) {
-				log.E.F("Error while connecting to node %q: %-v", peerinfo, e)
-			} else {
-				log.I.F("%s: Connection established with bootstrap node: %s",
-					getHostAddress(host), *peerinfo)
+				log.D.F("Error while connecting to node %q: %-v",
+					peerinfo, e)
+				wg.Done()
+				return
 			}
+			log.I.F(
+				"%s: Connection established with bootstrap node: %s",
+				getHostAddress(host), *peerinfo)
+			
+			wg.Done()
 		}()
 	}
 	wg.Wait()
-	return kdht, nil
+	return
 }
 
-func Discover(ctx context.Context, h host.Host, dht *dht.IpfsDHT, rendezvous string) {
-	var routingDiscovery = routing.NewRoutingDiscovery(dht)
+func Discover(ctx context.Context, h host.Host, dht *dht.IpfsDHT,
+	rendezvous string) {
+	
+	var disco = routing.NewRoutingDiscovery(dht)
 	var e error
 	var peers <-chan peer.AddrInfo
-	_, e = routingDiscovery.Advertise(ctx, rendezvous)
+	if _, e = disco.Advertise(ctx, rendezvous); fails(e) {
+		// return
+	}
 	ticker := time.NewTicker(time.Second * 1)
 	defer ticker.Stop()
 	for {
@@ -274,20 +287,22 @@ func Discover(ctx context.Context, h host.Host, dht *dht.IpfsDHT, rendezvous str
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			peers, e = routingDiscovery.FindPeers(ctx, rendezvous)
-			if fails(e) {
+			if peers, e = disco.FindPeers(ctx, rendezvous); fails(e) {
 				return
 			}
 			for p := range peers {
 				if p.ID == h.ID() {
 					continue
 				}
-				if h.Network().Connectedness(p.ID) != network.Connected {
-					_, e = h.Network().DialPeer(ctx, p.ID)
-					fmt.Printf("Connected to peer %s\n", p.ID.String())
-					if e != nil {
+				if h.Network().Connectedness(p.ID) !=
+					network.Connected {
+					
+					if _, e = h.Network().DialPeer(ctx,
+						p.ID); fails(e) {
+						
 						continue
 					}
+					log.D.Ln("Connected to peer", p.ID)
 				}
 			}
 		}

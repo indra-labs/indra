@@ -21,8 +21,8 @@ type Response struct {
 	slice.Bytes
 }
 
-func responsePrototype() Codec      { return &Response{} }
-func init()                         { Register(ResponseMagic, responsePrototype) }
+func responseGen() Codec            { return &Response{} }
+func init()                         { Register(ResponseMagic, responseGen) }
 func (x *Response) Magic() string   { return ResponseMagic }
 func (x *Response) Len() int        { return ResponseLen + len(x.Bytes) }
 func (x *Response) Wrap(inner Mung) {}

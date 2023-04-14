@@ -19,8 +19,8 @@ type Reverse struct {
 	Mung
 }
 
-func reversePrototype() Codec      { return &Reverse{} }
-func init()                        { Register(ReverseMagic, reversePrototype) }
+func reverseGen() Codec            { return &Reverse{} }
+func init()                        { Register(ReverseMagic, reverseGen) }
 func (x *Reverse) Magic() string   { return ReverseMagic }
 func (x *Reverse) Len() int        { return ReverseLen + x.Mung.Len() }
 func (x *Reverse) Wrap(inner Mung) { x.Mung = inner }

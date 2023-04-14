@@ -16,8 +16,8 @@ const (
 		3*sha256.Len + 3*nonce.IVLen
 )
 
-func ReadyPrototype() Codec      { return &Ready{} }
-func init()                      { Register(ReadyMagic, ReadyPrototype) }
+func ReadyGen() Codec            { return &Ready{} }
+func init()                      { Register(ReadyMagic, ReadyGen) }
 func (x *Ready) Magic() string   { return ReadyMagic }
 func (x *Ready) Len() int        { return ReadyLen }
 func (x *Ready) Wrap(inner Mung) {}

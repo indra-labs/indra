@@ -29,8 +29,8 @@ type Crypt struct {
 	Mung
 }
 
-func cryptPrototype() Codec      { return &Crypt{} }
-func init()                      { Register(CryptMagic, cryptPrototype) }
+func cryptGen() Codec            { return &Crypt{} }
+func init()                      { Register(CryptMagic, cryptGen) }
 func (x *Crypt) Len() int        { return CryptLen + x.Mung.Len() }
 func (x *Crypt) Wrap(inner Mung) { x.Mung = inner }
 func (x *Crypt) GetMung() Mung   { return x }

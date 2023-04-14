@@ -36,8 +36,8 @@ type IntroQuery struct {
 	Mung
 }
 
-func introQueryPrototype() Codec      { return &IntroQuery{} }
-func init()                           { Register(IntroQueryMagic, introQueryPrototype) }
+func introQueryGen() Codec            { return &IntroQuery{} }
+func init()                           { Register(IntroQueryMagic, introQueryGen) }
 func (x *IntroQuery) Magic() string   { return IntroQueryMagic }
 func (x *IntroQuery) Len() int        { return IntroQueryLen + x.Mung.Len() }
 func (x *IntroQuery) Wrap(inner Mung) { x.Mung = inner }

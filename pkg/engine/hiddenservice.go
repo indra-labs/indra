@@ -30,8 +30,8 @@ type HiddenService struct {
 	Mung
 }
 
-func hiddenServicePrototype() Codec      { return &HiddenService{} }
-func init()                              { Register(HiddenServiceMagic, hiddenServicePrototype) }
+func hiddenServiceGen() Codec            { return &HiddenService{} }
+func init()                              { Register(HiddenServiceMagic, hiddenServiceGen) }
 func (x *HiddenService) Magic() string   { return HiddenServiceMagic }
 func (x *HiddenService) Len() int        { return HiddenServiceLen + x.Mung.Len() }
 func (x *HiddenService) Wrap(inner Mung) { x.Mung = inner }

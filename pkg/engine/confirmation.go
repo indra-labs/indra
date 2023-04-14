@@ -17,8 +17,8 @@ type Confirmation struct {
 	Load byte
 }
 
-func confirmationPrototype() Codec      { return &Confirmation{} }
-func init()                             { Register(ConfirmationMagic, confirmationPrototype) }
+func confirmationGen() Codec            { return &Confirmation{} }
+func init()                             { Register(ConfirmationMagic, confirmationGen) }
 func (x *Confirmation) Len() int        { return ConfirmationLen }
 func (x *Confirmation) Wrap(inner Mung) {}
 func (x *Confirmation) GetMung() Mung   { return x }

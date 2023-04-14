@@ -17,8 +17,8 @@ type Forward struct {
 	Mung
 }
 
-func forwardPrototype() Codec      { return &Forward{} }
-func init()                        { Register(ForwardMagic, forwardPrototype) }
+func forwardGen() Codec            { return &Forward{} }
+func init()                        { Register(ForwardMagic, forwardGen) }
 func (x *Forward) Magic() string   { return ForwardMagic }
 func (x *Forward) Len() int        { return ForwardLen + x.Mung.Len() }
 func (x *Forward) Wrap(inner Mung) { x.Mung = inner }

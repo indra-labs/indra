@@ -28,8 +28,8 @@ type Intro struct {
 	Sig      crypto.SigBytes
 }
 
-func introPrototype() Codec      { return &Intro{} }
-func init()                      { Register(IntroMagic, introPrototype) }
+func introGen() Codec            { return &Intro{} }
+func init()                      { Register(IntroMagic, introGen) }
 func (x *Intro) Magic() string   { return IntroMagic }
 func (x *Intro) Len() int        { return IntroLen }
 func (x *Intro) Wrap(inner Mung) {}

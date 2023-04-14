@@ -18,8 +18,8 @@ type Delay struct {
 	Mung
 }
 
-func delayPrototype() Codec      { return &Delay{} }
-func init()                      { Register(DelayMagic, delayPrototype) }
+func delayGen() Codec            { return &Delay{} }
+func init()                      { Register(DelayMagic, delayGen) }
 func (x *Delay) Magic() string   { return DelayMagic }
 func (x *Delay) Len() int        { return DelayLen + x.Mung.Len() }
 func (x *Delay) Wrap(inner Mung) { x.Mung = inner }

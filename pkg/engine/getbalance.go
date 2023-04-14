@@ -36,8 +36,8 @@ type GetBalance struct {
 	Mung
 }
 
-func getBalancePrototype() Codec      { return &GetBalance{} }
-func init()                           { Register(GetBalanceMagic, getBalancePrototype) }
+func getBalanceGen() Codec            { return &GetBalance{} }
+func init()                           { Register(GetBalanceMagic, getBalanceGen) }
 func (x *GetBalance) Magic() string   { return GetBalanceMagic }
 func (x *GetBalance) Len() int        { return GetBalanceLen + x.Mung.Len() }
 func (x *GetBalance) Wrap(inner Mung) { x.Mung = inner }

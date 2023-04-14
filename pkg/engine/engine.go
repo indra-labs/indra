@@ -48,8 +48,8 @@ func NewEngine(p Params) (c *Engine, e error) {
 		C:                qu.T(),
 	}
 	c.AddNodes(append([]*Node{p.Node}, p.Nodes...)...)
-	// AddIntro a return session for receiving responses, ideally more of these will
-	// be generated during operation and rotated out over time.
+	// AddIntro a return session for receiving responses, ideally more of these
+	// will be generated during operation and rotated out over time.
 	for i := 0; i < p.NReturnSessions; i++ {
 		c.AddSession(NewSessionData(nonce.NewID(), p.Node, 0, nil, nil, 5))
 	}
@@ -126,8 +126,7 @@ func (ng *Engine) Handler() (out bool) {
 			if s.Preimage == p.Preimage {
 				s.IncSats(p.Amount, false, "top-up")
 				topUp = true
-				log.T.F("topping up %x with %v",
-					s.ID, p.Amount)
+				log.T.F("topping up %x with %v", s.ID, p.Amount)
 				return true
 			}
 			return false

@@ -21,8 +21,8 @@ type Session struct {
 	Mung
 }
 
-func sessionPrototype() Codec      { return &Session{} }
-func init()                        { Register(SessionMagic, sessionPrototype) }
+func sessionGen() Codec            { return &Session{} }
+func init()                        { Register(SessionMagic, sessionGen) }
 func (x *Session) Magic() string   { return SessionMagic }
 func (x *Session) Len() int        { return SessionLen + x.Mung.Len() }
 func (x *Session) Wrap(inner Mung) { x.Mung = inner }

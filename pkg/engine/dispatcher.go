@@ -156,71 +156,60 @@ func NewDispatcher(l *Conn, ctx context.Context,
 	return
 }
 
-func (d *Dispatcher) GetRxRecordAndPartials(id nonce.ID) (rxr *RxRecord,
-	packets Packets) {
-	
-	for _, v := range d.PendingInbound {
-		if v.ID == id {
-			rxr = v
-			break
+func (d *Dispatcher) RunGC() {
+	// remove successful receives after all pieces arrived. Successful
+	// transmissions before the timeout will already be cleared from
+	// confirmation by the acknowledgment.
+	var rxr []*RxRecord
+	d.Lock()
+	for dpi, dp := range d.Partials {
+		// Find the oldest and newest.
+		oldest := time.Now()
+		newest := dp[0].TimeStamp
+		for _, ts := range dp {
+			if oldest.After(ts.TimeStamp) {
+				oldest = ts.TimeStamp
+			}
+			if newest.Before(ts.TimeStamp) {
+				newest = ts.TimeStamp
+			}
+		}
+		if newest.Sub(time.Now()) > time.Duration(d.Ping.Value())*
+			TimeoutPingCount {
+			
+			// after 10 pings of time elapse since last received we
+			// consider the transmission a failure, send back the
+			// failed RxRecord and delete the map entry.
+			var tmp []*RxRecord
+			for i := range d.PendingInbound {
+				if d.PendingInbound[i].ID == dp[0].ID {
+					rxr = append(rxr, d.PendingInbound[i])
+				} else {
+					tmp = append(tmp, d.PendingInbound[i])
+				}
+			}
+			delete(d.Partials, dpi)
+			d.PendingInbound = tmp
 		}
 	}
-	var ok bool
-	if packets, ok = d.Partials[id]; ok {
+	d.Unlock()
+	// With the lock released we now can dispatch the RxRecords.
+	var e error
+	for i := range rxr {
+		// send the RxRecord to the peer.
+		ack := &Acknowledge{rxr[i]}
+		s := NewSplice(ack.Len())
+		if e = ack.Encode(s); fails(e) {
+			continue
+		}
+		d.Duplex.Send <- s.GetAll()
 	}
-	return
 }
 
 func (d *Dispatcher) HandlePing(p ping.Result) {
 	d.Lock()
 	d.Ping.Add(float64(p.RTT))
 	d.Unlock()
-}
-
-func (d *Dispatcher) SendToConn(m slice.Bytes) {
-	log.D.S("message dispatching to conn", m.ToBytes())
-	// Data received for sending through the Conn.
-	id := nonce.NewID()
-	hash := sha256.Single(m)
-	txr := &TxRecord{
-		ID:    id,
-		Hash:  hash,
-		First: time.Now(),
-		Size:  len(m),
-	}
-	pp := &PacketParams{
-		ID:     id,
-		To:     d.Conn.RemoteKey,
-		Parity: int(d.Parity.Load()),
-		Length: m.Len(),
-		Data:   m,
-	}
-	packets, e := SplitToPackets(pp, d.Conn.MTU, d.KeySet)
-	if fails(e) {
-		return
-	}
-	// Shuffle. This is both for anonymity and improving the
-	// chances of most error bursts to not cut through a whole
-	// segment (they are grouped by 256 for RS FEC).
-	cryptorand.Shuffle(len(packets), func(i, j int) {
-		packets[i], packets[j] = packets[j], packets[i]
-	})
-	// Send them out!
-	for i := range packets {
-		d.Conn.DuplexByteChan.Send <- packets[i]
-	}
-	txr.Last = time.Now()
-	txr.Ping = time.Duration(d.Ping.Value())
-	d.Lock()
-	d.DataSent = d.DataSent.Add(d.DataSent,
-		big.NewInt(int64(len(m))))
-	for _, v := range packets {
-		d.TotalSent = d.TotalSent.Add(d.TotalSent,
-			big.NewInt(int64(len(v))))
-	}
-	d.PendingOutbound = append(d.PendingOutbound, txr)
-	d.Unlock()
-	log.D.Ln("message dispatched")
 }
 
 func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
@@ -302,6 +291,52 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 	d.Unlock()
 }
 
+func (d *Dispatcher) SendToConn(m slice.Bytes) {
+	log.D.S("message dispatching to conn", m.ToBytes())
+	// Data received for sending through the Conn.
+	id := nonce.NewID()
+	hash := sha256.Single(m)
+	txr := &TxRecord{
+		ID:    id,
+		Hash:  hash,
+		First: time.Now(),
+		Size:  len(m),
+	}
+	pp := &PacketParams{
+		ID:     id,
+		To:     d.Conn.RemoteKey,
+		Parity: int(d.Parity.Load()),
+		Length: m.Len(),
+		Data:   m,
+	}
+	packets, e := SplitToPackets(pp, d.Conn.MTU, d.KeySet)
+	if fails(e) {
+		return
+	}
+	// Shuffle. This is both for anonymity and improving the
+	// chances of most error bursts to not cut through a whole
+	// segment (they are grouped by 256 for RS FEC).
+	cryptorand.Shuffle(len(packets), func(i, j int) {
+		packets[i], packets[j] = packets[j], packets[i]
+	})
+	// Send them out!
+	for i := range packets {
+		d.Conn.DuplexByteChan.Send <- packets[i]
+	}
+	txr.Last = time.Now()
+	txr.Ping = time.Duration(d.Ping.Value())
+	d.Lock()
+	d.DataSent = d.DataSent.Add(d.DataSent,
+		big.NewInt(int64(len(m))))
+	for _, v := range packets {
+		d.TotalSent = d.TotalSent.Add(d.TotalSent,
+			big.NewInt(int64(len(v))))
+	}
+	d.PendingOutbound = append(d.PendingOutbound, txr)
+	d.Unlock()
+	log.D.Ln("message dispatched")
+}
+
 func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 	s := NewSpliceFrom(m)
 	c := Recognise(s)
@@ -324,7 +359,7 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 		log.D.S("key change reply", o)
 	
 	case AcknowledgeMagic:
-		o := c.(*Acknowledgement)
+		o := c.(*Acknowledge)
 		log.D.S("acknowledgement", o)
 	
 	case MungedMagic:
@@ -334,51 +369,17 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 	}
 }
 
-func (d *Dispatcher) RunGC() {
-	// remove successful receives after all pieces arrived.
-	var rxr []*RxRecord
-	d.Lock()
-	for dpi, dp := range d.Partials {
-		// Find the oldest and newest.
-		oldest := time.Now()
-		newest := dp[0].TimeStamp
-		for _, ts := range dp {
-			if oldest.After(ts.TimeStamp) {
-				oldest = ts.TimeStamp
-			}
-			if newest.Before(ts.TimeStamp) {
-				newest = ts.TimeStamp
-			}
-		}
-		if newest.Sub(time.Now()) > time.Duration(d.Ping.Value())*
-			TimeoutPingCount {
-			
-			// after 10 pings of time elapse since last received we
-			// consider the transmission a failure, send back the
-			// failed RxRecord and delete the map entry.
-			var tmp []*RxRecord
-			for i := range d.PendingInbound {
-				if d.PendingInbound[i].ID == dp[0].ID {
-					rxr = append(rxr, d.PendingInbound[i])
-					break
-				} else {
-					tmp = append(tmp, d.PendingInbound[i])
-				}
-			}
-			delete(d.Partials, dpi)
-			d.PendingInbound = tmp
+func (d *Dispatcher) GetRxRecordAndPartials(id nonce.ID) (rxr *RxRecord,
+	packets Packets) {
+	
+	for _, v := range d.PendingInbound {
+		if v.ID == id {
+			rxr = v
+			break
 		}
 	}
-	d.Unlock()
-	// With the lock released we now can dispatch the RxRecords.
-	var e error
-	for i := range rxr {
-		// send the RxRecord to the peer.
-		ack := &Acknowledgement{rxr[i]}
-		s := NewSplice(ack.Len())
-		if e = ack.Encode(s); fails(e) {
-			continue
-		}
-		d.Duplex.Send <- s.GetAll()
+	var ok bool
+	if packets, ok = d.Partials[id]; ok {
 	}
+	return
 }

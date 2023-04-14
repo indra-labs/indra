@@ -18,8 +18,8 @@ const (
 		nonce.IDLen + 3*sha256.Len + 3*nonce.IVLen
 )
 
-func RoutePrototype() Codec      { return &Route{} }
-func init()                      { Register(RouteMagic, RoutePrototype) }
+func RouteGen() Codec            { return &Route{} }
+func init()                      { Register(RouteMagic, RouteGen) }
 func (x *Route) Magic() string   { return RouteMagic }
 func (x *Route) Len() int        { return RouteLen + x.Mung.Len() }
 func (x *Route) Wrap(inner Mung) { x.Mung = inner }

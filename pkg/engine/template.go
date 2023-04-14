@@ -5,8 +5,8 @@ const (
 	EndLen   = 0
 )
 
-func EndPrototype() Codec      { return &End{} }
-func init()                    { Register(EndMagic, EndPrototype) }
+func EndGen() Codec            { return &End{} }
+func init()                    { Register(EndMagic, EndGen) }
 func (x *End) Magic() string   { return EndMagic }
 func (x *End) Len() int        { return EndLen }
 func (x *End) Wrap(inner Mung) {}

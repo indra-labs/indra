@@ -21,8 +21,8 @@ type Balance struct {
 	lnwire.MilliSatoshi
 }
 
-func balancePrototype() Codec      { return &Balance{} }
-func init()                        { Register(BalanceMagic, balancePrototype) }
+func balanceGen() Codec            { return &Balance{} }
+func init()                        { Register(BalanceMagic, balanceGen) }
 func (x *Balance) Magic() string   { return BalanceMagic }
 func (x *Balance) Len() int        { return BalanceLen }
 func (x *Balance) Wrap(inner Mung) {}

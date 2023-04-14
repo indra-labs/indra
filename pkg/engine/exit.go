@@ -39,8 +39,8 @@ type Exit struct {
 	Mung
 }
 
-func exitPrototype() Codec      { return &Exit{} }
-func init()                     { Register(ExitMagic, exitPrototype) }
+func exitGen() Codec            { return &Exit{} }
+func init()                     { Register(ExitMagic, exitGen) }
 func (x *Exit) Magic() string   { return ExitMagic }
 func (x *Exit) Len() int        { return ExitLen + x.Bytes.Len() + x.Mung.Len() }
 func (x *Exit) Wrap(inner Mung) { x.Mung = inner }
