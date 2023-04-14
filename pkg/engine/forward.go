@@ -14,24 +14,25 @@ const (
 
 type Forward struct {
 	AddrPort *netip.AddrPort
-	Onion
+	Mung
 }
 
-func forwardPrototype() Onion       { return &Forward{} }
-func init()                         { Register(ForwardMagic, forwardPrototype) }
-func (x *Forward) Magic() string    { return ForwardMagic }
-func (x *Forward) Len() int         { return ForwardLen + x.Onion.Len() }
-func (x *Forward) Wrap(inner Onion) { x.Onion = inner }
+func forwardPrototype() Codec      { return &Forward{} }
+func init()                        { Register(ForwardMagic, forwardPrototype) }
+func (x *Forward) Magic() string   { return ForwardMagic }
+func (x *Forward) Len() int        { return ForwardLen + x.Mung.Len() }
+func (x *Forward) Wrap(inner Mung) { x.Mung = inner }
+func (x *Forward) GetMung() Mung   { return x }
 
 func (o Skins) Forward(addr *netip.AddrPort) Skins {
-	return append(o, &Forward{AddrPort: addr, Onion: &End{}})
+	return append(o, &Forward{AddrPort: addr, Mung: &End{}})
 }
 
 func (x *Forward) Encode(s *Splice) error {
 	log.T.F("encoding %s %s", reflect.TypeOf(x),
 		x.AddrPort.String(),
 	)
-	return x.Onion.Encode(s.Magic(ForwardMagic).AddrPort(x.AddrPort))
+	return x.Mung.Encode(s.Magic(ForwardMagic).AddrPort(x.AddrPort))
 }
 
 func (x *Forward) Decode(s *Splice) (e error) {
@@ -43,7 +44,7 @@ func (x *Forward) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *Forward) Handle(s *Splice, p Onion,
+func (x *Forward) Handle(s *Splice, p Mung,
 	ng *Engine) (e error) {
 	
 	// Forward the whole buffer received onwards. Usually there will be a

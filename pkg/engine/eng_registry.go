@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"net/netip"
 	"reflect"
 	"sync"
 	
@@ -10,38 +9,38 @@ import (
 
 var registry = NewRegistry()
 
-type OnionGenerators map[string]func() Onion
+type CodecGenerators map[string]func() Codec
 
 type Registry struct {
 	sync.Mutex
-	OnionGenerators
+	CodecGenerators
 }
 
 func NewRegistry() *Registry {
-	return &Registry{OnionGenerators: make(OnionGenerators)}
+	return &Registry{CodecGenerators: make(CodecGenerators)}
 }
 
-func Register(magicString string, on func() Onion) {
+func Register(magicString string, on func() Codec) {
 	registry.Lock()
 	defer registry.Unlock()
-	registry.OnionGenerators[magicString] = on
+	registry.CodecGenerators[magicString] = on
 }
 
-func Recognise(s *Splice, addr *netip.AddrPort) (on Onion) {
+func Recognise(s *Splice) (cdc Codec) {
 	registry.Lock()
 	defer registry.Unlock()
 	var magic string
 	s.ReadMagic(&magic)
 	var ok bool
-	var in func() Onion
-	if in, ok = registry.OnionGenerators[magic]; ok {
-		on = in()
+	var in func() Codec
+	if in, ok = registry.CodecGenerators[magic]; ok {
+		cdc = in()
 	}
 	if !ok {
 		log.D.S("decryption failure", s.GetRest())
 	}
-	log.D.F("%s recognised magic %s for type %v",
-		color.Yellow.Sprint(addr.String()), color.Red.Sprint(magic),
-		color.Green.Sprint(reflect.TypeOf(on)))
+	log.D.F("recognised magic %s for type %v",
+		color.Red.Sprint(magic),
+		color.Green.Sprint(reflect.TypeOf(cdc)))
 	return
 }

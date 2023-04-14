@@ -10,31 +10,30 @@ import (
 )
 
 const (
-	KeyChangeInitiateMagic = "kchi"
-	KeyChangeReplyMagic    = "kchr"
-	AcknowledgementMagic   = "ackn"
-	MungMagic              = "mung"
+	InitRekeyMagic   = "kchi"
+	RekeyReplyMagic  = "kchr"
+	AcknowledgeMagic = "ackn"
+	MungedMagic      = "mung"
 )
 
-type KeyChangeInitiate struct {
+type InitRekey struct {
 	NewPubkey *crypto.Pub
 }
 
-func (k *KeyChangeInitiate) Encode(s *Splice) (e error) {
-	s.Magic4(KeyChangeInitiateMagic).Pubkey(k.NewPubkey)
+func InitRekeyPrototype() Codec    { return &InitRekey{} }
+func init()                        { Register(InitRekeyMagic, InitRekeyPrototype) }
+func (k *InitRekey) Magic() string { return InitRekeyMagic }
+func (k *InitRekey) GetMung() Mung { return nil }
+
+func (k *InitRekey) Encode(s *Splice) (e error) {
+	s.Magic4(InitRekeyMagic).Pubkey(k.NewPubkey)
 	return
 }
 
-func (k *KeyChangeInitiate) Decode(s *Splice) (e error) {
+func (k *InitRekey) Decode(s *Splice) (e error) {
 	if s.Len() < k.Len() {
 		return fmt.Errorf("message too short, got %d, require %d", k.Len(),
 			s.Len())
-	}
-	var magic string
-	s.ReadMagic4(&magic)
-	if magic != KeyChangeInitiateMagic {
-		return fmt.Errorf("incorrect magic, got '%s', require '%s'", magic,
-			KeyChangeInitiateMagic)
 	}
 	s.ReadPubkey(&k.NewPubkey)
 	if k.NewPubkey == nil {
@@ -43,29 +42,28 @@ func (k *KeyChangeInitiate) Decode(s *Splice) (e error) {
 	return
 }
 
-func (k *KeyChangeInitiate) Len() int {
+func (k *InitRekey) Len() int {
 	return 4 + crypto.PubKeyLen
 }
 
-type KeyChangeReply struct {
+type RekeyReply struct {
 	NewPubkey *crypto.Pub
 }
 
-func (r *KeyChangeReply) Encode(s *Splice) (e error) {
-	s.Magic4(KeyChangeReplyMagic).Pubkey(r.NewPubkey)
+func RekeyReplyPrototype() Codec    { return &RekeyReply{} }
+func init()                         { Register(RekeyReplyMagic, RekeyReplyPrototype) }
+func (r *RekeyReply) Magic() string { return RekeyReplyMagic }
+func (r *RekeyReply) GetMung() Mung { return nil }
+
+func (r *RekeyReply) Encode(s *Splice) (e error) {
+	s.Magic4(RekeyReplyMagic).Pubkey(r.NewPubkey)
 	return
 }
 
-func (r *KeyChangeReply) Decode(s *Splice) (e error) {
+func (r *RekeyReply) Decode(s *Splice) (e error) {
 	if s.Len() < r.Len() {
 		return fmt.Errorf("message too short, got %d, require %d", r.Len(),
 			s.Len())
-	}
-	var magic string
-	s.ReadMagic4(&magic)
-	if magic != KeyChangeReplyMagic {
-		return fmt.Errorf("incorrect magic, got '%s', require '%s'", magic,
-			KeyChangeReplyMagic)
 	}
 	s.ReadPubkey(&r.NewPubkey)
 	if r.NewPubkey == nil {
@@ -74,21 +72,26 @@ func (r *KeyChangeReply) Decode(s *Splice) (e error) {
 	return
 }
 
-func (r *KeyChangeReply) Len() int {
+func (r *RekeyReply) Len() int {
 	return 4 + crypto.PubKeyLen
 }
 
 type Acknowledgement struct {
-	RxRecord
+	*RxRecord
 }
 
+func AcknowledgementPrototype() Codec    { return &Acknowledgement{} }
+func init()                              { Register(AcknowledgeMagic, AcknowledgementPrototype) }
+func (a *Acknowledgement) Magic() string { return AcknowledgeMagic }
+func (a *Acknowledgement) GetMung() Mung { return nil }
+
 func (a *Acknowledgement) Encode(s *Splice) (e error) {
-	s.Magic4(AcknowledgementMagic).
+	s.Magic4(AcknowledgeMagic).
 		ID(a.ID).
 		Hash(a.Hash).
 		Time(a.First).
 		Time(a.Last).
-		Uint64(uint64(a.Received)).
+		Uint64(a.Received).
 		Duration(a.Ping)
 	return
 }
@@ -97,12 +100,6 @@ func (a *Acknowledgement) Decode(s *Splice) (e error) {
 	if s.Len() < a.Len() {
 		return fmt.Errorf("message too short, got %d, require %d", a.Len(),
 			s.Len())
-	}
-	var magic string
-	s.ReadMagic4(&magic)
-	if magic != AcknowledgementMagic {
-		return fmt.Errorf("incorrect magic, got '%s', require '%s'", magic,
-			AcknowledgementMagic)
 	}
 	s.ReadID(&a.ID).
 		ReadHash(&a.Hash).
@@ -117,30 +114,39 @@ func (a *Acknowledgement) Len() int {
 	return 4 + nonce.IDLen + sha256.Len + 4*slice.Uint64Len
 }
 
-type Mung struct {
-	slice.Bytes
+type Munged struct {
+	slice.Bytes // contains an encoded Mung.
 }
 
-func (m *Mung) Encode(s *Splice) (e error) {
-	s.Magic4(MungMagic).Bytes(m.Bytes)
+func (m Munged) Unpack() (mu Mung) {
+	s := NewSpliceFrom(m.Bytes)
+	mm := Recognise(s)
+	var ok bool
+	if mu, ok = mm.(Mung); !ok {
+		log.D.Ln("type not recognised as a mung")
+	}
 	return
 }
 
-func (m *Mung) Decode(s *Splice) (e error) {
+func MungedPrototype() Codec    { return &Munged{} }
+func init()                     { Register(MungedMagic, MungedPrototype) }
+func (m *Munged) Magic() string { return MungedMagic }
+func (m *Munged) GetMung() Mung { return nil }
+
+func (m *Munged) Encode(s *Splice) (e error) {
+	s.Magic4(MungedMagic).Bytes(m.Bytes)
+	return
+}
+
+func (m *Munged) Decode(s *Splice) (e error) {
 	if s.Len() < m.Len() {
 		return fmt.Errorf("message too short, got %d, require %d", m.Len(),
 			s.Len())
-	}
-	var magic string
-	s.ReadMagic4(&magic)
-	if magic != MungMagic {
-		return fmt.Errorf("incorrect magic, got '%s', require '%s'", magic,
-			MungMagic)
 	}
 	s.ReadBytes(&m.Bytes)
 	return
 }
 
-func (m *Mung) Len() int {
+func (m *Munged) Len() int {
 	return 4 + len(m.Bytes) + 4
 }

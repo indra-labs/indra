@@ -27,21 +27,22 @@ type HiddenService struct {
 	// for the reply message, they are common with the crypts in the header.
 	Nonces
 	RoutingHeaderBytes
-	Onion
+	Mung
 }
 
-func hiddenServicePrototype() Onion       { return &HiddenService{} }
-func init()                               { Register(HiddenServiceMagic, hiddenServicePrototype) }
-func (x *HiddenService) Magic() string    { return HiddenServiceMagic }
-func (x *HiddenService) Len() int         { return HiddenServiceLen + x.Onion.Len() }
-func (x *HiddenService) Wrap(inner Onion) { x.Onion = inner }
+func hiddenServicePrototype() Codec      { return &HiddenService{} }
+func init()                              { Register(HiddenServiceMagic, hiddenServicePrototype) }
+func (x *HiddenService) Magic() string   { return HiddenServiceMagic }
+func (x *HiddenService) Len() int        { return HiddenServiceLen + x.Mung.Len() }
+func (x *HiddenService) Wrap(inner Mung) { x.Mung = inner }
+func (x *HiddenService) GetMung() Mung   { return x }
 
 func (o Skins) HiddenService(in *Intro, point *ExitPoint) Skins {
 	return append(o, &HiddenService{
 		Intro:   *in,
 		Ciphers: GenCiphers(point.Keys, point.ReturnPubs),
 		Nonces:  point.Nonces,
-		Onion:   NewEnd(),
+		Mung:    NewEnd(),
 	})
 }
 
@@ -50,7 +51,7 @@ func (x *HiddenService) Encode(s *Splice) (e error) {
 		x.ID, x.Key, x.AddrPort, x.Ciphers, x.Nonces, x.RoutingHeaderBytes,
 	)
 	SpliceIntro(s.Magic(HiddenServiceMagic), &x.Intro)
-	return x.Onion.Encode(s.Ciphers(x.Ciphers).Nonces(x.Nonces))
+	return x.Mung.Encode(s.Ciphers(x.Ciphers).Nonces(x.Nonces))
 }
 
 func (x *HiddenService) Decode(s *Splice) (e error) {
@@ -68,7 +69,7 @@ func (x *HiddenService) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *HiddenService) Handle(s *Splice, p Onion, ng *Engine) (e error) {
+func (x *HiddenService) Handle(s *Splice, p Mung, ng *Engine) (e error) {
 	log.D.F("%s adding introduction for key %s",
 		ng.GetLocalNodeAddressString(), x.Key.ToBase32Abbreviated())
 	ng.HiddenRouting.AddIntro(x.Key, &Introduction{

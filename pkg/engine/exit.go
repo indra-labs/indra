@@ -36,14 +36,15 @@ type Exit struct {
 	Port uint16
 	// Bytes are the message to be passed to the exit service.
 	slice.Bytes
-	Onion
+	Mung
 }
 
-func exitPrototype() Onion       { return &Exit{} }
-func init()                      { Register(ExitMagic, exitPrototype) }
-func (x *Exit) Magic() string    { return ExitMagic }
-func (x *Exit) Len() int         { return ExitLen + x.Bytes.Len() + x.Onion.Len() }
-func (x *Exit) Wrap(inner Onion) { x.Onion = inner }
+func exitPrototype() Codec      { return &Exit{} }
+func init()                     { Register(ExitMagic, exitPrototype) }
+func (x *Exit) Magic() string   { return ExitMagic }
+func (x *Exit) Len() int        { return ExitLen + x.Bytes.Len() + x.Mung.Len() }
+func (x *Exit) Wrap(inner Mung) { x.Mung = inner }
+func (x *Exit) GetMung() Mung   { return x }
 
 func (o Skins) Exit(id nonce.ID, port uint16, payload slice.Bytes,
 	ep *ExitPoint) Skins {
@@ -54,7 +55,7 @@ func (o Skins) Exit(id nonce.ID, port uint16, payload slice.Bytes,
 		Nonces:  ep.Nonces,
 		Port:    port,
 		Bytes:   payload,
-		Onion:   nop,
+		Mung:    nop,
 	})
 }
 
@@ -62,7 +63,7 @@ func (x *Exit) Encode(s *Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.Ciphers, x.Nonces, x.Port, x.Bytes.ToBytes(),
 	)
-	return x.Onion.Encode(s.
+	return x.Mung.Encode(s.
 		Magic(ExitMagic).
 		ID(x.ID).Ciphers(x.Ciphers).Nonces(x.Nonces).
 		Uint16(x.Port).
@@ -82,7 +83,7 @@ func (x *Exit) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *Exit) Handle(s *Splice, p Onion,
+func (x *Exit) Handle(s *Splice, p Mung,
 	ng *Engine) (e error) {
 	
 	// payload is forwarded to a local port and the result is forwarded

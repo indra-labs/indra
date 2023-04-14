@@ -33,14 +33,15 @@ type IntroQuery struct {
 	// a local Socks5 proxy into Indranet and the exit node also having
 	// this.
 	Key *crypto.Pub
-	Onion
+	Mung
 }
 
-func introQueryPrototype() Onion       { return &IntroQuery{} }
-func init()                            { Register(IntroQueryMagic, introQueryPrototype) }
-func (x *IntroQuery) Magic() string    { return IntroQueryMagic }
-func (x *IntroQuery) Len() int         { return IntroQueryLen + x.Onion.Len() }
-func (x *IntroQuery) Wrap(inner Onion) { x.Onion = inner }
+func introQueryPrototype() Codec      { return &IntroQuery{} }
+func init()                           { Register(IntroQueryMagic, introQueryPrototype) }
+func (x *IntroQuery) Magic() string   { return IntroQueryMagic }
+func (x *IntroQuery) Len() int        { return IntroQueryLen + x.Mung.Len() }
+func (x *IntroQuery) Wrap(inner Mung) { x.Mung = inner }
+func (x *IntroQuery) GetMung() Mung   { return x }
 
 func (o Skins) IntroQuery(id nonce.ID, hsk *crypto.Pub, exit *ExitPoint) Skins {
 	return append(o, &IntroQuery{
@@ -48,7 +49,7 @@ func (o Skins) IntroQuery(id nonce.ID, hsk *crypto.Pub, exit *ExitPoint) Skins {
 		Ciphers: GenCiphers(exit.Keys, exit.ReturnPubs),
 		Nonces:  exit.Nonces,
 		Key:     hsk,
-		Onion:   nop,
+		Mung:    nop,
 	})
 }
 
@@ -56,7 +57,7 @@ func (x *IntroQuery) Encode(s *Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.Key, x.Ciphers, x.Nonces,
 	)
-	return x.Onion.Encode(s.
+	return x.Mung.Encode(s.
 		Magic(IntroQueryMagic).
 		ID(x.ID).Ciphers(x.Ciphers).Nonces(x.Nonces).
 		Pubkey(x.Key),
@@ -73,7 +74,7 @@ func (x *IntroQuery) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *IntroQuery) Handle(s *Splice, p Onion,
+func (x *IntroQuery) Handle(s *Splice, p Mung,
 	ng *Engine) (e error) {
 	
 	ng.HiddenRouting.Lock()
@@ -121,7 +122,7 @@ func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *crypto.Pub,
 	
 	fn := func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
 		s := LoadSplice(b, slice.NewCursor())
-		on := Recognise(s, ng.GetLocalNodeAddress())
+		on := Recognise(s)
 		if e = on.Decode(s); fails(e) {
 			return
 		}

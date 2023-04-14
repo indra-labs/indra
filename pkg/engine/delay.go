@@ -15,17 +15,17 @@ const (
 
 type Delay struct {
 	time.Duration
-	Onion
+	Mung
 }
 
-func delayPrototype() Onion       { return &Delay{} }
-func init()                       { Register(DelayMagic, delayPrototype) }
-func (x *Delay) Magic() string    { return DelayMagic }
-func (x *Delay) Len() int         { return DelayLen + x.Onion.Len() }
-func (x *Delay) Wrap(inner Onion) { x.Onion = inner }
+func delayPrototype() Codec      { return &Delay{} }
+func init()                      { Register(DelayMagic, delayPrototype) }
+func (x *Delay) Magic() string   { return DelayMagic }
+func (x *Delay) Len() int        { return DelayLen + x.Mung.Len() }
+func (x *Delay) Wrap(inner Mung) { x.Mung = inner }
 
 func (o Skins) Delay(d time.Duration) Skins {
-	return append(o, &Delay{Duration: d, Onion: nop})
+	return append(o, &Delay{Duration: d, Mung: nop})
 }
 
 func (x *Delay) Encode(s *Splice) (e error) {
@@ -33,8 +33,8 @@ func (x *Delay) Encode(s *Splice) (e error) {
 		x.Duration,
 	)
 	s.Magic(DelayMagic).Uint64(uint64(x.Duration))
-	if x.Onion != nil {
-		e = x.Onion.Encode(s)
+	if x.Mung != nil {
+		e = x.Mung.Encode(s)
 	}
 	return
 }
@@ -47,7 +47,7 @@ func (x *Delay) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *Delay) Handle(s *Splice, p Onion, ng *Engine) (e error) {
+func (x *Delay) Handle(s *Splice, p Mung, ng *Engine) (e error) {
 	
 	// this is a message to hold the message in the buffer until a duration
 	// elapses. The accounting for the remainder of the message adds a

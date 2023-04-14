@@ -5,18 +5,20 @@ import (
 )
 
 type Codec interface {
+	Magic() string
 	Encode(s *Splice) (e error)
 	Decode(s *Splice) (e error)
 	Len() int
+	GetMung() Mung
 }
 
-// Onion is an interface for the layers of messages each encrypted inside a
-// OnionSkin, which provides the cipher for the inner layers inside it.
-type Onion interface {
-	Magic() string
+// Mung is an interface messages that can be layered over each other and have
+// a set of processing instructions for the data in them, and, if relevant,
+// how to account for them in sessions.
+type Mung interface {
 	Codec
-	Wrap(inner Onion)
-	Handle(s *Splice, p Onion, ng *Engine) (e error)
+	Wrap(inner Mung)
+	Handle(s *Splice, p Mung, ng *Engine) (e error)
 	Account(res *SendData, sm *SessionManager, s *SessionData,
 		last bool) (skip bool, sd *SessionData)
 }

@@ -97,6 +97,7 @@ type Dispatcher struct {
 	// transmit, including packet overhead. This is the raw size of the
 	// segmented packets that were sent.
 	TotalReceived *big.Int
+	Ping          ewma.MovingAverage
 	// PingDivergence represents the proportion of time between start of send
 	// and receiving acknowledgement, versus the ping RTT being actively
 	// measured concurrently. Shorter/equal time means it can reduce redundancy,
@@ -106,16 +107,16 @@ type Dispatcher struct {
 	// parameter for a given transmission that minimises latency. Onion routing
 	// necessarily amplifies any latency so making a transmission get across
 	// before/without retransmits is as good as the path can provide.
-	PingDivergence ewma.MovingAverage
-	Duplex         *DuplexByteChan
-	*Conn
-	*crypto.Prv
-	*crypto.KeySet
-	sync.Mutex
-	Ping            ewma.MovingAverage
+	PingDivergence  ewma.MovingAverage
+	Duplex          *DuplexByteChan
 	PendingInbound  []*RxRecord
 	PendingOutbound []*TxRecord
 	Partials        map[nonce.ID]Packets
+	OldPrv          *crypto.Prv
+	*crypto.Prv
+	*crypto.KeySet
+	*Conn
+	sync.Mutex
 }
 
 const TimeoutPingCount = 10
@@ -124,10 +125,13 @@ func NewDispatcher(l *Conn, ctx context.Context,
 	ks *crypto.KeySet) (d *Dispatcher) {
 	
 	d = &Dispatcher{
-		Conn:   l,
-		KeySet: ks,
-		Duplex: NewDuplexByteChan(ConnBufs),
-		Ping:   ewma.NewMovingAverage(),
+		Prv:            nil,
+		OldPrv:         nil,
+		Conn:           l,
+		KeySet:         ks,
+		Duplex:         NewDuplexByteChan(ConnBufs),
+		Ping:           ewma.NewMovingAverage(),
+		PingDivergence: ewma.NewMovingAverage(),
 	}
 	d.Parity.Store(DefaultStartingParity)
 	ps := ping.NewPingService(l.Host)
@@ -237,28 +241,31 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 		d.Unlock()
 		return
 	}
-	if rxr, prt := d.GetRxRecordAndPartials(p.ID); rxr != nil {
+	var rxr *RxRecord
+	var packets Packets
+	if rxr, packets = d.GetRxRecordAndPartials(p.ID); rxr != nil {
 		rxr.Received += uint64(len(m))
 		rxr.Last = time.Now()
-		prt = append(prt, p)
+		packets = append(packets, p)
 	} else {
-		d.PendingInbound = append(d.PendingInbound, &RxRecord{
+		rxr = &RxRecord{
 			ID:       p.ID,
 			First:    time.Now(),
 			Last:     time.Now(),
 			Size:     int(p.Length),
 			Received: uint64(len(m)),
 			Ping:     time.Duration(d.Ping.Value()),
-		})
-		d.Partials[p.ID] = Packets{p}
+		}
+		d.PendingInbound = append(d.PendingInbound, rxr)
+		packets = Packets{p}
+		d.Partials[p.ID] = packets
 	}
 	d.Unlock()
-	// if the message only one packet we can send it out now:
+	// if the message only one packet we can hand it on to the receiving channel
+	// now:
 	if int(p.Length) == len(p.Data) {
 		log.D.Ln("forwarding single packet message")
-		d.Duplex.Recv <- m
-		// Send out and delete the RxRecord.
-		
+		d.Handle(m, rxr)
 		return
 	}
 	// Find collection of existing fragments matching the message ID
@@ -290,16 +297,45 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 			)
 		}
 		// Send the message on to the receiving channel.
-		d.Duplex.Recv <- msg
-		// Send out and delete the RxRecord.
-		
+		d.Handle(msg, rxr)
 	}
 	d.Unlock()
 }
 
+func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
+	s := NewSpliceFrom(m)
+	c := Recognise(s)
+	if c == nil {
+		return
+	}
+	magic := c.Magic()
+	log.D.Ln("decoding message with magic", magic)
+	var e error
+	if e = c.Decode(s); fails(e) {
+		return
+	}
+	switch magic {
+	case InitRekeyMagic:
+		o := c.(*InitRekey)
+		log.D.S("key change initiate", o)
+	
+	case RekeyReplyMagic:
+		o := c.(*RekeyReply)
+		log.D.S("key change reply", o)
+	
+	case AcknowledgeMagic:
+		o := c.(*Acknowledgement)
+		log.D.S("acknowledgement", o)
+	
+	case MungedMagic:
+		o := c.(*Munged)
+		log.D.S("mung!", o)
+		
+	}
+}
+
 func (d *Dispatcher) RunGC() {
-	// remove successful receives after they are finished or all
-	// pieces arrived.
+	// remove successful receives after all pieces arrived.
 	var rxr []*RxRecord
 	d.Lock()
 	for dpi, dp := range d.Partials {
@@ -335,8 +371,14 @@ func (d *Dispatcher) RunGC() {
 	}
 	d.Unlock()
 	// With the lock released we now can dispatch the RxRecords.
+	var e error
 	for i := range rxr {
 		// send the RxRecord to the peer.
-		_ = rxr[i]
+		ack := &Acknowledgement{rxr[i]}
+		s := NewSplice(ack.Len())
+		if e = ack.Encode(s); fails(e) {
+			continue
+		}
+		d.Duplex.Send <- s.GetAll()
 	}
 }

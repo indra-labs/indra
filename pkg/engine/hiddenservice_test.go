@@ -17,7 +17,7 @@ import (
 )
 
 func TestEngine_SendHiddenService(t *testing.T) {
-	log2.SetLogLevel(log2.Info)
+	log2.SetLogLevel(log2.Trace)
 	log2.App = ""
 	var clients []*Engine
 	var e error

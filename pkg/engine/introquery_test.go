@@ -38,8 +38,8 @@ func TestOnionSkins_IntroQuery(t *testing.T) {
 		End().Assemble()
 	s := Encode(on)
 	s.SetCursor(0)
-	var onc Onion
-	if onc = Recognise(s, slice.GenerateRandomAddrPortIPv6()); onc == nil {
+	var onc Codec
+	if onc = Recognise(s); onc == nil {
 		t.Error("did not unwrap")
 		t.FailNow()
 	}

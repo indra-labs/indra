@@ -21,11 +21,12 @@ type Balance struct {
 	lnwire.MilliSatoshi
 }
 
-func balancePrototype() Onion       { return &Balance{} }
-func init()                         { Register(BalanceMagic, balancePrototype) }
-func (x *Balance) Magic() string    { return BalanceMagic }
-func (x *Balance) Len() int         { return BalanceLen }
-func (x *Balance) Wrap(inner Onion) {}
+func balancePrototype() Codec      { return &Balance{} }
+func init()                        { Register(BalanceMagic, balancePrototype) }
+func (x *Balance) Magic() string   { return BalanceMagic }
+func (x *Balance) Len() int        { return BalanceLen }
+func (x *Balance) Wrap(inner Mung) {}
+func (x *Balance) GetMung() Mung   { return x }
 
 func (o Skins) Balance(id, confID nonce.ID,
 	amt lnwire.MilliSatoshi) Skins {
@@ -61,7 +62,7 @@ func (x *Balance) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *Balance) Handle(s *Splice, p Onion,
+func (x *Balance) Handle(s *Splice, p Mung,
 	ng *Engine) (e error) {
 	
 	if pending := ng.PendingResponses.Find(x.ID); pending != nil {

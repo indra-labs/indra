@@ -18,14 +18,15 @@ type Session struct {
 	ID              nonce.ID // only used by a client
 	Hop             byte     // only used by a client
 	Header, Payload *crypto.Prv
-	Onion
+	Mung
 }
 
-func sessionPrototype() Onion       { return &Session{} }
-func init()                         { Register(SessionMagic, sessionPrototype) }
-func (x *Session) Magic() string    { return SessionMagic }
-func (x *Session) Len() int         { return SessionLen + x.Onion.Len() }
-func (x *Session) Wrap(inner Onion) { x.Onion = inner }
+func sessionPrototype() Codec      { return &Session{} }
+func init()                        { Register(SessionMagic, sessionPrototype) }
+func (x *Session) Magic() string   { return SessionMagic }
+func (x *Session) Len() int        { return SessionLen + x.Mung.Len() }
+func (x *Session) Wrap(inner Mung) { x.Mung = inner }
+func (x *Session) GetMung() Mung   { return x }
 
 func MakeSession(id nonce.ID, s [5]*Session,
 	client *SessionData, hop []*Node, ks *crypto.KeySet) Skins {
@@ -54,7 +55,7 @@ func (o Skins) Session(sess *Session) Skins {
 	return append(o, &Session{
 		Header:  sess.Header,
 		Payload: sess.Payload,
-		Onion:   &End{},
+		Mung:    &End{},
 	})
 }
 
@@ -79,7 +80,7 @@ func (x *Session) Encode(s *Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.Hop, x.Header, x.Payload,
 	)
-	return x.Onion.Encode(s.Magic(SessionMagic).
+	return x.Mung.Encode(s.Magic(SessionMagic).
 		ID(x.ID).
 		Prvkey(x.Header).
 		Prvkey(x.Payload),
@@ -98,7 +99,7 @@ func (x *Session) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *Session) Handle(s *Splice, p Onion, ng *Engine) (e error) {
+func (x *Session) Handle(s *Splice, p Mung, ng *Engine) (e error) {
 	
 	log.T.F("incoming session %s", x.PreimageHash())
 	pi := ng.FindPendingPreimage(x.PreimageHash())

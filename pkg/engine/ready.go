@@ -16,11 +16,12 @@ const (
 		3*sha256.Len + 3*nonce.IVLen
 )
 
-func ReadyPrototype() Onion       { return &Ready{} }
-func init()                       { Register(ReadyMagic, ReadyPrototype) }
-func (x *Ready) Magic() string    { return ReadyMagic }
-func (x *Ready) Len() int         { return ReadyLen }
-func (x *Ready) Wrap(inner Onion) {}
+func ReadyPrototype() Codec      { return &Ready{} }
+func init()                      { Register(ReadyMagic, ReadyPrototype) }
+func (x *Ready) Magic() string   { return ReadyMagic }
+func (x *Ready) Len() int        { return ReadyLen }
+func (x *Ready) Wrap(inner Mung) {}
+func (x *Ready) GetMung() Mung   { return x }
 
 type Ready struct {
 	ID              nonce.ID
@@ -71,7 +72,7 @@ func (x *Ready) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *Ready) Handle(s *Splice, p Onion,
+func (x *Ready) Handle(s *Splice, p Mung,
 	ng *Engine) (e error) {
 	
 	_, e = ng.PendingResponses.ProcessAndDelete(x.ID, x, s.GetAll())

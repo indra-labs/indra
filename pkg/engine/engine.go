@@ -83,19 +83,24 @@ func (ng *Engine) Shutdown() {
 	ng.C.Q()
 }
 
-func (ng *Engine) HandleMessage(s *Splice, pr Onion) {
+func (ng *Engine) HandleMessage(s *Splice, pr Mung) {
 	log.D.F("%s handling received message", ng.GetLocalNodeAddressString())
 	s.SetCursor(0)
 	s.SpliceSegments = s.SpliceSegments[:0]
-	on := Recognise(s, ng.GetLocalNodeAddress())
+	on := Recognise(s)
 	if on != nil {
+		log.D.Ln("magic", on.Magic())
 		if fails(on.Decode(s)) {
 			return
 		}
 		if pr != nil && on.Magic() != pr.Magic() {
 			log.D.S(s.b.ToBytes())
 		}
-		if fails(on.Handle(s, pr, ng)) {
+		m := on.GetMung()
+		if m == nil {
+			return
+		}
+		if fails(m.Handle(s, pr, ng)) {
 			log.W.S("unrecognised packet", s.GetAll().ToBytes())
 		}
 	}
@@ -105,7 +110,7 @@ func (ng *Engine) Handler() (out bool) {
 	log.T.C(func() string {
 		return ng.GetLocalNodeAddressString() + " awaiting message"
 	})
-	var prev Onion
+	var prev Mung
 	select {
 	case <-ng.C.Wait():
 		ng.Shutdown()

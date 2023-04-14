@@ -75,6 +75,7 @@ func NewListener(rendezvous, multiAddr string,
 	c.Host.SetStreamHandler(IndraLibP2PID, c.handle)
 	return
 }
+
 func (l *Listener) SetMTU(mtu int) {
 	l.Lock()
 	l.MTU = mtu
@@ -157,11 +158,12 @@ func NewDuplexByteChan(bufs int) *DuplexByteChan {
 
 type Conn struct {
 	network.Conn
-	MTU       int
-	RemoteKey *crypto.Pub
-	MultiAddr multiaddr.Multiaddr
-	Host      host.Host
-	rw        *bufio.ReadWriter
+	MTU          int
+	RemoteKey    *crypto.Pub
+	OldRemoteKey *crypto.Pub
+	MultiAddr    multiaddr.Multiaddr
+	Host         host.Host
+	rw           *bufio.ReadWriter
 	*DuplexByteChan
 	qu.C
 }
