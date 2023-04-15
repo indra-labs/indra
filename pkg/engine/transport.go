@@ -206,9 +206,6 @@ func (c *Conn) GetRecv() ByteChan {
 func getHostAddress(ha host.Host) string {
 	hostAddr, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/p2p/%s",
 		ha.ID().String()))
-	
-	// Now we can build a full multi-address to reach this host by encapsulating
-	// both addresses:
 	addr := ha.Addrs()[0]
 	return addr.Encapsulate(hostAddr).String()
 }

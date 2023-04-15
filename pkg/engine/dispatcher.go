@@ -295,6 +295,23 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 	}
 }
 
+func (d *Dispatcher) SendAck(rxr *RxRecord) {
+	ack := &Acknowledge{rxr}
+	s := NewSplice(ack.Len())
+	_ = ack.Encode(s)
+	d.Duplex.Send <- s.GetAll()
+	// Remove Rx from pending.
+	d.Lock()
+	var tmp []*RxRecord
+	for _, v := range d.PendingInbound {
+		if rxr.ID != v.ID {
+			tmp = append(tmp, v)
+		}
+	}
+	d.PendingInbound = tmp
+	d.Unlock()
+}
+
 func (d *Dispatcher) SendToConn(m slice.Bytes) {
 	log.D.S("message dispatching to conn", m.ToBytes())
 	// Data received for sending through the Conn.
@@ -332,8 +349,6 @@ func (d *Dispatcher) SendToConn(m slice.Bytes) {
 	txr.Last = time.Now()
 	txr.Ping = time.Duration(d.Ping.Value())
 	d.Lock()
-	d.DataSent = d.DataSent.Add(d.DataSent,
-		big.NewInt(int64(len(m))))
 	for _, v := range packets {
 		d.TotalSent = d.TotalSent.Add(d.TotalSent,
 			big.NewInt(int64(len(v))))
@@ -344,6 +359,8 @@ func (d *Dispatcher) SendToConn(m slice.Bytes) {
 }
 
 func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
+	// Send out the acknowledgement.
+	d.SendAck(rxr)
 	s := NewSpliceFrom(m)
 	c := Recognise(s)
 	if c == nil {
@@ -382,7 +399,45 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 	case AcknowledgeMagic:
 		o := c.(*Acknowledge)
 		log.D.S("acknowledgement", o)
-	
+		r := o.RxRecord
+		d.Lock()
+		var tmp []*TxRecord
+		for _, v := range d.PendingOutbound {
+			if v.ID == r.ID {
+				// Accounting of successful send.
+				if r.Hash == v.Hash {
+					d.DataSent = d.DataSent.Add(d.DataSent,
+						big.NewInt(int64(v.Size)))
+				}
+				ds := d.TotalSent.Mul(d.TotalSent, big.NewInt(100000))
+				correct := d.DataSent.Div(ds, d.DataSent)
+				historicalError := float64(correct.Uint64()) / 100000
+				// Our first sent time and their last received should be
+				// around the same as the ping. Note that inaccurate clocks
+				// might not be helpful here.
+				//
+				// The consequence would be poor time sync decreases the
+				// precision of the error correction adjustment and lead to
+				// higher latency and more tx failures.
+				//
+				// The combination of all time average moderates the strength
+				// of ping rising a lot or a long burst of failed
+				// transmissions.
+				tot := r.Last.Sub(rxr.First)
+				div := float64(r.Ping) / float64(tot)
+				d.PingDivergence.Add(div)
+				pd := d.PingDivergence.Value()
+				par := float64(d.Parity.Load())
+				parRatio := par / 256
+				d.Parity.Store(uint32(byte(
+					parRatio * pd * historicalError * 256)))
+			} else {
+				tmp = append(tmp, v)
+			}
+		}
+		// Entry is now deleted and processed.
+		d.PendingOutbound = tmp
+		d.Unlock()
 	case MungedMagic:
 		o := c.(*Munged)
 		log.D.S("mung!", o)
