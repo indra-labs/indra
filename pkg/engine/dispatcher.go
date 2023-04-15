@@ -424,7 +424,7 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 				// of ping rising a lot or a long burst of failed
 				// transmissions.
 				tot := r.Last.Sub(rxr.First)
-				div := float64(r.Ping) / float64(tot)
+				div := float64(tot) / float64(r.Ping)
 				d.PingDivergence.Add(div)
 				pd := d.PingDivergence.Value()
 				par := float64(d.Parity.Load())
