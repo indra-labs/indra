@@ -95,7 +95,7 @@ type Dispatcher struct {
 	TotalSent *big.Int
 	// TotalReceived is the amount of bytes that were needed to successfully
 	// transmit, including packet overhead. This is the raw size of the
-	// segmented packets that were sent.
+	// segmented packets that were received.
 	TotalReceived *big.Int
 	Ping          ewma.MovingAverage
 	// PingDivergence represents the proportion of time between start of send
@@ -113,20 +113,20 @@ type Dispatcher struct {
 	PendingOutbound []*TxRecord
 	Partials        map[nonce.ID]Packets
 	OldPrv          *crypto.Prv
-	*crypto.Prv
+	Prv             *crypto.Prv
 	*crypto.KeySet
-	*Conn
+	Conn *Conn
 	sync.Mutex
 }
 
 const TimeoutPingCount = 10
 
-func NewDispatcher(l *Conn, ctx context.Context,
+func NewDispatcher(l *Conn, key *crypto.Prv, ctx context.Context,
 	ks *crypto.KeySet) (d *Dispatcher) {
 	
 	d = &Dispatcher{
-		Prv:            nil,
-		OldPrv:         nil,
+		Prv:            key,
+		OldPrv:         key,
 		Conn:           l,
 		KeySet:         ks,
 		Duplex:         NewDuplexByteChan(ConnBufs),
@@ -214,17 +214,19 @@ func (d *Dispatcher) HandlePing(p ping.Result) {
 
 func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 	log.D.S("received from conn to dispatcher", m.ToBytes())
-	// Packet received, decrypt, gather and send acks back and
-	// reconstructed messages to the Dispatcher.RecvFromConn channel.
+	// Packet received, decrypt, gather and send acks back and reconstructed
+	// messages to the Dispatcher.RecvFromConn channel.
 	from, to, iv, e := GetKeysFromPacket(m)
 	if fails(e) {
-	}
-	if !crypto.Match(to, crypto.DerivePub(d.Prv).ToBytes()) {
-		// This connection should only receive messages with cloaked
-		// keys matching our private key of the connection.
 		return
 	}
 	d.Lock()
+	if !crypto.Match(to, crypto.DerivePub(d.Prv).ToBytes()) {
+		// This connection should only receive messages with cloaked keys
+		// matching our private key of the connection.
+		d.Unlock()
+		return
+	}
 	var p *Packet
 	if p, e = DecodePacket(m, from, d.Prv, iv); fails(e) {
 		d.Unlock()
@@ -250,35 +252,38 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 		d.Partials[p.ID] = packets
 	}
 	d.Unlock()
-	// if the message only one packet we can hand it on to the receiving channel
-	// now:
+	// if the message is only one packet we can hand it on to the receiving
+	// channel now:
 	if int(p.Length) == len(p.Data) {
 		log.D.Ln("forwarding single packet message")
 		d.Handle(m, rxr)
 		return
 	}
-	// Find collection of existing fragments matching the message ID
-	// or make a new one and add this packet to it for later
-	// assembly.
+	// Find collection of existing fragments matching the message ID or make a
+	// new one and add this packet to it for later assembly.
 	log.D.Ln("collating packet")
 	d.Lock()
 	d.TotalReceived = d.TotalReceived.Add(d.TotalReceived,
 		big.NewInt(int64(len(m))))
 	d.Partials[p.ID] = append(d.Partials[p.ID], p)
-	segCount := int(p.Length) / d.Conn.MTU
-	mod := int(p.Length) % d.Conn.MTU
+	d.Unlock()
+	segCount := int(p.Length) / d.Conn.GetMTU()
+	mod := int(p.Length) % d.Conn.GetMTU()
 	if mod > 0 {
 		segCount++
 	}
+	d.Lock()
+	defer d.Unlock()
 	if len(d.Partials[p.ID]) >= segCount {
 		// Enough to attempt reconstruction:
 		var msg []byte
 		if d.Partials[p.ID], msg, e = JoinPackets(d.Partials[p.ID]); fails(e) {
+			log.D.Ln("failed to join packets")
 			return
 		}
 		log.D.Ln("message reconstructed; dispatching...")
 		d.DataReceived = d.DataReceived.Add(d.DataReceived,
-			big.NewInt(int64(len(m))))
+			big.NewInt(int64(len(msg))))
 		for _, v := range d.Partials[p.ID] {
 			d.TotalReceived = d.TotalReceived.Add(
 				d.TotalReceived,
@@ -288,7 +293,6 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 		// Send the message on to the receiving channel.
 		d.Handle(msg, rxr)
 	}
-	d.Unlock()
 }
 
 func (d *Dispatcher) SendToConn(m slice.Bytes) {
@@ -304,24 +308,26 @@ func (d *Dispatcher) SendToConn(m slice.Bytes) {
 	}
 	pp := &PacketParams{
 		ID:     id,
-		To:     d.Conn.RemoteKey,
+		To:     d.Conn.GetRemoteKey(),
 		Parity: int(d.Parity.Load()),
 		Length: m.Len(),
 		Data:   m,
 	}
-	packets, e := SplitToPackets(pp, d.Conn.MTU, d.KeySet)
+	mtu := d.Conn.GetMTU()
+	packets, e := SplitToPackets(pp, mtu, d.KeySet)
 	if fails(e) {
 		return
 	}
-	// Shuffle. This is both for anonymity and improving the
-	// chances of most error bursts to not cut through a whole
-	// segment (they are grouped by 256 for RS FEC).
+	// Shuffle. This is both for anonymity and improving the chances of most
+	// error bursts to not cut through a whole segment (they are grouped by 256
+	// for RS FEC).
 	cryptorand.Shuffle(len(packets), func(i, j int) {
 		packets[i], packets[j] = packets[j], packets[i]
 	})
 	// Send them out!
+	sendChan := d.Conn.GetSend()
 	for i := range packets {
-		d.Conn.DuplexByteChan.Send <- packets[i]
+		sendChan <- packets[i]
 	}
 	txr.Last = time.Now()
 	txr.Ping = time.Duration(d.Ping.Value())
@@ -353,11 +359,26 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 	case InitRekeyMagic:
 		o := c.(*InitRekey)
 		log.D.S("key change initiate", o)
-	
+		d.Conn.SetRemoteKey(o.NewPubkey)
+		var prv *crypto.Prv
+		if prv, e = crypto.GeneratePrvKey(); fails(e) {
+			return
+		}
+		d.Lock()
+		d.OldPrv = d.Prv
+		d.Prv = prv
+		d.Unlock()
+		// Send a reply:
+		rpl := RekeyReply{NewPubkey: crypto.DerivePub(prv)}
+		reply := NewSplice(rpl.Len())
+		if e = rpl.Encode(reply); fails(e) {
+			return
+		}
+		d.Duplex.Send <- reply.GetAll()
 	case RekeyReplyMagic:
 		o := c.(*RekeyReply)
 		log.D.S("key change reply", o)
-	
+		d.Conn.SetRemoteKey(o.NewPubkey)
 	case AcknowledgeMagic:
 		o := c.(*Acknowledge)
 		log.D.S("acknowledgement", o)

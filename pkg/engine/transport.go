@@ -159,21 +159,55 @@ func NewDuplexByteChan(bufs int) *DuplexByteChan {
 
 type Conn struct {
 	network.Conn
-	MTU          int
-	RemoteKey    *crypto.Pub
-	OldRemoteKey *crypto.Pub
-	MultiAddr    multiaddr.Multiaddr
-	Host         host.Host
-	rw           *bufio.ReadWriter
+	MTU       int
+	RemoteKey *crypto.Pub
+	MultiAddr multiaddr.Multiaddr
+	Host      host.Host
+	rw        *bufio.ReadWriter
 	*DuplexByteChan
+	sync.Mutex
 	qu.C
+}
+
+// concurrent safe accessors:
+
+func (c *Conn) GetMTU() int {
+	c.Lock()
+	defer c.Unlock()
+	return c.MTU
+}
+
+func (c *Conn) SetMTU(mtu int) {
+	c.Lock()
+	c.MTU = mtu
+	c.Unlock()
+}
+
+func (c *Conn) GetRemoteKey() (remoteKey *crypto.Pub) {
+	c.Lock()
+	defer c.Unlock()
+	return c.RemoteKey
+}
+
+func (c *Conn) SetRemoteKey(remoteKey *crypto.Pub) {
+	c.Lock()
+	c.RemoteKey = remoteKey
+	c.Unlock()
+}
+
+func (c *Conn) GetSend() ByteChan {
+	return c.DuplexByteChan.Send
+}
+
+func (c *Conn) GetRecv() ByteChan {
+	return c.DuplexByteChan.Recv
 }
 
 func getHostAddress(ha host.Host) string {
 	hostAddr, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/p2p/%s",
 		ha.ID().String()))
 	
-	// Now we can build a full multiaddress to reach this host by encapsulating
+	// Now we can build a full multi-address to reach this host by encapsulating
 	// both addresses:
 	addr := ha.Addrs()[0]
 	return addr.Encapsulate(hostAddr).String()
