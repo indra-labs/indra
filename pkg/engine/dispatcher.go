@@ -97,6 +97,7 @@ type Dispatcher struct {
 	// transmit, including packet overhead. This is the raw size of the
 	// segmented packets that were received.
 	TotalReceived *big.Int
+	ErrorEWMA     ewma.MovingAverage
 	Ping          ewma.MovingAverage
 	// PingDivergence represents the proportion of time between start of send
 	// and receiving acknowledgement, versus the ping RTT being actively
@@ -132,6 +133,7 @@ func NewDispatcher(l *Conn, key *crypto.Prv, ctx context.Context,
 		Duplex:         NewDuplexByteChan(ConnBufs),
 		Ping:           ewma.NewMovingAverage(),
 		PingDivergence: ewma.NewMovingAverage(),
+		ErrorEWMA:      ewma.NewMovingAverage(),
 	}
 	d.Parity.Store(DefaultStartingParity)
 	ps := ping.NewPingService(l.Host)
@@ -412,6 +414,7 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 				ds := d.TotalSent.Mul(d.TotalSent, big.NewInt(100000))
 				correct := d.DataSent.Div(ds, d.DataSent)
 				historicalError := float64(correct.Uint64()) / 100000
+				d.ErrorEWMA.Add(historicalError)
 				// Our first sent time and their last received should be
 				// around the same as the ping. Note that inaccurate clocks
 				// might not be helpful here.
@@ -426,11 +429,10 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 				tot := r.Last.Sub(rxr.First)
 				div := float64(tot) / float64(r.Ping)
 				d.PingDivergence.Add(div)
-				pd := d.PingDivergence.Value()
-				par := float64(d.Parity.Load())
-				parRatio := par / 256
+				par := float64(d.Parity.Load()) / 256
 				d.Parity.Store(uint32(byte(
-					parRatio * pd * historicalError * 256)))
+					par * d.PingDivergence.Value() *
+						d.ErrorEWMA.Value() * 256)))
 			} else {
 				tmp = append(tmp, v)
 			}
