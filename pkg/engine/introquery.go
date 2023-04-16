@@ -6,6 +6,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
@@ -36,12 +37,12 @@ type IntroQuery struct {
 	Onion
 }
 
-func introQueryGen() Codec             { return &IntroQuery{} }
-func init()                            { Register(IntroQueryMagic, introQueryGen) }
-func (x *IntroQuery) Magic() string    { return IntroQueryMagic }
-func (x *IntroQuery) Len() int         { return IntroQueryLen + x.Onion.Len() }
-func (x *IntroQuery) Wrap(inner Onion) { x.Onion = inner }
-func (x *IntroQuery) GetOnion() Onion  { return x }
+func introQueryGen() coding.Codec           { return &IntroQuery{} }
+func init()                                 { Register(IntroQueryMagic, introQueryGen) }
+func (x *IntroQuery) Magic() string         { return IntroQueryMagic }
+func (x *IntroQuery) Len() int              { return IntroQueryLen + x.Onion.Len() }
+func (x *IntroQuery) Wrap(inner Onion)      { x.Onion = inner }
+func (x *IntroQuery) GetOnion() interface{} { return x }
 
 func (x *IntroQuery) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),

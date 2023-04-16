@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"time"
 	
+	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -19,7 +20,7 @@ type Delay struct {
 	Onion
 }
 
-func delayGen() Codec             { return &Delay{} }
+func delayGen() coding.Codec      { return &Delay{} }
 func init()                       { Register(DelayMagic, delayGen) }
 func (x *Delay) Magic() string    { return DelayMagic }
 func (x *Delay) Len() int         { return DelayLen + x.Onion.Len() }

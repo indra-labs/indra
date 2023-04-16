@@ -7,6 +7,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -40,12 +41,12 @@ type Exit struct {
 	Onion
 }
 
-func exitGen() Codec             { return &Exit{} }
-func init()                      { Register(ExitMagic, exitGen) }
-func (x *Exit) Magic() string    { return ExitMagic }
-func (x *Exit) Len() int         { return ExitLen + x.Bytes.Len() + x.Onion.Len() }
-func (x *Exit) Wrap(inner Onion) { x.Onion = inner }
-func (x *Exit) GetOnion() Onion  { return x }
+func exitGen() coding.Codec           { return &Exit{} }
+func init()                           { Register(ExitMagic, exitGen) }
+func (x *Exit) Magic() string         { return ExitMagic }
+func (x *Exit) Len() int              { return ExitLen + x.Bytes.Len() + x.Onion.Len() }
+func (x *Exit) Wrap(inner Onion)      { x.Onion = inner }
+func (x *Exit) GetOnion() interface{} { return x }
 
 func (x *Exit) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),

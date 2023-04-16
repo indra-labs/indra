@@ -6,6 +6,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
@@ -28,12 +29,12 @@ type HiddenService struct {
 	Onion
 }
 
-func hiddenServiceGen() Codec             { return &HiddenService{} }
-func init()                               { Register(HiddenServiceMagic, hiddenServiceGen) }
-func (x *HiddenService) Magic() string    { return HiddenServiceMagic }
-func (x *HiddenService) Len() int         { return HiddenServiceLen + x.Onion.Len() }
-func (x *HiddenService) Wrap(inner Onion) { x.Onion = inner }
-func (x *HiddenService) GetOnion() Onion  { return x }
+func hiddenServiceGen() coding.Codec           { return &HiddenService{} }
+func init()                                    { Register(HiddenServiceMagic, hiddenServiceGen) }
+func (x *HiddenService) Magic() string         { return HiddenServiceMagic }
+func (x *HiddenService) Len() int              { return HiddenServiceLen + x.Onion.Len() }
+func (x *HiddenService) Wrap(inner Onion)      { x.Onion = inner }
+func (x *HiddenService) GetOnion() interface{} { return x }
 
 func (x *HiddenService) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),

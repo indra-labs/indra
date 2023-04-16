@@ -5,6 +5,7 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 )
 
@@ -22,7 +23,7 @@ func TestOnionSkins_SimpleCrypt(t *testing.T) {
 	s := Encode(on)
 	s.SetCursor(0)
 	log.D.S("encoded, encrypted onion:\n", s.GetAll().ToBytes())
-	var oncr Codec
+	var oncr coding.Codec
 	if oncr = Recognise(s); oncr == nil {
 		t.Error("did not unwrap")
 		t.FailNow()
@@ -32,7 +33,7 @@ func TestOnionSkins_SimpleCrypt(t *testing.T) {
 		t.FailNow()
 	}
 	oncr.(*Crypt).Decrypt(prv1, s)
-	var oncn Codec
+	var oncn coding.Codec
 	if oncn = Recognise(s); oncn == nil {
 		t.Error("did not unwrap")
 		t.FailNow()

@@ -6,6 +6,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -21,10 +22,10 @@ type InitRekey struct {
 	NewPubkey *crypto.Pub
 }
 
-func InitRekeyGen() Codec            { return &InitRekey{} }
-func init()                          { Register(InitRekeyMagic, InitRekeyGen) }
-func (k *InitRekey) Magic() string   { return InitRekeyMagic }
-func (k *InitRekey) GetOnion() Onion { return nil }
+func InitRekeyGen() coding.Codec           { return &InitRekey{} }
+func init()                                { Register(InitRekeyMagic, InitRekeyGen) }
+func (k *InitRekey) Magic() string         { return InitRekeyMagic }
+func (k *InitRekey) GetOnion() interface{} { return nil }
 
 func (k *InitRekey) Encode(s *splice.Splice) (e error) {
 	s.Magic4(InitRekeyMagic).Pubkey(k.NewPubkey)
@@ -51,10 +52,10 @@ type RekeyReply struct {
 	NewPubkey *crypto.Pub
 }
 
-func RekeyReplyGen() Codec            { return &RekeyReply{} }
-func init()                           { Register(RekeyReplyMagic, RekeyReplyGen) }
-func (r *RekeyReply) Magic() string   { return RekeyReplyMagic }
-func (r *RekeyReply) GetOnion() Onion { return nil }
+func RekeyReplyGen() coding.Codec           { return &RekeyReply{} }
+func init()                                 { Register(RekeyReplyMagic, RekeyReplyGen) }
+func (r *RekeyReply) Magic() string         { return RekeyReplyMagic }
+func (r *RekeyReply) GetOnion() interface{} { return nil }
 
 func (r *RekeyReply) Encode(s *splice.Splice) (e error) {
 	s.Magic4(RekeyReplyMagic).Pubkey(r.NewPubkey)
@@ -81,10 +82,10 @@ type Acknowledge struct {
 	*RxRecord
 }
 
-func AcknowledgeGen() Codec            { return &Acknowledge{} }
-func init()                            { Register(AcknowledgeMagic, AcknowledgeGen) }
-func (a *Acknowledge) Magic() string   { return AcknowledgeMagic }
-func (a *Acknowledge) GetOnion() Onion { return nil }
+func AcknowledgeGen() coding.Codec           { return &Acknowledge{} }
+func init()                                  { Register(AcknowledgeMagic, AcknowledgeGen) }
+func (a *Acknowledge) Magic() string         { return AcknowledgeMagic }
+func (a *Acknowledge) GetOnion() interface{} { return nil }
 
 func (a *Acknowledge) Encode(s *splice.Splice) (e error) {
 	s.Magic4(AcknowledgeMagic).
@@ -129,10 +130,10 @@ func (m Munged) Unpack() (mu Onion) {
 	return
 }
 
-func MungedGen() Codec            { return &Munged{} }
-func init()                       { Register(MungedMagic, MungedGen) }
-func (m *Munged) Magic() string   { return MungedMagic }
-func (m *Munged) GetOnion() Onion { return nil }
+func MungedGen() coding.Codec           { return &Munged{} }
+func init()                             { Register(MungedMagic, MungedGen) }
+func (m *Munged) Magic() string         { return MungedMagic }
+func (m *Munged) GetOnion() interface{} { return nil }
 
 func (m *Munged) Encode(s *splice.Splice) (e error) {
 	s.Magic4(MungedMagic).Bytes(m.Bytes)

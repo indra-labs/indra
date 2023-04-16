@@ -4,6 +4,7 @@ import (
 	"net/netip"
 	"reflect"
 	
+	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
@@ -18,12 +19,12 @@ type Forward struct {
 	Onion
 }
 
-func forwardGen() Codec             { return &Forward{} }
-func init()                         { Register(ForwardMagic, forwardGen) }
-func (x *Forward) Magic() string    { return ForwardMagic }
-func (x *Forward) Len() int         { return ForwardLen + x.Onion.Len() }
-func (x *Forward) Wrap(inner Onion) { x.Onion = inner }
-func (x *Forward) GetOnion() Onion  { return x }
+func forwardGen() coding.Codec           { return &Forward{} }
+func init()                              { Register(ForwardMagic, forwardGen) }
+func (x *Forward) Magic() string         { return ForwardMagic }
+func (x *Forward) Len() int              { return ForwardLen + x.Onion.Len() }
+func (x *Forward) Wrap(inner Onion)      { x.Onion = inner }
+func (x *Forward) GetOnion() interface{} { return x }
 
 func (x *Forward) Encode(s *splice.Splice) error {
 	log.T.F("encoding %s %s", reflect.TypeOf(x),

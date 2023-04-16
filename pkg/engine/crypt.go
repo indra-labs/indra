@@ -7,6 +7,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
@@ -30,12 +31,12 @@ type Crypt struct {
 	Onion
 }
 
-func cryptGen() Codec             { return &Crypt{} }
-func init()                       { Register(CryptMagic, cryptGen) }
-func (x *Crypt) Len() int         { return CryptLen + x.Onion.Len() }
-func (x *Crypt) Wrap(inner Onion) { x.Onion = inner }
-func (x *Crypt) GetOnion() Onion  { return x }
-func (x *Crypt) Magic() string    { return CryptMagic }
+func cryptGen() coding.Codec           { return &Crypt{} }
+func init()                            { Register(CryptMagic, cryptGen) }
+func (x *Crypt) Len() int              { return CryptLen + x.Onion.Len() }
+func (x *Crypt) Wrap(inner Onion)      { x.Onion = inner }
+func (x *Crypt) GetOnion() interface{} { return x }
+func (x *Crypt) Magic() string         { return CryptMagic }
 
 func (x *Crypt) Encode(s *splice.Splice) (e error) {
 	log.T.F("encoding %s %s %x %x", reflect.TypeOf(x),

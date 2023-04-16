@@ -4,6 +4,7 @@ import (
 	"testing"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 )
 
@@ -16,7 +17,7 @@ func TestOnionSkins_Confirmation(t *testing.T) {
 		Assemble()
 	s := Encode(on)
 	s.SetCursor(0)
-	var onc Codec
+	var onc coding.Codec
 	if onc = Recognise(s); onc == nil {
 		
 		t.Error("did not unwrap")

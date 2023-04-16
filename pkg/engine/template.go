@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
 
@@ -9,12 +10,12 @@ const (
 	EndLen   = 0
 )
 
-func EndGen() Codec             { return &End{} }
-func init()                     { Register(EndMagic, EndGen) }
-func (x *End) Magic() string    { return EndMagic }
-func (x *End) Len() int         { return EndLen }
-func (x *End) Wrap(inner Onion) {}
-func (x *End) GetOnion() Onion  { return x }
+func EndGen() coding.Codec           { return &End{} }
+func init()                          { Register(EndMagic, EndGen) }
+func (x *End) Magic() string         { return EndMagic }
+func (x *End) Len() int              { return EndLen }
+func (x *End) Wrap(inner Onion)      {}
+func (x *End) GetOnion() interface{} { return x }
 
 type End struct{}
 

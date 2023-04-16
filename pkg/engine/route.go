@@ -8,6 +8,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
@@ -18,12 +19,12 @@ const (
 		nonce.IDLen + 3*sha256.Len + 3*nonce.IVLen
 )
 
-func RouteGen() Codec             { return &Route{} }
-func init()                       { Register(RouteMagic, RouteGen) }
-func (x *Route) Magic() string    { return RouteMagic }
-func (x *Route) Len() int         { return RouteLen + x.Onion.Len() }
-func (x *Route) Wrap(inner Onion) { x.Onion = inner }
-func (x *Route) GetOnion() Onion  { return x }
+func RouteGen() coding.Codec           { return &Route{} }
+func init()                            { Register(RouteMagic, RouteGen) }
+func (x *Route) Magic() string         { return RouteMagic }
+func (x *Route) Len() int              { return RouteLen + x.Onion.Len() }
+func (x *Route) Wrap(inner Onion)      { x.Onion = inner }
+func (x *Route) GetOnion() interface{} { return x }
 
 type Route struct {
 	HiddenService *crypto.Pub

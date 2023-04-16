@@ -4,6 +4,7 @@ import (
 	"reflect"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -22,12 +23,12 @@ type Response struct {
 	slice.Bytes
 }
 
-func responseGen() Codec             { return &Response{} }
-func init()                          { Register(ResponseMagic, responseGen) }
-func (x *Response) Magic() string    { return ResponseMagic }
-func (x *Response) Len() int         { return ResponseLen + len(x.Bytes) }
-func (x *Response) Wrap(inner Onion) {}
-func (x *Response) GetOnion() Onion  { return x }
+func responseGen() coding.Codec           { return &Response{} }
+func init()                               { Register(ResponseMagic, responseGen) }
+func (x *Response) Magic() string         { return ResponseMagic }
+func (x *Response) Len() int              { return ResponseLen + len(x.Bytes) }
+func (x *Response) Wrap(inner Onion)      {}
+func (x *Response) GetOnion() interface{} { return x }
 
 func (x *Response) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),

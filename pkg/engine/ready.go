@@ -7,6 +7,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
@@ -17,12 +18,12 @@ const (
 		3*sha256.Len + 3*nonce.IVLen
 )
 
-func ReadyGen() Codec             { return &Ready{} }
-func init()                       { Register(ReadyMagic, ReadyGen) }
-func (x *Ready) Magic() string    { return ReadyMagic }
-func (x *Ready) Len() int         { return ReadyLen }
-func (x *Ready) Wrap(inner Onion) {}
-func (x *Ready) GetOnion() Onion  { return x }
+func ReadyGen() coding.Codec           { return &Ready{} }
+func init()                            { Register(ReadyMagic, ReadyGen) }
+func (x *Ready) Magic() string         { return ReadyMagic }
+func (x *Ready) Len() int              { return ReadyLen }
+func (x *Ready) Wrap(inner Onion)      {}
+func (x *Ready) GetOnion() interface{} { return x }
 
 type Ready struct {
 	ID              nonce.ID

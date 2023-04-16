@@ -8,6 +8,7 @@ import (
 	"testing"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 )
 
 func TestOnionSkins_Reverse(t *testing.T) {
@@ -34,7 +35,7 @@ func TestOnionSkins_Reverse(t *testing.T) {
 			Assemble()
 		s := Encode(on)
 		s.SetCursor(0)
-		var onr Codec
+		var onr coding.Codec
 		if onr = Recognise(s); onr == nil {
 			t.Error("did not unwrap")
 			t.FailNow()

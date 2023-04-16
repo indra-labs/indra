@@ -6,6 +6,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -37,12 +38,12 @@ type GetBalance struct {
 	Onion
 }
 
-func getBalanceGen() Codec             { return &GetBalance{} }
-func init()                            { Register(GetBalanceMagic, getBalanceGen) }
-func (x *GetBalance) Magic() string    { return GetBalanceMagic }
-func (x *GetBalance) Len() int         { return GetBalanceLen + x.Onion.Len() }
-func (x *GetBalance) Wrap(inner Onion) { x.Onion = inner }
-func (x *GetBalance) GetOnion() Onion  { return x }
+func getBalanceGen() coding.Codec           { return &GetBalance{} }
+func init()                                 { Register(GetBalanceMagic, getBalanceGen) }
+func (x *GetBalance) Magic() string         { return GetBalanceMagic }
+func (x *GetBalance) Len() int              { return GetBalanceLen + x.Onion.Len() }
+func (x *GetBalance) Wrap(inner Onion)      { x.Onion = inner }
+func (x *GetBalance) GetOnion() interface{} { return x }
 
 type GetBalanceParams struct {
 	ID, ConfID nonce.ID

@@ -6,6 +6,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
@@ -22,12 +23,12 @@ type Session struct {
 	Onion
 }
 
-func sessionGen() Codec             { return &Session{} }
-func init()                         { Register(SessionMagic, sessionGen) }
-func (x *Session) Magic() string    { return SessionMagic }
-func (x *Session) Len() int         { return SessionLen + x.Onion.Len() }
-func (x *Session) Wrap(inner Onion) { x.Onion = inner }
-func (x *Session) GetOnion() Onion  { return x }
+func sessionGen() coding.Codec           { return &Session{} }
+func init()                              { Register(SessionMagic, sessionGen) }
+func (x *Session) Magic() string         { return SessionMagic }
+func (x *Session) Len() int              { return SessionLen + x.Onion.Len() }
+func (x *Session) Wrap(inner Onion)      { x.Onion = inner }
+func (x *Session) GetOnion() interface{} { return x }
 
 func NewSessionKeys(hop byte) (x *Session) {
 	var e error

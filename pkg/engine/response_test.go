@@ -5,6 +5,7 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 	"git-indra.lan/indra-labs/indra/pkg/util/tests"
@@ -25,7 +26,7 @@ func TestOnionSkins_Response(t *testing.T) {
 		End().Assemble()
 	s := Encode(on)
 	s.SetCursor(0)
-	var onc Codec
+	var onc coding.Codec
 	if onc = Recognise(s); onc == nil {
 		t.Error("did not unwrap")
 		t.FailNow()

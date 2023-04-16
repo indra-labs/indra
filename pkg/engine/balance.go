@@ -6,6 +6,7 @@ import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -22,12 +23,12 @@ type Balance struct {
 	lnwire.MilliSatoshi
 }
 
-func balanceGen() Codec             { return &Balance{} }
-func init()                         { Register(BalanceMagic, balanceGen) }
-func (x *Balance) Magic() string    { return BalanceMagic }
-func (x *Balance) Len() int         { return BalanceLen }
-func (x *Balance) Wrap(inner Onion) {}
-func (x *Balance) GetOnion() Onion  { return x }
+func balanceGen() coding.Codec           { return &Balance{} }
+func init()                              { Register(BalanceMagic, balanceGen) }
+func (x *Balance) Magic() string         { return BalanceMagic }
+func (x *Balance) Len() int              { return BalanceLen }
+func (x *Balance) Wrap(inner Onion)      {}
+func (x *Balance) GetOnion() interface{} { return x }
 
 func (x *Balance) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),

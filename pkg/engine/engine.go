@@ -101,7 +101,7 @@ func (ng *Engine) HandleMessage(s *splice.Splice, pr Onion) {
 		if m == nil {
 			return
 		}
-		if fails(m.Handle(s, pr, ng)) {
+		if fails(m.(Onion).Handle(s, pr, ng)) {
 			log.W.S("unrecognised packet", s.GetAll().ToBytes())
 		}
 	}

@@ -9,6 +9,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -21,12 +22,12 @@ const (
 		ReplyCiphersLen
 )
 
-func MessageGen() Codec             { return &Message{} }
-func init()                         { Register(MessageMagic, MessageGen) }
-func (x *Message) Magic() string    { return MessageMagic }
-func (x *Message) Len() int         { return MessageLen + x.Payload.Len() }
-func (x *Message) Wrap(inner Onion) {}
-func (x *Message) GetOnion() Onion  { return x }
+func MessageGen() coding.Codec           { return &Message{} }
+func init()                              { Register(MessageMagic, MessageGen) }
+func (x *Message) Magic() string         { return MessageMagic }
+func (x *Message) Len() int              { return MessageLen + x.Payload.Len() }
+func (x *Message) Wrap(inner Onion)      {}
+func (x *Message) GetOnion() interface{} { return x }
 
 type Message struct {
 	Forwards        [2]*SessionData

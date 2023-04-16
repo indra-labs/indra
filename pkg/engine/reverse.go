@@ -5,6 +5,7 @@ import (
 	"reflect"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
+	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -20,12 +21,12 @@ type Reverse struct {
 	Onion
 }
 
-func reverseGen() Codec             { return &Reverse{} }
-func init()                         { Register(ReverseMagic, reverseGen) }
-func (x *Reverse) Magic() string    { return ReverseMagic }
-func (x *Reverse) Len() int         { return ReverseLen + x.Onion.Len() }
-func (x *Reverse) Wrap(inner Onion) { x.Onion = inner }
-func (x *Reverse) GetOnion() Onion  { return x }
+func reverseGen() coding.Codec           { return &Reverse{} }
+func init()                              { Register(ReverseMagic, reverseGen) }
+func (x *Reverse) Magic() string         { return ReverseMagic }
+func (x *Reverse) Len() int              { return ReverseLen + x.Onion.Len() }
+func (x *Reverse) Wrap(inner Onion)      { x.Onion = inner }
+func (x *Reverse) GetOnion() interface{} { return x }
 
 func (x *Reverse) Encode(s *splice.Splice) (e error) {
 	log.T.Ln("encoding", reflect.TypeOf(x), x.AddrPort)

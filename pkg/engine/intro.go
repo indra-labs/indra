@@ -10,6 +10,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -29,12 +30,12 @@ type Intro struct {
 	Sig      crypto.SigBytes
 }
 
-func introGen() Codec             { return &Intro{} }
-func init()                       { Register(IntroMagic, introGen) }
-func (x *Intro) Magic() string    { return IntroMagic }
-func (x *Intro) Len() int         { return IntroLen }
-func (x *Intro) Wrap(inner Onion) {}
-func (x *Intro) GetOnion() Onion  { return x }
+func introGen() coding.Codec           { return &Intro{} }
+func init()                            { Register(IntroMagic, introGen) }
+func (x *Intro) Magic() string         { return IntroMagic }
+func (x *Intro) Len() int              { return IntroLen }
+func (x *Intro) Wrap(inner Onion)      {}
+func (x *Intro) GetOnion() interface{} { return x }
 
 func NewIntro(id nonce.ID, key *crypto.Prv, ap *netip.AddrPort,
 	expires time.Time) (in *Intro) {
