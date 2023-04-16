@@ -7,6 +7,7 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -28,17 +29,7 @@ func (x *Balance) Len() int         { return BalanceLen }
 func (x *Balance) Wrap(inner Onion) {}
 func (x *Balance) GetOnion() Onion  { return x }
 
-func (o Skins) Balance(id, confID nonce.ID,
-	amt lnwire.MilliSatoshi) Skins {
-	
-	return append(o, &Balance{
-		ID:           id,
-		ConfID:       confID,
-		MilliSatoshi: amt,
-	})
-}
-
-func (x *Balance) Encode(s *Splice) (e error) {
+func (x *Balance) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.ConfID, x.MilliSatoshi,
 	)
@@ -50,7 +41,7 @@ func (x *Balance) Encode(s *Splice) (e error) {
 	return
 }
 
-func (x *Balance) Decode(s *Splice) (e error) {
+func (x *Balance) Decode(s *splice.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), BalanceLen-magic.Len,
 		BalanceMagic); fails(e) {
 		return
@@ -62,7 +53,7 @@ func (x *Balance) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *Balance) Handle(s *Splice, p Onion,
+func (x *Balance) Handle(s *splice.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	if pending := ng.PendingResponses.Find(x.ID); pending != nil {

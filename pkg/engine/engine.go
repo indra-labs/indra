@@ -6,6 +6,7 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -82,10 +83,10 @@ func (ng *Engine) Shutdown() {
 	ng.C.Q()
 }
 
-func (ng *Engine) HandleMessage(s *Splice, pr Onion) {
+func (ng *Engine) HandleMessage(s *splice.Splice, pr Onion) {
 	log.D.F("%s handling received message", ng.GetLocalNodeAddressString())
 	s.SetCursor(0)
-	s.SpliceSegments = s.SpliceSegments[:0]
+	s.Segments = s.Segments[:0]
 	on := Recognise(s)
 	if on != nil {
 		log.D.Ln("magic", on.Magic())
@@ -93,7 +94,7 @@ func (ng *Engine) HandleMessage(s *Splice, pr Onion) {
 			return
 		}
 		if pr != nil && on.Magic() != pr.Magic() {
-			log.D.S(s.b.ToBytes())
+			log.D.S(s.GetAll())
 		}
 		m := on.GetOnion()
 		if m == nil {
@@ -116,7 +117,7 @@ func (ng *Engine) Handler() (out bool) {
 		out = true
 		break
 	case b := <-ng.ReceiveToLocalNode(0):
-		s := LoadSplice(b, slice.NewCursor())
+		s := splice.Load(b, slice.NewCursor())
 		ng.HandleMessage(s, prev)
 	case p := <-ng.GetLocalNode().PaymentChan.Receive():
 		log.D.F("incoming payment for %s: %v", p.ID, p.Amount)

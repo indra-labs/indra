@@ -6,6 +6,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -25,12 +26,12 @@ func init()                          { Register(InitRekeyMagic, InitRekeyGen) }
 func (k *InitRekey) Magic() string   { return InitRekeyMagic }
 func (k *InitRekey) GetOnion() Onion { return nil }
 
-func (k *InitRekey) Encode(s *Splice) (e error) {
+func (k *InitRekey) Encode(s *splice.Splice) (e error) {
 	s.Magic4(InitRekeyMagic).Pubkey(k.NewPubkey)
 	return
 }
 
-func (k *InitRekey) Decode(s *Splice) (e error) {
+func (k *InitRekey) Decode(s *splice.Splice) (e error) {
 	if s.Len() < k.Len() {
 		return fmt.Errorf("message too short, got %d, require %d", k.Len(),
 			s.Len())
@@ -55,12 +56,12 @@ func init()                           { Register(RekeyReplyMagic, RekeyReplyGen)
 func (r *RekeyReply) Magic() string   { return RekeyReplyMagic }
 func (r *RekeyReply) GetOnion() Onion { return nil }
 
-func (r *RekeyReply) Encode(s *Splice) (e error) {
+func (r *RekeyReply) Encode(s *splice.Splice) (e error) {
 	s.Magic4(RekeyReplyMagic).Pubkey(r.NewPubkey)
 	return
 }
 
-func (r *RekeyReply) Decode(s *Splice) (e error) {
+func (r *RekeyReply) Decode(s *splice.Splice) (e error) {
 	if s.Len() < r.Len() {
 		return fmt.Errorf("message too short, got %d, require %d", r.Len(),
 			s.Len())
@@ -85,7 +86,7 @@ func init()                            { Register(AcknowledgeMagic, AcknowledgeG
 func (a *Acknowledge) Magic() string   { return AcknowledgeMagic }
 func (a *Acknowledge) GetOnion() Onion { return nil }
 
-func (a *Acknowledge) Encode(s *Splice) (e error) {
+func (a *Acknowledge) Encode(s *splice.Splice) (e error) {
 	s.Magic4(AcknowledgeMagic).
 		ID(a.ID).
 		Hash(a.Hash).
@@ -96,7 +97,7 @@ func (a *Acknowledge) Encode(s *Splice) (e error) {
 	return
 }
 
-func (a *Acknowledge) Decode(s *Splice) (e error) {
+func (a *Acknowledge) Decode(s *splice.Splice) (e error) {
 	if s.Len() < a.Len() {
 		return fmt.Errorf("message too short, got %d, require %d", a.Len(),
 			s.Len())
@@ -119,7 +120,7 @@ type Munged struct {
 }
 
 func (m Munged) Unpack() (mu Onion) {
-	s := NewSpliceFrom(m.Bytes)
+	s := splice.NewFrom(m.Bytes)
 	mm := Recognise(s)
 	var ok bool
 	if mu, ok = mm.(Onion); !ok {
@@ -133,12 +134,12 @@ func init()                       { Register(MungedMagic, MungedGen) }
 func (m *Munged) Magic() string   { return MungedMagic }
 func (m *Munged) GetOnion() Onion { return nil }
 
-func (m *Munged) Encode(s *Splice) (e error) {
+func (m *Munged) Encode(s *splice.Splice) (e error) {
 	s.Magic4(MungedMagic).Bytes(m.Bytes)
 	return
 }
 
-func (m *Munged) Decode(s *Splice) (e error) {
+func (m *Munged) Decode(s *splice.Splice) (e error) {
 	if s.Len() < m.Len() {
 		return fmt.Errorf("message too short, got %d, require %d", m.Len(),
 			s.Len())

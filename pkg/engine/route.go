@@ -2,7 +2,6 @@ package engine
 
 import (
 	"crypto/cipher"
-	"net/netip"
 	"reflect"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
@@ -10,6 +9,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
 
 const (
@@ -35,33 +35,16 @@ type Route struct {
 	ID nonce.ID
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
-	Ciphers Ciphers
+	Ciphers crypto.Ciphers
 	// Nonces are the nonces to use with the cipher when creating the
 	// encryption for the reply message,
 	// they are common with the crypts in the header.
-	Nonces
+	crypto.Nonces
 	RoutingHeaderBytes
 	Onion
 }
 
-func (o Skins) Route(id nonce.ID, k *crypto.Pub, ks *crypto.KeySet,
-	ep *ExitPoint) Skins {
-	
-	oo := &Route{
-		HiddenService: k,
-		Sender:        ks.Next(),
-		IV:            nonce.New(),
-		ID:            id,
-		Ciphers:       GenCiphers(ep.Keys, ep.ReturnPubs),
-		Nonces:        ep.Nonces,
-		Onion:         &End{},
-	}
-	oo.SenderPub = crypto.DerivePub(oo.Sender)
-	oo.HiddenCloaked = crypto.GetCloak(k)
-	return append(o, oo)
-}
-
-func (x *Route) Encode(s *Splice) (e error) {
+func (x *Route) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.HiddenService, x.Sender, x.IV, x.Ciphers, x.Nonces,
 		x.RoutingHeaderBytes,
@@ -84,7 +67,7 @@ func (x *Route) Encode(s *Splice) (e error) {
 	return
 }
 
-func (x *Route) Decode(s *Splice) (e error) {
+func (x *Route) Decode(s *splice.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), RouteLen-magic.Len,
 		RouteMagic); fails(e) {
 		return
@@ -97,15 +80,15 @@ func (x *Route) Decode(s *Splice) (e error) {
 
 // Decrypt decrypts the rest of a message after the Route segment if the
 // recipient has the hidden service private key.
-func (x *Route) Decrypt(prk *crypto.Prv, s *Splice) {
+func (x *Route) Decrypt(prk *crypto.Prv, s *splice.Splice) {
 	ciph.Encipher(ciph.GetBlock(prk, x.SenderPub, "route decrypt"), x.IV,
 		s.GetRest())
 	// And now we can see the reply field for the return trip.
-	s.ReadID(&x.ID).ReadCiphers(&x.Ciphers).ReadNonces(&x.Nonces).
-		ReadRoutingHeader(&x.RoutingHeaderBytes)
+	s.ReadID(&x.ID).ReadCiphers(&x.Ciphers).ReadNonces(&x.Nonces)
+	ReadRoutingHeader(s, &x.RoutingHeaderBytes)
 }
 
-func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
+func (x *Route) Handle(s *splice.Splice, p Onion, ng *Engine) (e error) {
 	
 	log.D.Ln(ng.GetLocalNodeAddressString(), "handling route")
 	hc := ng.FindCloakedHiddenService(x.HiddenCloaked)
@@ -124,22 +107,22 @@ func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 		// We have the keys to unwrap this one.
 		x.Decrypt(hh.Prv, s)
 		log.D.Ln(s)
-		n := GenNonces(5)
+		n := crypto.GenNonces(5)
 		rvKeys := ng.KeySet.Next3()
 		hops := []byte{3, 4, 5, 0, 1}
 		sessions := make(Sessions, len(hops))
 		ng.SelectHops(hops, sessions, "route reply header")
 		rt := &Routing{
 			Sessions: [3]*SessionData{sessions[0], sessions[1], sessions[2]},
-			Keys:     Privs{rvKeys[0], rvKeys[1], rvKeys[2]},
-			Nonces:   Nonces{n[0], n[1], n[2]},
+			Keys:     crypto.Privs{rvKeys[0], rvKeys[1], rvKeys[2]},
+			Nonces:   crypto.Nonces{n[0], n[1], n[2]},
 		}
 		rh := Skins{}.RoutingHeader(rt)
 		rHdr := Encode(rh.Assemble())
 		rHdr.SetCursor(0)
 		ep := ExitPoint{
 			Routing: rt,
-			ReturnPubs: Pubs{
+			ReturnPubs: crypto.Pubs{
 				crypto.DerivePub(sessions[0].Payload.Prv),
 				crypto.DerivePub(sessions[1].Payload.Prv),
 				crypto.DerivePub(sessions[2].Payload.Prv),
@@ -150,9 +133,9 @@ func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 			ForwardCrypt(sessions[4], ng.KeySet.Next(), n[4]).
 			Ready(x.ID, x.HiddenService,
 				x.RoutingHeaderBytes,
-				rHdr.GetRoutingHeaderFromCursor(),
+				GetRoutingHeaderFromCursor(rHdr),
 				x.Ciphers,
-				GenCiphers(ep.Keys, ep.ReturnPubs),
+				crypto.GenCiphers(ep.Keys, ep.ReturnPubs),
 				x.Nonces,
 				ep.Nonces)
 		assembled := mr.Assemble()
@@ -162,48 +145,8 @@ func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 	return
 }
 
-func MakeRoute(id nonce.ID, k *crypto.Pub, ks *crypto.KeySet,
-	alice, bob *SessionData, c Circuit) Skins {
-	
-	headers := GetHeaders(alice, bob, c, ks)
-	return Skins{}.
-		RoutingHeader(headers.Forward).
-		Route(id, k, ks, headers.ExitPoint()).
-		RoutingHeader(headers.Return)
-}
-
-func (ng *Engine) SendRoute(k *crypto.Pub, ap *netip.AddrPort,
-	hook Callback) {
-	
-	ng.FindNodeByAddrPort(ap)
-	var ss *SessionData
-	ng.IterateSessions(func(s *SessionData) bool {
-		if s.Node.AddrPort.String() == ap.String() {
-			ss = s
-			return true
-		}
-		return false
-	})
-	if ss == nil {
-		log.E.Ln(ng.GetLocalNodeAddressString(),
-			"could not find session for address", ap.String())
-		return
-	}
-	log.D.Ln(ng.GetLocalNodeAddressString(), "sending route",
-		k.ToBase32Abbreviated())
-	hops := StandardCircuit()
-	s := make(Sessions, len(hops))
-	s[2] = ss
-	se := ng.SelectHops(hops, s, "sendroute")
-	var c Circuit
-	copy(c[:], se)
-	o := MakeRoute(nonce.NewID(), k, ng.KeySet, se[5], c[2], c)
-	res := ng.PostAcctOnion(o)
-	log.D.Ln("sending out route request onion")
-	ng.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.PendingResponses)
-}
-
-func (x *Route) Account(res *SendData, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
+func (x *Route) Account(res *SendData, sm *SessionManager,
+	s *SessionData, last bool) (skip bool, sd *SessionData) {
 	
 	copy(res.ID[:], x.ID[:])
 	res.Billable = append(res.Billable, s.ID)

@@ -8,6 +8,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
 
 const (
@@ -29,25 +30,16 @@ type Ready struct {
 	Forward, Return *ReplyHeader
 }
 
-func (o Skins) Ready(id nonce.ID, addr *crypto.Pub, fwHeader,
-	rvHeader RoutingHeaderBytes,
-	fc, rc Ciphers, fn, rn Nonces) Skins {
-	return append(o, &Ready{id, addr,
-		&ReplyHeader{fwHeader, fc, fn},
-		&ReplyHeader{rvHeader, rc, rn},
-	})
-}
-
-func (x *Ready) Encode(s *Splice) (e error) {
+func (x *Ready) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.Address, x.Forward,
 	)
-	s.RoutingHeader(x.Forward.RoutingHeaderBytes)
+	WriteRoutingHeader(s, x.Forward.RoutingHeaderBytes)
 	start := s.GetCursor()
 	s.Magic(ReadyMagic).
 		ID(x.ID).
-		Pubkey(x.Address).
-		RoutingHeader(x.Return.RoutingHeaderBytes).
+		Pubkey(x.Address)
+	WriteRoutingHeader(s, x.Return.RoutingHeaderBytes).
 		Ciphers(x.Return.Ciphers).
 		Nonces(x.Return.Nonces)
 	for i := range x.Forward.Ciphers {
@@ -58,21 +50,21 @@ func (x *Ready) Encode(s *Splice) (e error) {
 	return
 }
 
-func (x *Ready) Decode(s *Splice) (e error) {
+func (x *Ready) Decode(s *splice.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), ReadyLen-magic.Len,
 		ReadyMagic); fails(e) {
 		return
 	}
 	x.Return = &ReplyHeader{}
 	s.ReadID(&x.ID).
-		ReadPubkey(&x.Address).
-		ReadRoutingHeader(&x.Return.RoutingHeaderBytes).
+		ReadPubkey(&x.Address)
+	ReadRoutingHeader(s, &x.Return.RoutingHeaderBytes).
 		ReadCiphers(&x.Return.Ciphers).
 		ReadNonces(&x.Return.Nonces)
 	return
 }
 
-func (x *Ready) Handle(s *Splice, p Onion,
+func (x *Ready) Handle(s *splice.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	_, e = ng.PendingResponses.ProcessAndDelete(x.ID, x, s.GetAll())

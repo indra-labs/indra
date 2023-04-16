@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 	
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/tests"
 )
@@ -18,10 +19,10 @@ func TestNewRCPListener(t *testing.T) {
 	var e error
 	var l1, l2 *Listener
 	_ = l2
-	var k1, k2 *Keys
+	var k1, k2 *crypto.Keys
 	ctx, cancel := context.WithCancel(context.Background())
 	_ = cancel
-	if k1, k2, e = Generate2Keys(); fails(e) {
+	if k1, k2, e = crypto.Generate2Keys(); fails(e) {
 		t.FailNow()
 	}
 	l1, e = NewListener("", localhostZeroIPv4, k1.Prv, ctx, DefaultMTU)

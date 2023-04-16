@@ -6,12 +6,13 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 const (
 	ReverseMagic = "rv"
-	ReverseLen   = magic.Len + 1 + AddrLen
+	ReverseLen   = magic.Len + 1 + splice.AddrLen
 )
 
 type Reverse struct {
@@ -26,11 +27,7 @@ func (x *Reverse) Len() int         { return ReverseLen + x.Onion.Len() }
 func (x *Reverse) Wrap(inner Onion) { x.Onion = inner }
 func (x *Reverse) GetOnion() Onion  { return x }
 
-func (o Skins) Reverse(ip *netip.AddrPort) Skins {
-	return append(o, &Reverse{AddrPort: ip, Onion: nop})
-}
-
-func (x *Reverse) Encode(s *Splice) (e error) {
+func (x *Reverse) Encode(s *splice.Splice) (e error) {
 	log.T.Ln("encoding", reflect.TypeOf(x), x.AddrPort)
 	if x.AddrPort == nil {
 		s.Advance(ReverseLen, "reverse")
@@ -43,7 +40,7 @@ func (x *Reverse) Encode(s *Splice) (e error) {
 	return
 }
 
-func (x *Reverse) Decode(s *Splice) (e error) {
+func (x *Reverse) Decode(s *splice.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), ReverseLen-magic.Len,
 		ReverseMagic); fails(e) {
 		return
@@ -52,7 +49,7 @@ func (x *Reverse) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *Reverse) Handle(s *Splice, p Onion,
+func (x *Reverse) Handle(s *splice.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	if x.AddrPort.String() == ng.GetLocalNodeAddress().String() {
@@ -92,14 +89,14 @@ func (x *Reverse) Handle(s *Splice, p Onion,
 		if string(s.GetRange(start, start+magic.Len)) != ReverseMagic {
 			// It's for us!
 			log.T.S("handling response")
-			ng.HandleMessage(BudgeUp(s.SetCursor(last)), on)
+			ng.HandleMessage(splice.BudgeUp(s.SetCursor(last)), on)
 			return e
 		}
 		sess := ng.FindSessionByHeader(hdr)
 		if sess != nil {
 			ng.DecSession(sess.ID,
 				ng.GetLocalNodeRelayRate()*s.Len(), false, "reverse")
-			ng.HandleMessage(BudgeUp(s.SetCursor(start)), on)
+			ng.HandleMessage(splice.BudgeUp(s.SetCursor(start)), on)
 		}
 	} else if p != nil {
 		// we need to forward this message onion.

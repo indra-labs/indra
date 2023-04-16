@@ -5,6 +5,7 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
 
 const (
@@ -23,13 +24,9 @@ func (x *Confirmation) Len() int         { return ConfirmationLen }
 func (x *Confirmation) Wrap(inner Onion) {}
 func (x *Confirmation) GetOnion() Onion  { return x }
 
-func (o Skins) Confirmation(id nonce.ID, load byte) Skins {
-	return append(o, &Confirmation{ID: id, Load: load})
-}
-
 func (x *Confirmation) Magic() string { return ConfirmationMagic }
 
-func (x *Confirmation) Encode(s *Splice) (e error) {
+func (x *Confirmation) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.Load,
 	)
@@ -37,7 +34,7 @@ func (x *Confirmation) Encode(s *Splice) (e error) {
 	return
 }
 
-func (x *Confirmation) Decode(s *Splice) (e error) {
+func (x *Confirmation) Decode(s *splice.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), ConfirmationLen-magic.Len,
 		ConfirmationMagic); fails(e) {
 		return
@@ -46,7 +43,7 @@ func (x *Confirmation) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *Confirmation) Handle(s *Splice, p Onion,
+func (x *Confirmation) Handle(s *splice.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	// When a confirmation arrives check if it is registered for and run the

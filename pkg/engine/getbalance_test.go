@@ -17,14 +17,14 @@ import (
 
 func TestOnionSkins_GetBalance(t *testing.T) {
 	var e error
-	n3 := Gen3Nonces()
+	n3 := crypto.Gen3Nonces()
 	id, confID := nonce.NewID(), nonce.NewID()
 	_, ks, _ := crypto.NewSigner()
-	var prvs Privs
+	var prvs crypto.Privs
 	for i := range prvs {
 		prvs[i] = ks.Next()
 	}
-	var pubs Pubs
+	var pubs crypto.Pubs
 	for i := range pubs {
 		pubs[i] = crypto.DerivePub(prvs[i])
 	}

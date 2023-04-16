@@ -116,3 +116,5 @@ out:
 	log.D.F("circuit\n%s", str)
 	return
 }
+
+func StandardCircuit() []byte { return []byte{0, 1, 2, 3, 4, 5} }

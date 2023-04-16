@@ -18,7 +18,7 @@ type SessionData struct {
 	ID              nonce.ID
 	Node            *Node
 	Remaining       lnwire.MilliSatoshi
-	Header, Payload Keys
+	Header, Payload crypto.Keys
 	Preimage        sha256.Hash
 	Hop             byte
 }
@@ -73,12 +73,12 @@ func NewSessionData(
 		ID:        id,
 		Node:      node,
 		Remaining: rem,
-		Header: Keys{
+		Header: crypto.Keys{
 			Pub:   hdrPub,
 			Bytes: hdrPub.ToBytes(),
 			Prv:   hdrPrv,
 		},
-		Payload: Keys{
+		Payload: crypto.Keys{
 			Pub:   pldPub,
 			Bytes: pldPub.ToBytes(),
 			Prv:   pldPrv,

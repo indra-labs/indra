@@ -17,11 +17,11 @@ func TestOnionSkins_Intro(t *testing.T) {
 	id := nonce.NewID()
 	in := NewIntro(id, pr, slice.GenerateRandomAddrPortIPv6(),
 		time.Now().Add(time.Hour))
-	var prvs Privs
+	var prvs crypto.Privs
 	for i := range prvs {
 		prvs[i] = ks.Next()
 	}
-	var pubs Pubs
+	var pubs crypto.Pubs
 	for i := range pubs {
 		pubs[i] = crypto.DerivePub(prvs[i])
 	}

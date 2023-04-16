@@ -7,6 +7,7 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 )
 
@@ -193,7 +194,7 @@ func GossipIntro(intro *Intro, sm *SessionManager, c qu.C) {
 	log.D.F("propagating hidden service intro for %s",
 		intro.Key.ToBase32Abbreviated())
 	done := qu.T()
-	msg := NewSplice(IntroLen)
+	msg := splice.New(IntroLen)
 	if fails(intro.Encode(msg)) {
 		return
 	}

@@ -7,6 +7,7 @@ import (
 	"github.com/gookit/color"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -20,7 +21,7 @@ type SendData struct {
 }
 
 // Send a message to a peer via their AddrPort.
-func (sm *SessionManager) Send(addr *netip.AddrPort, s *Splice) {
+func (sm *SessionManager) Send(addr *netip.AddrPort, s *splice.Splice) {
 	// first search if we already have the node available with connection open.
 	as := addr.String()
 	sm.ForEachNode(func(n *Node) bool {
@@ -58,5 +59,5 @@ func (sm *SessionManager) SendWithOneHook(ap *netip.AddrPort,
 	)
 	log.T.Ln(sm.GetLocalNodeAddressString(), "sending out onion", res.ID,
 		"to", color.Yellow.Sprint(ap.String()))
-	sm.Send(ap, LoadSplice(res.B, slice.NewCursor()))
+	sm.Send(ap, splice.Load(res.B, slice.NewCursor()))
 }

@@ -5,6 +5,7 @@ import (
 	"time"
 	
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -24,11 +25,7 @@ func (x *Delay) Magic() string    { return DelayMagic }
 func (x *Delay) Len() int         { return DelayLen + x.Onion.Len() }
 func (x *Delay) Wrap(inner Onion) { x.Onion = inner }
 
-func (o Skins) Delay(d time.Duration) Skins {
-	return append(o, &Delay{Duration: d, Onion: nop})
-}
-
-func (x *Delay) Encode(s *Splice) (e error) {
+func (x *Delay) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.Duration,
 	)
@@ -39,7 +36,7 @@ func (x *Delay) Encode(s *Splice) (e error) {
 	return
 }
 
-func (x *Delay) Decode(s *Splice) (e error) {
+func (x *Delay) Decode(s *splice.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), DelayLen-magic.Len, DelayMagic); fails(e) {
 		return
 	}
@@ -47,7 +44,7 @@ func (x *Delay) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *Delay) Handle(s *Splice, p Onion, ng *Engine) (e error) {
+func (x *Delay) Handle(s *splice.Splice, p Onion, ng *Engine) (e error) {
 	
 	// this is a message to hold the message in the buffer until a duration
 	// elapses. The accounting for the remainder of the message adds a
@@ -57,7 +54,7 @@ func (x *Delay) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 	select {
 	case <-time.After(x.Duration):
 	}
-	ng.HandleMessage(BudgeUp(s), x)
+	ng.HandleMessage(splice.BudgeUp(s), x)
 	return
 }
 

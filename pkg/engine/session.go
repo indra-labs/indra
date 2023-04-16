@@ -7,6 +7,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
 
 const (
@@ -28,37 +29,6 @@ func (x *Session) Len() int         { return SessionLen + x.Onion.Len() }
 func (x *Session) Wrap(inner Onion) { x.Onion = inner }
 func (x *Session) GetOnion() Onion  { return x }
 
-func MakeSession(id nonce.ID, s [5]*Session,
-	client *SessionData, hop []*Node, ks *crypto.KeySet) Skins {
-	
-	n := GenNonces(6)
-	sk := Skins{}
-	for i := range s {
-		if i == 0 {
-			sk = sk.Crypt(hop[i].Identity.Pub, nil, ks.Next(),
-				n[i], 0).Session(s[i])
-		} else {
-			sk = sk.ForwardSession(hop[i], ks.Next(), n[i], s[i])
-		}
-	}
-	return sk.
-		ForwardCrypt(client, ks.Next(), n[5]).
-		Confirmation(id, 0)
-}
-
-func (o Skins) Session(sess *Session) Skins {
-	// MakeSession can apply to from 1 to 5 nodes, if either key is nil then
-	// this crypt just doesn't get added in the serialization process.
-	if sess.Header == nil || sess.Payload == nil {
-		return o
-	}
-	return append(o, &Session{
-		Header:  sess.Header,
-		Payload: sess.Payload,
-		Onion:   &End{},
-	})
-}
-
 func NewSessionKeys(hop byte) (x *Session) {
 	var e error
 	var hdrPrv, pldPrv *crypto.Prv
@@ -76,7 +46,7 @@ func NewSessionKeys(hop byte) (x *Session) {
 	}
 }
 
-func (x *Session) Encode(s *Splice) (e error) {
+func (x *Session) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.Hop, x.Header, x.Payload,
 	)
@@ -87,7 +57,7 @@ func (x *Session) Encode(s *Splice) (e error) {
 	)
 }
 
-func (x *Session) Decode(s *Splice) (e error) {
+func (x *Session) Decode(s *splice.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), SessionLen-magic.Len,
 		SessionMagic); fails(e) {
 		return
@@ -99,7 +69,7 @@ func (x *Session) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *Session) Handle(s *Splice, p Onion, ng *Engine) (e error) {
+func (x *Session) Handle(s *splice.Splice, p Onion, ng *Engine) (e error) {
 	
 	log.T.F("incoming session %s", x.PreimageHash())
 	pi := ng.FindPendingPreimage(x.PreimageHash())
@@ -110,7 +80,7 @@ func (x *Session) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 		log.D.F("adding session %s to %s", pi.ID, ng.GetLocalNodeAddressString())
 		ng.AddSession(NewSessionData(pi.ID,
 			ng.GetLocalNode(), pi.Amount, x.Header, x.Payload, x.Hop))
-		ng.HandleMessage(BudgeUp(s), nil)
+		ng.HandleMessage(splice.BudgeUp(s), nil)
 	} else {
 		log.E.Ln("dropping session message without payment")
 	}

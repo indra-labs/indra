@@ -9,6 +9,7 @@ import (
 	
 	"github.com/cybriq/qu"
 	
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
@@ -19,15 +20,15 @@ import (
 
 func TestOnionSkins_Exit(t *testing.T) {
 	var e error
-	prvs, pubs := GetCipherSet(t)
-	ciphers := GenCiphers(prvs, pubs)
+	prvs, pubs := crypto.GetCipherSet(t)
+	ciphers := crypto.GenCiphers(prvs, pubs)
 	var msg slice.Bytes
 	var hash sha256.Hash
 	if msg, hash, e = tests.GenMessage(512, "aoeu"); fails(e) {
 		t.Error(e)
 		t.FailNow()
 	}
-	n3 := Gen3Nonces()
+	n3 := crypto.Gen3Nonces()
 	p := uint16(rand.Uint32())
 	id := nonce.NewID()
 	ep := &ExitPoint{

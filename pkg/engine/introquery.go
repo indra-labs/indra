@@ -7,7 +7,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
 
 const (
@@ -20,11 +20,11 @@ type IntroQuery struct {
 	ID nonce.ID
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
-	Ciphers
+	crypto.Ciphers
 	// Nonces are the nonces to use with the cipher when creating the
 	// encryption for the reply message,
 	// they are common with the crypts in the header.
-	Nonces
+	crypto.Nonces
 	// Port identifies the type of service as well as being the port used by
 	// the service to be relayed to. Notice there is no IP address, this is
 	// because Indranet only forwards to exits of decentralised services
@@ -43,17 +43,7 @@ func (x *IntroQuery) Len() int         { return IntroQueryLen + x.Onion.Len() }
 func (x *IntroQuery) Wrap(inner Onion) { x.Onion = inner }
 func (x *IntroQuery) GetOnion() Onion  { return x }
 
-func (o Skins) IntroQuery(id nonce.ID, hsk *crypto.Pub, exit *ExitPoint) Skins {
-	return append(o, &IntroQuery{
-		ID:      id,
-		Ciphers: GenCiphers(exit.Keys, exit.ReturnPubs),
-		Nonces:  exit.Nonces,
-		Key:     hsk,
-		Onion:   nop,
-	})
-}
-
-func (x *IntroQuery) Encode(s *Splice) (e error) {
+func (x *IntroQuery) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.Key, x.Ciphers, x.Nonces,
 	)
@@ -64,7 +54,7 @@ func (x *IntroQuery) Encode(s *Splice) (e error) {
 	)
 }
 
-func (x *IntroQuery) Decode(s *Splice) (e error) {
+func (x *IntroQuery) Decode(s *splice.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), IntroQueryLen-magic.Len,
 		IntroQueryMagic); fails(e) {
 		return
@@ -74,7 +64,7 @@ func (x *IntroQuery) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *IntroQuery) Handle(s *Splice, p Onion,
+func (x *IntroQuery) Handle(s *splice.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	ng.HiddenRouting.Lock()
@@ -92,7 +82,7 @@ func (x *IntroQuery) Handle(s *Splice, p Onion,
 	}
 	ng.HiddenRouting.Unlock()
 	iqr := Encode(il)
-	rb := FormatReply(s.GetRoutingHeaderFromCursor(), x.Ciphers, x.Nonces,
+	rb := FormatReply(GetRoutingHeaderFromCursor(s), x.Ciphers, x.Nonces,
 		iqr.GetAll())
 	switch on1 := p.(type) {
 	case *Crypt:
@@ -105,47 +95,6 @@ func (x *IntroQuery) Handle(s *Splice, p Onion,
 	}
 	ng.HandleMessage(rb, x)
 	return
-}
-
-func MakeIntroQuery(id nonce.ID, hsk *crypto.Pub, alice, bob *SessionData,
-	c Circuit, ks *crypto.KeySet) Skins {
-	
-	headers := GetHeaders(alice, bob, c, ks)
-	return Skins{}.
-		RoutingHeader(headers.Forward).
-		IntroQuery(id, hsk, headers.ExitPoint()).
-		RoutingHeader(headers.Return)
-}
-
-func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *crypto.Pub,
-	alice, bob *SessionData, hook func(in *Intro)) {
-	
-	fn := func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
-		s := LoadSplice(b, slice.NewCursor())
-		on := Recognise(s)
-		if e = on.Decode(s); fails(e) {
-			return
-		}
-		var oni *Intro
-		var ok bool
-		if oni, ok = on.(*Intro); !ok {
-			return
-		}
-		hook(oni)
-		return
-	}
-	log.D.Ln("sending introquery")
-	hops := StandardCircuit()
-	s := make(Sessions, len(hops))
-	s[2] = bob
-	s[5] = alice
-	se := ng.SelectHops(hops, s, "sendintroquery")
-	var c Circuit
-	copy(c[:], se)
-	o := MakeIntroQuery(id, hsk, bob, alice, c, ng.KeySet)
-	res := ng.PostAcctOnion(o)
-	log.D.Ln(res.ID)
-	ng.SendWithOneHook(c[0].Node.AddrPort, res, fn, ng.PendingResponses)
 }
 
 func (x *IntroQuery) Account(res *SendData, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {

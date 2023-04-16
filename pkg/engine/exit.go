@@ -8,6 +8,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -21,11 +22,11 @@ type Exit struct {
 	ID nonce.ID
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
-	Ciphers
+	crypto.Ciphers
 	// Nonces are the nonces to use with the cipher when creating the
 	// encryption for the reply message,
 	// they are common with the crypts in the header.
-	Nonces
+	crypto.Nonces
 	// Port identifies the type of service as well as being the port used by
 	// the service to be relayed to. Notice there is no IP address, this is
 	// because Indranet only forwards to exits of decentralised services
@@ -46,20 +47,7 @@ func (x *Exit) Len() int         { return ExitLen + x.Bytes.Len() + x.Onion.Len(
 func (x *Exit) Wrap(inner Onion) { x.Onion = inner }
 func (x *Exit) GetOnion() Onion  { return x }
 
-func (o Skins) Exit(id nonce.ID, port uint16, payload slice.Bytes,
-	ep *ExitPoint) Skins {
-	
-	return append(o, &Exit{
-		ID:      id,
-		Ciphers: GenCiphers(ep.Keys, ep.ReturnPubs),
-		Nonces:  ep.Nonces,
-		Port:    port,
-		Bytes:   payload,
-		Onion:   nop,
-	})
-}
-
-func (x *Exit) Encode(s *Splice) (e error) {
+func (x *Exit) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.Ciphers, x.Nonces, x.Port, x.Bytes.ToBytes(),
 	)
@@ -71,7 +59,7 @@ func (x *Exit) Encode(s *Splice) (e error) {
 	)
 }
 
-func (x *Exit) Decode(s *Splice) (e error) {
+func (x *Exit) Decode(s *splice.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), ExitLen-magic.Len,
 		ExitMagic); fails(e) {
 		
@@ -83,7 +71,7 @@ func (x *Exit) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *Exit) Handle(s *Splice, p Onion,
+func (x *Exit) Handle(s *splice.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	// payload is forwarded to a local port and the result is forwarded
@@ -107,7 +95,7 @@ func (x *Exit) Handle(s *Splice, p Onion,
 		Load:  byte(ng.Load.Load()),
 		Bytes: result,
 	})
-	rb := FormatReply(s.GetRoutingHeaderFromCursor(),
+	rb := FormatReply(GetRoutingHeaderFromCursor(s),
 		x.Ciphers, x.Nonces, res.GetAll())
 	switch on := p.(type) {
 	case *Crypt:
@@ -139,41 +127,6 @@ type ExitParams struct {
 	Alice, Bob *SessionData
 	S          Circuit
 	KS         *crypto.KeySet
-}
-
-// MakeExit constructs a message containing an arbitrary payload to a node (3rd
-// hop) with a set of 3 ciphers derived from the hidden PayloadPub of the return
-// hops that are layered progressively after the Exit message.
-//
-// The Exit node forwards the packet it receives to the local port specified in
-// the Exit message, and then uses the ciphers to encrypt the reply with the
-// three ciphers provided, which don't enable it to decrypt the header, only to
-// encrypt the payload.
-//
-// The header remains a constant size and each node in the Reverse trims off
-// their section at the top, moves the next crypt header to the top and pads the
-// remainder with noise, so it always looks like the first hop.
-func MakeExit(p ExitParams) Skins {
-	headers := GetHeaders(p.Alice, p.Bob, p.S, p.KS)
-	return Skins{}.
-		RoutingHeader(headers.Forward).
-		Exit(p.ID, p.Port, p.Payload, headers.ExitPoint()).
-		RoutingHeader(headers.Return)
-}
-
-func (ng *Engine) SendExit(port uint16, msg slice.Bytes, id nonce.ID,
-	alice, bob *SessionData, hook Callback) {
-	
-	hops := StandardCircuit()
-	s := make(Sessions, len(hops))
-	s[2] = bob
-	s[5] = alice
-	se := ng.SelectHops(hops, s, "exit")
-	var c Circuit
-	copy(c[:], se)
-	o := MakeExit(ExitParams{port, msg, id, bob, alice, c, ng.KeySet})
-	res := ng.PostAcctOnion(o)
-	ng.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.PendingResponses)
 }
 
 func (x *Exit) Account(res *SendData, sm *SessionManager,

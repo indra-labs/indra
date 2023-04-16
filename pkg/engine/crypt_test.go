@@ -13,7 +13,7 @@ func TestOnionSkins_SimpleCrypt(t *testing.T) {
 	var e error
 	n := nonce.NewID()
 	n1 := nonce.New()
-	prv1, prv2 := GetTwoPrvKeys(t)
+	prv1, prv2 := crypto.GetTwoPrvKeys(t)
 	pub1, pub2 := crypto.DerivePub(prv1), crypto.DerivePub(prv2)
 	on := Skins{}.
 		Crypt(pub1, pub2, prv2, n1, 0).

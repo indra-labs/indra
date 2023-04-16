@@ -24,17 +24,6 @@ var (
 	fails = log.E.Chk
 )
 
-// ComputeSharedSecret computes an Elliptic Curve Diffie-Hellman shared secret
-// that can be decrypted by the holder of the private key matching the public
-// key provided.
-func ComputeSharedSecret(prv *Prv, pub *Pub) sha256.Hash {
-	return sha256.Single(
-		secp256k1.GenerateSharedSecret(
-			(*secp256k1.PrivateKey)(prv), (*secp256k1.PublicKey)(pub),
-		),
-	)
-}
-
 const (
 	BlindLen = 3
 	HashLen  = 5

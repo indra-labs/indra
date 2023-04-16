@@ -5,11 +5,12 @@ import (
 	"reflect"
 	
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
 
 const (
 	ForwardMagic = "fw"
-	ForwardLen   = magic.Len + 1 + AddrLen
+	ForwardLen   = magic.Len + 1 + splice.AddrLen
 )
 
 type Forward struct {
@@ -24,18 +25,14 @@ func (x *Forward) Len() int         { return ForwardLen + x.Onion.Len() }
 func (x *Forward) Wrap(inner Onion) { x.Onion = inner }
 func (x *Forward) GetOnion() Onion  { return x }
 
-func (o Skins) Forward(addr *netip.AddrPort) Skins {
-	return append(o, &Forward{AddrPort: addr, Onion: &End{}})
-}
-
-func (x *Forward) Encode(s *Splice) error {
+func (x *Forward) Encode(s *splice.Splice) error {
 	log.T.F("encoding %s %s", reflect.TypeOf(x),
 		x.AddrPort.String(),
 	)
 	return x.Onion.Encode(s.Magic(ForwardMagic).AddrPort(x.AddrPort))
 }
 
-func (x *Forward) Decode(s *Splice) (e error) {
+func (x *Forward) Decode(s *splice.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), ForwardLen-magic.Len,
 		ForwardMagic); fails(e) {
 		return
@@ -44,14 +41,14 @@ func (x *Forward) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *Forward) Handle(s *Splice, p Onion,
+func (x *Forward) Handle(s *splice.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	// Forward the whole buffer received onwards. Usually there will be a
 	// crypt.Layer under this which will be unwrapped by the receiver.
 	if x.AddrPort.String() == ng.GetLocalNodeAddress().String() {
 		// it is for us, we want to unwrap the next part.
-		ng.HandleMessage(BudgeUp(s), x)
+		ng.HandleMessage(splice.BudgeUp(s), x)
 	} else {
 		switch on1 := p.(type) {
 		case *Crypt:
@@ -63,7 +60,7 @@ func (x *Forward) Handle(s *Splice, p Onion,
 			}
 		}
 		// we need to forward this message onion.
-		ng.Send(x.AddrPort, BudgeUp(s))
+		ng.Send(x.AddrPort, splice.BudgeUp(s))
 	}
 	return e
 }

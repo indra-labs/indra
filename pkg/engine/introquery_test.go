@@ -20,11 +20,11 @@ func TestOnionSkins_IntroQuery(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	log2.App = ""
 	var e error
-	prvs, pubs := GetCipherSet(t)
-	ciphers := GenCiphers(prvs, pubs)
-	prv1, _ := GetTwoPrvKeys(t)
+	prvs, pubs := crypto.GetCipherSet(t)
+	ciphers := crypto.GenCiphers(prvs, pubs)
+	prv1, _ := crypto.GetTwoPrvKeys(t)
 	pub1 := crypto.DerivePub(prv1)
-	n3 := Gen3Nonces()
+	n3 := crypto.Gen3Nonces()
 	ep := &ExitPoint{
 		Routing: &Routing{
 			Sessions: [3]*SessionData{},

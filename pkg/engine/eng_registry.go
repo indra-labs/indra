@@ -5,6 +5,8 @@ import (
 	"sync"
 	
 	"github.com/gookit/color"
+	
+	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
 
 var registry = NewRegistry()
@@ -26,7 +28,7 @@ func Register(magicString string, on func() Codec) {
 	registry.CodecGenerators[magicString] = on
 }
 
-func Recognise(s *Splice) (cdc Codec) {
+func Recognise(s *splice.Splice) (cdc Codec) {
 	registry.Lock()
 	defer registry.Unlock()
 	var magic string

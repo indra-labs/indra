@@ -1,5 +1,7 @@
 package engine
 
+import "git-indra.lan/indra-labs/indra/pkg/splice"
+
 const (
 	EndMagic = "!!"
 	EndLen   = 0
@@ -14,23 +16,19 @@ func (x *End) GetOnion() Onion  { return x }
 
 type End struct{}
 
-func (o Skins) End() Skins {
-	return append(o, &End{})
-}
-
 func NewEnd() *End {
 	return &End{}
 }
 
-func (x *End) Encode(s *Splice) (e error) {
+func (x *End) Encode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *End) Decode(s *Splice) (e error) {
+func (x *End) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *End) Handle(s *Splice, p Onion,
+func (x *End) Handle(s *splice.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	return

@@ -13,6 +13,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -200,7 +201,7 @@ func (d *Dispatcher) RunGC() {
 	for i := range rxr {
 		// send the RxRecord to the peer.
 		ack := &Acknowledge{rxr[i]}
-		s := NewSplice(ack.Len())
+		s := splice.New(ack.Len())
 		if e = ack.Encode(s); fails(e) {
 			continue
 		}
@@ -303,7 +304,7 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 
 func (d *Dispatcher) SendAck(rxr *RxRecord) {
 	ack := &Acknowledge{rxr}
-	s := NewSplice(ack.Len())
+	s := splice.New(ack.Len())
 	_ = ack.Encode(s)
 	d.Duplex.Send(s.GetAll())
 	// Remove Rx from pending.
@@ -367,7 +368,7 @@ func (d *Dispatcher) SendToConn(m slice.Bytes) {
 func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 	// Sender out the acknowledgement.
 	d.SendAck(rxr)
-	s := NewSpliceFrom(m)
+	s := splice.NewFrom(m)
 	c := Recognise(s)
 	if c == nil {
 		return
@@ -393,7 +394,7 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 		d.Unlock()
 		// Sender a reply:
 		rpl := RekeyReply{NewPubkey: crypto.DerivePub(prv)}
-		reply := NewSplice(rpl.Len())
+		reply := splice.New(rpl.Len())
 		if e = rpl.Encode(reply); fails(e) {
 			return
 		}

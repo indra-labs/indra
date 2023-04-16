@@ -7,6 +7,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -21,11 +22,11 @@ type GetBalance struct {
 	ConfID nonce.ID
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
-	Ciphers
+	crypto.Ciphers
 	// Nonces are the nonces to use with the cipher when creating the
 	// encryption for the reply message,
 	// they are common with the crypts in the header.
-	Nonces
+	crypto.Nonces
 	// Port identifies the type of service as well as being the port used by
 	// the service to be relayed to. Notice there is no IP address, this is
 	// because Indranet only forwards to exits of decentralised services
@@ -50,43 +51,7 @@ type GetBalanceParams struct {
 	KS         *crypto.KeySet
 }
 
-// MakeGetBalance sends out a request in a similar way to Exit except the node
-// being queried can be any of the 5.
-func MakeGetBalance(p GetBalanceParams) Skins {
-	headers := GetHeaders(p.Alice, p.Bob, p.S, p.KS)
-	return Skins{}.
-		RoutingHeader(headers.Forward).
-		GetBalance(p.ID, p.ConfID, headers.ExitPoint()).
-		RoutingHeader(headers.Return)
-}
-
-func (ng *Engine) SendGetBalance(alice, bob *SessionData, hook Callback) {
-	hops := StandardCircuit()
-	s := make(Sessions, len(hops))
-	s[2] = bob
-	s[5] = alice
-	se := ng.SelectHops(hops, s, "sendgetbalance")
-	var c Circuit
-	copy(c[:], se)
-	confID := nonce.NewID()
-	o := MakeGetBalance(GetBalanceParams{alice.ID, confID, alice, bob, c,
-		ng.KeySet})
-	log.D.Ln("sending out getbalance onion")
-	res := ng.PostAcctOnion(o)
-	ng.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.PendingResponses)
-}
-
-func (o Skins) GetBalance(id, confID nonce.ID, ep *ExitPoint) Skins {
-	return append(o, &GetBalance{
-		ID:      id,
-		ConfID:  confID,
-		Ciphers: GenCiphers(ep.Keys, ep.ReturnPubs),
-		Nonces:  ep.Nonces,
-		Onion:   nop,
-	})
-}
-
-func (x *GetBalance) Encode(s *Splice) (e error) {
+func (x *GetBalance) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.ConfID, x.Ciphers, x.Nonces,
 	)
@@ -97,7 +62,7 @@ func (x *GetBalance) Encode(s *Splice) (e error) {
 	)
 }
 
-func (x *GetBalance) Decode(s *Splice) (e error) {
+func (x *GetBalance) Decode(s *splice.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), GetBalanceLen-magic.Len,
 		GetBalanceMagic); fails(e) {
 		return
@@ -107,7 +72,7 @@ func (x *GetBalance) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *GetBalance) Handle(s *Splice, p Onion,
+func (x *GetBalance) Handle(s *splice.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	log.T.S(x)
@@ -132,7 +97,7 @@ func (x *GetBalance) Handle(s *Splice, p Onion,
 		return
 	}
 	log.D.Ln("session found", x.ID)
-	header := s.GetRoutingHeaderFromCursor()
+	header := GetRoutingHeaderFromCursor(s)
 	rbb := FormatReply(header, x.Ciphers, x.Nonces, Encode(bal).GetAll())
 	rb := append(rbb.GetAll(), slice.NoisePad(714-rbb.Len())...)
 	switch on1 := p.(type) {
@@ -158,7 +123,7 @@ func (x *GetBalance) Handle(s *Splice, p Onion,
 	})
 	rbb = FormatReply(header, x.Ciphers, x.Nonces, Encode(bal).GetAll())
 	rb = append(rbb.GetAll(), slice.NoisePad(714-len(rb))...)
-	ng.HandleMessage(LoadSplice(rb, slice.NewCursor()), x)
+	ng.HandleMessage(splice.Load(rb, slice.NewCursor()), x)
 	return
 }
 

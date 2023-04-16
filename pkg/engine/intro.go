@@ -11,13 +11,14 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 const (
 	IntroMagic = "in"
 	IntroLen   = magic.Len + nonce.IDLen + crypto.PubKeyLen + 1 +
-		AddrLen + slice.Uint64Len + crypto.SigLen
+		splice.AddrLen + slice.Uint64Len + crypto.SigLen
 )
 
 type Intro struct {
@@ -35,15 +36,10 @@ func (x *Intro) Len() int         { return IntroLen }
 func (x *Intro) Wrap(inner Onion) {}
 func (x *Intro) GetOnion() Onion  { return x }
 
-func (o Skins) Intro(id nonce.ID, key *crypto.Prv, ap *netip.AddrPort,
-	expires time.Time) (sk Skins) {
-	return append(o, NewIntro(id, key, ap, expires))
-}
-
 func NewIntro(id nonce.ID, key *crypto.Prv, ap *netip.AddrPort,
 	expires time.Time) (in *Intro) {
 	pk := crypto.DerivePub(key)
-	s := NewSplice(IntroLen - magic.Len)
+	s := splice.New(IntroLen - magic.Len)
 	s.ID(id).Pubkey(pk).AddrPort(ap).Uint64(uint64(expires.
 		UnixNano()))
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
@@ -63,7 +59,7 @@ func NewIntro(id nonce.ID, key *crypto.Prv, ap *netip.AddrPort,
 }
 
 func (x *Intro) Validate() bool {
-	s := NewSplice(IntroLen - magic.Len)
+	s := splice.New(IntroLen - magic.Len)
 	s.ID(x.ID).Pubkey(x.Key).AddrPort(x.AddrPort).Uint64(uint64(x.Expiry.
 		UnixNano()))
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
@@ -77,7 +73,7 @@ func (x *Intro) Validate() bool {
 	return false
 }
 
-func SpliceIntro(s *Splice, x *Intro) *Splice {
+func SpliceIntro(s *splice.Splice, x *Intro) *splice.Splice {
 	return s.ID(x.ID).
 		Pubkey(x.Key).
 		AddrPort(x.AddrPort).
@@ -85,7 +81,7 @@ func SpliceIntro(s *Splice, x *Intro) *Splice {
 		Signature(&x.Sig)
 }
 
-func (x *Intro) Encode(s *Splice) (e error) {
+func (x *Intro) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.AddrPort.String(), x.Expiry, x.Sig,
 	)
@@ -93,7 +89,7 @@ func (x *Intro) Encode(s *Splice) (e error) {
 	return
 }
 
-func (x *Intro) Decode(s *Splice) (e error) {
+func (x *Intro) Decode(s *splice.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), IntroLen-magic.Len,
 		IntroMagic); fails(e) {
 		
@@ -108,7 +104,7 @@ func (x *Intro) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *Intro) Handle(s *Splice, p Onion,
+func (x *Intro) Handle(s *splice.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	ng.HiddenRouting.Lock()

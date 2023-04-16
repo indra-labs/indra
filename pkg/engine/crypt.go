@@ -8,6 +8,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
 
 const (
@@ -35,22 +36,9 @@ func (x *Crypt) Len() int         { return CryptLen + x.Onion.Len() }
 func (x *Crypt) Wrap(inner Onion) { x.Onion = inner }
 func (x *Crypt) GetOnion() Onion  { return x }
 
-func (o Skins) Crypt(toHdr, toPld *crypto.Pub, from *crypto.Prv, iv nonce.IV,
-	depth int) Skins {
-	
-	return append(o, &Crypt{
-		Depth:        depth,
-		ToHeaderPub:  toHdr,
-		ToPayloadPub: toPld,
-		From:         from,
-		IV:           iv,
-		Onion:        nop,
-	})
-}
-
 func (x *Crypt) Magic() string { return CryptMagic }
 
-func (x *Crypt) Encode(s *Splice) (e error) {
+func (x *Crypt) Encode(s *splice.Splice) (e error) {
 	log.T.F("encoding %s %s %x %x", reflect.TypeOf(x),
 		x.ToHeaderPub, x.From.ToBytes(), x.IV,
 	)
@@ -90,7 +78,7 @@ func (x *Crypt) Encode(s *Splice) (e error) {
 	return e
 }
 
-func (x *Crypt) Decode(s *Splice) (e error) {
+func (x *Crypt) Decode(s *splice.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), CryptLen-magic.Len, CryptMagic); fails(e) {
 		return
 	}
@@ -100,12 +88,12 @@ func (x *Crypt) Decode(s *Splice) (e error) {
 
 // Decrypt requires the prv.Pub to be located from the Cloak, using the FromPub
 // key to derive the shared secret, and then decrypts the rest of the message.
-func (x *Crypt) Decrypt(prk *crypto.Prv, s *Splice) {
+func (x *Crypt) Decrypt(prk *crypto.Prv, s *splice.Splice) {
 	ciph.Encipher(ciph.GetBlock(prk, x.FromPub, "decrypt crypt header"),
 		x.IV, s.GetRest())
 }
 
-func (x *Crypt) Handle(s *Splice, p Onion,
+func (x *Crypt) Handle(s *splice.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	hdr, _, _, identity := ng.FindCloaked(x.Cloak)
@@ -121,10 +109,10 @@ func (x *Crypt) Handle(s *Splice, p Onion,
 				" no following session")
 			return e
 		}
-		ng.HandleMessage(BudgeUp(s), x)
+		ng.HandleMessage(splice.BudgeUp(s), x)
 		return e
 	}
-	ng.HandleMessage(BudgeUp(s), x)
+	ng.HandleMessage(splice.BudgeUp(s), x)
 	
 	return e
 }

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -9,8 +10,8 @@ import (
 // Dispatcher's message headers.
 type Codec interface {
 	Magic() string
-	Encode(s *Splice) (e error)
-	Decode(s *Splice) (e error)
+	Encode(s *splice.Splice) (e error)
+	Decode(s *splice.Splice) (e error)
 	Len() int
 	GetOnion() Onion
 }
@@ -21,7 +22,7 @@ type Codec interface {
 type Onion interface {
 	Codec
 	Wrap(inner Onion)
-	Handle(s *Splice, p Onion, ng *Engine) (e error)
+	Handle(s *splice.Splice, p Onion, ng *Engine) (e error)
 	Account(res *SendData, sm *SessionManager, s *SessionData,
 		last bool) (skip bool, sd *SessionData)
 }

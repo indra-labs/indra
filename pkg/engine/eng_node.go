@@ -23,7 +23,7 @@ type Node struct {
 	ID nonce.ID
 	sync.Mutex
 	AddrPort  *netip.AddrPort
-	Identity  *Keys
+	Identity  *crypto.Keys
 	RelayRate int      // Base relay price mSAT/Mb.
 	Services  Services // Services offered by this peer.
 	PaymentChan
@@ -48,7 +48,7 @@ func NewNode(addr *netip.AddrPort, idPrv *crypto.Prv, tpt Transport,
 	n = &Node{
 		ID:          id,
 		AddrPort:    addr,
-		Identity:    MakeKeys(idPrv),
+		Identity:    crypto.MakeKeys(idPrv),
 		RelayRate:   relayRate,
 		PaymentChan: make(PaymentChan, PaymentChanBuffers),
 		Transport:   tpt,

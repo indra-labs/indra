@@ -5,6 +5,7 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -28,11 +29,7 @@ func (x *Response) Len() int         { return ResponseLen + len(x.Bytes) }
 func (x *Response) Wrap(inner Onion) {}
 func (x *Response) GetOnion() Onion  { return x }
 
-func (o Skins) Response(id nonce.ID, res slice.Bytes, port uint16) Skins {
-	return append(o, &Response{ID: id, Port: port, Bytes: res})
-}
-
-func (x *Response) Encode(s *Splice) (e error) {
+func (x *Response) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.Port, x.Load, x.Bytes.ToBytes(),
 	)
@@ -45,7 +42,7 @@ func (x *Response) Encode(s *Splice) (e error) {
 	return
 }
 
-func (x *Response) Decode(s *Splice) (e error) {
+func (x *Response) Decode(s *splice.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), ResponseLen-magic.Len,
 		ResponseMagic); fails(e) {
 		return
@@ -58,7 +55,7 @@ func (x *Response) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *Response) Handle(s *Splice, p Onion,
+func (x *Response) Handle(s *splice.Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	pending := ng.PendingResponses.Find(x.ID)
