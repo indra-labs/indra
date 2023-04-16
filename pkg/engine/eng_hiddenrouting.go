@@ -218,7 +218,7 @@ func GossipIntro(intro *Intro, sm *SessionManager, c qu.C) {
 		default:
 		}
 		n := sm.FindNodeByIndex(peerIndices[cursor])
-		n.Transport.Sender.Send(msg.GetAll())
+		n.Transport.Send(msg.GetAll())
 		cursor++
 		if cursor > len(peerIndices)-1 {
 			break

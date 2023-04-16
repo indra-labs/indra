@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"net"
 	"net/netip"
 	"testing"
@@ -109,7 +110,7 @@ func GenNonces(count int) (n []nonce.IV) {
 }
 
 func createNMockCircuits(inclSessions bool, nCircuits int,
-	nReturnSessions int) (cl []*Engine, e error) {
+	nReturnSessions int, ctx context.Context) (cl []*Engine, e error) {
 	
 	nTotal := 1 + nCircuits*5
 	cl = make([]*Engine, nTotal)
@@ -117,7 +118,7 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 	tpts := make([]Transport, nTotal)
 	ss := make(Sessions, nTotal-1)
 	for i := range tpts {
-		tpts[i] = NewSim(nTotal)
+		tpts[i] = NewSimDuplex(nTotal, ctx)
 	}
 	for i := range nodes {
 		var idPrv *crypto.Prv
@@ -125,9 +126,8 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 			return
 		}
 		addr := slice.GenerateRandomAddrPortIPv4()
-		nodes[i], _ = NewNode(addr, idPrv, tpts[i], tpts[i], 50000)
+		nodes[i], _ = NewNode(addr, idPrv, tpts[i], 50000)
 		if cl[i], e = NewEngine(Params{
-			tpts[i],
 			tpts[i],
 			idPrv,
 			nodes[i],
@@ -165,14 +165,16 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 	return
 }
 
-func CreateNMockCircuits(nCirc int, nReturns int) (cl []*Engine, e error) {
-	return createNMockCircuits(false, nCirc, nReturns)
+func CreateNMockCircuits(nCirc int, nReturns int,
+	ctx context.Context) (cl []*Engine, e error) {
+	
+	return createNMockCircuits(false, nCirc, nReturns, ctx)
 }
 
-func CreateNMockCircuitsWithSessions(nCirc int, nReturns int) (cl []*Engine,
-	e error) {
+func CreateNMockCircuitsWithSessions(nCirc int, nReturns int,
+	ctx context.Context) (cl []*Engine, e error) {
 	
-	return createNMockCircuits(true, nCirc, nReturns)
+	return createNMockCircuits(true, nCirc, nReturns, ctx)
 }
 
 func GetTwoPrvKeys(t *testing.T) (prv1, prv2 *crypto.Prv) {

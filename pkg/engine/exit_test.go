@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"math/rand"
 	"sync"
 	"testing"
@@ -84,7 +85,8 @@ func TestClient_SendExit(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuitsWithSessions(2, 2); fails(e) {
+	ctx, cancel := context.WithCancel(context.Background())
+	if clients, e = CreateNMockCircuitsWithSessions(2, 2, ctx); fails(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -92,7 +94,7 @@ func TestClient_SendExit(t *testing.T) {
 	log.D.Ln("client", client.GetLocalNodeAddressString())
 	// set up forwarding port service
 	const port = 3455
-	sim := NewSim(0)
+	sim := NewByteChan(0)
 	for i := range clients {
 		e = clients[i].AddServiceToLocalNode(&Service{
 			Port:      port,
@@ -170,6 +172,7 @@ out:
 		wg.Wait()
 	}
 	quit.Q()
+	cancel()
 	for _, v := range clients {
 		v.Shutdown()
 	}

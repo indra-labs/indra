@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"sync"
 	"testing"
 	"time"
@@ -77,7 +78,8 @@ func TestClient_SendGetBalance(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	var clients []*Engine
 	var e error
-	if clients, e = CreateNMockCircuitsWithSessions(2, 2); fails(e) {
+	ctx, cancel := context.WithCancel(context.Background())
+	if clients, e = CreateNMockCircuitsWithSessions(2, 2, ctx); fails(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -126,6 +128,7 @@ out:
 		wg.Wait()
 	}
 	quit.Q()
+	cancel()
 	for _, v := range clients {
 		v.Shutdown()
 	}

@@ -27,7 +27,7 @@ type Node struct {
 	RelayRate int      // Base relay price mSAT/Mb.
 	Services  Services // Services offered by this peer.
 	PaymentChan
-	Transport *DuplexByteChan
+	Transport Transport
 	// Sender, Receiver Transport
 }
 
@@ -43,7 +43,7 @@ const (
 // nil, as only the node embedded in a client and not the peer node list has one
 // available. The Node for a client's self should use true in the local
 // parameter to not initialise the peer state ring buffers as it won't use them.
-func NewNode(addr *netip.AddrPort, idPrv *crypto.Prv, snd, rcv Transport,
+func NewNode(addr *netip.AddrPort, idPrv *crypto.Prv, tpt Transport,
 	relayRate int) (n *Node, id nonce.ID) {
 	
 	id = nonce.NewID()
@@ -53,10 +53,7 @@ func NewNode(addr *netip.AddrPort, idPrv *crypto.Prv, snd, rcv Transport,
 		Identity:    MakeKeys(idPrv),
 		RelayRate:   relayRate,
 		PaymentChan: make(PaymentChan, PaymentChanBuffers),
-		Transport: &DuplexByteChan{
-			Sender:   snd,
-			Receiver: rcv,
-		},
+		Transport:   tpt,
 	}
 	return
 }

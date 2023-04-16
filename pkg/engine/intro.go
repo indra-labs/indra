@@ -149,7 +149,7 @@ func (x *Intro) Handle(s *Splice, p Mung,
 		for i := range nn {
 			log.T.F("sending intro to %s", color.Yellow.Sprint(nn[i].AddrPort.
 				String()))
-			nn[i].Transport.Sender.Send(s.GetAll())
+			nn[i].Transport.Send(s.GetAll())
 			counter++
 			if counter < 2 {
 				continue

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"sync"
 	"testing"
 	"time"
@@ -22,7 +23,8 @@ func TestEngine_Message(t *testing.T) {
 	var clients []*Engine
 	var e error
 	const nCircuits = 10
-	if clients, e = CreateNMockCircuits(nCircuits, nCircuits); fails(e) {
+	ctx, cancel := context.WithCancel(context.Background())
+	if clients, e = CreateNMockCircuits(nCircuits, nCircuits, ctx); fails(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -118,7 +120,7 @@ func TestEngine_Message(t *testing.T) {
 	svc := &Service{
 		Port:      2345,
 		RelayRate: 43523,
-		Transport: NewSim(64),
+		Transport: NewByteChan(64),
 	}
 	ini := client.SendHiddenService(id, idPrv, time.Now().Add(time.Hour),
 		returner, introducer, svc, func(id nonce.ID, ifc interface{},
@@ -180,5 +182,6 @@ func TestEngine_Message(t *testing.T) {
 	wg.Wait()
 	time.Sleep(time.Second)
 	quit.Q()
+	cancel()
 	log.W.Ln("fin")
 }

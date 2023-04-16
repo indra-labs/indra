@@ -22,16 +22,15 @@ type Engine struct {
 }
 
 type Params struct {
-	Sender, Receiver Transport
-	IDPrv            *crypto.Prv
-	Node             *Node
-	Nodes            []*Node
-	NReturnSessions  int
+	Transport
+	IDPrv           *crypto.Prv
+	Node            *Node
+	Nodes           []*Node
+	NReturnSessions int
 }
 
 func NewEngine(p Params) (c *Engine, e error) {
-	p.Node.Transport.Sender = p.Sender
-	p.Node.Transport.Receiver = p.Receiver
+	p.Node.Transport = p.Transport
 	p.Node.Identity.Prv = p.IDPrv
 	p.Node.Identity.Pub = crypto.DerivePub(p.IDPrv)
 	var ks *crypto.KeySet

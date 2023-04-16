@@ -281,7 +281,7 @@ func (sm *SessionManager) ReceiveToLocalNode(port uint16) <-chan slice.Bytes {
 	sm.Lock()
 	defer sm.Unlock()
 	if port == 0 {
-		return sm.GetLocalNode().Transport.Receiver.Receive()
+		return sm.GetLocalNode().Transport.Receive()
 	}
 	return sm.GetLocalNode().ReceiveFrom(port)
 }

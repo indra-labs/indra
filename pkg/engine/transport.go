@@ -149,14 +149,6 @@ func (l *Listener) GetConnRecv(multiAddr string) (recv Transport) {
 	return
 }
 
-type DuplexByteChan struct {
-	Receiver, Sender Transport
-}
-
-func NewDuplexByteChan(bufs int) *DuplexByteChan {
-	return &DuplexByteChan{make(ByteChan, bufs), make(ByteChan, bufs)}
-}
-
 type Conn struct {
 	network.Conn
 	MTU       int

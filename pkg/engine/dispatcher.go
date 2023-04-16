@@ -146,7 +146,7 @@ func NewDispatcher(l *Conn, key *crypto.Prv, ctx context.Context,
 				go d.RunGC()
 			case p := <-pings:
 				go d.HandlePing(p)
-			case m := <-l.Transport.Receiver.Receive():
+			case m := <-l.Transport.Receive():
 				go d.RecvFromConn(m)
 			case m := <-d.Duplex.Sender.Receive():
 				go d.SendToConn(m)
@@ -223,14 +223,18 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 		return
 	}
 	d.Lock()
+	// This connection should only receive messages with cloaked keys
+	// matching our private key of the connection.
+	prv := d.Prv
 	if !crypto.Match(to, crypto.DerivePub(d.Prv).ToBytes()) {
-		// This connection should only receive messages with cloaked keys
-		// matching our private key of the connection.
+		prv = d.OldPrv
+	}
+	if !crypto.Match(to, crypto.DerivePub(d.OldPrv).ToBytes()) {
 		d.Unlock()
 		return
 	}
 	var p *Packet
-	if p, e = DecodePacket(m, from, d.Prv, iv); fails(e) {
+	if p, e = DecodePacket(m, from, prv, iv); fails(e) {
 		d.Unlock()
 		return
 	}
@@ -301,7 +305,7 @@ func (d *Dispatcher) SendAck(rxr *RxRecord) {
 	ack := &Acknowledge{rxr}
 	s := NewSplice(ack.Len())
 	_ = ack.Encode(s)
-	d.Duplex.Sender.Send(s.GetAll())
+	d.Duplex.Send(s.GetAll())
 	// Remove Rx from pending.
 	d.Lock()
 	var tmp []*RxRecord
@@ -393,7 +397,7 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 		if e = rpl.Encode(reply); fails(e) {
 			return
 		}
-		d.Duplex.Sender.Send(reply.GetAll())
+		d.Duplex.Send(reply.GetAll())
 	case RekeyReplyMagic:
 		o := c.(*RekeyReply)
 		log.D.S("key change reply", o)
@@ -404,37 +408,23 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 		r := o.RxRecord
 		d.Lock()
 		var tmp []*TxRecord
-		for _, v := range d.PendingOutbound {
-			if v.ID == r.ID {
+		for _, pending := range d.PendingOutbound {
+			if pending.ID == r.ID {
 				// Accounting of successful send.
-				if r.Hash == v.Hash {
+				if r.Hash == pending.Hash {
 					d.DataSent = d.DataSent.Add(d.DataSent,
-						big.NewInt(int64(v.Size)))
+						big.NewInt(int64(pending.Size)))
 				}
-				ds := d.TotalSent.Mul(d.TotalSent, big.NewInt(100000))
-				correct := d.DataSent.Div(ds, d.DataSent)
-				historicalError := float64(correct.Uint64()) / 100000
-				d.ErrorEWMA.Add(historicalError)
-				// Our first sent time and their last received should be
-				// around the same as the ping. Note that inaccurate clocks
-				// might not be helpful here.
-				//
-				// The consequence would be poor time sync decreases the
-				// precision of the error correction adjustment and lead to
-				// higher latency and more tx failures.
-				//
-				// The combination of all time average moderates the strength
-				// of ping rising a lot or a long burst of failed
-				// transmissions.
-				tot := r.Last.Sub(rxr.First)
+				d.ErrorEWMA.Add(float64(r.Received) / float64(r.Size))
+				tot := r.Last.Sub(pending.First) * 2
 				div := float64(tot) / float64(r.Ping)
 				d.PingDivergence.Add(div)
-				par := float64(d.Parity.Load()) / 256
+				par := float64(d.Parity.Load())
 				d.Parity.Store(uint32(byte(
 					par * d.PingDivergence.Value() *
-						d.ErrorEWMA.Value() * 256)))
+						d.ErrorEWMA.Value())))
 			} else {
-				tmp = append(tmp, v)
+				tmp = append(tmp, pending)
 			}
 		}
 		// Entry is now deleted and processed.
