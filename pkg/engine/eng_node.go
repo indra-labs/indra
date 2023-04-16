@@ -27,7 +27,8 @@ type Node struct {
 	RelayRate int      // Base relay price mSAT/Mb.
 	Services  Services // Services offered by this peer.
 	PaymentChan
-	Sender, Receiver Transport
+	Transport *DuplexByteChan
+	// Sender, Receiver Transport
 }
 
 const (
@@ -52,8 +53,10 @@ func NewNode(addr *netip.AddrPort, idPrv *crypto.Prv, snd, rcv Transport,
 		Identity:    MakeKeys(idPrv),
 		RelayRate:   relayRate,
 		PaymentChan: make(PaymentChan, PaymentChanBuffers),
-		Sender:      snd,
-		Receiver:    rcv,
+		Transport: &DuplexByteChan{
+			Sender:   snd,
+			Receiver: rcv,
+		},
 	}
 	return
 }

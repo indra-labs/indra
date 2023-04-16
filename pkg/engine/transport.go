@@ -102,7 +102,7 @@ func (l *Listener) handle(s network.Stream) {
 			nc = l.Dial(as)
 			l.AddConn(nc)
 		}
-		nc.Recv <- b[:n]
+		nc.Transport.Receiver.Send(b[:n])
 	}
 }
 
@@ -131,26 +131,26 @@ func (l *Listener) DelConn(d *Conn) {
 	l.Unlock()
 }
 
-func (l *Listener) GetConnSend(multiAddr string) (send ByteChan) {
+func (l *Listener) GetConnSend(multiAddr string) (send Transport) {
 	l.Lock()
 	if _, ok := l.connections[multiAddr]; ok {
-		send = l.connections[multiAddr].Send
+		send = l.connections[multiAddr].Transport.Sender
 	}
 	l.Unlock()
 	return
 }
 
-func (l *Listener) GetConnRecv(multiAddr string) (recv ByteChan) {
+func (l *Listener) GetConnRecv(multiAddr string) (recv Transport) {
 	l.Lock()
 	if _, ok := l.connections[multiAddr]; ok {
-		recv = l.connections[multiAddr].Recv
+		recv = l.connections[multiAddr].Transport.Receiver
 	}
 	l.Unlock()
 	return
 }
 
 type DuplexByteChan struct {
-	Recv, Send ByteChan
+	Receiver, Sender Transport
 }
 
 func NewDuplexByteChan(bufs int) *DuplexByteChan {
@@ -164,7 +164,7 @@ type Conn struct {
 	MultiAddr multiaddr.Multiaddr
 	Host      host.Host
 	rw        *bufio.ReadWriter
-	*DuplexByteChan
+	Transport *DuplexByteChan
 	sync.Mutex
 	qu.C
 }
@@ -195,13 +195,8 @@ func (c *Conn) SetRemoteKey(remoteKey *crypto.Pub) {
 	c.Unlock()
 }
 
-func (c *Conn) GetSend() ByteChan {
-	return c.DuplexByteChan.Send
-}
-
-func (c *Conn) GetRecv() ByteChan {
-	return c.DuplexByteChan.Recv
-}
+func (c *Conn) GetSend() Transport { return c.Transport.Sender }
+func (c *Conn) GetRecv() Transport { return c.Transport.Receiver }
 
 func getHostAddress(ha host.Host) string {
 	hostAddr, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/p2p/%s",
@@ -229,11 +224,11 @@ func (l *Listener) Dial(multiAddr string) (d *Conn) {
 		return
 	}
 	d = &Conn{
-		Conn:           s.Conn(),
-		MTU:            l.MTU,
-		MultiAddr:      ma,
-		Host:           l.Host,
-		DuplexByteChan: NewDuplexByteChan(ConnBufs),
+		Conn:      s.Conn(),
+		MTU:       l.MTU,
+		MultiAddr: ma,
+		Host:      l.Host,
+		Transport: NewDuplexByteChan(ConnBufs),
 		rw: bufio.NewReadWriter(bufio.NewReader(s),
 			bufio.NewWriter(s)),
 		C: qu.T(),
@@ -249,7 +244,7 @@ func (l *Listener) Dial(multiAddr string) (d *Conn) {
 			select {
 			case <-d.C:
 				return
-			case b := <-d.Send:
+			case b := <-d.Transport.Sender.Receive():
 				log.D.S(hostAddress+" sending to "+d.MultiAddr.String(),
 					b.ToBytes())
 				if _, e = d.rw.Write(b); fails(e) {

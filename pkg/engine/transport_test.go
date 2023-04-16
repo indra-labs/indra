@@ -49,7 +49,7 @@ func TestNewRCPListener(t *testing.T) {
 				log.D.S("received "+hn1, b.ToBytes())
 			case b := <-c2.Receive():
 				log.D.S("received "+hn2, b.ToBytes())
-				d2.Send <- msg2
+				d2.Transport.Sender.Send(msg2)
 			case <-ctx.Done():
 				return
 			}
@@ -61,11 +61,11 @@ func TestNewRCPListener(t *testing.T) {
 	log.D.Ln("connections", l1.connections, l2.connections)
 	l1.Unlock()
 	l2.Unlock()
-	d1.Send <- msg1
-	d2.Send <- msg1
+	d1.Transport.Sender.Send(msg1)
+	d2.Transport.Sender.Send(msg1)
 	time.Sleep(time.Second)
-	d1.Send <- msg1
-	d2.Send <- msg1
+	d1.Transport.Sender.Send(msg1)
+	d2.Transport.Sender.Send(msg1)
 	time.Sleep(time.Second)
 	cancel()
 }

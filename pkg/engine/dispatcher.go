@@ -146,9 +146,9 @@ func NewDispatcher(l *Conn, key *crypto.Prv, ctx context.Context,
 				go d.RunGC()
 			case p := <-pings:
 				go d.HandlePing(p)
-			case m := <-l.Recv:
+			case m := <-l.Transport.Receiver.Receive():
 				go d.RecvFromConn(m)
-			case m := <-d.Duplex.Send:
+			case m := <-d.Duplex.Sender.Receive():
 				go d.SendToConn(m)
 			case <-ctx.Done():
 				return
@@ -204,7 +204,7 @@ func (d *Dispatcher) RunGC() {
 		if e = ack.Encode(s); fails(e) {
 			continue
 		}
-		d.Duplex.Send <- s.GetAll()
+		d.Duplex.Sender.Send(s.GetAll())
 	}
 }
 
@@ -292,7 +292,7 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 				big.NewInt(int64(len(v.Data)+v.GetOverhead())),
 			)
 		}
-		// Send the message on to the receiving channel.
+		// Sender the message on to the receiving channel.
 		d.Handle(msg, rxr)
 	}
 }
@@ -301,7 +301,7 @@ func (d *Dispatcher) SendAck(rxr *RxRecord) {
 	ack := &Acknowledge{rxr}
 	s := NewSplice(ack.Len())
 	_ = ack.Encode(s)
-	d.Duplex.Send <- s.GetAll()
+	d.Duplex.Sender.Send(s.GetAll())
 	// Remove Rx from pending.
 	d.Lock()
 	var tmp []*RxRecord
@@ -343,10 +343,10 @@ func (d *Dispatcher) SendToConn(m slice.Bytes) {
 	cryptorand.Shuffle(len(packets), func(i, j int) {
 		packets[i], packets[j] = packets[j], packets[i]
 	})
-	// Send them out!
+	// Sender them out!
 	sendChan := d.Conn.GetSend()
 	for i := range packets {
-		sendChan <- packets[i]
+		sendChan.Send(packets[i])
 	}
 	txr.Last = time.Now()
 	txr.Ping = time.Duration(d.Ping.Value())
@@ -361,7 +361,7 @@ func (d *Dispatcher) SendToConn(m slice.Bytes) {
 }
 
 func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
-	// Send out the acknowledgement.
+	// Sender out the acknowledgement.
 	d.SendAck(rxr)
 	s := NewSpliceFrom(m)
 	c := Recognise(s)
@@ -387,13 +387,13 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 		d.OldPrv = d.Prv
 		d.Prv = prv
 		d.Unlock()
-		// Send a reply:
+		// Sender a reply:
 		rpl := RekeyReply{NewPubkey: crypto.DerivePub(prv)}
 		reply := NewSplice(rpl.Len())
 		if e = rpl.Encode(reply); fails(e) {
 			return
 		}
-		d.Duplex.Send <- reply.GetAll()
+		d.Duplex.Sender.Send(reply.GetAll())
 	case RekeyReplyMagic:
 		o := c.(*RekeyReply)
 		log.D.S("key change reply", o)

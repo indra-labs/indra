@@ -30,8 +30,8 @@ type Params struct {
 }
 
 func NewEngine(p Params) (c *Engine, e error) {
-	p.Node.Sender = p.Sender
-	p.Node.Receiver = p.Receiver
+	p.Node.Transport.Sender = p.Sender
+	p.Node.Transport.Receiver = p.Receiver
 	p.Node.Identity.Prv = p.IDPrv
 	p.Node.Identity.Pub = crypto.DerivePub(p.IDPrv)
 	var ks *crypto.KeySet
