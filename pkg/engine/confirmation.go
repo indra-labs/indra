@@ -17,11 +17,11 @@ type Confirmation struct {
 	Load byte
 }
 
-func confirmationGen() Codec            { return &Confirmation{} }
-func init()                             { Register(ConfirmationMagic, confirmationGen) }
-func (x *Confirmation) Len() int        { return ConfirmationLen }
-func (x *Confirmation) Wrap(inner Mung) {}
-func (x *Confirmation) GetMung() Mung   { return x }
+func confirmationGen() Codec             { return &Confirmation{} }
+func init()                              { Register(ConfirmationMagic, confirmationGen) }
+func (x *Confirmation) Len() int         { return ConfirmationLen }
+func (x *Confirmation) Wrap(inner Onion) {}
+func (x *Confirmation) GetOnion() Onion  { return x }
 
 func (o Skins) Confirmation(id nonce.ID, load byte) Skins {
 	return append(o, &Confirmation{ID: id, Load: load})
@@ -46,7 +46,7 @@ func (x *Confirmation) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *Confirmation) Handle(s *Splice, p Mung,
+func (x *Confirmation) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	// When a confirmation arrives check if it is registered for and run the

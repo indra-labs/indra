@@ -20,12 +20,12 @@ const (
 		ReplyCiphersLen
 )
 
-func MessageGen() Codec            { return &Message{} }
-func init()                        { Register(MessageMagic, MessageGen) }
-func (x *Message) Magic() string   { return MessageMagic }
-func (x *Message) Len() int        { return MessageLen + x.Payload.Len() }
-func (x *Message) Wrap(inner Mung) {}
-func (x *Message) GetMung() Mung   { return x }
+func MessageGen() Codec             { return &Message{} }
+func init()                         { Register(MessageMagic, MessageGen) }
+func (x *Message) Magic() string    { return MessageMagic }
+func (x *Message) Len() int         { return MessageLen + x.Payload.Len() }
+func (x *Message) Wrap(inner Onion) {}
+func (x *Message) GetOnion() Onion  { return x }
 
 type Message struct {
 	Forwards        [2]*SessionData
@@ -79,7 +79,7 @@ func (x *Message) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *Message) Handle(s *Splice, p Mung,
+func (x *Message) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	// Forward payload out to service port.

@@ -5,23 +5,23 @@ import (
 )
 
 // Codec is a unit of data that can be read and written from a binary form. All
-// Mung are Codec but not all Codec are Mung. Codec is also used for the
+// Onion are Codec but not all Codec are Onion. Codec is also used for the
 // Dispatcher's message headers.
 type Codec interface {
 	Magic() string
 	Encode(s *Splice) (e error)
 	Decode(s *Splice) (e error)
 	Len() int
-	GetMung() Mung
+	GetOnion() Onion
 }
 
-// Mung are messages that can be layered over each other and have
+// Onion are messages that can be layered over each other and have
 // a set of processing instructions for the data in them, and, if relevant,
 // how to account for them in sessions.
-type Mung interface {
+type Onion interface {
 	Codec
-	Wrap(inner Mung)
-	Handle(s *Splice, p Mung, ng *Engine) (e error)
+	Wrap(inner Onion)
+	Handle(s *Splice, p Onion, ng *Engine) (e error)
 	Account(res *SendData, sm *SessionManager, s *SessionData,
 		last bool) (skip bool, sd *SessionData)
 }

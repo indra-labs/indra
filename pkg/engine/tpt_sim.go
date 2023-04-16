@@ -35,7 +35,7 @@ func NewDuplexByteChan(bufs int) *DuplexByteChan {
 // NewSimDuplex creates a DuplexByteChan that behaves like a single ByteChan by
 // forwarding from the send channel to the receive channel. This creates
 // something like a virtual in memory packet connection, as used in many of the
-// Mung tests for testing correct forwarding without a full network.
+// Onion tests for testing correct forwarding without a full network.
 //
 // A network-using version of the same tests should also work exactly the same.
 func NewSimDuplex(bufs int, ctx context.Context) (d *DuplexByteChan) {

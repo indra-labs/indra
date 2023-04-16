@@ -20,10 +20,10 @@ type InitRekey struct {
 	NewPubkey *crypto.Pub
 }
 
-func InitRekeyGen() Codec          { return &InitRekey{} }
-func init()                        { Register(InitRekeyMagic, InitRekeyGen) }
-func (k *InitRekey) Magic() string { return InitRekeyMagic }
-func (k *InitRekey) GetMung() Mung { return nil }
+func InitRekeyGen() Codec            { return &InitRekey{} }
+func init()                          { Register(InitRekeyMagic, InitRekeyGen) }
+func (k *InitRekey) Magic() string   { return InitRekeyMagic }
+func (k *InitRekey) GetOnion() Onion { return nil }
 
 func (k *InitRekey) Encode(s *Splice) (e error) {
 	s.Magic4(InitRekeyMagic).Pubkey(k.NewPubkey)
@@ -50,10 +50,10 @@ type RekeyReply struct {
 	NewPubkey *crypto.Pub
 }
 
-func RekeyReplyGen() Codec          { return &RekeyReply{} }
-func init()                         { Register(RekeyReplyMagic, RekeyReplyGen) }
-func (r *RekeyReply) Magic() string { return RekeyReplyMagic }
-func (r *RekeyReply) GetMung() Mung { return nil }
+func RekeyReplyGen() Codec            { return &RekeyReply{} }
+func init()                           { Register(RekeyReplyMagic, RekeyReplyGen) }
+func (r *RekeyReply) Magic() string   { return RekeyReplyMagic }
+func (r *RekeyReply) GetOnion() Onion { return nil }
 
 func (r *RekeyReply) Encode(s *Splice) (e error) {
 	s.Magic4(RekeyReplyMagic).Pubkey(r.NewPubkey)
@@ -80,10 +80,10 @@ type Acknowledge struct {
 	*RxRecord
 }
 
-func AcknowledgeGen() Codec          { return &Acknowledge{} }
-func init()                          { Register(AcknowledgeMagic, AcknowledgeGen) }
-func (a *Acknowledge) Magic() string { return AcknowledgeMagic }
-func (a *Acknowledge) GetMung() Mung { return nil }
+func AcknowledgeGen() Codec            { return &Acknowledge{} }
+func init()                            { Register(AcknowledgeMagic, AcknowledgeGen) }
+func (a *Acknowledge) Magic() string   { return AcknowledgeMagic }
+func (a *Acknowledge) GetOnion() Onion { return nil }
 
 func (a *Acknowledge) Encode(s *Splice) (e error) {
 	s.Magic4(AcknowledgeMagic).
@@ -115,23 +115,23 @@ func (a *Acknowledge) Len() int {
 }
 
 type Munged struct {
-	slice.Bytes // contains an encoded Mung.
+	slice.Bytes // contains an encoded Onion.
 }
 
-func (m Munged) Unpack() (mu Mung) {
+func (m Munged) Unpack() (mu Onion) {
 	s := NewSpliceFrom(m.Bytes)
 	mm := Recognise(s)
 	var ok bool
-	if mu, ok = mm.(Mung); !ok {
+	if mu, ok = mm.(Onion); !ok {
 		log.D.Ln("type not recognised as a mung")
 	}
 	return
 }
 
-func MungedGen() Codec          { return &Munged{} }
-func init()                     { Register(MungedMagic, MungedGen) }
-func (m *Munged) Magic() string { return MungedMagic }
-func (m *Munged) GetMung() Mung { return nil }
+func MungedGen() Codec            { return &Munged{} }
+func init()                       { Register(MungedMagic, MungedGen) }
+func (m *Munged) Magic() string   { return MungedMagic }
+func (m *Munged) GetOnion() Onion { return nil }
 
 func (m *Munged) Encode(s *Splice) (e error) {
 	s.Magic4(MungedMagic).Bytes(m.Bytes)

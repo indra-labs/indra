@@ -5,11 +5,11 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 )
 
-type Skins []Mung
+type Skins []Onion
 
 var nop = &End{}
 
-func Encode(on Mung) (s *Splice) {
+func Encode(on Onion) (s *Splice) {
 	s = NewSplice(on.Len())
 	fails(on.Encode(s))
 	return
@@ -19,7 +19,7 @@ func Encode(on Mung) (s *Splice) {
 // contains the second, second contains the third, and so on, and then returns
 // the first onion, on which you can then call Encode and generate the wire
 // message form of the onion.
-func (o Skins) Assemble() (on Mung) {
+func (o Skins) Assemble() (on Onion) {
 	// First item is the outer crypt.
 	on = o[0]
 	// Iterate through the remaining layers.

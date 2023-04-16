@@ -33,15 +33,15 @@ type IntroQuery struct {
 	// a local Socks5 proxy into Indranet and the exit node also having
 	// this.
 	Key *crypto.Pub
-	Mung
+	Onion
 }
 
-func introQueryGen() Codec            { return &IntroQuery{} }
-func init()                           { Register(IntroQueryMagic, introQueryGen) }
-func (x *IntroQuery) Magic() string   { return IntroQueryMagic }
-func (x *IntroQuery) Len() int        { return IntroQueryLen + x.Mung.Len() }
-func (x *IntroQuery) Wrap(inner Mung) { x.Mung = inner }
-func (x *IntroQuery) GetMung() Mung   { return x }
+func introQueryGen() Codec             { return &IntroQuery{} }
+func init()                            { Register(IntroQueryMagic, introQueryGen) }
+func (x *IntroQuery) Magic() string    { return IntroQueryMagic }
+func (x *IntroQuery) Len() int         { return IntroQueryLen + x.Onion.Len() }
+func (x *IntroQuery) Wrap(inner Onion) { x.Onion = inner }
+func (x *IntroQuery) GetOnion() Onion  { return x }
 
 func (o Skins) IntroQuery(id nonce.ID, hsk *crypto.Pub, exit *ExitPoint) Skins {
 	return append(o, &IntroQuery{
@@ -49,7 +49,7 @@ func (o Skins) IntroQuery(id nonce.ID, hsk *crypto.Pub, exit *ExitPoint) Skins {
 		Ciphers: GenCiphers(exit.Keys, exit.ReturnPubs),
 		Nonces:  exit.Nonces,
 		Key:     hsk,
-		Mung:    nop,
+		Onion:   nop,
 	})
 }
 
@@ -57,7 +57,7 @@ func (x *IntroQuery) Encode(s *Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.Key, x.Ciphers, x.Nonces,
 	)
-	return x.Mung.Encode(s.
+	return x.Onion.Encode(s.
 		Magic(IntroQueryMagic).
 		ID(x.ID).Ciphers(x.Ciphers).Nonces(x.Nonces).
 		Pubkey(x.Key),
@@ -74,7 +74,7 @@ func (x *IntroQuery) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *IntroQuery) Handle(s *Splice, p Mung,
+func (x *IntroQuery) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	ng.HiddenRouting.Lock()

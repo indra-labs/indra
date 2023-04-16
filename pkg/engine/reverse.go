@@ -16,18 +16,18 @@ const (
 
 type Reverse struct {
 	AddrPort *netip.AddrPort
-	Mung
+	Onion
 }
 
-func reverseGen() Codec            { return &Reverse{} }
-func init()                        { Register(ReverseMagic, reverseGen) }
-func (x *Reverse) Magic() string   { return ReverseMagic }
-func (x *Reverse) Len() int        { return ReverseLen + x.Mung.Len() }
-func (x *Reverse) Wrap(inner Mung) { x.Mung = inner }
-func (x *Reverse) GetMung() Mung   { return x }
+func reverseGen() Codec             { return &Reverse{} }
+func init()                         { Register(ReverseMagic, reverseGen) }
+func (x *Reverse) Magic() string    { return ReverseMagic }
+func (x *Reverse) Len() int         { return ReverseLen + x.Onion.Len() }
+func (x *Reverse) Wrap(inner Onion) { x.Onion = inner }
+func (x *Reverse) GetOnion() Onion  { return x }
 
 func (o Skins) Reverse(ip *netip.AddrPort) Skins {
-	return append(o, &Reverse{AddrPort: ip, Mung: nop})
+	return append(o, &Reverse{AddrPort: ip, Onion: nop})
 }
 
 func (x *Reverse) Encode(s *Splice) (e error) {
@@ -37,8 +37,8 @@ func (x *Reverse) Encode(s *Splice) (e error) {
 	} else {
 		s.Magic(ReverseMagic).AddrPort(x.AddrPort)
 	}
-	if x.Mung != nil {
-		e = x.Mung.Encode(s)
+	if x.Onion != nil {
+		e = x.Onion.Encode(s)
 	}
 	return
 }
@@ -52,7 +52,7 @@ func (x *Reverse) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *Reverse) Handle(s *Splice, p Mung,
+func (x *Reverse) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	if x.AddrPort.String() == ng.GetLocalNodeAddress().String() {

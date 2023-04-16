@@ -82,7 +82,7 @@ func (ng *Engine) Shutdown() {
 	ng.C.Q()
 }
 
-func (ng *Engine) HandleMessage(s *Splice, pr Mung) {
+func (ng *Engine) HandleMessage(s *Splice, pr Onion) {
 	log.D.F("%s handling received message", ng.GetLocalNodeAddressString())
 	s.SetCursor(0)
 	s.SpliceSegments = s.SpliceSegments[:0]
@@ -95,7 +95,7 @@ func (ng *Engine) HandleMessage(s *Splice, pr Mung) {
 		if pr != nil && on.Magic() != pr.Magic() {
 			log.D.S(s.b.ToBytes())
 		}
-		m := on.GetMung()
+		m := on.GetOnion()
 		if m == nil {
 			return
 		}
@@ -109,7 +109,7 @@ func (ng *Engine) Handler() (out bool) {
 	log.T.C(func() string {
 		return ng.GetLocalNodeAddressString() + " awaiting message"
 	})
-	var prev Mung
+	var prev Onion
 	select {
 	case <-ng.C.Wait():
 		ng.Shutdown()

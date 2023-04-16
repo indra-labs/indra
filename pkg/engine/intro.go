@@ -28,12 +28,12 @@ type Intro struct {
 	Sig      crypto.SigBytes
 }
 
-func introGen() Codec            { return &Intro{} }
-func init()                      { Register(IntroMagic, introGen) }
-func (x *Intro) Magic() string   { return IntroMagic }
-func (x *Intro) Len() int        { return IntroLen }
-func (x *Intro) Wrap(inner Mung) {}
-func (x *Intro) GetMung() Mung   { return x }
+func introGen() Codec             { return &Intro{} }
+func init()                       { Register(IntroMagic, introGen) }
+func (x *Intro) Magic() string    { return IntroMagic }
+func (x *Intro) Len() int         { return IntroLen }
+func (x *Intro) Wrap(inner Onion) {}
+func (x *Intro) GetOnion() Onion  { return x }
 
 func (o Skins) Intro(id nonce.ID, key *crypto.Prv, ap *netip.AddrPort,
 	expires time.Time) (sk Skins) {
@@ -108,7 +108,7 @@ func (x *Intro) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *Intro) Handle(s *Splice, p Mung,
+func (x *Intro) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	ng.HiddenRouting.Lock()

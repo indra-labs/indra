@@ -38,11 +38,9 @@ const (
 	PaymentChanBuffers      = 8
 )
 
-// NewNode creates a new Node. A netip.AddrPort is optional if the counterparty
-// is not in direct connection. Also, the IdentityPrv node private key can be
-// nil, as only the node embedded in a client and not the peer node list has one
-// available. The Node for a client's self should use true in the local
-// parameter to not initialise the peer state ring buffers as it won't use them.
+// NewNode creates a new Node. The Node for a client's self should use true in
+// the local parameter to not initialise the peer state ring buffers as it won't
+// use them.
 func NewNode(addr *netip.AddrPort, idPrv *crypto.Prv, tpt Transport,
 	relayRate int) (n *Node, id nonce.ID) {
 	

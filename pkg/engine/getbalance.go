@@ -33,15 +33,15 @@ type GetBalance struct {
 	// course, if configured this way. This could be done by tunneling from
 	// a local Socks5 proxy into Indranet and the exit node also having
 	// this.
-	Mung
+	Onion
 }
 
-func getBalanceGen() Codec            { return &GetBalance{} }
-func init()                           { Register(GetBalanceMagic, getBalanceGen) }
-func (x *GetBalance) Magic() string   { return GetBalanceMagic }
-func (x *GetBalance) Len() int        { return GetBalanceLen + x.Mung.Len() }
-func (x *GetBalance) Wrap(inner Mung) { x.Mung = inner }
-func (x *GetBalance) GetMung() Mung   { return x }
+func getBalanceGen() Codec             { return &GetBalance{} }
+func init()                            { Register(GetBalanceMagic, getBalanceGen) }
+func (x *GetBalance) Magic() string    { return GetBalanceMagic }
+func (x *GetBalance) Len() int         { return GetBalanceLen + x.Onion.Len() }
+func (x *GetBalance) Wrap(inner Onion) { x.Onion = inner }
+func (x *GetBalance) GetOnion() Onion  { return x }
 
 type GetBalanceParams struct {
 	ID, ConfID nonce.ID
@@ -82,7 +82,7 @@ func (o Skins) GetBalance(id, confID nonce.ID, ep *ExitPoint) Skins {
 		ConfID:  confID,
 		Ciphers: GenCiphers(ep.Keys, ep.ReturnPubs),
 		Nonces:  ep.Nonces,
-		Mung:    nop,
+		Onion:   nop,
 	})
 }
 
@@ -90,7 +90,7 @@ func (x *GetBalance) Encode(s *Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.ConfID, x.Ciphers, x.Nonces,
 	)
-	return x.Mung.Encode(s.
+	return x.Onion.Encode(s.
 		Magic(GetBalanceMagic).
 		ID(x.ID).
 		ID(x.ConfID).Ciphers(x.Ciphers).Nonces(x.Nonces),
@@ -107,7 +107,7 @@ func (x *GetBalance) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *GetBalance) Handle(s *Splice, p Mung,
+func (x *GetBalance) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	log.T.S(x)

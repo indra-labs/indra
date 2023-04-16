@@ -5,12 +5,12 @@ const (
 	EndLen   = 0
 )
 
-func EndGen() Codec            { return &End{} }
-func init()                    { Register(EndMagic, EndGen) }
-func (x *End) Magic() string   { return EndMagic }
-func (x *End) Len() int        { return EndLen }
-func (x *End) Wrap(inner Mung) {}
-func (x *End) GetMung() Mung   { return x }
+func EndGen() Codec             { return &End{} }
+func init()                     { Register(EndMagic, EndGen) }
+func (x *End) Magic() string    { return EndMagic }
+func (x *End) Len() int         { return EndLen }
+func (x *End) Wrap(inner Onion) {}
+func (x *End) GetOnion() Onion  { return x }
 
 type End struct{}
 
@@ -30,7 +30,7 @@ func (x *End) Decode(s *Splice) (e error) {
 	return
 }
 
-func (x *End) Handle(s *Splice, p Mung,
+func (x *End) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	return

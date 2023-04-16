@@ -26,14 +26,14 @@ type Crypt struct {
 	Cloak   crypto.PubKey
 	ToPriv  *crypto.Prv
 	FromPub *crypto.Pub
-	Mung
+	Onion
 }
 
-func cryptGen() Codec            { return &Crypt{} }
-func init()                      { Register(CryptMagic, cryptGen) }
-func (x *Crypt) Len() int        { return CryptLen + x.Mung.Len() }
-func (x *Crypt) Wrap(inner Mung) { x.Mung = inner }
-func (x *Crypt) GetMung() Mung   { return x }
+func cryptGen() Codec             { return &Crypt{} }
+func init()                       { Register(CryptMagic, cryptGen) }
+func (x *Crypt) Len() int         { return CryptLen + x.Onion.Len() }
+func (x *Crypt) Wrap(inner Onion) { x.Onion = inner }
+func (x *Crypt) GetOnion() Onion  { return x }
 
 func (o Skins) Crypt(toHdr, toPld *crypto.Pub, from *crypto.Prv, iv nonce.IV,
 	depth int) Skins {
@@ -44,7 +44,7 @@ func (o Skins) Crypt(toHdr, toPld *crypto.Pub, from *crypto.Prv, iv nonce.IV,
 		ToPayloadPub: toPld,
 		From:         from,
 		IV:           iv,
-		Mung:         nop,
+		Onion:        nop,
 	})
 }
 
@@ -74,8 +74,8 @@ func (x *Crypt) Encode(s *Splice) (e error) {
 	default:
 		panic("incorrect value for crypt sequence")
 	}
-	if x.Mung != nil {
-		if e = x.Mung.Encode(s); fails(e) {
+	if x.Onion != nil {
+		if e = x.Onion.Encode(s); fails(e) {
 			return
 		}
 	}
@@ -105,7 +105,7 @@ func (x *Crypt) Decrypt(prk *crypto.Prv, s *Splice) {
 		x.IV, s.GetRest())
 }
 
-func (x *Crypt) Handle(s *Splice, p Mung,
+func (x *Crypt) Handle(s *Splice, p Onion,
 	ng *Engine) (e error) {
 	
 	hdr, _, _, identity := ng.FindCloaked(x.Cloak)

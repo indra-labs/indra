@@ -18,12 +18,12 @@ const (
 		nonce.IDLen + 3*sha256.Len + 3*nonce.IVLen
 )
 
-func RouteGen() Codec            { return &Route{} }
-func init()                      { Register(RouteMagic, RouteGen) }
-func (x *Route) Magic() string   { return RouteMagic }
-func (x *Route) Len() int        { return RouteLen + x.Mung.Len() }
-func (x *Route) Wrap(inner Mung) { x.Mung = inner }
-func (x *Route) GetMung() Mung   { return x }
+func RouteGen() Codec             { return &Route{} }
+func init()                       { Register(RouteMagic, RouteGen) }
+func (x *Route) Magic() string    { return RouteMagic }
+func (x *Route) Len() int         { return RouteLen + x.Onion.Len() }
+func (x *Route) Wrap(inner Onion) { x.Onion = inner }
+func (x *Route) GetOnion() Onion  { return x }
 
 type Route struct {
 	HiddenService *crypto.Pub
@@ -41,7 +41,7 @@ type Route struct {
 	// they are common with the crypts in the header.
 	Nonces
 	RoutingHeaderBytes
-	Mung
+	Onion
 }
 
 func (o Skins) Route(id nonce.ID, k *crypto.Pub, ks *crypto.KeySet,
@@ -54,7 +54,7 @@ func (o Skins) Route(id nonce.ID, k *crypto.Pub, ks *crypto.KeySet,
 		ID:            id,
 		Ciphers:       GenCiphers(ep.Keys, ep.ReturnPubs),
 		Nonces:        ep.Nonces,
-		Mung:          &End{},
+		Onion:         &End{},
 	}
 	oo.SenderPub = crypto.DerivePub(oo.Sender)
 	oo.HiddenCloaked = crypto.GetCloak(k)
@@ -72,7 +72,7 @@ func (x *Route) Encode(s *Splice) (e error) {
 		IV(x.IV)
 	start := s.GetCursor()
 	s.ID(x.ID).Ciphers(x.Ciphers).Nonces(x.Nonces)
-	if e = x.Mung.Encode(s); fails(e) {
+	if e = x.Onion.Encode(s); fails(e) {
 		return
 	}
 	var blk cipher.Block
@@ -105,7 +105,7 @@ func (x *Route) Decrypt(prk *crypto.Prv, s *Splice) {
 		ReadRoutingHeader(&x.RoutingHeaderBytes)
 }
 
-func (x *Route) Handle(s *Splice, p Mung, ng *Engine) (e error) {
+func (x *Route) Handle(s *Splice, p Onion, ng *Engine) (e error) {
 	
 	log.D.Ln(ng.GetLocalNodeAddressString(), "handling route")
 	hc := ng.FindCloakedHiddenService(x.HiddenCloaked)
