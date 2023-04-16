@@ -54,8 +54,9 @@ func (x *Balance) Decode(s *splice.Splice) (e error) {
 }
 
 func (x *Balance) Handle(s *splice.Splice, p Onion,
-	ng *Engine) (e error) {
+	ni interface{}) (e error) {
 	
+	ng := ni.(*Engine)
 	if pending := ng.PendingResponses.Find(x.ID); pending != nil {
 		log.D.S("found pending", pending.ID)
 		for i := range pending.Billable {
@@ -92,7 +93,7 @@ func (x *Balance) Handle(s *splice.Splice, p Onion,
 	return
 }
 
-func (x *Balance) Account(res *SendData, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
+func (x *Balance) Account(res *Data, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
 	
 	res.ID = x.ID
 	return

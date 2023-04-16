@@ -72,8 +72,9 @@ func (x *Exit) Decode(s *splice.Splice) (e error) {
 }
 
 func (x *Exit) Handle(s *splice.Splice, p Onion,
-	ng *Engine) (e error) {
+	ni interface{}) (e error) {
 	
+	ng := ni.(*Engine)
 	// payload is forwarded to a local port and the result is forwarded
 	// back with a reverse header.
 	var result slice.Bytes
@@ -129,7 +130,7 @@ type ExitParams struct {
 	KS         *crypto.KeySet
 }
 
-func (x *Exit) Account(res *SendData, sm *SessionManager,
+func (x *Exit) Account(res *Data, sm *SessionManager,
 	s *SessionData, last bool) (skip bool, sd *SessionData) {
 	s.Node.Lock()
 	for j := range s.Node.Services {

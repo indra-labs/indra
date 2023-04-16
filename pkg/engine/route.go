@@ -88,8 +88,9 @@ func (x *Route) Decrypt(prk *crypto.Prv, s *splice.Splice) {
 	ReadRoutingHeader(s, &x.RoutingHeaderBytes)
 }
 
-func (x *Route) Handle(s *splice.Splice, p Onion, ng *Engine) (e error) {
+func (x *Route) Handle(s *splice.Splice, p Onion, ni interface{}) (e error) {
 	
+	ng := ni.(*Engine)
 	log.D.Ln(ng.GetLocalNodeAddressString(), "handling route")
 	hc := ng.FindCloakedHiddenService(x.HiddenCloaked)
 	if hc == nil {
@@ -145,7 +146,7 @@ func (x *Route) Handle(s *splice.Splice, p Onion, ng *Engine) (e error) {
 	return
 }
 
-func (x *Route) Account(res *SendData, sm *SessionManager,
+func (x *Route) Account(res *Data, sm *SessionManager,
 	s *SessionData, last bool) (skip bool, sd *SessionData) {
 	
 	copy(res.ID[:], x.ID[:])

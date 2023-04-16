@@ -65,13 +65,14 @@ func (x *Ready) Decode(s *splice.Splice) (e error) {
 }
 
 func (x *Ready) Handle(s *splice.Splice, p Onion,
-	ng *Engine) (e error) {
+	ni interface{}) (e error) {
 	
+	ng := ni.(*Engine)
 	_, e = ng.PendingResponses.ProcessAndDelete(x.ID, x, s.GetAll())
 	return
 }
 
-func (x *Ready) Account(res *SendData, sm *SessionManager,
+func (x *Ready) Account(res *Data, sm *SessionManager,
 	s *SessionData, last bool) (skip bool, sd *SessionData) {
 	
 	return

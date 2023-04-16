@@ -19,6 +19,7 @@ import (
 	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
+	"git-indra.lan/indra-labs/indra/pkg/engine/transport"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -131,7 +132,7 @@ func (l *Listener) DelConn(d *Conn) {
 	l.Unlock()
 }
 
-func (l *Listener) GetConnSend(multiAddr string) (send Transport) {
+func (l *Listener) GetConnSend(multiAddr string) (send transport.Transport) {
 	l.Lock()
 	if _, ok := l.connections[multiAddr]; ok {
 		send = l.connections[multiAddr].Transport.Sender
@@ -140,7 +141,7 @@ func (l *Listener) GetConnSend(multiAddr string) (send Transport) {
 	return
 }
 
-func (l *Listener) GetConnRecv(multiAddr string) (recv Transport) {
+func (l *Listener) GetConnRecv(multiAddr string) (recv transport.Transport) {
 	l.Lock()
 	if _, ok := l.connections[multiAddr]; ok {
 		recv = l.connections[multiAddr].Transport.Receiver
@@ -187,8 +188,8 @@ func (c *Conn) SetRemoteKey(remoteKey *crypto.Pub) {
 	c.Unlock()
 }
 
-func (c *Conn) GetSend() Transport { return c.Transport.Sender }
-func (c *Conn) GetRecv() Transport { return c.Transport.Receiver }
+func (c *Conn) GetSend() transport.Transport { return c.Transport.Sender }
+func (c *Conn) GetRecv() transport.Transport { return c.Transport.Receiver }
 
 func getHostAddress(ha host.Host) string {
 	hostAddr, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/p2p/%s",

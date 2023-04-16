@@ -105,8 +105,9 @@ func (x *Intro) Decode(s *splice.Splice) (e error) {
 }
 
 func (x *Intro) Handle(s *splice.Splice, p Onion,
-	ng *Engine) (e error) {
+	ni interface{}) (e error) {
 	
+	ng := ni.(*Engine)
 	ng.HiddenRouting.Lock()
 	valid := x.Validate()
 	if valid {
@@ -157,7 +158,7 @@ func (x *Intro) Handle(s *splice.Splice, p Onion,
 	return
 }
 
-func (x *Intro) Account(res *SendData, sm *SessionManager,
+func (x *Intro) Account(res *Data, sm *SessionManager,
 	s *SessionData, last bool) (skip bool, sd *SessionData) {
 	
 	res.ID = x.ID

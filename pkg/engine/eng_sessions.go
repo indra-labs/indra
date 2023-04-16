@@ -14,8 +14,8 @@ import (
 // PostAcctOnion takes a slice of Skins and calculates their costs and
 // the list of sessions inside them and attaches accounting operations to
 // apply when the associated confirmation(s) or response hooks are executed.
-func (sm *SessionManager) PostAcctOnion(o Skins) (res *SendData) {
-	res = &SendData{}
+func (sm *SessionManager) PostAcctOnion(o Skins) (res *Data) {
+	res = &Data{}
 	assembled := o.Assemble()
 	sp := Encode(assembled)
 	res.B = sp.GetAll()

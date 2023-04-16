@@ -7,13 +7,14 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/engine/transport"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 type Service struct {
 	Port      uint16
 	RelayRate int
-	Transport
+	transport.Transport
 }
 
 type Services []*Service
@@ -27,8 +28,7 @@ type Node struct {
 	RelayRate int      // Base relay price mSAT/Mb.
 	Services  Services // Services offered by this peer.
 	PaymentChan
-	Transport Transport
-	// Sender, Receiver Transport
+	Transport transport.Transport
 }
 
 const (
@@ -41,7 +41,7 @@ const (
 // NewNode creates a new Node. The Node for a client's self should use true in
 // the local parameter to not initialise the peer state ring buffers as it won't
 // use them.
-func NewNode(addr *netip.AddrPort, idPrv *crypto.Prv, tpt Transport,
+func NewNode(addr *netip.AddrPort, idPrv *crypto.Prv, tpt transport.Transport,
 	relayRate int) (n *Node, id nonce.ID) {
 	
 	id = nonce.NewID()

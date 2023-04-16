@@ -44,8 +44,9 @@ func (x *Delay) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Delay) Handle(s *splice.Splice, p Onion, ng *Engine) (e error) {
+func (x *Delay) Handle(s *splice.Splice, p Onion, ni interface{}) (e error) {
 	
+	ng := ni.(*Engine)
 	// this is a message to hold the message in the buffer until a duration
 	// elapses. The accounting for the remainder of the message adds a
 	// factor to the effective byte consumption in accordance with the time
@@ -58,6 +59,6 @@ func (x *Delay) Handle(s *splice.Splice, p Onion, ng *Engine) (e error) {
 	return
 }
 
-func (x *Delay) Account(res *SendData, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
+func (x *Delay) Account(res *Data, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
 	return
 }

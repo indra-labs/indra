@@ -59,7 +59,9 @@ func (x *HiddenService) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *HiddenService) Handle(s *splice.Splice, p Onion, ng *Engine) (e error) {
+func (x *HiddenService) Handle(s *splice.Splice, p Onion, ni interface{}) (e error) {
+	
+	ng := ni.(*Engine)
 	log.D.F("%s adding introduction for key %s",
 		ng.GetLocalNodeAddressString(), x.Key.ToBase32Abbreviated())
 	ng.HiddenRouting.AddIntro(x.Key, &Introduction{
@@ -75,7 +77,7 @@ func (x *HiddenService) Handle(s *splice.Splice, p Onion, ng *Engine) (e error) 
 	return
 }
 
-func (x *HiddenService) Account(res *SendData, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
+func (x *HiddenService) Account(res *Data, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
 	
 	res.ID = x.Intro.ID
 	res.Billable = append(res.Billable, s.ID)

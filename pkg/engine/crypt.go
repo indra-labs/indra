@@ -35,8 +35,7 @@ func init()                       { Register(CryptMagic, cryptGen) }
 func (x *Crypt) Len() int         { return CryptLen + x.Onion.Len() }
 func (x *Crypt) Wrap(inner Onion) { x.Onion = inner }
 func (x *Crypt) GetOnion() Onion  { return x }
-
-func (x *Crypt) Magic() string { return CryptMagic }
+func (x *Crypt) Magic() string    { return CryptMagic }
 
 func (x *Crypt) Encode(s *splice.Splice) (e error) {
 	log.T.F("encoding %s %s %x %x", reflect.TypeOf(x),
@@ -94,8 +93,9 @@ func (x *Crypt) Decrypt(prk *crypto.Prv, s *splice.Splice) {
 }
 
 func (x *Crypt) Handle(s *splice.Splice, p Onion,
-	ng *Engine) (e error) {
+	ni interface{}) (e error) {
 	
+	ng := ni.(*Engine)
 	hdr, _, _, identity := ng.FindCloaked(x.Cloak)
 	if hdr == nil {
 		log.T.Ln("no matching key found from cloaked key")
@@ -117,7 +117,7 @@ func (x *Crypt) Handle(s *splice.Splice, p Onion,
 	return e
 }
 
-func (x *Crypt) Account(res *SendData, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
+func (x *Crypt) Account(res *Data, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
 	
 	sd = sm.FindSessionByHeaderPub(x.ToHeaderPub)
 	if sd == nil {

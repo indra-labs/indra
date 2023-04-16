@@ -65,8 +65,9 @@ func (x *IntroQuery) Decode(s *splice.Splice) (e error) {
 }
 
 func (x *IntroQuery) Handle(s *splice.Splice, p Onion,
-	ng *Engine) (e error) {
+	ni interface{}) (e error) {
 	
+	ng := ni.(*Engine)
 	ng.HiddenRouting.Lock()
 	log.D.Ln(ng.GetLocalNodeAddressString(), "handling introquery", x.ID,
 		x.Key.ToBase32Abbreviated())
@@ -97,7 +98,7 @@ func (x *IntroQuery) Handle(s *splice.Splice, p Onion,
 	return
 }
 
-func (x *IntroQuery) Account(res *SendData, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
+func (x *IntroQuery) Account(res *Data, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
 	
 	res.ID = x.ID
 	res.Billable = append(res.Billable, s.ID)

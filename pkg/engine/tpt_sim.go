@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	
+	"git-indra.lan/indra-labs/indra/pkg/engine/transport"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -25,7 +26,7 @@ func (s ByteChan) Receive() <-chan slice.Bytes {
 // consuming type by listening to the send channel for requests to send, and
 // forwarding data from the upstream to the receive channel.
 type DuplexByteChan struct {
-	Receiver, Sender Transport
+	Receiver, Sender transport.Transport
 }
 
 func NewDuplexByteChan(bufs int) *DuplexByteChan {

@@ -44,15 +44,16 @@ func (x *Confirmation) Decode(s *splice.Splice) (e error) {
 }
 
 func (x *Confirmation) Handle(s *splice.Splice, p Onion,
-	ng *Engine) (e error) {
+	ni interface{}) (e error) {
 	
+	ng := ni.(*Engine)
 	// When a confirmation arrives check if it is registered for and run the
 	// hook that was registered with it.
 	ng.PendingResponses.ProcessAndDelete(x.ID, nil, s.GetAll())
 	return
 }
 
-func (x *Confirmation) Account(res *SendData, sm *SessionManager,
+func (x *Confirmation) Account(res *Data, sm *SessionManager,
 	s *SessionData, last bool) (skip bool, sd *SessionData) {
 	
 	res.ID = x.ID

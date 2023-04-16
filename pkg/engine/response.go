@@ -56,8 +56,9 @@ func (x *Response) Decode(s *splice.Splice) (e error) {
 }
 
 func (x *Response) Handle(s *splice.Splice, p Onion,
-	ng *Engine) (e error) {
+	ni interface{}) (e error) {
 	
+	ng := ni.(*Engine)
 	pending := ng.PendingResponses.Find(x.ID)
 	log.T.F("searching for pending ID %s", x.ID)
 	if pending != nil {
@@ -89,7 +90,7 @@ func (x *Response) Handle(s *splice.Splice, p Onion,
 	return
 }
 
-func (x *Response) Account(res *SendData, sm *SessionManager,
+func (x *Response) Account(res *Data, sm *SessionManager,
 	s *SessionData, last bool) (skip bool, sd *SessionData) {
 	return
 }

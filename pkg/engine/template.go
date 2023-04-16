@@ -1,6 +1,8 @@
 package engine
 
-import "git-indra.lan/indra-labs/indra/pkg/splice"
+import (
+	"git-indra.lan/indra-labs/indra/pkg/splice"
+)
 
 const (
 	EndMagic = "!!"
@@ -29,12 +31,12 @@ func (x *End) Decode(s *splice.Splice) (e error) {
 }
 
 func (x *End) Handle(s *splice.Splice, p Onion,
-	ng *Engine) (e error) {
+	ni interface{}) (e error) {
 	
 	return
 }
 
-func (x *End) Account(res *SendData, sm *SessionManager,
+func (x *End) Account(res *Data, sm *SessionManager,
 	s *SessionData, last bool) (skip bool, sd *SessionData) {
 	return
 }

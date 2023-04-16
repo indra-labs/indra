@@ -42,8 +42,9 @@ func (x *Forward) Decode(s *splice.Splice) (e error) {
 }
 
 func (x *Forward) Handle(s *splice.Splice, p Onion,
-	ng *Engine) (e error) {
+	ni interface{}) (e error) {
 	
+	ng := ni.(*Engine)
 	// Forward the whole buffer received onwards. Usually there will be a
 	// crypt.Layer under this which will be unwrapped by the receiver.
 	if x.AddrPort.String() == ng.GetLocalNodeAddress().String() {
@@ -65,7 +66,7 @@ func (x *Forward) Handle(s *splice.Splice, p Onion,
 	return e
 }
 
-func (x *Forward) Account(res *SendData, sm *SessionManager,
+func (x *Forward) Account(res *Data, sm *SessionManager,
 	s *SessionData, last bool) (skip bool, sd *SessionData) {
 	
 	res.Billable = append(res.Billable, s.ID)

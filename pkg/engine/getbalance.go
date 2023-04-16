@@ -73,8 +73,9 @@ func (x *GetBalance) Decode(s *splice.Splice) (e error) {
 }
 
 func (x *GetBalance) Handle(s *splice.Splice, p Onion,
-	ng *Engine) (e error) {
+	ni interface{}) (e error) {
 	
+	ng := ni.(*Engine)
 	log.T.S(x)
 	var found bool
 	var bal *Balance
@@ -127,7 +128,7 @@ func (x *GetBalance) Handle(s *splice.Splice, p Onion,
 	return
 }
 
-func (x *GetBalance) Account(res *SendData, sm *SessionManager,
+func (x *GetBalance) Account(res *Data, sm *SessionManager,
 	s *SessionData, last bool) (skip bool, sd *SessionData) {
 	
 	res.ID = s.ID

@@ -75,14 +75,15 @@ func (x *Message) Decode(s *splice.Splice) (e error) {
 }
 
 func (x *Message) Handle(s *splice.Splice, p Onion,
-	ng *Engine) (e error) {
+	ni interface{}) (e error) {
 	
+	ng := ni.(*Engine)
 	// Forward payload out to service port.
 	_, e = ng.PendingResponses.ProcessAndDelete(x.ID, x, s.GetAll())
 	return
 }
 
-func (x *Message) Account(res *SendData, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
+func (x *Message) Account(res *Data, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
 	
 	res.ID = x.ID
 	res.Billable = append(res.Billable, s.ID)

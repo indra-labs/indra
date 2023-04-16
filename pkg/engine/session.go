@@ -69,8 +69,9 @@ func (x *Session) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Session) Handle(s *splice.Splice, p Onion, ng *Engine) (e error) {
+func (x *Session) Handle(s *splice.Splice, p Onion, ni interface{}) (e error) {
 	
+	ng := ni.(*Engine)
 	log.T.F("incoming session %s", x.PreimageHash())
 	pi := ng.FindPendingPreimage(x.PreimageHash())
 	if pi != nil {
@@ -92,7 +93,7 @@ func (x *Session) PreimageHash() sha256.Hash {
 	return sha256.Single(append(h[:], p[:]...))
 }
 
-func (x *Session) Account(res *SendData, sm *SessionManager, s *SessionData,
+func (x *Session) Account(res *Data, sm *SessionManager, s *SessionData,
 	last bool) (skip bool, sd *SessionData) {
 	return
 }

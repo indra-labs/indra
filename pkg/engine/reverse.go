@@ -50,8 +50,9 @@ func (x *Reverse) Decode(s *splice.Splice) (e error) {
 }
 
 func (x *Reverse) Handle(s *splice.Splice, p Onion,
-	ng *Engine) (e error) {
+	ni interface{}) (e error) {
 	
+	ng := ni.(*Engine)
 	if x.AddrPort.String() == ng.GetLocalNodeAddress().String() {
 		in := Recognise(s)
 		if e = in.Decode(s); fails(e) {
@@ -108,7 +109,7 @@ func (x *Reverse) Handle(s *splice.Splice, p Onion,
 	return e
 }
 
-func (x *Reverse) Account(res *SendData, sm *SessionManager,
+func (x *Reverse) Account(res *Data, sm *SessionManager,
 	s *SessionData, last bool) (skip bool, sd *SessionData) {
 	
 	res.Billable = append(res.Billable, s.ID)

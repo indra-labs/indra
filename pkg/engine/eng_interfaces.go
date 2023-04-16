@@ -2,7 +2,6 @@ package engine
 
 import (
 	"git-indra.lan/indra-labs/indra/pkg/splice"
-	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 // Codec is a unit of data that can be read and written from a binary form. All
@@ -22,13 +21,7 @@ type Codec interface {
 type Onion interface {
 	Codec
 	Wrap(inner Onion)
-	Handle(s *splice.Splice, p Onion, ng *Engine) (e error)
-	Account(res *SendData, sm *SessionManager, s *SessionData,
+	Handle(s *splice.Splice, p Onion, ni interface{}) (e error)
+	Account(res *Data, sm *SessionManager, s *SessionData,
 		last bool) (skip bool, sd *SessionData)
-}
-
-// Transport is a generic interface for sending and receiving slices of bytes.
-type Transport interface {
-	Send(b slice.Bytes) (e error)
-	Receive() <-chan slice.Bytes
 }
