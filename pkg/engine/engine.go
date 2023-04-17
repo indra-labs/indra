@@ -6,8 +6,8 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/engine/ifc"
 	"git-indra.lan/indra-labs/indra/pkg/engine/node"
+	"git-indra.lan/indra-labs/indra/pkg/engine/onions"
 	"git-indra.lan/indra-labs/indra/pkg/engine/responses"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
@@ -19,7 +19,7 @@ import (
 type Engine struct {
 	Responses *responses.Pending
 	*sess.Manager
-	*HiddenRouting
+	h *onions.Hidden
 	*crypto.KeySet
 	Load          atomic.Uint32
 	TimeoutSignal qu.C
@@ -48,7 +48,7 @@ func NewEngine(p Params) (c *Engine, e error) {
 		Responses:     &responses.Pending{},
 		KeySet:        ks,
 		Manager:       sess.NewSessionManager(),
-		HiddenRouting: NewHiddenrouting(),
+		h:             onions.NewHiddenrouting(),
 		TimeoutSignal: qu.T(),
 		Pause:         qu.T(),
 		C:             qu.T(),
@@ -89,11 +89,11 @@ func (ng *Engine) Shutdown() {
 	ng.C.Q()
 }
 
-func (ng *Engine) HandleMessage(s *splice.Splice, pr ifc.Onion) {
+func (ng *Engine) HandleMessage(s *splice.Splice, pr onions.Onion) {
 	log.D.F("%s handling received message", ng.GetLocalNodeAddressString())
 	s.SetCursor(0)
 	s.Segments = s.Segments[:0]
-	on := Recognise(s)
+	on := onions.Recognise(s)
 	if on != nil {
 		log.D.Ln("magic", on.Magic())
 		if fails(on.Decode(s)) {
@@ -106,7 +106,7 @@ func (ng *Engine) HandleMessage(s *splice.Splice, pr ifc.Onion) {
 		if m == nil {
 			return
 		}
-		if fails(m.(ifc.Onion).Handle(s, pr, ng)) {
+		if fails(m.(onions.Onion).Handle(s, pr, ng)) {
 			log.W.S("unrecognised packet", s.GetAll().ToBytes())
 		}
 	}
@@ -116,7 +116,7 @@ func (ng *Engine) Handler() (out bool) {
 	log.T.C(func() string {
 		return ng.GetLocalNodeAddressString() + " awaiting message"
 	})
-	var prev ifc.Onion
+	var prev onions.Onion
 	select {
 	case <-ng.C.Wait():
 		ng.Shutdown()
@@ -169,12 +169,12 @@ func (ng *Engine) Handler() (out bool) {
 	return
 }
 
-var _ ifc.Ngin = &Engine{}
+var _ onions.Ngin = &Engine{}
 
 func (ng *Engine) GetLoad() byte               { return byte(ng.Load.Load()) }
 func (ng *Engine) SetLoad(load byte)           { ng.Load.Store(uint32(load)) }
 func (ng *Engine) Mgr() *sess.Manager          { return ng.Manager }
 func (ng *Engine) Pending() *responses.Pending { return ng.Responses }
-func (ng *Engine) Hidden() *HiddenRouting      { return ng.HiddenRouting }
+func (ng *Engine) GetHidden() *onions.Hidden   { return ng.h }
 func (ng *Engine) KillSwitch() qu.C            { return ng.C }
 func (ng *Engine) Keyset() *crypto.KeySet      { return ng.KeySet }

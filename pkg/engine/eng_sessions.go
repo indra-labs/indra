@@ -8,6 +8,7 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/node"
+	"git-indra.lan/indra-labs/indra/pkg/engine/onions"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -39,9 +40,9 @@ func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 	// index of returnHops will be a randomly selected one.
 	returnSession = returnHops[0]
 	conf := nonce.NewID()
-	var s [5]*Session
+	var s [5]*onions.Session
 	for i := range s {
-		s[i] = NewSessionKeys(byte(i))
+		s[i] = onions.NewSessionKeys(byte(i))
 	}
 	var confirmChans [5]chan bool
 	var pendingConfirms int
@@ -79,7 +80,7 @@ func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 		}
 	}
 	// todo: handle payment failures!
-	o := MakeSession(conf, s, returnSession, nodes[:], ng.KeySet)
+	o := onions.MakeSession(conf, s, returnSession, nodes[:], ng.KeySet)
 	res := PostAcctOnion(ng.Manager, o)
 	ng.SendWithOneHook(nodes[0].AddrPort, res, func(id nonce.ID, ifc interface{},
 		b slice.Bytes) (e error) {

@@ -7,7 +7,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
-	"git-indra.lan/indra-labs/indra/pkg/engine/ifc"
+	"git-indra.lan/indra-labs/indra/pkg/engine/onions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -24,7 +24,7 @@ type InitRekey struct {
 }
 
 func InitRekeyGen() coding.Codec           { return &InitRekey{} }
-func init()                                { Register(InitRekeyMagic, InitRekeyGen) }
+func init()                                { onions.Register(InitRekeyMagic, InitRekeyGen) }
 func (k *InitRekey) Magic() string         { return InitRekeyMagic }
 func (k *InitRekey) GetOnion() interface{} { return nil }
 
@@ -54,7 +54,7 @@ type RekeyReply struct {
 }
 
 func RekeyReplyGen() coding.Codec           { return &RekeyReply{} }
-func init()                                 { Register(RekeyReplyMagic, RekeyReplyGen) }
+func init()                                 { onions.Register(RekeyReplyMagic, RekeyReplyGen) }
 func (r *RekeyReply) Magic() string         { return RekeyReplyMagic }
 func (r *RekeyReply) GetOnion() interface{} { return nil }
 
@@ -84,7 +84,7 @@ type Acknowledge struct {
 }
 
 func AcknowledgeGen() coding.Codec           { return &Acknowledge{} }
-func init()                                  { Register(AcknowledgeMagic, AcknowledgeGen) }
+func init()                                  { onions.Register(AcknowledgeMagic, AcknowledgeGen) }
 func (a *Acknowledge) Magic() string         { return AcknowledgeMagic }
 func (a *Acknowledge) GetOnion() interface{} { return nil }
 
@@ -121,18 +121,18 @@ type Munged struct {
 	slice.Bytes // contains an encoded Onion.
 }
 
-func (m Munged) Unpack() (mu ifc.Onion) {
+func (m Munged) Unpack() (mu onions.Onion) {
 	s := splice.NewFrom(m.Bytes)
-	mm := Recognise(s)
+	mm := onions.Recognise(s)
 	var ok bool
-	if mu, ok = mm.(ifc.Onion); !ok {
+	if mu, ok = mm.(onions.Onion); !ok {
 		log.D.Ln("type not recognised as a mung")
 	}
 	return
 }
 
 func MungedGen() coding.Codec           { return &Munged{} }
-func init()                             { Register(MungedMagic, MungedGen) }
+func init()                             { onions.Register(MungedMagic, MungedGen) }
 func (m *Munged) Magic() string         { return MungedMagic }
 func (m *Munged) GetOnion() interface{} { return nil }
 

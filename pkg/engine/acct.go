@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"git-indra.lan/indra-labs/indra/pkg/engine/onions"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 )
@@ -8,10 +9,10 @@ import (
 // PostAcctOnion takes a slice of Skins and calculates their costs and
 // the list of sessions inside them and attaches accounting operations to
 // apply when the associated confirmation(s) or response hooks are executed.
-func PostAcctOnion(sm *sess.Manager, o Skins) (res *sess.Data) {
+func PostAcctOnion(sm *sess.Manager, o onions.Skins) (res *sess.Data) {
 	res = &sess.Data{}
 	assembled := o.Assemble()
-	sp := Encode(assembled)
+	sp := onions.Encode(assembled)
 	res.B = sp.GetAll()
 	// do client accounting
 	skip := false
@@ -22,7 +23,7 @@ func PostAcctOnion(sm *sess.Manager, o Skins) (res *sess.Data) {
 			continue
 		}
 		switch on := o[i].(type) {
-		case *Crypt:
+		case *onions.Crypt:
 			if i == len(o)-1 {
 				last = true
 			}

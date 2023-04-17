@@ -13,6 +13,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/engine/onions"
 	"git-indra.lan/indra-labs/indra/pkg/engine/packet"
 	"git-indra.lan/indra-labs/indra/pkg/engine/transport"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
@@ -371,7 +372,7 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 	// Sender out the acknowledgement.
 	d.SendAck(rxr)
 	s := splice.NewFrom(m)
-	c := Recognise(s)
+	c := onions.Recognise(s)
 	if c == nil {
 		return
 	}

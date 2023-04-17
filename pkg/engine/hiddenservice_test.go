@@ -27,7 +27,8 @@ func TestEngine_SendHiddenService(t *testing.T) {
 	var e error
 	const nCircuits = 10
 	ctx, cancel := context.WithCancel(context.Background())
-	if clients, e = CreateNMockCircuits(nCircuits, nCircuits, ctx); fails(e) {
+	if clients, e = CreateNMockCircuits(nCircuits, nCircuits,
+		ctx); fails(e) {
 		t.Error(e)
 		t.FailNow()
 	}
