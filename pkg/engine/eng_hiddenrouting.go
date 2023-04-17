@@ -7,6 +7,7 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/engine/services"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 )
@@ -23,7 +24,7 @@ type KnownIntros map[crypto.PubBytes]*Intro
 type LocalHiddenService struct {
 	Prv           *crypto.Prv
 	CurrentIntros []*Intro
-	*Service
+	*services.Service
 }
 
 type HiddenServices map[crypto.PubBytes]*LocalHiddenService
@@ -45,7 +46,7 @@ func NewHiddenrouting() *HiddenRouting {
 	}
 }
 
-func (hr *HiddenRouting) AddHiddenService(svc *Service, key *crypto.Prv,
+func (hr *HiddenRouting) AddHiddenService(svc *services.Service, key *crypto.Prv,
 	in *Intro, addr string) {
 	
 	pk := crypto.DerivePub(key).ToBytes()

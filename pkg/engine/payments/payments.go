@@ -1,4 +1,4 @@
-package engine
+package payments
 
 import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
@@ -14,24 +14,24 @@ type Payment struct {
 	ConfirmChan chan bool
 }
 
-type PaymentChan chan *Payment
+type Chan chan *Payment
 
-// Send a payment on the PaymentChan.
-func (pc PaymentChan) Send(amount lnwire.MilliSatoshi,
-	s *Session) (confirmChan chan bool) {
+// Send a payment on the Chan.
+func (pc Chan) Send(amount lnwire.MilliSatoshi,
+	id nonce.ID, preimage sha256.Hash, ) (confirmChan chan bool) {
 	
 	confirmChan = make(chan bool)
 	pc <- &Payment{
-		ID:          s.ID,
-		Preimage:    s.PreimageHash(),
+		ID:          id,
+		Preimage:    preimage,
 		Amount:      amount,
 		ConfirmChan: confirmChan,
 	}
 	return
 }
 
-// Receive waits on receiving a Payment on a PaymentChan.
-func (pc PaymentChan) Receive() <-chan *Payment { return pc }
+// Receive waits on receiving a Payment on a Chan.
+func (pc Chan) Receive() <-chan *Payment { return pc }
 
 type PendingPayments []*Payment
 

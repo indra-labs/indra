@@ -11,6 +11,7 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/engine/services"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -117,7 +118,7 @@ func TestEngine_Message(t *testing.T) {
 	}
 	wg.Add(1)
 	counter.Inc()
-	svc := &Service{
+	svc := &services.Service{
 		Port:      2345,
 		RelayRate: 43523,
 		Transport: NewByteChan(64),

@@ -120,7 +120,7 @@ func (ng *Engine) Handler() (out bool) {
 	case b := <-ng.ReceiveToLocalNode(0):
 		s := splice.Load(b, slice.NewCursor())
 		ng.HandleMessage(s, prev)
-	case p := <-ng.GetLocalNode().PaymentChan.Receive():
+	case p := <-ng.GetLocalNode().Chan.Receive():
 		log.D.F("incoming payment for %s: %v", p.ID, p.Amount)
 		topUp := false
 		ng.IterateSessions(func(s *SessionData) bool {
@@ -147,7 +147,7 @@ func (ng *Engine) Handler() (out bool) {
 	out:
 		for {
 			select {
-			case <-ng.GetLocalNode().PaymentChan.Receive():
+			case <-ng.GetLocalNode().Chan.Receive():
 				log.D.Ln("discarding payments while in pause")
 			case <-ng.ReceiveToLocalNode(0):
 				log.D.Ln("discarding messages while in pause")

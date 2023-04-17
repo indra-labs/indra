@@ -11,12 +11,14 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/engine/payments"
+	"git-indra.lan/indra-labs/indra/pkg/engine/services"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 type SessionManager struct {
 	nodes           []*Node
-	PendingPayments PendingPayments
+	PendingPayments payments.PendingPayments
 	Sessions
 	SessionCache
 	sync.Mutex
@@ -25,7 +27,7 @@ type SessionManager struct {
 func NewSessionManager() *SessionManager {
 	return &SessionManager{
 		SessionCache:    make(SessionCache),
-		PendingPayments: make(PendingPayments, 0),
+		PendingPayments: make(payments.PendingPayments, 0),
 	}
 }
 
@@ -277,9 +279,9 @@ func (sm *SessionManager) NodesLen() int {
 // GetLocalNode returns the engine's local Node.
 func (sm *SessionManager) GetLocalNode() *Node { return sm.nodes[0] }
 
-// GetLocalNodePaymentChan returns the engine's local Node PaymentChan.
-func (sm *SessionManager) GetLocalNodePaymentChan() PaymentChan {
-	return sm.nodes[0].PaymentChan
+// GetLocalNodePaymentChan returns the engine's local Node Chan.
+func (sm *SessionManager) GetLocalNodePaymentChan() payments.Chan {
+	return sm.nodes[0].Chan
 }
 
 func (sm *SessionManager) GetLocalNodeAddress() (addr *netip.AddrPort) {
@@ -315,7 +317,7 @@ func (sm *SessionManager) ReceiveToLocalNode(port uint16) <-chan slice.Bytes {
 	return sm.GetLocalNode().ReceiveFrom(port)
 }
 
-func (sm *SessionManager) AddServiceToLocalNode(s *Service) (e error) {
+func (sm *SessionManager) AddServiceToLocalNode(s *services.Service) (e error) {
 	sm.Lock()
 	defer sm.Unlock()
 	return sm.GetLocalNode().AddService(s)
@@ -466,7 +468,7 @@ func (sc SessionCache) Add(s *SessionData) SessionCache {
 // PendingPayment accessors. For the same reason as the sessions, pending
 // payments need to be accessed only with the node's mutex locked.
 
-func (sm *SessionManager) AddPendingPayment(np *Payment) {
+func (sm *SessionManager) AddPendingPayment(np *payments.Payment) {
 	sm.Lock()
 	defer sm.Unlock()
 	log.D.F("%s adding pending payment %s for %v",
@@ -479,12 +481,12 @@ func (sm *SessionManager) DeletePendingPayment(preimage sha256.Hash) {
 	defer sm.Unlock()
 	sm.PendingPayments = sm.PendingPayments.Delete(preimage)
 }
-func (sm *SessionManager) FindPendingPayment(id nonce.ID) (pp *Payment) {
+func (sm *SessionManager) FindPendingPayment(id nonce.ID) (pp *payments.Payment) {
 	sm.Lock()
 	defer sm.Unlock()
 	return sm.PendingPayments.Find(id)
 }
-func (sm *SessionManager) FindPendingPreimage(pi sha256.Hash) (pp *Payment) {
+func (sm *SessionManager) FindPendingPreimage(pi sha256.Hash) (pp *payments.Payment) {
 	log.T.F("searching preimage %s", pi)
 	sm.Lock()
 	defer sm.Unlock()

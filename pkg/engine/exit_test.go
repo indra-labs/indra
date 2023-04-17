@@ -13,6 +13,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
+	"git-indra.lan/indra-labs/indra/pkg/engine/services"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -98,7 +99,7 @@ func TestClient_SendExit(t *testing.T) {
 	const port = 3455
 	sim := NewByteChan(0)
 	for i := range clients {
-		e = clients[i].AddServiceToLocalNode(&Service{
+		e = clients[i].AddServiceToLocalNode(&services.Service{
 			Port:      port,
 			Transport: sim,
 			RelayRate: 58000,

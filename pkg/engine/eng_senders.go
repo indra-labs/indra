@@ -8,6 +8,7 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/engine/services"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -45,7 +46,7 @@ func (ng *Engine) SendGetBalance(alice, bob *SessionData, hook Callback) {
 
 func (ng *Engine) SendHiddenService(id nonce.ID, key *crypto.Prv,
 	expiry time.Time, alice, bob *SessionData,
-	svc *Service, hook Callback) (in *Intro) {
+	svc *services.Service, hook Callback) (in *Intro) {
 	
 	hops := StandardCircuit()
 	s := make(Sessions, len(hops))

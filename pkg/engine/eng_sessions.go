@@ -77,7 +77,7 @@ func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 	var pendingConfirms int
 	for i := range nodes {
 		confirmChans[i] = nodes[i].
-			PaymentChan.Send(amount, s[i])
+			Chan.Send(amount, s[i].ID, s[i].PreimageHash())
 		pendingConfirms++
 	}
 	var success bool

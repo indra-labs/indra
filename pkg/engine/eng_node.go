@@ -7,17 +7,11 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/engine/payments"
+	"git-indra.lan/indra-labs/indra/pkg/engine/services"
 	"git-indra.lan/indra-labs/indra/pkg/engine/transport"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
-
-type Service struct {
-	Port      uint16
-	RelayRate int
-	transport.Transport
-}
-
-type Services []*Service
 
 // Node is a representation of a messaging counterparty.
 type Node struct {
@@ -25,9 +19,9 @@ type Node struct {
 	sync.Mutex
 	AddrPort  *netip.AddrPort
 	Identity  *crypto.Keys
-	RelayRate int      // Base relay price mSAT/Mb.
-	Services  Services // Services offered by this peer.
-	PaymentChan
+	RelayRate int               // Base relay price mSAT/Mb.
+	Services  services.Services // Services offered by this peer.
+	payments.Chan
 	Transport transport.Transport
 }
 
@@ -46,17 +40,17 @@ func NewNode(addr *netip.AddrPort, idPrv *crypto.Prv, tpt transport.Transport,
 	
 	id = nonce.NewID()
 	n = &Node{
-		ID:          id,
-		AddrPort:    addr,
-		Identity:    crypto.MakeKeys(idPrv),
-		RelayRate:   relayRate,
-		PaymentChan: make(PaymentChan, PaymentChanBuffers),
-		Transport:   tpt,
+		ID:        id,
+		AddrPort:  addr,
+		Identity:  crypto.MakeKeys(idPrv),
+		RelayRate: relayRate,
+		Chan:      make(payments.Chan, PaymentChanBuffers),
+		Transport: tpt,
 	}
 	return
 }
 
-func (n *Node) AddService(s *Service) (e error) {
+func (n *Node) AddService(s *services.Service) (e error) {
 	n.Lock()
 	defer n.Unlock()
 	for i := range n.Services {
@@ -84,7 +78,7 @@ func (n *Node) DeleteService(port uint16) {
 	}
 }
 
-func (n *Node) FindService(port uint16) (service *Service) {
+func (n *Node) FindService(port uint16) (svc *services.Service) {
 	n.Lock()
 	defer n.Unlock()
 	for i := range n.Services {
