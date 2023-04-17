@@ -7,6 +7,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -111,7 +112,7 @@ func (x *Reverse) Handle(s *splice.Splice, p Onion,
 	return e
 }
 
-func (x *Reverse) Account(res *Data, sm *SessionManager,
+func (x *Reverse) Account(res *sessionmgr.Data, sm *SessionManager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	res.Billable = append(res.Billable, s.ID)

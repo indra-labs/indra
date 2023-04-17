@@ -8,6 +8,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
@@ -100,7 +101,7 @@ func (x *IntroQuery) Handle(s *splice.Splice, p Onion,
 	return
 }
 
-func (x *IntroQuery) Account(res *Data, sm *SessionManager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+func (x *IntroQuery) Account(res *sessionmgr.Data, sm *SessionManager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	res.ID = x.ID
 	res.Billable = append(res.Billable, s.ID)

@@ -8,14 +8,22 @@ import (
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	"github.com/gookit/color"
 	
+	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/node"
 	"git-indra.lan/indra-labs/indra/pkg/engine/payments"
 	"git-indra.lan/indra-labs/indra/pkg/engine/services"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
+	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+)
+
+var (
+	log   = log2.GetLogger(indra.PathBase)
+	fails = log.E.Chk
 )
 
 type SessionManager struct {
@@ -31,6 +39,38 @@ func NewSessionManager() *SessionManager {
 		SessionCache:    make(SessionCache),
 		PendingPayments: make(payments.PendingPayments, 0),
 	}
+}
+
+// PostAcctOnion takes a slice of Skins and calculates their costs and
+// the list of sessions inside them and attaches accounting operations to
+// apply when the associated confirmation(s) or response hooks are executed.
+func (sm *SessionManager) PostAcctOnion(o Skins) (res *sessionmgr.Data) {
+	res = &sessionmgr.Data{}
+	assembled := o.Assemble()
+	sp := Encode(assembled)
+	res.B = sp.GetAll()
+	// do client accounting
+	skip := false
+	var last bool
+	for i := range o {
+		if skip {
+			skip = false
+			continue
+		}
+		switch on := o[i].(type) {
+		case *Crypt:
+			if i == len(o)-1 {
+				last = true
+			}
+			var s *sessions.Data
+			skip, s = on.Account(res, sm, nil, last)
+			if last {
+				break
+			}
+			o[i+1].Account(res, sm, s, last)
+		}
+	}
+	return
 }
 
 // FindCloaked searches the client identity key and the sessions for a match. It

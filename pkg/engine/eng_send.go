@@ -8,6 +8,7 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/node"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -31,7 +32,7 @@ func (sm *SessionManager) Send(addr *netip.AddrPort, s *splice.Splice) {
 // as returned from PostAcctOnion this is the last, confirmation or response
 // layer in an onion.Skins.
 func (sm *SessionManager) SendWithOneHook(ap *netip.AddrPort,
-	res *Data, responseHook Callback, p *PendingResponses) {
+	res *sessionmgr.Data, responseHook Callback, p *PendingResponses) {
 	
 	if responseHook == nil {
 		responseHook = func(_ nonce.ID, _ interface{}, _ slice.Bytes) (e error) {

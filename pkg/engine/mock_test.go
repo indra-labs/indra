@@ -7,6 +7,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/node"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
+	"git-indra.lan/indra-labs/indra/pkg/engine/tpt"
 	"git-indra.lan/indra-labs/indra/pkg/engine/transport"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -17,10 +18,10 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 	nTotal := 1 + nCircuits*5
 	cl = make([]*Engine, nTotal)
 	nodes := make([]*node.Node, nTotal)
-	tpts := make([]transport.Transport, nTotal)
+	tpts := make([]tpt.Transport, nTotal)
 	ss := make(sessions.Sessions, nTotal-1)
 	for i := range tpts {
-		tpts[i] = NewSimDuplex(nTotal, ctx)
+		tpts[i] = transport.NewSimDuplex(nTotal, ctx)
 	}
 	for i := range nodes {
 		var idPrv *crypto.Prv

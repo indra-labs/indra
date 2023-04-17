@@ -14,6 +14,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/packet"
+	"git-indra.lan/indra-labs/indra/pkg/engine/transport"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -111,20 +112,20 @@ type Dispatcher struct {
 	// necessarily amplifies any latency so making a transmission get across
 	// before/without retransmits is as good as the path can provide.
 	PingDivergence  ewma.MovingAverage
-	Duplex          *DuplexByteChan
+	Duplex          *transport.DuplexByteChan
 	PendingInbound  []*RxRecord
 	PendingOutbound []*TxRecord
 	Partials        map[nonce.ID]packet.Packets
 	OldPrv          *crypto.Prv
 	Prv             *crypto.Prv
 	*crypto.KeySet
-	Conn *Conn
+	Conn *transport.Conn
 	sync.Mutex
 }
 
 const TimeoutPingCount = 10
 
-func NewDispatcher(l *Conn, key *crypto.Prv, ctx context.Context,
+func NewDispatcher(l *transport.Conn, key *crypto.Prv, ctx context.Context,
 	ks *crypto.KeySet) (d *Dispatcher) {
 	
 	d = &Dispatcher{
@@ -132,7 +133,7 @@ func NewDispatcher(l *Conn, key *crypto.Prv, ctx context.Context,
 		OldPrv:         key,
 		Conn:           l,
 		KeySet:         ks,
-		Duplex:         NewDuplexByteChan(ConnBufs),
+		Duplex:         transport.NewDuplexByteChan(transport.ConnBufs),
 		Ping:           ewma.NewMovingAverage(),
 		PingDivergence: ewma.NewMovingAverage(),
 		ErrorEWMA:      ewma.NewMovingAverage(),

@@ -8,6 +8,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -130,7 +131,7 @@ func (x *GetBalance) Handle(s *splice.Splice, p Onion,
 	return
 }
 
-func (x *GetBalance) Account(res *Data, sm *SessionManager,
+func (x *GetBalance) Account(res *sessionmgr.Data, sm *SessionManager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	res.ID = s.ID

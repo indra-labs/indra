@@ -1,4 +1,4 @@
-package engine
+package transport
 
 import (
 	"bufio"
@@ -19,8 +19,14 @@ import (
 	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
-	"git-indra.lan/indra-labs/indra/pkg/engine/transport"
+	"git-indra.lan/indra-labs/indra/pkg/engine/tpt"
+	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+)
+
+var (
+	log   = log2.GetLogger(indra.PathBase)
+	fails = log.E.Chk
 )
 
 const (
@@ -132,7 +138,7 @@ func (l *Listener) DelConn(d *Conn) {
 	l.Unlock()
 }
 
-func (l *Listener) GetConnSend(multiAddr string) (send transport.Transport) {
+func (l *Listener) GetConnSend(multiAddr string) (send tpt.Transport) {
 	l.Lock()
 	if _, ok := l.connections[multiAddr]; ok {
 		send = l.connections[multiAddr].Transport.Sender
@@ -141,7 +147,7 @@ func (l *Listener) GetConnSend(multiAddr string) (send transport.Transport) {
 	return
 }
 
-func (l *Listener) GetConnRecv(multiAddr string) (recv transport.Transport) {
+func (l *Listener) GetConnRecv(multiAddr string) (recv tpt.Transport) {
 	l.Lock()
 	if _, ok := l.connections[multiAddr]; ok {
 		recv = l.connections[multiAddr].Transport.Receiver
@@ -188,8 +194,8 @@ func (c *Conn) SetRemoteKey(remoteKey *crypto.Pub) {
 	c.Unlock()
 }
 
-func (c *Conn) GetSend() transport.Transport { return c.Transport.Sender }
-func (c *Conn) GetRecv() transport.Transport { return c.Transport.Receiver }
+func (c *Conn) GetSend() tpt.Transport { return c.Transport.Sender }
+func (c *Conn) GetRecv() tpt.Transport { return c.Transport.Receiver }
 
 func getHostAddress(ha host.Host) string {
 	hostAddr, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/p2p/%s",

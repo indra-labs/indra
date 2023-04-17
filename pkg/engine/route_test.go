@@ -14,6 +14,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/services"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
+	"git-indra.lan/indra-labs/indra/pkg/engine/transport"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -123,7 +124,7 @@ func TestEngine_Route(t *testing.T) {
 	svc := &services.Service{
 		Port:      localPort,
 		RelayRate: 43523,
-		Transport: NewByteChan(64),
+		Transport: transport.NewByteChan(64),
 	}
 	ini := client.SendHiddenService(id, idPrv, time.Now().Add(time.Hour),
 		returner, introducer, svc, func(id nonce.ID, ifc interface{},

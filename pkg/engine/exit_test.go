@@ -15,6 +15,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/services"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
+	"git-indra.lan/indra-labs/indra/pkg/engine/transport"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -98,7 +99,7 @@ func TestClient_SendExit(t *testing.T) {
 	log.D.Ln("client", client.GetLocalNodeAddressString())
 	// set up forwarding port service
 	const port = 3455
-	sim := NewByteChan(0)
+	sim := transport.NewByteChan(0)
 	for i := range clients {
 		e = clients[i].AddServiceToLocalNode(&services.Service{
 			Port:      port,

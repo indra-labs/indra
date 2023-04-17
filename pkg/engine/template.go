@@ -2,6 +2,7 @@ package engine
 
 import (
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
@@ -38,7 +39,7 @@ func (x *End) Handle(s *splice.Splice, p Onion,
 	return
 }
 
-func (x *End) Account(res *Data, sm *SessionManager,
+func (x *End) Account(res *sessionmgr.Data, sm *SessionManager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	return
 }

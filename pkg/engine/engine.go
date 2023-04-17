@@ -8,7 +8,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/node"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
-	"git-indra.lan/indra-labs/indra/pkg/engine/transport"
+	"git-indra.lan/indra-labs/indra/pkg/engine/tpt"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -26,7 +26,7 @@ type Engine struct {
 }
 
 type Params struct {
-	transport.Transport
+	tpt.Transport
 	IDPrv           *crypto.Prv
 	Node            *node.Node
 	Nodes           []*node.Node

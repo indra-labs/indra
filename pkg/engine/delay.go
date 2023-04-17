@@ -6,6 +6,7 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -61,6 +62,6 @@ func (x *Delay) Handle(s *splice.Splice, p Onion, ni interface{}) (e error) {
 	return
 }
 
-func (x *Delay) Account(res *Data, sm *SessionManager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+func (x *Delay) Account(res *sessionmgr.Data, sm *SessionManager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	return
 }

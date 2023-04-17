@@ -1,4 +1,4 @@
-package engine
+package transport
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"time"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
+	"git-indra.lan/indra-labs/indra/pkg/engine"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/tests"
 )
@@ -22,16 +23,16 @@ func TestNewRCPListener(t *testing.T) {
 	var k1, k2 *crypto.Keys
 	ctx, cancel := context.WithCancel(context.Background())
 	_ = cancel
-	if k1, k2, e = crypto.Generate2Keys(); fails(e) {
+	if k1, k2, e = crypto.Generate2Keys(); engine.fails(e) {
 		t.FailNow()
 	}
 	l1, e = NewListener("", localhostZeroIPv4, k1.Prv, ctx, DefaultMTU)
-	if fails(e) {
+	if engine.fails(e) {
 		t.FailNow()
 	}
 	l2, e = NewListener(getHostAddress(l1.Host), localhostZeroIPv4,
 		k2.Prv, ctx, DefaultMTU)
-	if fails(e) {
+	if engine.fails(e) {
 		t.FailNow()
 	}
 	var msg1, msg2 []byte
@@ -47,9 +48,9 @@ func TestNewRCPListener(t *testing.T) {
 		for {
 			select {
 			case b := <-c1.Receive():
-				log.D.S("received "+hn1, b.ToBytes())
+				engine.log.D.S("received "+hn1, b.ToBytes())
 			case b := <-c2.Receive():
-				log.D.S("received "+hn2, b.ToBytes())
+				engine.log.D.S("received "+hn2, b.ToBytes())
 				d2.Transport.Sender.Send(msg2)
 			case <-ctx.Done():
 				return
@@ -59,7 +60,7 @@ func TestNewRCPListener(t *testing.T) {
 	time.Sleep(time.Second)
 	l1.Lock()
 	l2.Lock()
-	log.D.Ln("connections", l1.connections, l2.connections)
+	engine.log.D.Ln("connections", l1.connections, l2.connections)
 	l1.Unlock()
 	l2.Unlock()
 	d1.Transport.Sender.Send(msg1)

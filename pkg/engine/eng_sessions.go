@@ -13,38 +13,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
-// PostAcctOnion takes a slice of Skins and calculates their costs and
-// the list of sessions inside them and attaches accounting operations to
-// apply when the associated confirmation(s) or response hooks are executed.
-func (sm *SessionManager) PostAcctOnion(o Skins) (res *Data) {
-	res = &Data{}
-	assembled := o.Assemble()
-	sp := Encode(assembled)
-	res.B = sp.GetAll()
-	// do client accounting
-	skip := false
-	var last bool
-	for i := range o {
-		if skip {
-			skip = false
-			continue
-		}
-		switch on := o[i].(type) {
-		case *Crypt:
-			if i == len(o)-1 {
-				last = true
-			}
-			var s *sessions.Data
-			skip, s = on.Account(res, sm, nil, last)
-			if last {
-				break
-			}
-			o[i+1].Account(res, sm, s, last)
-		}
-	}
-	return
-}
-
 // BuyNewSessions performs the initial purchase of 5 sessions as well as adding
 // different hop numbers to relays with existing  Note that all 5 of
 // the sessions will be paid the amount specified, not divided up.
