@@ -6,6 +6,7 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
 
@@ -68,7 +69,7 @@ func (x *Forward) Handle(s *splice.Splice, p Onion,
 }
 
 func (x *Forward) Account(res *Data, sm *SessionManager,
-	s *SessionData, last bool) (skip bool, sd *SessionData) {
+	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	res.Billable = append(res.Billable, s.ID)
 	res.PostAcct = append(res.PostAcct,

@@ -8,6 +8,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
 
@@ -78,7 +79,7 @@ func (x *HiddenService) Handle(s *splice.Splice, p Onion, ni interface{}) (e err
 	return
 }
 
-func (x *HiddenService) Account(res *Data, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
+func (x *HiddenService) Account(res *Data, sm *SessionManager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	res.ID = x.Intro.ID
 	res.Billable = append(res.Billable, s.ID)

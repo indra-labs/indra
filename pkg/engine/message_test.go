@@ -12,6 +12,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/services"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -76,9 +77,9 @@ func TestEngine_Message(t *testing.T) {
 	id := nonce.NewID()
 	_ = id
 	introducerHops := client.SessionManager.GetSessionsAtHop(2)
-	var introducer *SessionData
+	var introducer *sessions.Data
 	returnHops := client.SessionManager.GetSessionsAtHop(5)
-	var returner *SessionData
+	var returner *sessions.Data
 	_ = returner
 	if len(introducerHops) > 1 {
 		cryptorand.Shuffle(len(introducerHops),

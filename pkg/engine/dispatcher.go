@@ -13,6 +13,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/engine/packet"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -113,7 +114,7 @@ type Dispatcher struct {
 	Duplex          *DuplexByteChan
 	PendingInbound  []*RxRecord
 	PendingOutbound []*TxRecord
-	Partials        map[nonce.ID]Packets
+	Partials        map[nonce.ID]packet.Packets
 	OldPrv          *crypto.Prv
 	Prv             *crypto.Prv
 	*crypto.KeySet
@@ -219,7 +220,7 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 	log.D.S("received from conn to dispatcher", m.ToBytes())
 	// Packet received, decrypt, gather and send acks back and reconstructed
 	// messages to the Dispatcher.RecvFromConn channel.
-	from, to, iv, e := GetKeysFromPacket(m)
+	from, to, iv, e := packet.GetKeysFromPacket(m)
 	if fails(e) {
 		return
 	}
@@ -234,13 +235,13 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 		d.Unlock()
 		return
 	}
-	var p *Packet
-	if p, e = DecodePacket(m, from, prv, iv); fails(e) {
+	var p *packet.Packet
+	if p, e = packet.DecodePacket(m, from, prv, iv); fails(e) {
 		d.Unlock()
 		return
 	}
 	var rxr *RxRecord
-	var packets Packets
+	var packets packet.Packets
 	if rxr, packets = d.GetRxRecordAndPartials(p.ID); rxr != nil {
 		rxr.Received += uint64(len(m))
 		rxr.Last = time.Now()
@@ -255,7 +256,7 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 			Ping:     time.Duration(d.Ping.Value()),
 		}
 		d.PendingInbound = append(d.PendingInbound, rxr)
-		packets = Packets{p}
+		packets = packet.Packets{p}
 		d.Partials[p.ID] = packets
 	}
 	d.Unlock()
@@ -284,7 +285,7 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 	if len(d.Partials[p.ID]) >= segCount {
 		// Enough to attempt reconstruction:
 		var msg []byte
-		if d.Partials[p.ID], msg, e = JoinPackets(d.Partials[p.ID]); fails(e) {
+		if d.Partials[p.ID], msg, e = packet.JoinPackets(d.Partials[p.ID]); fails(e) {
 			log.D.Ln("failed to join packets")
 			return
 		}
@@ -330,7 +331,7 @@ func (d *Dispatcher) SendToConn(m slice.Bytes) {
 		First: time.Now(),
 		Size:  len(m),
 	}
-	pp := &PacketParams{
+	pp := &packet.PacketParams{
 		ID:     id,
 		To:     d.Conn.GetRemoteKey(),
 		Parity: int(d.Parity.Load()),
@@ -338,7 +339,7 @@ func (d *Dispatcher) SendToConn(m slice.Bytes) {
 		Data:   m,
 	}
 	mtu := d.Conn.GetMTU()
-	packets, e := SplitToPackets(pp, mtu, d.KeySet)
+	packets, e := packet.SplitToPackets(pp, mtu, d.KeySet)
 	if fails(e) {
 		return
 	}
@@ -439,7 +440,7 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 }
 
 func (d *Dispatcher) GetRxRecordAndPartials(id nonce.ID) (rxr *RxRecord,
-	packets Packets) {
+	packets packet.Packets) {
 	
 	for _, v := range d.PendingInbound {
 		if v.ID == id {

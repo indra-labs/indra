@@ -5,6 +5,8 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/engine/node"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/engine/transport"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -14,9 +16,9 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 	
 	nTotal := 1 + nCircuits*5
 	cl = make([]*Engine, nTotal)
-	nodes := make([]*Node, nTotal)
+	nodes := make([]*node.Node, nTotal)
 	tpts := make([]transport.Transport, nTotal)
-	ss := make(Sessions, nTotal-1)
+	ss := make(sessions.Sessions, nTotal-1)
 	for i := range tpts {
 		tpts[i] = NewSimDuplex(nTotal, ctx)
 	}
@@ -26,7 +28,7 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 			return
 		}
 		addr := slice.GenerateRandomAddrPortIPv4()
-		nodes[i], _ = NewNode(addr, idPrv, tpts[i], 50000)
+		nodes[i], _ = node.NewNode(addr, idPrv, tpts[i], 50000)
 		if cl[i], e = NewEngine(Params{
 			tpts[i],
 			idPrv,
@@ -41,7 +43,7 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 		if inclSessions {
 			// Create a session for all but the first.
 			if i > 0 {
-				ss[i-1] = NewSessionData(nonce.NewID(), nodes[i],
+				ss[i-1] = sessions.NewSessionData(nonce.NewID(), nodes[i],
 					1<<16, nil, nil, byte((i-1)/nCircuits))
 				// AddIntro session to node, so it will be able to relay if it
 				// gets a message with the key.

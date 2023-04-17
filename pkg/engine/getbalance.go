@@ -8,6 +8,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -47,8 +48,8 @@ func (x *GetBalance) GetOnion() interface{} { return x }
 
 type GetBalanceParams struct {
 	ID, ConfID nonce.ID
-	Alice, Bob *SessionData
-	S          Circuit
+	Alice, Bob *sessions.Data
+	S          sessions.Circuit
 	KS         *crypto.KeySet
 }
 
@@ -80,7 +81,7 @@ func (x *GetBalance) Handle(s *splice.Splice, p Onion,
 	log.T.S(x)
 	var found bool
 	var bal *Balance
-	ng.IterateSessions(func(sd *SessionData) bool {
+	ng.IterateSessions(func(sd *sessions.Data) bool {
 		if sd.ID == x.ID {
 			log.D.S("sessiondata", sd.ID, sd.Remaining)
 			bal = &Balance{
@@ -111,7 +112,7 @@ func (x *GetBalance) Handle(s *splice.Splice, p Onion,
 			ng.DecSession(sess.ID, in+out, false, "getbalance")
 		}
 	}
-	ng.IterateSessions(func(sd *SessionData) bool {
+	ng.IterateSessions(func(sd *sessions.Data) bool {
 		if sd.ID == x.ID {
 			bal = &Balance{
 				ID:           x.ID,
@@ -130,7 +131,7 @@ func (x *GetBalance) Handle(s *splice.Splice, p Onion,
 }
 
 func (x *GetBalance) Account(res *Data, sm *SessionManager,
-	s *SessionData, last bool) (skip bool, sd *SessionData) {
+	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	res.ID = s.ID
 	res.Billable = append(res.Billable, s.ID)

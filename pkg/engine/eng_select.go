@@ -1,22 +1,24 @@
 package engine
 
 import (
+	"git-indra.lan/indra-labs/indra/pkg/engine/node"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 )
 
 // SelectUnusedCircuit accepts an array of 5 Node entries where all or some are
 // empty and picks nodes for the remainder that do not have a hop at that
 // position.
-func (sm *SessionManager) SelectUnusedCircuit() (c [5]*Node) {
+func (sm *SessionManager) SelectUnusedCircuit() (c [5]*node.Node) {
 	sm.Lock()
 	defer sm.Unlock()
 	// Create a shuffled slice of Nodes to randomise the selection process.
-	nodeList := make([]*Node, len(sm.nodes)-1)
+	nodeList := make([]*node.Node, len(sm.nodes)-1)
 	copy(nodeList, sm.nodes[1:])
 	for i := range nodeList {
 		if _, ok := sm.SessionCache[nodeList[i].ID]; !ok {
 			log.T.F("adding session cache entry for node %s", nodeList[i].ID)
-			sm.SessionCache[nodeList[i].ID] = &Circuit{}
+			sm.SessionCache[nodeList[i].ID] = &sessions.Circuit{}
 		}
 	}
 	var counter int
@@ -40,13 +42,13 @@ out:
 	return
 }
 
-func (sm *SessionManager) SelectHops(hops []byte, alreadyHave Sessions,
-	note string) (so Sessions) {
+func (sm *SessionManager) SelectHops(hops []byte, alreadyHave sessions.Sessions,
+	note string) (so sessions.Sessions) {
 	
 	log.T.Ln(sm.GetLocalNodeAddressString(), "selecting hops", note)
 	sm.Lock()
 	defer sm.Unlock()
-	ws := make(Sessions, 0)
+	ws := make(sessions.Sessions, 0)
 out:
 	for i := range sm.Sessions {
 		if sm.Sessions[i] == nil {

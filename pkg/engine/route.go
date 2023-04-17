@@ -10,6 +10,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
 
@@ -112,10 +113,10 @@ func (x *Route) Handle(s *splice.Splice, p Onion, ni interface{}) (e error) {
 		n := crypto.GenNonces(5)
 		rvKeys := ng.KeySet.Next3()
 		hops := []byte{3, 4, 5, 0, 1}
-		sessions := make(Sessions, len(hops))
-		ng.SelectHops(hops, sessions, "route reply header")
+		s := make(sessions.Sessions, len(hops))
+		ng.SelectHops(hops, s, "route reply header")
 		rt := &Routing{
-			Sessions: [3]*SessionData{sessions[0], sessions[1], sessions[2]},
+			Sessions: [3]*sessions.Data{s[0], s[1], s[2]},
 			Keys:     crypto.Privs{rvKeys[0], rvKeys[1], rvKeys[2]},
 			Nonces:   crypto.Nonces{n[0], n[1], n[2]},
 		}
@@ -125,14 +126,14 @@ func (x *Route) Handle(s *splice.Splice, p Onion, ni interface{}) (e error) {
 		ep := ExitPoint{
 			Routing: rt,
 			ReturnPubs: crypto.Pubs{
-				crypto.DerivePub(sessions[0].Payload.Prv),
-				crypto.DerivePub(sessions[1].Payload.Prv),
-				crypto.DerivePub(sessions[2].Payload.Prv),
+				crypto.DerivePub(s[0].Payload.Prv),
+				crypto.DerivePub(s[1].Payload.Prv),
+				crypto.DerivePub(s[2].Payload.Prv),
 			},
 		}
 		mr := Skins{}.
-			ForwardCrypt(sessions[3], ng.KeySet.Next(), n[3]).
-			ForwardCrypt(sessions[4], ng.KeySet.Next(), n[4]).
+			ForwardCrypt(s[3], ng.KeySet.Next(), n[3]).
+			ForwardCrypt(s[4], ng.KeySet.Next(), n[4]).
 			Ready(x.ID, x.HiddenService,
 				x.RoutingHeaderBytes,
 				GetRoutingHeaderFromCursor(rHdr),
@@ -148,7 +149,7 @@ func (x *Route) Handle(s *splice.Splice, p Onion, ni interface{}) (e error) {
 }
 
 func (x *Route) Account(res *Data, sm *SessionManager,
-	s *SessionData, last bool) (skip bool, sd *SessionData) {
+	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	copy(res.ID[:], x.ID[:])
 	res.Billable = append(res.Billable, s.ID)

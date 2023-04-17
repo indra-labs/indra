@@ -11,15 +11,17 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/engine/node"
 	"git-indra.lan/indra-labs/indra/pkg/engine/payments"
 	"git-indra.lan/indra-labs/indra/pkg/engine/services"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 type SessionManager struct {
-	nodes           []*Node
+	nodes           []*node.Node
 	PendingPayments payments.PendingPayments
-	Sessions
+	sessions.Sessions
 	SessionCache
 	sync.Mutex
 }
@@ -35,7 +37,7 @@ func NewSessionManager() *SessionManager {
 // returns the session as well, though not all users of this function will need
 // this.
 func (sm *SessionManager) FindCloaked(clk crypto.PubKey) (hdr *crypto.Prv,
-	pld *crypto.Prv, sess *SessionData, identity bool) {
+	pld *crypto.Prv, sess *sessions.Data, identity bool) {
 	
 	var b crypto.Blinder
 	copy(b[:], clk[:crypto.BlindLen])
@@ -47,7 +49,7 @@ func (sm *SessionManager) FindCloaked(clk crypto.PubKey) (hdr *crypto.Prv,
 		identity = true
 		return
 	}
-	sm.IterateSessions(func(s *SessionData) (stop bool) {
+	sm.IterateSessions(func(s *sessions.Data) (stop bool) {
 		hash = crypto.Cloak(b, s.Header.Bytes)
 		if hash == clk {
 			hdr = s.Header.Prv
@@ -98,7 +100,7 @@ func (sm *SessionManager) DecSession(id nonce.ID, msats int,
 	return false
 }
 
-func (sm *SessionManager) GetNodeCircuit(id nonce.ID) (sce *Circuit,
+func (sm *SessionManager) GetNodeCircuit(id nonce.ID) (sce *sessions.Circuit,
 	exists bool) {
 	
 	sm.Lock()
@@ -107,7 +109,7 @@ func (sm *SessionManager) GetNodeCircuit(id nonce.ID) (sce *Circuit,
 	return
 }
 
-func (sm *SessionManager) AddSession(s *SessionData) {
+func (sm *SessionManager) AddSession(s *sessions.Data) {
 	sm.Lock()
 	defer sm.Unlock()
 	// check for dupes
@@ -124,7 +126,7 @@ func (sm *SessionManager) AddSession(s *SessionData) {
 		sm.SessionCache = sm.SessionCache.Add(s)
 	}
 }
-func (sm *SessionManager) FindSession(id nonce.ID) *SessionData {
+func (sm *SessionManager) FindSession(id nonce.ID) *sessions.Data {
 	sm.Lock()
 	defer sm.Unlock()
 	for i := range sm.Sessions {
@@ -134,7 +136,7 @@ func (sm *SessionManager) FindSession(id nonce.ID) *SessionData {
 	}
 	return nil
 }
-func (sm *SessionManager) FindSessionByHeader(prvKey *crypto.Prv) *SessionData {
+func (sm *SessionManager) FindSessionByHeader(prvKey *crypto.Prv) *sessions.Data {
 	sm.Lock()
 	defer sm.Unlock()
 	for i := range sm.Sessions {
@@ -144,7 +146,7 @@ func (sm *SessionManager) FindSessionByHeader(prvKey *crypto.Prv) *SessionData {
 	}
 	return nil
 }
-func (sm *SessionManager) FindSessionByHeaderPub(pubKey *crypto.Pub) *SessionData {
+func (sm *SessionManager) FindSessionByHeaderPub(pubKey *crypto.Pub) *sessions.Data {
 	sm.Lock()
 	defer sm.Unlock()
 	for i := range sm.Sessions {
@@ -154,7 +156,7 @@ func (sm *SessionManager) FindSessionByHeaderPub(pubKey *crypto.Pub) *SessionDat
 	}
 	return nil
 }
-func (sm *SessionManager) FindSessionPreimage(pr sha256.Hash) *SessionData {
+func (sm *SessionManager) FindSessionPreimage(pr sha256.Hash) *sessions.Data {
 	sm.Lock()
 	defer sm.Unlock()
 	for i := range sm.Sessions {
@@ -165,7 +167,7 @@ func (sm *SessionManager) FindSessionPreimage(pr sha256.Hash) *SessionData {
 	return nil
 }
 
-func (sm *SessionManager) GetSessionsAtHop(hop byte) (s Sessions) {
+func (sm *SessionManager) GetSessionsAtHop(hop byte) (s sessions.Sessions) {
 	sm.Lock()
 	defer sm.Unlock()
 	for i := range sm.Sessions {
@@ -180,7 +182,7 @@ func (sm *SessionManager) DeleteSession(id nonce.ID) {
 	defer sm.Unlock()
 	for i := range sm.Sessions {
 		if sm.Sessions[i].ID == id {
-			// ProcessAndDelete from SessionData cache.
+			// ProcessAndDelete from Data cache.
 			sm.SessionCache[sm.Sessions[i].Node.ID][sm.Sessions[i].Hop] = nil
 			// ProcessAndDelete from 
 			sm.Sessions = append(sm.Sessions[:i], sm.Sessions[i+1:]...)
@@ -191,7 +193,7 @@ func (sm *SessionManager) DeleteSession(id nonce.ID) {
 // IterateSessions calls a function for each entry in the Sessions slice.
 //
 // Do not call SessionManager methods within this function.
-func (sm *SessionManager) IterateSessions(fn func(s *SessionData) bool) {
+func (sm *SessionManager) IterateSessions(fn func(s *sessions.Data) bool) {
 	sm.Lock()
 	defer sm.Unlock()
 	for i := range sm.Sessions {
@@ -205,8 +207,8 @@ func (sm *SessionManager) IterateSessions(fn func(s *SessionData) bool) {
 // that provides also access to the related node.
 //
 // Do not call SessionManager methods within this function.
-func (sm *SessionManager) IterateSessionCache(fn func(n *Node,
-	c *Circuit) bool) {
+func (sm *SessionManager) IterateSessionCache(fn func(n *node.Node,
+	c *sessions.Circuit) bool) {
 	
 	sm.Lock()
 	defer sm.Unlock()
@@ -223,7 +225,7 @@ out:
 	}
 }
 
-func (sm *SessionManager) GetSessionByIndex(i int) (s *SessionData) {
+func (sm *SessionManager) GetSessionByIndex(i int) (s *sessions.Data) {
 	sm.Lock()
 	defer sm.Unlock()
 	if len(sm.Sessions) > i {
@@ -256,7 +258,7 @@ func (sm *SessionManager) DeleteNodeAndSessions(id nonce.ID) {
 		}
 	}
 	// Create a new Sessions slice and add the ones not in the found list.
-	temp := make(Sessions, 0, len(sm.Sessions)-len(found))
+	temp := make(sessions.Sessions, 0, len(sm.Sessions)-len(found))
 	for i := range sm.Sessions {
 		for j := range found {
 			if i != found[j] {
@@ -277,7 +279,7 @@ func (sm *SessionManager) NodesLen() int {
 }
 
 // GetLocalNode returns the engine's local Node.
-func (sm *SessionManager) GetLocalNode() *Node { return sm.nodes[0] }
+func (sm *SessionManager) GetLocalNode() *node.Node { return sm.nodes[0] }
 
 // GetLocalNodePaymentChan returns the engine's local Node Chan.
 func (sm *SessionManager) GetLocalNodePaymentChan() payments.Chan {
@@ -342,26 +344,26 @@ func (sm *SessionManager) GetLocalNodeIdentityPrv() (ident *crypto.Prv) {
 }
 
 // SetLocalNode sets the engine's local Node.
-func (sm *SessionManager) SetLocalNode(n *Node) {
+func (sm *SessionManager) SetLocalNode(n *node.Node) {
 	sm.Lock()
 	defer sm.Unlock()
 	sm.nodes[0] = n
 }
 
 // AddNodes adds a Node to a Nodes.
-func (sm *SessionManager) AddNodes(nn ...*Node) {
+func (sm *SessionManager) AddNodes(nn ...*node.Node) {
 	sm.Lock()
 	defer sm.Unlock()
 	sm.nodes = append(sm.nodes, nn...)
 }
-func (sm *SessionManager) FindNodeByIndex(i int) (no *Node) {
+func (sm *SessionManager) FindNodeByIndex(i int) (no *node.Node) {
 	sm.Lock()
 	defer sm.Unlock()
 	return sm.nodes[i]
 }
 
 // FindNodeByID searches for a Node by ID.
-func (sm *SessionManager) FindNodeByID(i nonce.ID) (no *Node) {
+func (sm *SessionManager) FindNodeByID(i nonce.ID) (no *node.Node) {
 	sm.Lock()
 	defer sm.Unlock()
 	for _, nn := range sm.nodes {
@@ -374,7 +376,7 @@ func (sm *SessionManager) FindNodeByID(i nonce.ID) (no *Node) {
 }
 
 // FindNodeByAddrPort searches for a Node by netip.AddrPort.
-func (sm *SessionManager) FindNodeByAddrPort(id *netip.AddrPort) (no *Node) {
+func (sm *SessionManager) FindNodeByAddrPort(id *netip.AddrPort) (no *node.Node) {
 	sm.Lock()
 	defer sm.Unlock()
 	for _, nn := range sm.nodes {
@@ -420,7 +422,7 @@ func (sm *SessionManager) DeleteNodeByAddrPort(ip *netip.AddrPort) (e error) {
 //
 // Do not call any SessionManager methods above inside this function or there
 // will be a mutex double locking panic, except GetLocalNode.
-func (sm *SessionManager) ForEachNode(fn func(n *Node) bool) {
+func (sm *SessionManager) ForEachNode(fn func(n *node.Node) bool) {
 	sm.Lock()
 	defer sm.Unlock()
 	for i := range sm.nodes {
@@ -434,7 +436,7 @@ func (sm *SessionManager) ForEachNode(fn func(n *Node) bool) {
 }
 
 // A SessionCache stores each of the 5 hops of a peer node.
-type SessionCache map[nonce.ID]*Circuit
+type SessionCache map[nonce.ID]*sessions.Circuit
 
 func (sm *SessionManager) UpdateSessionCache() {
 	sm.Lock()
@@ -443,7 +445,7 @@ func (sm *SessionManager) UpdateSessionCache() {
 	for i := range sm.nodes {
 		_, exists := sm.SessionCache[sm.nodes[i].ID]
 		if !exists {
-			sm.SessionCache[sm.nodes[i].ID] = &Circuit{}
+			sm.SessionCache[sm.nodes[i].ID] = &sessions.Circuit{}
 		}
 	}
 	// Place all sessions in their slots respective to their node.
@@ -452,11 +454,11 @@ func (sm *SessionManager) UpdateSessionCache() {
 	}
 }
 
-func (sc SessionCache) Add(s *SessionData) SessionCache {
-	var sce *Circuit
+func (sc SessionCache) Add(s *sessions.Data) SessionCache {
+	var sce *sessions.Circuit
 	var exists bool
 	if sce, exists = sc[s.Node.ID]; !exists {
-		sce = &Circuit{}
+		sce = &sessions.Circuit{}
 		sce[s.Hop] = s
 		sc[s.Node.ID] = sce
 		return sc

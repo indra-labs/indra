@@ -13,6 +13,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/services"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -29,7 +30,7 @@ func TestOnionSkins_IntroQuery(t *testing.T) {
 	n3 := crypto.Gen3Nonces()
 	ep := &ExitPoint{
 		Routing: &Routing{
-			Sessions: [3]*SessionData{},
+			Sessions: [3]*sessions.Data{},
 			Keys:     prvs,
 			Nonces:   n3,
 		},
@@ -134,7 +135,7 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 	}
 	id := nonce.NewID()
 	introducerHops := client.SessionManager.GetSessionsAtHop(2)
-	var introducer *SessionData
+	var introducer *sessions.Data
 	if len(introducerHops) > 1 {
 		cryptorand.Shuffle(len(introducerHops), func(i, j int) {
 			introducerHops[i], introducerHops[j] = introducerHops[j], introducerHops[i]
@@ -142,7 +143,7 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 	}
 	introducer = introducerHops[0]
 	returnHops := client.SessionManager.GetSessionsAtHop(5)
-	var returner *SessionData
+	var returner *sessions.Data
 	if len(returnHops) > 1 {
 		cryptorand.Shuffle(len(returnHops), func(i, j int) {
 			returnHops[i], returnHops[j] = returnHops[j],

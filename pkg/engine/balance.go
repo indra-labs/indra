@@ -8,6 +8,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -75,8 +76,8 @@ func (x *Balance) Handle(s *splice.Splice, p Onion,
 				}
 			}
 		}
-		var se *SessionData
-		ng.IterateSessions(func(s *SessionData) bool {
+		var se *sessions.Data
+		ng.IterateSessions(func(s *sessions.Data) bool {
 			if s.ID == x.ID {
 				log.D.F("received balance %s for session %s %s was %s",
 					x.MilliSatoshi, x.ID, x.ConfID, s.Remaining)
@@ -95,7 +96,7 @@ func (x *Balance) Handle(s *splice.Splice, p Onion,
 }
 
 func (x *Balance) Account(res *Data, sm *SessionManager,
-	s *SessionData, last bool) (skip bool, sd *SessionData) {
+	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	res.ID = x.ID
 	return

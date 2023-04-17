@@ -8,6 +8,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
 
@@ -80,7 +81,7 @@ func (x *Session) Handle(s *splice.Splice, p Onion, ni interface{}) (e error) {
 		// at the same time, and we end up with duplicate 
 		ng.DeletePendingPayment(pi.Preimage)
 		log.D.F("adding session %s to %s", pi.ID, ng.GetLocalNodeAddressString())
-		ng.AddSession(NewSessionData(pi.ID,
+		ng.AddSession(sessions.NewSessionData(pi.ID,
 			ng.GetLocalNode(), pi.Amount, x.Header, x.Payload, x.Hop))
 		ng.HandleMessage(splice.BudgeUp(s), nil)
 	} else {
@@ -94,7 +95,7 @@ func (x *Session) PreimageHash() sha256.Hash {
 	return sha256.Single(append(h[:], p[:]...))
 }
 
-func (x *Session) Account(res *Data, sm *SessionManager, s *SessionData,
-	last bool) (skip bool, sd *SessionData) {
+func (x *Session) Account(res *Data, sm *SessionManager, s *sessions.Data,
+	last bool) (skip bool, sd *sessions.Data) {
 	return
 }

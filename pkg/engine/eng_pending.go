@@ -7,6 +7,7 @@ import (
 	"github.com/cybriq/qu"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -19,7 +20,7 @@ type PendingResponse struct {
 	Billable []nonce.ID
 	Return   nonce.ID
 	PostAcct []func()
-	Sessions
+	sessions.Sessions
 	Callback Callback
 	time.Time
 	Success qu.C
@@ -44,7 +45,7 @@ func (p *PendingResponses) GetOldestPending() (pr *PendingResponse) {
 type ResponseParams struct {
 	ID       nonce.ID
 	SentSize int
-	S        Sessions
+	S        sessions.Sessions
 	Billable []nonce.ID
 	Ret      nonce.ID
 	Port     uint16

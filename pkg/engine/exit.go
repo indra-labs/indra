@@ -9,6 +9,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -126,13 +127,13 @@ type ExitParams struct {
 	Port       uint16
 	Payload    slice.Bytes
 	ID         nonce.ID
-	Alice, Bob *SessionData
-	S          Circuit
+	Alice, Bob *sessions.Data
+	S          sessions.Circuit
 	KS         *crypto.KeySet
 }
 
 func (x *Exit) Account(res *Data, sm *SessionManager,
-	s *SessionData, last bool) (skip bool, sd *SessionData) {
+	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	s.Node.Lock()
 	for j := range s.Node.Services {
 		if s.Node.Services[j].Port != x.Port {

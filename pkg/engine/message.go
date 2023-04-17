@@ -11,6 +11,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -30,7 +31,7 @@ func (x *Message) Wrap(inner Onion)      {}
 func (x *Message) GetOnion() interface{} { return x }
 
 type Message struct {
-	Forwards        [2]*SessionData
+	Forwards        [2]*sessions.Data
 	Address         *crypto.Pub
 	ID, Re          nonce.ID
 	Forward, Return *ReplyHeader
@@ -84,7 +85,7 @@ func (x *Message) Handle(s *splice.Splice, p Onion,
 	return
 }
 
-func (x *Message) Account(res *Data, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
+func (x *Message) Account(res *Data, sm *SessionManager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	res.ID = x.ID
 	res.Billable = append(res.Billable, s.ID)

@@ -1,4 +1,4 @@
-package engine
+package packet
 
 import (
 	"crypto/rand"

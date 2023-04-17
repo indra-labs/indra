@@ -13,6 +13,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/services"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -72,14 +73,14 @@ func TestEngine_SendHiddenService(t *testing.T) {
 	id := nonce.NewID()
 	introducerHops := clients[0].SessionManager.GetSessionsAtHop(2)
 	returnHops := clients[0].SessionManager.GetSessionsAtHop(5)
-	var introducer *SessionData
+	var introducer *sessions.Data
 	if len(introducerHops) > 1 {
 		cryptorand.Shuffle(len(introducerHops), func(i, j int) {
 			introducerHops[i], introducerHops[j] = introducerHops[j],
 				introducerHops[i]
 		})
 	}
-	var returner *SessionData
+	var returner *sessions.Data
 	if len(introducerHops) > 1 {
 		cryptorand.Shuffle(len(returnHops), func(i, j int) {
 			returnHops[i], returnHops[j] = returnHops[j],

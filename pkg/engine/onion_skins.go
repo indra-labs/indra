@@ -9,6 +9,8 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/engine/node"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -41,12 +43,12 @@ func (o Skins) Assemble() (on Onion) {
 	return o[0]
 }
 
-func (o Skins) ForwardCrypt(s *SessionData, k *crypto.Prv, n nonce.IV) Skins {
+func (o Skins) ForwardCrypt(s *sessions.Data, k *crypto.Prv, n nonce.IV) Skins {
 	return o.Forward(s.Node.AddrPort).Crypt(s.Header.Pub, s.Payload.Pub, k,
 		n, 0)
 }
 
-func (o Skins) ReverseCrypt(s *SessionData, k *crypto.Prv, n nonce.IV,
+func (o Skins) ReverseCrypt(s *sessions.Data, k *crypto.Prv, n nonce.IV,
 	seq int) (oo Skins) {
 	
 	if s == nil || k == nil {
@@ -59,7 +61,7 @@ func (o Skins) ReverseCrypt(s *SessionData, k *crypto.Prv, n nonce.IV,
 }
 
 type Routing struct {
-	Sessions [3]*SessionData
+	Sessions [3]*sessions.Data
 	Keys     crypto.Privs
 	crypto.Nonces
 }
@@ -69,7 +71,7 @@ type Headers struct {
 	ReturnPubs      crypto.Pubs
 }
 
-func GetHeaders(alice, bob *SessionData, c Circuit,
+func GetHeaders(alice, bob *sessions.Data, c sessions.Circuit,
 	ks *crypto.KeySet) (h *Headers) {
 	
 	fwKeys := ks.Next3()
@@ -78,7 +80,7 @@ func GetHeaders(alice, bob *SessionData, c Circuit,
 	var rtNonces, fwNonces [3]nonce.IV
 	copy(fwNonces[:], n[:3])
 	copy(rtNonces[:], n[3:])
-	var fwSessions, rtSessions [3]*SessionData
+	var fwSessions, rtSessions [3]*sessions.Data
 	copy(fwSessions[:], c[:2])
 	fwSessions[2] = bob
 	copy(rtSessions[:], c[3:])
@@ -122,7 +124,7 @@ func (o Skins) RoutingHeader(r *Routing) Skins {
 		ReverseCrypt(r.Sessions[2], r.Keys[2], r.Nonces[2], 1)
 }
 
-func (o Skins) ForwardSession(s *Node,
+func (o Skins) ForwardSession(s *node.Node,
 	k *crypto.Prv, n nonce.IV, sess *Session) Skins {
 	
 	return o.Forward(s.AddrPort).
@@ -278,7 +280,7 @@ func (o Skins) End() Skins {
 // an increment of their liveness score. By using this scheme, when nodes are
 // offline their scores will fall to zero after a time whereas live nodes will
 // have steadily increasing scores from successful pings.
-func Ping(id nonce.ID, client *SessionData, s Circuit,
+func Ping(id nonce.ID, client *sessions.Data, s sessions.Circuit,
 	ks *crypto.KeySet) Skins {
 	
 	n := crypto.GenPingNonces()
@@ -293,7 +295,7 @@ func Ping(id nonce.ID, client *SessionData, s Circuit,
 }
 
 func MakeRoute(id nonce.ID, k *crypto.Pub, ks *crypto.KeySet,
-	alice, bob *SessionData, c Circuit) Skins {
+	alice, bob *sessions.Data, c sessions.Circuit) Skins {
 	
 	headers := GetHeaders(alice, bob, c, ks)
 	return Skins{}.
@@ -332,8 +334,8 @@ func MakeGetBalance(p GetBalanceParams) Skins {
 		RoutingHeader(headers.Return)
 }
 
-func MakeHiddenService(in *Intro, alice, bob *SessionData,
-	c Circuit, ks *crypto.KeySet) Skins {
+func MakeHiddenService(in *Intro, alice, bob *sessions.Data,
+	c sessions.Circuit, ks *crypto.KeySet) Skins {
 	
 	headers := GetHeaders(alice, bob, c, ks)
 	return Skins{}.
@@ -342,8 +344,8 @@ func MakeHiddenService(in *Intro, alice, bob *SessionData,
 		RoutingHeader(headers.Return)
 }
 
-func MakeIntroQuery(id nonce.ID, hsk *crypto.Pub, alice, bob *SessionData,
-	c Circuit, ks *crypto.KeySet) Skins {
+func MakeIntroQuery(id nonce.ID, hsk *crypto.Pub, alice, bob *sessions.Data,
+	c sessions.Circuit, ks *crypto.KeySet) Skins {
 	
 	headers := GetHeaders(alice, bob, c, ks)
 	return Skins{}.
@@ -353,7 +355,7 @@ func MakeIntroQuery(id nonce.ID, hsk *crypto.Pub, alice, bob *SessionData,
 }
 
 func MakeSession(id nonce.ID, s [5]*Session,
-	client *SessionData, hop []*Node, ks *crypto.KeySet) Skins {
+	client *sessions.Data, hop []*node.Node, ks *crypto.KeySet) Skins {
 	
 	n := crypto.GenNonces(6)
 	sk := Skins{}
@@ -409,10 +411,10 @@ func MakeReplyHeader(ng *Engine) (returnHeader *ReplyHeader) {
 	n := crypto.GenNonces(3)
 	rvKeys := ng.KeySet.Next3()
 	hops := []byte{3, 4, 5}
-	sessions := make(Sessions, len(hops))
-	ng.SelectHops(hops, sessions, "make message reply header")
+	s := make(sessions.Sessions, len(hops))
+	ng.SelectHops(hops, s, "make message reply header")
 	rt := &Routing{
-		Sessions: [3]*SessionData{sessions[0], sessions[1], sessions[2]},
+		Sessions: [3]*sessions.Data{s[0], s[1], s[2]},
 		Keys:     crypto.Privs{rvKeys[0], rvKeys[1], rvKeys[2]},
 		Nonces:   crypto.Nonces{n[0], n[1], n[2]},
 	}
@@ -422,9 +424,9 @@ func MakeReplyHeader(ng *Engine) (returnHeader *ReplyHeader) {
 	ep := ExitPoint{
 		Routing: rt,
 		ReturnPubs: crypto.Pubs{
-			crypto.DerivePub(sessions[0].Payload.Prv),
-			crypto.DerivePub(sessions[1].Payload.Prv),
-			crypto.DerivePub(sessions[2].Payload.Prv),
+			crypto.DerivePub(s[0].Payload.Prv),
+			crypto.DerivePub(s[1].Payload.Prv),
+			crypto.DerivePub(s[2].Payload.Prv),
 		},
 	}
 	returnHeader = &ReplyHeader{

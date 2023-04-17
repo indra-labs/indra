@@ -7,6 +7,7 @@ import (
 	"github.com/gookit/color"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/engine/node"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -15,7 +16,7 @@ import (
 func (sm *SessionManager) Send(addr *netip.AddrPort, s *splice.Splice) {
 	// first search if we already have the node available with connection open.
 	as := addr.String()
-	sm.ForEachNode(func(n *Node) bool {
+	sm.ForEachNode(func(n *node.Node) bool {
 		if as == n.AddrPort.String() {
 			log.D.F("%s sending message to %v",
 				sm.GetLocalNodeAddressString(), color.Yellow.Sprint(addr))

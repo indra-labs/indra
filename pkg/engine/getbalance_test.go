@@ -11,6 +11,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -31,7 +32,7 @@ func TestOnionSkins_GetBalance(t *testing.T) {
 	}
 	ep := &ExitPoint{
 		Routing: &Routing{
-			Sessions: [3]*SessionData{},
+			Sessions: [3]*sessions.Data{},
 			Keys:     prvs,
 			Nonces:   n3,
 		},
@@ -106,7 +107,7 @@ out:
 	for i := 1; i < len(clients[0].Sessions)-1; i++ {
 		wg.Add(1)
 		returnHops := client.SessionManager.GetSessionsAtHop(5)
-		var returner *SessionData
+		var returner *sessions.Data
 		if len(returnHops) > 1 {
 			cryptorand.Shuffle(len(returnHops), func(i, j int) {
 				returnHops[i], returnHops[j] = returnHops[j],

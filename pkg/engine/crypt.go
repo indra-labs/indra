@@ -9,6 +9,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
 
@@ -118,7 +119,7 @@ func (x *Crypt) Handle(s *splice.Splice, p Onion,
 	return e
 }
 
-func (x *Crypt) Account(res *Data, sm *SessionManager, s *SessionData, last bool) (skip bool, sd *SessionData) {
+func (x *Crypt) Account(res *Data, sm *SessionManager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	sd = sm.FindSessionByHeaderPub(x.ToHeaderPub)
 	if sd == nil {

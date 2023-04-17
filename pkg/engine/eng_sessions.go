@@ -7,6 +7,8 @@ import (
 	"github.com/gookit/color"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/engine/node"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -32,7 +34,7 @@ func (sm *SessionManager) PostAcctOnion(o Skins) (res *Data) {
 			if i == len(o)-1 {
 				last = true
 			}
-			var s *SessionData
+			var s *sessions.Data
 			skip, s = on.Account(res, sm, nil, last)
 			if last {
 				break
@@ -49,7 +51,7 @@ func (sm *SessionManager) PostAcctOnion(o Skins) (res *Data) {
 func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 	fn func()) (e error) {
 	
-	var nodes [5]*Node
+	var nodes [5]*node.Node
 	nodes = ng.SessionManager.SelectUnusedCircuit()
 	for i := range nodes {
 		if nodes[i] == nil {
@@ -58,7 +60,7 @@ func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 		}
 	}
 	// Get a random return hop session (index 5).
-	var returnSession *SessionData
+	var returnSession *sessions.Data
 	returnHops := ng.SessionManager.GetSessionsAtHop(5)
 	if len(returnHops) > 1 {
 		cryptorand.Shuffle(len(returnHops), func(i, j int) {
@@ -115,14 +117,14 @@ func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 		b slice.Bytes) (e error) {
 		ng.SessionManager.Lock()
 		defer ng.SessionManager.Unlock()
-		var ss [5]*SessionData
+		var ss [5]*sessions.Data
 		for i := range nodes {
 			log.D.F("confirming and storing session at hop %d %s for %s with"+
 				" %v initial balance",
 				i, s[i].ID,
 				color.Yellow.Sprint(nodes[i].AddrPort.String()),
 				amount)
-			ss[i] = NewSessionData(s[i].ID, nodes[i], amount,
+			ss[i] = sessions.NewSessionData(s[i].ID, nodes[i], amount,
 				s[i].Header, s[i].Payload, byte(i))
 			ng.SessionManager.Add(ss[i])
 			ng.Sessions = append(ng.Sessions, ss[i])

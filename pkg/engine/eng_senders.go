@@ -9,32 +9,33 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/services"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 func (ng *Engine) SendExit(port uint16, msg slice.Bytes, id nonce.ID,
-	alice, bob *SessionData, hook Callback) {
+	alice, bob *sessions.Data, hook Callback) {
 	
 	hops := StandardCircuit()
-	s := make(Sessions, len(hops))
+	s := make(sessions.Sessions, len(hops))
 	s[2] = bob
 	s[5] = alice
 	se := ng.SelectHops(hops, s, "exit")
-	var c Circuit
+	var c sessions.Circuit
 	copy(c[:], se)
 	o := MakeExit(ExitParams{port, msg, id, bob, alice, c, ng.KeySet})
 	res := ng.PostAcctOnion(o)
 	ng.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.PendingResponses)
 }
 
-func (ng *Engine) SendGetBalance(alice, bob *SessionData, hook Callback) {
+func (ng *Engine) SendGetBalance(alice, bob *sessions.Data, hook Callback) {
 	hops := StandardCircuit()
-	s := make(Sessions, len(hops))
+	s := make(sessions.Sessions, len(hops))
 	s[2] = bob
 	s[5] = alice
 	se := ng.SelectHops(hops, s, "sendgetbalance")
-	var c Circuit
+	var c sessions.Circuit
 	copy(c[:], se)
 	confID := nonce.NewID()
 	o := MakeGetBalance(GetBalanceParams{alice.ID, confID, alice, bob, c,
@@ -45,14 +46,14 @@ func (ng *Engine) SendGetBalance(alice, bob *SessionData, hook Callback) {
 }
 
 func (ng *Engine) SendHiddenService(id nonce.ID, key *crypto.Prv,
-	expiry time.Time, alice, bob *SessionData,
+	expiry time.Time, alice, bob *sessions.Data,
 	svc *services.Service, hook Callback) (in *Intro) {
 	
 	hops := StandardCircuit()
-	s := make(Sessions, len(hops))
+	s := make(sessions.Sessions, len(hops))
 	s[2] = alice
 	se := ng.SelectHops(hops, s, "sendhiddenservice")
-	var c Circuit
+	var c sessions.Circuit
 	copy(c[:], se[:len(c)])
 	in = NewIntro(id, key, alice.Node.AddrPort, expiry)
 	o := MakeHiddenService(in, alice, bob, c, ng.KeySet)
@@ -67,7 +68,7 @@ func (ng *Engine) SendHiddenService(id nonce.ID, key *crypto.Prv,
 }
 
 func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *crypto.Pub,
-	alice, bob *SessionData, hook func(in *Intro)) {
+	alice, bob *sessions.Data, hook func(in *Intro)) {
 	
 	fn := func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
 		s := splice.Load(b, slice.NewCursor())
@@ -85,11 +86,11 @@ func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *crypto.Pub,
 	}
 	log.D.Ln("sending introquery")
 	hops := StandardCircuit()
-	s := make(Sessions, len(hops))
+	s := make(sessions.Sessions, len(hops))
 	s[2] = bob
 	s[5] = alice
 	se := ng.SelectHops(hops, s, "sendintroquery")
-	var c Circuit
+	var c sessions.Circuit
 	copy(c[:], se)
 	o := MakeIntroQuery(id, hsk, bob, alice, c, ng.KeySet)
 	res := ng.PostAcctOnion(o)
@@ -101,7 +102,7 @@ func (ng *Engine) SendMessage(mp *Message, hook Callback) (id nonce.ID) {
 	// Add another two hops for security against unmasking.
 	preHops := []byte{0, 1}
 	oo := ng.SelectHops(preHops, mp.Forwards[:], "sendmessage")
-	mp.Forwards = [2]*SessionData{oo[0], oo[1]}
+	mp.Forwards = [2]*sessions.Data{oo[0], oo[1]}
 	o := Skins{}.Message(mp, ng.KeySet)
 	res := ng.PostAcctOnion(o)
 	log.D.Ln("sending out message onion")
@@ -110,9 +111,9 @@ func (ng *Engine) SendMessage(mp *Message, hook Callback) (id nonce.ID) {
 	return res.ID
 }
 
-func (ng *Engine) SendPing(c Circuit, hook Callback) {
+func (ng *Engine) SendPing(c sessions.Circuit, hook Callback) {
 	hops := StandardCircuit()
-	s := make(Sessions, len(hops))
+	s := make(sessions.Sessions, len(hops))
 	copy(s, c[:])
 	se := ng.SelectHops(hops, s, "sendping")
 	copy(c[:], se)
@@ -126,8 +127,8 @@ func (ng *Engine) SendRoute(k *crypto.Pub, ap *netip.AddrPort,
 	hook Callback) {
 	
 	ng.FindNodeByAddrPort(ap)
-	var ss *SessionData
-	ng.IterateSessions(func(s *SessionData) bool {
+	var ss *sessions.Data
+	ng.IterateSessions(func(s *sessions.Data) bool {
 		if s.Node.AddrPort.String() == ap.String() {
 			ss = s
 			return true
@@ -142,10 +143,10 @@ func (ng *Engine) SendRoute(k *crypto.Pub, ap *netip.AddrPort,
 	log.D.Ln(ng.GetLocalNodeAddressString(), "sending route",
 		k.ToBase32Abbreviated())
 	hops := StandardCircuit()
-	s := make(Sessions, len(hops))
+	s := make(sessions.Sessions, len(hops))
 	s[2] = ss
 	se := ng.SelectHops(hops, s, "sendroute")
-	var c Circuit
+	var c sessions.Circuit
 	copy(c[:], se)
 	o := MakeRoute(nonce.NewID(), k, ng.KeySet, se[5], c[2], c)
 	res := ng.PostAcctOnion(o)

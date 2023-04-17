@@ -6,6 +6,8 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/engine/node"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/engine/transport"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -26,8 +28,8 @@ type Engine struct {
 type Params struct {
 	transport.Transport
 	IDPrv           *crypto.Prv
-	Node            *Node
-	Nodes           []*Node
+	Node            *node.Node
+	Nodes           []*node.Node
 	NReturnSessions int
 }
 
@@ -48,11 +50,11 @@ func NewEngine(p Params) (c *Engine, e error) {
 		Pause:            qu.T(),
 		C:                qu.T(),
 	}
-	c.AddNodes(append([]*Node{p.Node}, p.Nodes...)...)
+	c.AddNodes(append([]*node.Node{p.Node}, p.Nodes...)...)
 	// AddIntro a return session for receiving responses, ideally more of these
 	// will be generated during operation and rotated out over time.
 	for i := 0; i < p.NReturnSessions; i++ {
-		c.AddSession(NewSessionData(nonce.NewID(), p.Node, 0, nil, nil, 5))
+		c.AddSession(sessions.NewSessionData(nonce.NewID(), p.Node, 0, nil, nil, 5))
 	}
 	return
 }
@@ -123,7 +125,7 @@ func (ng *Engine) Handler() (out bool) {
 	case p := <-ng.GetLocalNode().Chan.Receive():
 		log.D.F("incoming payment for %s: %v", p.ID, p.Amount)
 		topUp := false
-		ng.IterateSessions(func(s *SessionData) bool {
+		ng.IterateSessions(func(s *sessions.Data) bool {
 			if s.Preimage == p.Preimage {
 				s.IncSats(p.Amount, false, "top-up")
 				topUp = true

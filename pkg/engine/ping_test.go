@@ -9,6 +9,7 @@ import (
 	"github.com/cybriq/qu"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -40,7 +41,7 @@ func TestClient_SendPing(t *testing.T) {
 out:
 	for i := 3; i < len(clients[0].Sessions)-1; i++ {
 		wg.Add(1)
-		var c Circuit
+		var c sessions.Circuit
 		sess := clients[0].Sessions[i]
 		c[sess.Hop] = clients[0].Sessions[i]
 		clients[0].SendPing(c,
