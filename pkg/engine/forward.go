@@ -6,7 +6,7 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
@@ -44,32 +44,29 @@ func (x *Forward) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Forward) Handle(s *splice.Splice, p Onion,
-	ni interface{}) (e error) {
-	
-	ng := ni.(*Engine)
+func (x *Forward) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	// Forward the whole buffer received onwards. Usually there will be a
 	// crypt.Layer under this which will be unwrapped by the receiver.
-	if x.AddrPort.String() == ng.GetLocalNodeAddress().String() {
+	if x.AddrPort.String() == ng.Mgr().GetLocalNodeAddress().String() {
 		// it is for us, we want to unwrap the next part.
 		ng.HandleMessage(splice.BudgeUp(s), x)
 	} else {
 		switch on1 := p.(type) {
 		case *Crypt:
-			sess := ng.FindSessionByHeader(on1.ToPriv)
+			sess := ng.Mgr().FindSessionByHeader(on1.ToPriv)
 			if sess != nil {
-				ng.DecSession(sess.ID,
-					ng.GetLocalNodeRelayRate()*s.Len(),
+				ng.Mgr().DecSession(sess.ID,
+					ng.Mgr().GetLocalNodeRelayRate()*s.Len(),
 					false, "forward")
 			}
 		}
 		// we need to forward this message onion.
-		ng.Send(x.AddrPort, splice.BudgeUp(s))
+		ng.Mgr().Send(x.AddrPort, splice.BudgeUp(s))
 	}
 	return e
 }
 
-func (x *Forward) Account(res *sessionmgr.Data, sm *sessionmgr.Manager,
+func (x *Forward) Account(res *sess.Data, sm *sess.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	res.Billable = append(res.Billable, s.ID)

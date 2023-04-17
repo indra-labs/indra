@@ -8,7 +8,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/node"
 	"git-indra.lan/indra-labs/indra/pkg/engine/responses"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/engine/tpt"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
@@ -16,8 +16,8 @@ import (
 )
 
 type Engine struct {
-	*responses.PendingResponses
-	*sessionmgr.Manager
+	Responses *responses.Pending
+	*sess.Manager
 	*HiddenRouting
 	*crypto.KeySet
 	Load          atomic.Uint32
@@ -44,13 +44,13 @@ func NewEngine(p Params) (c *Engine, e error) {
 		return
 	}
 	c = &Engine{
-		PendingResponses: &responses.PendingResponses{},
-		KeySet:           ks,
-		Manager:          sessionmgr.NewSessionManager(),
-		HiddenRouting:    NewHiddenrouting(),
-		TimeoutSignal:    qu.T(),
-		Pause:            qu.T(),
-		C:                qu.T(),
+		Responses:     &responses.Pending{},
+		KeySet:        ks,
+		Manager:       sess.NewSessionManager(),
+		HiddenRouting: NewHiddenrouting(),
+		TimeoutSignal: qu.T(),
+		Pause:         qu.T(),
+		C:             qu.T(),
 	}
 	c.AddNodes(append([]*node.Node{p.Node}, p.Nodes...)...)
 	// AddIntro a return session for receiving responses, ideally more of these
@@ -167,3 +167,13 @@ func (ng *Engine) Handler() (out bool) {
 	}
 	return
 }
+
+var _ Ngin = &Engine{}
+
+func (ng *Engine) GetLoad() byte               { return byte(ng.Load.Load()) }
+func (ng *Engine) SetLoad(load byte)           { ng.Load.Store(uint32(load)) }
+func (ng *Engine) Mgr() *sess.Manager          { return ng.Manager }
+func (ng *Engine) Pending() *responses.Pending { return ng.Responses }
+func (ng *Engine) Hidden() *HiddenRouting      { return ng.HiddenRouting }
+func (ng *Engine) KillSwitch() qu.C            { return ng.C }
+func (ng *Engine) Keyset() *crypto.KeySet      { return ng.KeySet }

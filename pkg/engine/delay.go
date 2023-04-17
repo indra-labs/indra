@@ -6,7 +6,7 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -47,9 +47,7 @@ func (x *Delay) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Delay) Handle(s *splice.Splice, p Onion, ni interface{}) (e error) {
-	
-	ng := ni.(*Engine)
+func (x *Delay) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	// this is a message to hold the message in the buffer until a duration
 	// elapses. The accounting for the remainder of the message adds a
 	// factor to the effective byte consumption in accordance with the time
@@ -62,7 +60,7 @@ func (x *Delay) Handle(s *splice.Splice, p Onion, ni interface{}) (e error) {
 	return
 }
 
-func (x *Delay) Account(res *sessionmgr.Data, sm *sessionmgr.Manager,
+func (x *Delay) Account(res *sess.Data, sm *sess.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	return
 }

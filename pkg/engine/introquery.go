@@ -8,7 +8,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
@@ -67,41 +67,38 @@ func (x *IntroQuery) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *IntroQuery) Handle(s *splice.Splice, p Onion,
-	ni interface{}) (e error) {
-	
-	ng := ni.(*Engine)
-	ng.HiddenRouting.Lock()
-	log.D.Ln(ng.GetLocalNodeAddressString(), "handling introquery", x.ID,
+func (x *IntroQuery) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
+	ng.Hidden().Lock()
+	log.D.Ln(ng.Mgr().GetLocalNodeAddressString(), "handling introquery", x.ID,
 		x.Key.ToBase32Abbreviated())
 	var ok bool
 	var il *Intro
-	if il, ok = ng.HiddenRouting.KnownIntros[x.Key.ToBytes()]; !ok {
+	if il, ok = ng.Hidden().KnownIntros[x.Key.ToBytes()]; !ok {
 		// if the reply is zeroes the querant knows it needs to retry at a
 		// different relay
 		il = &Intro{}
-		ng.HiddenRouting.Unlock()
+		ng.Hidden().Unlock()
 		log.E.Ln("intro not known")
 		return
 	}
-	ng.HiddenRouting.Unlock()
+	ng.Hidden().Unlock()
 	iqr := Encode(il)
 	rb := FormatReply(GetRoutingHeaderFromCursor(s), x.Ciphers, x.Nonces,
 		iqr.GetAll())
 	switch on1 := p.(type) {
 	case *Crypt:
-		sess := ng.FindSessionByHeader(on1.ToPriv)
+		sess := ng.Mgr().FindSessionByHeader(on1.ToPriv)
 		if sess != nil {
 			in := sess.Node.RelayRate * s.Len() / 2
 			out := sess.Node.RelayRate * rb.Len() / 2
-			ng.DecSession(sess.ID, in+out, false, "introquery")
+			ng.Mgr().DecSession(sess.ID, in+out, false, "introquery")
 		}
 	}
 	ng.HandleMessage(rb, x)
 	return
 }
 
-func (x *IntroQuery) Account(res *sessionmgr.Data, sm *sessionmgr.Manager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+func (x *IntroQuery) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	res.ID = x.ID
 	res.Billable = append(res.Billable, s.ID)

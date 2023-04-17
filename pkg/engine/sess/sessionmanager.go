@@ -1,4 +1,4 @@
-package sessionmgr
+package sess
 
 import (
 	"fmt"

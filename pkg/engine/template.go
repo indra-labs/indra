@@ -2,7 +2,7 @@ package engine
 
 import (
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
@@ -33,13 +33,12 @@ func (x *End) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *End) Handle(s *splice.Splice, p Onion,
-	ni interface{}) (e error) {
+func (x *End) Handle(s *splice.Splice, p Onion, ni Ngin) (e error) {
 	
 	return
 }
 
-func (x *End) Account(res *sessionmgr.Data, sm *sessionmgr.Manager,
+func (x *End) Account(res *sess.Data, sm *sess.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	return
 }

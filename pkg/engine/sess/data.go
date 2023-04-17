@@ -1,4 +1,4 @@
-package sessionmgr
+package sess
 
 import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"

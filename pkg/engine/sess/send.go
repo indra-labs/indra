@@ -1,4 +1,4 @@
-package sessionmgr
+package sess
 
 import (
 	"errors"
@@ -32,7 +32,7 @@ func (sm *Manager) Send(addr *netip.AddrPort, s *splice.Splice) {
 // as returned from PostAcctOnion this is the last, confirmation or response
 // layer in an onion.Skins.
 func (sm *Manager) SendWithOneHook(ap *netip.AddrPort,
-	res *Data, responseHook responses.Callback, p *responses.PendingResponses) {
+	res *Data, responseHook responses.Callback, p *responses.Pending) {
 	
 	if responseHook == nil {
 		responseHook = func(_ nonce.ID, _ interface{}, _ slice.Bytes) (e error) {

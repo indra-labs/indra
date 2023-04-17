@@ -20,7 +20,7 @@ var (
 
 type Callback func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error)
 
-type Pending struct {
+type Response struct {
 	ID       nonce.ID
 	SentSize int
 	Port     uint16
@@ -33,12 +33,12 @@ type Pending struct {
 	Success qu.C
 }
 
-type PendingResponses struct {
+type Pending struct {
 	sync.Mutex
-	responses []*Pending
+	responses []*Response
 }
 
-func (p *PendingResponses) GetOldestPending() (pr *Pending) {
+func (p *Pending) GetOldestPending() (pr *Response) {
 	p.Lock()
 	defer p.Unlock()
 	if len(p.responses) > 0 {
@@ -60,11 +60,11 @@ type ResponseParams struct {
 	PostAcct []func()
 }
 
-func (p *PendingResponses) Add(pr ResponseParams) {
+func (p *Pending) Add(pr ResponseParams) {
 	p.Lock()
 	defer p.Unlock()
 	log.T.F("adding response hook %s", pr.ID)
-	r := &Pending{
+	r := &Response{
 		ID:       pr.ID,
 		SentSize: pr.SentSize,
 		Time:     time.Now(),
@@ -78,7 +78,7 @@ func (p *PendingResponses) Add(pr ResponseParams) {
 	p.responses = append(p.responses, r)
 }
 
-func (p *PendingResponses) FindOlder(t time.Time) (r []*Pending) {
+func (p *Pending) FindOlder(t time.Time) (r []*Response) {
 	p.Lock()
 	defer p.Unlock()
 	for i := range p.responses {
@@ -89,7 +89,7 @@ func (p *PendingResponses) FindOlder(t time.Time) (r []*Pending) {
 	return
 }
 
-func (p *PendingResponses) Find(id nonce.ID) (pr *Pending) {
+func (p *Pending) Find(id nonce.ID) (pr *Response) {
 	p.Lock()
 	defer p.Unlock()
 	for i := range p.responses {
@@ -102,7 +102,7 @@ func (p *PendingResponses) Find(id nonce.ID) (pr *Pending) {
 
 // ProcessAndDelete runs the callback and post accounting function list and
 // deletes the pending response.
-func (p *PendingResponses) ProcessAndDelete(id nonce.ID, ifc interface{},
+func (p *Pending) ProcessAndDelete(id nonce.ID, ifc interface{},
 	b slice.Bytes) (found bool, e error) {
 	
 	p.Lock()

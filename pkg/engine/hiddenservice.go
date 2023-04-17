@@ -8,7 +8,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
@@ -62,12 +62,10 @@ func (x *HiddenService) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *HiddenService) Handle(s *splice.Splice, p Onion, ni interface{}) (e error) {
-	
-	ng := ni.(*Engine)
+func (x *HiddenService) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	log.D.F("%s adding introduction for key %s",
-		ng.GetLocalNodeAddressString(), x.Key.ToBase32Abbreviated())
-	ng.HiddenRouting.AddIntro(x.Key, &Introduction{
+		ng.Mgr().GetLocalNodeAddressString(), x.Key.ToBase32Abbreviated())
+	ng.Hidden().AddIntro(x.Key, &Introduction{
 		Intro: &x.Intro,
 		ReplyHeader: ReplyHeader{
 			Ciphers:            x.Ciphers,
@@ -76,11 +74,11 @@ func (x *HiddenService) Handle(s *splice.Splice, p Onion, ni interface{}) (e err
 		},
 	})
 	log.D.Ln("stored new introduction, starting broadcast")
-	go GossipIntro(&x.Intro, ng.Manager, ng.C)
+	go GossipIntro(&x.Intro, ng.Mgr(), ng.KillSwitch())
 	return
 }
 
-func (x *HiddenService) Account(res *sessionmgr.Data, sm *sessionmgr.Manager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+func (x *HiddenService) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	res.ID = x.Intro.ID
 	res.Billable = append(res.Billable, s.ID)

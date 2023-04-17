@@ -6,7 +6,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -58,15 +58,12 @@ func (x *Response) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Response) Handle(s *splice.Splice, p Onion,
-	ni interface{}) (e error) {
-	
-	ng := ni.(*Engine)
-	pending := ng.PendingResponses.Find(x.ID)
+func (x *Response) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
+	pending := ng.Pending().Find(x.ID)
 	log.T.F("searching for pending ID %s", x.ID)
 	if pending != nil {
 		for i := range pending.Billable {
-			se := ng.FindSession(pending.Billable[i])
+			se := ng.Mgr().FindSession(pending.Billable[i])
 			if se != nil {
 				typ := "response"
 				relayRate := se.Node.RelayRate
@@ -85,15 +82,15 @@ func (x *Response) Handle(s *splice.Splice, p Onion,
 					}
 					se.Node.Unlock()
 				}
-				ng.DecSession(se.ID, relayRate*dataSize, true, typ)
+				ng.Mgr().DecSession(se.ID, relayRate*dataSize, true, typ)
 			}
 		}
-		ng.PendingResponses.ProcessAndDelete(x.ID, nil, x.Bytes)
+		ng.Pending().ProcessAndDelete(x.ID, nil, x.Bytes)
 	}
 	return
 }
 
-func (x *Response) Account(res *sessionmgr.Data, sm *sessionmgr.Manager,
+func (x *Response) Account(res *sess.Data, sm *sess.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	return
 }

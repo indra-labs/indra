@@ -9,7 +9,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
@@ -95,11 +95,8 @@ func (x *Crypt) Decrypt(prk *crypto.Prv, s *splice.Splice) {
 		x.IV, s.GetRest())
 }
 
-func (x *Crypt) Handle(s *splice.Splice, p Onion,
-	ni interface{}) (e error) {
-	
-	ng := ni.(*Engine)
-	hdr, _, _, identity := ng.FindCloaked(x.Cloak)
+func (x *Crypt) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
+	hdr, _, _, identity := ng.Mgr().FindCloaked(x.Cloak)
 	if hdr == nil {
 		log.T.Ln("no matching key found from cloaked key")
 		return
@@ -120,7 +117,7 @@ func (x *Crypt) Handle(s *splice.Splice, p Onion,
 	return e
 }
 
-func (x *Crypt) Account(res *sessionmgr.Data, sm *sessionmgr.Manager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+func (x *Crypt) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	sd = sm.FindSessionByHeaderPub(x.ToHeaderPub)
 	if sd == nil {

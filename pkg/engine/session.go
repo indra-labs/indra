@@ -8,7 +8,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
@@ -72,18 +72,18 @@ func (x *Session) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Session) Handle(s *splice.Splice, p Onion, ni interface{}) (e error) {
+func (x *Session) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	
-	ng := ni.(*Engine)
 	log.T.F("incoming session %s", x.PreimageHash())
-	pi := ng.FindPendingPreimage(x.PreimageHash())
+	pi := ng.Mgr().FindPendingPreimage(x.PreimageHash())
 	if pi != nil {
 		// We need to delete this first in case somehow two such messages arrive
 		// at the same time, and we end up with duplicate 
-		ng.DeletePendingPayment(pi.Preimage)
-		log.D.F("adding session %s to %s", pi.ID, ng.GetLocalNodeAddressString())
-		ng.AddSession(sessions.NewSessionData(pi.ID,
-			ng.GetLocalNode(), pi.Amount, x.Header, x.Payload, x.Hop))
+		ng.Mgr().DeletePendingPayment(pi.Preimage)
+		log.D.F("adding session %s to %s", pi.ID,
+			ng.Mgr().GetLocalNodeAddressString())
+		ng.Mgr().AddSession(sessions.NewSessionData(pi.ID,
+			ng.Mgr().GetLocalNode(), pi.Amount, x.Header, x.Payload, x.Hop))
 		ng.HandleMessage(splice.BudgeUp(s), nil)
 	} else {
 		log.E.Ln("dropping session message without payment")
@@ -96,7 +96,7 @@ func (x *Session) PreimageHash() sha256.Hash {
 	return sha256.Single(append(h[:], p[:]...))
 }
 
-func (x *Session) Account(res *sessionmgr.Data, sm *sessionmgr.Manager, s *sessions.Data,
+func (x *Session) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data,
 	last bool) (skip bool, sd *sessions.Data) {
 	return
 }

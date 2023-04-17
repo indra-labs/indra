@@ -8,7 +8,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -56,29 +56,27 @@ func (x *Balance) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Balance) Handle(s *splice.Splice, p Onion,
-	ni interface{}) (e error) {
+func (x *Balance) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	
-	ng := ni.(*Engine)
-	if pending := ng.PendingResponses.Find(x.ID); pending != nil {
+	if pending := ng.Pending().Find(x.ID); pending != nil {
 		log.D.S("found pending", pending.ID)
 		for i := range pending.Billable {
-			session := ng.FindSession(pending.Billable[i])
+			session := ng.Mgr().FindSession(pending.Billable[i])
 			out := session.Node.RelayRate * s.Len()
 			if session != nil {
 				in := session.Node.RelayRate * pending.SentSize
 				switch {
 				case i < 2:
-					ng.DecSession(session.ID, in, true, "reverse")
+					ng.Mgr().DecSession(session.ID, in, true, "reverse")
 				case i == 2:
-					ng.DecSession(session.ID, (in+out)/2, true, "getbalance")
+					ng.Mgr().DecSession(session.ID, (in+out)/2, true, "getbalance")
 				case i > 2:
-					ng.DecSession(session.ID, out, true, "reverse")
+					ng.Mgr().DecSession(session.ID, out, true, "reverse")
 				}
 			}
 		}
 		var se *sessions.Data
-		ng.IterateSessions(func(s *sessions.Data) bool {
+		ng.Mgr().IterateSessions(func(s *sessions.Data) bool {
 			if s.ID == x.ID {
 				log.D.F("received balance %s for session %s %s was %s",
 					x.MilliSatoshi, x.ID, x.ConfID, s.Remaining)
@@ -91,12 +89,12 @@ func (x *Balance) Handle(s *splice.Splice, p Onion,
 			log.D.F("got %v, expected %v", se.Remaining, x.MilliSatoshi)
 			se.Remaining = x.MilliSatoshi
 		}
-		ng.PendingResponses.ProcessAndDelete(pending.ID, nil, s.GetAll())
+		ng.Pending().ProcessAndDelete(pending.ID, nil, s.GetAll())
 	}
 	return
 }
 
-func (x *Balance) Account(res *sessionmgr.Data, sm *sessionmgr.Manager,
+func (x *Balance) Account(res *sess.Data, sm *sess.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	res.ID = x.ID

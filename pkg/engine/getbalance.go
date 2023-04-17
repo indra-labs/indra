@@ -8,7 +8,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -75,14 +75,11 @@ func (x *GetBalance) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *GetBalance) Handle(s *splice.Splice, p Onion,
-	ni interface{}) (e error) {
-	
-	ng := ni.(*Engine)
+func (x *GetBalance) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	log.T.S(x)
 	var found bool
 	var bal *Balance
-	ng.IterateSessions(func(sd *sessions.Data) bool {
+	ng.Mgr().IterateSessions(func(sd *sessions.Data) bool {
 		if sd.ID == x.ID {
 			log.D.S("sessiondata", sd.ID, sd.Remaining)
 			bal = &Balance{
@@ -97,7 +94,7 @@ func (x *GetBalance) Handle(s *splice.Splice, p Onion,
 	})
 	if !found {
 		log.E.Ln("session not found", x.ID)
-		log.D.S(ng.Sessions)
+		log.D.S(ng.Mgr().Sessions)
 		return
 	}
 	log.D.Ln("session found", x.ID)
@@ -106,14 +103,14 @@ func (x *GetBalance) Handle(s *splice.Splice, p Onion,
 	rb := append(rbb.GetAll(), slice.NoisePad(714-rbb.Len())...)
 	switch on1 := p.(type) {
 	case *Crypt:
-		sess := ng.FindSessionByHeader(on1.ToPriv)
+		sess := ng.Mgr().FindSessionByHeader(on1.ToPriv)
 		if sess != nil {
 			in := sess.Node.RelayRate * s.Len() / 2
 			out := sess.Node.RelayRate * len(rb) / 2
-			ng.DecSession(sess.ID, in+out, false, "getbalance")
+			ng.Mgr().DecSession(sess.ID, in+out, false, "getbalance")
 		}
 	}
-	ng.IterateSessions(func(sd *sessions.Data) bool {
+	ng.Mgr().IterateSessions(func(sd *sessions.Data) bool {
 		if sd.ID == x.ID {
 			bal = &Balance{
 				ID:           x.ID,
@@ -131,7 +128,7 @@ func (x *GetBalance) Handle(s *splice.Splice, p Onion,
 	return
 }
 
-func (x *GetBalance) Account(res *sessionmgr.Data, sm *sessionmgr.Manager,
+func (x *GetBalance) Account(res *sess.Data, sm *sess.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	res.ID = s.ID

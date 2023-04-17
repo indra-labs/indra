@@ -9,7 +9,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -74,36 +74,34 @@ func (x *Exit) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Exit) Handle(s *splice.Splice, p Onion,
-	ni interface{}) (e error) {
-	
-	ng := ni.(*Engine)
+func (x *Exit) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	// payload is forwarded to a local port and the result is forwarded
 	// back with a reverse header.
 	var result slice.Bytes
 	h := sha256.Single(x.Bytes)
 	log.T.S(h)
-	log.T.F("%s received exit id %s", ng.GetLocalNodeAddressString(), x.ID)
-	if e = ng.SendFromLocalNode(x.Port, x.Bytes); fails(e) {
+	log.T.F("%s received exit id %s", ng.Mgr().
+		GetLocalNodeAddressString(), x.ID)
+	if e = ng.Mgr().SendFromLocalNode(x.Port, x.Bytes); fails(e) {
 		return
 	}
 	timer := time.NewTicker(time.Second * 5)
 	select {
-	case result = <-ng.ReceiveToLocalNode(x.Port):
+	case result = <-ng.Mgr().ReceiveToLocalNode(x.Port):
 	case <-timer.C:
 	}
 	// We need to wrap the result in a message crypt.
 	res := Encode(&Response{
 		ID:    x.ID,
 		Port:  x.Port,
-		Load:  byte(ng.Load.Load()),
+		Load:  byte(ng.GetLoad()),
 		Bytes: result,
 	})
 	rb := FormatReply(GetRoutingHeaderFromCursor(s),
 		x.Ciphers, x.Nonces, res.GetAll())
 	switch on := p.(type) {
 	case *Crypt:
-		sess := ng.FindSessionByHeader(on.ToPriv)
+		sess := ng.Mgr().FindSessionByHeader(on.ToPriv)
 		if sess == nil {
 			return
 		}
@@ -116,7 +114,7 @@ func (x *Exit) Handle(s *splice.Splice, p Onion,
 			in := sess.Node.Services[i].RelayRate * s.Len() / 2
 			out := sess.Node.Services[i].RelayRate * rb.Len() / 2
 			sess.Node.Unlock()
-			ng.DecSession(sess.ID, in+out, false, "exit")
+			ng.Mgr().DecSession(sess.ID, in+out, false, "exit")
 			break
 		}
 	}
@@ -133,7 +131,7 @@ type ExitParams struct {
 	KS         *crypto.KeySet
 }
 
-func (x *Exit) Account(res *sessionmgr.Data, sm *sessionmgr.Manager,
+func (x *Exit) Account(res *sess.Data, sm *sess.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	s.Node.Lock()
 	for j := range s.Node.Services {

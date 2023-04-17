@@ -11,7 +11,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -77,16 +77,13 @@ func (x *Message) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Message) Handle(s *splice.Splice, p Onion,
-	ni interface{}) (e error) {
-	
-	ng := ni.(*Engine)
+func (x *Message) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	// Forward payload out to service port.
-	_, e = ng.PendingResponses.ProcessAndDelete(x.ID, x, s.GetAll())
+	_, e = ng.Pending().ProcessAndDelete(x.ID, x, s.GetAll())
 	return
 }
 
-func (x *Message) Account(res *sessionmgr.Data, sm *sessionmgr.Manager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+func (x *Message) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	res.ID = x.ID
 	res.Billable = append(res.Billable, s.ID)

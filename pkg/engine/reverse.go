@@ -7,7 +7,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -52,11 +52,8 @@ func (x *Reverse) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Reverse) Handle(s *splice.Splice, p Onion,
-	ni interface{}) (e error) {
-	
-	ng := ni.(*Engine)
-	if x.AddrPort.String() == ng.GetLocalNodeAddress().String() {
+func (x *Reverse) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
+	if x.AddrPort.String() == ng.Mgr().GetLocalNodeAddress().String() {
 		in := Recognise(s)
 		if e = in.Decode(s); fails(e) {
 			return e
@@ -69,10 +66,10 @@ func (x *Reverse) Handle(s *splice.Splice, p Onion,
 		start := first - ReverseCryptLen
 		second := first + ReverseCryptLen
 		last := second + ReverseCryptLen
-		hdr, pld, _, _ := ng.FindCloaked(on.Cloak)
+		hdr, pld, _, _ := ng.Mgr().FindCloaked(on.Cloak)
 		if hdr == nil || pld == nil {
 			log.E.F("failed to find key for %s",
-				ng.GetLocalNodeAddressString())
+				ng.Mgr().GetLocalNodeAddressString())
 			return e
 		}
 		// We need to find the PayloadPub to match.
@@ -96,23 +93,23 @@ func (x *Reverse) Handle(s *splice.Splice, p Onion,
 			ng.HandleMessage(splice.BudgeUp(s.SetCursor(last)), on)
 			return e
 		}
-		sess := ng.FindSessionByHeader(hdr)
+		sess := ng.Mgr().FindSessionByHeader(hdr)
 		if sess != nil {
-			ng.DecSession(sess.ID,
-				ng.GetLocalNodeRelayRate()*s.Len(), false, "reverse")
+			ng.Mgr().DecSession(sess.ID,
+				ng.Mgr().GetLocalNodeRelayRate()*s.Len(), false, "reverse")
 			ng.HandleMessage(splice.BudgeUp(s.SetCursor(start)), on)
 		}
 	} else if p != nil {
 		// we need to forward this message onion.
-		log.T.Ln(ng.GetLocalNodeAddressString(), "forwarding reverse")
-		ng.Send(x.AddrPort, s)
+		log.T.Ln(ng.Mgr().GetLocalNodeAddressString(), "forwarding reverse")
+		ng.Mgr().Send(x.AddrPort, s)
 	} else {
 		log.E.Ln("we do not forward nonsense! scoff! snort!")
 	}
 	return e
 }
 
-func (x *Reverse) Account(res *sessionmgr.Data, sm *sessionmgr.Manager,
+func (x *Reverse) Account(res *sess.Data, sm *sess.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	res.Billable = append(res.Billable, s.ID)

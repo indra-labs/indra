@@ -6,7 +6,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
@@ -46,17 +46,15 @@ func (x *Confirmation) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Confirmation) Handle(s *splice.Splice, p Onion,
-	ni interface{}) (e error) {
+func (x *Confirmation) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	
-	ng := ni.(*Engine)
 	// When a confirmation arrives check if it is registered for and run the
 	// hook that was registered with it.
-	ng.PendingResponses.ProcessAndDelete(x.ID, nil, s.GetAll())
+	ng.Pending().ProcessAndDelete(x.ID, nil, s.GetAll())
 	return
 }
 
-func (x *Confirmation) Account(res *sessionmgr.Data, sm *sessionmgr.Manager,
+func (x *Confirmation) Account(res *sess.Data, sm *sess.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	res.ID = x.ID

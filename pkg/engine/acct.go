@@ -1,15 +1,15 @@
 package engine
 
 import (
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 )
 
 // PostAcctOnion takes a slice of Skins and calculates their costs and
 // the list of sessions inside them and attaches accounting operations to
 // apply when the associated confirmation(s) or response hooks are executed.
-func PostAcctOnion(sm *sessionmgr.Manager, o Skins) (res *sessionmgr.Data) {
-	res = &sessionmgr.Data{}
+func PostAcctOnion(sm *sess.Manager, o Skins) (res *sess.Data) {
+	res = &sess.Data{}
 	assembled := o.Assemble()
 	sp := Encode(assembled)
 	res.B = sp.GetAll()

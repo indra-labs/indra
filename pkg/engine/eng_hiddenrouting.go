@@ -8,7 +8,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/services"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 )
@@ -192,7 +192,7 @@ func (hr *HiddenRouting) AddIntro(pk *crypto.Pub, intro *Introduction) {
 	hr.Unlock()
 }
 
-func GossipIntro(intro *Intro, sm *sessionmgr.Manager, c qu.C) {
+func GossipIntro(intro *Intro, sm *sess.Manager, c qu.C) {
 	log.D.F("propagating hidden service intro for %s",
 		intro.Key.ToBase32Abbreviated())
 	done := qu.T()

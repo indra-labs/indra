@@ -100,6 +100,6 @@ func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 		}
 		fn()
 		return
-	}, ng.PendingResponses)
+	}, ng.Responses)
 	return
 }

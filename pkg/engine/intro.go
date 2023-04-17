@@ -13,7 +13,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/engine/node"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -108,38 +108,36 @@ func (x *Intro) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Intro) Handle(s *splice.Splice, p Onion,
-	ni interface{}) (e error) {
-	
-	ng := ni.(*Engine)
-	ng.HiddenRouting.Lock()
+func (x *Intro) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
+	ng.Hidden().Lock()
 	valid := x.Validate()
 	if valid {
-		log.T.Ln(ng.GetLocalNodeAddressString(), "validated intro", x.ID)
+		log.T.Ln(ng.Mgr().GetLocalNodeAddressString(), "validated intro", x.ID)
 		kb := x.Key.ToBytes()
-		if _, ok := ng.HiddenRouting.KnownIntros[x.Key.ToBytes()]; ok {
-			log.D.Ln(ng.GetLocalNodeAddressString(), "already have intro")
-			ng.PendingResponses.ProcessAndDelete(x.ID, &kb, s.GetAll())
-			ng.HiddenRouting.Unlock()
+		if _, ok := ng.Hidden().KnownIntros[x.Key.ToBytes()]; ok {
+			log.D.Ln(ng.Mgr().GetLocalNodeAddressString(), "already have intro")
+			ng.Pending().ProcessAndDelete(x.ID, &kb, s.GetAll())
+			ng.Hidden().Unlock()
 			return
 		}
 		log.D.F("%s storing intro for %s %s",
-			ng.GetLocalNodeAddressString(), x.Key.ToBase32Abbreviated(), x.ID)
-		ng.HiddenRouting.KnownIntros[x.Key.ToBytes()] = x
+			ng.Mgr().GetLocalNodeAddressString(), x.Key.ToBase32Abbreviated(),
+			x.ID)
+		ng.Hidden().KnownIntros[x.Key.ToBytes()] = x
 		var ok bool
-		if ok, e = ng.PendingResponses.ProcessAndDelete(x.ID, &kb,
+		if ok, e = ng.Pending().ProcessAndDelete(x.ID, &kb,
 			s.GetAll()); ok || fails(e) {
 			
-			ng.HiddenRouting.Unlock()
+			ng.Hidden().Unlock()
 			log.D.Ln("deleted pending response", x.ID)
 			return
 		}
 		log.D.F("%s sending out intro to %s at %s to all known peers",
-			ng.GetLocalNodeAddressString(), x.Key.ToBase32Abbreviated(),
+			ng.Mgr().GetLocalNodeAddressString(), x.Key.ToBase32Abbreviated(),
 			color.Yellow.Sprint(x.AddrPort.String()))
-		sender := ng.Manager.FindNodeByAddrPort(x.AddrPort)
+		sender := ng.Mgr().FindNodeByAddrPort(x.AddrPort)
 		nn := make(map[nonce.ID]*node.Node)
-		ng.Manager.ForEachNode(func(n *node.Node) bool {
+		ng.Mgr().ForEachNode(func(n *node.Node) bool {
 			if n.ID != sender.ID {
 				nn[n.ID] = n
 				return true
@@ -158,11 +156,11 @@ func (x *Intro) Handle(s *splice.Splice, p Onion,
 			break
 		}
 	}
-	ng.HiddenRouting.Unlock()
+	ng.Hidden().Unlock()
 	return
 }
 
-func (x *Intro) Account(res *sessionmgr.Data, sm *sessionmgr.Manager,
+func (x *Intro) Account(res *sess.Data, sm *sess.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	res.ID = x.ID

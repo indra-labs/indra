@@ -10,7 +10,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
@@ -91,11 +91,9 @@ func (x *Route) Decrypt(prk *crypto.Prv, s *splice.Splice) {
 	ReadRoutingHeader(s, &x.RoutingHeaderBytes)
 }
 
-func (x *Route) Handle(s *splice.Splice, p Onion, ni interface{}) (e error) {
-	
-	ng := ni.(*Engine)
-	log.D.Ln(ng.GetLocalNodeAddressString(), "handling route")
-	hc := ng.FindCloakedHiddenService(x.HiddenCloaked)
+func (x *Route) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
+	log.D.Ln(ng.Mgr().GetLocalNodeAddressString(), "handling route")
+	hc := ng.Hidden().FindCloakedHiddenService(x.HiddenCloaked)
 	if hc == nil {
 		log.T.Ln("no matching hidden service key found from cloaked key")
 		return
@@ -105,19 +103,19 @@ func (x *Route) Handle(s *splice.Splice, p Onion, ni interface{}) (e error) {
 	}
 	log.D.Ln("route key", *hc)
 	hcl := *hc
-	if hh, ok := ng.HiddenRouting.HiddenServices[hcl]; ok {
+	if hh, ok := ng.Hidden().HiddenServices[hcl]; ok {
 		log.D.F("we are the hidden service %s - decrypting...",
 			hh.CurrentIntros[0].Key.ToBase32Abbreviated())
 		// We have the keys to unwrap this one.
 		x.Decrypt(hh.Prv, s)
 		log.D.Ln(s)
 		n := crypto.GenNonces(5)
-		rvKeys := ng.KeySet.Next3()
+		rvKeys := ng.Keyset().Next3()
 		hops := []byte{3, 4, 5, 0, 1}
-		s := make(sessions.Sessions, len(hops))
-		ng.SelectHops(hops, s, "route reply header")
+		ss := make(sessions.Sessions, len(hops))
+		ng.Mgr().SelectHops(hops, ss, "route reply header")
 		rt := &Routing{
-			Sessions: [3]*sessions.Data{s[0], s[1], s[2]},
+			Sessions: [3]*sessions.Data{ss[0], ss[1], ss[2]},
 			Keys:     crypto.Privs{rvKeys[0], rvKeys[1], rvKeys[2]},
 			Nonces:   crypto.Nonces{n[0], n[1], n[2]},
 		}
@@ -127,14 +125,14 @@ func (x *Route) Handle(s *splice.Splice, p Onion, ni interface{}) (e error) {
 		ep := ExitPoint{
 			Routing: rt,
 			ReturnPubs: crypto.Pubs{
-				crypto.DerivePub(s[0].Payload.Prv),
-				crypto.DerivePub(s[1].Payload.Prv),
-				crypto.DerivePub(s[2].Payload.Prv),
+				crypto.DerivePub(ss[0].Payload.Prv),
+				crypto.DerivePub(ss[1].Payload.Prv),
+				crypto.DerivePub(ss[2].Payload.Prv),
 			},
 		}
 		mr := Skins{}.
-			ForwardCrypt(s[3], ng.KeySet.Next(), n[3]).
-			ForwardCrypt(s[4], ng.KeySet.Next(), n[4]).
+			ForwardCrypt(ss[3], ng.Keyset().Next(), n[3]).
+			ForwardCrypt(ss[4], ng.Keyset().Next(), n[4]).
 			Ready(x.ID, x.HiddenService,
 				x.RoutingHeaderBytes,
 				GetRoutingHeaderFromCursor(rHdr),
@@ -149,7 +147,7 @@ func (x *Route) Handle(s *splice.Splice, p Onion, ni interface{}) (e error) {
 	return
 }
 
-func (x *Route) Account(res *sessionmgr.Data, sm *sessionmgr.Manager,
+func (x *Route) Account(res *sess.Data, sm *sess.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	copy(res.ID[:], x.ID[:])
