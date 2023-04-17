@@ -6,6 +6,7 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
+	"git-indra.lan/indra-labs/indra/pkg/engine/ifc"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
@@ -20,14 +21,14 @@ const (
 
 type Reverse struct {
 	AddrPort *netip.AddrPort
-	Onion
+	ifc.Onion
 }
 
 func reverseGen() coding.Codec           { return &Reverse{} }
 func init()                              { Register(ReverseMagic, reverseGen) }
 func (x *Reverse) Magic() string         { return ReverseMagic }
 func (x *Reverse) Len() int              { return ReverseLen + x.Onion.Len() }
-func (x *Reverse) Wrap(inner Onion)      { x.Onion = inner }
+func (x *Reverse) Wrap(inner ifc.Onion)  { x.Onion = inner }
 func (x *Reverse) GetOnion() interface{} { return x }
 
 func (x *Reverse) Encode(s *splice.Splice) (e error) {
@@ -52,7 +53,7 @@ func (x *Reverse) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Reverse) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
+func (x *Reverse) Handle(s *splice.Splice, p ifc.Onion, ng ifc.Ngin) (e error) {
 	if x.AddrPort.String() == ng.Mgr().GetLocalNodeAddress().String() {
 		in := Recognise(s)
 		if e = in.Decode(s); fails(e) {

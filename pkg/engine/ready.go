@@ -8,6 +8,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
+	"git-indra.lan/indra-labs/indra/pkg/engine/ifc"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
@@ -24,7 +25,7 @@ func ReadyGen() coding.Codec           { return &Ready{} }
 func init()                            { Register(ReadyMagic, ReadyGen) }
 func (x *Ready) Magic() string         { return ReadyMagic }
 func (x *Ready) Len() int              { return ReadyLen }
-func (x *Ready) Wrap(inner Onion)      {}
+func (x *Ready) Wrap(inner ifc.Onion)  {}
 func (x *Ready) GetOnion() interface{} { return x }
 
 type Ready struct {
@@ -67,7 +68,7 @@ func (x *Ready) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Ready) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
+func (x *Ready) Handle(s *splice.Splice, p ifc.Onion, ng ifc.Ngin) (e error) {
 	_, e = ng.Pending().ProcessAndDelete(x.ID, x, s.GetAll())
 	return
 }

@@ -5,6 +5,7 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
+	"git-indra.lan/indra-labs/indra/pkg/engine/ifc"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
@@ -29,7 +30,7 @@ func responseGen() coding.Codec           { return &Response{} }
 func init()                               { Register(ResponseMagic, responseGen) }
 func (x *Response) Magic() string         { return ResponseMagic }
 func (x *Response) Len() int              { return ResponseLen + len(x.Bytes) }
-func (x *Response) Wrap(inner Onion)      {}
+func (x *Response) Wrap(inner ifc.Onion)  {}
 func (x *Response) GetOnion() interface{} { return x }
 
 func (x *Response) Encode(s *splice.Splice) (e error) {
@@ -58,7 +59,7 @@ func (x *Response) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Response) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
+func (x *Response) Handle(s *splice.Splice, p ifc.Onion, ng ifc.Ngin) (e error) {
 	pending := ng.Pending().Find(x.ID)
 	log.T.F("searching for pending ID %s", x.ID)
 	if pending != nil {

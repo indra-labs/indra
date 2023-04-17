@@ -7,6 +7,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
+	"git-indra.lan/indra-labs/indra/pkg/engine/ifc"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
@@ -37,14 +38,14 @@ type GetBalance struct {
 	// course, if configured this way. This could be done by tunneling from
 	// a local Socks5 proxy into Indranet and the exit node also having
 	// this.
-	Onion
+	ifc.Onion
 }
 
 func getBalanceGen() coding.Codec           { return &GetBalance{} }
 func init()                                 { Register(GetBalanceMagic, getBalanceGen) }
 func (x *GetBalance) Magic() string         { return GetBalanceMagic }
 func (x *GetBalance) Len() int              { return GetBalanceLen + x.Onion.Len() }
-func (x *GetBalance) Wrap(inner Onion)      { x.Onion = inner }
+func (x *GetBalance) Wrap(inner ifc.Onion)  { x.Onion = inner }
 func (x *GetBalance) GetOnion() interface{} { return x }
 
 type GetBalanceParams struct {
@@ -75,7 +76,7 @@ func (x *GetBalance) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *GetBalance) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
+func (x *GetBalance) Handle(s *splice.Splice, p ifc.Onion, ng ifc.Ngin) (e error) {
 	log.T.S(x)
 	var found bool
 	var bal *Balance

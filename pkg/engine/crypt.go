@@ -8,6 +8,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
+	"git-indra.lan/indra-labs/indra/pkg/engine/ifc"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
@@ -30,13 +31,13 @@ type Crypt struct {
 	Cloak   crypto.PubKey
 	ToPriv  *crypto.Prv
 	FromPub *crypto.Pub
-	Onion
+	ifc.Onion
 }
 
 func cryptGen() coding.Codec           { return &Crypt{} }
 func init()                            { Register(CryptMagic, cryptGen) }
 func (x *Crypt) Len() int              { return CryptLen + x.Onion.Len() }
-func (x *Crypt) Wrap(inner Onion)      { x.Onion = inner }
+func (x *Crypt) Wrap(inner ifc.Onion)  { x.Onion = inner }
 func (x *Crypt) GetOnion() interface{} { return x }
 func (x *Crypt) Magic() string         { return CryptMagic }
 
@@ -95,7 +96,7 @@ func (x *Crypt) Decrypt(prk *crypto.Prv, s *splice.Splice) {
 		x.IV, s.GetRest())
 }
 
-func (x *Crypt) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
+func (x *Crypt) Handle(s *splice.Splice, p ifc.Onion, ng ifc.Ngin) (e error) {
 	hdr, _, _, identity := ng.Mgr().FindCloaked(x.Cloak)
 	if hdr == nil {
 		log.T.Ln("no matching key found from cloaked key")

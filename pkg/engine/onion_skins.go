@@ -9,17 +9,18 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/engine/ifc"
 	"git-indra.lan/indra-labs/indra/pkg/engine/node"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
-type Skins []Onion
+type Skins []ifc.Onion
 
 var nop = &End{}
 
-func Encode(on Onion) (s *splice.Splice) {
+func Encode(on ifc.Onion) (s *splice.Splice) {
 	s = splice.New(on.Len())
 	fails(on.Encode(s))
 	return
@@ -29,7 +30,7 @@ func Encode(on Onion) (s *splice.Splice) {
 // contains the second, second contains the third, and so on, and then returns
 // the first onion, on which you can then call Encode and generate the wire
 // message form of the onion.
-func (o Skins) Assemble() (on Onion) {
+func (o Skins) Assemble() (on ifc.Onion) {
 	// First item is the outer crypt.
 	on = o[0]
 	// Iterate through the remaining layers.

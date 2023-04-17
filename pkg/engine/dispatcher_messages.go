@@ -7,6 +7,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
+	"git-indra.lan/indra-labs/indra/pkg/engine/ifc"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -120,11 +121,11 @@ type Munged struct {
 	slice.Bytes // contains an encoded Onion.
 }
 
-func (m Munged) Unpack() (mu Onion) {
+func (m Munged) Unpack() (mu ifc.Onion) {
 	s := splice.NewFrom(m.Bytes)
 	mm := Recognise(s)
 	var ok bool
-	if mu, ok = mm.(Onion); !ok {
+	if mu, ok = mm.(ifc.Onion); !ok {
 		log.D.Ln("type not recognised as a mung")
 	}
 	return

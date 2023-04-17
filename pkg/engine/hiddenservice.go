@@ -7,6 +7,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
+	"git-indra.lan/indra-labs/indra/pkg/engine/ifc"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
@@ -28,14 +29,14 @@ type HiddenService struct {
 	// for the reply message, they are common with the crypts in the header.
 	crypto.Nonces
 	RoutingHeaderBytes
-	Onion
+	ifc.Onion
 }
 
 func hiddenServiceGen() coding.Codec           { return &HiddenService{} }
 func init()                                    { Register(HiddenServiceMagic, hiddenServiceGen) }
 func (x *HiddenService) Magic() string         { return HiddenServiceMagic }
 func (x *HiddenService) Len() int              { return HiddenServiceLen + x.Onion.Len() }
-func (x *HiddenService) Wrap(inner Onion)      { x.Onion = inner }
+func (x *HiddenService) Wrap(inner ifc.Onion)  { x.Onion = inner }
 func (x *HiddenService) GetOnion() interface{} { return x }
 
 func (x *HiddenService) Encode(s *splice.Splice) (e error) {
@@ -62,7 +63,7 @@ func (x *HiddenService) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *HiddenService) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
+func (x *HiddenService) Handle(s *splice.Splice, p ifc.Onion, ng ifc.Ngin) (e error) {
 	log.D.F("%s adding introduction for key %s",
 		ng.Mgr().GetLocalNodeAddressString(), x.Key.ToBase32Abbreviated())
 	ng.Hidden().AddIntro(x.Key, &Introduction{

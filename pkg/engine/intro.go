@@ -11,6 +11,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
+	"git-indra.lan/indra-labs/indra/pkg/engine/ifc"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/engine/node"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
@@ -37,7 +38,7 @@ func introGen() coding.Codec           { return &Intro{} }
 func init()                            { Register(IntroMagic, introGen) }
 func (x *Intro) Magic() string         { return IntroMagic }
 func (x *Intro) Len() int              { return IntroLen }
-func (x *Intro) Wrap(inner Onion)      {}
+func (x *Intro) Wrap(inner ifc.Onion)  {}
 func (x *Intro) GetOnion() interface{} { return x }
 
 func NewIntro(id nonce.ID, key *crypto.Prv, ap *netip.AddrPort,
@@ -108,7 +109,7 @@ func (x *Intro) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Intro) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
+func (x *Intro) Handle(s *splice.Splice, p ifc.Onion, ng ifc.Ngin) (e error) {
 	ng.Hidden().Lock()
 	valid := x.Validate()
 	if valid {

@@ -1,9 +1,10 @@
-package engine
+package ifc
 
 import (
 	"github.com/cybriq/qu"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
+	"git-indra.lan/indra-labs/indra/pkg/engine"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/responses"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
@@ -28,7 +29,7 @@ type Ngin interface {
 	SetLoad(byte)
 	Mgr() *sess.Manager
 	Pending() *responses.Pending
-	Hidden() *HiddenRouting
+	Hidden() *engine.HiddenRouting
 	KillSwitch() qu.C
 	Keyset() *crypto.KeySet
 }

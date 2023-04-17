@@ -9,6 +9,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
+	"git-indra.lan/indra-labs/indra/pkg/engine/ifc"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
@@ -25,7 +26,7 @@ func RouteGen() coding.Codec           { return &Route{} }
 func init()                            { Register(RouteMagic, RouteGen) }
 func (x *Route) Magic() string         { return RouteMagic }
 func (x *Route) Len() int              { return RouteLen + x.Onion.Len() }
-func (x *Route) Wrap(inner Onion)      { x.Onion = inner }
+func (x *Route) Wrap(inner ifc.Onion)  { x.Onion = inner }
 func (x *Route) GetOnion() interface{} { return x }
 
 type Route struct {
@@ -44,7 +45,7 @@ type Route struct {
 	// they are common with the crypts in the header.
 	crypto.Nonces
 	RoutingHeaderBytes
-	Onion
+	ifc.Onion
 }
 
 func (x *Route) Encode(s *splice.Splice) (e error) {
@@ -91,7 +92,7 @@ func (x *Route) Decrypt(prk *crypto.Prv, s *splice.Splice) {
 	ReadRoutingHeader(s, &x.RoutingHeaderBytes)
 }
 
-func (x *Route) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
+func (x *Route) Handle(s *splice.Splice, p ifc.Onion, ng ifc.Ngin) (e error) {
 	log.D.Ln(ng.Mgr().GetLocalNodeAddressString(), "handling route")
 	hc := ng.Hidden().FindCloakedHiddenService(x.HiddenCloaked)
 	if hc == nil {

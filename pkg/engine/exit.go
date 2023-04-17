@@ -8,6 +8,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
+	"git-indra.lan/indra-labs/indra/pkg/engine/ifc"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
@@ -40,14 +41,14 @@ type Exit struct {
 	Port uint16
 	// Bytes are the message to be passed to the exit service.
 	slice.Bytes
-	Onion
+	ifc.Onion
 }
 
 func exitGen() coding.Codec           { return &Exit{} }
 func init()                           { Register(ExitMagic, exitGen) }
 func (x *Exit) Magic() string         { return ExitMagic }
 func (x *Exit) Len() int              { return ExitLen + x.Bytes.Len() + x.Onion.Len() }
-func (x *Exit) Wrap(inner Onion)      { x.Onion = inner }
+func (x *Exit) Wrap(inner ifc.Onion)  { x.Onion = inner }
 func (x *Exit) GetOnion() interface{} { return x }
 
 func (x *Exit) Encode(s *splice.Splice) (e error) {
@@ -74,7 +75,7 @@ func (x *Exit) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Exit) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
+func (x *Exit) Handle(s *splice.Splice, p ifc.Onion, ng ifc.Ngin) (e error) {
 	// payload is forwarded to a local port and the result is forwarded
 	// back with a reverse header.
 	var result slice.Bytes

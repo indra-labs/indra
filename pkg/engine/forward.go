@@ -5,6 +5,7 @@ import (
 	"reflect"
 	
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
+	"git-indra.lan/indra-labs/indra/pkg/engine/ifc"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
@@ -18,14 +19,14 @@ const (
 
 type Forward struct {
 	AddrPort *netip.AddrPort
-	Onion
+	ifc.Onion
 }
 
 func forwardGen() coding.Codec           { return &Forward{} }
 func init()                              { Register(ForwardMagic, forwardGen) }
 func (x *Forward) Magic() string         { return ForwardMagic }
 func (x *Forward) Len() int              { return ForwardLen + x.Onion.Len() }
-func (x *Forward) Wrap(inner Onion)      { x.Onion = inner }
+func (x *Forward) Wrap(inner ifc.Onion)  { x.Onion = inner }
 func (x *Forward) GetOnion() interface{} { return x }
 
 func (x *Forward) Encode(s *splice.Splice) error {
@@ -44,7 +45,7 @@ func (x *Forward) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Forward) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
+func (x *Forward) Handle(s *splice.Splice, p ifc.Onion, ng ifc.Ngin) (e error) {
 	// Forward the whole buffer received onwards. Usually there will be a
 	// crypt.Layer under this which will be unwrapped by the receiver.
 	if x.AddrPort.String() == ng.Mgr().GetLocalNodeAddress().String() {

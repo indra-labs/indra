@@ -7,6 +7,7 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
+	"git-indra.lan/indra-labs/indra/pkg/engine/ifc"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
@@ -29,7 +30,7 @@ func balanceGen() coding.Codec           { return &Balance{} }
 func init()                              { Register(BalanceMagic, balanceGen) }
 func (x *Balance) Magic() string         { return BalanceMagic }
 func (x *Balance) Len() int              { return BalanceLen }
-func (x *Balance) Wrap(inner Onion)      {}
+func (x *Balance) Wrap(inner ifc.Onion)  {}
 func (x *Balance) GetOnion() interface{} { return x }
 
 func (x *Balance) Encode(s *splice.Splice) (e error) {
@@ -56,7 +57,7 @@ func (x *Balance) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Balance) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
+func (x *Balance) Handle(s *splice.Splice, p ifc.Onion, ng ifc.Ngin) (e error) {
 	
 	if pending := ng.Pending().Find(x.ID); pending != nil {
 		log.D.S("found pending", pending.ID)

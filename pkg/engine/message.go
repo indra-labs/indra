@@ -10,6 +10,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
+	"git-indra.lan/indra-labs/indra/pkg/engine/ifc"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
@@ -28,7 +29,7 @@ func MessageGen() coding.Codec           { return &Message{} }
 func init()                              { Register(MessageMagic, MessageGen) }
 func (x *Message) Magic() string         { return MessageMagic }
 func (x *Message) Len() int              { return MessageLen + x.Payload.Len() }
-func (x *Message) Wrap(inner Onion)      {}
+func (x *Message) Wrap(inner ifc.Onion)  {}
 func (x *Message) GetOnion() interface{} { return x }
 
 type Message struct {
@@ -77,7 +78,7 @@ func (x *Message) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Message) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
+func (x *Message) Handle(s *splice.Splice, p ifc.Onion, ng ifc.Ngin) (e error) {
 	// Forward payload out to service port.
 	_, e = ng.Pending().ProcessAndDelete(x.ID, x, s.GetAll())
 	return

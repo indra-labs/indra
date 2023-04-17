@@ -2,6 +2,7 @@ package engine
 
 import (
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
+	"git-indra.lan/indra-labs/indra/pkg/engine/ifc"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
@@ -16,7 +17,7 @@ func EndGen() coding.Codec           { return &End{} }
 func init()                          { Register(EndMagic, EndGen) }
 func (x *End) Magic() string         { return EndMagic }
 func (x *End) Len() int              { return EndLen }
-func (x *End) Wrap(inner Onion)      {}
+func (x *End) Wrap(inner ifc.Onion)  {}
 func (x *End) GetOnion() interface{} { return x }
 
 type End struct{}
@@ -33,7 +34,7 @@ func (x *End) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *End) Handle(s *splice.Splice, p Onion, ni Ngin) (e error) {
+func (x *End) Handle(s *splice.Splice, p ifc.Onion, ni ifc.Ngin) (e error) {
 	
 	return
 }

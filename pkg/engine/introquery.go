@@ -7,6 +7,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
+	"git-indra.lan/indra-labs/indra/pkg/engine/ifc"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
@@ -36,14 +37,14 @@ type IntroQuery struct {
 	// a local Socks5 proxy into Indranet and the exit node also having
 	// this.
 	Key *crypto.Pub
-	Onion
+	ifc.Onion
 }
 
 func introQueryGen() coding.Codec           { return &IntroQuery{} }
 func init()                                 { Register(IntroQueryMagic, introQueryGen) }
 func (x *IntroQuery) Magic() string         { return IntroQueryMagic }
 func (x *IntroQuery) Len() int              { return IntroQueryLen + x.Onion.Len() }
-func (x *IntroQuery) Wrap(inner Onion)      { x.Onion = inner }
+func (x *IntroQuery) Wrap(inner ifc.Onion)  { x.Onion = inner }
 func (x *IntroQuery) GetOnion() interface{} { return x }
 
 func (x *IntroQuery) Encode(s *splice.Splice) (e error) {
@@ -67,7 +68,7 @@ func (x *IntroQuery) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *IntroQuery) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
+func (x *IntroQuery) Handle(s *splice.Splice, p ifc.Onion, ng ifc.Ngin) (e error) {
 	ng.Hidden().Lock()
 	log.D.Ln(ng.Mgr().GetLocalNodeAddressString(), "handling introquery", x.ID,
 		x.Key.ToBase32Abbreviated())

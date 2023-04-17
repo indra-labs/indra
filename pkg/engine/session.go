@@ -7,6 +7,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
+	"git-indra.lan/indra-labs/indra/pkg/engine/ifc"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
@@ -22,14 +23,14 @@ type Session struct {
 	ID              nonce.ID // only used by a client
 	Hop             byte     // only used by a client
 	Header, Payload *crypto.Prv
-	Onion
+	ifc.Onion
 }
 
 func sessionGen() coding.Codec           { return &Session{} }
 func init()                              { Register(SessionMagic, sessionGen) }
 func (x *Session) Magic() string         { return SessionMagic }
 func (x *Session) Len() int              { return SessionLen + x.Onion.Len() }
-func (x *Session) Wrap(inner Onion)      { x.Onion = inner }
+func (x *Session) Wrap(inner ifc.Onion)  { x.Onion = inner }
 func (x *Session) GetOnion() interface{} { return x }
 
 func NewSessionKeys(hop byte) (x *Session) {
@@ -72,7 +73,7 @@ func (x *Session) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Session) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
+func (x *Session) Handle(s *splice.Splice, p ifc.Onion, ng ifc.Ngin) (e error) {
 	
 	log.T.F("incoming session %s", x.PreimageHash())
 	pi := ng.Mgr().FindPendingPreimage(x.PreimageHash())

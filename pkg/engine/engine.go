@@ -6,6 +6,7 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/engine/ifc"
 	"git-indra.lan/indra-labs/indra/pkg/engine/node"
 	"git-indra.lan/indra-labs/indra/pkg/engine/responses"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
@@ -88,7 +89,7 @@ func (ng *Engine) Shutdown() {
 	ng.C.Q()
 }
 
-func (ng *Engine) HandleMessage(s *splice.Splice, pr Onion) {
+func (ng *Engine) HandleMessage(s *splice.Splice, pr ifc.Onion) {
 	log.D.F("%s handling received message", ng.GetLocalNodeAddressString())
 	s.SetCursor(0)
 	s.Segments = s.Segments[:0]
@@ -105,7 +106,7 @@ func (ng *Engine) HandleMessage(s *splice.Splice, pr Onion) {
 		if m == nil {
 			return
 		}
-		if fails(m.(Onion).Handle(s, pr, ng)) {
+		if fails(m.(ifc.Onion).Handle(s, pr, ng)) {
 			log.W.S("unrecognised packet", s.GetAll().ToBytes())
 		}
 	}
@@ -115,7 +116,7 @@ func (ng *Engine) Handler() (out bool) {
 	log.T.C(func() string {
 		return ng.GetLocalNodeAddressString() + " awaiting message"
 	})
-	var prev Onion
+	var prev ifc.Onion
 	select {
 	case <-ng.C.Wait():
 		ng.Shutdown()
@@ -168,7 +169,7 @@ func (ng *Engine) Handler() (out bool) {
 	return
 }
 
-var _ Ngin = &Engine{}
+var _ ifc.Ngin = &Engine{}
 
 func (ng *Engine) GetLoad() byte               { return byte(ng.Load.Load()) }
 func (ng *Engine) SetLoad(load byte)           { ng.Load.Store(uint32(load)) }
