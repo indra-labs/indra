@@ -20,7 +20,7 @@ func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 	fn func()) (e error) {
 	
 	var nodes [5]*node.Node
-	nodes = ng.SessionManager.SelectUnusedCircuit()
+	nodes = ng.Manager.SelectUnusedCircuit()
 	for i := range nodes {
 		if nodes[i] == nil {
 			e = fmt.Errorf("failed to find nodes %d", i)
@@ -29,7 +29,7 @@ func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 	}
 	// Get a random return hop session (index 5).
 	var returnSession *sessions.Data
-	returnHops := ng.SessionManager.GetSessionsAtHop(5)
+	returnHops := ng.Manager.GetSessionsAtHop(5)
 	if len(returnHops) > 1 {
 		cryptorand.Shuffle(len(returnHops), func(i, j int) {
 			returnHops[i], returnHops[j] = returnHops[j], returnHops[i]
@@ -80,11 +80,11 @@ func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 	}
 	// todo: handle payment failures!
 	o := MakeSession(conf, s, returnSession, nodes[:], ng.KeySet)
-	res := ng.PostAcctOnion(o)
+	res := PostAcctOnion(ng.Manager, o)
 	ng.SendWithOneHook(nodes[0].AddrPort, res, func(id nonce.ID, ifc interface{},
 		b slice.Bytes) (e error) {
-		ng.SessionManager.Lock()
-		defer ng.SessionManager.Unlock()
+		ng.Manager.Lock()
+		defer ng.Manager.Unlock()
 		var ss [5]*sessions.Data
 		for i := range nodes {
 			log.D.F("confirming and storing session at hop %d %s for %s with"+
@@ -94,9 +94,9 @@ func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 				amount)
 			ss[i] = sessions.NewSessionData(s[i].ID, nodes[i], amount,
 				s[i].Header, s[i].Payload, byte(i))
-			ng.SessionManager.Add(ss[i])
+			ng.Manager.Add(ss[i])
 			ng.Sessions = append(ng.Sessions, ss[i])
-			ng.SessionManager.PendingPayments.Delete(s[i].PreimageHash())
+			ng.Manager.PendingPayments.Delete(s[i].PreimageHash())
 		}
 		fn()
 		return

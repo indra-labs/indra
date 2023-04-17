@@ -96,7 +96,7 @@ func (x *Session) PreimageHash() sha256.Hash {
 	return sha256.Single(append(h[:], p[:]...))
 }
 
-func (x *Session) Account(res *sessionmgr.Data, sm *SessionManager, s *sessions.Data,
+func (x *Session) Account(res *sessionmgr.Data, sm *sessionmgr.Manager, s *sessions.Data,
 	last bool) (skip bool, sd *sessions.Data) {
 	return
 }

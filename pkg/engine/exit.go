@@ -133,7 +133,7 @@ type ExitParams struct {
 	KS         *crypto.KeySet
 }
 
-func (x *Exit) Account(res *sessionmgr.Data, sm *SessionManager,
+func (x *Exit) Account(res *sessionmgr.Data, sm *sessionmgr.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	s.Node.Lock()
 	for j := range s.Node.Services {

@@ -76,11 +76,11 @@ func (x *HiddenService) Handle(s *splice.Splice, p Onion, ni interface{}) (e err
 		},
 	})
 	log.D.Ln("stored new introduction, starting broadcast")
-	go GossipIntro(&x.Intro, ng.SessionManager, ng.C)
+	go GossipIntro(&x.Intro, ng.Manager, ng.C)
 	return
 }
 
-func (x *HiddenService) Account(res *sessionmgr.Data, sm *SessionManager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+func (x *HiddenService) Account(res *sessionmgr.Data, sm *sessionmgr.Manager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	res.ID = x.Intro.ID
 	res.Billable = append(res.Billable, s.ID)

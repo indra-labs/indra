@@ -86,7 +86,7 @@ func (x *Message) Handle(s *splice.Splice, p Onion,
 	return
 }
 
-func (x *Message) Account(res *sessionmgr.Data, sm *SessionManager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+func (x *Message) Account(res *sessionmgr.Data, sm *sessionmgr.Manager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	res.ID = x.ID
 	res.Billable = append(res.Billable, s.ID)

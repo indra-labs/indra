@@ -131,7 +131,7 @@ func (x *GetBalance) Handle(s *splice.Splice, p Onion,
 	return
 }
 
-func (x *GetBalance) Account(res *sessionmgr.Data, sm *SessionManager,
+func (x *GetBalance) Account(res *sessionmgr.Data, sm *sessionmgr.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	res.ID = s.ID

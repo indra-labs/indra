@@ -1,4 +1,4 @@
-package engine
+package sessionmgr
 
 import (
 	"git-indra.lan/indra-labs/indra/pkg/engine/node"
@@ -9,7 +9,7 @@ import (
 // SelectUnusedCircuit accepts an array of 5 Node entries where all or some are
 // empty and picks nodes for the remainder that do not have a hop at that
 // position.
-func (sm *SessionManager) SelectUnusedCircuit() (c [5]*node.Node) {
+func (sm *Manager) SelectUnusedCircuit() (c [5]*node.Node) {
 	sm.Lock()
 	defer sm.Unlock()
 	// Create a shuffled slice of Nodes to randomise the selection process.
@@ -42,7 +42,7 @@ out:
 	return
 }
 
-func (sm *SessionManager) SelectHops(hops []byte, alreadyHave sessions.Sessions,
+func (sm *Manager) SelectHops(hops []byte, alreadyHave sessions.Sessions,
 	note string) (so sessions.Sessions) {
 	
 	log.T.Ln(sm.GetLocalNodeAddressString(), "selecting hops", note)

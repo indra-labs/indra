@@ -137,9 +137,9 @@ func (x *Intro) Handle(s *splice.Splice, p Onion,
 		log.D.F("%s sending out intro to %s at %s to all known peers",
 			ng.GetLocalNodeAddressString(), x.Key.ToBase32Abbreviated(),
 			color.Yellow.Sprint(x.AddrPort.String()))
-		sender := ng.SessionManager.FindNodeByAddrPort(x.AddrPort)
+		sender := ng.Manager.FindNodeByAddrPort(x.AddrPort)
 		nn := make(map[nonce.ID]*node.Node)
-		ng.SessionManager.ForEachNode(func(n *node.Node) bool {
+		ng.Manager.ForEachNode(func(n *node.Node) bool {
 			if n.ID != sender.ID {
 				nn[n.ID] = n
 				return true
@@ -162,7 +162,7 @@ func (x *Intro) Handle(s *splice.Splice, p Onion,
 	return
 }
 
-func (x *Intro) Account(res *sessionmgr.Data, sm *SessionManager,
+func (x *Intro) Account(res *sessionmgr.Data, sm *sessionmgr.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	res.ID = x.ID

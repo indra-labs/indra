@@ -7,6 +7,8 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/node"
+	"git-indra.lan/indra-labs/indra/pkg/engine/responses"
+	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/engine/tpt"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
@@ -14,8 +16,8 @@ import (
 )
 
 type Engine struct {
-	*PendingResponses
-	*SessionManager
+	*responses.PendingResponses
+	*sessionmgr.Manager
 	*HiddenRouting
 	*crypto.KeySet
 	Load          atomic.Uint32
@@ -42,9 +44,9 @@ func NewEngine(p Params) (c *Engine, e error) {
 		return
 	}
 	c = &Engine{
-		PendingResponses: &PendingResponses{},
+		PendingResponses: &responses.PendingResponses{},
 		KeySet:           ks,
-		SessionManager:   NewSessionManager(),
+		Manager:          sessionmgr.NewSessionManager(),
 		HiddenRouting:    NewHiddenrouting(),
 		TimeoutSignal:    qu.T(),
 		Pause:            qu.T(),

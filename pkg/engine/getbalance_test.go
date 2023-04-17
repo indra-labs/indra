@@ -106,7 +106,7 @@ func TestClient_SendGetBalance(t *testing.T) {
 out:
 	for i := 1; i < len(clients[0].Sessions)-1; i++ {
 		wg.Add(1)
-		returnHops := client.SessionManager.GetSessionsAtHop(5)
+		returnHops := client.Manager.GetSessionsAtHop(5)
 		var returner *sessions.Data
 		if len(returnHops) > 1 {
 			cryptorand.Shuffle(len(returnHops), func(i, j int) {

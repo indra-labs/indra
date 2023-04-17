@@ -62,6 +62,7 @@ func (x *Delay) Handle(s *splice.Splice, p Onion, ni interface{}) (e error) {
 	return
 }
 
-func (x *Delay) Account(res *sessionmgr.Data, sm *SessionManager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+func (x *Delay) Account(res *sessionmgr.Data, sm *sessionmgr.Manager,
+	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	return
 }

@@ -1,4 +1,4 @@
-package engine
+package sessionmgr
 
 import (
 	"fmt"
@@ -15,7 +15,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/engine/node"
 	"git-indra.lan/indra-labs/indra/pkg/engine/payments"
 	"git-indra.lan/indra-labs/indra/pkg/engine/services"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
@@ -26,7 +25,7 @@ var (
 	fails = log.E.Chk
 )
 
-type SessionManager struct {
+type Manager struct {
 	nodes           []*node.Node
 	PendingPayments payments.PendingPayments
 	sessions.Sessions
@@ -34,49 +33,17 @@ type SessionManager struct {
 	sync.Mutex
 }
 
-func NewSessionManager() *SessionManager {
-	return &SessionManager{
+func NewSessionManager() *Manager {
+	return &Manager{
 		SessionCache:    make(SessionCache),
 		PendingPayments: make(payments.PendingPayments, 0),
 	}
 }
 
-// PostAcctOnion takes a slice of Skins and calculates their costs and
-// the list of sessions inside them and attaches accounting operations to
-// apply when the associated confirmation(s) or response hooks are executed.
-func (sm *SessionManager) PostAcctOnion(o Skins) (res *sessionmgr.Data) {
-	res = &sessionmgr.Data{}
-	assembled := o.Assemble()
-	sp := Encode(assembled)
-	res.B = sp.GetAll()
-	// do client accounting
-	skip := false
-	var last bool
-	for i := range o {
-		if skip {
-			skip = false
-			continue
-		}
-		switch on := o[i].(type) {
-		case *Crypt:
-			if i == len(o)-1 {
-				last = true
-			}
-			var s *sessions.Data
-			skip, s = on.Account(res, sm, nil, last)
-			if last {
-				break
-			}
-			o[i+1].Account(res, sm, s, last)
-		}
-	}
-	return
-}
-
 // FindCloaked searches the client identity key and the sessions for a match. It
 // returns the session as well, though not all users of this function will need
 // this.
-func (sm *SessionManager) FindCloaked(clk crypto.PubKey) (hdr *crypto.Prv,
+func (sm *Manager) FindCloaked(clk crypto.PubKey) (hdr *crypto.Prv,
 	pld *crypto.Prv, sess *sessions.Data, identity bool) {
 	
 	var b crypto.Blinder
@@ -104,19 +71,19 @@ func (sm *SessionManager) FindCloaked(clk crypto.PubKey) (hdr *crypto.Prv,
 
 // ClearPendingPayments is used only for debugging, removing all pending
 // payments, making the engine forget about payments it received.
-func (sm *SessionManager) ClearPendingPayments() {
+func (sm *Manager) ClearPendingPayments() {
 	log.D.Ln("clearing pending payments")
 	sm.PendingPayments = sm.PendingPayments[:0]
 }
 
 // ClearSessions is used only for debugging, removing all but the first session,
 // which is the engine's initial return session.
-func (sm *SessionManager) ClearSessions() {
+func (sm *Manager) ClearSessions() {
 	log.D.Ln("clearing sessions")
 	sm.Sessions = sm.Sessions[:1]
 }
 
-func (sm *SessionManager) IncSession(id nonce.ID, msats lnwire.MilliSatoshi,
+func (sm *Manager) IncSession(id nonce.ID, msats lnwire.MilliSatoshi,
 	sender bool, typ string) {
 	
 	sess := sm.FindSession(id)
@@ -127,7 +94,7 @@ func (sm *SessionManager) IncSession(id nonce.ID, msats lnwire.MilliSatoshi,
 	}
 }
 
-func (sm *SessionManager) DecSession(id nonce.ID, msats int,
+func (sm *Manager) DecSession(id nonce.ID, msats int,
 	sender bool, typ string) bool {
 	
 	sess := sm.FindSession(id)
@@ -140,7 +107,7 @@ func (sm *SessionManager) DecSession(id nonce.ID, msats int,
 	return false
 }
 
-func (sm *SessionManager) GetNodeCircuit(id nonce.ID) (sce *sessions.Circuit,
+func (sm *Manager) GetNodeCircuit(id nonce.ID) (sce *sessions.Circuit,
 	exists bool) {
 	
 	sm.Lock()
@@ -149,7 +116,7 @@ func (sm *SessionManager) GetNodeCircuit(id nonce.ID) (sce *sessions.Circuit,
 	return
 }
 
-func (sm *SessionManager) AddSession(s *sessions.Data) {
+func (sm *Manager) AddSession(s *sessions.Data) {
 	sm.Lock()
 	defer sm.Unlock()
 	// check for dupes
@@ -166,7 +133,7 @@ func (sm *SessionManager) AddSession(s *sessions.Data) {
 		sm.SessionCache = sm.SessionCache.Add(s)
 	}
 }
-func (sm *SessionManager) FindSession(id nonce.ID) *sessions.Data {
+func (sm *Manager) FindSession(id nonce.ID) *sessions.Data {
 	sm.Lock()
 	defer sm.Unlock()
 	for i := range sm.Sessions {
@@ -176,7 +143,7 @@ func (sm *SessionManager) FindSession(id nonce.ID) *sessions.Data {
 	}
 	return nil
 }
-func (sm *SessionManager) FindSessionByHeader(prvKey *crypto.Prv) *sessions.Data {
+func (sm *Manager) FindSessionByHeader(prvKey *crypto.Prv) *sessions.Data {
 	sm.Lock()
 	defer sm.Unlock()
 	for i := range sm.Sessions {
@@ -186,7 +153,7 @@ func (sm *SessionManager) FindSessionByHeader(prvKey *crypto.Prv) *sessions.Data
 	}
 	return nil
 }
-func (sm *SessionManager) FindSessionByHeaderPub(pubKey *crypto.Pub) *sessions.Data {
+func (sm *Manager) FindSessionByHeaderPub(pubKey *crypto.Pub) *sessions.Data {
 	sm.Lock()
 	defer sm.Unlock()
 	for i := range sm.Sessions {
@@ -196,7 +163,7 @@ func (sm *SessionManager) FindSessionByHeaderPub(pubKey *crypto.Pub) *sessions.D
 	}
 	return nil
 }
-func (sm *SessionManager) FindSessionPreimage(pr sha256.Hash) *sessions.Data {
+func (sm *Manager) FindSessionPreimage(pr sha256.Hash) *sessions.Data {
 	sm.Lock()
 	defer sm.Unlock()
 	for i := range sm.Sessions {
@@ -207,7 +174,7 @@ func (sm *SessionManager) FindSessionPreimage(pr sha256.Hash) *sessions.Data {
 	return nil
 }
 
-func (sm *SessionManager) GetSessionsAtHop(hop byte) (s sessions.Sessions) {
+func (sm *Manager) GetSessionsAtHop(hop byte) (s sessions.Sessions) {
 	sm.Lock()
 	defer sm.Unlock()
 	for i := range sm.Sessions {
@@ -217,7 +184,7 @@ func (sm *SessionManager) GetSessionsAtHop(hop byte) (s sessions.Sessions) {
 	}
 	return
 }
-func (sm *SessionManager) DeleteSession(id nonce.ID) {
+func (sm *Manager) DeleteSession(id nonce.ID) {
 	sm.Lock()
 	defer sm.Unlock()
 	for i := range sm.Sessions {
@@ -232,8 +199,8 @@ func (sm *SessionManager) DeleteSession(id nonce.ID) {
 
 // IterateSessions calls a function for each entry in the Sessions slice.
 //
-// Do not call SessionManager methods within this function.
-func (sm *SessionManager) IterateSessions(fn func(s *sessions.Data) bool) {
+// Do not call Manager methods within this function.
+func (sm *Manager) IterateSessions(fn func(s *sessions.Data) bool) {
 	sm.Lock()
 	defer sm.Unlock()
 	for i := range sm.Sessions {
@@ -246,8 +213,8 @@ func (sm *SessionManager) IterateSessions(fn func(s *sessions.Data) bool) {
 // IterateSessionCache calls a function for each entry in the SessionCache
 // that provides also access to the related node.
 //
-// Do not call SessionManager methods within this function.
-func (sm *SessionManager) IterateSessionCache(fn func(n *node.Node,
+// Do not call Manager methods within this function.
+func (sm *Manager) IterateSessionCache(fn func(n *node.Node,
 	c *sessions.Circuit) bool) {
 	
 	sm.Lock()
@@ -265,7 +232,7 @@ out:
 	}
 }
 
-func (sm *SessionManager) GetSessionByIndex(i int) (s *sessions.Data) {
+func (sm *Manager) GetSessionByIndex(i int) (s *sessions.Data) {
 	sm.Lock()
 	defer sm.Unlock()
 	if len(sm.Sessions) > i {
@@ -274,7 +241,7 @@ func (sm *SessionManager) GetSessionByIndex(i int) (s *sessions.Data) {
 	return
 }
 
-func (sm *SessionManager) DeleteNodeAndSessions(id nonce.ID) {
+func (sm *Manager) DeleteNodeAndSessions(id nonce.ID) {
 	sm.Lock()
 	defer sm.Unlock()
 	var exists bool
@@ -312,37 +279,37 @@ func (sm *SessionManager) DeleteNodeAndSessions(id nonce.ID) {
 }
 
 // NodesLen returns the length of a Nodes.
-func (sm *SessionManager) NodesLen() int {
+func (sm *Manager) NodesLen() int {
 	sm.Lock()
 	defer sm.Unlock()
 	return len(sm.nodes)
 }
 
 // GetLocalNode returns the engine's local Node.
-func (sm *SessionManager) GetLocalNode() *node.Node { return sm.nodes[0] }
+func (sm *Manager) GetLocalNode() *node.Node { return sm.nodes[0] }
 
 // GetLocalNodePaymentChan returns the engine's local Node Chan.
-func (sm *SessionManager) GetLocalNodePaymentChan() payments.Chan {
+func (sm *Manager) GetLocalNodePaymentChan() payments.Chan {
 	return sm.nodes[0].Chan
 }
 
-func (sm *SessionManager) GetLocalNodeAddress() (addr *netip.AddrPort) {
+func (sm *Manager) GetLocalNodeAddress() (addr *netip.AddrPort) {
 	// sm.Lock()
 	// defer sm.Unlock()
 	return sm.GetLocalNode().AddrPort
 }
 
-func (sm *SessionManager) GetLocalNodeAddressString() (s string) {
+func (sm *Manager) GetLocalNodeAddressString() (s string) {
 	return color.Yellow.Sprint(sm.GetLocalNodeAddress())
 }
 
-func (sm *SessionManager) SetLocalNodeAddress(addr *netip.AddrPort) {
+func (sm *Manager) SetLocalNodeAddress(addr *netip.AddrPort) {
 	sm.Lock()
 	defer sm.Unlock()
 	sm.GetLocalNode().AddrPort = addr
 }
 
-func (sm *SessionManager) SendFromLocalNode(port uint16,
+func (sm *Manager) SendFromLocalNode(port uint16,
 	b slice.Bytes) (e error) {
 	
 	sm.Lock()
@@ -350,7 +317,7 @@ func (sm *SessionManager) SendFromLocalNode(port uint16,
 	return sm.GetLocalNode().SendTo(port, b)
 }
 
-func (sm *SessionManager) ReceiveToLocalNode(port uint16) <-chan slice.Bytes {
+func (sm *Manager) ReceiveToLocalNode(port uint16) <-chan slice.Bytes {
 	sm.Lock()
 	defer sm.Unlock()
 	if port == 0 {
@@ -359,51 +326,51 @@ func (sm *SessionManager) ReceiveToLocalNode(port uint16) <-chan slice.Bytes {
 	return sm.GetLocalNode().ReceiveFrom(port)
 }
 
-func (sm *SessionManager) AddServiceToLocalNode(s *services.Service) (e error) {
+func (sm *Manager) AddServiceToLocalNode(s *services.Service) (e error) {
 	sm.Lock()
 	defer sm.Unlock()
 	return sm.GetLocalNode().AddService(s)
 }
 
-func (sm *SessionManager) GetLocalNodeRelayRate() (rate int) {
+func (sm *Manager) GetLocalNodeRelayRate() (rate int) {
 	sm.Lock()
 	defer sm.Unlock()
 	return sm.GetLocalNode().RelayRate
 }
 
-func (sm *SessionManager) GetLocalNodeIdentityBytes() (ident crypto.PubBytes) {
+func (sm *Manager) GetLocalNodeIdentityBytes() (ident crypto.PubBytes) {
 	sm.Lock()
 	defer sm.Unlock()
 	return sm.GetLocalNode().Identity.Bytes
 }
 
-func (sm *SessionManager) GetLocalNodeIdentityPrv() (ident *crypto.Prv) {
+func (sm *Manager) GetLocalNodeIdentityPrv() (ident *crypto.Prv) {
 	sm.Lock()
 	defer sm.Unlock()
 	return sm.GetLocalNode().Identity.Prv
 }
 
 // SetLocalNode sets the engine's local Node.
-func (sm *SessionManager) SetLocalNode(n *node.Node) {
+func (sm *Manager) SetLocalNode(n *node.Node) {
 	sm.Lock()
 	defer sm.Unlock()
 	sm.nodes[0] = n
 }
 
 // AddNodes adds a Node to a Nodes.
-func (sm *SessionManager) AddNodes(nn ...*node.Node) {
+func (sm *Manager) AddNodes(nn ...*node.Node) {
 	sm.Lock()
 	defer sm.Unlock()
 	sm.nodes = append(sm.nodes, nn...)
 }
-func (sm *SessionManager) FindNodeByIndex(i int) (no *node.Node) {
+func (sm *Manager) FindNodeByIndex(i int) (no *node.Node) {
 	sm.Lock()
 	defer sm.Unlock()
 	return sm.nodes[i]
 }
 
 // FindNodeByID searches for a Node by ID.
-func (sm *SessionManager) FindNodeByID(i nonce.ID) (no *node.Node) {
+func (sm *Manager) FindNodeByID(i nonce.ID) (no *node.Node) {
 	sm.Lock()
 	defer sm.Unlock()
 	for _, nn := range sm.nodes {
@@ -416,7 +383,7 @@ func (sm *SessionManager) FindNodeByID(i nonce.ID) (no *node.Node) {
 }
 
 // FindNodeByAddrPort searches for a Node by netip.AddrPort.
-func (sm *SessionManager) FindNodeByAddrPort(id *netip.AddrPort) (no *node.Node) {
+func (sm *Manager) FindNodeByAddrPort(id *netip.AddrPort) (no *node.Node) {
 	sm.Lock()
 	defer sm.Unlock()
 	for _, nn := range sm.nodes {
@@ -429,7 +396,7 @@ func (sm *SessionManager) FindNodeByAddrPort(id *netip.AddrPort) (no *node.Node)
 }
 
 // DeleteNodeByID deletes a node identified by an ID.
-func (sm *SessionManager) DeleteNodeByID(ii nonce.ID) (e error) {
+func (sm *Manager) DeleteNodeByID(ii nonce.ID) (e error) {
 	sm.Lock()
 	defer sm.Unlock()
 	e = fmt.Errorf("id %x not found", ii)
@@ -443,7 +410,7 @@ func (sm *SessionManager) DeleteNodeByID(ii nonce.ID) (e error) {
 }
 
 // DeleteNodeByAddrPort deletes a node identified by a netip.AddrPort.
-func (sm *SessionManager) DeleteNodeByAddrPort(ip *netip.AddrPort) (e error) {
+func (sm *Manager) DeleteNodeByAddrPort(ip *netip.AddrPort) (e error) {
 	sm.Lock()
 	defer sm.Unlock()
 	e = fmt.Errorf("node with ip %v not found", ip)
@@ -460,9 +427,9 @@ func (sm *SessionManager) DeleteNodeByAddrPort(ip *netip.AddrPort) (e error) {
 // ForEachNode runs a function over the slice of nodes with the mutex locked,
 // and terminates when the function returns true.
 //
-// Do not call any SessionManager methods above inside this function or there
+// Do not call any Manager methods above inside this function or there
 // will be a mutex double locking panic, except GetLocalNode.
-func (sm *SessionManager) ForEachNode(fn func(n *node.Node) bool) {
+func (sm *Manager) ForEachNode(fn func(n *node.Node) bool) {
 	sm.Lock()
 	defer sm.Unlock()
 	for i := range sm.nodes {
@@ -478,7 +445,7 @@ func (sm *SessionManager) ForEachNode(fn func(n *node.Node) bool) {
 // A SessionCache stores each of the 5 hops of a peer node.
 type SessionCache map[nonce.ID]*sessions.Circuit
 
-func (sm *SessionManager) UpdateSessionCache() {
+func (sm *Manager) UpdateSessionCache() {
 	sm.Lock()
 	defer sm.Unlock()
 	// First we create SessionCache entries for all existing nodes.
@@ -510,7 +477,7 @@ func (sc SessionCache) Add(s *sessions.Data) SessionCache {
 // PendingPayment accessors. For the same reason as the sessions, pending
 // payments need to be accessed only with the node's mutex locked.
 
-func (sm *SessionManager) AddPendingPayment(np *payments.Payment) {
+func (sm *Manager) AddPendingPayment(np *payments.Payment) {
 	sm.Lock()
 	defer sm.Unlock()
 	log.D.F("%s adding pending payment %s for %v",
@@ -518,17 +485,17 @@ func (sm *SessionManager) AddPendingPayment(np *payments.Payment) {
 		np.Amount)
 	sm.PendingPayments = sm.PendingPayments.Add(np)
 }
-func (sm *SessionManager) DeletePendingPayment(preimage sha256.Hash) {
+func (sm *Manager) DeletePendingPayment(preimage sha256.Hash) {
 	sm.Lock()
 	defer sm.Unlock()
 	sm.PendingPayments = sm.PendingPayments.Delete(preimage)
 }
-func (sm *SessionManager) FindPendingPayment(id nonce.ID) (pp *payments.Payment) {
+func (sm *Manager) FindPendingPayment(id nonce.ID) (pp *payments.Payment) {
 	sm.Lock()
 	defer sm.Unlock()
 	return sm.PendingPayments.Find(id)
 }
-func (sm *SessionManager) FindPendingPreimage(pi sha256.Hash) (pp *payments.Payment) {
+func (sm *Manager) FindPendingPreimage(pi sha256.Hash) (pp *payments.Payment) {
 	log.T.F("searching preimage %s", pi)
 	sm.Lock()
 	defer sm.Unlock()

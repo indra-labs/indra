@@ -1,4 +1,4 @@
-package engine
+package responses
 
 import (
 	"sync"
@@ -6,14 +6,21 @@ import (
 	
 	"github.com/cybriq/qu"
 	
+	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
+	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+)
+
+var (
+	log   = log2.GetLogger(indra.PathBase)
+	fails = log.E.Chk
 )
 
 type Callback func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error)
 
-type PendingResponse struct {
+type Pending struct {
 	ID       nonce.ID
 	SentSize int
 	Port     uint16
@@ -28,10 +35,10 @@ type PendingResponse struct {
 
 type PendingResponses struct {
 	sync.Mutex
-	responses []*PendingResponse
+	responses []*Pending
 }
 
-func (p *PendingResponses) GetOldestPending() (pr *PendingResponse) {
+func (p *PendingResponses) GetOldestPending() (pr *Pending) {
 	p.Lock()
 	defer p.Unlock()
 	if len(p.responses) > 0 {
@@ -57,7 +64,7 @@ func (p *PendingResponses) Add(pr ResponseParams) {
 	p.Lock()
 	defer p.Unlock()
 	log.T.F("adding response hook %s", pr.ID)
-	r := &PendingResponse{
+	r := &Pending{
 		ID:       pr.ID,
 		SentSize: pr.SentSize,
 		Time:     time.Now(),
@@ -71,7 +78,7 @@ func (p *PendingResponses) Add(pr ResponseParams) {
 	p.responses = append(p.responses, r)
 }
 
-func (p *PendingResponses) FindOlder(t time.Time) (r []*PendingResponse) {
+func (p *PendingResponses) FindOlder(t time.Time) (r []*Pending) {
 	p.Lock()
 	defer p.Unlock()
 	for i := range p.responses {
@@ -82,7 +89,7 @@ func (p *PendingResponses) FindOlder(t time.Time) (r []*PendingResponse) {
 	return
 }
 
-func (p *PendingResponses) Find(id nonce.ID) (pr *PendingResponse) {
+func (p *PendingResponses) Find(id nonce.ID) (pr *Pending) {
 	p.Lock()
 	defer p.Unlock()
 	for i := range p.responses {

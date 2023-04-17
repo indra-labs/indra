@@ -96,7 +96,7 @@ func (x *Balance) Handle(s *splice.Splice, p Onion,
 	return
 }
 
-func (x *Balance) Account(res *sessionmgr.Data, sm *SessionManager,
+func (x *Balance) Account(res *sessionmgr.Data, sm *sessionmgr.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	res.ID = x.ID

@@ -135,7 +135,7 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 		return
 	}
 	id := nonce.NewID()
-	introducerHops := client.SessionManager.GetSessionsAtHop(2)
+	introducerHops := client.Manager.GetSessionsAtHop(2)
 	var introducer *sessions.Data
 	if len(introducerHops) > 1 {
 		cryptorand.Shuffle(len(introducerHops), func(i, j int) {
@@ -143,7 +143,7 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 		})
 	}
 	introducer = introducerHops[0]
-	returnHops := client.SessionManager.GetSessionsAtHop(5)
+	returnHops := client.Manager.GetSessionsAtHop(5)
 	var returner *sessions.Data
 	if len(returnHops) > 1 {
 		cryptorand.Shuffle(len(returnHops), func(i, j int) {

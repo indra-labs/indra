@@ -77,9 +77,9 @@ func TestEngine_Message(t *testing.T) {
 	}
 	id := nonce.NewID()
 	_ = id
-	introducerHops := client.SessionManager.GetSessionsAtHop(2)
+	introducerHops := client.Manager.GetSessionsAtHop(2)
 	var introducer *sessions.Data
-	returnHops := client.SessionManager.GetSessionsAtHop(5)
+	returnHops := client.Manager.GetSessionsAtHop(5)
 	var returner *sessions.Data
 	_ = returner
 	if len(introducerHops) > 1 {

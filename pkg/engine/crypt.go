@@ -120,7 +120,7 @@ func (x *Crypt) Handle(s *splice.Splice, p Onion,
 	return e
 }
 
-func (x *Crypt) Account(res *sessionmgr.Data, sm *SessionManager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+func (x *Crypt) Account(res *sessionmgr.Data, sm *sessionmgr.Manager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	sd = sm.FindSessionByHeaderPub(x.ToHeaderPub)
 	if sd == nil {

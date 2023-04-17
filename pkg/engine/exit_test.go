@@ -141,7 +141,7 @@ out:
 			t.FailNow()
 		}
 		bob := clients[0].Sessions[i]
-		returnHops := client.SessionManager.GetSessionsAtHop(5)
+		returnHops := client.Manager.GetSessionsAtHop(5)
 		var alice *sessions.Data
 		if len(returnHops) > 1 {
 			cryptorand.Shuffle(len(returnHops), func(i, j int) {

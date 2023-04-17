@@ -72,8 +72,8 @@ func TestEngine_SendHiddenService(t *testing.T) {
 		return
 	}
 	id := nonce.NewID()
-	introducerHops := clients[0].SessionManager.GetSessionsAtHop(2)
-	returnHops := clients[0].SessionManager.GetSessionsAtHop(5)
+	introducerHops := clients[0].Manager.GetSessionsAtHop(2)
+	returnHops := clients[0].Manager.GetSessionsAtHop(5)
 	var introducer *sessions.Data
 	if len(introducerHops) > 1 {
 		cryptorand.Shuffle(len(introducerHops), func(i, j int) {

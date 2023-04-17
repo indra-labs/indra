@@ -39,7 +39,7 @@ func (x *End) Handle(s *splice.Splice, p Onion,
 	return
 }
 
-func (x *End) Account(res *sessionmgr.Data, sm *SessionManager,
+func (x *End) Account(res *sessionmgr.Data, sm *sessionmgr.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	return
 }

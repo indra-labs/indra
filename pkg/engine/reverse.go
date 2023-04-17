@@ -112,7 +112,7 @@ func (x *Reverse) Handle(s *splice.Splice, p Onion,
 	return e
 }
 
-func (x *Reverse) Account(res *sessionmgr.Data, sm *SessionManager,
+func (x *Reverse) Account(res *sessionmgr.Data, sm *sessionmgr.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	res.Billable = append(res.Billable, s.ID)

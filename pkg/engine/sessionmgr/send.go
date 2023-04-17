@@ -1,4 +1,4 @@
-package engine
+package sessionmgr
 
 import (
 	"errors"
@@ -8,13 +8,13 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/node"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessionmgr"
+	"git-indra.lan/indra-labs/indra/pkg/engine/responses"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
 // Send a message to a peer via their AddrPort.
-func (sm *SessionManager) Send(addr *netip.AddrPort, s *splice.Splice) {
+func (sm *Manager) Send(addr *netip.AddrPort, s *splice.Splice) {
 	// first search if we already have the node available with connection open.
 	as := addr.String()
 	sm.ForEachNode(func(n *node.Node) bool {
@@ -31,8 +31,8 @@ func (sm *SessionManager) Send(addr *netip.AddrPort, s *splice.Splice) {
 // SendWithOneHook is used for onions with only one confirmation hook. Usually
 // as returned from PostAcctOnion this is the last, confirmation or response
 // layer in an onion.Skins.
-func (sm *SessionManager) SendWithOneHook(ap *netip.AddrPort,
-	res *sessionmgr.Data, responseHook Callback, p *PendingResponses) {
+func (sm *Manager) SendWithOneHook(ap *netip.AddrPort,
+	res *Data, responseHook responses.Callback, p *responses.PendingResponses) {
 	
 	if responseHook == nil {
 		responseHook = func(_ nonce.ID, _ interface{}, _ slice.Bytes) (e error) {
@@ -40,7 +40,7 @@ func (sm *SessionManager) SendWithOneHook(ap *netip.AddrPort,
 			return errors.New("nil response hook")
 		}
 	}
-	p.Add(ResponseParams{
+	p.Add(responses.ResponseParams{
 		ID:       res.ID,
 		SentSize: res.B.Len(),
 		S:        res.Sessions,

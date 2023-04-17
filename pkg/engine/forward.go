@@ -69,7 +69,7 @@ func (x *Forward) Handle(s *splice.Splice, p Onion,
 	return e
 }
 
-func (x *Forward) Account(res *sessionmgr.Data, sm *SessionManager,
+func (x *Forward) Account(res *sessionmgr.Data, sm *sessionmgr.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	res.Billable = append(res.Billable, s.ID)

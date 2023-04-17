@@ -149,7 +149,7 @@ func (x *Route) Handle(s *splice.Splice, p Onion, ni interface{}) (e error) {
 	return
 }
 
-func (x *Route) Account(res *sessionmgr.Data, sm *SessionManager,
+func (x *Route) Account(res *sessionmgr.Data, sm *sessionmgr.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	copy(res.ID[:], x.ID[:])
