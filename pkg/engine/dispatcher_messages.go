@@ -16,7 +16,7 @@ const (
 	InitRekeyMagic   = "kchi"
 	RekeyReplyMagic  = "kchr"
 	AcknowledgeMagic = "ackn"
-	MungedMagic      = "mung"
+	OnionMagic       = "onio"
 )
 
 type InitRekey struct {
@@ -27,6 +27,7 @@ func InitRekeyGen() coding.Codec           { return &InitRekey{} }
 func init()                                { onions.Register(InitRekeyMagic, InitRekeyGen) }
 func (k *InitRekey) Magic() string         { return InitRekeyMagic }
 func (k *InitRekey) GetOnion() interface{} { return nil }
+func (k *InitRekey) Len() int              { return 4 + crypto.PubKeyLen }
 
 func (k *InitRekey) Encode(s *splice.Splice) (e error) {
 	s.Magic4(InitRekeyMagic).Pubkey(k.NewPubkey)
@@ -43,10 +44,6 @@ func (k *InitRekey) Decode(s *splice.Splice) (e error) {
 		return fmt.Errorf("invalid public key")
 	}
 	return
-}
-
-func (k *InitRekey) Len() int {
-	return 4 + crypto.PubKeyLen
 }
 
 type RekeyReply struct {
@@ -117,11 +114,11 @@ func (a *Acknowledge) Len() int {
 	return 4 + nonce.IDLen + sha256.Len + 4*slice.Uint64Len
 }
 
-type Munged struct {
+type Onion struct {
 	slice.Bytes // contains an encoded Onion.
 }
 
-func (m Munged) Unpack() (mu onions.Onion) {
+func (m Onion) Unpack() (mu onions.Onion) {
 	s := splice.NewFrom(m.Bytes)
 	mm := onions.Recognise(s)
 	var ok bool
@@ -131,17 +128,17 @@ func (m Munged) Unpack() (mu onions.Onion) {
 	return
 }
 
-func MungedGen() coding.Codec           { return &Munged{} }
-func init()                             { onions.Register(MungedMagic, MungedGen) }
-func (m *Munged) Magic() string         { return MungedMagic }
-func (m *Munged) GetOnion() interface{} { return nil }
+func OnionGen() coding.Codec           { return &Onion{} }
+func init()                            { onions.Register(OnionMagic, OnionGen) }
+func (m *Onion) Magic() string         { return OnionMagic }
+func (m *Onion) GetOnion() interface{} { return nil }
 
-func (m *Munged) Encode(s *splice.Splice) (e error) {
-	s.Magic4(MungedMagic).Bytes(m.Bytes)
+func (m *Onion) Encode(s *splice.Splice) (e error) {
+	s.Magic4(OnionMagic).Bytes(m.Bytes)
 	return
 }
 
-func (m *Munged) Decode(s *splice.Splice) (e error) {
+func (m *Onion) Decode(s *splice.Splice) (e error) {
 	if s.Len() < m.Len() {
 		return fmt.Errorf("message too short, got %d, require %d", m.Len(),
 			s.Len())
@@ -150,6 +147,6 @@ func (m *Munged) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (m *Munged) Len() int {
+func (m *Onion) Len() int {
 	return 4 + len(m.Bytes) + 4
 }

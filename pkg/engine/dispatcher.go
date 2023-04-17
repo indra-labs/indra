@@ -369,7 +369,7 @@ func (d *Dispatcher) SendToConn(m slice.Bytes) {
 }
 
 func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
-	// Sender out the acknowledgement.
+	// Send out the acknowledgement.
 	d.SendAck(rxr)
 	s := splice.NewFrom(m)
 	c := onions.Recognise(s)
@@ -434,9 +434,9 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 		// Entry is now deleted and processed.
 		d.PendingOutbound = tmp
 		d.Unlock()
-	case MungedMagic:
-		o := c.(*Munged)
-		log.D.S("mung!", o)
+	case OnionMagic:
+		o := c.(*Onion)
+		log.D.S("onion", o)
 		
 	}
 }

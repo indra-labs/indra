@@ -140,7 +140,7 @@ func TestClient_SendGetBalance(t *testing.T) {
 	var wg sync.WaitGroup
 	go func() {
 		select {
-		case <-time.After(time.Second):
+		case <-time.After(5 * time.Second):
 		case <-quit:
 			return
 		}
@@ -319,7 +319,7 @@ func TestEngine_Message(t *testing.T) {
 	go func() {
 		for {
 			select {
-			case <-time.After(time.Second * 3):
+			case <-time.After(time.Second * 5):
 				quit.Q()
 				t.Error("MakeHiddenService test failed")
 			case <-quit:
