@@ -10,10 +10,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/util/tests"
 )
 
-const localhostZeroIPv4 = "/ip4/127.0.0.1/tcp/0"
-
-const DefaultMTU = 1382
-
 func TestNewRCPListener(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	var e error
@@ -25,11 +21,11 @@ func TestNewRCPListener(t *testing.T) {
 	if k1, k2, e = crypto.Generate2Keys(); fails(e) {
 		t.FailNow()
 	}
-	l1, e = NewListener("", localhostZeroIPv4, k1.Prv, ctx, DefaultMTU)
+	l1, e = NewListener("", LocalhostZeroIPv4, k1.Prv, ctx, DefaultMTU)
 	if fails(e) {
 		t.FailNow()
 	}
-	l2, e = NewListener(getHostAddress(l1.Host), localhostZeroIPv4,
+	l2, e = NewListener(GetHostAddress(l1.Host), LocalhostZeroIPv4,
 		k2.Prv, ctx, DefaultMTU)
 	if fails(e) {
 		t.FailNow()
@@ -38,8 +34,8 @@ func TestNewRCPListener(t *testing.T) {
 	_ = msg2
 	msg1, _, e = tests.GenMessage(32, "REQUEST")
 	msg2, _, e = tests.GenMessage(32, "RESPONSE")
-	hn1 := getHostAddress(l2.Host)
-	hn2 := getHostAddress(l1.Host)
+	hn1 := GetHostAddress(l2.Host)
+	hn2 := GetHostAddress(l1.Host)
 	d1 := l1.Dial(hn1)
 	d2 := l2.Dial(hn2)
 	c1, c2 := l1.GetConnRecv(hn1), l2.GetConnRecv(hn2)

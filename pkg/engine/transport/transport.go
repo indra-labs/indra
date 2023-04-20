@@ -30,9 +30,11 @@ var (
 )
 
 const (
-	ConnBufs         = 64
-	IndraLibP2PID    = "/indra/relay/" + indra.SemVer
-	IndraServiceName = "org.indra.relay"
+	LocalhostZeroIPv4 = "/ip4/127.0.0.1/tcp/0"
+	DefaultMTU        = 1382
+	ConnBufs          = 64
+	IndraLibP2PID     = "/indra/relay/" + indra.SemVer
+	IndraServiceName  = "org.indra.relay"
 )
 
 type Listener struct {
@@ -77,7 +79,7 @@ func NewListener(rendezvous, multiAddr string,
 	if d, e = NewDHT(ctx, c.Host, rdv); fails(e) {
 		return
 	}
-	log.D.Ln("listener", getHostAddress(c.Host))
+	log.D.Ln("listener", GetHostAddress(c.Host))
 	go Discover(ctx, c.Host, d, rendezvous)
 	c.Host.SetStreamHandler(IndraLibP2PID, c.handle)
 	return
@@ -97,7 +99,9 @@ func (l *Listener) handle(s network.Stream) {
 		if n, e = s.Read(b); fails(e) {
 			return
 		}
-		log.D.S(getHostAddress(l.Host)+" read from listener", b[:n].ToBytes())
+		log.D.S(GetHostAddress(l.Host) + " read from listener",
+			// b[:n].ToBytes(),
+		)
 		id := s.Conn().RemotePeer()
 		ai := l.Host.Peerstore().PeerInfo(id)
 		aid := ai.ID.String()
@@ -197,7 +201,7 @@ func (c *Conn) SetRemoteKey(remoteKey *crypto.Pub) {
 func (c *Conn) GetSend() tpt.Transport { return c.Transport.Sender }
 func (c *Conn) GetRecv() tpt.Transport { return c.Transport.Receiver }
 
-func getHostAddress(ha host.Host) string {
+func GetHostAddress(ha host.Host) string {
 	hostAddr, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/p2p/%s",
 		ha.ID().String()))
 	addr := ha.Addrs()[0]
@@ -235,7 +239,7 @@ func (l *Listener) Dial(multiAddr string) (d *Conn) {
 	l.Lock()
 	l.connections[multiAddr] = d
 	l.Unlock()
-	hostAddress := getHostAddress(d.Host)
+	hostAddress := GetHostAddress(d.Host)
 	go func() {
 		var e error
 		for {
@@ -244,8 +248,9 @@ func (l *Listener) Dial(multiAddr string) (d *Conn) {
 			case <-d.C:
 				return
 			case b := <-d.Transport.Sender.Receive():
-				log.D.S(hostAddress+" sending to "+d.MultiAddr.String(),
-					b.ToBytes())
+				log.D.S(hostAddress + " sending to " + d.MultiAddr.String(),
+					// b.ToBytes(),
+				)
 				if _, e = d.rw.Write(b); fails(e) {
 					continue
 				}
@@ -288,7 +293,7 @@ func NewDHT(ctx context.Context, host host.Host,
 			}
 			log.I.F(
 				"%s: Connection established with bootstrap node: %s",
-				getHostAddress(host), *peerinfo)
+				GetHostAddress(host), *peerinfo)
 			
 			wg.Done()
 		}()

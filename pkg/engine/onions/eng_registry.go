@@ -47,7 +47,7 @@ func Recognise(s *splice.Splice) (cdc coding.Codec) {
 		cdc = in()
 	}
 	if !ok {
-		log.D.S("decryption failure", s.GetRest())
+		log.D.S("decryption failure", s.GetAll())
 	}
 	log.D.F("recognised magic %s for type %v",
 		color.Red.Sprint(magic),

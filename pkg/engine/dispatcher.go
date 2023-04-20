@@ -138,6 +138,11 @@ func NewDispatcher(l *transport.Conn, key *crypto.Prv, ctx context.Context,
 		Ping:           ewma.NewMovingAverage(),
 		PingDivergence: ewma.NewMovingAverage(),
 		ErrorEWMA:      ewma.NewMovingAverage(),
+		DataReceived:   big.NewInt(0),
+		DataSent:       big.NewInt(0),
+		TotalSent:      big.NewInt(0),
+		TotalReceived:  big.NewInt(0),
+		Partials:       make(map[nonce.ID]packet.Packets),
 	}
 	d.Parity.Store(DefaultStartingParity)
 	ps := ping.NewPingService(l.Host)
@@ -171,6 +176,9 @@ func (d *Dispatcher) RunGC() {
 	for dpi, dp := range d.Partials {
 		// Find the oldest and newest.
 		oldest := time.Now()
+		if len(dp) == 0 {
+			continue
+		}
 		newest := dp[0].TimeStamp
 		for _, ts := range dp {
 			if oldest.After(ts.TimeStamp) {
@@ -219,7 +227,9 @@ func (d *Dispatcher) HandlePing(p ping.Result) {
 }
 
 func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
-	log.D.S("received from conn to dispatcher", m.ToBytes())
+	log.D.S("received from conn to dispatcher",
+		// m.ToBytes(),
+	)
 	// Packet received, decrypt, gather and send acks back and reconstructed
 	// messages to the Dispatcher.RecvFromConn channel.
 	from, to, iv, e := packet.GetKeysFromPacket(m)
@@ -264,11 +274,13 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 	d.Unlock()
 	// if the message is only one packet we can hand it on to the receiving
 	// channel now:
-	if int(p.Length) == len(p.Data) {
+	if p.Seq == 0 && int(p.Length) <= len(p.Data) {
 		log.D.Ln("forwarding single packet message")
 		d.Handle(m, rxr)
 		return
 	}
+	log.D.Ln("seq", p.Seq, int(p.Length), len(p.Data))
+	// log.D.S("packet", p)
 	// Find collection of existing fragments matching the message ID or make a
 	// new one and add this packet to it for later assembly.
 	log.D.Ln("collating packet")
@@ -295,12 +307,19 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 		d.DataReceived = d.DataReceived.Add(d.DataReceived,
 			big.NewInt(int64(len(msg))))
 		for _, v := range d.Partials[p.ID] {
+			if v == nil {
+				continue
+			}
+			log.D.S("v", v.Data[:v.Length])
+			n := len(v.Data) +
+				v.GetOverhead()
+			log.D.S("n", d.TotalReceived, n)
 			d.TotalReceived = d.TotalReceived.Add(
 				d.TotalReceived,
-				big.NewInt(int64(len(v.Data)+v.GetOverhead())),
+				big.NewInt(int64(n)),
 			)
 		}
-		// Sender the message on to the receiving channel.
+		// Send the message on to the receiving channel.
 		d.Handle(msg, rxr)
 	}
 }
@@ -333,15 +352,20 @@ func (d *Dispatcher) SendToConn(m slice.Bytes) {
 		First: time.Now(),
 		Size:  len(m),
 	}
+	tok := d.Conn.RemotePublicKey()
+	b, e := tok.Raw()
+	var to *crypto.Pub
+	to, e = crypto.PubFromBytes(b)
 	pp := &packet.PacketParams{
 		ID:     id,
-		To:     d.Conn.GetRemoteKey(),
+		To:     to,
 		Parity: int(d.Parity.Load()),
 		Length: m.Len(),
 		Data:   m,
 	}
 	mtu := d.Conn.GetMTU()
-	packets, e := packet.SplitToPackets(pp, mtu, d.KeySet)
+	var packets [][]byte
+	packets, e = packet.SplitToPackets(pp, mtu, d.KeySet)
 	if fails(e) {
 		return
 	}
@@ -369,8 +393,12 @@ func (d *Dispatcher) SendToConn(m slice.Bytes) {
 }
 
 func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
-	// Send out the acknowledgement.
-	d.SendAck(rxr)
+	log.D.Ln("handling message")
+	go func() {
+		// Send out the acknowledgement.
+		d.SendAck(rxr)
+		log.D.Ln("sent acknowledgement")
+	}()
 	s := splice.NewFrom(m)
 	c := onions.Recognise(s)
 	if c == nil {
