@@ -68,8 +68,6 @@ func TestDispatcher(t *testing.T) {
 		}
 	}()
 	var msgp1, msgp2 slice.Bytes
-	_ = msgp2
-	_ = msgp1
 	id1, id2 := nonce.NewID(), nonce.NewID()
 	var load1 byte = 128
 	var load2 byte = 32
