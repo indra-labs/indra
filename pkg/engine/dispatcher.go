@@ -310,6 +310,7 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 			log.D.Ln("failed to join packets")
 			return
 		}
+		log.D.S("message", msg)
 		log.D.Ln("message reconstructed; dispatching...")
 		d.DataReceived = d.DataReceived.Add(d.DataReceived,
 			big.NewInt(int64(len(msg))))
