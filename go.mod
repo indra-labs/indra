@@ -264,6 +264,8 @@ replace crypto/sha256 => github.com/minio/sha256-simd v1.0.0
 
 replace math/rand => github.com/lukechampine/frand v1.4.2
 
+//replace s7v2qgqpsgnak5rkrewh3gabd4h2hfluz7hpzr7mrtmscgb2pmzq2zqd.onion/indra-labs/lnd => git-indra.lan/indra-labs/indra
+
 //replace git-indra.lan/indra-labs/indra => ./
 
 //replace git-indra.lan/indra-labs/lnd => ../lnd

@@ -44,35 +44,18 @@ var sourceConfigurations = []docker.BuildConfiguration{
 	//		PullParent:     false,
 	//	},
 	//},
-	//docker.BuildConfiguration{
-	//	Name:            defaultRepositoryName + "/" + "lnd-source",
-	//	ContextFilePath: "/tmp/lnd-source.tar",
-	//	BuildOpts: types.ImageBuildOptions{
-	//		Dockerfile: "docker/sources/lnd/official.Dockerfile",
-	//		Tags: []string{
-	//			"v0.15.5-beta",
-	//		},
-	//		BuildArgs: map[string]*string{
-	//			"sourcing_image": strPtr(defaultBuilderContainer),
-	//			"source_url":     strPtr("https://github.com/lightningnetwork/lnd/releases/download"),
-	//			"source_version": strPtr("v0.15.5-beta"),
-	//		},
-	//		SuppressOutput: false,
-	//		Remove:         true,
-	//		ForceRemove:    true,
-	//		PullParent:     false,
-	//	},
-	//},
 	docker.BuildConfiguration{
-		Name:            defaultRepositoryName + "/" + "indra-source",
-		ContextFilePath: "/tmp/indra-source-local.tar",
+		Name:            defaultRepositoryName + "/" + "lnd-source",
+		ContextFilePath: "/tmp/lnd-source.tar",
 		BuildOpts: types.ImageBuildOptions{
-			Dockerfile: "docker/sources/indra/local.Dockerfile",
+			Dockerfile: "docker/sources/lnd/official.Dockerfile",
 			Tags: []string{
-				"dev",
+				"v0.16.0-beta",
 			},
 			BuildArgs: map[string]*string{
 				"sourcing_image": strPtr(defaultBuilderContainer),
+				"source_url":     strPtr("https://github.com/lightningnetwork/lnd/releases/download"),
+				"source_version": strPtr("v0.16.0-beta"),
 			},
 			SuppressOutput: false,
 			Remove:         true,
@@ -80,6 +63,23 @@ var sourceConfigurations = []docker.BuildConfiguration{
 			PullParent:     false,
 		},
 	},
+	//docker.BuildConfiguration{
+	//	Name:            defaultRepositoryName + "/" + "indra-source",
+	//	ContextFilePath: "/tmp/indra-source-local.tar",
+	//	BuildOpts: types.ImageBuildOptions{
+	//		Dockerfile: "docker/sources/indra/local.Dockerfile",
+	//		Tags: []string{
+	//			"dev",
+	//		},
+	//		BuildArgs: map[string]*string{
+	//			"sourcing_image": strPtr(defaultBuilderContainer),
+	//		},
+	//		SuppressOutput: false,
+	//		Remove:         true,
+	//		ForceRemove:    true,
+	//		PullParent:     false,
+	//	},
+	//},
 	//docker.BuildConfiguration{
 	//	Name:            defaultRepositoryName + "/" + "indra-source",
 	//	ContextFilePath: "/tmp/indra-source.tar",
