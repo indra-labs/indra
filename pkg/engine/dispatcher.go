@@ -234,7 +234,7 @@ func (d *Dispatcher) HandlePing(p ping.Result) {
 
 func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 	log.D.S("received from conn to dispatcher",
-		m.ToBytes(),
+		// m.ToBytes(),
 	)
 	// Packet received, decrypt, gather and send acks back and reconstructed
 	// messages to the Dispatcher.RecvFromConn channel.
@@ -318,10 +318,10 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 			if v == nil {
 				continue
 			}
-			log.D.S("v", v.Data[:v.Length])
+			// log.D.S("v", v.Data[:v.Length])
 			n := len(v.Data) +
 				v.GetOverhead()
-			log.D.S("n", d.TotalReceived, n)
+			// log.D.S("n", d.TotalReceived, n)
 			d.TotalReceived = d.TotalReceived.Add(
 				d.TotalReceived,
 				big.NewInt(int64(n)),
@@ -441,7 +441,6 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 		d.Conn.SetRemoteKey(o.NewPubkey)
 	case AcknowledgeMagic:
 		o := c.(*Acknowledge)
-		log.D.S("acknowledgement", o)
 		r := o.RxRecord
 		var tmp []*TxRecord
 		for _, pending := range d.PendingOutbound {
@@ -467,7 +466,7 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 		d.PendingOutbound = tmp
 	case OnionMagic:
 		o := c.(*Onion)
-		log.D.S("onion", o)
+		d.Duplex.Receiver.Send(o.Bytes)
 		go func() {
 			// Send out the acknowledgement.
 			d.SendAck(rxr)

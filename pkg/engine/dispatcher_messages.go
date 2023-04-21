@@ -101,7 +101,6 @@ func (a *Acknowledge) Decode(s *splice.Splice) (e error) {
 		return fmt.Errorf("message too short, got %d, require %d", a.Len(),
 			s.Len())
 	}
-	log.D.S("ack", a)
 	s.ReadID(&a.ID).
 		ReadHash(&a.Hash).
 		ReadTime(&a.First).

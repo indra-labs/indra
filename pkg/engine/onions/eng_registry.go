@@ -8,7 +8,6 @@ import (
 	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
-	magic2 "git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
@@ -48,11 +47,7 @@ func Recognise(s *splice.Splice) (cdc coding.Codec) {
 	if in, ok = registry.CodecGenerators[magic]; ok {
 		cdc = in()
 	}
-	if !ok {
-		log.D.S("message unrecognised", s.GetRange(s.GetCursor()-magic2.Len,
-			-1).ToBytes())
-	}
-	if cdc == nil {
+	if !ok || cdc == nil {
 		log.D.F("unrecognised magic %s ignoring message",
 			color.Red.Sprint(magic))
 	} else {
