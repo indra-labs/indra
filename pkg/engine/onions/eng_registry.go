@@ -8,6 +8,7 @@ import (
 	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
+	magic2 "git-indra.lan/indra-labs/indra/pkg/engine/magic"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
@@ -40,6 +41,7 @@ func Recognise(s *splice.Splice) (cdc coding.Codec) {
 	registry.Lock()
 	defer registry.Unlock()
 	var magic string
+	// log.D.S("splice", s.GetAll().ToBytes())
 	s.ReadMagic(&magic)
 	var ok bool
 	var in func() coding.Codec
@@ -47,7 +49,8 @@ func Recognise(s *splice.Splice) (cdc coding.Codec) {
 		cdc = in()
 	}
 	if !ok {
-		log.D.S("decryption failure", s.GetAll().ToBytes())
+		log.D.S("message unrecognised", s.GetRange(s.GetCursor()-magic2.Len,
+			-1).ToBytes())
 	}
 	log.D.F("recognised magic %s for type %v",
 		color.Red.Sprint(magic),

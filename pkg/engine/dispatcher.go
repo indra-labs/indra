@@ -47,7 +47,7 @@ type TxRecord struct {
 type RxRecord struct {
 	ID nonce.ID
 	// Hash is the hash of the reconstructed message received.
-	sha256.Hash
+	Hash sha256.Hash
 	// First is when the first packet was received.
 	First time.Time
 	// Last is when the last packet was received. A longer time than the current
@@ -389,25 +389,22 @@ func (d *Dispatcher) SendToConn(m slice.Bytes) {
 	}
 	txr.Last = time.Now()
 	txr.Ping = time.Duration(d.Ping.Value())
-	// d.Lock()
+	d.Lock()
 	for _, v := range packets {
 		d.TotalSent = d.TotalSent.Add(d.TotalSent,
 			big.NewInt(int64(len(v))))
 	}
 	d.PendingOutbound = append(d.PendingOutbound, txr)
-	// d.Unlock()
+	d.Unlock()
 	log.D.Ln("message dispatched")
 }
 
 // Handle the message. This is expected to be called with the mutex locked,
 // so nothing in it should be trying to lock it.
 func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
-	log.W.Ln("handling message")
-	go func() {
-		// Send out the acknowledgement.
-		d.SendAck(rxr)
-		log.D.Ln("sent acknowledgement")
-	}()
+	log.W.S("handling message",
+		// m.ToBytes(),
+	)
 	s := splice.NewFrom(m)
 	c := onions.Recognise(s)
 	if c == nil {
@@ -448,7 +445,7 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 		var tmp []*TxRecord
 		for _, pending := range d.PendingOutbound {
 			if pending.ID == r.ID {
-				// Accounting of successful send.
+				log.D.Ln("accounting of successful send")
 				if r.Hash == pending.Hash {
 					d.DataSent = d.DataSent.Add(d.DataSent,
 						big.NewInt(int64(pending.Size)))
@@ -470,7 +467,11 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 	case OnionMagic:
 		o := c.(*Onion)
 		log.D.S("onion", o)
-		
+		go func() {
+			// Send out the acknowledgement.
+			d.SendAck(rxr)
+			log.D.Ln("sent acknowledgement")
+		}()
 	}
 }
 
