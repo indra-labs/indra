@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	BalanceMagic = "ba"
+	BalanceMagic = "bala"
 	BalanceLen   = magic.Len + nonce.IDLen*2 + slice.Uint64Len
 )
 

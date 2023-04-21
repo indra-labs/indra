@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	ReadyMagic = "rd"
+	ReadyMagic = "redy"
 	ReadyLen   = magic.Len + nonce.IDLen + crypto.PubKeyLen + 2*RoutingHeaderLen +
 		3*sha256.Len + 3*nonce.IVLen
 )

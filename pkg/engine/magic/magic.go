@@ -3,7 +3,7 @@ package magic
 import "fmt"
 
 const (
-	Len         = 2
+	Len         = 4
 	ErrTooShort = "'%s' message  minimum size: %d got: %d"
 )
 

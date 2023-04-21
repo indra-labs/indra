@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	GetBalanceMagic = "gb"
+	GetBalanceMagic = "getb"
 	GetBalanceLen   = magic.Len + 2*nonce.IDLen +
 		3*sha256.Len + nonce.IVLen*3
 )

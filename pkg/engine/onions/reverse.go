@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	ReverseMagic = "rv"
+	ReverseMagic = "rvrs"
 	ReverseLen   = magic.Len + 1 + splice.AddrLen
 )
 

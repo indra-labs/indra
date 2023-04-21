@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	IntroMagic = "in"
+	IntroMagic = "intr"
 	IntroLen   = magic.Len + nonce.IDLen + crypto.PubKeyLen + 1 +
 		splice.AddrLen + slice.Uint64Len + crypto.SigLen
 )

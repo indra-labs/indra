@@ -30,7 +30,7 @@ func (k *InitRekey) GetOnion() interface{} { return nil }
 func (k *InitRekey) Len() int              { return 4 + crypto.PubKeyLen }
 
 func (k *InitRekey) Encode(s *splice.Splice) (e error) {
-	s.Magic4(InitRekeyMagic).Pubkey(k.NewPubkey)
+	s.Magic(InitRekeyMagic).Pubkey(k.NewPubkey)
 	return
 }
 
@@ -56,7 +56,7 @@ func (r *RekeyReply) Magic() string         { return RekeyReplyMagic }
 func (r *RekeyReply) GetOnion() interface{} { return nil }
 
 func (r *RekeyReply) Encode(s *splice.Splice) (e error) {
-	s.Magic4(RekeyReplyMagic).Pubkey(r.NewPubkey)
+	s.Magic(RekeyReplyMagic).Pubkey(r.NewPubkey)
 	return
 }
 
@@ -80,13 +80,13 @@ type Acknowledge struct {
 	*RxRecord
 }
 
-func AcknowledgeGen() coding.Codec           { return &Acknowledge{} }
+func AcknowledgeGen() coding.Codec           { return &Acknowledge{&RxRecord{}} }
 func init()                                  { onions.Register(AcknowledgeMagic, AcknowledgeGen) }
 func (a *Acknowledge) Magic() string         { return AcknowledgeMagic }
 func (a *Acknowledge) GetOnion() interface{} { return nil }
 
 func (a *Acknowledge) Encode(s *splice.Splice) (e error) {
-	s.Magic4(AcknowledgeMagic).
+	s.Magic(AcknowledgeMagic).
 		ID(a.ID).
 		Hash(a.Hash).
 		Time(a.First).
@@ -101,6 +101,7 @@ func (a *Acknowledge) Decode(s *splice.Splice) (e error) {
 		return fmt.Errorf("message too short, got %d, require %d", a.Len(),
 			s.Len())
 	}
+	log.D.S("ack", a)
 	s.ReadID(&a.ID).
 		ReadHash(&a.Hash).
 		ReadTime(&a.First).
@@ -123,7 +124,7 @@ func (m Onion) Unpack() (mu onions.Onion) {
 	mm := onions.Recognise(s)
 	var ok bool
 	if mu, ok = mm.(onions.Onion); !ok {
-		log.D.Ln("type not recognised as a mung")
+		log.D.Ln("type not recognised as a onion")
 	}
 	return
 }
@@ -134,7 +135,7 @@ func (m *Onion) Magic() string         { return OnionMagic }
 func (m *Onion) GetOnion() interface{} { return nil }
 
 func (m *Onion) Encode(s *splice.Splice) (e error) {
-	s.Magic4(OnionMagic).Bytes(m.Bytes)
+	s.Magic(OnionMagic).Bytes(m.Bytes)
 	return
 }
 

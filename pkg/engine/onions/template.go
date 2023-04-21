@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	EndMagic = "!!"
+	EndMagic = "!!!!"
 	EndLen   = 0
 )
 

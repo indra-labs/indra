@@ -6,6 +6,7 @@ import (
 	"time"
 	
 	"git-indra.lan/indra-labs/indra/pkg/engine/transport"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
@@ -36,15 +37,15 @@ func TestDispatcher(t *testing.T) {
 	}
 	var msg1, msg2 []byte
 	_ = msg2
-	msg1, _, e = tests.GenMessage(1536, "REQUEST")
-	msg2, _, e = tests.GenMessage(1536, "RESPONSE")
+	msg1, _, e = tests.GenMessage(48, "REQUEST")
+	msg2, _, e = tests.GenMessage(48, "RESPONSE")
 	_, _ = msg1, msg2
 	hn1 := transport.GetHostAddress(l2.Host)
 	hn2 := transport.GetHostAddress(l1.Host)
 	var ks *crypto.KeySet
 	_, ks, e = crypto.NewSigner()
 	d1 := NewDispatcher(l1.Dial(hn1), k1.Prv, ctx, ks)
-	d2 := NewDispatcher(l2.Dial(hn2), k1.Prv, ctx, ks)
+	d2 := NewDispatcher(l2.Dial(hn2), k2.Prv, ctx, ks)
 	go func() {
 		for {
 			select {
@@ -57,8 +58,12 @@ func TestDispatcher(t *testing.T) {
 			}
 		}
 	}()
-	// d1.Duplex.Send(msg1)
-	d1.SendToConn(msg1)
+	var msgp1, msgp2 slice.Bytes
+	_ = msgp2
+	_ = msgp1
+	
+	d1.Duplex.Send(msg1)
+	// d1.SendToConn(msgp1)
 	// d2.SendToConn(msg2)
 	time.Sleep(time.Second * 3)
 	log.D.Ln("ping", time.Duration(d1.Ping.Value()),

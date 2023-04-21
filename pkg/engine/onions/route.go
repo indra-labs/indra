@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	RouteMagic = "ro"
+	RouteMagic = "rout"
 	RouteLen   = magic.Len + crypto.CloakLen + crypto.PubKeyLen + nonce.IVLen +
 		nonce.IDLen + 3*sha256.Len + 3*nonce.IVLen
 )

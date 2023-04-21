@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	SessionMagic = "ss"
+	SessionMagic = "sess"
 	SessionLen   = magic.Len + nonce.IDLen + crypto.PrvKeyLen*2
 )
 

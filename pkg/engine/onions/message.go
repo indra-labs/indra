@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	MessageMagic    = "ms"
+	MessageMagic    = "mess"
 	ReplyCiphersLen = 2*RoutingHeaderLen + 6*sha256.Len + 6*nonce.IVLen
 	MessageLen      = magic.Len + 2*nonce.IDLen + 2*RoutingHeaderLen +
 		ReplyCiphersLen

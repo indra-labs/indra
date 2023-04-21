@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	CryptMagic       = "cr"
+	CryptMagic       = "cryp"
 	CryptLen         = magic.Len + nonce.IVLen + crypto.CloakLen + crypto.PubKeyLen
 	ReverseCryptLen  = ReverseLen + CryptLen
 	RoutingHeaderLen = 3 * ReverseCryptLen

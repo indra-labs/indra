@@ -244,28 +244,14 @@ func (s *Splice) CopyIntoRange(b slice.Bytes, start, end int) {
 func (s *Splice) Magic(magic string) *Splice {
 	copy(s.b[*s.c:s.c.Inc(magic2.Len)], magic)
 	s.Segments = append(s.Segments,
-		NameOffset{Offset: int(*s.c), Name: "magic"})
+		NameOffset{Offset: int(*s.c), Name: magic})
 	return s
 }
 
-func (s *Splice) ReadMagic(out *string) *Splice {
-	*out = string(s.b[*s.c:s.c.Inc(magic2.Len)])
+func (s *Splice) ReadMagic(magic *string) *Splice {
+	*magic = string(s.b[*s.c:s.c.Inc(magic2.Len)])
 	s.Segments = append(s.Segments,
-		NameOffset{Offset: int(*s.c), Name: "magic"})
-	return s
-}
-
-func (s *Splice) Magic4(magic string) *Splice {
-	copy(s.b[*s.c:s.c.Inc(4)], magic)
-	s.Segments = append(s.Segments,
-		NameOffset{Offset: int(*s.c), Name: "magic4"})
-	return s
-}
-
-func (s *Splice) ReadMagic4(out *string) *Splice {
-	*out = string(s.b[*s.c:s.c.Inc(4)])
-	s.Segments = append(s.Segments,
-		NameOffset{Offset: int(*s.c), Name: "magic4"})
+		NameOffset{Offset: int(*s.c), Name: *magic})
 	return s
 }
 

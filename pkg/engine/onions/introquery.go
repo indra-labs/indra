@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	IntroQueryMagic = "iq"
+	IntroQueryMagic = "intq"
 	IntroQueryLen   = magic.Len + nonce.IDLen + crypto.PubKeyLen +
 		3*sha256.Len + nonce.IVLen*3
 )

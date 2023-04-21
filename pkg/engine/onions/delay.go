@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	DelayMagic = "dl"
+	DelayMagic = "dely"
 	DelayLen   = magic.Len + slice.Uint64Len
 )
 

@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	ConfirmationMagic = "cn"
+	ConfirmationMagic = "conf"
 	ConfirmationLen   = magic.Len + nonce.IDLen + 1
 )
 

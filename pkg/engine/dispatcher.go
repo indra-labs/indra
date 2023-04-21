@@ -3,7 +3,6 @@ package engine
 import (
 	"context"
 	"math/big"
-	"sync"
 	"time"
 	
 	"github.com/VividCortex/ewma"
@@ -121,7 +120,7 @@ type Dispatcher struct {
 	Prv             *crypto.Prv
 	*crypto.KeySet
 	Conn *transport.Conn
-	sync.Mutex
+	// sync.Mutex
 }
 
 const TimeoutPingCount = 10
@@ -176,9 +175,16 @@ func (d *Dispatcher) RunGC() {
 	for dpi, dp := range d.Partials {
 		// Find the oldest and newest.
 		oldest := time.Now()
-		if len(dp) == 0 {
+		if len(dp) == 0 || dp == nil {
 			continue
 		}
+		var tmp packet.Packets
+		for i := range dp {
+			if dp[i] != nil {
+				tmp = append(tmp, dp[i])
+			}
+		}
+		dp = tmp
 		newest := dp[0].TimeStamp
 		for _, ts := range dp {
 			if oldest.After(ts.TimeStamp) {
@@ -206,7 +212,7 @@ func (d *Dispatcher) RunGC() {
 			d.PendingInbound = tmp
 		}
 	}
-	d.Unlock()
+	// d.Unlock()
 	// With the lock released we now can dispatch the RxRecords.
 	var e error
 	for i := range rxr {
@@ -228,7 +234,7 @@ func (d *Dispatcher) HandlePing(p ping.Result) {
 
 func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 	log.D.S("received from conn to dispatcher",
-		// m.ToBytes(),
+		m.ToBytes(),
 	)
 	// Packet received, decrypt, gather and send acks back and reconstructed
 	// messages to the Dispatcher.RecvFromConn channel.
@@ -236,22 +242,23 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 	if fails(e) {
 		return
 	}
-	d.Lock()
+	log.D.Ln("got keys from packet")
 	// This connection should only receive messages with cloaked keys
 	// matching our private key of the connection.
 	prv := d.Prv
 	if !crypto.Match(to, crypto.DerivePub(d.Prv).ToBytes()) {
 		prv = d.OldPrv
-	}
-	if !crypto.Match(to, crypto.DerivePub(d.OldPrv).ToBytes()) {
-		d.Unlock()
-		return
+		if !crypto.Match(to, crypto.DerivePub(d.OldPrv).ToBytes()) {
+			log.W.Ln("cloaked key did not match")
+			return
+		}
 	}
 	var p *packet.Packet
 	if p, e = packet.DecodePacket(m, from, prv, iv); fails(e) {
-		d.Unlock()
+		// d.Unlock()
 		return
 	}
+	d.Lock()
 	var rxr *RxRecord
 	var packets packet.Packets
 	if rxr, packets = d.GetRxRecordAndPartials(p.ID); rxr != nil {
@@ -277,10 +284,10 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 	if p.Seq == 0 && int(p.Length) <= len(p.Data) {
 		log.D.Ln("forwarding single packet message")
 		d.Handle(m, rxr)
+		// d.Unlock()
 		return
 	}
 	log.D.Ln("seq", p.Seq, int(p.Length), len(p.Data))
-	// log.D.S("packet", p)
 	// Find collection of existing fragments matching the message ID or make a
 	// new one and add this packet to it for later assembly.
 	log.D.Ln("collating packet")
@@ -375,25 +382,27 @@ func (d *Dispatcher) SendToConn(m slice.Bytes) {
 	cryptorand.Shuffle(len(packets), func(i, j int) {
 		packets[i], packets[j] = packets[j], packets[i]
 	})
-	// Sender them out!
+	// Send them out!
 	sendChan := d.Conn.GetSend()
 	for i := range packets {
 		sendChan.Send(packets[i])
 	}
 	txr.Last = time.Now()
 	txr.Ping = time.Duration(d.Ping.Value())
-	d.Lock()
+	// d.Lock()
 	for _, v := range packets {
 		d.TotalSent = d.TotalSent.Add(d.TotalSent,
 			big.NewInt(int64(len(v))))
 	}
 	d.PendingOutbound = append(d.PendingOutbound, txr)
-	d.Unlock()
+	// d.Unlock()
 	log.D.Ln("message dispatched")
 }
 
+// Handle the message. This is expected to be called with the mutex locked,
+// so nothing in it should be trying to lock it.
 func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
-	log.D.Ln("handling message")
+	log.W.Ln("handling message")
 	go func() {
 		// Send out the acknowledgement.
 		d.SendAck(rxr)
@@ -419,10 +428,8 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 		if prv, e = crypto.GeneratePrvKey(); fails(e) {
 			return
 		}
-		d.Lock()
 		d.OldPrv = d.Prv
 		d.Prv = prv
-		d.Unlock()
 		// Sender a reply:
 		rpl := RekeyReply{NewPubkey: crypto.DerivePub(prv)}
 		reply := splice.New(rpl.Len())
@@ -438,7 +445,6 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 		o := c.(*Acknowledge)
 		log.D.S("acknowledgement", o)
 		r := o.RxRecord
-		d.Lock()
 		var tmp []*TxRecord
 		for _, pending := range d.PendingOutbound {
 			if pending.ID == r.ID {
@@ -461,7 +467,6 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 		}
 		// Entry is now deleted and processed.
 		d.PendingOutbound = tmp
-		d.Unlock()
 	case OnionMagic:
 		o := c.(*Onion)
 		log.D.S("onion", o)

@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	ExitMagic = "ex"
+	ExitMagic = "exit"
 	ExitLen   = magic.Len + slice.Uint16Len + 3*sha256.Len +
 		slice.Uint32Len + nonce.IVLen*3 + nonce.IDLen
 )

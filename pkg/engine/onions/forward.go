@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	ForwardMagic = "fw"
+	ForwardMagic = "forw"
 	ForwardLen   = magic.Len + 1 + splice.AddrLen
 )
 

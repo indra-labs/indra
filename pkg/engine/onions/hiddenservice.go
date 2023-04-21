@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	HiddenServiceMagic = "hs"
+	HiddenServiceMagic = "hids"
 	HiddenServiceLen   = magic.Len + IntroLen +
 		3*sha256.Len + nonce.IVLen*3 + RoutingHeaderLen
 )

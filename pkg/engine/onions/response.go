@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	ResponseMagic = "rs"
+	ResponseMagic = "resp"
 	ResponseLen   = magic.Len + slice.Uint32Len + slice.Uint16Len +
 		nonce.IDLen + 1
 )
