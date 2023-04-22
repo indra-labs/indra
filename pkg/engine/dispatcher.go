@@ -334,18 +334,20 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 }
 
 func (d *Dispatcher) SendAck(rxr *RxRecord) {
-	log.I.Ln("sending ack")
+	log.T.Ln("sending ack")
 	ack := &Acknowledge{rxr}
 	s := splice.New(ack.Len())
 	_ = ack.Encode(s)
 	d.Duplex.Send(s.GetAll())
-	log.I.S("sent ack", ack)
+	log.T.S("sent ack", ack)
 	// Remove Rx from pending.
 	d.Lock()
 	var tmp []*RxRecord
 	for _, v := range d.PendingInbound {
 		if rxr.ID != v.ID {
 			tmp = append(tmp, v)
+		} else {
+			log.T.Ln("removed pending receive record")
 		}
 	}
 	d.PendingInbound = tmp
