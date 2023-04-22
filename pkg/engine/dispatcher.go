@@ -6,6 +6,7 @@ import (
 	"time"
 	
 	"github.com/VividCortex/ewma"
+	"github.com/gookit/color"
 	"github.com/libp2p/go-libp2p/p2p/protocol/ping"
 	"go.uber.org/atomic"
 	
@@ -333,10 +334,12 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 }
 
 func (d *Dispatcher) SendAck(rxr *RxRecord) {
+	log.I.Ln("sending ack")
 	ack := &Acknowledge{rxr}
 	s := splice.New(ack.Len())
 	_ = ack.Encode(s)
 	d.Duplex.Send(s.GetAll())
+	log.I.S("sent ack", ack)
 	// Remove Rx from pending.
 	d.Lock()
 	var tmp []*RxRecord
@@ -403,9 +406,11 @@ func (d *Dispatcher) SendToConn(m slice.Bytes) {
 // Handle the message. This is expected to be called with the mutex locked,
 // so nothing in it should be trying to lock it.
 func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
-	log.W.S("handling message",
+	log.D.S("handling message",
 		// m.ToBytes(),
 	)
+	hash := sha256.Single(m.ToBytes())
+	copy(rxr.Hash[:], hash[:])
 	s := splice.NewFrom(m)
 	c := onions.Recognise(s)
 	if c == nil {
@@ -440,12 +445,13 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 		log.D.S("key change reply", o)
 		d.Conn.SetRemoteKey(o.NewPubkey)
 	case AcknowledgeMagic:
+		log.D.Ln("ack: received")
 		o := c.(*Acknowledge)
 		r := o.RxRecord
 		var tmp []*TxRecord
 		for _, pending := range d.PendingOutbound {
 			if pending.ID == r.ID {
-				log.D.Ln("accounting of successful send")
+				log.D.Ln("ack: accounting of successful send")
 				if r.Hash == pending.Hash {
 					d.DataSent = d.DataSent.Add(d.DataSent,
 						big.NewInt(int64(pending.Size)))
@@ -458,6 +464,8 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 				d.Parity.Store(uint32(byte(
 					par * d.PingDivergence.Value() *
 						d.ErrorEWMA.Value())))
+				log.D.Ln("ack: processed for",
+					color.Green.Sprint(r.ID.String()))
 			} else {
 				tmp = append(tmp, pending)
 			}
@@ -470,7 +478,7 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 		go func() {
 			// Send out the acknowledgement.
 			d.SendAck(rxr)
-			log.D.Ln("sent acknowledgement")
+			log.D.Ln("ack: sent")
 		}()
 	}
 }

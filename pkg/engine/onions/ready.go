@@ -47,7 +47,7 @@ func (x *Ready) Encode(s *splice.Splice) (e error) {
 		Nonces(x.Return.Nonces)
 	for i := range x.Forward.Ciphers {
 		blk := ciph.BlockFromHash(x.Forward.Ciphers[i])
-		log.D.F("encrypting %s", x.Forward.Ciphers[i].String())
+		log.D.F("encrypting %s", x.Forward.Ciphers[i])
 		ciph.Encipher(blk, x.Forward.Nonces[i], s.GetFrom(start))
 	}
 	return

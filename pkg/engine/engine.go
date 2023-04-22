@@ -100,7 +100,7 @@ func (ng *Engine) HandleMessage(s *splice.Splice, pr onions.Onion) {
 			return
 		}
 		if pr != nil && on.Magic() != pr.Magic() {
-			log.D.S(s.GetAll())
+			log.D.S(s.GetAll().ToBytes())
 		}
 		m := on.GetOnion()
 		if m == nil {

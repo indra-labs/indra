@@ -10,7 +10,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/util/tests"
 )
 
-func TestNewRCPListener(t *testing.T) {
+func TestNewListener(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	var e error
 	var l1, l2 *Listener

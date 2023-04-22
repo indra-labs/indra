@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 	
+	"github.com/gookit/color"
+	
 	"git-indra.lan/indra-labs/indra/pkg/engine/onions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	
@@ -17,6 +19,8 @@ import (
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/tests"
 )
+
+var blue = color.Blue.Sprint
 
 func TestDispatcher(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
@@ -35,8 +39,7 @@ func TestDispatcher(t *testing.T) {
 		t.FailNow()
 	}
 	l2, e = transport.NewListener(transport.GetHostAddress(l1.Host),
-		transport.LocalhostZeroIPv4,
-		k2.Prv, ctx, transport.DefaultMTU)
+		transport.LocalhostZeroIPv4, k2.Prv, ctx, transport.DefaultMTU)
 	if fails(e) {
 		t.FailNow()
 	}
@@ -50,23 +53,6 @@ func TestDispatcher(t *testing.T) {
 	var ks *crypto.KeySet
 	_, ks, e = crypto.NewSigner()
 	d1 := NewDispatcher(l1.Dial(hn1), k1.Prv, ctx, ks)
-	d2 := NewDispatcher(l2.Dial(hn2), k2.Prv, ctx, ks)
-	var wg sync.WaitGroup
-	wg.Add(2)
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case b := <-d1.Duplex.Receive():
-				log.I.S("duplex receive "+d1.Conn.ID(), b.ToBytes())
-				wg.Done()
-			case b := <-d2.Duplex.Receive():
-				log.I.S("duplex receive "+d2.Conn.ID(), b.ToBytes())
-				wg.Done()
-			}
-		}
-	}()
 	var msgp1, msgp2 slice.Bytes
 	id1, id2 := nonce.NewID(), nonce.NewID()
 	var load1 byte = 128
@@ -91,12 +77,45 @@ func TestDispatcher(t *testing.T) {
 	if e = xx2.Encode(sp2); fails(e) {
 		t.FailNow()
 	}
+	d2 := NewDispatcher(l2.Dial(hn2), k2.Prv, ctx, ks)
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case b := <-d1.Duplex.Receive():
+				bb, xb2 := b.ToBytes(), x2.ToBytes()
+				if string(bb) == string(xb2) {
+					log.T.S("receive "+blue(d1.Conn.LocalMultiaddr().String()),
+						bb, xb2,
+					)
+					wg.Done()
+					continue
+				}
+				t.Error("did not receive expected message")
+				return
+			case b := <-d2.Duplex.Receive():
+				bb, xb1 := b.ToBytes(), x1.ToBytes()
+				if string(bb) == string(xb1) {
+					log.T.S("receive "+blue(d1.Conn.LocalMultiaddr().String()),
+						bb, xb1,
+					)
+					wg.Done()
+					continue
+				}
+				t.Error("did not receive expected message")
+				return
+			}
+		}
+	}()
 	msgp1 = sp1.GetAll()
 	msgp2 = sp2.GetAll()
 	d1.SendToConn(msgp1)
 	d2.SendToConn(msgp2)
 	wg.Wait()
-	// time.Sleep(time.Second * 3)
+	time.Sleep(time.Second)
 	log.D.Ln("ping", time.Duration(d1.Ping.Value()),
 		time.Duration(d2.Ping.Value()))
 	cancel()

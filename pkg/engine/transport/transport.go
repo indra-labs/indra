@@ -8,6 +8,7 @@ import (
 	"time"
 	
 	"github.com/cybriq/qu"
+	"github.com/gookit/color"
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -79,7 +80,7 @@ func NewListener(rendezvous, multiAddr string,
 	if d, e = NewDHT(ctx, c.Host, rdv); fails(e) {
 		return
 	}
-	log.D.Ln("listener", GetHostAddress(c.Host))
+	log.D.Ln("listener", blue(GetHostOnlyAddress(c.Host)))
 	go Discover(ctx, c.Host, d, rendezvous)
 	c.Host.SetStreamHandler(IndraLibP2PID, c.handle)
 	return
@@ -99,7 +100,7 @@ func (l *Listener) handle(s network.Stream) {
 		if n, e = s.Read(b); fails(e) {
 			return
 		}
-		log.D.S(GetHostAddress(l.Host) + " read from listener",
+		log.D.S(blue(GetHostOnlyAddress(l.Host)) + " read from listener",
 			// b[:n].ToBytes(),
 		)
 		id := s.Conn().RemotePeer()
@@ -207,6 +208,10 @@ func GetHostAddress(ha host.Host) string {
 	addr := ha.Addrs()[0]
 	return addr.Encapsulate(hostAddr).String()
 }
+func GetHostOnlyAddress(ha host.Host) string {
+	addr := ha.Addrs()[0]
+	return addr.String()
+}
 
 func (l *Listener) Dial(multiAddr string) (d *Conn) {
 	var e error
@@ -239,16 +244,17 @@ func (l *Listener) Dial(multiAddr string) (d *Conn) {
 	l.Lock()
 	l.connections[multiAddr] = d
 	l.Unlock()
-	hostAddress := GetHostAddress(d.Host)
+	hostAddress := GetHostOnlyAddress(d.Host)
 	go func() {
 		var e error
 		for {
-			log.D.Ln("sender", hostAddress, "ready")
+			log.D.Ln("sender", blue(hostAddress), "ready")
 			select {
 			case <-d.C:
 				return
 			case b := <-d.Transport.Sender.Receive():
-				log.D.S(hostAddress + " sending to " + d.MultiAddr.String(),
+				log.D.S(blue(hostAddress) + " sending to " +
+					blue(GetHostOnlyAddress(d.Host)),
 					// b.ToBytes(),
 				)
 				if _, e = d.rw.Write(b); fails(e) {
@@ -257,12 +263,14 @@ func (l *Listener) Dial(multiAddr string) (d *Conn) {
 				if e = d.rw.Flush(); fails(e) {
 					continue
 				}
-				log.D.Ln(hostAddress, "sent")
+				log.D.Ln(blue(hostAddress), "sent")
 			}
 		}
 	}()
 	return
 }
+
+var blue = color.Blue.Sprint
 
 func NewDHT(ctx context.Context, host host.Host,
 	bootstrapPeers []multiaddr.Multiaddr) (d *dht.IpfsDHT, e error) {
@@ -293,7 +301,8 @@ func NewDHT(ctx context.Context, host host.Host,
 			}
 			log.I.F(
 				"%s: Connection established with bootstrap node: %s",
-				GetHostAddress(host), *peerinfo)
+				blue(GetHostOnlyAddress(host)),
+				blue((*peerinfo).Addrs[0]))
 			
 			wg.Done()
 		}()
@@ -332,7 +341,7 @@ func Discover(ctx context.Context, h host.Host, dht *dht.IpfsDHT,
 						
 						continue
 					}
-					log.D.Ln("Connected to peer", p.ID)
+					log.D.Ln("Connected to peer", blue(p.Addrs[0]))
 				}
 			}
 		}

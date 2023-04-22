@@ -34,7 +34,7 @@ func (x *Response) GetOnion() interface{} { return x }
 
 func (x *Response) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
-		x.ID, x.Port, x.Load, x.Bytes.ToBytes(),
+		// x.ID, x.Port, x.Load, x.Bytes.ToBytes(),
 	)
 	s.
 		Magic(ResponseMagic).
