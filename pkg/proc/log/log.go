@@ -22,6 +22,8 @@ import (
 // relative paths for log printing code locations.
 var log = GetLogger(indra.PathBase)
 
+var startTime = time.Now()
+
 // LogLevel is a code representing a scale of importance and context for log
 // entries.
 type LogLevel int32
@@ -328,8 +330,33 @@ func logPrint(
 			formatString = "%-58v%s%s%-6v %s"
 			loc = GetLoc(3, subsystem)
 			tsf = LocTimeStampFormat
+			nns := int(time.Now().Sub(startTime).
+				Nanoseconds())
+			ns := fmt.Sprintf("%24d", nns)
+			end := len(ns)
+			timeStamp := []string{
+				ns[:end-9],
+				ns[end-9 : end-6],
+				ns[end-6 : end-3],
+				ns[end-3 : end],
+			}
+			aboveS := " "
+			if nns > int(time.Second) {
+				aboveS = "."
+			}
+			timeText = fmt.Sprintf("%18s",
+				fmt.Sprintf("%s%s%s %s %s",
+					timeStamp[0],
+					aboveS,
+					timeStamp[1],
+					timeStamp[2],
+					timeStamp[3],
+				
+				),
+			)
+			// /float64(time.Second))
 			// timeText = getTimeText(LocTimeStampFormat)
-			timeText = ""
+			// timeText = ""
 		}
 		var app string
 		if len(App) > 0 {
