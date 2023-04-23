@@ -10,10 +10,10 @@ import (
 	
 	"git-indra.lan/indra-labs/indra/pkg/engine/onions"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/transport"
-	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
@@ -79,7 +79,7 @@ func TestDispatcher(t *testing.T) {
 	}
 	d2 := NewDispatcher(l2.Dial(hn2), k2.Prv, ctx, ks)
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(4)
 	go func() {
 		for {
 			select {
@@ -91,7 +91,7 @@ func TestDispatcher(t *testing.T) {
 					t.Error("did not receive expected message")
 					return
 				} else {
-					log.I.S("success")
+					log.I.S("success 1")
 					wg.Done()
 					continue
 				}
@@ -101,7 +101,7 @@ func TestDispatcher(t *testing.T) {
 					t.Error("did not receive expected message")
 					return
 				} else {
-					log.I.S("success")
+					log.I.S("success 2")
 					wg.Done()
 					continue
 				}
@@ -111,9 +111,18 @@ func TestDispatcher(t *testing.T) {
 	msgp1 = sp1.GetAll()
 	msgp2 = sp2.GetAll()
 	d1.SendToConn(msgp1)
+	log.I.Ln("sent 1")
+	time.Sleep(time.Second)
 	d2.SendToConn(msgp2)
+	log.I.Ln("sent 2")
+	time.Sleep(time.Second)
+	d1.SendToConn(msgp1)
+	log.I.Ln("sent 3")
+	// time.Sleep(time.Second)
+	d2.SendToConn(msgp2)
+	log.I.Ln("sent 4")
+	time.Sleep(time.Second)
 	wg.Wait()
-	time.Sleep(time.Second * 2)
 	log.D.Ln("ping", time.Duration(d1.Ping.Value()),
 		time.Duration(d2.Ping.Value()))
 	cancel()

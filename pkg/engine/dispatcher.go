@@ -55,7 +55,7 @@ type RxRecord struct {
 	// ping RTT after First indicates retransmits.
 	Last time.Time
 	// Size of the message as found in the packet headers.
-	Size int
+	Size uint64
 	// Received is the number of bytes received upon reconstruction, including
 	// packet overhead.
 	Received uint64
@@ -167,6 +167,8 @@ func NewDispatcher(l *transport.Conn, key *crypto.Prv, ctx context.Context,
 			}
 		}
 	}()
+	// Start key exchange.
+	// d.KeyExchange()
 	return
 }
 
@@ -257,12 +259,15 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 		}
 	}
 	var p *packet.Packet
+	log.D.Ln("decoding packet")
 	if p, e = packet.DecodePacket(m, from, prv, iv); fails(e) {
 		return
 	}
-	d.Lock()
+	log.D.Ln("decoded packet")
 	var rxr *RxRecord
 	var packets packet.Packets
+	// d.Lock()
+	// log.D.Ln("inside critical section")
 	d.TotalReceived = d.TotalReceived.Add(d.TotalReceived,
 		big.NewInt(int64(len(m))))
 	if rxr, packets = d.GetRxRecordAndPartials(p.ID); rxr != nil {
@@ -276,7 +281,7 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 			ID:       p.ID,
 			First:    time.Now(),
 			Last:     time.Now(),
-			Size:     int(p.Length),
+			Size:     uint64(p.Length),
 			Received: uint64(len(m)),
 			Ping:     time.Duration(d.Ping.Value()),
 		}
@@ -284,15 +289,15 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 		packets = packet.Packets{p}
 		d.Partials[p.ID] = packets
 	}
-	d.Unlock()
+	// d.Unlock()
 	// if the message is only one packet we can hand it on to the receiving
 	// channel now:
 	if p.Seq == 0 && int(p.Length) <= len(p.Data) {
-		d.Lock()
+		// d.Lock()
 		log.D.Ln("forwarding single packet message")
 		d.CompletedInbound = append(d.CompletedInbound, rxr.ID)
 		d.Handle(m, rxr)
-		d.Unlock()
+		// d.Unlock()
 		return
 	}
 	log.D.Ln("seq", p.Seq, int(p.Length), len(p.Data))
@@ -301,8 +306,8 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 	if mod > 0 {
 		segCount++
 	}
-	d.Lock()
-	defer d.Unlock()
+	// d.Lock()
+	// defer d.Unlock()
 	if len(d.Partials[p.ID]) >= segCount {
 		// Enough to attempt reconstruction:
 		var msg []byte
@@ -345,9 +350,17 @@ func (d *Dispatcher) SendAck(rxr *RxRecord) {
 		} else {
 			log.T.Ln("sending ack")
 			ack := &Acknowledge{rxr}
-			// log.D.S("rxr spew", rxr)
+			log.D.S("rxr size", rxr.Size)
 			s := splice.New(ack.Len())
 			_ = ack.Encode(s)
+			// log.D.S("ack enc", ack)
+			// rack := &Acknowledge{&RxRecord{}}
+			// ss := make(slice.Bytes, s.Len())
+			// copy(ss, s.GetAll())
+			// rs := splice.NewFrom(ss)
+			// rs.SetCursor(4)
+			// rack.Decode(rs)
+			// log.D.S("ack dec", rack)
 			d.Duplex.Send(s.GetAll())
 		}
 	}
@@ -356,7 +369,7 @@ func (d *Dispatcher) SendAck(rxr *RxRecord) {
 }
 
 func (d *Dispatcher) SendToConn(m slice.Bytes) {
-	// log.D.S("message dispatching to conn", m.ToBytes())
+	log.D.S("message dispatching to conn", m.ToBytes())
 	// Data received for sending through the Conn.
 	id := nonce.NewID()
 	hash := sha256.Single(m)
@@ -378,6 +391,7 @@ func (d *Dispatcher) SendToConn(m slice.Bytes) {
 		Data:   m,
 	}
 	mtu := d.Conn.GetMTU()
+	log.D.Ln("getMTU")
 	var packets [][]byte
 	packets, e = packet.SplitToPackets(pp, mtu, d.KeySet)
 	if fails(e) {
@@ -393,18 +407,36 @@ func (d *Dispatcher) SendToConn(m slice.Bytes) {
 	// Send them out!
 	sendChan := d.Conn.GetSend()
 	for i := range packets {
+		log.T.Ln("sending out", i)
 		sendChan.Send(packets[i])
+		log.T.Ln("sent", i)
 	}
 	txr.Last = time.Now()
 	txr.Ping = time.Duration(d.Ping.Value())
-	d.Lock()
+	// d.Lock()
 	for _, v := range packets {
 		d.TotalSent = d.TotalSent.Add(d.TotalSent,
 			big.NewInt(int64(len(v))))
 	}
 	d.PendingOutbound = append(d.PendingOutbound, txr)
-	d.Unlock()
+	// d.Unlock()
 	// log.D.Ln("message dispatched")
+}
+
+func (d *Dispatcher) KeyExchange() {
+	var e error
+	var prv *crypto.Prv
+	if prv, e = crypto.GeneratePrvKey(); fails(e) {
+		return
+	}
+	d.OldPrv = d.Prv
+	d.Prv = prv
+	rpl := InitRekey{NewPubkey: crypto.DerivePub(prv)}
+	reply := splice.New(rpl.Len())
+	if e = rpl.Encode(reply); fails(e) {
+		return
+	}
+	d.Duplex.Send(reply.GetAll())
 }
 
 // Handle the message. This is expected to be called with the mutex locked,
@@ -438,7 +470,7 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 		}
 		d.OldPrv = d.Prv
 		d.Prv = prv
-		// Sender a reply:
+		// Send a reply:
 		rpl := RekeyReply{NewPubkey: crypto.DerivePub(prv)}
 		reply := splice.New(rpl.Len())
 		if e = rpl.Encode(reply); fails(e) {
@@ -453,7 +485,7 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 		log.D.Ln("ack: received")
 		o := c.(*Acknowledge)
 		r := o.RxRecord
-		log.D.S("RxRecord", r, r.Size)
+		// log.D.S("RxRecord", r, r.Size)
 		var tmp []*TxRecord
 		for _, pending := range d.PendingOutbound {
 			if pending.ID == r.ID {

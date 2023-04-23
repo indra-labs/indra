@@ -91,6 +91,7 @@ func (a *Acknowledge) Encode(s *splice.Splice) (e error) {
 		Hash(a.Hash).
 		Time(a.First).
 		Time(a.Last).
+		Uint64(a.Size).
 		Uint64(a.Received).
 		Duration(a.Ping)
 	return
@@ -105,13 +106,14 @@ func (a *Acknowledge) Decode(s *splice.Splice) (e error) {
 		ReadHash(&a.Hash).
 		ReadTime(&a.First).
 		ReadTime(&a.Last).
+		ReadUint64(&a.Size).
 		ReadUint64(&a.Received).
-		Duration(a.Ping)
+		ReadDuration(&a.Ping)
 	return
 }
 
 func (a *Acknowledge) Len() int {
-	return 4 + nonce.IDLen + sha256.Len + 4*slice.Uint64Len
+	return 4 + nonce.IDLen + sha256.Len + 5*slice.Uint64Len
 }
 
 type Onion struct {
