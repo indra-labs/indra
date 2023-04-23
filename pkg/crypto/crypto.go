@@ -345,7 +345,7 @@ func (sig SigBytes) Recover(hash sha256.Hash) (p *Pub, e error) {
 }
 
 type KeySet struct {
-	sync.Mutex
+	Mutex           sync.Mutex
 	Base, Increment *Prv
 }
 
@@ -366,11 +366,11 @@ func NewSigner() (first *Prv, ks *KeySet, e error) {
 // Next adds Increment to Base, assigns the new value to the Base and returns
 // the new value.
 func (ks *KeySet) Next() (n *Prv) {
-	// ks.Mutex.Lock()
+	ks.Mutex.Lock()
 	next := ks.Base.Key.Add(&ks.Increment.Key)
 	ks.Base.Key = *next
 	n = &Prv{Key: *next}
-	// ks.Mutex.Unlock()
+	ks.Mutex.Unlock()
 	return
 }
 
