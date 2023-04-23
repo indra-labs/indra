@@ -112,13 +112,14 @@ type Dispatcher struct {
 	// parameter for a given transmission that minimises latency. Onion routing
 	// necessarily amplifies any latency so making a transmission get across
 	// before/without retransmits is as good as the path can provide.
-	PingDivergence  ewma.MovingAverage
-	Duplex          *transport.DuplexByteChan
-	PendingInbound  []*RxRecord
-	PendingOutbound []*TxRecord
-	Partials        map[nonce.ID]packet.Packets
-	OldPrv          *crypto.Prv
-	Prv             *crypto.Prv
+	PingDivergence   ewma.MovingAverage
+	Duplex           *transport.DuplexByteChan
+	CompletedInbound []nonce.ID
+	PendingInbound   []*RxRecord
+	PendingOutbound  []*TxRecord
+	Partials         map[nonce.ID]packet.Packets
+	OldPrv           *crypto.Prv
+	Prv              *crypto.Prv
 	*crypto.KeySet
 	Conn *transport.Conn
 	// sync.Mutex
@@ -144,6 +145,8 @@ func NewDispatcher(l *transport.Conn, key *crypto.Prv, ctx context.Context,
 		TotalReceived:  big.NewInt(0),
 		Partials:       make(map[nonce.ID]packet.Packets),
 	}
+	d.PingDivergence.Set(1)
+	d.ErrorEWMA.Set(0)
 	d.Parity.Store(DefaultStartingParity)
 	ps := ping.NewPingService(l.Host)
 	pings := ps.Ping(ctx, l.Conn.RemotePeer())
@@ -213,7 +216,6 @@ func (d *Dispatcher) RunGC() {
 			d.PendingInbound = tmp
 		}
 	}
-	// d.Unlock()
 	// With the lock released we now can dispatch the RxRecords.
 	var e error
 	for i := range rxr {
@@ -234,7 +236,8 @@ func (d *Dispatcher) HandlePing(p ping.Result) {
 }
 
 func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
-	log.D.S("received from conn to dispatcher",
+	log.D.Ln(color.Blue.Sprint(d.Conn.LocalMultiaddr()), "received", len(m),
+		"bytes from conn to dispatcher",
 		// m.ToBytes(),
 	)
 	// Packet received, decrypt, gather and send acks back and reconstructed
@@ -243,7 +246,6 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 	if fails(e) {
 		return
 	}
-	log.D.Ln("got keys from packet")
 	// This connection should only receive messages with cloaked keys
 	// matching our private key of the connection.
 	prv := d.Prv
@@ -256,17 +258,20 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 	}
 	var p *packet.Packet
 	if p, e = packet.DecodePacket(m, from, prv, iv); fails(e) {
-		// d.Unlock()
 		return
 	}
 	d.Lock()
 	var rxr *RxRecord
 	var packets packet.Packets
+	d.TotalReceived = d.TotalReceived.Add(d.TotalReceived,
+		big.NewInt(int64(len(m))))
 	if rxr, packets = d.GetRxRecordAndPartials(p.ID); rxr != nil {
 		rxr.Received += uint64(len(m))
 		rxr.Last = time.Now()
-		packets = append(packets, p)
+		log.D.Ln("rxr", rxr.Size)
+		d.Partials[p.ID] = append(d.Partials[p.ID], p)
 	} else {
+		log.D.Ln("Size", p.Length, len(p.Data))
 		rxr = &RxRecord{
 			ID:       p.ID,
 			First:    time.Now(),
@@ -283,20 +288,14 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 	// if the message is only one packet we can hand it on to the receiving
 	// channel now:
 	if p.Seq == 0 && int(p.Length) <= len(p.Data) {
+		d.Lock()
 		log.D.Ln("forwarding single packet message")
+		d.CompletedInbound = append(d.CompletedInbound, rxr.ID)
 		d.Handle(m, rxr)
-		// d.Unlock()
+		d.Unlock()
 		return
 	}
 	log.D.Ln("seq", p.Seq, int(p.Length), len(p.Data))
-	// Find collection of existing fragments matching the message ID or make a
-	// new one and add this packet to it for later assembly.
-	log.D.Ln("collating packet")
-	d.Lock()
-	d.TotalReceived = d.TotalReceived.Add(d.TotalReceived,
-		big.NewInt(int64(len(m))))
-	d.Partials[p.ID] = append(d.Partials[p.ID], p)
-	d.Unlock()
 	segCount := int(p.Length) / d.Conn.GetMTU()
 	mod := int(p.Length) % d.Conn.GetMTU()
 	if mod > 0 {
@@ -312,42 +311,44 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 			return
 		}
 		log.D.S("message", msg)
-		log.D.Ln("message reconstructed; dispatching...")
 		d.DataReceived = d.DataReceived.Add(d.DataReceived,
 			big.NewInt(int64(len(msg))))
 		for _, v := range d.Partials[p.ID] {
 			if v == nil {
 				continue
 			}
-			// log.D.S("v", v.Data[:v.Length])
-			n := len(v.Data) +
-				v.GetOverhead()
-			// log.D.S("n", d.TotalReceived, n)
+			n := len(v.Data) + v.GetOverhead()
 			d.TotalReceived = d.TotalReceived.Add(
-				d.TotalReceived,
-				big.NewInt(int64(n)),
+				d.TotalReceived, big.NewInt(int64(n)),
 			)
 		}
 		// Send the message on to the receiving channel.
+		d.CompletedInbound = append(d.CompletedInbound, rxr.ID)
 		d.Handle(msg, rxr)
+	}
+	log.D.Ln("partials", len(d.Partials[p.ID]), "parity", d.Parity.Load())
+	if len(d.Partials[p.ID]) == segCount*int(256-d.Parity.Load()) {
+		log.D.Ln("this is all pieces, we can delete probably")
 	}
 }
 
 func (d *Dispatcher) SendAck(rxr *RxRecord) {
-	log.T.Ln("sending ack")
-	ack := &Acknowledge{rxr}
-	s := splice.New(ack.Len())
-	_ = ack.Encode(s)
-	d.Duplex.Send(s.GetAll())
-	log.T.S("sent ack", ack)
+	// log.T.S("sent ack", ack)
 	// Remove Rx from pending.
 	d.Lock()
 	var tmp []*RxRecord
 	for _, v := range d.PendingInbound {
 		if rxr.ID != v.ID {
 			tmp = append(tmp, v)
+			// } else {
+			// 	log.T.Ln("removed pending receive record")
 		} else {
-			log.T.Ln("removed pending receive record")
+			log.T.Ln("sending ack")
+			ack := &Acknowledge{rxr}
+			// log.D.S("rxr spew", rxr)
+			s := splice.New(ack.Len())
+			_ = ack.Encode(s)
+			d.Duplex.Send(s.GetAll())
 		}
 	}
 	d.PendingInbound = tmp
@@ -355,7 +356,7 @@ func (d *Dispatcher) SendAck(rxr *RxRecord) {
 }
 
 func (d *Dispatcher) SendToConn(m slice.Bytes) {
-	log.D.S("message dispatching to conn", m.ToBytes())
+	// log.D.S("message dispatching to conn", m.ToBytes())
 	// Data received for sending through the Conn.
 	id := nonce.NewID()
 	hash := sha256.Single(m)
@@ -382,6 +383,7 @@ func (d *Dispatcher) SendToConn(m slice.Bytes) {
 	if fails(e) {
 		return
 	}
+	// log.D.S("split packets", packets)
 	// Shuffle. This is both for anonymity and improving the chances of most
 	// error bursts to not cut through a whole segment (they are grouped by 256
 	// for RS FEC).
@@ -402,15 +404,12 @@ func (d *Dispatcher) SendToConn(m slice.Bytes) {
 	}
 	d.PendingOutbound = append(d.PendingOutbound, txr)
 	d.Unlock()
-	log.D.Ln("message dispatched")
+	// log.D.Ln("message dispatched")
 }
 
 // Handle the message. This is expected to be called with the mutex locked,
 // so nothing in it should be trying to lock it.
 func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
-	log.D.S("handling message",
-		// m.ToBytes(),
-	)
 	hash := sha256.Single(m.ToBytes())
 	copy(rxr.Hash[:], hash[:])
 	s := splice.NewFrom(m)
@@ -418,12 +417,16 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 	if c == nil {
 		return
 	}
+	log.D.S("handling message",
+		m.ToBytes(),
+	)
 	magic := c.Magic()
-	log.D.Ln("decoding message with magic", magic)
+	log.D.Ln("decoding message with magic", color.Red.Sprint(magic))
 	var e error
 	if e = c.Decode(s); fails(e) {
 		return
 	}
+	// log.D.S("decoded onion", c)
 	switch magic {
 	case InitRekeyMagic:
 		o := c.(*InitRekey)
@@ -450,6 +453,7 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 		log.D.Ln("ack: received")
 		o := c.(*Acknowledge)
 		r := o.RxRecord
+		log.D.S("RxRecord", r, r.Size)
 		var tmp []*TxRecord
 		for _, pending := range d.PendingOutbound {
 			if pending.ID == r.ID {
@@ -458,16 +462,30 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 					d.DataSent = d.DataSent.Add(d.DataSent,
 						big.NewInt(int64(pending.Size)))
 				}
-				d.ErrorEWMA.Add(float64(r.Received) / float64(r.Size))
-				tot := r.Last.Sub(pending.First) * 2
-				div := float64(tot) / float64(r.Ping)
+				log.D.Ln(d.ErrorEWMA.Value(), pending.Size, r.Size, r.Received,
+					float64(pending.Size)/float64(r.Received))
+				if pending.Size >= d.Conn.MTU-packet.Overhead {
+					d.ErrorEWMA.Add(float64(pending.Size) / float64(r.Received))
+				}
+				log.D.Ln("first", pending.First.UnixNano(), "last",
+					pending.Last.UnixNano(), r.Ping.Nanoseconds())
+				tot := pending.Last.UnixNano() - pending.First.UnixNano()
+				pn := r.Ping
+				div := float64(pn) / float64(tot)
+				log.D.Ln("div", div, "tot", tot)
 				d.PingDivergence.Add(div)
 				par := float64(d.Parity.Load())
-				d.Parity.Store(uint32(byte(
-					par * d.PingDivergence.Value() *
-						d.ErrorEWMA.Value())))
+				pv := par * d.PingDivergence.Value() *
+					(1 + d.ErrorEWMA.Value())
+				log.D.Ln("pv", par, "*", d.PingDivergence.Value(), "*",
+					1+d.ErrorEWMA.Value(), "=", pv)
+				d.Parity.Store(uint32(byte(pv)))
 				log.D.Ln("ack: processed for",
-					color.Green.Sprint(r.ID.String()))
+					color.Green.Sprint(r.ID.String()),
+					r.Ping, tot, div, par,
+					d.PingDivergence.Value(),
+					d.ErrorEWMA.Value(),
+					d.Parity.Load())
 			} else {
 				tmp = append(tmp, pending)
 			}

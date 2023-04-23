@@ -48,8 +48,11 @@ func Recognise(s *splice.Splice) (cdc coding.Codec) {
 		cdc = in()
 	}
 	if !ok || cdc == nil {
-		log.D.F("unrecognised magic %s ignoring message",
-			color.Red.Sprint(magic))
+		// log.D.F("unrecognised magic %s ignoring message",
+		// 	color.Red.Sprint(magic),
+		// 	spew.Sdump(s.GetUntil(s.GetCursor()).ToBytes()),
+		// 	spew.Sdump(s.GetFrom(s.GetCursor()).ToBytes()),
+		// )
 	} else {
 		log.D.F("recognised magic %s for type %v",
 			color.Red.Sprint(magic),

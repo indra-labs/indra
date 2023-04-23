@@ -87,26 +87,24 @@ func TestDispatcher(t *testing.T) {
 				return
 			case b := <-d1.Duplex.Receive():
 				bb, xb2 := b.ToBytes(), x2.ToBytes()
-				if string(bb) == string(xb2) {
-					log.T.S("receive "+blue(d1.Conn.LocalMultiaddr().String()),
-						bb, xb2,
-					)
+				if string(bb) != string(xb2) {
+					t.Error("did not receive expected message")
+					return
+				} else {
+					log.I.S("success")
 					wg.Done()
 					continue
 				}
-				t.Error("did not receive expected message")
-				return
 			case b := <-d2.Duplex.Receive():
 				bb, xb1 := b.ToBytes(), x1.ToBytes()
-				if string(bb) == string(xb1) {
-					log.T.S("receive "+blue(d1.Conn.LocalMultiaddr().String()),
-						bb, xb1,
-					)
+				if string(bb) != string(xb1) {
+					t.Error("did not receive expected message")
+					return
+				} else {
+					log.I.S("success")
 					wg.Done()
 					continue
 				}
-				t.Error("did not receive expected message")
-				return
 			}
 		}
 	}()
@@ -115,7 +113,7 @@ func TestDispatcher(t *testing.T) {
 	d1.SendToConn(msgp1)
 	d2.SendToConn(msgp2)
 	wg.Wait()
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * 2)
 	log.D.Ln("ping", time.Duration(d1.Ping.Value()),
 		time.Duration(d2.Ping.Value()))
 	cancel()

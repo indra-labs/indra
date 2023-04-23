@@ -80,7 +80,7 @@ func NewListener(rendezvous, multiAddr string,
 	if d, e = NewDHT(ctx, c.Host, rdv); fails(e) {
 		return
 	}
-	log.D.Ln("listener", blue(GetHostOnlyAddress(c.Host)))
+	log.D.Ln("listening on", blue(GetHostOnlyAddress(c.Host)))
 	go Discover(ctx, c.Host, d, rendezvous)
 	c.Host.SetStreamHandler(IndraLibP2PID, c.handle)
 	return
@@ -100,7 +100,8 @@ func (l *Listener) handle(s network.Stream) {
 		if n, e = s.Read(b); fails(e) {
 			return
 		}
-		log.D.S(blue(GetHostOnlyAddress(l.Host)) + " read from listener",
+		log.D.S(blue(GetHostOnlyAddress(l.
+			Host)) + " read " + fmt.Sprint(n) + " bytes from listener",
 			// b[:n].ToBytes(),
 		)
 		id := s.Conn().RemotePeer()
@@ -253,17 +254,17 @@ func (l *Listener) Dial(multiAddr string) (d *Conn) {
 			case <-d.C:
 				return
 			case b := <-d.Transport.Sender.Receive():
-				log.D.S(blue(hostAddress) + " sending to " +
-					blue(GetHostOnlyAddress(d.Host)),
-					// b.ToBytes(),
-				)
+				// log.D.S(blue(hostAddress)+" sending to "+
+				// 	blue(GetHostOnlyAddress(d.Host)),
+				// 	b.ToBytes(),
+				// )
 				if _, e = d.rw.Write(b); fails(e) {
 					continue
 				}
 				if e = d.rw.Flush(); fails(e) {
 					continue
 				}
-				log.D.Ln(blue(hostAddress), "sent")
+				log.D.Ln(blue(hostAddress), "sent", b.Len(), "bytes")
 			}
 		}
 	}()

@@ -1,8 +1,6 @@
 package onions
 
 import (
-	"reflect"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
@@ -30,9 +28,9 @@ func (x *Confirmation) GetOnion() interface{} { return x }
 func (x *Confirmation) Magic() string { return ConfirmationMagic }
 
 func (x *Confirmation) Encode(s *splice.Splice) (e error) {
-	log.T.S("encoding", reflect.TypeOf(x),
-		x.ID, x.Load,
-	)
+	// log.T.S("encoding", reflect.TypeOf(x),
+	// 	x.ID, x.Load,
+	// )
 	s.Magic(ConfirmationMagic).ID(x.ID).Byte(x.Load)
 	return
 }

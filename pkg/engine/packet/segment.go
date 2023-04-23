@@ -66,12 +66,12 @@ func JoinPackets(packets Packets) (pkts Packets, msg []byte, e error) {
 	p := packets[0]
 	// Construct the segments map.
 	overhead := p.GetOverhead()
-	log.D.Ln(
-		int(p.Length), len(p.Data)+overhead, overhead, int(p.Parity))
+	// log.D.Ln(
+	// 	int(p.Length), len(p.Data)+overhead, overhead, int(p.Parity))
 	segMap := NewPacketSegments(
 		int(p.Length), len(p.Data)+overhead, overhead, int(p.Parity))
 	segCount := segMap[len(segMap)-1].PEnd
-	log.D.S("segMap", segMap)
+	// log.D.S("segMap", segMap)
 	length, red := p.Length, p.Parity
 	prevSeq := p.Seq
 	var discard []int
