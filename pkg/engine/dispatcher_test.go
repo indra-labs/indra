@@ -49,10 +49,11 @@ func TestDispatcher(t *testing.T) {
 	msg2, _, e = tests.GenMessage(48, "RESPONSE")
 	_, _ = msg1, msg2
 	hn1 := transport.GetHostAddress(l2.Host)
-	hn2 := transport.GetHostAddress(l1.Host)
+	// hn2 := transport.GetHostAddress(l1.Host)
 	var ks *crypto.KeySet
 	_, ks, e = crypto.NewSigner()
-	d1 := NewDispatcher(l1.Dial(hn1), k1.Prv, ctx, ks)
+	d1 := NewDispatcher(l1.Dial(hn1), ctx, ks)
+	// time.Sleep(time.Second)
 	var msgp1, msgp2 slice.Bytes
 	id1, id2 := nonce.NewID(), nonce.NewID()
 	var load1 byte = 128
@@ -77,7 +78,10 @@ func TestDispatcher(t *testing.T) {
 	if e = xx2.Encode(sp2); fails(e) {
 		t.FailNow()
 	}
-	d2 := NewDispatcher(l2.Dial(hn2), k2.Prv, ctx, ks)
+	d2 := NewDispatcher(<-l2.Accept(), ctx, ks)
+	// todo: Why does this require 30ms and where can we instead trigger
+	//  continuation from it?
+	time.Sleep(time.Millisecond * 30)
 	var wg sync.WaitGroup
 	wg.Add(4)
 	go func() {

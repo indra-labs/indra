@@ -25,6 +25,8 @@ import (
 const (
 	// DefaultStartingParity is set to 64, or 25%
 	DefaultStartingParity = 64
+	// DefaultDispatcherRekey is 16mb to trigger rekey.
+	DefaultDispatcherRekey = 1 << 24
 )
 
 // TxRecord is the details of a send operation in progress. This is used with
@@ -119,8 +121,8 @@ type Dispatcher struct {
 	PendingInbound   []*RxRecord
 	PendingOutbound  []*TxRecord
 	Partials         map[nonce.ID]packet.Packets
-	OldPrv           *crypto.Prv
-	Prv              *crypto.Prv
+	OldPrv, Prv      atomic.Value
+	lastRekey        atomic.Value
 	ks               *crypto.KeySet
 	Conn             *transport.Conn
 	Mutex            sync.Mutex
@@ -128,12 +130,9 @@ type Dispatcher struct {
 
 const TimeoutPingCount = 10
 
-func NewDispatcher(l *transport.Conn, key *crypto.Prv, ctx context.Context,
-	ks *crypto.KeySet) (d *Dispatcher) {
+func NewDispatcher(l *transport.Conn, ctx context.Context, ks *crypto.KeySet) (d *Dispatcher) {
 	
 	d = &Dispatcher{
-		Prv:            key,
-		OldPrv:         key,
 		Conn:           l,
 		ks:             ks,
 		Duplex:         transport.NewDuplexByteChan(transport.ConnBufs),
@@ -146,6 +145,25 @@ func NewDispatcher(l *transport.Conn, key *crypto.Prv, ctx context.Context,
 		TotalReceived:  big.NewInt(0),
 		Partials:       make(map[nonce.ID]packet.Packets),
 	}
+	var e error
+	prk := d.Conn.Conn.LocalPrivateKey()
+	var rprk slice.Bytes
+	if rprk, e = prk.Raw(); fails(e) {
+		return
+	}
+	cpr := crypto.PrvKeyFromBytes(rprk)
+	d.Prv.Store(cpr)
+	d.OldPrv.Store(cpr)
+	fpk := d.Conn.Conn.RemotePublicKey()
+	var rpk slice.Bytes
+	if rpk, e = fpk.Raw(); fails(e) {
+		return
+	}
+	var pk *crypto.Pub
+	if pk, e = crypto.PubFromBytes(rpk); fails(e) {
+		return
+	}
+	d.Conn.SetRemoteKey(pk)
 	d.PingDivergence.Set(1)
 	d.ErrorEWMA.Set(0)
 	d.Parity.Store(DefaultStartingParity)
@@ -169,7 +187,7 @@ func NewDispatcher(l *transport.Conn, key *crypto.Prv, ctx context.Context,
 		}
 	}()
 	// Start key exchange.
-	// d.KeyExchange()
+	d.KeyExchange()
 	return
 }
 
@@ -231,6 +249,11 @@ func (d *Dispatcher) RunGC() {
 		}
 		d.Duplex.Sender.Send(s.GetAll())
 	}
+	// If we have moved a lot of data, time to rekey.
+	last := big.NewInt(0).SetBytes(d.lastRekey.Load().([]byte))
+	if last.Sub(last, d.TotalReceived).Uint64() > DefaultDispatcherRekey {
+		d.KeyExchange()
+	}
 }
 
 func (d *Dispatcher) HandlePing(p ping.Result) {
@@ -253,11 +276,11 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 	// This connection should only receive messages with cloaked keys
 	// matching our private key of the connection.
 	d.Mutex.Lock()
-	prv := d.Prv
-	if !crypto.Match(to, crypto.DerivePub(d.Prv).ToBytes()) {
-		prv = d.OldPrv
-		if !crypto.Match(to, crypto.DerivePub(d.OldPrv).ToBytes()) {
-			log.W.Ln("cloaked key did not match")
+	prv := d.Prv.Load().(*crypto.Prv)
+	if !crypto.Match(to, crypto.DerivePub(d.Prv.Load().(*crypto.Prv)).ToBytes()) {
+		prv = d.OldPrv.Load().(*crypto.Prv)
+		if !crypto.Match(to, crypto.DerivePub(d.OldPrv.Load().(*crypto.Prv)).ToBytes()) {
+			log.W.Ln(d.Conn.LocalMultiaddr(), "cloaked key did not match")
 			d.Mutex.Unlock()
 			return
 		}
@@ -376,13 +399,9 @@ func (d *Dispatcher) SendToConn(m slice.Bytes) {
 		First: time.Now(),
 		Size:  len(m),
 	}
-	tok := d.Conn.RemotePublicKey()
-	b, e := tok.Raw()
-	var to *crypto.Pub
-	to, e = crypto.PubFromBytes(b)
 	pp := &packet.PacketParams{
 		ID:     id,
-		To:     to,
+		To:     d.Conn.GetRemoteKey(),
 		Parity: int(d.Parity.Load()),
 		Length: m.Len(),
 		Data:   m,
@@ -390,6 +409,7 @@ func (d *Dispatcher) SendToConn(m slice.Bytes) {
 	mtu := d.Conn.GetMTU()
 	log.D.Ln("getMTU")
 	var packets [][]byte
+	var e error
 	packets, e = packet.SplitToPackets(pp, mtu, d.ks)
 	if fails(e) {
 		return
@@ -421,19 +441,22 @@ func (d *Dispatcher) SendToConn(m slice.Bytes) {
 }
 
 func (d *Dispatcher) KeyExchange() {
+	log.D.Ln(d.Conn.LocalMultiaddr(), "initiating key exchange")
 	var e error
 	var prv *crypto.Prv
 	if prv, e = crypto.GeneratePrvKey(); fails(e) {
 		return
 	}
-	d.OldPrv = d.Prv
-	d.Prv = prv
 	rpl := InitRekey{NewPubkey: crypto.DerivePub(prv)}
 	reply := splice.New(rpl.Len())
 	if e = rpl.Encode(reply); fails(e) {
 		return
 	}
 	d.Duplex.Send(reply.GetAll())
+	d.OldPrv.Store(d.Prv.Load())
+	d.Prv.Store(prv)
+	d.lastRekey.Store(d.TotalReceived.Bytes())
+	log.D.Ln(d.Conn.LocalMultiaddr(), "done key exchange")
 }
 
 // Handle the message. This is expected to be called with the mutex locked,
@@ -465,8 +488,6 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 		if prv, e = crypto.GeneratePrvKey(); fails(e) {
 			return
 		}
-		d.OldPrv = d.Prv
-		d.Prv = prv
 		// Send a reply:
 		rpl := RekeyReply{NewPubkey: crypto.DerivePub(prv)}
 		reply := splice.New(rpl.Len())
@@ -474,6 +495,9 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 			return
 		}
 		d.Duplex.Send(reply.GetAll())
+		d.OldPrv.Store(d.Prv.Load())
+		d.Prv.Store(prv)
+		d.lastRekey.Store(d.TotalReceived.Bytes())
 	case RekeyReplyMagic:
 		o := c.(*RekeyReply)
 		log.D.S("key change reply", o)
