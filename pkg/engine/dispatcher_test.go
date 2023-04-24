@@ -52,8 +52,11 @@ func TestDispatcher(t *testing.T) {
 	// hn2 := transport.GetHostAddress(l1.Host)
 	var ks *crypto.KeySet
 	_, ks, e = crypto.NewSigner()
-	d1 := NewDispatcher(l1.Dial(hn1), ctx, ks)
-	// time.Sleep(time.Second)
+	d1 := NewDispatcher(l1.Dial(hn1), ctx, ks, true)
+	d2 := NewDispatcher(<-l2.Accept(), ctx, ks, false)
+	// todo: Why does this require 30ms and where can we instead trigger
+	//  continuation from it?
+	// time.Sleep(time.Millisecond * 20)
 	var msgp1, msgp2 slice.Bytes
 	id1, id2 := nonce.NewID(), nonce.NewID()
 	var load1 byte = 128
@@ -78,10 +81,6 @@ func TestDispatcher(t *testing.T) {
 	if e = xx2.Encode(sp2); fails(e) {
 		t.FailNow()
 	}
-	d2 := NewDispatcher(<-l2.Accept(), ctx, ks)
-	// todo: Why does this require 30ms and where can we instead trigger
-	//  continuation from it?
-	time.Sleep(time.Millisecond * 30)
 	var wg sync.WaitGroup
 	wg.Add(4)
 	go func() {

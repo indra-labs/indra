@@ -115,22 +115,27 @@ type Dispatcher struct {
 	// parameter for a given transmission that minimises latency. Onion routing
 	// necessarily amplifies any latency so making a transmission get across
 	// before/without retransmits is as good as the path can provide.
-	PingDivergence   ewma.MovingAverage
-	Duplex           *transport.DuplexByteChan
-	CompletedInbound []nonce.ID
-	PendingInbound   []*RxRecord
-	PendingOutbound  []*TxRecord
-	Partials         map[nonce.ID]packet.Packets
-	OldPrv, Prv      atomic.Value
-	lastRekey        atomic.Value
-	ks               *crypto.KeySet
-	Conn             *transport.Conn
-	Mutex            sync.Mutex
+	PingDivergence        ewma.MovingAverage
+	Duplex                *transport.DuplexByteChan
+	CompletedInbound      []nonce.ID
+	PendingInbound        []*RxRecord
+	PendingOutbound       []*TxRecord
+	Partials              map[nonce.ID]packet.Packets
+	Prv, OldPrv, OlderPrv atomic.Value
+	lastRekey             atomic.Value
+	ks                    *crypto.KeySet
+	Conn                  *transport.Conn
+	Mutex                 sync.Mutex
 }
 
 const TimeoutPingCount = 10
 
-func NewDispatcher(l *transport.Conn, ctx context.Context, ks *crypto.KeySet) (d *Dispatcher) {
+// NewDispatcher initialises and starts up a Dispatcher with the provided
+// connection, acquired by dialing or Accepting inbound connection from a peer.
+//
+// The doRekey flag should be true for the dialer and false for the Acceptor.
+func NewDispatcher(l *transport.Conn, ctx context.Context,
+	ks *crypto.KeySet, doRekey bool) (d *Dispatcher) {
 	
 	d = &Dispatcher{
 		Conn:           l,
@@ -154,6 +159,7 @@ func NewDispatcher(l *transport.Conn, ctx context.Context, ks *crypto.KeySet) (d
 	cpr := crypto.PrvKeyFromBytes(rprk)
 	d.Prv.Store(cpr)
 	d.OldPrv.Store(cpr)
+	d.OlderPrv.Store(cpr)
 	fpk := d.Conn.Conn.RemotePublicKey()
 	var rpk slice.Bytes
 	if rpk, e = fpk.Raw(); fails(e) {
@@ -187,7 +193,9 @@ func NewDispatcher(l *transport.Conn, ctx context.Context, ks *crypto.KeySet) (d
 		}
 	}()
 	// Start key exchange.
-	d.KeyExchange()
+	if doRekey {
+		d.KeyExchange()
+	}
 	return
 }
 
@@ -277,12 +285,15 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 	// matching our private key of the connection.
 	d.Mutex.Lock()
 	prv := d.Prv.Load().(*crypto.Prv)
-	if !crypto.Match(to, crypto.DerivePub(d.Prv.Load().(*crypto.Prv)).ToBytes()) {
+	if !crypto.Match(to, crypto.DerivePub(prv).ToBytes()) {
 		prv = d.OldPrv.Load().(*crypto.Prv)
-		if !crypto.Match(to, crypto.DerivePub(d.OldPrv.Load().(*crypto.Prv)).ToBytes()) {
-			log.W.Ln(d.Conn.LocalMultiaddr(), "cloaked key did not match")
-			d.Mutex.Unlock()
-			return
+		if !crypto.Match(to, crypto.DerivePub(prv).ToBytes()) {
+			prv = d.OlderPrv.Load().(*crypto.Prv)
+			if !crypto.Match(to, crypto.DerivePub(prv).ToBytes()) {
+				log.W.Ln(d.Conn.LocalMultiaddr(), "cloaked key did not match")
+				d.Mutex.Unlock()
+				return
+			}
 		}
 	}
 	d.Mutex.Unlock()
@@ -359,7 +370,8 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 		d.CompletedInbound = append(d.CompletedInbound, rxr.ID)
 		d.Handle(msg, rxr)
 	}
-	log.D.Ln("partials", len(d.Partials[p.ID]), "parity", d.Parity.Load())
+	log.D.Ln(d.Conn.LocalMultiaddr(), "partials", len(d.Partials[p.ID]),
+		"parity", d.Parity.Load())
 	if len(d.Partials[p.ID]) == segCount*int(256-d.Parity.Load()) {
 		log.D.Ln("this is all pieces, we can delete probably")
 	}
@@ -389,7 +401,8 @@ func (d *Dispatcher) SendAck(rxr *RxRecord) {
 }
 
 func (d *Dispatcher) SendToConn(m slice.Bytes) {
-	log.D.S("message dispatching to conn", m.ToBytes())
+	log.D.S(d.Conn.LocalMultiaddr().String()+" message dispatching to conn",
+		m.ToBytes())
 	// Data received for sending through the Conn.
 	id := nonce.NewID()
 	hash := sha256.Single(m)
@@ -453,6 +466,7 @@ func (d *Dispatcher) KeyExchange() {
 		return
 	}
 	d.Duplex.Send(reply.GetAll())
+	d.OlderPrv.Store(d.OldPrv.Load())
 	d.OldPrv.Store(d.Prv.Load())
 	d.Prv.Store(prv)
 	d.lastRekey.Store(d.TotalReceived.Bytes())
@@ -482,7 +496,7 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 	switch magic {
 	case InitRekeyMagic:
 		o := c.(*InitRekey)
-		log.D.S("key change initiate", o)
+		log.D.S(d.Conn.LocalMultiaddr(), "key change initiate", o)
 		d.Conn.SetRemoteKey(o.NewPubkey)
 		var prv *crypto.Prv
 		if prv, e = crypto.GeneratePrvKey(); fails(e) {
@@ -495,6 +509,7 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 			return
 		}
 		d.Duplex.Send(reply.GetAll())
+		d.OlderPrv.Store(d.OldPrv.Load())
 		d.OldPrv.Store(d.Prv.Load())
 		d.Prv.Store(prv)
 		d.lastRekey.Store(d.TotalReceived.Bytes())
