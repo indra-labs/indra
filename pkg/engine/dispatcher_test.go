@@ -54,9 +54,6 @@ func TestDispatcher(t *testing.T) {
 	_, ks, e = crypto.NewSigner()
 	d1 := NewDispatcher(l1.Dial(hn1), ctx, ks, true)
 	d2 := NewDispatcher(<-l2.Accept(), ctx, ks, false)
-	// todo: Why does this require 30ms and where can we instead trigger
-	//  continuation from it?
-	// time.Sleep(time.Millisecond * 20)
 	var msgp1, msgp2 slice.Bytes
 	id1, id2 := nonce.NewID(), nonce.NewID()
 	var load1 byte = 128
@@ -115,17 +112,17 @@ func TestDispatcher(t *testing.T) {
 	msgp2 = sp2.GetAll()
 	d1.SendToConn(msgp1)
 	log.I.Ln("sent 1")
-	time.Sleep(time.Second)
+	// time.Sleep(time.Second)
 	d2.SendToConn(msgp2)
 	log.I.Ln("sent 2")
-	time.Sleep(time.Second)
+	// time.Sleep(time.Second)
 	d1.SendToConn(msgp1)
 	log.I.Ln("sent 3")
 	// time.Sleep(time.Second)
 	d2.SendToConn(msgp2)
 	log.I.Ln("sent 4")
-	time.Sleep(time.Second)
 	wg.Wait()
+	time.Sleep(time.Second)
 	log.D.Ln("ping", time.Duration(d1.Ping.Value()),
 		time.Duration(d2.Ping.Value()))
 	cancel()
