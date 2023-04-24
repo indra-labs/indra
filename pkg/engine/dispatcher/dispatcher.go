@@ -1,4 +1,4 @@
-package engine
+package dispatcher
 
 import (
 	"context"
@@ -11,15 +11,22 @@ import (
 	"github.com/libp2p/go-libp2p/p2p/protocol/ping"
 	"go.uber.org/atomic"
 	
+	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/engine/onions"
 	"git-indra.lan/indra-labs/indra/pkg/engine/packet"
 	"git-indra.lan/indra-labs/indra/pkg/engine/transport"
+	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+)
+
+var (
+	log   = log2.GetLogger(indra.PathBase)
+	fails = log.E.Chk
 )
 
 const (

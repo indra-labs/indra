@@ -1,4 +1,4 @@
-package engine
+package dispatcher
 
 import (
 	"context"
@@ -53,7 +53,7 @@ func TestDispatcher(t *testing.T) {
 	var ks *crypto.KeySet
 	_, ks, e = crypto.NewSigner()
 	d1 := NewDispatcher(l1.Dial(hn1), ctx, ks, true)
-	d2 := NewDispatcher(<-l2.Accept(), ctx, ks, false)
+	d2 := NewDispatcher(<-l2.Accept(), ctx, ks, true)
 	var msgp1, msgp2 slice.Bytes
 	id1, id2 := nonce.NewID(), nonce.NewID()
 	var load1 byte = 128
@@ -122,7 +122,7 @@ func TestDispatcher(t *testing.T) {
 	d2.SendToConn(msgp2)
 	log.I.Ln("sent 4")
 	wg.Wait()
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * 2)
 	log.D.Ln("ping", time.Duration(d1.Ping.Value()),
 		time.Duration(d2.Ping.Value()))
 	cancel()
