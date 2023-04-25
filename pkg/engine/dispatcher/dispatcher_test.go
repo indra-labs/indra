@@ -123,7 +123,11 @@ func TestDispatcher(t *testing.T) {
 	log.I.Ln("sent 4")
 	wg.Wait()
 	time.Sleep(time.Second * 2)
+	d1.Mutex.Lock()
+	d2.Mutex.Lock()
 	log.D.Ln("ping", time.Duration(d1.Ping.Value()),
 		time.Duration(d2.Ping.Value()))
+	d1.Mutex.Unlock()
+	d2.Mutex.Unlock()
 	cancel()
 }

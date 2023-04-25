@@ -449,8 +449,8 @@ func (d *Dispatcher) SendToConn(m slice.Bytes) {
 		log.T.Ln("sent", i)
 	}
 	txr.Last = time.Now()
-	txr.Ping = time.Duration(d.Ping.Value())
 	d.Mutex.Lock()
+	txr.Ping = time.Duration(d.Ping.Value())
 	for _, v := range packets {
 		d.TotalSent = d.TotalSent.Add(d.TotalSent,
 			big.NewInt(int64(len(v))))

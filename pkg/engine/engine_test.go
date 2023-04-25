@@ -182,7 +182,6 @@ out:
 
 func TestEngine_SendIntroQuery(t *testing.T) {
 	log2.SetLogLevel(log2.Info)
-	log2.App = ""
 	var clients []*Engine
 	var e error
 	const nCircuits = 10
@@ -297,7 +296,7 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 
 func TestEngine_Message(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
-	log2.App = ""
+	log2.App.Store("")
 	var clients []*Engine
 	var e error
 	const nCircuits = 10
@@ -518,7 +517,7 @@ out:
 
 func TestEngine_Route(t *testing.T) {
 	log2.SetLogLevel(log2.Info)
-	log2.App = ""
+	log2.App.Store("")
 	runtime.GOMAXPROCS(1)
 	var clients []*Engine
 	var e error

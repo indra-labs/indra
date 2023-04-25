@@ -57,7 +57,7 @@ func main() {
 		major = true
 		os.Args = append(os.Args[0:1], os.Args[2:]...)
 	}
-	log2.App = "bumper"
+	log2.App.Store("bumper")
 	BuildTime = time.Now().Format(time.RFC3339)
 	var cwd string
 	var e error

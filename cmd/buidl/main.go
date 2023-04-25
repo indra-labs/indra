@@ -38,7 +38,7 @@ func errPrintln(a ...interface{}) {
 }
 
 func main() {
-	log2.App = "buidl"
+	log2.App.Store("buidl")
 	BuildTime = time.Now().Format(time.RFC3339)
 	var cwd string
 	var e error

@@ -12,7 +12,7 @@ import (
 
 func TestOnionSkins_IntroQuery(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
-	log2.App = ""
+	log2.App.Store("")
 	var e error
 	prvs, pubs := crypto.GetCipherSet(t)
 	ciphers := crypto.GenCiphers(prvs, pubs)

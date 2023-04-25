@@ -19,7 +19,7 @@ type App struct {
 }
 
 func New(c *cmds2.Command, args []string) (a *App, e error) {
-	log2.App = c.Name
+	log2.App.Store(c.Name)
 	// AddIntro the default configuration items for datadir/configfile
 	log.T.Ln("test")
 	cmds2.GetConfigBase(c.Configs, c.Name, false)

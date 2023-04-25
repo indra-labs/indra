@@ -13,6 +13,7 @@ import (
 	
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gookit/color"
+	"go.uber.org/atomic"
 	
 	"git-indra.lan/indra-labs/indra"
 )
@@ -165,7 +166,7 @@ var (
 	logLevel = Info
 	// App is the name of the application. Change this at the beginning of
 	// an application main.
-	App = ""
+	App atomic.String
 	// allSubsystems stores all package subsystem names found in the current
 	// application.
 	allSubsystems []string
@@ -319,7 +320,10 @@ func logPrint(
 	printFunc func() string,
 ) func() {
 	return func() {
+		writerMx.Lock()
+		defer writerMx.Unlock()
 		if level > logLevel {
+			writerMx.Unlock()
 			return
 		}
 		formatString := "%v%s%s%-6v %s"
@@ -359,8 +363,8 @@ func logPrint(
 			// timeText = ""
 		}
 		var app string
-		if len(App) > 0 {
-			app = fmt.Sprint(" [" + App + "]")
+		if len(App.Load()) > 0 {
+			app = fmt.Sprint(" [" + App.Load() + "]")
 		}
 		s := fmt.Sprintf(
 			formatString,
@@ -373,8 +377,6 @@ func logPrint(
 			printFunc(),
 		)
 		s = strings.TrimSuffix(s, "\n")
-		writerMx.Lock()
-		defer writerMx.Unlock()
 		fmt.Fprintln(writer, s)
 	}
 }

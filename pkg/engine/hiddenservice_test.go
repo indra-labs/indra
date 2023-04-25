@@ -22,7 +22,7 @@ import (
 
 func TestEngine_SendHiddenService(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
-	log2.App = ""
+	log2.App.Store("")
 	var clients []*Engine
 	var e error
 	const nCircuits = 10
