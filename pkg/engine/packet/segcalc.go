@@ -45,16 +45,16 @@ func (s PacketSegments) String() (o string) {
 	return
 }
 
-func NewPacketSegments(payloadLen, segmentSize, overhead, redundancy int) (s PacketSegments) {
+func NewPacketSegments(payloadLen, segmentSize, overhead, parity int) (s PacketSegments) {
 	segSize := segmentSize - overhead
 	nSegs := payloadLen/segSize + 1
 	lastSeg := payloadLen % segSize
-	sectsD := 256 - redundancy
-	sectsP := redundancy
+	sectsD := 256 - parity
+	sectsP := parity
 	withR := nSegs + nSegs*sectsP/sectsD
-	// If any redundancy is specified, if it rounds to zero, it must be
+	// If any parity is specified, if it rounds to zero, it must be
 	// bumped up to 1 in order to work with the rs encoder.
-	if withR == nSegs && redundancy > 0 {
+	if withR == nSegs && parity > 0 {
 		withR++
 	}
 	sects := nSegs / sectsD
@@ -77,9 +77,9 @@ func NewPacketSegments(payloadLen, segmentSize, overhead, redundancy int) (s Pac
 	}
 	if lastSect > 0 {
 		endD := start + lastSect
-		// if there is redundancy the DEnd must be at least one less
+		// if there is parity the DEnd must be at least one less
 		// than PEnd.
-		if withR == endD && redundancy > 0 {
+		if withR == endD && parity > 0 {
 			withR++
 		}
 		s = append(s, PacketSegment{

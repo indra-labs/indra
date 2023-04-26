@@ -323,7 +323,6 @@ func logPrint(
 		writerMx.Lock()
 		defer writerMx.Unlock()
 		if level > logLevel {
-			writerMx.Unlock()
 			return
 		}
 		formatString := "%v%s%s%-6v %s"

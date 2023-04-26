@@ -3,6 +3,7 @@ package nonce
 import (
 	"crypto/rand"
 	"encoding/base32"
+	"sync"
 	
 	"git-indra.lan/indra-labs/indra/pkg/constant"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
@@ -26,6 +27,7 @@ func (id ID) String() string {
 
 var seed sha256.Hash
 var counter uint16
+var idMx sync.Mutex
 
 func reseed() {
 	if c, e := rand.Read(seed[:]); fails(e) && c != IDLen {
@@ -35,6 +37,8 @@ func reseed() {
 
 // NewID returns a random 8 byte nonce to be used as identifiers.
 func NewID() (t ID) {
+	idMx.Lock()
+	defer idMx.Unlock()
 	if counter == 0 {
 		reseed()
 	}

@@ -7,6 +7,7 @@ import (
 	"time"
 	
 	"github.com/VividCortex/ewma"
+	"github.com/cybriq/qu"
 	"github.com/gookit/color"
 	"github.com/libp2p/go-libp2p/p2p/protocol/ping"
 	"go.uber.org/atomic"
@@ -29,11 +30,13 @@ var (
 	fails = log.E.Chk
 )
 
+var blue = color.Blue.Sprint
+
 const (
 	// DefaultStartingParity is set to 64, or 25%
 	DefaultStartingParity = 64
 	// DefaultDispatcherRekey is 16mb to trigger rekey.
-	DefaultDispatcherRekey = 1 << 24
+	DefaultDispatcherRekey = 1 << 20
 )
 
 // TxRecord is the details of a send operation in progress. This is used with
@@ -73,6 +76,11 @@ type RxRecord struct {
 	// receive, used with the total message transmit time to estimate an
 	// adjustment in the parity shards to be used in sending on this connection.
 	Ping time.Duration
+}
+
+type Completion struct {
+	ID   nonce.ID
+	Time time.Time
 }
 
 // Dispatcher is a message splitter/joiner and error correction adjustment system
@@ -124,25 +132,25 @@ type Dispatcher struct {
 	// before/without retransmits is as good as the path can provide.
 	PingDivergence        ewma.MovingAverage
 	Duplex                *transport.DuplexByteChan
-	CompletedInbound      []nonce.ID
+	Done                  []Completion
 	PendingInbound        []*RxRecord
 	PendingOutbound       []*TxRecord
 	Partials              map[nonce.ID]packet.Packets
-	Prv, OldPrv, OlderPrv atomic.Value
+	Prv, OldPrv, OlderPrv *crypto.Prv
+	KeyLock               sync.Mutex
 	lastRekey             atomic.Value
 	ks                    *crypto.KeySet
 	Conn                  *transport.Conn
 	Mutex                 sync.Mutex
+	Ready                 qu.C
 }
 
 const TimeoutPingCount = 10
 
 // NewDispatcher initialises and starts up a Dispatcher with the provided
 // connection, acquired by dialing or Accepting inbound connection from a peer.
-//
-// The doRekey flag should be true for the dialer and false for the Acceptor.
 func NewDispatcher(l *transport.Conn, ctx context.Context,
-	ks *crypto.KeySet, doRekey bool) (d *Dispatcher) {
+	ks *crypto.KeySet) (d *Dispatcher) {
 	
 	d = &Dispatcher{
 		Conn:           l,
@@ -156,6 +164,7 @@ func NewDispatcher(l *transport.Conn, ctx context.Context,
 		TotalSent:      big.NewInt(0),
 		TotalReceived:  big.NewInt(0),
 		Partials:       make(map[nonce.ID]packet.Packets),
+		Ready:          qu.Ts(1),
 	}
 	var e error
 	prk := d.Conn.Conn.LocalPrivateKey()
@@ -164,9 +173,10 @@ func NewDispatcher(l *transport.Conn, ctx context.Context,
 		return
 	}
 	cpr := crypto.PrvKeyFromBytes(rprk)
-	d.Prv.Store(cpr)
-	d.OldPrv.Store(cpr)
-	d.OlderPrv.Store(cpr)
+	d.Prv = cpr
+	d.OldPrv = cpr
+	d.OlderPrv = cpr
+	d.lastRekey.Store(d.TotalReceived.Bytes())
 	fpk := d.Conn.Conn.RemotePublicKey()
 	var rpk slice.Bytes
 	if rpk, e = fpk.Raw(); fails(e) {
@@ -192,26 +202,33 @@ func NewDispatcher(l *transport.Conn, ctx context.Context,
 				d.HandlePing(p)
 			case m := <-l.Transport.Receive():
 				d.RecvFromConn(m)
-			case m := <-d.Duplex.Sender.Receive():
-				d.SendToConn(m)
+			case <-d.Ready.Wait():
+				select {
+				case m := <-d.Duplex.Sender.Receive():
+					d.SendToConn(m)
+				default:
+				}
 			case <-ctx.Done():
 				return
 			}
 		}
 	}()
 	// Start key exchange.
-	if doRekey {
-		d.KeyExchange()
-	}
+	d.KeyExchange()
+	
 	return
 }
 
 func (d *Dispatcher) RunGC() {
+	log.T.Ln(d.Conn.RemoteMultiaddr(), "RunGC")
 	// remove successful receives after all pieces arrived. Successful
 	// transmissions before the timeout will already be cleared from
 	// confirmation by the acknowledgment.
 	var rxr []*RxRecord
+	log.T.Ln(d.Conn.Conn.LocalMultiaddr(), "mutex lock")
 	d.Mutex.Lock()
+	d.Ready.Signal()
+	// log.I.S("dispatcher state", d)
 	for dpi, dp := range d.Partials {
 		// Find the oldest and newest.
 		oldest := time.Now()
@@ -237,22 +254,40 @@ func (d *Dispatcher) RunGC() {
 		if newest.Sub(time.Now()) > time.Duration(d.Ping.Value())*
 			TimeoutPingCount {
 			
+			log.D.Ln("receive timed out with failure")
 			// after 10 pings of time elapse since last received we
 			// consider the transmission a failure, send back the
 			// failed RxRecord and delete the map entry.
-			var tmp []*RxRecord
+			var tmpR []*RxRecord
 			for i := range d.PendingInbound {
 				if d.PendingInbound[i].ID == dp[0].ID {
 					rxr = append(rxr, d.PendingInbound[i])
 				} else {
-					tmp = append(tmp, d.PendingInbound[i])
+					tmpR = append(tmpR, d.PendingInbound[i])
 				}
 			}
 			delete(d.Partials, dpi)
-			d.PendingInbound = tmp
+			tmpD := make([]Completion, 0, len(d.PendingInbound))
+			d.PendingInbound = tmpR
+			for i := range d.Done {
+				if d.PendingInbound[i].ID == d.Done[i].ID {
+					log.D.Ln("removing", dpi, d.Done[i].ID)
+				} else {
+					tmpD = append(tmpD, d.Done[i])
+				}
+			}
+			d.Done = tmpD
 		}
 	}
-	d.Mutex.Unlock()
+	// If we have moved a lot of data, time to rekey.
+	last := big.NewInt(0).SetBytes(d.lastRekey.Load().([]byte))
+	if last.Sub(last, d.TotalReceived).Uint64() > DefaultDispatcherRekey {
+		d.KeyExchange()
+	}
+	func() {
+		log.T.Ln(d.Conn.Conn.LocalMultiaddr(), "mutex unlock")
+		d.Mutex.Unlock()
+	}()
 	// With the lock released we now can dispatch the RxRecords.
 	var e error
 	for i := range rxr {
@@ -264,21 +299,26 @@ func (d *Dispatcher) RunGC() {
 		}
 		d.Duplex.Sender.Send(s.GetAll())
 	}
-	// If we have moved a lot of data, time to rekey.
-	last := big.NewInt(0).SetBytes(d.lastRekey.Load().([]byte))
-	if last.Sub(last, d.TotalReceived).Uint64() > DefaultDispatcherRekey {
-		d.KeyExchange()
-	}
 }
 
 func (d *Dispatcher) HandlePing(p ping.Result) {
+	// log.T.Ln(d.Conn.Conn.LocalMultiaddr(), "mutex lock")
 	d.Mutex.Lock()
 	d.Ping.Add(float64(p.RTT))
+	// func() {
+	// log.T.Ln(d.Conn.Conn.LocalMultiaddr(), "mutex unlock")
 	d.Mutex.Unlock()
+	// }()
 }
 
 func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
-	log.D.Ln(color.Blue.Sprint(d.Conn.LocalMultiaddr()), "received", len(m),
+	// d.Mutex.Lock()
+	// defer func() {
+	// 	log.T.Ln(d.Conn.Conn.LocalMultiaddr(), "mutex unlock")
+	// 	d.Mutex.Unlock()
+	// 	// <-d.Ready // .Signal()
+	// }()
+	log.T.Ln(color.Blue.Sprint(d.Conn.LocalMultiaddr()), "received", len(m),
 		"bytes from conn to dispatcher",
 		// m.ToBytes(),
 	)
@@ -290,39 +330,55 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 	}
 	// This connection should only receive messages with cloaked keys
 	// matching our private key of the connection.
-	d.Mutex.Lock()
-	prv := d.Prv.Load().(*crypto.Prv)
+	// d.Mutex.Lock()
+	// log.D.S(to)
+	{
+		log.T.Ln(d.Conn.Conn.LocalMultiaddr(), "keylock lock")
+		d.KeyLock.Lock()
+	}
+	prv := d.Prv
 	if !crypto.Match(to, crypto.DerivePub(prv).ToBytes()) {
-		prv = d.OldPrv.Load().(*crypto.Prv)
+		log.W.Ln(d.Conn.LocalMultiaddr(), "first", crypto.DerivePub(prv))
+		prv = d.OldPrv
 		if !crypto.Match(to, crypto.DerivePub(prv).ToBytes()) {
-			prv = d.OlderPrv.Load().(*crypto.Prv)
+			log.W.Ln(d.Conn.LocalMultiaddr(), "second")
+			prv = d.OlderPrv
 			if !crypto.Match(to, crypto.DerivePub(prv).ToBytes()) {
-				log.W.Ln(d.Conn.LocalMultiaddr(), "cloaked key did not match")
-				d.Mutex.Unlock()
+				func() {
+					log.T.Ln(d.Conn.Conn.LocalMultiaddr(), "keylock unlock")
+					d.KeyLock.Unlock()
+				}()
+				log.W.Ln(d.Conn.LocalMultiaddr(), "third")
+				// debug.PrintStack()
+				panic("why not!!!!")
 				return
 			}
 		}
 	}
-	d.Mutex.Unlock()
+	func() {
+		log.T.Ln(d.Conn.Conn.LocalMultiaddr(), "keylock unlock")
+		d.KeyLock.Unlock()
+	}()
 	var p *packet.Packet
-	log.D.Ln("decoding packet")
+	log.T.Ln("decoding packet")
 	if p, e = packet.DecodePacket(m, from, prv, iv); fails(e) {
 		return
 	}
-	log.D.Ln("decoded packet")
+	// log.T.Ln("decoded packet", p.ID)
 	var rxr *RxRecord
 	var packets packet.Packets
-	d.Mutex.Lock()
-	// log.D.Ln("inside critical section")
+	// log.T.Ln(d.Conn.Conn.LocalMultiaddr(), "mutex lock")
+	// d.Mutex.Lock()
 	d.TotalReceived = d.TotalReceived.Add(d.TotalReceived,
 		big.NewInt(int64(len(m))))
 	if rxr, packets = d.GetRxRecordAndPartials(p.ID); rxr != nil {
+		log.T.Ln("more message", p.Length, len(p.Data))
 		rxr.Received += uint64(len(m))
 		rxr.Last = time.Now()
-		log.D.Ln("rxr", rxr.Size)
+		log.T.Ln("rxr", rxr.Size)
 		d.Partials[p.ID] = append(d.Partials[p.ID], p)
 	} else {
-		log.D.Ln("Size", p.Length, len(p.Data))
+		log.T.Ln("new message", p.Length, len(p.Data))
 		rxr = &RxRecord{
 			ID:       p.ID,
 			First:    time.Now(),
@@ -335,33 +391,80 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 		packets = packet.Packets{p}
 		d.Partials[p.ID] = packets
 	}
-	d.Mutex.Unlock()
-	// if the message is only one packet we can hand it on to the receiving
-	// channel now:
-	if p.Seq == 0 && int(p.Length) <= len(p.Data) {
-		d.Mutex.Lock()
-		log.D.Ln("forwarding single packet message")
-		d.CompletedInbound = append(d.CompletedInbound, rxr.ID)
-		d.Handle(m, rxr)
-		d.Mutex.Unlock()
-		return
+	for i := range d.Done {
+		if p.ID == d.Done[i].ID {
+			log.T.Ln(d.Conn.Conn.LocalMultiaddr(),
+				"new packet from done message")
+			// Skip, message has been dispatched.
+			segCount := int(p.Length) / d.Conn.GetMTU()
+			mod := int(p.Length) % d.Conn.GetMTU()
+			if mod > 0 {
+				segCount++
+			}
+			if len(d.Partials[p.ID]) >= segCount {
+				log.T.Ln("deleting fully completed message")
+				// wasDone := false
+				tmpD := make([]Completion, 0, len(d.PendingInbound))
+				for i := range d.Done {
+					if p.ID != d.Done[i].ID {
+						tmpD = append(tmpD, d.Done[i])
+						// } else {
+						// 	wasDone = true
+					}
+				}
+				// {
+				// 	log.T.Ln(d.Conn.Conn.LocalMultiaddr(), "mutex unlock")
+				// d.Mutex.Unlock()
+				// }
+				return
+			}
+		}
 	}
-	log.D.Ln("seq", p.Seq, int(p.Length), len(p.Data))
+	// {
+	// 	log.T.Ln(d.Conn.Conn.LocalMultiaddr(), "mutex unlock")
+	// 	d.Mutex.Unlock()
+	// }
+	
+	// // if the message is only one packet we can hand it on to the receiving
+	// // channel now:
+	// if (p.Seq == 0 || p.Seq == 1) &&
+	// 	len(d.Partials[p.ID]) < 1 &&
+	// 	int(p.Length) <= len(p.Data) {
+	//
+	// 	log.T.Ln(d.Conn.Conn.LocalMultiaddr(), "mutex lock")
+	// 	d.Mutex.Lock()
+	// log.T.Ln("forwarding single packet message")
+	// d.Handle(m, rxr)
+	// d.Done = append(d.Done, Completion{rxr.ID, time.Now()})
+	// 	{
+	// 		log.T.Ln(d.Conn.Conn.LocalMultiaddr(), "mutex unlock")
+	// 		d.Mutex.Unlock()
+	// 	}
+	// 	return
+	// }
+	// for i := range d.Done {
+	// 	if d.Done[i].ID == p.ID {
+	// 		log.D.Ln("is done", p.ID)
+	// 		return
+	// 	}
+	// }
+	log.T.Ln(blue(d.Conn.Conn.LocalMultiaddr()),
+		"seq", p.Seq, int(p.Length), len(p.Data), p.ID, d.Done)
 	segCount := int(p.Length) / d.Conn.GetMTU()
 	mod := int(p.Length) % d.Conn.GetMTU()
 	if mod > 0 {
 		segCount++
 	}
-	d.Mutex.Lock()
-	defer d.Mutex.Unlock()
-	if len(d.Partials[p.ID]) >= segCount {
+	// log.T.Ln(d.Conn.Conn.LocalMultiaddr(), "mutex lock")
+	// d.Mutex.Lock()
+	if len(d.Partials[p.ID]) > segCount {
 		// Enough to attempt reconstruction:
 		var msg []byte
 		if d.Partials[p.ID], msg, e = packet.JoinPackets(d.Partials[p.ID]); fails(e) {
 			log.D.Ln("failed to join packets")
 			return
 		}
-		log.D.S("message", msg)
+		// log.T.S("message", msg)
 		d.DataReceived = d.DataReceived.Add(d.DataReceived,
 			big.NewInt(int64(len(msg))))
 		for _, v := range d.Partials[p.ID] {
@@ -374,20 +477,64 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 			)
 		}
 		// Send the message on to the receiving channel.
-		d.CompletedInbound = append(d.CompletedInbound, rxr.ID)
+		// d.Done = append(d.Done,
+		// 	Completion{rxr.ID, time.Now()})
 		d.Handle(msg, rxr)
+		log.T.Ln(d.Conn.LocalMultiaddr(), "partials", len(d.Partials[p.ID]),
+			"parity", d.Parity.Load())
+		pars := segCount * int(d.Parity.Load()) / 256
+		if d.Parity.Load() > 0 && pars < 1 {
+			pars = 1
+		}
+		// // If we have all the pieces and handled it, it can be deleted.
+		// if len(d.Partials[p.ID]) >= segCount+pars {
+		// 	log.D.Ln("deleting completed message")
+		// 	wasDone := false
+		// 	tmpD := make([]Completion, 0, len(d.PendingInbound))
+		// 	for i := range d.Done {
+		// 		if p.ID != d.Done[i].ID {
+		// 			tmpD = append(tmpD, d.Done[i])
+		// 		} else {
+		// 			wasDone = true
+		// 		}
+		// 	}
+		// 	d.Done = tmpD
+		// 	if !wasDone {
+		// 		//
+		// 		return
+		// 	}
+		// 	log.D.Ln("parity", segCount, pars, segCount+pars,
+		// 		len(d.Partials[p.ID]))
+		// 	// Remove the pending record for the complete tx.
+		// 	var tmp []*RxRecord
+		// 	for i := range d.PendingInbound {
+		// 		if d.PendingInbound[i].ID != p.ID {
+		// 			tmp = append(tmp, d.PendingInbound[i])
+		// 		}
+		// 	}
+		// 	d.PendingInbound = tmp
+		// 	delete(d.Partials, p.ID)
+		// 	return
+		// }
+		// } else {
+		// 	// Message tx is complete, but there should be more pieces to come or a
+		// 	// timeout.
+		// 	log.D.Ln("when is the future")
+		// 	d.Done = append(d.Done,
+		// 		Completion{rxr.ID, time.Now()})
 	}
-	log.D.Ln(d.Conn.LocalMultiaddr(), "partials", len(d.Partials[p.ID]),
-		"parity", d.Parity.Load())
-	if len(d.Partials[p.ID]) == segCount*int(256-d.Parity.Load()) {
-		log.D.Ln("this is all pieces, we can delete probably")
-	}
+	// d.Mutex.Unlock()
 }
 
 func (d *Dispatcher) SendAck(rxr *RxRecord) {
 	// log.T.S("sent ack", ack)
 	// Remove Rx from pending.
+	log.T.Ln(d.Conn.Conn.LocalMultiaddr(), "mutex lock")
 	d.Mutex.Lock()
+	defer func() {
+		log.T.Ln(d.Conn.Conn.LocalMultiaddr(), "mutex unlock")
+		d.Mutex.Unlock()
+	}()
 	var tmp []*RxRecord
 	for _, v := range d.PendingInbound {
 		if rxr.ID != v.ID {
@@ -395,20 +542,28 @@ func (d *Dispatcher) SendAck(rxr *RxRecord) {
 			// } else {
 			// 	log.T.Ln("removed pending receive record")
 		} else {
+			{
+				log.T.Ln(d.Conn.Conn.LocalMultiaddr(), "mutex unlock")
+				d.Mutex.Unlock()
+			}
 			log.T.Ln("sending ack")
 			ack := &Acknowledge{rxr}
-			log.D.S("rxr size", rxr.Size)
+			log.T.S("rxr size", rxr.Size)
 			s := splice.New(ack.Len())
 			_ = ack.Encode(s)
+			// d.Ready.Signal()
+			// <-d.Ready
 			d.Duplex.Send(s.GetAll())
+			log.T.Ln(d.Conn.Conn.LocalMultiaddr(), "mutex lock")
+			d.Mutex.Lock()
 		}
 	}
 	d.PendingInbound = tmp
-	d.Mutex.Unlock()
+	// <-d.Ready
 }
 
 func (d *Dispatcher) SendToConn(m slice.Bytes) {
-	log.D.S(d.Conn.LocalMultiaddr().String()+" message dispatching to conn",
+	log.T.S(d.Conn.LocalMultiaddr().String()+" message dispatching to conn",
 		m.ToBytes())
 	// Data received for sending through the Conn.
 	id := nonce.NewID()
@@ -427,7 +582,7 @@ func (d *Dispatcher) SendToConn(m slice.Bytes) {
 		Data:   m,
 	}
 	mtu := d.Conn.GetMTU()
-	log.D.Ln("getMTU")
+	// log.D.Ln("completed", len(d.Done))
 	var packets [][]byte
 	var e error
 	packets, e = packet.SplitToPackets(pp, mtu, d.ks)
@@ -447,17 +602,20 @@ func (d *Dispatcher) SendToConn(m slice.Bytes) {
 		log.T.Ln("sending out", i)
 		sendChan.Send(packets[i])
 		log.T.Ln("sent", i)
+		// d.Ready.Signal()
 	}
 	txr.Last = time.Now()
+	// log.T.Ln(d.Conn.Conn.LocalMultiaddr(), "mutex lock")
 	d.Mutex.Lock()
 	txr.Ping = time.Duration(d.Ping.Value())
+	d.Mutex.Unlock()
 	for _, v := range packets {
 		d.TotalSent = d.TotalSent.Add(d.TotalSent,
 			big.NewInt(int64(len(v))))
 	}
 	d.PendingOutbound = append(d.PendingOutbound, txr)
-	d.Mutex.Unlock()
-	log.D.Ln("message dispatched")
+	log.T.Ln("message dispatched")
+	// d.Ready.Signal()
 }
 
 func (d *Dispatcher) KeyExchange() {
@@ -467,22 +625,47 @@ func (d *Dispatcher) KeyExchange() {
 	if prv, e = crypto.GeneratePrvKey(); fails(e) {
 		return
 	}
-	rpl := InitRekey{NewPubkey: crypto.DerivePub(prv)}
+	rpl := NewKey{NewPubkey: crypto.DerivePub(prv)}
 	reply := splice.New(rpl.Len())
 	if e = rpl.Encode(reply); fails(e) {
 		return
 	}
+	// d.Ready.Signal()
 	d.Duplex.Send(reply.GetAll())
-	d.OlderPrv.Store(d.OldPrv.Load())
-	d.OldPrv.Store(d.Prv.Load())
-	d.Prv.Store(prv)
+	log.D.Ln(d.Conn.LocalMultiaddr(), "initiating key exchange")
+	// time.Sleep(time.Second)
+	log.D.Ln("sending kx")
+	{
+		log.T.Ln(d.Conn.Conn.LocalMultiaddr(), "keylock lock")
+		d.KeyLock.Lock()
+	}
+	log.D.Ln("updating prv keys")
+	d.OlderPrv = d.OldPrv
+	d.OldPrv = d.Prv
+	d.Prv = prv
+	func() {
+		log.T.Ln(d.Conn.Conn.LocalMultiaddr(), "keylock unlock")
+		d.KeyLock.Unlock()
+	}()
 	d.lastRekey.Store(d.TotalReceived.Bytes())
-	log.D.Ln(d.Conn.LocalMultiaddr(), "done key exchange")
+	// d.Ready.Signal()
+	// d.Ready.Q()
 }
 
 // Handle the message. This is expected to be called with the mutex locked,
 // so nothing in it should be trying to lock it.
 func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
+	for i := range d.Done {
+		if d.Done[i].ID == rxr.ID {
+			log.W.Ln("handle called for done message packet", rxr.ID)
+			return
+		}
+	}
+	// d.Done = append(d.Done, Completion{rxr.ID, time.Now()})
+	// unlock := func() {
+	// 	log.T.Ln(d.Conn.Conn.LocalMultiaddr(), "keylock unlock")
+	// 	d.KeyLock.Unlock()
+	// }
 	hash := sha256.Single(m.ToBytes())
 	copy(rxr.Hash[:], hash[:])
 	s := splice.NewFrom(m)
@@ -490,7 +673,7 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 	if c == nil {
 		return
 	}
-	log.D.S("handling message",
+	log.T.S(d.Conn.LocalMultiaddr().String()+" handling message",
 		m.ToBytes(),
 	)
 	magic := c.Magic()
@@ -499,83 +682,94 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 	if e = c.Decode(s); fails(e) {
 		return
 	}
-	// log.D.S("decoded onion", c)
 	switch magic {
-	case InitRekeyMagic:
-		o := c.(*InitRekey)
-		log.D.S(d.Conn.LocalMultiaddr(), "key change initiate", o)
-		d.Conn.SetRemoteKey(o.NewPubkey)
-		var prv *crypto.Prv
-		if prv, e = crypto.GeneratePrvKey(); fails(e) {
+	case NewKeyMagic:
+		// {
+		// 	log.T.Ln(d.Conn.Conn.LocalMultiaddr(), "keylock lock")
+		// 	d.KeyLock.Lock()
+		// }
+		// defer unlock()
+		o := c.(*NewKey)
+		// log.D.Ln(d.Conn.LocalMultiaddr(), "new key")
+		// var prv *crypto.Prv
+		// if prv, e = crypto.GeneratePrvKey(); fails(e) {
+		// 	unlock()
+		// 	return
+		// }
+		// d.OlderPrv = d.OldPrv
+		// d.OldPrv = d.Prv
+		// log.D.Ln("changing connection key")
+		// d.Prv = prv
+		// d.lastRekey.Store(d.TotalReceived.Bytes())
+		if d.Conn.GetRemoteKey().Equals(o.NewPubkey) {
+			log.W.Ln("same key received again")
 			return
 		}
-		// Send a reply:
-		rpl := RekeyReply{NewPubkey: crypto.DerivePub(prv)}
-		reply := splice.New(rpl.Len())
-		if e = rpl.Encode(reply); fails(e) {
-			return
-		}
-		d.Duplex.Send(reply.GetAll())
-		d.OlderPrv.Store(d.OldPrv.Load())
-		d.OldPrv.Store(d.Prv.Load())
-		d.Prv.Store(prv)
-		d.lastRekey.Store(d.TotalReceived.Bytes())
-	case RekeyReplyMagic:
-		o := c.(*RekeyReply)
-		log.D.S("key change reply", o)
 		d.Conn.SetRemoteKey(o.NewPubkey)
+		log.D.Ln(blue(d.Conn.Conn.LocalMultiaddr()), "new remote key received",
+			o.NewPubkey.ToBase32())
+		// d.Done = append(d.Done, Completion{rxr.ID, time.Now()})
+		// d.Ready.Signal()
+		log.D.S("done", d.Done)
 	case AcknowledgeMagic:
-		log.D.Ln("ack: received")
+		log.D.Ln("ack: received", len(d.Done))
 		o := c.(*Acknowledge)
 		r := o.RxRecord
 		// log.D.S("RxRecord", r, r.Size)
 		var tmp []*TxRecord
 		for _, pending := range d.PendingOutbound {
 			if pending.ID == r.ID {
-				log.D.Ln("ack: accounting of successful send")
 				if r.Hash == pending.Hash {
+					log.T.Ln("ack: accounting of successful send")
 					d.DataSent = d.DataSent.Add(d.DataSent,
 						big.NewInt(int64(pending.Size)))
 				}
-				log.D.Ln(d.ErrorEWMA.Value(), pending.Size, r.Size, r.Received,
+				log.T.Ln(d.ErrorEWMA.Value(), pending.Size, r.Size, r.Received,
 					float64(pending.Size)/float64(r.Received))
 				if pending.Size >= d.Conn.MTU-packet.Overhead {
 					d.ErrorEWMA.Add(float64(pending.Size) / float64(r.Received))
 				}
-				log.D.Ln("first", pending.First.UnixNano(), "last",
+				log.T.Ln("first", pending.First.UnixNano(), "last",
 					pending.Last.UnixNano(), r.Ping.Nanoseconds())
 				tot := pending.Last.UnixNano() - pending.First.UnixNano()
 				pn := r.Ping
 				div := float64(pn) / float64(tot)
-				log.D.Ln("div", div, "tot", tot)
+				log.T.Ln("div", div, "tot", tot)
 				d.PingDivergence.Add(div)
 				par := float64(d.Parity.Load())
 				pv := par * d.PingDivergence.Value() *
 					(1 + d.ErrorEWMA.Value())
-				log.D.Ln("pv", par, "*", d.PingDivergence.Value(), "*",
+				log.T.Ln("pv", par, "*", d.PingDivergence.Value(), "*",
 					1+d.ErrorEWMA.Value(), "=", pv)
 				d.Parity.Store(uint32(byte(pv)))
-				log.D.Ln("ack: processed for",
+				log.T.Ln("ack: processed for",
 					color.Green.Sprint(r.ID.String()),
 					r.Ping, tot, div, par,
 					d.PingDivergence.Value(),
 					d.ErrorEWMA.Value(),
 					d.Parity.Load())
+				break
 			} else {
 				tmp = append(tmp, pending)
 			}
 		}
 		// Entry is now deleted and processed.
 		d.PendingOutbound = tmp
+		// d.Ready.Signal()
 	case OnionMagic:
 		o := c.(*Onion)
 		d.Duplex.Receiver.Send(o.Bytes)
 		go func() {
 			// Send out the acknowledgement.
 			d.SendAck(rxr)
-			log.D.Ln("ack: sent")
+			// log.T.Ln("ack: sent")
 		}()
+		// d.Ready.Signal()
+		// <-d.Ready
 	}
+	// d.Ready.Signal()
+	log.D.Ln("ready!")
+	// <-d.Ready
 }
 
 func (d *Dispatcher) GetRxRecordAndPartials(id nonce.ID) (rxr *RxRecord,

@@ -30,7 +30,7 @@ type DuplexByteChan struct {
 }
 
 func NewDuplexByteChan(bufs int) *DuplexByteChan {
-	return &DuplexByteChan{NewByteChan(bufs), NewByteChan(bufs)}
+	return &DuplexByteChan{Receiver: NewByteChan(bufs), Sender: NewByteChan(0)}
 }
 
 // NewSimDuplex creates a DuplexByteChan that behaves like a single ByteChan by

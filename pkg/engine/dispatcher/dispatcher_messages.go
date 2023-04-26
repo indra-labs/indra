@@ -13,28 +13,27 @@ import (
 )
 
 const (
-	InitRekeyMagic   = "kchi"
-	RekeyReplyMagic  = "kchr"
+	NewKeyMagic      = "newK"
 	AcknowledgeMagic = "ackn"
 	OnionMagic       = "onio"
 )
 
-type InitRekey struct {
+type NewKey struct {
 	NewPubkey *crypto.Pub
 }
 
-func InitRekeyGen() coding.Codec           { return &InitRekey{} }
-func init()                                { onions.Register(InitRekeyMagic, InitRekeyGen) }
-func (k *InitRekey) Magic() string         { return InitRekeyMagic }
-func (k *InitRekey) GetOnion() interface{} { return nil }
-func (k *InitRekey) Len() int              { return 4 + crypto.PubKeyLen }
+func InitRekeyGen() coding.Codec        { return &NewKey{} }
+func init()                             { onions.Register(NewKeyMagic, InitRekeyGen) }
+func (k *NewKey) Magic() string         { return NewKeyMagic }
+func (k *NewKey) GetOnion() interface{} { return nil }
+func (k *NewKey) Len() int              { return 4 + crypto.PubKeyLen }
 
-func (k *InitRekey) Encode(s *splice.Splice) (e error) {
-	s.Magic(InitRekeyMagic).Pubkey(k.NewPubkey)
+func (k *NewKey) Encode(s *splice.Splice) (e error) {
+	s.Magic(NewKeyMagic).Pubkey(k.NewPubkey)
 	return
 }
 
-func (k *InitRekey) Decode(s *splice.Splice) (e error) {
+func (k *NewKey) Decode(s *splice.Splice) (e error) {
 	if s.Len() < k.Len() {
 		return fmt.Errorf("message too short, got %d, require %d", k.Len(),
 			s.Len())
@@ -44,36 +43,6 @@ func (k *InitRekey) Decode(s *splice.Splice) (e error) {
 		return fmt.Errorf("invalid public key")
 	}
 	return
-}
-
-type RekeyReply struct {
-	NewPubkey *crypto.Pub
-}
-
-func RekeyReplyGen() coding.Codec           { return &RekeyReply{} }
-func init()                                 { onions.Register(RekeyReplyMagic, RekeyReplyGen) }
-func (r *RekeyReply) Magic() string         { return RekeyReplyMagic }
-func (r *RekeyReply) GetOnion() interface{} { return nil }
-
-func (r *RekeyReply) Encode(s *splice.Splice) (e error) {
-	s.Magic(RekeyReplyMagic).Pubkey(r.NewPubkey)
-	return
-}
-
-func (r *RekeyReply) Decode(s *splice.Splice) (e error) {
-	if s.Len() < r.Len() {
-		return fmt.Errorf("message too short, got %d, require %d", r.Len(),
-			s.Len())
-	}
-	s.ReadPubkey(&r.NewPubkey)
-	if r.NewPubkey == nil {
-		return fmt.Errorf("invalid public key")
-	}
-	return
-}
-
-func (r *RekeyReply) Len() int {
-	return 4 + crypto.PubKeyLen
 }
 
 type Acknowledge struct {

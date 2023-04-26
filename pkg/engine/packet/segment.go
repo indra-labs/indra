@@ -61,6 +61,13 @@ func JoinPackets(packets Packets) (pkts Packets, msg []byte, e error) {
 	}
 	// By sorting the packets we know we can iterate through them and detect
 	// missing and duplicated items by simple rules.
+	var tmp Packets
+	for i := range packets {
+		if packets[i] != nil {
+			tmp = append(tmp, packets[i])
+		}
+	}
+	packets = tmp
 	sort.Sort(packets)
 	lp := len(packets)
 	p := packets[0]
@@ -122,7 +129,7 @@ func JoinPackets(packets Packets) (pkts Packets, msg []byte, e error) {
 		lp--
 	}
 	// fails there is all pieces if there is no redundancy.
-	log.D.Ln("red", red, "lp", lp, "segCount", segCount)
+	log.T.Ln("red", red, "lp", lp, "segCount", segCount)
 	if red == 0 && lp < segCount {
 		e = fmt.Errorf(ErrLostNoRedundant, segCount-lp, segCount)
 		return

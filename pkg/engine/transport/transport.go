@@ -33,7 +33,7 @@ var (
 const (
 	LocalhostZeroIPv4 = "/ip4/127.0.0.1/tcp/0"
 	DefaultMTU        = 1382
-	ConnBufs          = 64
+	ConnBufs          = 8192
 	IndraLibP2PID     = "/indra/relay/" + indra.SemVer
 	IndraServiceName  = "org.indra.relay"
 )
@@ -100,7 +100,7 @@ func (l *Listener) handle(s network.Stream) {
 		if n, e = s.Read(b); fails(e) {
 			return
 		}
-		log.D.S(blue(GetHostOnlyAddress(l.
+		log.T.S(blue(GetHostOnlyAddress(l.
 			Host)) + " read " + fmt.Sprint(n) + " bytes from listener",
 			// b[:n].ToBytes(),
 		)
@@ -249,7 +249,7 @@ func (l *Listener) Dial(multiAddr string) (d *Conn) {
 	go func() {
 		var e error
 		for {
-			log.D.Ln("sender", blue(hostAddress), "ready")
+			log.T.Ln("sender", blue(hostAddress), "ready")
 			select {
 			case <-d.C:
 				return
@@ -264,7 +264,7 @@ func (l *Listener) Dial(multiAddr string) (d *Conn) {
 				if e = d.rw.Flush(); fails(e) {
 					continue
 				}
-				log.D.Ln(blue(hostAddress), "sent", b.Len(), "bytes")
+				log.T.Ln(blue(hostAddress), "sent", b.Len(), "bytes")
 			}
 		}
 	}()
