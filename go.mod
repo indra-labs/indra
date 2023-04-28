@@ -121,6 +121,7 @@ require (
 	github.com/jackc/pgtype v1.12.0 // indirect
 	github.com/jackc/pgx/v4 v4.17.2 // indirect
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
+	github.com/jbarham/primegen v0.0.0-20200302115600-8ce4838491a0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jbenet/go-temp-err-catcher v0.1.0 // indirect
 	github.com/jbenet/goprocess v0.1.4 // indirect
