@@ -10,19 +10,6 @@ type PacketSegment struct {
 	DStart, DEnd, PEnd, SLen, Last int
 }
 
-// This is an expanded printer for debugging
-// func (s PacketSegment) String() (o string) {
-// 	slast := (s.PEnd-s.DEnd)*s.SLen - s.SLen + s.ID
-// 	if s.PEnd-s.DEnd == 0 {
-// 		slast = 0
-// 	}
-// 	o = fmt.Sprintf("%5d (%5d, %5d) %5d [%5d, %5d] %5d (%5d; %5d)",
-// 		s.DStart, s.DEnd-s.DStart, (s.DEnd-s.DStart-1)*s.SLen+s.ID,
-// 		s.DEnd, s.PEnd-s.DEnd, slast, s.PEnd,
-// 		s.SLen, s.ID)
-// 	return
-// }
-
 // String is a printer that produces a Go syntax formatted version of the
 // PacketSegment.
 func (s PacketSegment) String() (o string) {
@@ -38,8 +25,8 @@ type PacketSegments []PacketSegment
 // PacketSegments.
 func (s PacketSegments) String() (o string) {
 	o += "\n\tSegments{"
-	for _, si := range s {
-		o += fmt.Sprintf("\n%s", si.String())
+	for i := range s {
+		o += fmt.Sprintf("\n%s", s[i].String())
 	}
 	o += "\n\t}\n"
 	return

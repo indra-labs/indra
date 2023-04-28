@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 	
-	"github.com/cybriq/qu"
 	"github.com/gookit/color"
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
@@ -17,6 +16,8 @@ import (
 	"github.com/libp2p/go-libp2p/core/peerstore"
 	"github.com/libp2p/go-libp2p/p2p/discovery/routing"
 	"github.com/multiformats/go-multiaddr"
+	
+	"git-indra.lan/indra-labs/indra/pkg/util/qu"
 	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
@@ -249,7 +250,7 @@ func (l *Listener) Dial(multiAddr string) (d *Conn) {
 	go func() {
 		var e error
 		for {
-			log.T.Ln("sender", blue(hostAddress), "ready")
+			log.T.Ln(blue(hostAddress), "sender ready")
 			select {
 			case <-d.C:
 				return

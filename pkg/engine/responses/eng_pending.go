@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 	
-	"github.com/cybriq/qu"
+	"git-indra.lan/indra-labs/indra/pkg/util/qu"
 	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"

@@ -37,7 +37,7 @@ func TestSplitJoin(t *testing.T) {
 	}
 	var splitted [][]byte
 	_, ks, _ := crypto.NewSigner()
-	if splitted, e = SplitToPackets(params, segSize, ks); fails(e) {
+	if _, splitted, e = SplitToPackets(params, segSize, ks); fails(e) {
 		t.Error(e)
 	}
 	var pkts Packets
@@ -96,7 +96,7 @@ func BenchmarkSplit(b *testing.B) {
 		
 		var splitted [][]byte
 		_, ks, _ := crypto.NewSigner()
-		if splitted, e = SplitToPackets(params, segSize, ks); fails(e) {
+		if _, splitted, e = SplitToPackets(params, segSize, ks); fails(e) {
 			b.Error(e)
 		}
 		_ = splitted
@@ -137,7 +137,7 @@ func TestRemovePacket(t *testing.T) {
 
 func TestSplitJoinFEC(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
-	msgSize := 2 << 15
+	msgSize := 1 << 18
 	segSize := 1382
 	var e error
 	var sp, rp, Rp *crypto.Prv
@@ -179,13 +179,16 @@ func TestSplitJoinFEC(t *testing.T) {
 				Length: len(payload),
 				Data:   payload,
 			}
-			if splitted, e = SplitToPackets(ep, segSize, ks); fails(e) {
+			var ds int
+			if ds, splitted, e = SplitToPackets(ep, segSize, ks); fails(e) {
 				t.Error(e)
 				t.FailNow()
 			}
+			log.D.Ln(ds, len(splitted))
 			overhead := ep.GetOverhead()
-			segMap := NewPacketSegments(len(ep.Data), segSize, overhead,
+			segMap := NewPacketSegments(ep.Length, segSize, overhead,
 				ep.Parity)
+			log.D.Ln(len(payload), len(splitted))
 			for segs := range segMap {
 				start := segMap[segs].DStart
 				end := segMap[segs].PEnd

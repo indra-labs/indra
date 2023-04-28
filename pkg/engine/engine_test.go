@@ -7,8 +7,9 @@ import (
 	"testing"
 	"time"
 	
-	"github.com/cybriq/qu"
 	"go.uber.org/atomic"
+	
+	"git-indra.lan/indra-labs/indra/pkg/util/qu"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"

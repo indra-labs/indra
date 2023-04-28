@@ -54,7 +54,7 @@ func Recognise(s *splice.Splice) (cdc coding.Codec) {
 		// 	spew.Sdump(s.GetFrom(s.GetCursor()).ToBytes()),
 		// )
 	} else {
-		log.D.F("recognised magic %s for type %v",
+		log.T.F("recognised magic %s for type %v",
 			color.Red.Sprint(magic),
 			color.Green.Sprint(reflect.TypeOf(cdc)))
 	}

@@ -28,7 +28,7 @@ const (
 //
 // The last packet that falls short of the segmentSize is padded random bytes.
 func SplitToPackets(pp *PacketParams, segSize int,
-	ks *crypto.KeySet) (packets [][]byte, e error) {
+	ks *crypto.KeySet) (dataShards int, packets [][]byte, e error) {
 	
 	if pp.Data == nil || len(pp.Data) == 0 {
 		e = fmt.Errorf(ErrEmptyBytes)
@@ -39,6 +39,7 @@ func SplitToPackets(pp *PacketParams, segSize int,
 	ss := segSize - overhead
 	segments := slice.Segment(pp.Data, ss)
 	segMap := NewPacketSegments(pp.Length, segSize, pp.GetOverhead(), pp.Parity)
+	dataShards = segMap[len(segMap)-1].DEnd
 	var p [][]byte
 	p, e = segMap.AddParity(segments)
 	for i := range p {
@@ -182,7 +183,6 @@ func JoinPackets(packets Packets) (pkts Packets, msg []byte, e error) {
 		// if we have all the data segments we can just assemble and
 		// return.
 		if lhD == dLen {
-			log.D.Ln("wut", sm.DStart, sm.DEnd)
 			for i := sm.DStart; i < sm.DEnd; i++ {
 				segments = append(segments, pkts[i].Data)
 			}

@@ -1,7 +1,7 @@
 package onions
 
 import (
-	"github.com/cybriq/qu"
+	"git-indra.lan/indra-labs/indra/pkg/util/qu"
 	
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/splice"
