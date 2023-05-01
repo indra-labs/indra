@@ -12,6 +12,7 @@ import (
 	"go.uber.org/atomic"
 	
 	"git-indra.lan/indra-labs/indra/pkg/util/qu"
+	"git-indra.lan/indra-labs/indra/pkg/util/splice"
 	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
@@ -21,7 +22,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/engine/packet"
 	"git-indra.lan/indra-labs/indra/pkg/engine/transport"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )

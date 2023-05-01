@@ -1,7 +1,7 @@
 package coding
 
 import (
-	"git-indra.lan/indra-labs/indra/pkg/splice"
+	"git-indra.lan/indra-labs/indra/pkg/util/splice"
 )
 
 // Codec is a unit of data that can be read and written from a binary form. All

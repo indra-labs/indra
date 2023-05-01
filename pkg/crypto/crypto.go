@@ -13,9 +13,9 @@ import (
 	crypto_pb "github.com/libp2p/go-libp2p/core/crypto/pb"
 	
 	"git-indra.lan/indra-labs/indra"
-	"git-indra.lan/indra-labs/indra/pkg/b32/based32"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"git-indra.lan/indra-labs/indra/pkg/util/b32/based32"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 

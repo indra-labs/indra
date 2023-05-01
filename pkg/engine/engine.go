@@ -4,6 +4,7 @@ import (
 	"go.uber.org/atomic"
 	
 	"git-indra.lan/indra-labs/indra/pkg/util/qu"
+	"git-indra.lan/indra-labs/indra/pkg/util/splice"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -13,7 +14,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/engine/tpt"
-	"git-indra.lan/indra-labs/indra/pkg/splice"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 

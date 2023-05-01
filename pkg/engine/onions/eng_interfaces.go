@@ -2,13 +2,13 @@ package onions
 
 import (
 	"git-indra.lan/indra-labs/indra/pkg/util/qu"
+	"git-indra.lan/indra-labs/indra/pkg/util/splice"
 	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/responses"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
-	"git-indra.lan/indra-labs/indra/pkg/splice"
 )
 
 // Onion are messages that can be layered over each other and have
