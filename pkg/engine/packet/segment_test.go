@@ -24,7 +24,7 @@ func TestSplitJoin(t *testing.T) {
 	}
 	var sp, rp *crypto.Prv
 	var rP *crypto.Pub
-	if sp, rp, _, rP, e = tests.GenerateTestKeyPairs(); fails(e) {
+	if sp, rp, _, rP, e = crypto.GenerateTestKeyPairs(); fails(e) {
 		t.FailNow()
 	}
 	addr := rP
@@ -82,7 +82,7 @@ func BenchmarkSplit(b *testing.B) {
 	}
 	var sp *crypto.Prv
 	var rP *crypto.Pub
-	if sp, _, _, rP, e = tests.GenerateTestKeyPairs(); fails(e) {
+	if sp, _, _, rP, e = crypto.GenerateTestKeyPairs(); fails(e) {
 		b.FailNow()
 	}
 	addr := rP
@@ -142,7 +142,7 @@ func TestSplitJoinFEC(t *testing.T) {
 	var e error
 	var sp, rp, Rp *crypto.Prv
 	var sP, rP, RP *crypto.Pub
-	if sp, rp, sP, rP, e = tests.GenerateTestKeyPairs(); fails(e) {
+	if sp, rp, sP, rP, e = crypto.GenerateTestKeyPairs(); fails(e) {
 		t.FailNow()
 	}
 	_, _, _, _ = sP, Rp, RP, rp

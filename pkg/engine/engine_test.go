@@ -517,7 +517,7 @@ out:
 }
 
 func TestEngine_Route(t *testing.T) {
-	log2.SetLogLevel(log2.Info)
+	log2.SetLogLevel(log2.Debug)
 	log2.App.Store("")
 	runtime.GOMAXPROCS(1)
 	var clients []*Engine
@@ -543,7 +543,7 @@ func TestEngine_Route(t *testing.T) {
 			select {
 			case <-time.After(time.Second * 4):
 				quit.Q()
-				t.Error("MakeHiddenService test failed")
+				t.Error("Route test failed")
 			case <-quit:
 				for i := 0; i < int(counter.Load()); i++ {
 					wg.Done()
