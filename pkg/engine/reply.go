@@ -11,7 +11,7 @@ func MakeReplyHeader(ng *Engine) (returnHeader *onions.ReplyHeader) {
 	rvKeys := ng.KeySet.Next3()
 	hops := []byte{3, 4, 5}
 	s := make(sessions.Sessions, len(hops))
-	ng.SelectHops(hops, s, "make message reply header")
+	ng.Manager.SelectHops(hops, s, "make message reply header")
 	rt := &onions.Routing{
 		Sessions: [3]*sessions.Data{s[0], s[1], s[2]},
 		Keys:     crypto.Privs{rvKeys[0], rvKeys[1], rvKeys[2]},

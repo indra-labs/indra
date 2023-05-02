@@ -17,16 +17,19 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
+// Engine processes onion messages, forwarding the relevant data to other relays
+// and locally accessible servers as indicated by the API function and message
+// parameters.
+//
+//
 type Engine struct {
-	Responses *responses.Pending
-	*sess.Manager
-	h *onions.Hidden
-	*crypto.KeySet
-	Load          atomic.Uint32
-	TimeoutSignal qu.C
-	Pause         qu.C
-	ShuttingDown  atomic.Bool
-	qu.C
+	Responses    *responses.Pending
+	Manager      *sess.Manager
+	h            *onions.Hidden
+	KeySet       *crypto.KeySet
+	Load         atomic.Uint32
+	Pause, C     qu.C
+	ShuttingDown atomic.Bool
 }
 
 type Params struct {
@@ -46,19 +49,19 @@ func NewEngine(p Params) (c *Engine, e error) {
 		return
 	}
 	c = &Engine{
-		Responses:     &responses.Pending{},
-		KeySet:        ks,
-		Manager:       sess.NewSessionManager(),
-		h:             onions.NewHiddenrouting(),
-		TimeoutSignal: qu.T(),
-		Pause:         qu.T(),
-		C:             qu.T(),
+		Responses: &responses.Pending{},
+		KeySet:    ks,
+		Manager:   sess.NewSessionManager(),
+		h:         onions.NewHiddenrouting(),
+		Pause:     qu.T(),
+		C:         qu.T(),
 	}
-	c.AddNodes(append([]*node.Node{p.Node}, p.Nodes...)...)
+	c.Manager.AddNodes(append([]*node.Node{p.Node}, p.Nodes...)...)
 	// AddIntro a return session for receiving responses, ideally more of these
 	// will be generated during operation and rotated out over time.
 	for i := 0; i < p.NReturnSessions; i++ {
-		c.AddSession(sessions.NewSessionData(nonce.NewID(), p.Node, 0, nil, nil, 5))
+		c.Manager.AddSession(sessions.NewSessionData(nonce.NewID(), p.Node, 0,
+			nil, nil, 5))
 	}
 	return
 }
@@ -91,7 +94,8 @@ func (ng *Engine) Shutdown() {
 }
 
 func (ng *Engine) HandleMessage(s *splice.Splice, pr onions.Onion) {
-	log.D.F("%s handling received message", ng.GetLocalNodeAddressString())
+	log.D.F("%s handling received message",
+		ng.Manager.GetLocalNodeAddressString())
 	s.SetCursor(0)
 	s.Segments = s.Segments[:0]
 	on := onions.Recognise(s)
@@ -115,7 +119,7 @@ func (ng *Engine) HandleMessage(s *splice.Splice, pr onions.Onion) {
 
 func (ng *Engine) Handler() (out bool) {
 	log.T.C(func() string {
-		return ng.GetLocalNodeAddressString() + " awaiting message"
+		return ng.Manager.GetLocalNodeAddressString() + " awaiting message"
 	})
 	var prev onions.Onion
 	select {
@@ -123,13 +127,13 @@ func (ng *Engine) Handler() (out bool) {
 		ng.Shutdown()
 		out = true
 		break
-	case b := <-ng.ReceiveToLocalNode(0):
+	case b := <-ng.Manager.ReceiveToLocalNode(0):
 		s := splice.Load(b, slice.NewCursor())
 		ng.HandleMessage(s, prev)
-	case p := <-ng.GetLocalNode().Chan.Receive():
+	case p := <-ng.Manager.GetLocalNode().Chan.Receive():
 		log.D.F("incoming payment for %s: %v", p.ID, p.Amount)
 		topUp := false
-		ng.IterateSessions(func(s *sessions.Data) bool {
+		ng.Manager.IterateSessions(func(s *sessions.Data) bool {
 			if s.Preimage == p.Preimage {
 				s.IncSats(p.Amount, false, "top-up")
 				topUp = true
@@ -139,7 +143,7 @@ func (ng *Engine) Handler() (out bool) {
 			return false
 		})
 		if !topUp {
-			ng.AddPendingPayment(p)
+			ng.Manager.AddPendingPayment(p)
 			log.T.F("awaiting session keys for preimage %s session ID %s",
 				p.Preimage, p.ID)
 		}
@@ -147,21 +151,21 @@ func (ng *Engine) Handler() (out bool) {
 		// a timeout on the lnd node returning the success to trigger this.
 		p.ConfirmChan <- true
 	case <-ng.Pause:
-		log.D.Ln("pausing", ng.GetLocalNodeAddressString())
+		log.D.Ln("pausing", ng.Manager.GetLocalNodeAddressString())
 		// For testing purposes we need to halt this Handler and discard channel
 		// messages.
 	out:
 		for {
 			select {
-			case <-ng.GetLocalNode().Chan.Receive():
+			case <-ng.Manager.GetLocalNode().Chan.Receive():
 				log.D.Ln("discarding payments while in pause")
-			case <-ng.ReceiveToLocalNode(0):
+			case <-ng.Manager.ReceiveToLocalNode(0):
 				log.D.Ln("discarding messages while in pause")
 			case <-ng.C.Wait():
 				break out
 			case <-ng.Pause:
 				// This will then resume to the top level select.
-				log.D.Ln("unpausing", ng.GetLocalNodeAddressString())
+				log.D.Ln("unpausing", ng.Manager.GetLocalNodeAddressString())
 				break out
 			}
 			

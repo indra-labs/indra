@@ -46,8 +46,8 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 		); fails(e) {
 			return
 		}
-		cl[i].SetLocalNodeAddress(nodes[i].AddrPort)
-		cl[i].SetLocalNode(nodes[i])
+		cl[i].Manager.SetLocalNodeAddress(nodes[i].AddrPort)
+		cl[i].Manager.SetLocalNode(nodes[i])
 		if inclSessions {
 			// Create a session for all but the first.
 			if i > 0 {
@@ -55,11 +55,11 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 					1<<16, nil, nil, byte((i-1)/nCircuits))
 				// AddIntro session to node, so it will be able to relay if it
 				// gets a message with the key.
-				cl[i].AddSession(ss[i-1])
+				cl[i].Manager.AddSession(ss[i-1])
 				// we need a copy for the node so the balance adjustments don't
 				// double up.
 				s := *ss[i-1]
-				cl[0].AddSession(&s)
+				cl[0].Manager.AddSession(&s)
 			}
 		}
 	}
@@ -69,7 +69,7 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 			if i == j {
 				continue
 			}
-			cl[i].AddNodes(nodes[j])
+			cl[i].Manager.AddNodes(nodes[j])
 		}
 	}
 	return

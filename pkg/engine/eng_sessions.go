@@ -82,7 +82,8 @@ func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 	// todo: handle payment failures!
 	o := onions.MakeSession(conf, s, returnSession, nodes[:], ng.KeySet)
 	res := PostAcctOnion(ng.Manager, o)
-	ng.SendWithOneHook(nodes[0].AddrPort, res, func(id nonce.ID, ifc interface{},
+	ng.Manager.SendWithOneHook(nodes[0].AddrPort, res, func(id nonce.ID,
+		ifc interface{},
 		b slice.Bytes) (e error) {
 		ng.Manager.Lock()
 		defer ng.Manager.Unlock()
@@ -96,7 +97,7 @@ func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 			ss[i] = sessions.NewSessionData(s[i].ID, nodes[i], amount,
 				s[i].Header, s[i].Payload, byte(i))
 			ng.Manager.Add(ss[i])
-			ng.Sessions = append(ng.Sessions, ss[i])
+			ng.Manager.Sessions = append(ng.Manager.Sessions, ss[i])
 			ng.Manager.PendingPayments.Delete(s[i].PreimageHash())
 		}
 		fn()

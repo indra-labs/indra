@@ -34,12 +34,12 @@ func TestClient_SendExit(t *testing.T) {
 		t.FailNow()
 	}
 	client := clients[0]
-	log.D.Ln("client", client.GetLocalNodeAddressString())
+	log.D.Ln("client", client.Manager.GetLocalNodeAddressString())
 	// set up forwarding port service
 	const port = 3455
 	sim := transport.NewByteChan(0)
 	for i := range clients {
-		e = clients[i].AddServiceToLocalNode(&services.Service{
+		e = clients[i].Manager.AddServiceToLocalNode(&services.Service{
 			Port:      port,
 			Transport: sim,
 			RelayRate: 58000,
@@ -65,7 +65,7 @@ func TestClient_SendExit(t *testing.T) {
 		t.Error("Exit test failed")
 	}()
 out:
-	for i := 3; i < len(clients[0].Sessions)-1; i++ {
+	for i := 3; i < len(clients[0].Manager.Sessions)-1; i++ {
 		wg.Add(1)
 		var msg slice.Bytes
 		if msg, _, e = tests.GenMessage(64, "request"); fails(e) {
@@ -78,7 +78,7 @@ out:
 			t.Error(e)
 			t.FailNow()
 		}
-		bob := clients[0].Sessions[i]
+		bob := clients[0].Manager.Sessions[i]
 		returnHops := client.Manager.GetSessionsAtHop(5)
 		var alice *sessions.Data
 		if len(returnHops) > 1 {
@@ -101,9 +101,9 @@ out:
 			wg.Done()
 			return
 		})
-		bb := <-clients[3].ReceiveToLocalNode(port)
+		bb := <-clients[3].Manager.ReceiveToLocalNode(port)
 		log.T.S(bb.ToBytes())
-		if e = clients[3].SendFromLocalNode(port, respMsg); fails(e) {
+		if e = clients[3].Manager.SendFromLocalNode(port, respMsg); fails(e) {
 			t.Error("fail send")
 		}
 		log.T.Ln("response sent")
@@ -132,7 +132,7 @@ func TestClient_SendGetBalance(t *testing.T) {
 		t.FailNow()
 	}
 	client := clients[0]
-	log.D.Ln("client", client.GetLocalNodeAddressString())
+	log.D.Ln("client", client.Manager.GetLocalNodeAddressString())
 	// Start up the clients.
 	for _, v := range clients {
 		go v.Start()
@@ -149,7 +149,7 @@ func TestClient_SendGetBalance(t *testing.T) {
 		t.Error("SendGetBalance test failed")
 	}()
 out:
-	for i := 1; i < len(clients[0].Sessions)-1; i++ {
+	for i := 1; i < len(clients[0].Manager.Sessions)-1; i++ {
 		wg.Add(1)
 		returnHops := client.Manager.GetSessionsAtHop(5)
 		var returner *sessions.Data
@@ -160,7 +160,7 @@ out:
 			})
 		}
 		returner = returnHops[0]
-		clients[0].SendGetBalance(returner, clients[0].Sessions[i],
+		clients[0].SendGetBalance(returner, clients[0].Manager.Sessions[i],
 			func(cf nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
 				log.I.Ln("success")
 				wg.Done()
@@ -267,7 +267,7 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 	// Now query everyone for the intro.
 	idPub := crypto.DerivePub(idPrv)
 	peers := clients[1:]
-	log.D.Ln("client address", client.GetLocalNodeAddressString())
+	log.D.Ln("client address", client.Manager.GetLocalNodeAddressString())
 	for i := range peers {
 		wg.Add(1)
 		counter.Inc()
@@ -308,7 +308,7 @@ func TestEngine_Message(t *testing.T) {
 		t.FailNow()
 	}
 	client := clients[0]
-	log.W.Ln("client", client.GetLocalNodeAddressString())
+	log.W.Ln("client", client.Manager.GetLocalNodeAddressString())
 	// Start up the clients.
 	for _, v := range clients {
 		go v.Start()
@@ -377,7 +377,7 @@ func TestEngine_Message(t *testing.T) {
 	const localPort = 25234
 	log.D.Ln("getting sessions for introducer...")
 	for i := range clients {
-		if introducer.Node.ID == clients[i].GetLocalNode().ID {
+		if introducer.Node.ID == clients[i].Manager.GetLocalNode().ID {
 			for j := 0; j < nCircuits; j++ {
 				wg.Add(1)
 				counter.Inc()
@@ -491,11 +491,11 @@ func TestClient_SendPing(t *testing.T) {
 		t.Error("SendPing test failed")
 	}()
 out:
-	for i := 3; i < len(clients[0].Sessions)-1; i++ {
+	for i := 3; i < len(clients[0].Manager.Sessions)-1; i++ {
 		wg.Add(1)
 		var c sessions.Circuit
-		sess := clients[0].Sessions[i]
-		c[sess.Hop] = clients[0].Sessions[i]
+		sess := clients[0].Manager.Sessions[i]
+		c[sess.Hop] = clients[0].Manager.Sessions[i]
 		clients[0].SendPing(c,
 			func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
 				log.I.Ln("success")
@@ -530,7 +530,7 @@ func TestEngine_Route(t *testing.T) {
 		t.FailNow()
 	}
 	client := clients[0]
-	log.W.Ln("client", client.GetLocalNodeAddressString())
+	log.W.Ln("client", client.Manager.GetLocalNodeAddressString())
 	// Start up the clients.
 	for _, v := range clients {
 		go v.Start()
@@ -599,7 +599,7 @@ func TestEngine_Route(t *testing.T) {
 	const localPort = 25234
 	log.D.Ln("getting sessions for introducer...")
 	for i := range clients {
-		if introducer.Node.ID == clients[i].GetLocalNode().ID {
+		if introducer.Node.ID == clients[i].Manager.GetLocalNode().ID {
 			for j := 0; j < nCircuits; j++ {
 				wg.Add(1)
 				counter.Inc()
@@ -693,8 +693,8 @@ func TestClient_SendSessionKeys(t *testing.T) {
 			counter.Dec()
 		}
 		wg.Wait()
-		for j := range clients[0].SessionCache {
-			log.D.F("%d %s %v", i, j, clients[0].SessionCache[j])
+		for j := range clients[0].Manager.SessionCache {
+			log.D.F("%d %s %v", i, j, clients[0].Manager.SessionCache[j])
 		}
 		quit.Q()
 	}
