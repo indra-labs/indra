@@ -343,7 +343,8 @@ func Discover(ctx context.Context, h host.Host, dht *dht.IpfsDHT,
 						
 						continue
 					}
-					log.D.Ln("Connected to peer", blue(p.Addrs[0]))
+					log.D.Ln(h.Addrs()[0].String(), "Connected to peer",
+						blue(p.Addrs[0]))
 				}
 			}
 		}

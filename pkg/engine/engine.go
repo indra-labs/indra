@@ -34,7 +34,7 @@ type Engine struct {
 
 type Params struct {
 	tpt.Transport
-	IDPrv           *crypto.Prv
+	ID              *crypto.Keys
 	Node            *node.Node
 	Nodes           []*node.Node
 	NReturnSessions int
@@ -42,8 +42,7 @@ type Params struct {
 
 func NewEngine(p Params) (c *Engine, e error) {
 	p.Node.Transport = p.Transport
-	p.Node.Identity.Prv = p.IDPrv
-	p.Node.Identity.Pub = crypto.DerivePub(p.IDPrv)
+	p.Node.Identity = p.ID
 	var ks *crypto.KeySet
 	if _, ks, e = crypto.NewSigner(); fails(e) {
 		return

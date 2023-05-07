@@ -31,15 +31,15 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 		tpts[i] = transport.NewSimDuplex(nTotal, ctx)
 	}
 	for i := range nodes {
-		var idPrv *crypto.Prv
-		if idPrv, e = crypto.GeneratePrvKey(); fails(e) {
+		var id *crypto.Keys
+		if id, e = crypto.GenerateKeys(); fails(e) {
 			return
 		}
 		addr := slice.GenerateRandomAddrPortIPv4()
-		nodes[i], _ = node.NewNode(addr, idPrv, tpts[i], 50000)
+		nodes[i], _ = node.NewNode(addr, id, tpts[i], 50000)
 		if cl[i], e = NewEngine(Params{
 			tpts[i],
-			idPrv,
+			id,
 			nodes[i],
 			nil,
 			nReturnSessions},

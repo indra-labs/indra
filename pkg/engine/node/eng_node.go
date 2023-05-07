@@ -42,14 +42,14 @@ const (
 // NewNode creates a new Node. The Node for a client's self should use true in
 // the local parameter to not initialise the peer state ring buffers as it won't
 // use them.
-func NewNode(addr *netip.AddrPort, idPrv *crypto.Prv, tpt tpt.Transport,
+func NewNode(addr *netip.AddrPort, keys *crypto.Keys, tpt tpt.Transport,
 	relayRate int) (n *Node, id nonce.ID) {
 	
 	id = nonce.NewID()
 	n = &Node{
 		ID:        id,
 		AddrPort:  addr,
-		Identity:  crypto.MakeKeys(idPrv),
+		Identity:  keys,
 		RelayRate: relayRate,
 		Chan:      make(payments.Chan, PaymentChanBuffers),
 		Transport: tpt,

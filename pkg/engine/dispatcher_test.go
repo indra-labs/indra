@@ -59,7 +59,7 @@ func TestEngine_Dispatcher(t *testing.T) {
 		}
 		log.D.Ln(transport.GetHostOnlyAddress(l.Host))
 		var nod *node.Node
-		if nod, _ = node.NewNode(&addr, k.Prv, nil, 50000); fails(e) {
+		if nod, _ = node.NewNode(&addr, k, nil, 50000); fails(e) {
 			t.FailNow()
 		}
 		log.D.S("node", nod)
