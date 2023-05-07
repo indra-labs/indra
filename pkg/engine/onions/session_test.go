@@ -31,11 +31,11 @@ func TestOnionSkins_Session(t *testing.T) {
 		t.Error("did not unwrap expected type")
 		t.FailNow()
 	}
-	if !ci.Header.Key.Equals(&sess.Header.Key) {
+	if !ci.Header.Prv.Equals(sess.Header.Prv) {
 		t.Error("header key did not unwrap correctly")
 		t.FailNow()
 	}
-	if !ci.Payload.Key.Equals(&sess.Payload.Key) {
+	if !ci.Payload.Prv.Equals(sess.Payload.Prv) {
 		t.Error("payload key did not unwrap correctly")
 		t.FailNow()
 	}

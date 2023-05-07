@@ -108,6 +108,7 @@ func (ng *Engine) HandleMessage(s *splice.Splice, pr onions.Onion) {
 		}
 		m := on.GetOnion()
 		if m == nil {
+			log.D.Ln("did not get onion")
 			return
 		}
 		if fails(m.(onions.Onion).Handle(s, pr, ng)) {
@@ -136,7 +137,7 @@ func (ng *Engine) Handler() (out bool) {
 			if s.Preimage == p.Preimage {
 				s.IncSats(p.Amount, false, "top-up")
 				topUp = true
-				log.T.F("topping up %x with %v", s.ID, p.Amount)
+				log.T.F("topping up %x with %v", s.Header.Bytes, p.Amount)
 				return true
 			}
 			return false

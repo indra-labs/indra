@@ -151,6 +151,6 @@ func (x *Route) Account(res *sess.Data, sm *sess.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	copy(res.ID[:], x.ID[:])
-	res.Billable = append(res.Billable, s.ID)
+	res.Billable = append(res.Billable, s.Header.Bytes)
 	return
 }

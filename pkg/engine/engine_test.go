@@ -145,6 +145,7 @@ func TestClient_SendGetBalance(t *testing.T) {
 		case <-quit:
 			return
 		}
+		cancel()
 		quit.Q()
 		t.Error("SendGetBalance test failed")
 	}()

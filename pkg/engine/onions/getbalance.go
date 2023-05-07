@@ -107,7 +107,7 @@ func (x *GetBalance) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 		if sess != nil {
 			in := sess.Node.RelayRate * s.Len() / 2
 			out := sess.Node.RelayRate * len(rb) / 2
-			ng.Mgr().DecSession(sess.ID, in+out, false, "getbalance")
+			ng.Mgr().DecSession(sess.Header.Bytes, in+out, false, "getbalance")
 		}
 	}
 	ng.Mgr().IterateSessions(func(sd *sessions.Data) bool {
@@ -132,7 +132,7 @@ func (x *GetBalance) Account(res *sess.Data, sm *sess.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	res.ID = s.ID
-	res.Billable = append(res.Billable, s.ID)
+	res.Billable = append(res.Billable, s.Header.Bytes)
 	skip = true
 	return
 }

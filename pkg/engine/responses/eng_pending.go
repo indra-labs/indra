@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 	
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/util/qu"
 	
 	"git-indra.lan/indra-labs/indra"
@@ -24,8 +25,8 @@ type Response struct {
 	ID       nonce.ID
 	SentSize int
 	Port     uint16
-	Billable []nonce.ID
-	Return   nonce.ID
+	Billable []crypto.PubBytes
+	Return   crypto.PubBytes
 	PostAcct []func()
 	sessions.Sessions
 	Callback Callback
@@ -53,8 +54,8 @@ type ResponseParams struct {
 	ID       nonce.ID
 	SentSize int
 	S        sessions.Sessions
-	Billable []nonce.ID
-	Ret      nonce.ID
+	Billable []crypto.PubBytes
+	Ret      crypto.PubBytes
 	Port     uint16
 	Callback Callback
 	PostAcct []func()

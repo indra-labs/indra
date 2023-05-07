@@ -126,8 +126,8 @@ func (x *Crypt) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data, last
 	res.Sessions = append(res.Sessions, sd)
 	// The last hop needs no accounting as it's us!
 	if last {
-		res.Ret = sd.ID
-		res.Billable = append(res.Billable, sd.ID)
+		res.Ret = sd.Header.Bytes
+		res.Billable = append(res.Billable, sd.Header.Bytes)
 	}
 	return
 }

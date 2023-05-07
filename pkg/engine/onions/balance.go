@@ -67,11 +67,11 @@ func (x *Balance) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 				in := session.Node.RelayRate * pending.SentSize
 				switch {
 				case i < 2:
-					ng.Mgr().DecSession(session.ID, in, true, "reverse")
+					ng.Mgr().DecSession(session.Header.Bytes, in, true, "reverse")
 				case i == 2:
-					ng.Mgr().DecSession(session.ID, (in+out)/2, true, "getbalance")
+					ng.Mgr().DecSession(session.Header.Bytes, (in+out)/2, true, "getbalance")
 				case i > 2:
-					ng.Mgr().DecSession(session.ID, out, true, "reverse")
+					ng.Mgr().DecSession(session.Header.Bytes, out, true, "reverse")
 				}
 			}
 		}

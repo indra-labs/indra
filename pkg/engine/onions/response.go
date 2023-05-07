@@ -82,7 +82,7 @@ func (x *Response) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 					}
 					se.Node.Unlock()
 				}
-				ng.Mgr().DecSession(se.ID, relayRate*dataSize, true, typ)
+				ng.Mgr().DecSession(se.Header.Bytes, relayRate*dataSize, true, typ)
 			}
 		}
 		ng.Pending().ProcessAndDelete(x.ID, nil, x.Bytes)

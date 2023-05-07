@@ -81,7 +81,7 @@ func (x *HiddenService) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 func (x *HiddenService) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	res.ID = x.Intro.ID
-	res.Billable = append(res.Billable, s.ID)
+	res.Billable = append(res.Billable, s.Header.Bytes)
 	skip = true
 	return
 }

@@ -86,7 +86,7 @@ func (sm *Manager) ClearSessions() {
 	sm.Sessions = sm.Sessions[:1]
 }
 
-func (sm *Manager) IncSession(id nonce.ID, msats lnwire.MilliSatoshi,
+func (sm *Manager) IncSession(id crypto.PubBytes, msats lnwire.MilliSatoshi,
 	sender bool, typ string) {
 	
 	sess := sm.FindSession(id)
@@ -97,8 +97,8 @@ func (sm *Manager) IncSession(id nonce.ID, msats lnwire.MilliSatoshi,
 	}
 }
 
-func (sm *Manager) DecSession(id nonce.ID, msats int,
-	sender bool, typ string) bool {
+func (sm *Manager) DecSession(id crypto.PubBytes, msats int, sender bool,
+	typ string) bool {
 	
 	sess := sm.FindSession(id)
 	if sess != nil {
@@ -124,8 +124,8 @@ func (sm *Manager) AddSession(s *sessions.Data) {
 	defer sm.Unlock()
 	// check for dupes
 	for i := range sm.Sessions {
-		if sm.Sessions[i].ID == s.ID {
-			log.D.F("refusing to add duplicate session ID %x", s.ID)
+		if sm.Sessions[i].Header.Bytes == s.Header.Bytes {
+			log.D.F("refusing to add duplicate session ID %x", s.Header.Bytes)
 			return
 		}
 	}
@@ -136,11 +136,11 @@ func (sm *Manager) AddSession(s *sessions.Data) {
 		sm.SessionCache = sm.SessionCache.Add(s)
 	}
 }
-func (sm *Manager) FindSession(id nonce.ID) *sessions.Data {
+func (sm *Manager) FindSession(id crypto.PubBytes) *sessions.Data {
 	sm.Lock()
 	defer sm.Unlock()
 	for i := range sm.Sessions {
-		if sm.Sessions[i].ID == id {
+		if sm.Sessions[i].Header.Bytes == id {
 			return sm.Sessions[i]
 		}
 	}
@@ -187,11 +187,11 @@ func (sm *Manager) GetSessionsAtHop(hop byte) (s sessions.Sessions) {
 	}
 	return
 }
-func (sm *Manager) DeleteSession(id nonce.ID) {
+func (sm *Manager) DeleteSession(id crypto.PubBytes) {
 	sm.Lock()
 	defer sm.Unlock()
 	for i := range sm.Sessions {
-		if sm.Sessions[i].ID == id {
+		if sm.Sessions[i].Header.Bytes == id {
 			// ProcessAndDelete from Data cache.
 			sm.SessionCache[sm.Sessions[i].Node.ID][sm.Sessions[i].Hop] = nil
 			// ProcessAndDelete from 

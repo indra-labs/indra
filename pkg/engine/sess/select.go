@@ -60,7 +60,7 @@ out:
 			if alreadyHave[j] == nil {
 				continue
 			}
-			if sm.Sessions[i].ID == alreadyHave[j].ID {
+			if sm.Sessions[i].Header.Bytes == alreadyHave[j].Header.Bytes {
 				continue out
 			}
 		}

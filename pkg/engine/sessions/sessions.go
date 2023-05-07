@@ -33,7 +33,7 @@ type Data struct {
 
 func (s *Data) String() string {
 	return fmt.Sprintf("%s sesssion %s node %s hop %d",
-		s.Node.AddrPort.String(), s.ID,
+		s.Node.AddrPort.String(), s.Header.Bytes.String(),
 		s.Node.ID, s.Hop)
 }
 
@@ -46,7 +46,7 @@ func (c Circuit) String() (o string) {
 		if c[i] == nil {
 			o += "              "
 		} else {
-			o += c[i].ID.String() + " "
+			o += c[i].Header.Bytes.String() + " "
 		}
 	}
 	o += "]"
@@ -73,7 +73,7 @@ func NewSessionData(
 	}
 	h, p := hdr.Prv.ToBytes(), pld.Prv.ToBytes()
 	s = &Data{
-		ID:        id,
+		// ID:        id,
 		Node:      node,
 		Remaining: rem,
 		Header:    hdr,
@@ -91,8 +91,8 @@ func (s *Data) IncSats(sats lnwire.MilliSatoshi, sender bool, typ string) {
 	if sender {
 		who = "client"
 	}
-	log.D.F("%s session %d %x current %v incrementing by %v", who, typ, s.ID,
-		s.Remaining, sats)
+	log.D.F("%s session %d %x current %v incrementing by %v", who, typ,
+		s.Header.Bytes.String(), s.Remaining, sats)
 	s.Remaining += sats
 }
 
@@ -111,8 +111,7 @@ func (s *Data) DecSats(sats lnwire.MilliSatoshi, sender bool,
 	}
 	log.D.F("%s %s session %s %s current %v decrementing by %v",
 		color.Yellow.Sprint(s.Node.AddrPort.String()), who,
-		typ, s.ID,
-		s.Remaining, sats)
+		typ, s.Header.Bytes.String(), s.Remaining, sats)
 	s.Remaining -= sats
 	return true
 }

@@ -95,7 +95,7 @@ func (x *Reverse) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 		}
 		sess := ng.Mgr().FindSessionByHeader(hdr)
 		if sess != nil {
-			ng.Mgr().DecSession(sess.ID,
+			ng.Mgr().DecSession(sess.Header.Bytes,
 				ng.Mgr().GetLocalNodeRelayRate()*s.Len(), false, "reverse")
 			ng.HandleMessage(splice.BudgeUp(s.SetCursor(start)), on)
 		}
@@ -112,6 +112,6 @@ func (x *Reverse) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 func (x *Reverse) Account(res *sess.Data, sm *sess.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
-	res.Billable = append(res.Billable, s.ID)
+	res.Billable = append(res.Billable, s.Header.Bytes)
 	return
 }

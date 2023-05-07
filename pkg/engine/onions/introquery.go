@@ -91,7 +91,7 @@ func (x *IntroQuery) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 		if sess != nil {
 			in := sess.Node.RelayRate * s.Len() / 2
 			out := sess.Node.RelayRate * rb.Len() / 2
-			ng.Mgr().DecSession(sess.ID, in+out, false, "introquery")
+			ng.Mgr().DecSession(sess.Header.Bytes, in+out, false, "introquery")
 		}
 	}
 	ng.HandleMessage(rb, x)
@@ -101,7 +101,7 @@ func (x *IntroQuery) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 func (x *IntroQuery) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	
 	res.ID = x.ID
-	res.Billable = append(res.Billable, s.ID)
+	res.Billable = append(res.Billable, s.Header.Bytes)
 	skip = true
 	return
 }
