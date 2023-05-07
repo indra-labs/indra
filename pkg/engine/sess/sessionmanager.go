@@ -16,6 +16,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/engine/payments"
 	"git-indra.lan/indra-labs/indra/pkg/engine/services"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
+	"git-indra.lan/indra-labs/indra/pkg/engine/transport"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
@@ -27,16 +28,18 @@ var (
 
 type Manager struct {
 	nodes           []*node.Node
+	Listeners       []*transport.Listener
 	PendingPayments payments.PendingPayments
 	sessions.Sessions
 	SessionCache
 	sync.Mutex
 }
 
-func NewSessionManager() *Manager {
+func NewSessionManager(listeners ...*transport.Listener) *Manager {
 	return &Manager{
 		SessionCache:    make(SessionCache),
 		PendingPayments: make(payments.PendingPayments, 0),
+		Listeners:       listeners,
 	}
 }
 
