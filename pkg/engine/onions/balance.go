@@ -16,12 +16,11 @@ import (
 
 const (
 	BalanceMagic = "bala"
-	BalanceLen   = magic.Len + nonce.IDLen*2 + slice.Uint64Len
+	BalanceLen   = magic.Len + nonce.IDLen + slice.Uint64Len
 )
 
 type Balance struct {
-	ID     nonce.ID
-	ConfID nonce.ID
+	ID nonce.ID
 	lnwire.MilliSatoshi
 }
 
@@ -34,12 +33,12 @@ func (x *Balance) GetOnion() interface{} { return x }
 
 func (x *Balance) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
-		x.ID, x.ConfID, x.MilliSatoshi,
+		x.ID,
+		x.MilliSatoshi,
 	)
 	s.
 		Magic(BalanceMagic).
 		ID(x.ID).
-		ID(x.ConfID).
 		Uint64(uint64(x.MilliSatoshi))
 	return
 }
@@ -51,7 +50,6 @@ func (x *Balance) Decode(s *splice.Splice) (e error) {
 	}
 	s.
 		ReadID(&x.ID).
-		ReadID(&x.ConfID).
 		ReadMilliSatoshi(&x.MilliSatoshi)
 	return
 }
@@ -78,8 +76,8 @@ func (x *Balance) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 		var se *sessions.Data
 		ng.Mgr().IterateSessions(func(s *sessions.Data) bool {
 			if s.ID == x.ID {
-				log.D.F("received balance %s for session %s %s was %s",
-					x.MilliSatoshi, x.ID, x.ConfID, s.Remaining)
+				log.D.F("received balance %s for session %s was %s",
+					x.MilliSatoshi, x.ID, s.Remaining)
 				se = s
 				return true
 			}

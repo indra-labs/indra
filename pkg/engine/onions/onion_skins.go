@@ -135,11 +135,7 @@ func (o Skins) ForwardSession(s *node.Node,
 func (o Skins) Balance(id, confID nonce.ID,
 	amt lnwire.MilliSatoshi) Skins {
 	
-	return append(o, &Balance{
-		ID:           id,
-		ConfID:       confID,
-		MilliSatoshi: amt,
-	})
+	return append(o, &Balance{ID: id, MilliSatoshi: amt})
 }
 
 func (o Skins) Confirmation(id nonce.ID, load byte) Skins {
@@ -180,10 +176,9 @@ func (o Skins) Forward(addr *netip.AddrPort) Skins {
 	return append(o, &Forward{AddrPort: addr, Onion: &End{}})
 }
 
-func (o Skins) GetBalance(id, confID nonce.ID, ep *ExitPoint) Skins {
+func (o Skins) GetBalance(id nonce.ID, ep *ExitPoint) Skins {
 	return append(o, &GetBalance{
-		ID:      id,
-		ConfID:  confID,
+		ID: id,
 		Ciphers: crypto.GenCiphers(ep.Keys, ep.ReturnPubs),
 		Nonces:  ep.Nonces,
 		Onion:   nop,
@@ -330,7 +325,7 @@ func MakeGetBalance(p GetBalanceParams) Skins {
 	headers := GetHeaders(p.Alice, p.Bob, p.S, p.KS)
 	return Skins{}.
 		RoutingHeader(headers.Forward).
-		GetBalance(p.ID, p.ConfID, headers.ExitPoint()).
+		GetBalance(p.ID, headers.ExitPoint()).
 		RoutingHeader(headers.Return)
 }
 

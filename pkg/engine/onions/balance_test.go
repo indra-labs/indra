@@ -38,10 +38,6 @@ func TestOnionSkins_Balance(t *testing.T) {
 		t.Error("ID did not decode correctly")
 		t.FailNow()
 	}
-	if ci.ConfID != confID {
-		t.Error("Confirmation ID did not decode correctly")
-		t.FailNow()
-	}
 	if ci.MilliSatoshi != sats {
 		t.Error("amount did not decode correctly")
 		t.FailNow()

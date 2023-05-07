@@ -12,7 +12,7 @@ import (
 func TestOnionSkins_GetBalance(t *testing.T) {
 	var e error
 	n3 := crypto.Gen3Nonces()
-	id, confID := nonce.NewID(), nonce.NewID()
+	id := nonce.NewID()
 	_, ks, _ := crypto.NewSigner()
 	var prvs crypto.Privs
 	for i := range prvs {
@@ -31,7 +31,7 @@ func TestOnionSkins_GetBalance(t *testing.T) {
 		ReturnPubs: pubs,
 	}
 	on := Skins{}.
-		GetBalance(id, confID, ep).
+		GetBalance(id, ep).
 		Assemble()
 	s := Encode(on)
 	s.SetCursor(0)

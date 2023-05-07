@@ -16,13 +16,12 @@ import (
 
 const (
 	GetBalanceMagic = "getb"
-	GetBalanceLen   = magic.Len + 2*nonce.IDLen +
+	GetBalanceLen   = magic.Len + nonce.IDLen +
 		3*sha256.Len + nonce.IVLen*3
 )
 
 type GetBalance struct {
-	ID     nonce.ID
-	ConfID nonce.ID
+	ID nonce.ID
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
 	crypto.Ciphers
@@ -56,12 +55,12 @@ type GetBalanceParams struct {
 
 func (x *GetBalance) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
-		x.ID, x.ConfID, x.Ciphers, x.Nonces,
+		x.ID, x.Ciphers, x.Nonces,
 	)
 	return x.Onion.Encode(s.
 		Magic(GetBalanceMagic).
 		ID(x.ID).
-		ID(x.ConfID).Ciphers(x.Ciphers).Nonces(x.Nonces),
+		Ciphers(x.Ciphers).Nonces(x.Nonces),
 	)
 }
 
@@ -71,7 +70,7 @@ func (x *GetBalance) Decode(s *splice.Splice) (e error) {
 		return
 	}
 	s.ReadID(&x.ID).
-		ReadID(&x.ConfID).ReadCiphers(&x.Ciphers).ReadNonces(&x.Nonces)
+		ReadCiphers(&x.Ciphers).ReadNonces(&x.Nonces)
 	return
 }
 
@@ -82,11 +81,7 @@ func (x *GetBalance) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	ng.Mgr().IterateSessions(func(sd *sessions.Data) bool {
 		if sd.ID == x.ID {
 			log.D.S("sessiondata", sd.ID, sd.Remaining)
-			bal = &Balance{
-				ID:           x.ID,
-				ConfID:       x.ConfID,
-				MilliSatoshi: sd.Remaining,
-			}
+			bal = &Balance{ID: x.ID, MilliSatoshi: sd.Remaining}
 			found = true
 			return true
 		}
@@ -112,11 +107,7 @@ func (x *GetBalance) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	}
 	ng.Mgr().IterateSessions(func(sd *sessions.Data) bool {
 		if sd.ID == x.ID {
-			bal = &Balance{
-				ID:           x.ID,
-				ConfID:       x.ConfID,
-				MilliSatoshi: sd.Remaining,
-			}
+			bal = &Balance{ID: x.ID, MilliSatoshi: sd.Remaining}
 			found = true
 			return true
 		}
