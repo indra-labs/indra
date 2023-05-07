@@ -12,10 +12,10 @@ import (
 
 func TestOnionSkins_Balance(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
-	id, confID := nonce.NewID(), nonce.NewID()
+	id := nonce.NewID()
 	sats := lnwire.MilliSatoshi(10000)
 	on := Skins{}.
-		Balance(id, confID, sats).
+		Balance(id, sats).
 		Assemble()
 	s := Encode(on)
 	s.SetCursor(0)

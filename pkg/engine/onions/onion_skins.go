@@ -132,8 +132,7 @@ func (o Skins) ForwardSession(s *node.Node,
 		Session(sess)
 }
 
-func (o Skins) Balance(id, confID nonce.ID,
-	amt lnwire.MilliSatoshi) Skins {
+func (o Skins) Balance(id nonce.ID, amt lnwire.MilliSatoshi) Skins {
 	
 	return append(o, &Balance{ID: id, MilliSatoshi: amt})
 }
@@ -178,7 +177,7 @@ func (o Skins) Forward(addr *netip.AddrPort) Skins {
 
 func (o Skins) GetBalance(id nonce.ID, ep *ExitPoint) Skins {
 	return append(o, &GetBalance{
-		ID: id,
+		ID:      id,
 		Ciphers: crypto.GenCiphers(ep.Keys, ep.ReturnPubs),
 		Nonces:  ep.Nonces,
 		Onion:   nop,

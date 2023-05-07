@@ -40,8 +40,7 @@ func (ng *Engine) SendGetBalance(alice, bob *sessions.Data, hook responses.Callb
 	se := ng.Manager.SelectHops(hops, s, "sendgetbalance")
 	var c sessions.Circuit
 	copy(c[:], se)
-	confID := nonce.NewID()
-	o := onions.MakeGetBalance(onions.GetBalanceParams{alice.ID, confID, alice, bob, c,
+	o := onions.MakeGetBalance(onions.GetBalanceParams{alice.ID, alice, bob, c,
 		ng.KeySet})
 	log.D.Ln("sending out getbalance onion")
 	res := PostAcctOnion(ng.Manager, o)
@@ -120,8 +119,8 @@ func (ng *Engine) SendPing(c sessions.Circuit, hook responses.Callback) {
 	copy(s, c[:])
 	se := ng.Manager.SelectHops(hops, s, "sendping")
 	copy(c[:], se)
-	confID := nonce.NewID()
-	o := onions.Ping(confID, se[len(se)-1], c, ng.KeySet)
+	id := nonce.NewID()
+	o := onions.Ping(id, se[len(se)-1], c, ng.KeySet)
 	res := PostAcctOnion(ng.Manager, o)
 	ng.Manager.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.Responses)
 }

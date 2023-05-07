@@ -47,7 +47,7 @@ func (x *GetBalance) Wrap(inner Onion)      { x.Onion = inner }
 func (x *GetBalance) GetOnion() interface{} { return x }
 
 type GetBalanceParams struct {
-	ID, ConfID nonce.ID
+	ID         nonce.ID
 	Alice, Bob *sessions.Data
 	S          sessions.Circuit
 	KS         *crypto.KeySet
