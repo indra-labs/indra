@@ -64,6 +64,7 @@ func TestEngine_Dispatcher(t *testing.T) {
 		}
 		log.D.S("node", nod)
 		nodes = append(nodes, nod)
+		
 	}
 	time.Sleep(time.Second * 2)
 	cancel()

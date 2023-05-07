@@ -21,7 +21,7 @@ const (
 type Session struct {
 	ID              nonce.ID // only used by a client
 	Hop             byte     // only used by a client
-	Header, Payload *crypto.Prv
+	Header, Payload *crypto.Keys
 	Onion
 }
 
@@ -34,18 +34,15 @@ func (x *Session) GetOnion() interface{} { return x }
 
 func NewSessionKeys(hop byte) (x *Session) {
 	var e error
-	var hdrPrv, pldPrv *crypto.Prv
-	if hdrPrv, e = crypto.GeneratePrvKey(); fails(e) {
-		return
-	}
-	if pldPrv, e = crypto.GeneratePrvKey(); fails(e) {
+	var hdr, pld *crypto.Keys
+	if hdr, pld, e = crypto.Generate2Keys(); fails(e) {
 		return
 	}
 	return &Session{
 		ID:      nonce.NewID(),
 		Hop:     hop,
-		Header:  hdrPrv,
-		Payload: pldPrv,
+		Header:  hdr,
+		Payload: pld,
 	}
 }
 
@@ -55,8 +52,8 @@ func (x *Session) Encode(s *splice.Splice) (e error) {
 	)
 	return x.Onion.Encode(s.Magic(SessionMagic).
 		ID(x.ID).
-		Prvkey(x.Header).
-		Prvkey(x.Payload),
+		Prvkey(x.Header.Prv).
+		Prvkey(x.Payload.Prv),
 	)
 }
 
@@ -65,10 +62,13 @@ func (x *Session) Decode(s *splice.Splice) (e error) {
 		SessionMagic); fails(e) {
 		return
 	}
+	var h, p crypto.Prv
+	hdr, pld := &h, &p
 	s.
 		ReadID(&x.ID).
-		ReadPrvkey(&x.Header).
-		ReadPrvkey(&x.Payload)
+		ReadPrvkey(&hdr).
+		ReadPrvkey(&pld)
+	x.Header, x.Payload = crypto.MakeKeys(hdr), crypto.MakeKeys(pld)
 	return
 }
 
@@ -92,7 +92,7 @@ func (x *Session) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 }
 
 func (x *Session) PreimageHash() sha256.Hash {
-	h, p := x.Header.ToBytes(), x.Payload.ToBytes()
+	h, p := x.Header.Prv.ToBytes(), x.Payload.Prv.ToBytes()
 	return sha256.Single(append(h[:], p[:]...))
 }
 

@@ -26,7 +26,7 @@ type Data struct {
 	ID              nonce.ID
 	Node            *node.Node
 	Remaining       lnwire.MilliSatoshi
-	Header, Payload crypto.Keys
+	Header, Payload *crypto.Keys
 	Preimage        sha256.Hash
 	Hop             byte
 }
@@ -62,37 +62,24 @@ func NewSessionData(
 	id nonce.ID,
 	node *node.Node,
 	rem lnwire.MilliSatoshi,
-	hdrPrv *crypto.Prv,
-	pldPrv *crypto.Prv,
+	hdr, pld *crypto.Keys,
 	hop byte,
 ) (s *Data) {
 	
 	var e error
-	if hdrPrv == nil || pldPrv == nil {
-		if hdrPrv, e = crypto.GeneratePrvKey(); fails(e) {
-		}
-		if pldPrv, e = crypto.GeneratePrvKey(); fails(e) {
+	if hdr == nil || pld == nil {
+		if hdr, pld, e = crypto.Generate2Keys(); fails(e) {
 		}
 	}
-	hdrPub := crypto.DerivePub(hdrPrv)
-	pldPub := crypto.DerivePub(pldPrv)
-	h, p := hdrPrv.ToBytes(), pldPrv.ToBytes()
+	h, p := hdr.Prv.ToBytes(), pld.Prv.ToBytes()
 	s = &Data{
 		ID:        id,
 		Node:      node,
 		Remaining: rem,
-		Header: crypto.Keys{
-			Pub:   hdrPub,
-			Bytes: hdrPub.ToBytes(),
-			Prv:   hdrPrv,
-		},
-		Payload: crypto.Keys{
-			Pub:   pldPub,
-			Bytes: pldPub.ToBytes(),
-			Prv:   pldPrv,
-		},
-		Preimage: sha256.Single(append(h[:], p[:]...)),
-		Hop:      hop,
+		Header:    hdr,
+		Payload:   pld,
+		Preimage:  sha256.Single(append(h[:], p[:]...)),
+		Hop:       hop,
 	}
 	return
 }
