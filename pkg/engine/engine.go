@@ -3,6 +3,7 @@ package engine
 import (
 	"go.uber.org/atomic"
 	
+	"git-indra.lan/indra-labs/indra/pkg/engine/transport"
 	"git-indra.lan/indra-labs/indra/pkg/util/qu"
 	"git-indra.lan/indra-labs/indra/pkg/util/splice"
 	
@@ -25,6 +26,7 @@ import (
 type Engine struct {
 	Responses    *responses.Pending
 	Manager      *sess.Manager
+	Listener     *transport.Listener
 	h            *onions.Hidden
 	KeySet       *crypto.KeySet
 	Load         atomic.Uint32
@@ -34,6 +36,7 @@ type Engine struct {
 
 type Params struct {
 	tpt.Transport
+	Listener        *transport.Listener
 	ID              *crypto.Keys
 	Node            *node.Node
 	Nodes           []*node.Node

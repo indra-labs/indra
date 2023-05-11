@@ -38,12 +38,11 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 		addr := slice.GenerateRandomAddrPortIPv4()
 		nodes[i], _ = node.NewNode(addr, id, tpts[i], 50000)
 		if cl[i], e = NewEngine(Params{
-			tpts[i],
-			id,
-			nodes[i],
-			nil,
-			nReturnSessions},
-		); fails(e) {
+			Transport:       tpts[i],
+			ID:              id,
+			Node:            nodes[i],
+			NReturnSessions: nReturnSessions,
+		}); fails(e) {
 			return
 		}
 		cl[i].Manager.SetLocalNodeAddress(nodes[i].AddrPort)

@@ -23,6 +23,7 @@ func TestEngine_Dispatcher(t *testing.T) {
 	var listeners []*transport.Listener
 	var keys []*crypto.Keys
 	var nodes []*node.Node
+	var engines []*Engine
 	var seed string
 	for i := 0; i < nTotal; i++ {
 		var k *crypto.Keys
@@ -57,14 +58,20 @@ func TestEngine_Dispatcher(t *testing.T) {
 		if addr, e = netip.ParseAddrPort(ip + ":" + port); fails(e) {
 			t.FailNow()
 		}
-		log.D.Ln(transport.GetHostOnlyAddress(l.Host))
 		var nod *node.Node
 		if nod, _ = node.NewNode(&addr, k, nil, 50000); fails(e) {
 			t.FailNow()
 		}
-		log.D.S("node", nod)
 		nodes = append(nodes, nod)
-		
+		var eng *Engine
+		if eng, e = NewEngine(Params{
+			Listener: l,
+			ID:       k,
+			Node:     nod,
+		}); fails(e) {
+			t.FailNow()
+		}
+		engines = append(engines, eng)
 	}
 	time.Sleep(time.Second * 2)
 	cancel()
