@@ -47,7 +47,7 @@ func TestOnionSkins_Response(t *testing.T) {
 		t.FailNow()
 	}
 	if rs.ID != id {
-		t.Error("ID did not decode correctly")
+		t.Error("Keys did not decode correctly")
 		t.FailNow()
 	}
 	if rs.Port != port {

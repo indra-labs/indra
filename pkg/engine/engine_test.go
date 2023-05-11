@@ -95,7 +95,7 @@ out:
 				t.Error("failed to receive expected message")
 			}
 			if id != idd {
-				t.Error("failed to receive expected message ID")
+				t.Error("failed to receive expected message Keys")
 			}
 			log.I.F("success\n\n")
 			wg.Done()

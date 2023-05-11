@@ -29,7 +29,7 @@ func (x *Confirmation) Magic() string { return ConfirmationMagic }
 
 func (x *Confirmation) Encode(s *splice.Splice) (e error) {
 	// log.T.S("encoding", reflect.TypeOf(x),
-	// 	x.ID, x.Load,
+	// 	x.Keys, x.Load,
 	// )
 	s.Magic(ConfirmationMagic).ID(x.ID).Byte(x.Load)
 	return

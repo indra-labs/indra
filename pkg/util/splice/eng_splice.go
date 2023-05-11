@@ -124,7 +124,7 @@ func (s *Splice) String() (o string) {
 				oo = string(tmp)
 				o += color.LightGreen.Sprint(" ", oo)
 			}
-			if prevString == "ID" {
+			if prevString == "Keys" {
 				var oo string
 				var e error
 				if oo, e = based32.Codec.Encode(v.ToBytes()); fails(e) {
@@ -258,14 +258,14 @@ func (s *Splice) ReadMagic(magic *string) *Splice {
 func (s *Splice) ID(id nonce.ID) *Splice {
 	copy(s.b[*s.c:s.c.Inc(nonce.IDLen)], id[:])
 	s.Segments = append(s.Segments,
-		NameOffset{Offset: int(*s.c), Name: "ID"})
+		NameOffset{Offset: int(*s.c), Name: "Keys"})
 	return s
 }
 
 func (s *Splice) ReadID(id *nonce.ID) *Splice {
 	copy((*id)[:], s.b[*s.c:s.c.Inc(nonce.IDLen)])
 	s.Segments = append(s.Segments,
-		NameOffset{Offset: int(*s.c), Name: "ID"})
+		NameOffset{Offset: int(*s.c), Name: "Keys"})
 	return s
 }
 

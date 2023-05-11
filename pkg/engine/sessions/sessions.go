@@ -73,7 +73,7 @@ func NewSessionData(
 	}
 	h, p := hdr.Prv.ToBytes(), pld.Prv.ToBytes()
 	s = &Data{
-		// ID:        id,
+		// Keys:        id,
 		Node:      node,
 		Remaining: rem,
 		Header:    hdr,

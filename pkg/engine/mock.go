@@ -39,7 +39,7 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 		nodes[i], _ = node.NewNode(addr, id, tpts[i], 50000)
 		if cl[i], e = NewEngine(Params{
 			Transport:       tpts[i],
-			ID:              id,
+			Keys:            id,
 			Node:            nodes[i],
 			NReturnSessions: nReturnSessions,
 		}); fails(e) {

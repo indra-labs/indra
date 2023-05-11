@@ -34,7 +34,7 @@ func TestOnionSkins_Confirmation(t *testing.T) {
 		t.FailNow()
 	}
 	if ci.ID != id {
-		t.Error("ID did not decode correctly")
+		t.Error("Keys did not decode correctly")
 		t.FailNow()
 	}
 	if ci.Load != load {

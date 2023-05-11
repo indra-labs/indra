@@ -51,7 +51,7 @@ func TestOnionSkins_GetBalance(t *testing.T) {
 		t.FailNow()
 	}
 	if ex.ID != id {
-		t.Error("ID did not decode correctly")
+		t.Error("Keys did not decode correctly")
 		t.FailNow()
 	}
 	for i := range ex.Ciphers {

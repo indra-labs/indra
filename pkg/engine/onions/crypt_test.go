@@ -47,7 +47,7 @@ func TestOnionSkins_SimpleCrypt(t *testing.T) {
 		t.FailNow()
 	} else {
 		if cn.ID != n {
-			t.Error("did not get expected confirmation ID")
+			t.Error("did not get expected confirmation Keys")
 			t.FailNow()
 		}
 	}

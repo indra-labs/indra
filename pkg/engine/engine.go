@@ -36,8 +36,8 @@ type Engine struct {
 
 type Params struct {
 	tpt.Transport
-	Listener        *transport.Listener
-	ID              *crypto.Keys
+	*transport.Listener
+	*crypto.Keys
 	Node            *node.Node
 	Nodes           []*node.Node
 	NReturnSessions int
@@ -45,7 +45,7 @@ type Params struct {
 
 func NewEngine(p Params) (c *Engine, e error) {
 	p.Node.Transport = p.Transport
-	p.Node.Identity = p.ID
+	p.Node.Identity = p.Keys
 	var ks *crypto.KeySet
 	if _, ks, e = crypto.NewSigner(); fails(e) {
 		return
@@ -119,6 +119,14 @@ func (ng *Engine) HandleMessage(s *splice.Splice, pr onions.Onion) {
 		}
 	}
 }
+func (ng *Engine) accept() <-chan *transport.Conn {
+	// Handle the absence of a listener gracefully.
+	if ng.Listener != nil {
+		return ng.Listener.Accept()
+	}
+	// This one cannot be sent to so will never select.
+	return make(chan *transport.Conn)
+}
 
 func (ng *Engine) Handler() (out bool) {
 	log.T.C(func() string {
@@ -130,6 +138,9 @@ func (ng *Engine) Handler() (out bool) {
 		ng.Shutdown()
 		out = true
 		break
+	case <-ng.accept():
+		// Add new connection.
+	
 	case b := <-ng.Manager.ReceiveToLocalNode(0):
 		s := splice.Load(b, slice.NewCursor())
 		ng.HandleMessage(s, prev)
@@ -147,7 +158,7 @@ func (ng *Engine) Handler() (out bool) {
 		})
 		if !topUp {
 			ng.Manager.AddPendingPayment(p)
-			log.T.F("awaiting session keys for preimage %s session ID %s",
+			log.T.F("awaiting session keys for preimage %s session Keys %s",
 				p.Preimage, p.ID)
 		}
 		// For now if we received this we return true. Later this will wait with

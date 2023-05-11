@@ -66,7 +66,7 @@ func TestOnionSkins_IntroQuery(t *testing.T) {
 		t.FailNow()
 	}
 	if ex.ID != id {
-		t.Error("ID did not decode correctly")
+		t.Error("Keys did not decode correctly")
 		t.FailNow()
 	}
 }

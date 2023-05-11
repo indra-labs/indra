@@ -125,7 +125,7 @@ func (sm *Manager) AddSession(s *sessions.Data) {
 	// check for dupes
 	for i := range sm.Sessions {
 		if sm.Sessions[i].Header.Bytes == s.Header.Bytes {
-			log.D.F("refusing to add duplicate session ID %x", s.Header.Bytes)
+			log.D.F("refusing to add duplicate session Keys %x", s.Header.Bytes)
 			return
 		}
 	}
@@ -248,7 +248,7 @@ func (sm *Manager) DeleteNodeAndSessions(id nonce.ID) {
 	sm.Lock()
 	defer sm.Unlock()
 	var exists bool
-	// If the node exists its ID is in the SessionCache.
+	// If the node exists its Keys is in the SessionCache.
 	if _, exists = sm.SessionCache[id]; !exists {
 		return
 	}
@@ -372,7 +372,7 @@ func (sm *Manager) FindNodeByIndex(i int) (no *node.Node) {
 	return sm.nodes[i]
 }
 
-// FindNodeByID searches for a Node by ID.
+// FindNodeByID searches for a Node by Keys.
 func (sm *Manager) FindNodeByID(i nonce.ID) (no *node.Node) {
 	sm.Lock()
 	defer sm.Unlock()
@@ -398,7 +398,7 @@ func (sm *Manager) FindNodeByAddrPort(id *netip.AddrPort) (no *node.Node) {
 	return
 }
 
-// DeleteNodeByID deletes a node identified by an ID.
+// DeleteNodeByID deletes a node identified by an Keys.
 func (sm *Manager) DeleteNodeByID(ii nonce.ID) (e error) {
 	sm.Lock()
 	defer sm.Unlock()

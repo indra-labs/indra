@@ -66,7 +66,7 @@ func TestEngine_Dispatcher(t *testing.T) {
 		var eng *Engine
 		if eng, e = NewEngine(Params{
 			Listener: l,
-			ID:       k,
+			Keys:     k,
 			Node:     nod,
 		}); fails(e) {
 			t.FailNow()

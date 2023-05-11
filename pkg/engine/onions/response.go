@@ -34,7 +34,7 @@ func (x *Response) GetOnion() interface{} { return x }
 
 func (x *Response) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
-		// x.ID, x.Port, x.Load, x.Bytes.ToBytes(),
+		// x.Keys, x.Port, x.Load, x.Bytes.ToBytes(),
 	)
 	s.
 		Magic(ResponseMagic).
@@ -60,7 +60,7 @@ func (x *Response) Decode(s *splice.Splice) (e error) {
 
 func (x *Response) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	pending := ng.Pending().Find(x.ID)
-	log.T.F("searching for pending ID %s", x.ID)
+	log.T.F("searching for pending Keys %s", x.ID)
 	if pending != nil {
 		for i := range pending.Billable {
 			se := ng.Mgr().FindSession(pending.Billable[i])
