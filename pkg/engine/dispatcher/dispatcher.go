@@ -477,7 +477,7 @@ func (d *Dispatcher) SendAck(rxr *RxRecord) {
 }
 
 func (d *Dispatcher) SendToConn(m slice.Bytes) (pieces int) {
-	log.T.S(d.ip, "message dispatching to conn",
+	log.T.Ln(d.ip, "message dispatching to conn",
 		// m.ToBytes(),
 	)
 	// Data received for sending through the Conn.

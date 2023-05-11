@@ -101,7 +101,7 @@ out:
 			wg.Done()
 			return
 		})
-		bb := <-clients[3].Manager.ReceiveToLocalNode(port)
+		bb := <-clients[3].Mgr().GetLocalNode().ReceiveFrom(port)
 		log.T.S(bb.ToBytes())
 		if e = clients[3].Manager.SendFromLocalNode(port, respMsg); fails(e) {
 			t.Error("fail send")

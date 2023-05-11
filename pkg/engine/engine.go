@@ -26,7 +26,6 @@ import (
 type Engine struct {
 	Responses    *responses.Pending
 	Manager      *sess.Manager
-	Listener     *transport.Listener
 	h            *onions.Hidden
 	KeySet       *crypto.KeySet
 	Load         atomic.Uint32
@@ -36,7 +35,7 @@ type Engine struct {
 
 type Params struct {
 	tpt.Transport
-	*transport.Listener
+	Listeners []*transport.Listener
 	*crypto.Keys
 	Node            *node.Node
 	Nodes           []*node.Node
@@ -53,7 +52,7 @@ func NewEngine(p Params) (c *Engine, e error) {
 	c = &Engine{
 		Responses: &responses.Pending{},
 		KeySet:    ks,
-		Manager:   sess.NewSessionManager(),
+		Manager:   sess.NewSessionManager(p.Listeners...),
 		h:         onions.NewHiddenrouting(),
 		Pause:     qu.T(),
 		C:         qu.T(),
@@ -119,14 +118,6 @@ func (ng *Engine) HandleMessage(s *splice.Splice, pr onions.Onion) {
 		}
 	}
 }
-func (ng *Engine) accept() <-chan *transport.Conn {
-	// Handle the absence of a listener gracefully.
-	if ng.Listener != nil {
-		return ng.Listener.Accept()
-	}
-	// This one cannot be sent to so will never select.
-	return make(chan *transport.Conn)
-}
 
 func (ng *Engine) Handler() (out bool) {
 	log.T.C(func() string {
@@ -138,10 +129,7 @@ func (ng *Engine) Handler() (out bool) {
 		ng.Shutdown()
 		out = true
 		break
-	case <-ng.accept():
-		// Add new connection.
-	
-	case b := <-ng.Manager.ReceiveToLocalNode(0):
+	case b := <-ng.Manager.ReceiveToLocalNode():
 		s := splice.Load(b, slice.NewCursor())
 		ng.HandleMessage(s, prev)
 	case p := <-ng.Manager.GetLocalNode().Chan.Receive():
@@ -173,7 +161,7 @@ func (ng *Engine) Handler() (out bool) {
 			select {
 			case <-ng.Manager.GetLocalNode().Chan.Receive():
 				log.D.Ln("discarding payments while in pause")
-			case <-ng.Manager.ReceiveToLocalNode(0):
+			case <-ng.Manager.ReceiveToLocalNode():
 				log.D.Ln("discarding messages while in pause")
 			case <-ng.C.Wait():
 				break out

@@ -114,6 +114,10 @@ func (l *Listener) handle(s network.Stream) {
 		var nc *Conn
 		if nc = l.FindConn(as); nc == nil {
 			nc = l.Dial(as)
+			if nc == nil {
+				log.D.Ln("failed to make connection to", as)
+				continue
+			}
 			l.AddConn(nc)
 		}
 		nc.Transport.Receiver.Send(b[:n])

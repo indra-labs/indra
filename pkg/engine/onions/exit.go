@@ -87,7 +87,7 @@ func (x *Exit) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	}
 	timer := time.NewTicker(time.Second * 5)
 	select {
-	case result = <-ng.Mgr().ReceiveToLocalNode(x.Port):
+	case result = <-ng.Mgr().GetLocalNode().ReceiveFrom(x.Port):
 	case <-timer.C:
 	}
 	// We need to wrap the result in a message crypt.

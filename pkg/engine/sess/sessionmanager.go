@@ -320,13 +320,10 @@ func (sm *Manager) SendFromLocalNode(port uint16,
 	return sm.GetLocalNode().SendTo(port, b)
 }
 
-func (sm *Manager) ReceiveToLocalNode(port uint16) <-chan slice.Bytes {
+func (sm *Manager) ReceiveToLocalNode() <-chan slice.Bytes {
 	sm.Lock()
 	defer sm.Unlock()
-	if port == 0 {
-		return sm.GetLocalNode().Transport.Receive()
-	}
-	return sm.GetLocalNode().ReceiveFrom(port)
+	return sm.GetLocalNode().Transport.Receive()
 }
 
 func (sm *Manager) AddServiceToLocalNode(s *services.Service) (e error) {

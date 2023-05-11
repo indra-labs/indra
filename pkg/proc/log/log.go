@@ -330,7 +330,7 @@ func logPrint(
 		tsf := timeStampFormat
 		timeText := getTimeText(tsf)
 		if codeLoc {
-			formatString = "%-24v%s%s%-6v %s"
+			formatString = "%-64v%s%s%-6v %s"
 			loc = GetLoc(3, subsystem)
 			tsf = LocTimeStampFormat
 			nns := int(time.Now().Sub(startTime).

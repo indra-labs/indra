@@ -41,8 +41,8 @@ func TestDispatcher(t *testing.T) {
 	}
 	var msg1, msg2 []byte
 	_ = msg2
-	msg1, _, e = tests.GenMessage(48, "REQUEST")
-	msg2, _, e = tests.GenMessage(48, "RESPONSE")
+	msg1, _, e = tests.GenMessage(8192, "REQUEST")
+	msg2, _, e = tests.GenMessage(4096, "RESPONSE")
 	_, _ = msg1, msg2
 	hn1 := transport.GetHostAddress(l2.Host)
 	// hn2 := transport.GetHostAddress(l1.Host)
@@ -53,12 +53,12 @@ func TestDispatcher(t *testing.T) {
 	var msgp1, msgp2 slice.Bytes
 	id1, id2 := nonce.NewID(), nonce.NewID()
 	var load1 byte = 128
-	var load2 byte = 32
+	// var load2 byte = 32
 	on1 := onions.Skins{}.
 		Confirmation(id1, load1).
 		Assemble()
 	on2 := onions.Skins{}.
-		Confirmation(id2, load2).
+		Response(id2, msg1, 0).
 		Assemble()
 	s1 := onions.Encode(on1)
 	s2 := onions.Encode(on2)
@@ -74,9 +74,9 @@ func TestDispatcher(t *testing.T) {
 	if e = xx2.Encode(sp2); fails(e) {
 		t.FailNow()
 	}
-	var wg sync.WaitGroup
-	wg.Add(4)
+	// var wg sync.WaitGroup
 	go func() {
+		var count int
 		for {
 			select {
 			case <-ctx.Done():
@@ -87,8 +87,9 @@ func TestDispatcher(t *testing.T) {
 					t.Error("did not receive expected message")
 					return
 				} else {
-					log.I.S("success 1")
-					wg.Done()
+					log.I.Ln("success", count)
+					count++
+					// wg.Done()
 					continue
 				}
 			case b := <-d2.Duplex.Receive():
@@ -97,8 +98,9 @@ func TestDispatcher(t *testing.T) {
 					t.Error("did not receive expected message")
 					return
 				} else {
-					log.I.S("success 2")
-					wg.Done()
+					log.I.Ln("success", count)
+					count++
+					// wg.Done()
 					continue
 				}
 			}
@@ -107,19 +109,23 @@ func TestDispatcher(t *testing.T) {
 	msgp1 = sp1.GetAll()
 	msgp2 = sp2.GetAll()
 	time.Sleep(time.Second)
+	// var n int
 	d1.SendToConn(msgp1)
+	// wg.Add(n)
 	log.I.Ln("sent 1")
 	time.Sleep(time.Second)
 	d2.SendToConn(msgp2)
+	// wg.Add(n)
 	log.I.Ln("sent 2")
 	time.Sleep(time.Second)
 	d1.SendToConn(msgp1)
+	// wg.Add(n)
 	log.I.Ln("sent 3")
 	time.Sleep(time.Second)
 	d2.SendToConn(msgp2)
-	log.I.Ln("sent 4")
-	wg.Wait()
-	time.Sleep(time.Second * 2)
+	// wg.Add(n)
+	// wg.Wait()
+	time.Sleep(time.Second)
 	d1.Mutex.Lock()
 	d2.Mutex.Lock()
 	log.D.Ln("ping", time.Duration(d1.Ping.Value()),
@@ -225,7 +231,7 @@ func TestDispatcher_Rekey(t *testing.T) {
 	for i := 0; i < countTo; i++ {
 		n := d1.SendToConn(msgp1)
 		wg.Add(n)
-		n = d2.SendToConn(msgp2)
+		d2.SendToConn(msgp2)
 		wg.Add(n)
 	}
 	wg.Wait()

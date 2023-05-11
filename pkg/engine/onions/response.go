@@ -33,7 +33,7 @@ func (x *Response) Wrap(inner Onion)      {}
 func (x *Response) GetOnion() interface{} { return x }
 
 func (x *Response) Encode(s *splice.Splice) (e error) {
-	log.T.S("encoding", reflect.TypeOf(x),
+	log.T.Ln("encoding", reflect.TypeOf(x),
 		// x.Keys, x.Port, x.Load, x.Bytes.ToBytes(),
 	)
 	s.
