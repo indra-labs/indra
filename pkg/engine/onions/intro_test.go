@@ -12,7 +12,7 @@ import (
 )
 
 func TestOnionSkins_Intro(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	log2.SetLogLevel(log2.Debug)
 	var e error
 	pr, ks, _ := crypto.NewSigner()
 	id := nonce.NewID()

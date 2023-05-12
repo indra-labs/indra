@@ -3,13 +3,13 @@ package cmds
 import (
 	"strings"
 	"testing"
-
+	
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 )
 
 func TestCommand_ParseCLIArgs(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
-
+	log2.SetLogLevel(log2.Debug)
+	
 	ec := GetExampleCommands()
 	o, _ := Init(ec, nil)
 	args6 := "/random/path/to/server_binary --cafile ~/some/cafile --LC=cn " +

@@ -25,7 +25,7 @@ import (
 )
 
 func TestClient_SendExit(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	log2.SetLogLevel(log2.Debug)
 	var clients []*Engine
 	var e error
 	ctx, cancel := context.WithCancel(context.Background())
@@ -122,7 +122,7 @@ out:
 }
 
 func TestClient_SendGetBalance(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	log2.SetLogLevel(log2.Debug)
 	var clients []*Engine
 	var e error
 	ctx, cancel := context.WithCancel(context.Background())
@@ -264,7 +264,7 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 			log.I.S("hidden service callback", id, ifc, b.ToBytes())
 			return
 		})
-	log2.SetLogLevel(log2.Trace)
+	log2.SetLogLevel(log2.Debug)
 	// Now query everyone for the intro.
 	idPub := crypto.DerivePub(idPrv)
 	peers := clients[1:]
@@ -297,7 +297,7 @@ func TestEngine_SendIntroQuery(t *testing.T) {
 }
 
 func TestEngine_Message(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	log2.SetLogLevel(log2.Debug)
 	log2.App.Store("")
 	var clients []*Engine
 	var e error
@@ -424,7 +424,7 @@ func TestEngine_Message(t *testing.T) {
 			return
 		})
 	wg.Wait()
-	log2.SetLogLevel(log2.Trace)
+	log2.SetLogLevel(log2.Debug)
 	msg, _, _ := tests.GenMessage(256, "hidden service message test")
 	wg.Add(1)
 	counter.Inc()
@@ -635,7 +635,7 @@ func TestEngine_Route(t *testing.T) {
 	_ = ini
 	wg.Wait()
 	time.Sleep(time.Second)
-	log2.SetLogLevel(log2.Trace)
+	log2.SetLogLevel(log2.Debug)
 	wg.Add(1)
 	counter.Inc()
 	log.D.Ln("intro", ini.ID, ini.AddrPort.String(), ini.Key.ToBase32Abbreviated(),

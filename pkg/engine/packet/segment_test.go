@@ -13,7 +13,7 @@ import (
 )
 
 func TestSplitJoin(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	log2.SetLogLevel(log2.Debug)
 	msgSize := 1 << 19
 	segSize := 1382
 	var e error
@@ -136,7 +136,7 @@ func TestRemovePacket(t *testing.T) {
 }
 
 func TestSplitJoinFEC(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	log2.SetLogLevel(log2.Debug)
 	msgSize := 1 << 18
 	segSize := 1382
 	var e error

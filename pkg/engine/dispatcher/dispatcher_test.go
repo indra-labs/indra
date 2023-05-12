@@ -19,7 +19,7 @@ import (
 )
 
 func TestDispatcher(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	log2.SetLogLevel(log2.Debug)
 	var e error
 	var l1, l2 *transport.Listener
 	_ = l2

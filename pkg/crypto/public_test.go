@@ -7,7 +7,7 @@ import (
 )
 
 func TestBase32(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	log2.SetLogLevel(log2.Debug)
 	for i := 0; i < 10000; i++ {
 		var k *Prv
 		var e error

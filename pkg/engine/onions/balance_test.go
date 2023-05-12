@@ -11,7 +11,7 @@ import (
 )
 
 func TestOnionSkins_Balance(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	log2.SetLogLevel(log2.Debug)
 	id := nonce.NewID()
 	sats := lnwire.MilliSatoshi(10000)
 	on := Skins{}.

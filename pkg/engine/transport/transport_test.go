@@ -11,7 +11,7 @@ import (
 )
 
 func TestNewListener(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	log2.SetLogLevel(log2.Debug)
 	var e error
 	var l1, l2 *Listener
 	_ = l2

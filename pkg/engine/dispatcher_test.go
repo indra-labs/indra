@@ -15,7 +15,7 @@ import (
 )
 
 func TestEngine_Dispatcher(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	log2.SetLogLevel(log2.Debug)
 	var e error
 	_ = e
 	const nTotal = 26

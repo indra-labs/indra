@@ -10,7 +10,7 @@ import (
 )
 
 func TestOnionSkins_SimpleCrypt(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	log2.SetLogLevel(log2.Debug)
 	var e error
 	n := nonce.NewID()
 	n1 := nonce.New()

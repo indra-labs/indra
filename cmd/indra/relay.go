@@ -41,7 +41,7 @@ package main
 //	Long:  `Runs a server that can be controlled with RPC and CLI interfaces.`,
 //	Run: func(cmd *cobra.Command, args []string) {
 //
-//		log2.SetLogLevel(log2.Trace)
+//		log2.SetLogLevel(log2.Debug)
 //
 //		log.I.Ln("-- ", log2.App, "("+viper.GetString(""+
 //			"network")+") -",

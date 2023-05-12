@@ -9,7 +9,7 @@ import (
 )
 
 func TestOnionSkins_Confirmation(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	log2.SetLogLevel(log2.Debug)
 	id := nonce.NewID()
 	var load byte = 128
 	on := Skins{}.

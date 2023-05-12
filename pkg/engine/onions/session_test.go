@@ -8,7 +8,7 @@ import (
 )
 
 func TestOnionSkins_Session(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	log2.SetLogLevel(log2.Debug)
 	sess := NewSessionKeys(1)
 	on := Skins{}.
 		Session(sess).

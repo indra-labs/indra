@@ -9,7 +9,7 @@ import (
 )
 
 func TestOnionSkins_Delay(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	log2.SetLogLevel(log2.Debug)
 	dur := time.Second
 	on := Skins{}.
 		Delay(dur).
