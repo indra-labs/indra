@@ -267,6 +267,8 @@ replace math/rand => github.com/lukechampine/frand v1.4.2
 
 replace git-indra.lan/indra-labs/indra => github.com/indra-labs/indra v0.1.11
 
+replace git-indra.lan/indra-labs/lnd => github.com/indra-labs/lnd v0.15.6
+
 //replace git-indra.lan/indra-labs/lnd => ../lnd
 
 exclude github.com/indra-labs/lnd v0.15.10001
