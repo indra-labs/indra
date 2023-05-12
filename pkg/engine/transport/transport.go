@@ -40,6 +40,7 @@ const (
 )
 
 type Listener struct {
+	DHT         *dht.IpfsDHT
 	MTU         int
 	Host        host.Host
 	connections map[string]*Conn
@@ -77,12 +78,11 @@ func NewListener(rendezvous, multiAddr string,
 	); fails(e) {
 		return
 	}
-	var d *dht.IpfsDHT
-	if d, e = NewDHT(ctx, c.Host, rdv); fails(e) {
+	if c.DHT, e = NewDHT(ctx, c.Host, rdv); fails(e) {
 		return
 	}
 	log.D.Ln("listening on", blue(GetHostOnlyAddress(c.Host)))
-	go Discover(ctx, c.Host, d, rendezvous)
+	go Discover(ctx, c.Host, c.DHT, rendezvous)
 	c.Host.SetStreamHandler(IndraLibP2PID, c.handle)
 	return
 }
