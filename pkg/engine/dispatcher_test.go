@@ -65,9 +65,9 @@ func TestEngine_Dispatcher(t *testing.T) {
 		nodes = append(nodes, nod)
 		var eng *Engine
 		if eng, e = NewEngine(Params{
-			Listeners: []*transport.Listener{l},
-			Keys:      k,
-			Node:      nod,
+			Listener: l,
+			Keys:     k,
+			Node:     nod,
 		}); fails(e) {
 			t.FailNow()
 		}

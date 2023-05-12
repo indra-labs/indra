@@ -33,10 +33,7 @@ type Node struct {
 }
 
 const (
-	// DefaultSampleBufferSize defines the number of samples for the Load, Latency
-	// and Failure ring buffers.
-	DefaultSampleBufferSize = 64
-	PaymentChanBuffers      = 8
+	PaymentChanBuffers = 8
 )
 
 // NewNode creates a new Node. The Node for a client's self should use true in

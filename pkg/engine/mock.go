@@ -38,6 +38,9 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 		addr := slice.GenerateRandomAddrPortIPv4()
 		nodes[i], _ = node.NewNode(addr, id, tpts[i], 50000)
 		if cl[i], e = NewEngine(Params{
+			Listener: &transport.Listener{
+				MTU: 1382,
+			},
 			Transport:       tpts[i],
 			Keys:            id,
 			Node:            nodes[i],

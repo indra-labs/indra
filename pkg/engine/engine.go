@@ -35,7 +35,7 @@ type Engine struct {
 
 type Params struct {
 	tpt.Transport
-	Listeners []*transport.Listener
+	Listener *transport.Listener
 	*crypto.Keys
 	Node            *node.Node
 	Nodes           []*node.Node
@@ -52,7 +52,7 @@ func NewEngine(p Params) (c *Engine, e error) {
 	c = &Engine{
 		Responses: &responses.Pending{},
 		KeySet:    ks,
-		Manager:   sess.NewSessionManager(p.Listeners...),
+		Manager:   sess.NewSessionManager(p.Listener),
 		h:         onions.NewHiddenrouting(),
 		Pause:     qu.T(),
 		C:         qu.T(),
@@ -129,6 +129,11 @@ func (ng *Engine) Handler() (out bool) {
 		ng.Shutdown()
 		out = true
 		break
+	case c := <-ng.Manager.Listener.Accept():
+		go func() {
+			_ = c
+			
+		}()
 	case b := <-ng.Manager.ReceiveToLocalNode():
 		s := splice.Load(b, slice.NewCursor())
 		ng.HandleMessage(s, prev)

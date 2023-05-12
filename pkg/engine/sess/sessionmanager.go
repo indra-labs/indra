@@ -28,18 +28,18 @@ var (
 
 type Manager struct {
 	nodes           []*node.Node
-	Listeners       []*transport.Listener
+	Listener        *transport.Listener
 	PendingPayments payments.PendingPayments
 	sessions.Sessions
 	SessionCache
 	sync.Mutex
 }
 
-func NewSessionManager(listeners ...*transport.Listener) *Manager {
+func NewSessionManager(listener *transport.Listener) *Manager {
 	return &Manager{
 		SessionCache:    make(SessionCache),
 		PendingPayments: make(payments.PendingPayments, 0),
-		Listeners:       listeners,
+		Listener:        listener,
 	}
 }
 
