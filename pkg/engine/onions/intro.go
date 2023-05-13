@@ -79,7 +79,7 @@ func SpliceIntro(s *splice.Splice, x *Intro) *splice.Splice {
 		Pubkey(x.Key).
 		AddrPort(x.AddrPort).
 		Uint64(uint64(x.Expiry.UnixNano())).
-		Signature(&x.Sig)
+		Signature(x.Sig)
 }
 
 func (x *Intro) Encode(s *splice.Splice) (e error) {

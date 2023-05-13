@@ -1,15 +1,30 @@
 package advert
 
 import (
+	"fmt"
 	"time"
 	
 	"github.com/multiformats/go-multiaddr"
 	
+	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
+	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 	"git-indra.lan/indra-labs/indra/pkg/util/splice"
 )
 
-const PeerMagic = "peer"
+var (
+	log   = log2.GetLogger(indra.PathBase)
+	fails = log.E.Chk
+)
+
+const (
+	PeerMagic = "peer"
+	PeerLen   = magic.Len + nonce.IDLen + slice.Uint64Len + crypto.SigLen
+)
 
 // Peer is the root identity document for an Indra peer. It is indexed by the
 // Identity field, its public key. The slices found below it are derived via
@@ -21,28 +36,65 @@ const PeerMagic = "peer"
 // service from their introduction solicitation, and the index from the current
 // set is given by the hidden service.
 type Peer struct {
-	Identity  crypto.PubBytes
+	Identity crypto.PubBytes
+	nonce.ID
 	RelayRate int
+	Sig       crypto.SigBytes
 	// Addresses - first is address, nil for hidden services,
 	// hidden services have more than one, 6 or more are kept active.
 	Addresses []*Address
 	Services  []Service
 }
 
+func (p *Peer) Sign(prv *crypto.Prv) (e error) {
+	s := splice.New(p.Len())
+	if e = p.Encode(s); fails(e) {
+		return
+	}
+	var b []byte
+	if b, e = prv.Sign(s.GetUntil(s.GetCursor())); fails(e) {
+		return
+	}
+	if len(b) != crypto.SigLen {
+		return fmt.Errorf("signature incorrect length, got %d expected %d",
+			len(b), crypto.SigLen)
+	}
+	copy(p.Sig[:], b)
+	return nil
+}
+
 func (p *Peer) Magic() string {
-	return PeerMagic
+	return ""
 }
 
 func (p *Peer) Encode(s *splice.Splice) (e error) {
+	s.ID(p.ID).Uint64(uint64(p.RelayRate))
 	return nil
 }
 
 func (p *Peer) Decode(s *splice.Splice) (e error) {
+	var v uint64
+	s.ReadID(&p.ID).ReadUint64(&v)
+	s.ReadSignature(&p.Sig)
+	p.RelayRate = int(v)
 	return nil
 }
 
+func (p *Peer) Validate(s *splice.Splice, pub *crypto.Pub) bool {
+	h := sha256.Single(s.GetRange(0, nonce.IDLen+slice.Uint64Len))
+	var e error
+	var pk *crypto.Pub
+	if pk, e = p.Sig.Recover(h); fails(e) {
+		return false
+	}
+	if pub.Equals(pk) {
+		return true
+	}
+	return false
+}
+
 func (p *Peer) Len() int {
-	return 0
+	return PeerLen
 }
 
 func (p *Peer) GetOnion() interface{} {
