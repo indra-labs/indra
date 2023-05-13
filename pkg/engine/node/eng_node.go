@@ -36,9 +36,7 @@ const (
 	PaymentChanBuffers = 8
 )
 
-// NewNode creates a new Node. The Node for a client's self should use true in
-// the local parameter to not initialise the peer state ring buffers as it won't
-// use them.
+// NewNode creates a new Node.
 func NewNode(addr *netip.AddrPort, keys *crypto.Keys, tpt tpt.Transport,
 	relayRate int) (n *Node, id nonce.ID) {
 	

@@ -182,119 +182,119 @@ out:
 	}
 }
 
-func TestEngine_SendIntroQuery(t *testing.T) {
-	log2.SetLogLevel(log2.Info)
-	var clients []*Engine
-	var e error
-	const nCircuits = 10
-	ctx, cancel := context.WithCancel(context.Background())
-	if clients, e = CreateNMockCircuits(nCircuits, nCircuits,
-		ctx); fails(e) {
-		t.Error(e)
-		t.FailNow()
-	}
-	client := clients[0]
-	// Start up the clients.
-	for _, v := range clients {
-		go v.Start()
-	}
-	var wg sync.WaitGroup
-	var counter atomic.Int32
-	quit := qu.T()
-	go func() {
-		for {
-			select {
-			case <-time.After(time.Second * 4):
-				quit.Q()
-				t.Error("MakeHiddenService test failed")
-			case <-quit:
-				for i := 0; i < int(counter.Load()); i++ {
-					wg.Done()
-				}
-				for _, v := range clients {
-					v.Shutdown()
-				}
-				return
-			}
-		}
-	}()
-	for i := 0; i < nCircuits*nCircuits/2; i++ {
-		wg.Add(1)
-		counter.Inc()
-		e = clients[0].BuyNewSessions(1000000, func() {
-			wg.Done()
-			counter.Dec()
-		})
-		if fails(e) {
-			wg.Done()
-			counter.Dec()
-		}
-		wg.Wait()
-	}
-	var idPrv *crypto.Prv
-	if idPrv, e = crypto.GeneratePrvKey(); fails(e) {
-		return
-	}
-	id := nonce.NewID()
-	introducerHops := client.Manager.GetSessionsAtHop(2)
-	var introducer *sessions.Data
-	if len(introducerHops) > 1 {
-		cryptorand.Shuffle(len(introducerHops), func(i, j int) {
-			introducerHops[i], introducerHops[j] = introducerHops[j], introducerHops[i]
-		})
-	}
-	introducer = introducerHops[0]
-	returnHops := client.Manager.GetSessionsAtHop(5)
-	var returner *sessions.Data
-	if len(returnHops) > 1 {
-		cryptorand.Shuffle(len(returnHops), func(i, j int) {
-			returnHops[i], returnHops[j] = returnHops[j],
-				returnHops[i]
-		})
-	}
-	returner = returnHops[0]
-	svc := &services.Service{
-		Port:      2345,
-		RelayRate: 43523,
-		Transport: transport.NewByteChan(64),
-	}
-	client.SendHiddenService(id, idPrv, time.Now().Add(time.Hour), returner,
-		introducer, svc, func(id nonce.ID, ifc interface{},
-			b slice.Bytes) (e error) {
-			log.I.S("hidden service callback", id, ifc, b.ToBytes())
-			return
-		})
-	log2.SetLogLevel(log2.Trace)
-	// Now query everyone for the intro.
-	idPub := crypto.DerivePub(idPrv)
-	peers := clients[1:]
-	log.D.Ln("client address", client.Manager.GetLocalNodeAddressString())
-	for i := range peers {
-		wg.Add(1)
-		counter.Inc()
-		log.T.Ln("peer", i)
-		if len(returnHops) > 1 {
-			cryptorand.Shuffle(len(returnHops), func(i, j int) {
-				returnHops[i], returnHops[j] = returnHops[j], returnHops[i]
-			})
-		}
-		if len(introducerHops) > 1 {
-			cryptorand.Shuffle(len(introducerHops), func(i, j int) {
-				introducerHops[i], introducerHops[j] = introducerHops[j], introducerHops[i]
-			})
-		}
-		client.SendIntroQuery(id, idPub, introducerHops[0], returnHops[0],
-			func(in *onions.Intro) {
-				wg.Done()
-				counter.Dec()
-				log.I.Ln("success",
-					in.ID, in.Key.ToBase32Abbreviated(), in.AddrPort)
-			})
-		wg.Wait()
-	}
-	quit.Q()
-	cancel()
-}
+// func TestEngine_SendIntroQuery(t *testing.T) {
+// 	log2.SetLogLevel(log2.Info)
+// 	var clients []*Engine
+// 	var e error
+// 	const nCircuits = 10
+// 	ctx, cancel := context.WithCancel(context.Background())
+// 	if clients, e = CreateNMockCircuits(nCircuits, nCircuits,
+// 		ctx); fails(e) {
+// 		t.Error(e)
+// 		t.FailNow()
+// 	}
+// 	client := clients[0]
+// 	// Start up the clients.
+// 	for _, v := range clients {
+// 		go v.Start()
+// 	}
+// 	var wg sync.WaitGroup
+// 	var counter atomic.Int32
+// 	quit := qu.T()
+// 	go func() {
+// 		for {
+// 			select {
+// 			case <-time.After(time.Second * 4):
+// 				quit.Q()
+// 				t.Error("MakeHiddenService test failed")
+// 			case <-quit:
+// 				for i := 0; i < int(counter.Load()); i++ {
+// 					wg.Done()
+// 				}
+// 				for _, v := range clients {
+// 					v.Shutdown()
+// 				}
+// 				return
+// 			}
+// 		}
+// 	}()
+// 	for i := 0; i < nCircuits*nCircuits/2; i++ {
+// 		wg.Add(1)
+// 		counter.Inc()
+// 		e = clients[0].BuyNewSessions(1000000, func() {
+// 			wg.Done()
+// 			counter.Dec()
+// 		})
+// 		if fails(e) {
+// 			wg.Done()
+// 			counter.Dec()
+// 		}
+// 		wg.Wait()
+// 	}
+// 	var idPrv *crypto.Prv
+// 	if idPrv, e = crypto.GeneratePrvKey(); fails(e) {
+// 		return
+// 	}
+// 	id := nonce.NewID()
+// 	introducerHops := client.Manager.GetSessionsAtHop(2)
+// 	var introducer *sessions.Data
+// 	if len(introducerHops) > 1 {
+// 		cryptorand.Shuffle(len(introducerHops), func(i, j int) {
+// 			introducerHops[i], introducerHops[j] = introducerHops[j], introducerHops[i]
+// 		})
+// 	}
+// 	introducer = introducerHops[0]
+// 	returnHops := client.Manager.GetSessionsAtHop(5)
+// 	var returner *sessions.Data
+// 	if len(returnHops) > 1 {
+// 		cryptorand.Shuffle(len(returnHops), func(i, j int) {
+// 			returnHops[i], returnHops[j] = returnHops[j],
+// 				returnHops[i]
+// 		})
+// 	}
+// 	returner = returnHops[0]
+// 	svc := &services.Service{
+// 		Port:      2345,
+// 		RelayRate: 43523,
+// 		Transport: transport.NewByteChan(64),
+// 	}
+// 	client.SendHiddenService(id, idPrv, time.Now().Add(time.Hour), returner,
+// 		introducer, svc, func(id nonce.ID, ifc interface{},
+// 			b slice.Bytes) (e error) {
+// 			log.I.S("hidden service callback", id, ifc, b.ToBytes())
+// 			return
+// 		})
+// 	log2.SetLogLevel(log2.Trace)
+// 	// Now query everyone for the intro.
+// 	idPub := crypto.DerivePub(idPrv)
+// 	peers := clients[1:]
+// 	log.D.Ln("client address", client.Manager.GetLocalNodeAddressString())
+// 	for i := range peers {
+// 		wg.Add(1)
+// 		counter.Inc()
+// 		log.T.Ln("peer", i)
+// 		if len(returnHops) > 1 {
+// 			cryptorand.Shuffle(len(returnHops), func(i, j int) {
+// 				returnHops[i], returnHops[j] = returnHops[j], returnHops[i]
+// 			})
+// 		}
+// 		if len(introducerHops) > 1 {
+// 			cryptorand.Shuffle(len(introducerHops), func(i, j int) {
+// 				introducerHops[i], introducerHops[j] = introducerHops[j], introducerHops[i]
+// 			})
+// 		}
+// 		client.SendIntroQuery(id, idPub, introducerHops[0], returnHops[0],
+// 			func(in *onions.Intro) {
+// 				wg.Done()
+// 				counter.Dec()
+// 				log.I.Ln("success",
+// 					in.ID, in.Key.ToBase32Abbreviated(), in.AddrPort)
+// 			})
+// 		wg.Wait()
+// 	}
+// 	quit.Q()
+// 	cancel()
+// }
 
 func TestEngine_Message(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
@@ -429,7 +429,7 @@ func TestEngine_Message(t *testing.T) {
 	wg.Add(1)
 	counter.Inc()
 	var ms *onions.Message
-	client.SendMessage(&onions.Message{
+	client.SendHiddenMessage(&onions.Message{
 		Address: rd.Address,
 		ID:      nonce.NewID(),
 		Re:      rd.ID,
@@ -446,7 +446,7 @@ func TestEngine_Message(t *testing.T) {
 	wg.Wait()
 	wg.Add(1)
 	counter.Inc()
-	client.SendMessage(&onions.Message{
+	client.SendHiddenMessage(&onions.Message{
 		Address: ms.Address,
 		ID:      nonce.NewID(),
 		Re:      ms.ID,

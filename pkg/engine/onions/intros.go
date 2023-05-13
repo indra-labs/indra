@@ -13,6 +13,9 @@ type Introduction struct {
 	ReplyHeader
 }
 
+// GossipIntro -
+// todo: this should update a peer subkey on DHT for
+//   introductions, as well as the link to the hidden service peer data
 func GossipIntro(intro *Intro, sm *sess.Manager, c qu.C) {
 	log.D.F("propagating hidden service intro for %s",
 		intro.Key.ToBase32Abbreviated())
