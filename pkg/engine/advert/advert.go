@@ -2,6 +2,7 @@ package advert
 
 import (
 	"fmt"
+	"net/netip"
 	"time"
 	
 	"github.com/multiformats/go-multiaddr"
@@ -22,7 +23,6 @@ var (
 )
 
 const (
-	PeerMagic = "peer"
 	PeerLen   = magic.Len + nonce.IDLen + slice.Uint64Len + crypto.SigLen
 )
 
@@ -80,17 +80,12 @@ func (p *Peer) Decode(s *splice.Splice) (e error) {
 	return nil
 }
 
-func (p *Peer) Validate(s *splice.Splice, pub *crypto.Pub) bool {
+func (p *Peer) Validate(s *splice.Splice) (pk *crypto.Pub) {
 	h := sha256.Single(s.GetRange(0, nonce.IDLen+slice.Uint64Len))
 	var e error
-	var pk *crypto.Pub
 	if pk, e = p.Sig.Recover(h); fails(e) {
-		return false
 	}
-	if pub.Equals(pk) {
-		return true
-	}
-	return false
+	return
 }
 
 func (p *Peer) Len() int {
@@ -106,25 +101,67 @@ func (p *Peer) GetOnion() interface{} {
 // address. This means hidden service introducers for values over zero.
 // Hidden services have no value in the zero index, which is "<hash>/address/0".
 type Address struct {
-	multiaddr.Multiaddr
-	ID     nonce.ID // To ensure no repeating message
-	Index  byte
-	Expiry time.Time // zero for relay's public address (32 bit).
-	crypto.SigBytes
+	ID        nonce.ID            // To ensure no repeating message
+	Multiaddr multiaddr.Multiaddr // We only use a netip.AddrPort though.
+	Index     byte                // This is the index in the slice from Peer.
+	Expiry    time.Time           // zero for relay's public address (32 bit).
+	Sig       crypto.SigBytes
 }
 
-const AddressLen = nonce.IDLen + 1 + slice.Uint32Len + crypto.SigLen
+const AddressLen = nonce.IDLen + splice.AddrLen + 1 +
+	slice.Uint64Len + crypto.SigLen
 
 func (a *Address) Magic() string { return "" }
 
 func (a *Address) Encode(s *splice.Splice) (e error) {
-	// TODO implement me
-	panic("implement me")
+	var ip, port string
+	if ip, e = a.Multiaddr.ValueForProtocol(multiaddr.P_IP4); fails(e) {
+	}
+	if ip == "" {
+		if ip, e = a.Multiaddr.ValueForProtocol(multiaddr.P_IP6); fails(e) {
+			return
+		}
+	}
+	if port, e = a.Multiaddr.ValueForProtocol(multiaddr.P_TCP); fails(e) {
+		return
+	}
+	var addr netip.AddrPort
+	if addr, e = netip.ParseAddrPort(ip + ":" + port); fails(e) {
+	}
+	s.ID(a.ID).AddrPort(&addr).Byte(a.Index).Time(a.Expiry)
+	return
+}
+
+func (a *Address) Sign(prv *crypto.Prv) (e error) {
+	s := splice.New(a.Len())
+	if e = a.Encode(s); fails(e) {
+		return
+	}
+	var b []byte
+	if b, e = prv.Sign(s.GetUntil(s.GetCursor())); fails(e) {
+		return
+	}
+	if len(b) != crypto.SigLen {
+		return fmt.Errorf("signature incorrect length, got %d expected %d",
+			len(b), crypto.SigLen)
+	}
+	copy(a.Sig[:], b)
+	return nil
 }
 
 func (a *Address) Decode(s *splice.Splice) (e error) {
-	// TODO implement me
-	panic("implement me")
+	var addr *netip.AddrPort
+	s.ReadID(&a.ID).ReadAddrPort(&addr).ReadByte(&a.Index).ReadTime(&a.Expiry)
+	return
+}
+
+func (a *Address) Validate(s *splice.Splice) (pub *crypto.Pub) {
+	h := sha256.Single(s.GetRange(0, nonce.IDLen+splice.AddrLen+1+
+		slice.Uint64Len))
+	var e error
+	if pub, e = a.Sig.Recover(h); fails(e) {
+	}
+	return
 }
 
 func (a *Address) Len() int              { return AddressLen }
@@ -137,25 +174,54 @@ func (a *Address) GetOnion() interface{} { return nil }
 // signals to stop scanning for more subsequent values.
 type Service struct {
 	ID        nonce.ID // To ensure no repeating message
-	Index     uint16
+	Index     uint16   // This is the index in the slice from Peer.
 	Port      uint16
-	RelayRate int
-	crypto.SigBytes
+	RelayRate uint32
+	Sig       crypto.SigBytes
 }
 
-const ServiceLen = nonce.IDLen + 2*slice.Uint16Len + slice.Uint64Len +
+const ServiceLen = nonce.IDLen + 2*slice.Uint16Len + slice.Uint32Len +
 	crypto.SigLen
 
 func (sv *Service) Magic() string { return "" }
 
+func (sv *Service) Sign(prv *crypto.Prv) (e error) {
+	s := splice.New(sv.Len())
+	if e = sv.Encode(s); fails(e) {
+		return
+	}
+	var b []byte
+	if b, e = prv.Sign(s.GetUntil(s.GetCursor())); fails(e) {
+		return
+	}
+	if len(b) != crypto.SigLen {
+		return fmt.Errorf("signature incorrect length, got %d expected %d",
+			len(b), crypto.SigLen)
+	}
+	copy(sv.Sig[:], b)
+	return nil
+}
+
 func (sv *Service) Encode(s *splice.Splice) (e error) {
-	// TODO implement me
-	panic("implement me")
+	s.ID(sv.ID).Uint16(sv.Index).Uint16(sv.Port).Uint32(sv.RelayRate)
+	return
+}
+
+func (sv *Service) Validate(s *splice.Splice) (pub *crypto.Pub) {
+	h := sha256.Single(s.GetRange(0, nonce.IDLen+2*slice.Uint16Len+
+		slice.Uint64Len))
+	var e error
+	if pub, e = sv.Sig.Recover(h); fails(e) {
+	}
+	return
 }
 
 func (sv *Service) Decode(s *splice.Splice) (e error) {
-	// TODO implement me
-	panic("implement me")
+	s.ReadID(&sv.ID).
+		ReadUint16(&sv.Index).
+		ReadUint16(&sv.Port).
+		ReadUint32(&sv.RelayRate)
+	return
 }
 
 func (sv *Service) Len() int              { return ServiceLen }
