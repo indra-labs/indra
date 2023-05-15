@@ -496,7 +496,7 @@ func (sm *Manager) FindPendingPayment(id nonce.ID) (pp *payments.Payment) {
 	return sm.PendingPayments.Find(id)
 }
 func (sm *Manager) FindPendingPreimage(pi sha256.Hash) (pp *payments.Payment) {
-	log.T.F("searching preimage %s", pi)
+	log.T.F("searching preimage %s", pi.Based32String())
 	sm.Lock()
 	defer sm.Unlock()
 	return sm.PendingPayments.FindPreimage(pi)

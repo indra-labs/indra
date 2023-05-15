@@ -108,7 +108,7 @@ func (x *Route) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 			hh.CurrentIntros[0].Key.ToBase32Abbreviated())
 		// We have the keys to unwrap this one.
 		x.Decrypt(hh.Prv, s)
-		log.D.Ln(s)
+		log.D.S("hidden message",s.GetAll().ToBytes())
 		n := crypto.GenNonces(5)
 		rvKeys := ng.Keyset().Next3()
 		hops := []byte{3, 4, 5, 0, 1}

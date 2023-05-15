@@ -74,7 +74,7 @@ func (x *Session) Decode(s *splice.Splice) (e error) {
 
 func (x *Session) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	
-	log.T.F("incoming session %s", x.PreimageHash())
+	log.T.F("incoming session %s", x.PreimageHash().Based32String())
 	pi := ng.Mgr().FindPendingPreimage(x.PreimageHash())
 	if pi != nil {
 		// We need to delete this first in case somehow two such messages arrive

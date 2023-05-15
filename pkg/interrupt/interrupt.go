@@ -144,7 +144,7 @@ func AddHandler(handler func()) {
 	// all other callbacks and exits if not already done.
 	_, loc, line, _ := runtime.Caller(1)
 	msg := fmt.Sprintf("%s:%d", loc, line)
-	log.T.Ln("\n"+strings.Split(msg, indra.PathBase)[0],
+	log.T.Ln("\n"+msg+strings.Split(msg, indra.PathBase)[0],
 		"added interrupt handler")
 	if ch == nil {
 		ch = make(chan os.Signal)

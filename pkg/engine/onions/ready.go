@@ -47,7 +47,7 @@ func (x *Ready) Encode(s *splice.Splice) (e error) {
 		Nonces(x.Return.Nonces)
 	for i := range x.Forward.Ciphers {
 		blk := ciph.BlockFromHash(x.Forward.Ciphers[i])
-		log.D.F("encrypting %s", x.Forward.Ciphers[i])
+		log.D.F("encrypting %s", x.Forward.Ciphers[i].Based32String())
 		ciph.Encipher(blk, x.Forward.Nonces[i], s.GetFrom(start))
 	}
 	return
@@ -68,6 +68,7 @@ func (x *Ready) Decode(s *splice.Splice) (e error) {
 }
 
 func (x *Ready) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
+	// todo: this should be triggering connection open signal to socks/tunnel.
 	_, e = ng.Pending().ProcessAndDelete(x.ID, x, s.GetAll())
 	return
 }

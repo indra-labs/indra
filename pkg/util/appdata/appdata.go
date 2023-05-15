@@ -86,3 +86,10 @@ func GetDataDir(goos, appName string, roaming bool) string {
 func Dir(appName string, roaming bool) string {
 	return GetDataDir(runtime.GOOS, appName, roaming)
 }
+
+func MakeDirIfNeeded(appName string, roaming bool,
+	mode os.FileMode) (dataDir string) {
+	dataDir = Dir(appName, roaming)
+	os.MkdirAll(dataDir, mode)
+	return
+}

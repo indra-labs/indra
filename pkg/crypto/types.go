@@ -58,7 +58,7 @@ func ComputeSharedSecret(prv *Prv, pub *Pub) sha256.Hash {
 func GenCiphers(prvs Privs, pubs Pubs) (ciphers Ciphers) {
 	for i := range prvs {
 		ciphers[i] = ComputeSharedSecret(prvs[i], pubs[i])
-		log.T.Ln("cipher", i, ciphers[i])
+		log.T.Ln("cipher", i, ciphers[i].Based32String())
 	}
 	return
 }

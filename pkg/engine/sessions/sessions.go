@@ -1,11 +1,9 @@
 package sessions
 
 import (
-	"fmt"
-	
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	"github.com/gookit/color"
-	
+
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -31,11 +29,11 @@ type Data struct {
 	Hop             byte
 }
 
-func (s *Data) String() string {
-	return fmt.Sprintf("%s sesssion %s node %s hop %d",
-		s.Node.AddrPort.String(), s.Header.Bytes.String(),
-		s.Node.ID, s.Hop)
-}
+// func (s *Data) String() string {
+// 	return fmt.Sprintf("%s sesssion %s node %s hop %d",
+// 		s.Node.AddrPort.String(), s.Header.Bytes.String(),
+// 		s.Node.ID, s.Hop)
+// }
 
 // A Circuit is the generic fixed-length path used for most messages.
 type Circuit [5]*Data
@@ -73,7 +71,7 @@ func NewSessionData(
 	}
 	h, p := hdr.Prv.ToBytes(), pld.Prv.ToBytes()
 	s = &Data{
-		// Keys:        id,
+		ID:        id,
 		Node:      node,
 		Remaining: rem,
 		Header:    hdr,

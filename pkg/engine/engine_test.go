@@ -2,15 +2,14 @@ package engine
 
 import (
 	"context"
+	"reflect"
 	"runtime"
 	"sync"
 	"testing"
 	"time"
-	
+
 	"go.uber.org/atomic"
-	
-	"git-indra.lan/indra-labs/indra/pkg/util/qu"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
@@ -20,6 +19,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/engine/transport"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
+	"git-indra.lan/indra-labs/indra/pkg/util/qu"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 	"git-indra.lan/indra-labs/indra/pkg/util/tests"
 )
@@ -161,6 +161,7 @@ out:
 			})
 		}
 		returner = returnHops[0]
+		log.D.S("returnHops", returnHops[0].ID)
 		clients[0].SendGetBalance(returner, clients[0].Manager.Sessions[i],
 			func(cf nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
 				log.I.Ln("success")
@@ -642,7 +643,11 @@ func TestEngine_Route(t *testing.T) {
 		ini.Expiry, ini.Validate())
 	client.SendRoute(ini.Key, ini.AddrPort,
 		func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
-			log.I.S("success", id)
+			if reflect.TypeOf(ifc).String()!="*onions.Ready"{
+				t.Error("wrong type")
+				t.FailNow()
+			}
+			log.I.Ln("success", id)
 			counter.Dec()
 			wg.Done()
 			return

@@ -2,7 +2,7 @@ package engine
 
 import (
 	"context"
-	
+
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -55,6 +55,7 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 			if i > 0 {
 				ss[i-1] = sessions.NewSessionData(nonce.NewID(), nodes[i],
 					1<<16, nil, nil, byte((i-1)/nCircuits))
+				// log.D.S("session",i-1,ss[i-1])
 				// AddIntro session to node, so it will be able to relay if it
 				// gets a message with the key.
 				cl[i].Manager.AddSession(ss[i-1])

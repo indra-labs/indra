@@ -64,6 +64,7 @@ func NewEngine(p Params) (c *Engine, e error) {
 		c.Manager.AddSession(sessions.NewSessionData(nonce.NewID(), p.Node, 0,
 			nil, nil, 5))
 	}
+	// log.D.S("sessions",c.Manager.Sessions)
 	return
 }
 

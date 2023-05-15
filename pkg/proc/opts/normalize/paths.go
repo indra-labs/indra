@@ -5,7 +5,7 @@ import (
 	"os/user"
 	"path/filepath"
 	"strings"
-
+	
 	"git-indra.lan/indra-labs/indra/pkg/util/appdata"
 )
 
@@ -24,8 +24,9 @@ func ResolvePath(input, appName string, abs bool) (cleaned string, e error) {
 			// app data directory
 		} else if !strings.HasPrefix(string(os.PathSeparator), cleaned) ||
 			strings.HasPrefix("."+string(os.PathSeparator), cleaned) {
-
-			cleaned = filepath.Join(appdata.Dir(appName, false), cleaned)
+			
+			cleaned = filepath.Join(appdata.MakeDirIfNeeded(appName, false,
+				0700), cleaned)
 		}
 	}
 	return
