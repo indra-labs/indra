@@ -14,7 +14,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
-	"git-indra.lan/indra-labs/indra/pkg/util/splice"
 )
 
 func (ng *Engine) SendExit(port uint16, msg slice.Bytes, id nonce.ID,
@@ -69,41 +68,10 @@ func (ng *Engine) SendHiddenService(id nonce.ID, key *crypto.Prv,
 	return
 }
 
-func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *crypto.Pub,
-	alice, bob *sessions.Data, hook func(in *onions.Intro)) {
-	
-	fn := func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
-		s := splice.Load(b, slice.NewCursor())
-		on := onions.Recognise(s)
-		if e = on.Decode(s); fails(e) {
-			return
-		}
-		var oni *onions.Intro
-		var ok bool
-		if oni, ok = on.(*onions.Intro); !ok {
-			return
-		}
-		hook(oni)
-		return
-	}
-	log.D.Ln("sending introquery")
-	hops := sess.StandardCircuit()
-	s := make(sessions.Sessions, len(hops))
-	s[2] = bob
-	s[5] = alice
-	se := ng.Manager.SelectHops(hops, s, "sendintroquery")
-	var c sessions.Circuit
-	copy(c[:], se)
-	o := onions.MakeIntroQuery(id, hsk, bob, alice, c, ng.KeySet)
-	res := PostAcctOnion(ng.Manager, o)
-	log.D.Ln(res.ID)
-	ng.Manager.SendWithOneHook(c[0].Node.AddrPort, res, fn, ng.Responses)
-}
-
-func (ng *Engine) SendMessage(mp *onions.Message, hook responses.Callback) (id nonce.ID) {
+func (ng *Engine) SendHiddenMessage(mp *onions.Message, hook responses.Callback) (id nonce.ID) {
 	// Add another two hops for security against unmasking.
 	preHops := []byte{0, 1}
-	oo := ng.Manager.SelectHops(preHops, mp.Forwards[:], "sendmessage")
+	oo := ng.Manager.SelectHops(preHops, mp.Forwards[:], "sendhiddenmessage")
 	mp.Forwards = [2]*sessions.Data{oo[0], oo[1]}
 	o := onions.Skins{}.Message(mp, ng.KeySet)
 	res := PostAcctOnion(ng.Manager, o)

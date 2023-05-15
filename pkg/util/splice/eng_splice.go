@@ -534,7 +534,7 @@ func (s *Splice) ReadBytes(b *slice.Bytes) *Splice {
 	return s
 }
 
-func (s *Splice) Signature(sb *crypto.SigBytes) *Splice {
+func (s *Splice) Signature(sb crypto.SigBytes) *Splice {
 	copy(s.b[*s.c:s.c.Inc(crypto.SigLen)], sb[:])
 	s.Segments = append(s.Segments,
 		NameOffset{Offset: int(*s.c), Name: "signature"})
