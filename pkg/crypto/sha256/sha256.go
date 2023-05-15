@@ -35,7 +35,7 @@ type Hash [32]byte
 // 	return hex.EncodeToString(h[:])
 // }
 
-func (h Hash) String() string {
+func (h Hash) Based32String() string {
 	return enc(h[:])[:52]
 }
 

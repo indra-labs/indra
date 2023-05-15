@@ -10,6 +10,8 @@ import (
 
 type MyIntros map[crypto.PubBytes]*Introduction
 
+type KnownIntros map[crypto.PubBytes]*Intro
+
 type LocalHiddenService struct {
 	Prv           *crypto.Prv
 	CurrentIntros []*Intro
@@ -23,13 +25,15 @@ type Services map[crypto.PubBytes]*LocalHiddenService
 type Hidden struct {
 	sync.Mutex
 	MyIntros
+	KnownIntros
 	Services
 }
 
 func NewHiddenrouting() *Hidden {
 	return &Hidden{
-		MyIntros: make(MyIntros),
-		Services: make(Services),
+		MyIntros:    make(MyIntros),
+		KnownIntros: make(KnownIntros),
+		Services:    make(Services),
 	}
 }
 
@@ -68,6 +72,12 @@ out:
 			}
 		}
 	}
+	for i := range hr.KnownIntros {
+		if hr.KnownIntros[i].ID == id {
+			delete(hr.KnownIntros, i)
+			break
+		}
+	}
 	hr.Unlock()
 	
 }
@@ -82,6 +92,11 @@ func (hr *Hidden) FindCloakedHiddenService(key crypto.PubKey) (
 		}
 	}
 	for i := range hr.Services {
+		if crypto.Match(key, i) {
+			return &i
+		}
+	}
+	for i := range hr.KnownIntros {
 		if crypto.Match(key, i) {
 			return &i
 		}
@@ -118,6 +133,22 @@ func (hr *Hidden) FindIntroductionUnsafe(
 	return
 }
 
+func (hr *Hidden) FindKnownIntro(key crypto.PubBytes) (intro *Intro) {
+	hr.Lock()
+	var ok bool
+	if intro, ok = hr.KnownIntros[key]; ok {
+	}
+	hr.Unlock()
+	return
+}
+
+func (hr *Hidden) FindKnownIntroUnsafe(key crypto.PubBytes) (intro *Intro) {
+	var ok bool
+	if intro, ok = hr.KnownIntros[key]; ok {
+	}
+	return
+}
+
 func (hr *Hidden) Delete(key crypto.PubBytes) (header *Introduction) {
 	hr.Lock()
 	var ok bool
@@ -128,6 +159,16 @@ func (hr *Hidden) Delete(key crypto.PubBytes) (header *Introduction) {
 	return
 }
 
+func (hr *Hidden) DeleteKnownIntro(key crypto.PubBytes) (
+	header *Introduction) {
+	hr.Lock()
+	var ok bool
+	if _, ok = hr.KnownIntros[key]; ok {
+		delete(hr.KnownIntros, key)
+	}
+	hr.Unlock()
+	return
+}
 
 func (hr *Hidden) AddIntro(pk *crypto.Pub, intro *Introduction) {
 	hr.Lock()

@@ -198,6 +198,16 @@ func (o Skins) Intro(id nonce.ID, key *crypto.Prv, ap *netip.AddrPort,
 	return append(o, NewIntro(id, key, ap, expires))
 }
 
+func (o Skins) IntroQuery(id nonce.ID, hsk *crypto.Pub, exit *ExitPoint) Skins {
+	return append(o, &IntroQuery{
+		ID:      id,
+		Ciphers: crypto.GenCiphers(exit.Keys, exit.ReturnPubs),
+		Nonces:  exit.Nonces,
+		Key:     hsk,
+		Onion:   nop,
+	})
+}
+
 func (o Skins) Message(msg *Message, ks *crypto.KeySet) Skins {
 	return append(o.
 		ForwardCrypt(msg.Forwards[0], ks.Next(), nonce.New()).
@@ -325,6 +335,16 @@ func MakeHiddenService(in *Intro, alice, bob *sessions.Data,
 	return Skins{}.
 		RoutingHeader(headers.Forward).
 		HiddenService(in, headers.ExitPoint()).
+		RoutingHeader(headers.Return)
+}
+
+func MakeIntroQuery(id nonce.ID, hsk *crypto.Pub, alice, bob *sessions.Data,
+	c sessions.Circuit, ks *crypto.KeySet) Skins {
+	
+	headers := GetHeaders(alice, bob, c, ks)
+	return Skins{}.
+		RoutingHeader(headers.Forward).
+		IntroQuery(id, hsk, headers.ExitPoint()).
 		RoutingHeader(headers.Return)
 }
 
