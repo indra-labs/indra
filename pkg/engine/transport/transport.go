@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"sync"
 	"time"
-	
+
 	"github.com/gookit/color"
 	"github.com/ipfs/go-datastore"
 	badger "github.com/ipfs/go-ds-badger"
@@ -22,7 +22,7 @@ import (
 	"github.com/libp2p/go-libp2p/p2p/security/noise"
 	"github.com/libp2p/go-libp2p/p2p/transport/tcp"
 	"github.com/multiformats/go-multiaddr"
-	
+
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/engine/tpt"
@@ -38,12 +38,11 @@ var (
 )
 
 const (
-	LocalhostZeroIPv4TCP  = "/ip4/127.0.0.1/tcp/0"
-	LocalhostZeroIPv4QUIC = "/ip4/127.0.0.1/udp/0/quic"
-	DefaultMTU            = 1382
-	ConnBufs              = 8192
-	IndraLibP2PID         = "/indra/relay/" + indra.SemVer
-	IndraServiceName      = "org.indra.relay"
+	LocalhostZeroIPv4TCP = "/ip4/127.0.0.1/tcp/0"
+	DefaultMTU           = 1382
+	ConnBufs             = 8192
+	IndraLibP2PID        = "/indra/relay/" + indra.SemVer
+	IndraServiceName     = "org.indra.relay"
 )
 
 type Listener struct {
@@ -71,7 +70,7 @@ func badgerStore(dataPath string) (datastore.Batching, func()) {
 
 func NewListener(rendezvous, multiAddr, storePath string, keys *crypto.Keys,
 	ctx context.Context, mtu int) (c *Listener, e error) {
-	
+
 	c = &Listener{
 		Keys:        keys,
 		MTU:         mtu,
@@ -136,7 +135,7 @@ func (l *Listener) handle(s network.Stream) {
 		}
 		log.D.S(blue(GetHostOnlyAddress(l.
 			Host)) + " read " + fmt.Sprint(n) + " bytes from listener",
-			// b[:n].ToBytes(),
+		// b[:n].ToBytes(),
 		)
 		id := s.Conn().RemotePeer()
 		ai := l.Host.Peerstore().PeerInfo(id)
@@ -267,7 +266,7 @@ func (l *Listener) Dial(multiAddr string) (d *Conn) {
 	var s network.Stream
 	if s, e = l.Host.NewStream(context.Background(), info.ID,
 		IndraLibP2PID); fails(e) {
-		
+
 		return
 	}
 	d = &Conn{
@@ -315,7 +314,7 @@ const ProtocolPrefix = "/indra/" + indra.SemVer
 
 func NewDHT(ctx context.Context, host host.Host,
 	bootstrapPeers []multiaddr.Multiaddr) (d *dht.IpfsDHT, e error) {
-	
+
 	var options []dht.Option
 	if len(bootstrapPeers) == 0 {
 		options = append(options, dht.Mode(dht.ModeServer))
@@ -347,7 +346,7 @@ func NewDHT(ctx context.Context, host host.Host,
 				"%s: Connection established with bootstrap node: %s",
 				blue(GetHostOnlyAddress(host)),
 				blue((*peerinfo).Addrs[0]))
-			
+
 			wg.Done()
 		}()
 	}
@@ -357,7 +356,7 @@ func NewDHT(ctx context.Context, host host.Host,
 
 func Discover(ctx context.Context, h host.Host, dht *dht.IpfsDHT,
 	rendezvous string) {
-	
+
 	var disco = routing.NewRoutingDiscovery(dht)
 	var e error
 	var peers <-chan peer.AddrInfo
@@ -379,10 +378,10 @@ func Discover(ctx context.Context, h host.Host, dht *dht.IpfsDHT,
 				}
 				if h.Network().Connectedness(p.ID) !=
 					network.Connected {
-					
+
 					if _, e = h.Network().DialPeer(ctx,
 						p.ID); fails(e) {
-						
+
 						continue
 					}
 					log.D.Ln(h.Addrs()[0].String(), "Connected to peer",
