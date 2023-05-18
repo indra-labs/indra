@@ -3,11 +3,14 @@ package transport
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
 	
 	"github.com/gookit/color"
+	"github.com/ipfs/go-datastore"
+	badger "github.com/ipfs/go-ds-badger"
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -15,14 +18,17 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/peerstore"
 	"github.com/libp2p/go-libp2p/p2p/discovery/routing"
+	"github.com/libp2p/go-libp2p/p2p/host/peerstore/pstoreds"
+	"github.com/libp2p/go-libp2p/p2p/security/noise"
+	"github.com/libp2p/go-libp2p/p2p/transport/tcp"
 	"github.com/multiformats/go-multiaddr"
-	
-	"git-indra.lan/indra-labs/indra/pkg/util/qu"
 	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/engine/tpt"
+	"git-indra.lan/indra-labs/indra/pkg/interrupt"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"git-indra.lan/indra-labs/indra/pkg/util/qu"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
@@ -32,11 +38,12 @@ var (
 )
 
 const (
-	LocalhostZeroIPv4 = "/ip4/127.0.0.1/tcp/0"
-	DefaultMTU        = 1382
-	ConnBufs          = 8192
-	IndraLibP2PID     = "/indra/relay/" + indra.SemVer
-	IndraServiceName  = "org.indra.relay"
+	LocalhostZeroIPv4TCP  = "/ip4/127.0.0.1/tcp/0"
+	LocalhostZeroIPv4QUIC = "/ip4/127.0.0.1/udp/0/quic"
+	DefaultMTU            = 1382
+	ConnBufs              = 8192
+	IndraLibP2PID         = "/indra/relay/" + indra.SemVer
+	IndraServiceName      = "org.indra.relay"
 )
 
 type Listener struct {
@@ -45,14 +52,28 @@ type Listener struct {
 	Host        host.Host
 	connections map[string]*Conn
 	newConns    chan *Conn
+	*crypto.Keys
 	context.Context
 	sync.Mutex
 }
 
-func NewListener(rendezvous, multiAddr string,
-	prv *crypto.Prv, ctx context.Context, mtu int) (c *Listener, e error) {
+func badgerStore(dataPath string) (datastore.Batching, func()) {
+	log.T.Ln("dataPath", dataPath)
+	store, err := badger.NewDatastore(dataPath, nil)
+	if fails(err) {
+		return nil, func() {}
+	}
+	closer := func() {
+		store.Close()
+	}
+	return store, closer
+}
+
+func NewListener(rendezvous, multiAddr, storePath string, keys *crypto.Keys,
+	ctx context.Context, mtu int) (c *Listener, e error) {
 	
 	c = &Listener{
+		Keys:        keys,
 		MTU:         mtu,
 		connections: make(map[string]*Conn),
 		newConns:    make(chan *Conn, ConnBufs),
@@ -70,14 +91,26 @@ func NewListener(rendezvous, multiAddr string,
 	} else {
 		rdv = nil
 	}
+	store, closer := badgerStore(storePath)
+	if store == nil {
+		return nil, errors.New("could not open database")
+	}
+	var st peerstore.Peerstore
+	st, e = pstoreds.NewPeerstore(ctx, store, pstoreds.DefaultOpts())
 	if c.Host, e = libp2p.New(
-		libp2p.Identity(prv),
+		libp2p.Identity(keys.Prv),
 		libp2p.ListenAddrs(ma),
-		libp2p.NoSecurity,
 		libp2p.EnableHolePunching(),
+		// libp2p.Transport(quic.NewTransport),
+		libp2p.Transport(tcp.NewTCPTransport),
+		// libp2p.Transport(websocket.New),
+		// libp2p.Security(tls.ID, tls.New),
+		libp2p.Security(noise.ID, noise.New),
+		libp2p.Peerstore(st),
 	); fails(e) {
 		return
 	}
+	interrupt.AddHandler(closer)
 	if c.DHT, e = NewDHT(ctx, c.Host, rdv); fails(e) {
 		return
 	}
@@ -101,7 +134,7 @@ func (l *Listener) handle(s network.Stream) {
 		if n, e = s.Read(b); fails(e) {
 			return
 		}
-		log.T.S(blue(GetHostOnlyAddress(l.
+		log.D.S(blue(GetHostOnlyAddress(l.
 			Host)) + " read " + fmt.Sprint(n) + " bytes from listener",
 			// b[:n].ToBytes(),
 		)
@@ -278,6 +311,8 @@ func (l *Listener) Dial(multiAddr string) (d *Conn) {
 
 var blue = color.Blue.Sprint
 
+const ProtocolPrefix = "/indra/" + indra.SemVer
+
 func NewDHT(ctx context.Context, host host.Host,
 	bootstrapPeers []multiaddr.Multiaddr) (d *dht.IpfsDHT, e error) {
 	
@@ -285,6 +320,9 @@ func NewDHT(ctx context.Context, host host.Host,
 	if len(bootstrapPeers) == 0 {
 		options = append(options, dht.Mode(dht.ModeServer))
 	}
+	options = append(options,
+		dht.ProtocolPrefix(ProtocolPrefix),
+	)
 	if d, e = dht.New(ctx, host, options...); fails(e) {
 		return
 	}

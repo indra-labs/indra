@@ -3,11 +3,12 @@ package engine
 import (
 	"context"
 	"net/netip"
+	"os"
 	"testing"
 	"time"
-	
+
 	"github.com/multiformats/go-multiaddr"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/engine/node"
 	"git-indra.lan/indra-labs/indra/pkg/engine/transport"
@@ -15,8 +16,9 @@ import (
 )
 
 func TestEngine_Dispatcher(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+	log2.SetLogLevel(log2.Trace)
 	var e error
+	log.D.Ln(os.PathSeparator)
 	_ = e
 	const nTotal = 26
 	ctx, cancel := context.WithCancel(context.Background())
@@ -32,8 +34,13 @@ func TestEngine_Dispatcher(t *testing.T) {
 		}
 		keys = append(keys, k)
 		var l *transport.Listener
-		if l, e = transport.NewListener(seed, transport.LocalhostZeroIPv4,
-			k.Prv, ctx, transport.DefaultMTU); fails(e) {
+		dataPath, err := os.MkdirTemp(os.TempDir(), "badger")
+		if err != nil {
+			t.FailNow()
+		}
+		if l, e = transport.NewListener(seed, transport.LocalhostZeroIPv4TCP,
+			dataPath, k, ctx, transport.DefaultMTU); fails(e) {
+			os.RemoveAll(dataPath)
 			t.FailNow()
 		}
 		sa := transport.GetHostAddress(l.Host)
@@ -44,22 +51,27 @@ func TestEngine_Dispatcher(t *testing.T) {
 		var addr netip.AddrPort
 		var ma multiaddr.Multiaddr
 		if ma, e = multiaddr.NewMultiaddr(sa); fails(e) {
+			os.RemoveAll(dataPath)
 			t.FailNow()
 		}
-		
+
 		var ip, port string
 		if ip, e = ma.ValueForProtocol(multiaddr.P_IP4); fails(e) {
 			// we specified ipv4 previously.
+			os.RemoveAll(dataPath)
 			t.FailNow()
 		}
 		if port, e = ma.ValueForProtocol(multiaddr.P_TCP); fails(e) {
+			os.RemoveAll(dataPath)
 			t.FailNow()
 		}
 		if addr, e = netip.ParseAddrPort(ip + ":" + port); fails(e) {
+			os.RemoveAll(dataPath)
 			t.FailNow()
 		}
 		var nod *node.Node
 		if nod, _ = node.NewNode(&addr, k, nil, 50000); fails(e) {
+			os.RemoveAll(dataPath)
 			t.FailNow()
 		}
 		nodes = append(nodes, nod)
@@ -69,9 +81,11 @@ func TestEngine_Dispatcher(t *testing.T) {
 			Keys:     k,
 			Node:     nod,
 		}); fails(e) {
+			os.RemoveAll(dataPath)
 			t.FailNow()
 		}
 		engines = append(engines, eng)
+		defer os.RemoveAll(dataPath)
 	}
 	time.Sleep(time.Second * 2)
 	cancel()
