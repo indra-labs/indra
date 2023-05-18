@@ -5,6 +5,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	libp2pquic "github.com/libp2p/go-libp2p/p2p/transport/quic"
+	"github.com/libp2p/go-libp2p/p2p/transport/websocket"
 	"sync"
 	"time"
 
@@ -19,7 +21,6 @@ import (
 	"github.com/libp2p/go-libp2p/core/peerstore"
 	"github.com/libp2p/go-libp2p/p2p/discovery/routing"
 	"github.com/libp2p/go-libp2p/p2p/host/peerstore/pstoreds"
-	"github.com/libp2p/go-libp2p/p2p/security/noise"
 	"github.com/libp2p/go-libp2p/p2p/transport/tcp"
 	"github.com/multiformats/go-multiaddr"
 
@@ -38,11 +39,12 @@ var (
 )
 
 const (
-	LocalhostZeroIPv4TCP = "/ip4/127.0.0.1/tcp/0"
-	DefaultMTU           = 1382
-	ConnBufs             = 8192
-	IndraLibP2PID        = "/indra/relay/" + indra.SemVer
-	IndraServiceName     = "org.indra.relay"
+	LocalhostZeroIPv4TCP  = "/ip4/127.0.0.1/tcp/0"
+	LocalhostZeroIPv4QUIC = "/ip4/127.0.0.1/udp/0/quic"
+	DefaultMTU            = 1382
+	ConnBufs              = 8192
+	IndraLibP2PID         = "/indra/relay/" + indra.SemVer
+	IndraServiceName      = "org.indra.relay"
 )
 
 type Listener struct {
@@ -100,11 +102,12 @@ func NewListener(rendezvous, multiAddr, storePath string, keys *crypto.Keys,
 		libp2p.Identity(keys.Prv),
 		libp2p.ListenAddrs(ma),
 		libp2p.EnableHolePunching(),
-		// libp2p.Transport(quic.NewTransport),
+		libp2p.Transport(libp2pquic.NewTransport),
 		libp2p.Transport(tcp.NewTCPTransport),
-		// libp2p.Transport(websocket.New),
-		// libp2p.Security(tls.ID, tls.New),
-		libp2p.Security(noise.ID, noise.New),
+		libp2p.Transport(websocket.New),
+		//libp2p.Security(libp2ptls.ID, libp2ptls.New),
+		//libp2p.Security(noise.ID, noise.New),
+		libp2p.NoSecurity,
 		libp2p.Peerstore(st),
 	); fails(e) {
 		return

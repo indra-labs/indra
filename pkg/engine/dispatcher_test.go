@@ -18,8 +18,6 @@ import (
 func TestEngine_Dispatcher(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	var e error
-	log.D.Ln(os.PathSeparator)
-	_ = e
 	const nTotal = 26
 	ctx, cancel := context.WithCancel(context.Background())
 	var listeners []*transport.Listener
@@ -38,7 +36,7 @@ func TestEngine_Dispatcher(t *testing.T) {
 		if err != nil {
 			t.FailNow()
 		}
-		if l, e = transport.NewListener(seed, transport.LocalhostZeroIPv4TCP,
+		if l, e = transport.NewListener(seed, transport.LocalhostZeroIPv4QUIC,
 			dataPath, k, ctx, transport.DefaultMTU); fails(e) {
 			os.RemoveAll(dataPath)
 			t.FailNow()
@@ -61,10 +59,12 @@ func TestEngine_Dispatcher(t *testing.T) {
 			os.RemoveAll(dataPath)
 			t.FailNow()
 		}
-		if port, e = ma.ValueForProtocol(multiaddr.P_TCP); fails(e) {
+		//if port, e = ma.ValueForProtocol(multiaddr.P_TCP); fails(e) {
+		if port, e = ma.ValueForProtocol(multiaddr.P_UDP); fails(e) {
 			os.RemoveAll(dataPath)
 			t.FailNow()
 		}
+		//}
 		if addr, e = netip.ParseAddrPort(ip + ":" + port); fails(e) {
 			os.RemoveAll(dataPath)
 			t.FailNow()
