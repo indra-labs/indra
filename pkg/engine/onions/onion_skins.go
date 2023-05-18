@@ -3,9 +3,9 @@ package onions
 import (
 	"net/netip"
 	"time"
-	
+
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -50,7 +50,7 @@ func (o Skins) ForwardCrypt(s *sessions.Data, k *crypto.Prv, n nonce.IV) Skins {
 
 func (o Skins) ReverseCrypt(s *sessions.Data, k *crypto.Prv, n nonce.IV,
 	seq int) (oo Skins) {
-	
+
 	if s == nil || k == nil {
 		oo = append(o, &Reverse{})
 		oo = append(oo, &Crypt{})
@@ -73,7 +73,7 @@ type Headers struct {
 
 func GetHeaders(alice, bob *sessions.Data, c sessions.Circuit,
 	ks *crypto.KeySet) (h *Headers) {
-	
+
 	fwKeys := ks.Next3()
 	rtKeys := ks.Next3()
 	n := crypto.GenNonces(6)
@@ -126,14 +126,14 @@ func (o Skins) RoutingHeader(r *Routing) Skins {
 
 func (o Skins) ForwardSession(s *node.Node,
 	k *crypto.Prv, n nonce.IV, sess *Session) Skins {
-	
+
 	return o.Forward(s.AddrPort).
 		Crypt(s.Identity.Pub, nil, k, n, 0).
 		Session(sess)
 }
 
 func (o Skins) Balance(id nonce.ID, amt lnwire.MilliSatoshi) Skins {
-	
+
 	return append(o, &Balance{ID: id, MilliSatoshi: amt})
 }
 
@@ -143,7 +143,7 @@ func (o Skins) Confirmation(id nonce.ID, load byte) Skins {
 
 func (o Skins) Crypt(toHdr, toPld *crypto.Pub, from *crypto.Prv, iv nonce.IV,
 	depth int) Skins {
-	
+
 	return append(o, &Crypt{
 		Depth:        depth,
 		ToHeaderPub:  toHdr,
@@ -160,7 +160,7 @@ func (o Skins) Delay(d time.Duration) Skins {
 
 func (o Skins) Exit(id nonce.ID, port uint16, payload slice.Bytes,
 	ep *ExitPoint) Skins {
-	
+
 	return append(o, &Exit{
 		ID:      id,
 		Ciphers: crypto.GenCiphers(ep.Keys, ep.ReturnPubs),
@@ -215,6 +215,11 @@ func (o Skins) Message(msg *Message, ks *crypto.KeySet) Skins {
 		msg)
 }
 
+func (o Skins) Peer(id nonce.ID, key *crypto.Prv, ap *netip.AddrPort,
+	expires time.Time) (sk Skins) {
+	return append(o, NewPeer(id, key, ap, expires))
+}
+
 func (o Skins) Ready(id nonce.ID, addr *crypto.Pub, fwHeader,
 	rvHeader RoutingHeaderBytes,
 	fc, rc crypto.Ciphers, fn, rn crypto.Nonces) Skins {
@@ -234,7 +239,7 @@ func (o Skins) Reverse(ip *netip.AddrPort) Skins {
 
 func (o Skins) Route(id nonce.ID, k *crypto.Pub, ks *crypto.KeySet,
 	ep *ExitPoint) Skins {
-	
+
 	oo := &Route{
 		HiddenService: k,
 		Sender:        ks.Next(),
@@ -276,7 +281,7 @@ func (o Skins) End() Skins {
 // have steadily increasing scores from successful pings.
 func Ping(id nonce.ID, client *sessions.Data, s sessions.Circuit,
 	ks *crypto.KeySet) Skins {
-	
+
 	n := crypto.GenPingNonces()
 	return Skins{}.
 		Crypt(s[0].Header.Pub, nil, ks.Next(), n[0], 0).
@@ -290,7 +295,7 @@ func Ping(id nonce.ID, client *sessions.Data, s sessions.Circuit,
 
 func MakeRoute(id nonce.ID, k *crypto.Pub, ks *crypto.KeySet,
 	alice, bob *sessions.Data, c sessions.Circuit) Skins {
-	
+
 	headers := GetHeaders(alice, bob, c, ks)
 	return Skins{}.
 		RoutingHeader(headers.Forward).
@@ -330,7 +335,7 @@ func MakeGetBalance(p GetBalanceParams) Skins {
 
 func MakeHiddenService(in *Intro, alice, bob *sessions.Data,
 	c sessions.Circuit, ks *crypto.KeySet) Skins {
-	
+
 	headers := GetHeaders(alice, bob, c, ks)
 	return Skins{}.
 		RoutingHeader(headers.Forward).
@@ -340,7 +345,7 @@ func MakeHiddenService(in *Intro, alice, bob *sessions.Data,
 
 func MakeIntroQuery(id nonce.ID, hsk *crypto.Pub, alice, bob *sessions.Data,
 	c sessions.Circuit, ks *crypto.KeySet) Skins {
-	
+
 	headers := GetHeaders(alice, bob, c, ks)
 	return Skins{}.
 		RoutingHeader(headers.Forward).
@@ -350,7 +355,7 @@ func MakeIntroQuery(id nonce.ID, hsk *crypto.Pub, alice, bob *sessions.Data,
 
 func MakeSession(id nonce.ID, s [5]*Session,
 	client *sessions.Data, hop []*node.Node, ks *crypto.KeySet) Skins {
-	
+
 	n := crypto.GenNonces(6)
 	sk := Skins{}
 	for i := range s {
@@ -412,7 +417,7 @@ type RoutingHeader struct {
 
 func FormatReply(header RoutingHeaderBytes, ciphers crypto.Ciphers,
 	nonces crypto.Nonces, res slice.Bytes) (rb *splice.Splice) {
-	
+
 	rl := RoutingHeaderLen
 	rb = splice.New(rl + len(res))
 	copy(rb.GetUntil(rl), header[:rl])

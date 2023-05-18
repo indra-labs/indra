@@ -2,7 +2,7 @@ package onions
 
 import (
 	"reflect"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
@@ -74,12 +74,12 @@ func (x *HiddenService) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 		},
 	})
 	log.D.Ln("stored new introduction, starting broadcast")
-	go GossipIntro(&x.Intro, ng.Mgr(), ng.KillSwitch())
+	go GossipAd(&x.Intro, ng.Mgr(), ng.KillSwitch())
 	return
 }
 
 func (x *HiddenService) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
-	
+
 	res.ID = x.Intro.ID
 	res.Billable = append(res.Billable, s.Header.Bytes)
 	skip = true
