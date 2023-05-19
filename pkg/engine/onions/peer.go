@@ -77,7 +77,7 @@ func (x *Peer) Validate() bool {
 	return false
 }
 
-func SplicePeer(s *splice.Splice, x *Peer) *splice.Splice {
+func (x *Peer) Splice(s *splice.Splice) *splice.Splice {
 	return s.ID(x.ID).
 		Pubkey(x.Key).
 		AddrPort(x.AddrPort).
@@ -89,7 +89,7 @@ func (x *Peer) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.AddrPort.String(), x.Expiry, x.Sig,
 	)
-	SplicePeer(s.Magic(PeerMagic), x)
+	x.Splice(s.Magic(PeerMagic))
 	return
 }
 
@@ -99,8 +99,7 @@ func (x *Peer) Decode(s *splice.Splice) (e error) {
 
 		return
 	}
-	s.
-		ReadID(&x.ID).
+	s.ReadID(&x.ID).
 		ReadPubkey(&x.Key).
 		ReadAddrPort(&x.AddrPort).
 		ReadTime(&x.Expiry).
@@ -123,7 +122,7 @@ func (x *Peer) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 		log.D.F("%s storing intro for %s %s",
 			ng.Mgr().GetLocalNodeAddressString(), x.Key.ToBase32Abbreviated(),
 			x.ID)
-		//ng.GetHidden().KnownIntros[x.Key.ToBytes()] = x
+		// ng.GetHidden().KnownIntros[x.Key.ToBytes()] = x
 		var ok bool
 		if ok, e = ng.Pending().ProcessAndDelete(x.ID, &kb,
 			s.GetAll()); ok || fails(e) {

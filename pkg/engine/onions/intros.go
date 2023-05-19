@@ -13,7 +13,7 @@ type Introduction struct {
 	ReplyHeader
 }
 
-func GossipAd(onion Onion, sm *sess.Manager, c qu.C) {
+func GossipAd(onion PeerInfo, sm *sess.Manager, c qu.C) {
 	switch on := onion.(type) {
 	case *Intro:
 		log.D.F("propagating hidden service intro for %s",

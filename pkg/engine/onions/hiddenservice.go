@@ -42,7 +42,7 @@ func (x *HiddenService) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.Key, x.AddrPort, x.Ciphers, x.Nonces, x.RoutingHeaderBytes,
 	)
-	SpliceIntro(s.Magic(HiddenServiceMagic), &x.Intro)
+	x.Intro.Splice(s.Magic(HiddenServiceMagic))
 	return x.Onion.Encode(s.Ciphers(x.Ciphers).Nonces(x.Nonces))
 }
 

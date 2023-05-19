@@ -3,7 +3,7 @@ package onions
 import (
 	"git-indra.lan/indra-labs/indra/pkg/util/qu"
 	"git-indra.lan/indra-labs/indra/pkg/util/splice"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/responses"
@@ -31,4 +31,10 @@ type Ngin interface {
 	GetHidden() *Hidden
 	KillSwitch() qu.C
 	Keyset() *crypto.KeySet
+}
+
+type PeerInfo interface {
+	Onion
+	Splice(s *splice.Splice)
+	Validate() bool
 }

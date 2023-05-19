@@ -4,9 +4,9 @@ import (
 	"net/netip"
 	"reflect"
 	"time"
-	
+
 	"github.com/gookit/color"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
@@ -77,8 +77,8 @@ func (x *Intro) Validate() bool {
 	return false
 }
 
-func SpliceIntro(s *splice.Splice, x *Intro) *splice.Splice {
-	return s.ID(x.ID).
+func (x *Intro) Splice(s *splice.Splice) {
+	s.ID(x.ID).
 		Pubkey(x.Key).
 		AddrPort(x.AddrPort).
 		Uint64(uint64(x.Expiry.UnixNano())).
@@ -89,14 +89,14 @@ func (x *Intro) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.AddrPort.String(), x.Expiry, x.Sig,
 	)
-	SpliceIntro(s.Magic(IntroMagic), x)
+	x.Splice(s.Magic(IntroMagic))
 	return
 }
 
 func (x *Intro) Decode(s *splice.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), IntroLen-magic.Len,
 		IntroMagic); fails(e) {
-		
+
 		return
 	}
 	s.
@@ -127,7 +127,7 @@ func (x *Intro) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 		var ok bool
 		if ok, e = ng.Pending().ProcessAndDelete(x.ID, &kb,
 			s.GetAll()); ok || fails(e) {
-			
+
 			ng.GetHidden().Unlock()
 			log.D.Ln("deleted pending response", x.ID)
 			return
@@ -162,7 +162,7 @@ func (x *Intro) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 
 func (x *Intro) Account(res *sess.Data, sm *sess.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
-	
+
 	res.ID = x.ID
 	return
 }
