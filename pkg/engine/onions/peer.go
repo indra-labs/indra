@@ -15,6 +15,8 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/engine/node"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
+	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
+	"git-indra.lan/indra-labs/indra/pkg/util/qu"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 	"git-indra.lan/indra-labs/indra/pkg/util/splice"
 )
@@ -77,8 +79,8 @@ func (x *Peer) Validate() bool {
 	return false
 }
 
-func (x *Peer) Splice(s *splice.Splice) *splice.Splice {
-	return s.ID(x.ID).
+func (x *Peer) Splice(s *splice.Splice) {
+	s.ID(x.ID).
 		Pubkey(x.Key).
 		AddrPort(x.AddrPort).
 		Uint64(uint64(x.Expiry.UnixNano())).
@@ -164,4 +166,39 @@ func (x *Peer) Account(res *sess.Data, sm *sess.Manager,
 
 	res.ID = x.ID
 	return
+}
+
+func (x *Peer) Gossip(sm *sess.Manager, c qu.C) {
+	log.D.F("propagating peer info for %s",
+		x.Key.ToBase32Abbreviated())
+	done := qu.T()
+	msg := splice.New(x.Len())
+	if fails(x.Encode(msg)) {
+		return
+	}
+	nPeers := sm.NodesLen()
+	peerIndices := make([]int, nPeers)
+	for i := 1; i < nPeers; i++ {
+		peerIndices[i] = i
+	}
+	cryptorand.Shuffle(nPeers, func(i, j int) {
+		peerIndices[i], peerIndices[j] = peerIndices[j], peerIndices[i]
+	})
+	var cursor int
+	for {
+		select {
+		case <-c.Wait():
+			return
+		case <-done:
+			return
+		default:
+		}
+		n := sm.FindNodeByIndex(peerIndices[cursor])
+		n.Transport.Send(msg.GetAll())
+		cursor++
+		if cursor > len(peerIndices)-1 {
+			break
+		}
+	}
+	log.T.Ln("finished broadcasting peer info")
 }

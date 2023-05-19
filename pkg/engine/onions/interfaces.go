@@ -37,4 +37,5 @@ type PeerInfo interface {
 	Onion
 	Splice(s *splice.Splice)
 	Validate() bool
+	Gossip(sm *sess.Manager, c qu.C)
 }
