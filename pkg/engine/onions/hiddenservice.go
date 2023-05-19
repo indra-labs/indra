@@ -74,7 +74,7 @@ func (x *HiddenService) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 		},
 	})
 	log.D.Ln("stored new introduction, starting broadcast")
-	go GossipAd(&x.Intro, ng.Mgr(), ng.KillSwitch())
+	go x.Intro.Gossip(ng.Mgr(), ng.KillSwitch())
 	return
 }
 

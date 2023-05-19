@@ -2,17 +2,18 @@ package dispatcher
 
 import (
 	"context"
+	"os"
 	"sync"
 	"testing"
 	"time"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/engine/onions"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 	"git-indra.lan/indra-labs/indra/pkg/util/splice"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/transport"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/tests"
@@ -29,13 +30,21 @@ func TestDispatcher(t *testing.T) {
 	if k1, k2, e = crypto.Generate2Keys(); fails(e) {
 		t.FailNow()
 	}
-	l1, e = transport.NewListener("", transport.LocalhostZeroIPv4, k1.Prv, ctx,
-		transport.DefaultMTU)
+	dataPath, err := os.MkdirTemp(os.TempDir(), "badger")
+	if err != nil {
+		t.FailNow()
+	}
+	l1, e = transport.NewListener("", transport.LocalhostZeroIPv4QUIC,
+		dataPath, k1, ctx, transport.DefaultMTU)
 	if fails(e) {
 		t.FailNow()
 	}
+	dataPath, err = os.MkdirTemp(os.TempDir(), "badger")
+	if err != nil {
+		t.FailNow()
+	}
 	l2, e = transport.NewListener(transport.GetHostAddress(l1.Host),
-		transport.LocalhostZeroIPv4, k2.Prv, ctx, transport.DefaultMTU)
+		transport.LocalhostZeroIPv4QUIC, dataPath, k2, ctx, transport.DefaultMTU)
 	if fails(e) {
 		t.FailNow()
 	}
@@ -146,13 +155,21 @@ func TestDispatcher_Rekey(t *testing.T) {
 	if k1, k2, e = crypto.Generate2Keys(); fails(e) {
 		t.FailNow()
 	}
-	l1, e = transport.NewListener("", transport.LocalhostZeroIPv4, k1.Prv, ctx,
-		transport.DefaultMTU)
+	dataPath, err := os.MkdirTemp(os.TempDir(), "badger")
+	if err != nil {
+		t.FailNow()
+	}
+	l1, e = transport.NewListener("", transport.LocalhostZeroIPv4QUIC,
+		dataPath, k1, ctx, transport.DefaultMTU)
 	if fails(e) {
 		t.FailNow()
 	}
+	dataPath, err = os.MkdirTemp(os.TempDir(), "badger")
+	if err != nil {
+		t.FailNow()
+	}
 	l2, e = transport.NewListener(transport.GetHostAddress(l1.Host),
-		transport.LocalhostZeroIPv4, k2.Prv, ctx, transport.DefaultMTU)
+		transport.LocalhostZeroIPv4QUIC, dataPath, k2, ctx, transport.DefaultMTU)
 	if fails(e) {
 		t.FailNow()
 	}

@@ -2,9 +2,10 @@ package transport
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/tests"
@@ -21,12 +22,21 @@ func TestNewListener(t *testing.T) {
 	if k1, k2, e = crypto.Generate2Keys(); fails(e) {
 		t.FailNow()
 	}
-	l1, e = NewListener("", LocalhostZeroIPv4, k1.Prv, ctx, DefaultMTU)
+	dataPath, err := os.MkdirTemp(os.TempDir(), "badger")
+	if err != nil {
+		t.FailNow()
+	}
+	l1, e = NewListener("", LocalhostZeroIPv4QUIC, dataPath, k1,
+		ctx, DefaultMTU)
 	if fails(e) {
 		t.FailNow()
 	}
-	l2, e = NewListener(GetHostAddress(l1.Host), LocalhostZeroIPv4,
-		k2.Prv, ctx, DefaultMTU)
+	dataPath, err = os.MkdirTemp(os.TempDir(), "badger")
+	if err != nil {
+		t.FailNow()
+	}
+	l2, e = NewListener(GetHostAddress(l1.Host), LocalhostZeroIPv4QUIC, dataPath,
+		k2, ctx, DefaultMTU)
 	if fails(e) {
 		t.FailNow()
 	}
