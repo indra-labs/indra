@@ -3,9 +3,9 @@ package engine
 import (
 	"net/netip"
 	"time"
-	
+
 	"github.com/gookit/color"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/onions"
@@ -19,7 +19,7 @@ import (
 
 func (ng *Engine) SendExit(port uint16, msg slice.Bytes, id nonce.ID,
 	alice, bob *sessions.Data, hook responses.Callback) {
-	
+
 	hops := sess.StandardCircuit()
 	s := make(sessions.Sessions, len(hops))
 	s[2] = bob
@@ -48,16 +48,17 @@ func (ng *Engine) SendGetBalance(alice, bob *sessions.Data, hook responses.Callb
 }
 
 func (ng *Engine) SendHiddenService(id nonce.ID, key *crypto.Prv,
-	expiry time.Time, alice, bob *sessions.Data,
-	svc *services.Service, hook responses.Callback) (in *onions.Intro) {
-	
+	relayRate uint32, port uint16, expiry time.Time,
+	alice, bob *sessions.Data, svc *services.Service,
+	hook responses.Callback) (in *onions.Intro) {
+
 	hops := sess.StandardCircuit()
 	s := make(sessions.Sessions, len(hops))
 	s[2] = alice
 	se := ng.Manager.SelectHops(hops, s, "sendhiddenservice")
 	var c sessions.Circuit
 	copy(c[:], se[:len(c)])
-	in = onions.NewIntro(id, key, alice.Node.AddrPort, expiry)
+	in = onions.NewIntro(id, key, alice.Node.AddrPort, relayRate, port, expiry)
 	o := onions.MakeHiddenService(in, alice, bob, c, ng.KeySet)
 	log.D.F("%s sending out hidden service onion %s",
 		ng.Manager.GetLocalNodeAddressString(),
@@ -71,7 +72,7 @@ func (ng *Engine) SendHiddenService(id nonce.ID, key *crypto.Prv,
 
 func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *crypto.Pub,
 	alice, bob *sessions.Data, hook func(in *onions.Intro)) {
-	
+
 	fn := func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
 		s := splice.Load(b, slice.NewCursor())
 		on := onions.Recognise(s)
@@ -127,7 +128,7 @@ func (ng *Engine) SendPing(c sessions.Circuit, hook responses.Callback) {
 
 func (ng *Engine) SendRoute(k *crypto.Pub, ap *netip.AddrPort,
 	hook responses.Callback) {
-	
+
 	ng.Manager.FindNodeByAddrPort(ap)
 	var ss *sessions.Data
 	ng.Manager.IterateSessions(func(s *sessions.Data) bool {

@@ -2,12 +2,13 @@ package engine
 
 import (
 	"context"
-	"git-indra.lan/indra-labs/indra/pkg/crypto"
-	"git-indra.lan/indra-labs/indra/pkg/engine/onions"
 	"runtime"
 	"sync"
 	"testing"
 	"time"
+
+	"git-indra.lan/indra-labs/indra/pkg/crypto"
+	"git-indra.lan/indra-labs/indra/pkg/engine/onions"
 
 	"go.uber.org/atomic"
 
@@ -29,7 +30,8 @@ func TestClient_SendExit(t *testing.T) {
 	var clients []*Engine
 	var e error
 	ctx, cancel := context.WithCancel(context.Background())
-	if clients, e = CreateNMockCircuitsWithSessions(2, 2, ctx); fails(e) {
+	if clients, e = CreateNMockCircuitsWithSessions(2, 2,
+		ctx); fails(e) {
 		t.Error(e)
 		t.FailNow()
 	}
@@ -74,7 +76,8 @@ out:
 		}
 		var respMsg slice.Bytes
 		var respHash sha256.Hash
-		if respMsg, respHash, e = tests.GenMessage(32, "response"); fails(e) {
+		if respMsg, respHash, e = tests.GenMessage(32,
+			"response"); fails(e) {
 			t.Error(e)
 			t.FailNow()
 		}
@@ -288,9 +291,9 @@ func TestEngine_Message(t *testing.T) {
 		RelayRate: 43523,
 		Transport: transport.NewByteChan(64),
 	}
-	ini := client.SendHiddenService(id, idPrv, time.Now().Add(time.Hour),
-		returner, introducer, svc, func(id nonce.ID, ifc interface{},
-			b slice.Bytes) (e error) {
+	ini := client.SendHiddenService(id, idPrv, 0, 0,
+		time.Now().Add(time.Hour), returner, introducer, svc,
+		func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
 			log.I.F("hidden service %s successfully propagated", ifc)
 			wg.Done()
 			counter.Dec()
@@ -510,15 +513,15 @@ func TestEngine_Route(t *testing.T) {
 		RelayRate: 43523,
 		Transport: transport.NewByteChan(64),
 	}
-	ini := client.SendHiddenService(id, idPrv, time.Now().Add(time.Hour),
-		returner, introducer, svc, func(id nonce.ID, ifc interface{},
-			b slice.Bytes) (e error) {
+	ini := client.SendHiddenService(id, idPrv, 0, 0,
+		time.Now().Add(time.Hour),
+		returner, introducer, svc,
+		func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
 			log.I.F("hidden service %s successfully propagated", ifc)
 			wg.Done()
 			counter.Dec()
 			return
 		})
-	_ = ini
 	wg.Wait()
 	time.Sleep(time.Second)
 	log2.SetLogLevel(log2.Debug)
