@@ -10,12 +10,12 @@ import (
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 )
 
-func TestOnionSkins_Peer(t *testing.T) {
+func TestOnionSkins_Service(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
 	var e error
 	pr, ks, _ := crypto.NewSigner()
 	id := nonce.NewID()
-	// in := NewPeer(id, pr, time.Now().Add(time.Hour))
+	// in := NewAddr(id, pr, time.Now().Add(time.Hour))
 	var prvs crypto.Privs
 	for i := range prvs {
 		prvs[i] = ks.Next()
@@ -25,7 +25,7 @@ func TestOnionSkins_Peer(t *testing.T) {
 		pubs[i] = crypto.DerivePub(prvs[i])
 	}
 	on1 := Skins{}.
-		Peer(id, pr, time.Now().Add(time.Hour))
+		Addr(id, pr, time.Now().Add(time.Hour))
 	on1 = append(on1, &End{})
 	on := on1.Assemble()
 	s := Encode(on)
@@ -41,14 +41,14 @@ func TestOnionSkins_Peer(t *testing.T) {
 		t.FailNow()
 	}
 	log.D.S(onc)
-	var peer *Peer
+	var peer *Addr
 	var ok bool
-	if peer, ok = onc.(*Peer); !ok {
+	if peer, ok = onc.(*Addr); !ok {
 		t.Error("did not unwrap expected type")
 		t.FailNow()
 	}
 	if !peer.Validate() {
-		t.Errorf("received Peer did not validate")
+		t.Errorf("received Addr did not validate")
 		t.FailNow()
 	}
 }

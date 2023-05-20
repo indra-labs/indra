@@ -20,12 +20,12 @@ import (
 )
 
 const (
-	PeerMagic = "peer"
-	PeerLen   = magic.Len + nonce.IDLen + crypto.PubKeyLen + 1 +
+	ServiceMagic = "serv"
+	ServiceLen   = magic.Len + nonce.IDLen + crypto.PubKeyLen + 1 +
 		splice.AddrLen + slice.Uint64Len + crypto.SigLen
 )
 
-type Peer struct {
+type Service struct {
 	ID        nonce.ID    // This ensures never a repeated signed message.
 	Key       *crypto.Pub // Identity key.
 	RelayRate uint64
@@ -33,18 +33,18 @@ type Peer struct {
 	Sig       crypto.SigBytes
 }
 
-func peerGen() coding.Codec           { return &Peer{} }
-func init()                           { Register(PeerMagic, peerGen) }
-func (x *Peer) Magic() string         { return PeerMagic }
-func (x *Peer) Len() int              { return PeerLen }
-func (x *Peer) Wrap(inner Onion)      {}
-func (x *Peer) GetOnion() interface{} { return x }
+func servGen() coding.Codec              { return &Service{} }
+func init()                              { Register(ServiceMagic, servGen) }
+func (x *Service) Magic() string         { return ServiceMagic }
+func (x *Service) Len() int              { return ServiceLen }
+func (x *Service) Wrap(inner Onion)      {}
+func (x *Service) GetOnion() interface{} { return x }
 
-func NewPeer(id nonce.ID, key *crypto.Prv,
-	expires time.Time) (in *Peer) {
+func NewService(id nonce.ID, key *crypto.Prv,
+	expires time.Time) (in *Service) {
 
 	pk := crypto.DerivePub(key)
-	s := splice.New(IntroLen - magic.Len)
+	s := splice.New(ServiceLen - magic.Len)
 	s.ID(id).Pubkey(pk).Uint64(uint64(expires.
 		UnixNano()))
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
@@ -53,7 +53,7 @@ func NewPeer(id nonce.ID, key *crypto.Prv,
 	if sign, e = crypto.Sign(key, hash); fails(e) {
 		return nil
 	}
-	in = &Peer{
+	in = &Service{
 		ID:     id,
 		Key:    pk,
 		Expiry: expires,
@@ -62,8 +62,8 @@ func NewPeer(id nonce.ID, key *crypto.Prv,
 	return
 }
 
-func (x *Peer) Validate() bool {
-	s := splice.New(PeerLen - magic.Len)
+func (x *Service) Validate() bool {
+	s := splice.New(ServiceLen - magic.Len)
 	s.ID(x.ID).Pubkey(x.Key).Uint64(uint64(x.Expiry.
 		UnixNano()))
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
@@ -77,24 +77,24 @@ func (x *Peer) Validate() bool {
 	return false
 }
 
-func (x *Peer) Splice(s *splice.Splice) {
+func (x *Service) Splice(s *splice.Splice) {
 	s.ID(x.ID).
 		Pubkey(x.Key).
 		Uint64(uint64(x.Expiry.UnixNano())).
 		Signature(x.Sig)
 }
 
-func (x *Peer) Encode(s *splice.Splice) (e error) {
+func (x *Service) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.Expiry, x.Sig,
 	)
-	x.Splice(s.Magic(PeerMagic))
+	x.Splice(s.Magic(ServiceMagic))
 	return
 }
 
-func (x *Peer) Decode(s *splice.Splice) (e error) {
-	if e = magic.TooShort(s.Remaining(), PeerLen-magic.Len,
-		PeerMagic); fails(e) {
+func (x *Service) Decode(s *splice.Splice) (e error) {
+	if e = magic.TooShort(s.Remaining(), ServiceLen-magic.Len,
+		ServiceMagic); fails(e) {
 
 		return
 	}
@@ -105,7 +105,7 @@ func (x *Peer) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Peer) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
+func (x *Service) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	ng.GetHidden().Lock()
 	valid := x.Validate()
 	if valid {
@@ -142,8 +142,8 @@ func (x *Peer) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 		})
 		counter := 0
 		for i := range nn {
-			log.T.F("sending intro to %s",
-				color.Yellow.Sprint(nn[i].AddrPort.String()))
+			log.T.F("sending intro to %s", color.Yellow.Sprint(nn[i].AddrPort.
+				String()))
 			nn[i].Transport.Send(s.GetAll())
 			counter++
 			if counter < 2 {
@@ -156,14 +156,14 @@ func (x *Peer) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	return
 }
 
-func (x *Peer) Account(res *sess.Data, sm *sess.Manager,
+func (x *Service) Account(res *sess.Data, sm *sess.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 
 	res.ID = x.ID
 	return
 }
 
-func (x *Peer) Gossip(sm *sess.Manager, c qu.C) {
+func (x *Service) Gossip(sm *sess.Manager, c qu.C) {
 	log.D.F("propagating peer info for %s",
 		x.Key.ToBase32Abbreviated())
 	Gossip(x, sm, c)

@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/netip"
 	"sync"
-	
+
 	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 	"github.com/gookit/color"
-	
+
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -48,7 +48,7 @@ func NewSessionManager(listener *transport.Listener) *Manager {
 // this.
 func (sm *Manager) FindCloaked(clk crypto.PubKey) (hdr *crypto.Prv,
 	pld *crypto.Prv, sess *sessions.Data, identity bool) {
-	
+
 	var b crypto.Blinder
 	copy(b[:], clk[:crypto.BlindLen])
 	hash := crypto.Cloak(b, sm.GetLocalNodeIdentityBytes())
@@ -88,7 +88,7 @@ func (sm *Manager) ClearSessions() {
 
 func (sm *Manager) IncSession(id crypto.PubBytes, msats lnwire.MilliSatoshi,
 	sender bool, typ string) {
-	
+
 	sess := sm.FindSession(id)
 	if sess != nil {
 		sm.Lock()
@@ -99,7 +99,7 @@ func (sm *Manager) IncSession(id crypto.PubBytes, msats lnwire.MilliSatoshi,
 
 func (sm *Manager) DecSession(id crypto.PubBytes, msats int, sender bool,
 	typ string) bool {
-	
+
 	sess := sm.FindSession(id)
 	if sess != nil {
 		sm.Lock()
@@ -112,7 +112,7 @@ func (sm *Manager) DecSession(id crypto.PubBytes, msats int, sender bool,
 
 func (sm *Manager) GetNodeCircuit(id nonce.ID) (sce *sessions.Circuit,
 	exists bool) {
-	
+
 	sm.Lock()
 	defer sm.Unlock()
 	sce, exists = sm.SessionCache[id]
@@ -194,7 +194,7 @@ func (sm *Manager) DeleteSession(id crypto.PubBytes) {
 		if sm.Sessions[i].Header.Bytes == id {
 			// ProcessAndDelete from Data cache.
 			sm.SessionCache[sm.Sessions[i].Node.ID][sm.Sessions[i].Hop] = nil
-			// ProcessAndDelete from 
+			// ProcessAndDelete from
 			sm.Sessions = append(sm.Sessions[:i], sm.Sessions[i+1:]...)
 		}
 	}
@@ -219,7 +219,7 @@ func (sm *Manager) IterateSessions(fn func(s *sessions.Data) bool) {
 // Do not call Manager methods within this function.
 func (sm *Manager) IterateSessionCache(fn func(n *node.Node,
 	c *sessions.Circuit) bool) {
-	
+
 	sm.Lock()
 	defer sm.Unlock()
 out:
@@ -314,7 +314,7 @@ func (sm *Manager) SetLocalNodeAddress(addr *netip.AddrPort) {
 
 func (sm *Manager) SendFromLocalNode(port uint16,
 	b slice.Bytes) (e error) {
-	
+
 	sm.Lock()
 	defer sm.Unlock()
 	return sm.GetLocalNode().SendTo(port, b)
@@ -388,6 +388,19 @@ func (sm *Manager) FindNodeByAddrPort(id *netip.AddrPort) (no *node.Node) {
 	defer sm.Unlock()
 	for _, nn := range sm.nodes {
 		if nn.AddrPort.String() == id.String() {
+			no = nn
+			break
+		}
+	}
+	return
+}
+
+// FindNodeByIdentity searches for a Node by netip.AddrPort.
+func (sm *Manager) FindNodeByIdentity(id *crypto.Pub) (no *node.Node) {
+	sm.Lock()
+	defer sm.Unlock()
+	for _, nn := range sm.nodes {
+		if nn.Identity.Pub.Equals(id) {
 			no = nn
 			break
 		}

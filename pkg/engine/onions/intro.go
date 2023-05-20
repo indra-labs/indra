@@ -24,7 +24,7 @@ const (
 	IntroMagic = "intr"
 	IntroLen   = magic.Len +
 		nonce.IDLen +
-		crypto.PubKeyLen + 1 +
+		crypto.PubKeyLen + 1 + 1 +
 		splice.AddrLen +
 		slice.Uint16Len +
 		slice.Uint32Len +
