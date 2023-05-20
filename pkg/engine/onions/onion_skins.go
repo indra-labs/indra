@@ -195,7 +195,7 @@ func (o Skins) HiddenService(in *Intro, point *ExitPoint) Skins {
 
 func (o Skins) Intro(id nonce.ID, key *crypto.Prv, ap *netip.AddrPort,
 	expires time.Time) (sk Skins) {
-	return append(o, NewIntro(id, key, ap, expires))
+	return append(o, NewIntro(id, key, ap, 0, 0, expires))
 }
 
 func (o Skins) IntroQuery(id nonce.ID, hsk *crypto.Pub, exit *ExitPoint) Skins {

@@ -22,16 +22,24 @@ import (
 
 const (
 	IntroMagic = "intr"
-	IntroLen   = magic.Len + nonce.IDLen + crypto.PubKeyLen + 1 +
-		splice.AddrLen + slice.Uint64Len + crypto.SigLen
+	IntroLen   = magic.Len +
+		nonce.IDLen +
+		crypto.PubKeyLen + 1 +
+		splice.AddrLen +
+		slice.Uint16Len +
+		slice.Uint32Len +
+		slice.Uint64Len +
+		crypto.SigLen
 )
 
 type Intro struct {
-	ID       nonce.ID // This ensures never a repeated signed message.
-	Key      *crypto.Pub
-	AddrPort *netip.AddrPort
-	Expiry   time.Time
-	Sig      crypto.SigBytes
+	ID        nonce.ID        // Ensures never a repeated signature.
+	Key       *crypto.Pub     // Hidden service address.
+	AddrPort  *netip.AddrPort // Introducer address.
+	RelayRate uint32          // mSat/Mb
+	Port      uint16
+	Expiry    time.Time
+	Sig       crypto.SigBytes
 }
 
 func introGen() coding.Codec           { return &Intro{} }
@@ -42,7 +50,8 @@ func (x *Intro) Wrap(inner Onion)      {}
 func (x *Intro) GetOnion() interface{} { return x }
 
 func NewIntro(id nonce.ID, key *crypto.Prv, ap *netip.AddrPort,
-	expires time.Time) (in *Intro) {
+	relayRate uint32, port uint16, expires time.Time) (in *Intro) {
+
 	pk := crypto.DerivePub(key)
 	s := splice.New(IntroLen - magic.Len)
 	s.ID(id).Pubkey(pk).AddrPort(ap).Uint64(uint64(expires.
@@ -54,11 +63,13 @@ func NewIntro(id nonce.ID, key *crypto.Prv, ap *netip.AddrPort,
 		return nil
 	}
 	in = &Intro{
-		ID:       id,
-		Key:      pk,
-		AddrPort: ap,
-		Expiry:   expires,
-		Sig:      sign,
+		ID:        id,
+		Key:       pk,
+		AddrPort:  ap,
+		RelayRate: relayRate,
+		Port:      port,
+		Expiry:    expires,
+		Sig:       sign,
 	}
 	return
 }
@@ -82,6 +93,8 @@ func (x *Intro) Splice(s *splice.Splice) {
 	s.ID(x.ID).
 		Pubkey(x.Key).
 		AddrPort(x.AddrPort).
+		Uint32(x.RelayRate).
+		Uint16(x.Port).
 		Uint64(uint64(x.Expiry.UnixNano())).
 		Signature(x.Sig)
 }
@@ -104,6 +117,8 @@ func (x *Intro) Decode(s *splice.Splice) (e error) {
 		ReadID(&x.ID).
 		ReadPubkey(&x.Key).
 		ReadAddrPort(&x.AddrPort).
+		ReadUint32(&x.RelayRate).
+		ReadUint16(&x.Port).
 		ReadTime(&x.Expiry).
 		ReadSignature(&x.Sig)
 	return

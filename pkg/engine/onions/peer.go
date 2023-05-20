@@ -27,11 +27,12 @@ const (
 )
 
 type Peer struct {
-	ID       nonce.ID // This ensures never a repeated signed message.
-	Key      *crypto.Pub
-	AddrPort *netip.AddrPort
-	Expiry   time.Time
-	Sig      crypto.SigBytes
+	ID        nonce.ID        // This ensures never a repeated signed message.
+	Key       *crypto.Pub     // Identity key.
+	AddrPort  *netip.AddrPort // Node address.
+	RelayRate uint64
+	Expiry    time.Time
+	Sig       crypto.SigBytes
 }
 
 func peerGen() coding.Codec           { return &Peer{} }

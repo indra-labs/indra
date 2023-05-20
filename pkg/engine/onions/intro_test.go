@@ -3,7 +3,7 @@ package onions
 import (
 	"testing"
 	"time"
-	
+
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
@@ -16,8 +16,7 @@ func TestOnionSkins_Intro(t *testing.T) {
 	var e error
 	pr, ks, _ := crypto.NewSigner()
 	id := nonce.NewID()
-	in := NewIntro(id, pr, slice.GenerateRandomAddrPortIPv6(),
-		time.Now().Add(time.Hour))
+	in := NewIntro(id, pr, slice.GenerateRandomAddrPortIPv6(), 0, 0, time.Now().Add(time.Hour))
 	var prvs crypto.Privs
 	for i := range prvs {
 		prvs[i] = ks.Next()
