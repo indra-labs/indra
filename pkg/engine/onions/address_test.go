@@ -1,6 +1,7 @@
 package onions
 
 import (
+	"net/netip"
 	"testing"
 	"time"
 
@@ -24,8 +25,10 @@ func TestOnionSkins_Addr(t *testing.T) {
 	for i := range pubs {
 		pubs[i] = crypto.DerivePub(prvs[i])
 	}
+	var ap netip.AddrPort
+	ap, e = netip.ParseAddrPort("127.0.0.1:1025")
 	on1 := Skins{}.
-		Addr(id, pr, time.Now().Add(time.Hour))
+		Addr(id, pr, time.Now().Add(time.Hour), &ap)
 	on1 = append(on1, &End{})
 	on := on1.Assemble()
 	s := Encode(on)

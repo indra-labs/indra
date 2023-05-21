@@ -220,9 +220,10 @@ func (o Skins) Peer(id nonce.ID, key *crypto.Prv,
 	return append(o, NewPeer(id, key, expires))
 }
 
-func (o Skins) Addr(id nonce.ID, key *crypto.Prv,
-	expires time.Time) (sk Skins) {
-	return append(o, NewAddr(id, key, expires))
+func (o Skins) Addr(id nonce.ID, key *crypto.Prv, expires time.Time,
+addr *netip.AddrPort) (sk Skins) {
+
+	return append(o, NewAddr(id, key, addr, expires))
 }
 
 func (o Skins) Service(id nonce.ID, key *crypto.Prv,

@@ -21,8 +21,12 @@ import (
 
 const (
 	PeerMagic = "peer"
-	PeerLen   = magic.Len + nonce.IDLen + crypto.PubKeyLen + 1 +
-		splice.AddrLen + slice.Uint64Len + crypto.SigLen
+	PeerLen   = magic.Len +
+		nonce.IDLen +
+		crypto.PubKeyLen + 1 +
+		splice.AddrLen +
+		slice.Uint64Len +
+		crypto.SigLen
 )
 
 type Peer struct {

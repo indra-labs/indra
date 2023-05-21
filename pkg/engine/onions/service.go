@@ -21,13 +21,19 @@ import (
 
 const (
 	ServiceMagic = "serv"
-	ServiceLen   = magic.Len + nonce.IDLen + crypto.PubKeyLen + 1 +
-		splice.AddrLen + slice.Uint64Len + crypto.SigLen
+	ServiceLen   = magic.Len +
+		nonce.IDLen +
+		crypto.PubKeyLen + 1 +
+		splice.AddrLen +
+		slice.Uint16Len +
+		slice.Uint64Len +
+		crypto.SigLen
 )
 
 type Service struct {
 	ID        nonce.ID    // This ensures never a repeated signed message.
 	Key       *crypto.Pub // Identity key.
+	Port      uint16
 	RelayRate uint64
 	Expiry    time.Time
 	Sig       crypto.SigBytes

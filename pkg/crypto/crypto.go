@@ -5,13 +5,13 @@ import (
 	"encoding/hex"
 	"fmt"
 	"sync"
-	
+
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 	"github.com/gookit/color"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	crypto_pb "github.com/libp2p/go-libp2p/core/crypto/pb"
-	
+
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
@@ -201,7 +201,7 @@ func (p *Prv) GetPublic() crypto.PubKey {
 
 func (k *Pub) Verify(data []byte, sigBytes []byte) (is bool,
 	e error) {
-	
+
 	var s SigBytes
 	if len(sigBytes) != len(s) {
 		return false, fmt.Errorf("length mismatch")
@@ -325,6 +325,18 @@ const SigLen = 65
 // SigBytes is an ECDSA BIP62 formatted compact signature which allows the
 // recovery of the public key from the signature.
 type SigBytes [SigLen]byte
+
+func (s SigBytes) String() string {
+	o, _ := based32.Codec.Encode(s[:])
+	return o[2:]
+}
+
+func FromBased32(s string) (sig SigBytes, e error) {
+	var ss slice.Bytes
+	ss, e = based32.Codec.Decode("aq" + s)
+	copy(sig[:], ss)
+	return
+}
 
 // Sign produces an ECDSA BIP62 compact signature.
 func Sign(prv *Prv, hash sha256.Hash) (sig SigBytes, e error) {

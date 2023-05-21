@@ -1,6 +1,7 @@
 package onions
 
 import (
+	"net/netip"
 	"reflect"
 	"time"
 
@@ -21,16 +22,20 @@ import (
 
 const (
 	AddrMagic = "addr"
-	AddrLen   = magic.Len + nonce.IDLen + crypto.PubKeyLen + 1 +
-		splice.AddrLen + slice.Uint64Len + crypto.SigLen
+	AddrLen   = magic.Len +
+		nonce.IDLen +
+		crypto.PubKeyLen + 1 +
+		splice.AddrLen +
+		slice.Uint64Len +
+		crypto.SigLen
 )
 
 type Addr struct {
-	ID        nonce.ID    // This ensures never a repeated signed message.
-	Key       *crypto.Pub // Identity key.
-	RelayRate uint64
-	Expiry    time.Time
-	Sig       crypto.SigBytes
+	ID       nonce.ID        // This ensures never a repeated signed message.
+	Key      *crypto.Pub     // Identity key.
+	AddrPort *netip.AddrPort // Introducer address.
+	Expiry   time.Time
+	Sig      crypto.SigBytes
 }
 
 func addrGen() coding.Codec           { return &Addr{} }
@@ -40,13 +45,15 @@ func (x *Addr) Len() int              { return AddrLen }
 func (x *Addr) Wrap(inner Onion)      {}
 func (x *Addr) GetOnion() interface{} { return x }
 
-func NewAddr(id nonce.ID, key *crypto.Prv,
+func NewAddr(id nonce.ID, key *crypto.Prv, addr *netip.AddrPort,
 	expires time.Time) (in *Addr) {
 
 	pk := crypto.DerivePub(key)
 	s := splice.New(AddrLen - magic.Len)
-	s.ID(id).Pubkey(pk).Uint64(uint64(expires.
-		UnixNano()))
+	s.ID(id).
+		Pubkey(pk).
+		AddrPort(addr).
+		Uint64(uint64(expires.UnixNano()))
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	var e error
 	var sign crypto.SigBytes
@@ -54,18 +61,21 @@ func NewAddr(id nonce.ID, key *crypto.Prv,
 		return nil
 	}
 	in = &Addr{
-		ID:     id,
-		Key:    pk,
-		Expiry: expires,
-		Sig:    sign,
+		ID:       id,
+		Key:      pk,
+		AddrPort: addr,
+		Expiry:   expires,
+		Sig:      sign,
 	}
 	return
 }
 
 func (x *Addr) Validate() bool {
 	s := splice.New(AddrLen - magic.Len)
-	s.ID(x.ID).Pubkey(x.Key).Uint64(uint64(x.Expiry.
-		UnixNano()))
+	s.ID(x.ID).
+		Pubkey(x.Key).
+		AddrPort(x.AddrPort).
+		Uint64(uint64(x.Expiry.UnixNano()))
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	key, e := x.Sig.Recover(hash)
 	if fails(e) {
@@ -80,6 +90,7 @@ func (x *Addr) Validate() bool {
 func (x *Addr) Splice(s *splice.Splice) {
 	s.ID(x.ID).
 		Pubkey(x.Key).
+		AddrPort(x.AddrPort).
 		Uint64(uint64(x.Expiry.UnixNano())).
 		Signature(x.Sig)
 }
@@ -100,6 +111,7 @@ func (x *Addr) Decode(s *splice.Splice) (e error) {
 	}
 	s.ReadID(&x.ID).
 		ReadPubkey(&x.Key).
+		ReadAddrPort(&x.AddrPort).
 		ReadTime(&x.Expiry).
 		ReadSignature(&x.Sig)
 	return
