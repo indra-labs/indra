@@ -215,20 +215,13 @@ func (o Skins) Message(msg *Message, ks *crypto.KeySet) Skins {
 		msg)
 }
 
-func (o Skins) Peer(id nonce.ID, key *crypto.Prv,
-	expires time.Time) (sk Skins) {
-	return append(o, NewPeer(id, key, expires))
-}
-
-func (o Skins) Addr(id nonce.ID, key *crypto.Prv, expires time.Time,
-addr *netip.AddrPort) (sk Skins) {
-
-	return append(o, NewAddr(id, key, addr, expires))
+func (o Skins) Peer(id nonce.ID, key *crypto.Prv, relayRate uint32, expires time.Time) (sk Skins) {
+	return append(o, NewPeer(id, key, expires, relayRate))
 }
 
 func (o Skins) Service(id nonce.ID, key *crypto.Prv,
 	expires time.Time) (sk Skins) {
-	return append(o, NewService(id, key, expires))
+	return append(o, NewService(id, key, 0, 0, expires))
 }
 
 func (o Skins) Ready(id nonce.ID, addr *crypto.Pub, fwHeader,

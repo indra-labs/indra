@@ -1,7 +1,6 @@
 package onions
 
 import (
-	"net/netip"
 	"testing"
 	"time"
 
@@ -25,10 +24,8 @@ func TestOnionSkins_Service(t *testing.T) {
 	for i := range pubs {
 		pubs[i] = crypto.DerivePub(prvs[i])
 	}
-	var ap netip.AddrPort
-	ap, e = netip.ParseAddrPort("127.0.0.1:1025")
 	on1 := Skins{}.
-		Addr(id, pr, time.Now().Add(time.Hour), &ap)
+		Service(id, pr, time.Now().Add(time.Hour))
 	on1 = append(on1, &End{})
 	on := on1.Assemble()
 	s := Encode(on)
@@ -44,13 +41,13 @@ func TestOnionSkins_Service(t *testing.T) {
 		t.FailNow()
 	}
 	log.D.S(onc)
-	var peer *Addr
+	var svc *Service
 	var ok bool
-	if peer, ok = onc.(*Addr); !ok {
+	if svc, ok = onc.(*Service); !ok {
 		t.Error("did not unwrap expected type")
 		t.FailNow()
 	}
-	if !peer.Validate() {
+	if !svc.Validate() {
 		t.Errorf("received Addr did not validate")
 		t.FailNow()
 	}

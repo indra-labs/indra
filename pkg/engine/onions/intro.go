@@ -36,8 +36,8 @@ type Intro struct {
 	ID        nonce.ID        // Ensures never a repeated signature.
 	Key       *crypto.Pub     // Hidden service address.
 	AddrPort  *netip.AddrPort // Introducer address.
+	Port      uint16          // Well known port of protocol available.
 	RelayRate uint32          // mSat/Mb
-	Port      uint16
 	Expiry    time.Time
 	Sig       crypto.SigBytes
 }
@@ -54,8 +54,12 @@ func NewIntro(id nonce.ID, key *crypto.Prv, ap *netip.AddrPort,
 
 	pk := crypto.DerivePub(key)
 	s := splice.New(IntroLen - magic.Len)
-	s.ID(id).Pubkey(pk).AddrPort(ap).Uint64(uint64(expires.
-		UnixNano()))
+	s.ID(id).
+		Pubkey(pk).
+		AddrPort(ap).
+		Uint32(relayRate).
+		Uint16(port).
+		Uint64(uint64(expires.UnixNano()))
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	var e error
 	var sign crypto.SigBytes
@@ -76,8 +80,12 @@ func NewIntro(id nonce.ID, key *crypto.Prv, ap *netip.AddrPort,
 
 func (x *Intro) Validate() bool {
 	s := splice.New(IntroLen - magic.Len)
-	s.ID(x.ID).Pubkey(x.Key).AddrPort(x.AddrPort).Uint64(uint64(x.Expiry.
-		UnixNano()))
+	s.ID(x.ID).
+		Pubkey(x.Key).
+		AddrPort(x.AddrPort).
+		Uint32(x.RelayRate).
+		Uint16(x.Port).
+		Uint64(uint64(x.Expiry.UnixNano()))
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	key, e := x.Sig.Recover(hash)
 	if fails(e) {

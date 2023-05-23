@@ -33,8 +33,8 @@ const (
 type Service struct {
 	ID        nonce.ID    // This ensures never a repeated signed message.
 	Key       *crypto.Pub // Identity key.
-	Port      uint16
-	RelayRate uint64
+	Port      uint16      // Well known port designating service protocol.
+	RelayRate uint32      // Fee rate in mSat/Mb
 	Expiry    time.Time
 	Sig       crypto.SigBytes
 }
@@ -46,13 +46,16 @@ func (x *Service) Len() int              { return ServiceLen }
 func (x *Service) Wrap(inner Onion)      {}
 func (x *Service) GetOnion() interface{} { return x }
 
-func NewService(id nonce.ID, key *crypto.Prv,
-	expires time.Time) (in *Service) {
+func NewService(id nonce.ID, key *crypto.Prv, port uint16, relayRate uint32,
+	expiry time.Time) (in *Service) {
 
 	pk := crypto.DerivePub(key)
 	s := splice.New(ServiceLen - magic.Len)
-	s.ID(id).Pubkey(pk).Uint64(uint64(expires.
-		UnixNano()))
+	s.ID(id).
+		Pubkey(pk).
+		Uint16(port).
+		Uint32(relayRate).
+		Uint64(uint64(expiry.UnixNano()))
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	var e error
 	var sign crypto.SigBytes
@@ -60,18 +63,23 @@ func NewService(id nonce.ID, key *crypto.Prv,
 		return nil
 	}
 	in = &Service{
-		ID:     id,
-		Key:    pk,
-		Expiry: expires,
-		Sig:    sign,
+		ID:        id,
+		Key:       pk,
+		Port:      port,
+		RelayRate: relayRate,
+		Expiry:    expiry,
+		Sig:       sign,
 	}
 	return
 }
 
 func (x *Service) Validate() bool {
 	s := splice.New(ServiceLen - magic.Len)
-	s.ID(x.ID).Pubkey(x.Key).Uint64(uint64(x.Expiry.
-		UnixNano()))
+	s.ID(x.ID).
+		Pubkey(x.Key).
+		Uint16(x.Port).
+		Uint32(x.RelayRate).
+		Uint64(uint64(x.Expiry.UnixNano()))
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	key, e := x.Sig.Recover(hash)
 	if fails(e) {
@@ -86,6 +94,8 @@ func (x *Service) Validate() bool {
 func (x *Service) Splice(s *splice.Splice) {
 	s.ID(x.ID).
 		Pubkey(x.Key).
+		Uint16(x.Port).
+		Uint32(x.RelayRate).
 		Uint64(uint64(x.Expiry.UnixNano())).
 		Signature(x.Sig)
 }
@@ -106,6 +116,8 @@ func (x *Service) Decode(s *splice.Splice) (e error) {
 	}
 	s.ReadID(&x.ID).
 		ReadPubkey(&x.Key).
+		ReadUint16(&x.Port).
+		ReadUint32(&x.RelayRate).
 		ReadTime(&x.Expiry).
 		ReadSignature(&x.Sig)
 	return

@@ -1,6 +1,7 @@
 package onions
 
 import (
+	"net/netip"
 	"reflect"
 	"time"
 
@@ -25,6 +26,7 @@ const (
 		nonce.IDLen +
 		crypto.PubKeyLen + 1 +
 		splice.AddrLen +
+		slice.Uint32Len +
 		slice.Uint64Len +
 		crypto.SigLen
 )
@@ -32,7 +34,8 @@ const (
 type Peer struct {
 	ID        nonce.ID    // This ensures never a repeated signed message.
 	Key       *crypto.Pub // Identity key.
-	RelayRate uint64
+	AddrPort  *netip.AddrPort
+	RelayRate uint32
 	Expiry    time.Time
 	Sig       crypto.SigBytes
 }
@@ -44,13 +47,15 @@ func (x *Peer) Len() int              { return PeerLen }
 func (x *Peer) Wrap(inner Onion)      {}
 func (x *Peer) GetOnion() interface{} { return x }
 
-func NewPeer(id nonce.ID, key *crypto.Prv,
-	expires time.Time) (in *Peer) {
+func NewPeer(id nonce.ID, key *crypto.Prv, expires time.Time,
+	relayRate uint32) (in *Peer) {
 
 	pk := crypto.DerivePub(key)
 	s := splice.New(IntroLen - magic.Len)
-	s.ID(id).Pubkey(pk).Uint64(uint64(expires.
-		UnixNano()))
+	s.ID(id).
+		Pubkey(pk).
+		Uint32(relayRate).
+		Uint64(uint64(expires.UnixNano()))
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	var e error
 	var sign crypto.SigBytes
@@ -58,18 +63,21 @@ func NewPeer(id nonce.ID, key *crypto.Prv,
 		return nil
 	}
 	in = &Peer{
-		ID:     id,
-		Key:    pk,
-		Expiry: expires,
-		Sig:    sign,
+		ID:        id,
+		Key:       pk,
+		RelayRate: relayRate,
+		Expiry:    expires,
+		Sig:       sign,
 	}
 	return
 }
 
 func (x *Peer) Validate() bool {
 	s := splice.New(PeerLen - magic.Len)
-	s.ID(x.ID).Pubkey(x.Key).Uint64(uint64(x.Expiry.
-		UnixNano()))
+	s.ID(x.ID).
+		Pubkey(x.Key).
+		Uint32(x.RelayRate).
+		Uint64(uint64(x.Expiry.UnixNano()))
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	key, e := x.Sig.Recover(hash)
 	if fails(e) {
@@ -84,6 +92,7 @@ func (x *Peer) Validate() bool {
 func (x *Peer) Splice(s *splice.Splice) {
 	s.ID(x.ID).
 		Pubkey(x.Key).
+		Uint32(x.RelayRate).
 		Uint64(uint64(x.Expiry.UnixNano())).
 		Signature(x.Sig)
 }
@@ -104,6 +113,7 @@ func (x *Peer) Decode(s *splice.Splice) (e error) {
 	}
 	s.ReadID(&x.ID).
 		ReadPubkey(&x.Key).
+		ReadUint32(&x.RelayRate).
 		ReadTime(&x.Expiry).
 		ReadSignature(&x.Sig)
 	return

@@ -25,7 +25,7 @@ func TestOnionSkins_Peer(t *testing.T) {
 		pubs[i] = crypto.DerivePub(prvs[i])
 	}
 	on1 := Skins{}.
-		Peer(id, pr, time.Now().Add(time.Hour))
+		Peer(id, pr, 20000, time.Now().Add(time.Hour))
 	on1 = append(on1, &End{})
 	on := on1.Assemble()
 	s := Encode(on)
