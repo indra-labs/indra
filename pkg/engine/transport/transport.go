@@ -24,13 +24,13 @@ import (
 	"github.com/libp2p/go-libp2p/p2p/transport/tcp"
 	"github.com/multiformats/go-multiaddr"
 
-	"git-indra.lan/indra-labs/indra"
-	"git-indra.lan/indra-labs/indra/pkg/crypto"
-	"git-indra.lan/indra-labs/indra/pkg/engine/tpt"
-	"git-indra.lan/indra-labs/indra/pkg/interrupt"
-	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	"git-indra.lan/indra-labs/indra/pkg/util/qu"
-	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/pkg/crypto"
+	"github.com/indra-labs/indra/pkg/engine/tpt"
+	"github.com/indra-labs/indra/pkg/interrupt"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/util/qu"
+	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
 const (

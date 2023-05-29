@@ -2,9 +2,9 @@ package main
 
 import (
 	"errors"
-	"git-indra.lan/indra-labs/indra"
-	"git-indra.lan/indra-labs/indra/cmd/indra/seed"
-	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/cmd/indra/seed"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"

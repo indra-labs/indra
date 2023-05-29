@@ -6,15 +6,15 @@ import (
 
 	"github.com/gookit/color"
 
-	"git-indra.lan/indra-labs/indra/pkg/crypto"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/engine/onions"
-	"git-indra.lan/indra-labs/indra/pkg/engine/responses"
-	"git-indra.lan/indra-labs/indra/pkg/engine/services"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
-	"git-indra.lan/indra-labs/indra/pkg/util/slice"
-	"git-indra.lan/indra-labs/indra/pkg/util/splice"
+	"github.com/indra-labs/indra/pkg/crypto"
+	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	"github.com/indra-labs/indra/pkg/engine/onions"
+	"github.com/indra-labs/indra/pkg/engine/responses"
+	"github.com/indra-labs/indra/pkg/engine/services"
+	"github.com/indra-labs/indra/pkg/engine/sess"
+	"github.com/indra-labs/indra/pkg/engine/sessions"
+	"github.com/indra-labs/indra/pkg/util/slice"
+	"github.com/indra-labs/indra/pkg/util/splice"
 )
 
 func (ng *Engine) SendExit(port uint16, msg slice.Bytes, id nonce.ID,

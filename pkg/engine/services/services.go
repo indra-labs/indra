@@ -1,6 +1,6 @@
 package services
 
-import "git-indra.lan/indra-labs/indra/pkg/engine/tpt"
+import "github.com/indra-labs/indra/pkg/engine/tpt"
 
 type (
 	Service struct {

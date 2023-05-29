@@ -1,9 +1,9 @@
 package onions
 
 import (
-	"git-indra.lan/indra-labs/indra/pkg/crypto"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/engine/services"
+	"github.com/indra-labs/indra/pkg/crypto"
+	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	"github.com/indra-labs/indra/pkg/engine/services"
 	"sync"
 )
 

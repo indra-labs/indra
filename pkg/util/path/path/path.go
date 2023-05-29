@@ -3,9 +3,9 @@ package path
 import (
 	"strings"
 
-	"git-indra.lan/indra-labs/indra"
-	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	"git-indra.lan/indra-labs/indra/pkg/util/norm"
+	"github.com/indra-labs/indra"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/util/norm"
 )
 
 var (

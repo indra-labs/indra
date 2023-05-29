@@ -2,13 +2,13 @@ package engine
 
 import (
 	"fmt"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/engine/node"
-	"git-indra.lan/indra-labs/indra/pkg/engine/onions"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
-	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
-	"git-indra.lan/indra-labs/indra/pkg/util/slice"
-	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
+	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	"github.com/indra-labs/indra/pkg/engine/node"
+	"github.com/indra-labs/indra/pkg/engine/onions"
+	"github.com/indra-labs/indra/pkg/engine/sessions"
+	"github.com/indra-labs/indra/pkg/util/cryptorand"
+	"github.com/indra-labs/indra/pkg/util/slice"
+	"github.com/lightningnetwork/lnd/lnwire"
 	"github.com/gookit/color"
 )
 

@@ -7,13 +7,13 @@ import (
 	"strings"
 	"sync"
 	
-	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	"git-indra.lan/indra-labs/indra/pkg/proc/opts/config"
-	"git-indra.lan/indra-labs/indra/pkg/proc/opts/meta"
-	"git-indra.lan/indra-labs/indra/pkg/proc/opts/text"
-	"git-indra.lan/indra-labs/indra/pkg/proc/opts/toggle"
-	"git-indra.lan/indra-labs/indra/pkg/util/norm"
-	"git-indra.lan/indra-labs/indra/pkg/util/path/path"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/proc/opts/config"
+	"github.com/indra-labs/indra/pkg/proc/opts/meta"
+	"github.com/indra-labs/indra/pkg/proc/opts/text"
+	"github.com/indra-labs/indra/pkg/proc/opts/toggle"
+	"github.com/indra-labs/indra/pkg/util/norm"
+	"github.com/indra-labs/indra/pkg/util/path/path"
 )
 
 type Op func(c *Command, args []string) error

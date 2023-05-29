@@ -1,12 +1,12 @@
 package seed
 
 import (
-	"git-indra.lan/indra-labs/indra"
-	"git-indra.lan/indra-labs/indra/cmd/indra/seed/client"
-	"git-indra.lan/indra-labs/indra/pkg/p2p"
-	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	"git-indra.lan/indra-labs/indra/pkg/rpc"
-	"git-indra.lan/indra-labs/indra/pkg/storage"
+	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/cmd/indra/seed/client"
+	"github.com/indra-labs/indra/pkg/p2p"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/rpc"
+	"github.com/indra-labs/indra/pkg/storage"
 	"github.com/spf13/cobra"
 )
 

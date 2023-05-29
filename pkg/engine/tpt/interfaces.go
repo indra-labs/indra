@@ -1,6 +1,6 @@
 package tpt
 
-import "git-indra.lan/indra-labs/indra/pkg/util/slice"
+import "github.com/indra-labs/indra/pkg/util/slice"
 
 // Transport is a generic interface for sending and receiving slices of bytes.
 type Transport interface {

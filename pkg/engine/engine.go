@@ -1,18 +1,18 @@
 package engine
 
 import (
-	"git-indra.lan/indra-labs/indra/pkg/crypto"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/engine/node"
-	"git-indra.lan/indra-labs/indra/pkg/engine/onions"
-	"git-indra.lan/indra-labs/indra/pkg/engine/responses"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
-	"git-indra.lan/indra-labs/indra/pkg/engine/tpt"
-	"git-indra.lan/indra-labs/indra/pkg/engine/transport"
-	"git-indra.lan/indra-labs/indra/pkg/util/qu"
-	"git-indra.lan/indra-labs/indra/pkg/util/slice"
-	"git-indra.lan/indra-labs/indra/pkg/util/splice"
+	"github.com/indra-labs/indra/pkg/crypto"
+	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	"github.com/indra-labs/indra/pkg/engine/node"
+	"github.com/indra-labs/indra/pkg/engine/onions"
+	"github.com/indra-labs/indra/pkg/engine/responses"
+	"github.com/indra-labs/indra/pkg/engine/sess"
+	"github.com/indra-labs/indra/pkg/engine/sessions"
+	"github.com/indra-labs/indra/pkg/engine/tpt"
+	"github.com/indra-labs/indra/pkg/engine/transport"
+	"github.com/indra-labs/indra/pkg/util/qu"
+	"github.com/indra-labs/indra/pkg/util/slice"
+	"github.com/indra-labs/indra/pkg/util/splice"
 	"go.uber.org/atomic"
 )
 

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"git-indra.lan/indra-labs/indra/pkg/util/appdata"
+	"github.com/indra-labs/indra/pkg/util/appdata"
 )
 
 func ResolvePath(input, appName string, abs bool) (cleaned string, e error) {

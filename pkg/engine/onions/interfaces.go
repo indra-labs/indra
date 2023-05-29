@@ -1,15 +1,15 @@
 package onions
 
 import (
-	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
-	"git-indra.lan/indra-labs/indra/pkg/util/qu"
-	"git-indra.lan/indra-labs/indra/pkg/util/splice"
+	"github.com/indra-labs/indra/pkg/util/cryptorand"
+	"github.com/indra-labs/indra/pkg/util/qu"
+	"github.com/indra-labs/indra/pkg/util/splice"
 
-	"git-indra.lan/indra-labs/indra/pkg/crypto"
-	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
-	"git-indra.lan/indra-labs/indra/pkg/engine/responses"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
+	"github.com/indra-labs/indra/pkg/crypto"
+	"github.com/indra-labs/indra/pkg/engine/coding"
+	"github.com/indra-labs/indra/pkg/engine/responses"
+	"github.com/indra-labs/indra/pkg/engine/sess"
+	"github.com/indra-labs/indra/pkg/engine/sessions"
 )
 
 type Ngin interface {

@@ -2,7 +2,7 @@ package log
 
 import (
 	"fmt"
-	"git-indra.lan/indra-labs/indra"
+	"github.com/indra-labs/indra"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gookit/color"
 	"go.uber.org/atomic"

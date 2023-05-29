@@ -6,11 +6,11 @@ import (
 	
 	"github.com/gookit/color"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/engine/node"
-	"git-indra.lan/indra-labs/indra/pkg/engine/responses"
-	"git-indra.lan/indra-labs/indra/pkg/util/slice"
-	"git-indra.lan/indra-labs/indra/pkg/util/splice"
+	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	"github.com/indra-labs/indra/pkg/engine/node"
+	"github.com/indra-labs/indra/pkg/engine/responses"
+	"github.com/indra-labs/indra/pkg/util/slice"
+	"github.com/indra-labs/indra/pkg/util/splice"
 )
 
 // Send a message to a peer via their AddrPort.

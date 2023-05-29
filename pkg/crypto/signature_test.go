@@ -3,7 +3,7 @@ package crypto
 import (
 	"crypto/rand"
 	"errors"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	mrand "math/rand"
 	"testing"
 )

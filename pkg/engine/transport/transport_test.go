@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"git-indra.lan/indra-labs/indra/pkg/crypto"
-	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	"git-indra.lan/indra-labs/indra/pkg/util/tests"
+	"github.com/indra-labs/indra/pkg/crypto"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/util/tests"
 )
 
 func TestNewListener(t *testing.T) {

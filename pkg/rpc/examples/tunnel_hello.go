@@ -7,7 +7,7 @@ import (
 	"github.com/tutorialedge/go-grpc-tutorial/chat"
 	"google.golang.org/grpc"
 	
-	"git-indra.lan/indra-labs/indra/pkg/rpc"
+	"github.com/indra-labs/indra/pkg/rpc"
 )
 
 func TunnelHello(ctx context.Context) {

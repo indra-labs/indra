@@ -3,12 +3,12 @@ package onions
 import (
 	"testing"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
-	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
-	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
-	"git-indra.lan/indra-labs/indra/pkg/util/slice"
-	"git-indra.lan/indra-labs/indra/pkg/util/tests"
+	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	"github.com/indra-labs/indra/pkg/crypto/sha256"
+	"github.com/indra-labs/indra/pkg/engine/coding"
+	"github.com/indra-labs/indra/pkg/util/cryptorand"
+	"github.com/indra-labs/indra/pkg/util/slice"
+	"github.com/indra-labs/indra/pkg/util/tests"
 )
 
 func TestOnionSkins_Response(t *testing.T) {

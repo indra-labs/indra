@@ -12,11 +12,11 @@ import (
 	"github.com/libp2p/go-libp2p/core/crypto"
 	crypto_pb "github.com/libp2p/go-libp2p/core/crypto/pb"
 
-	"git-indra.lan/indra-labs/indra"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
-	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	"git-indra.lan/indra-labs/indra/pkg/util/b32/based32"
-	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/pkg/crypto/sha256"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/util/b32/based32"
+	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
 const (

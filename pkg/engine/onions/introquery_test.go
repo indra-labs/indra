@@ -3,11 +3,11 @@ package onions
 import (
 	"testing"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
-	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/crypto"
+	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	"github.com/indra-labs/indra/pkg/engine/coding"
+	"github.com/indra-labs/indra/pkg/engine/sessions"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
 )
 
 func TestOnionSkins_IntroQuery(t *testing.T) {

@@ -12,8 +12,8 @@ import (
 	"github.com/libp2p/go-libp2p/core/protocol"
 	"github.com/multiformats/go-multiaddr"
 
-	"git-indra.lan/indra-labs/indra"
-	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
 )
 
 var (

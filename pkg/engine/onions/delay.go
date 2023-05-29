@@ -1,12 +1,12 @@
 package onions
 
 import (
-	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
-	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
-	"git-indra.lan/indra-labs/indra/pkg/util/slice"
-	"git-indra.lan/indra-labs/indra/pkg/util/splice"
+	"github.com/indra-labs/indra/pkg/engine/coding"
+	"github.com/indra-labs/indra/pkg/engine/magic"
+	"github.com/indra-labs/indra/pkg/engine/sess"
+	"github.com/indra-labs/indra/pkg/engine/sessions"
+	"github.com/indra-labs/indra/pkg/util/slice"
+	"github.com/indra-labs/indra/pkg/util/splice"
 	"reflect"
 	"time"
 )

@@ -2,7 +2,7 @@ package slice
 
 import (
 	"bytes"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"testing"
 )
 

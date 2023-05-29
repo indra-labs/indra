@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 	
-	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
 )
 
 func TestCommand_ParseCLIArgs(t *testing.T) {

@@ -1,9 +1,9 @@
 package sess
 
 import (
-	"git-indra.lan/indra-labs/indra/pkg/engine/node"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
-	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
+	"github.com/indra-labs/indra/pkg/engine/node"
+	"github.com/indra-labs/indra/pkg/engine/sessions"
+	"github.com/indra-labs/indra/pkg/util/cryptorand"
 )
 
 func (sm *Manager) SelectHops(hops []byte, alreadyHave sessions.Sessions,

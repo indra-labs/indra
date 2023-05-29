@@ -5,9 +5,9 @@ package sha256
 
 import (
 	"encoding/base32"
-	"git-indra.lan/indra-labs/indra"
-	"git-indra.lan/indra-labs/indra/pkg/constant"
-	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/pkg/constant"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/minio/sha256-simd"
 )
 

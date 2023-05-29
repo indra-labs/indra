@@ -9,8 +9,8 @@ import (
 	"sync"
 	"text/tabwriter"
 
-	"git-indra.lan/indra-labs/indra/pkg/proc/opts/config"
-	"git-indra.lan/indra-labs/indra/pkg/util/norm"
+	"github.com/indra-labs/indra/pkg/proc/opts/config"
+	"github.com/indra-labs/indra/pkg/util/norm"
 )
 
 // Help is a default top level command that is injected into a Command at the

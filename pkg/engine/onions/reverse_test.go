@@ -7,8 +7,8 @@ import (
 	"reflect"
 	"testing"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
+	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	"github.com/indra-labs/indra/pkg/engine/coding"
 )
 
 func TestOnionSkins_Reverse(t *testing.T) {

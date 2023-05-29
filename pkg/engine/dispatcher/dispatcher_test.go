@@ -6,16 +6,16 @@ import (
 	"testing"
 	"time"
 
-	"git-indra.lan/indra-labs/indra/pkg/engine/onions"
-	"git-indra.lan/indra-labs/indra/pkg/util/slice"
-	"git-indra.lan/indra-labs/indra/pkg/util/splice"
+	"github.com/indra-labs/indra/pkg/engine/onions"
+	"github.com/indra-labs/indra/pkg/util/slice"
+	"github.com/indra-labs/indra/pkg/util/splice"
 
-	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/engine/transport"
+	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	"github.com/indra-labs/indra/pkg/engine/transport"
 
-	"git-indra.lan/indra-labs/indra/pkg/crypto"
-	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	"git-indra.lan/indra-labs/indra/pkg/util/tests"
+	"github.com/indra-labs/indra/pkg/crypto"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/util/tests"
 )
 
 func TestDispatcher(t *testing.T) {

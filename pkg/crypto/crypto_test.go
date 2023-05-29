@@ -4,8 +4,8 @@ import (
 	rand2 "crypto/rand"
 	"testing"
 
-	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
-	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/crypto/sha256"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
 )
 
 func TestFromBased32(t *testing.T) {

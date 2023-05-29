@@ -1,8 +1,8 @@
 package crypto
 
 import (
-	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"testing"
 )

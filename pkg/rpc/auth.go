@@ -1,7 +1,7 @@
 package rpc
 
 import (
-	"git-indra.lan/indra-labs/lnd/lnd/macaroons"
+	"github.com/lightningnetwork/lnd/macaroons"
 	"gopkg.in/macaroon.v2"
 )
 

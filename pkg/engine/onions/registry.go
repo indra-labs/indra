@@ -1,10 +1,10 @@
 package onions
 
 import (
-	"git-indra.lan/indra-labs/indra"
-	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
-	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-	"git-indra.lan/indra-labs/indra/pkg/util/splice"
+	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/pkg/engine/coding"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/util/splice"
 	"github.com/gookit/color"
 	"reflect"
 	"sync"

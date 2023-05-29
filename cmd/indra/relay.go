@@ -5,14 +5,14 @@ package main
 //	"github.com/spf13/cobra"
 //	"github.com/spf13/viper"
 //
-//	"git-indra.lan/indra-labs/indra"
-//	"git-indra.lan/indra-labs/indra/pkg/crypto/key/prv"
-//	"git-indra.lan/indra-labs/indra/pkg/crypto/key/pub"
-//	"git-indra.lan/indra-labs/indra/pkg/interrupt"
-//	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
-//	"git-indra.lan/indra-labs/indra/pkg/relay"
-//	"git-indra.lan/indra-labs/indra/pkg/relay/transport"
-//	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+//	"github.com/indra-labs/indra"
+//	"github.com/indra-labs/indra/pkg/crypto/key/prv"
+//	"github.com/indra-labs/indra/pkg/crypto/key/pub"
+//	"github.com/indra-labs/indra/pkg/interrupt"
+//	log2 "github.com/indra-labs/indra/pkg/proc/log"
+//	"github.com/indra-labs/indra/pkg/relay"
+//	"github.com/indra-labs/indra/pkg/relay/transport"
+//	"github.com/indra-labs/indra/pkg/util/slice"
 // )
 //
 // var (

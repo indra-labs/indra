@@ -1,7 +1,7 @@
 package main
 
 import (
-	"git-indra.lan/indra-labs/indra/pkg/docker"
+	"github.com/indra-labs/indra/pkg/docker"
 	"github.com/docker/docker/api/types"
 )
 

@@ -3,8 +3,8 @@ package nonce
 import (
 	"crypto/rand"
 	"encoding/base32"
-	"git-indra.lan/indra-labs/indra/pkg/constant"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"github.com/indra-labs/indra/pkg/constant"
+	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"sync"
 )
 

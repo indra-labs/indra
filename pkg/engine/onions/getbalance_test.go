@@ -3,10 +3,10 @@ package onions
 import (
 	"testing"
 	
-	"git-indra.lan/indra-labs/indra/pkg/crypto"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
+	"github.com/indra-labs/indra/pkg/crypto"
+	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	"github.com/indra-labs/indra/pkg/engine/coding"
+	"github.com/indra-labs/indra/pkg/engine/sessions"
 )
 
 func TestOnionSkins_GetBalance(t *testing.T) {

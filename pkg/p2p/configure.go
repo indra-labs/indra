@@ -1,8 +1,8 @@
 package p2p
 
 import (
-	"git-indra.lan/indra-labs/indra/pkg/cfg"
-	"git-indra.lan/indra-labs/indra/pkg/storage"
+	"github.com/indra-labs/indra/pkg/cfg"
+	"github.com/indra-labs/indra/pkg/storage"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/multiformats/go-multiaddr"

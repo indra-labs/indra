@@ -1,9 +1,8 @@
-module git-indra.lan/indra-labs/indra
+module github.com/indra-labs/indra
 
 go 1.19
 
 require (
-	git-indra.lan/indra-labs/lnd v0.15.6
 	github.com/VividCortex/ewma v1.2.0
 	github.com/btcsuite/btcd/btcutil v1.1.3
 	github.com/davecgh/go-spew v1.1.1
@@ -19,6 +18,7 @@ require (
 	github.com/libp2p/go-libp2p v0.24.2
 	github.com/libp2p/go-libp2p-kad-dht v0.20.0
 	github.com/libp2p/go-libp2p-record v0.2.0
+	github.com/lightningnetwork/lnd v0.16.2-beta
 	github.com/minio/sha256-simd v1.0.0
 	github.com/moby/term v0.0.0-20221205130635-1aeaba878587
 	github.com/multiformats/go-multiaddr v0.8.0
@@ -28,8 +28,8 @@ require (
 	github.com/templexxx/reedsolomon v1.1.3
 	github.com/tutorialedge/go-grpc-tutorial v0.0.0-20200509091100-f8d1b5b15b01
 	go.uber.org/atomic v1.10.0
-	golang.org/x/crypto v0.6.0
-	golang.org/x/sys v0.5.0
+	golang.org/x/crypto v0.7.0
+	golang.org/x/sys v0.6.0
 	golang.zx2c4.com/wireguard v0.0.0-20230216153314-c7b76d3d9ecd
 	google.golang.org/grpc v1.53.0
 	google.golang.org/protobuf v1.28.1
@@ -46,12 +46,12 @@ require (
 	github.com/aead/siphash v1.0.1 // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/btcsuite/btcd v0.23.4 // indirect
+	github.com/btcsuite/btcd v0.23.5-0.20230228185050-38331963bddd // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
-	github.com/btcsuite/btcd/btcutil/psbt v1.1.6 // indirect
-	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1 // indirect
+	github.com/btcsuite/btcd/btcutil/psbt v1.1.8 // indirect
+	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2 // indirect
 	github.com/btcsuite/btclog v0.0.0-20170628155309-84c8d2346e9f // indirect
-	github.com/btcsuite/btcwallet v0.16.5 // indirect
+	github.com/btcsuite/btcwallet v0.16.9 // indirect
 	github.com/btcsuite/btcwallet/wallet/txauthor v1.3.3 // indirect
 	github.com/btcsuite/btcwallet/wallet/txrules v1.2.0 // indirect
 	github.com/btcsuite/btcwallet/wallet/txsizes v1.2.3 // indirect
@@ -132,10 +132,11 @@ require (
 	github.com/jbenet/goprocess v0.1.4 // indirect
 	github.com/jonboulle/clockwork v0.2.2 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/kevinburke/ssh_config v0.0.0-20190725054713-01f96b0aa0cd // indirect
 	github.com/kkdai/bstream v1.0.0 // indirect
 	github.com/klauspost/compress v1.15.15 // indirect
-	github.com/klauspost/cpuid/v2 v2.2.1 // indirect
+	github.com/klauspost/cpuid/v2 v2.2.3 // indirect
 	github.com/koron/go-ssdp v0.0.3 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lib/pq v1.10.6 // indirect
@@ -151,11 +152,15 @@ require (
 	github.com/libp2p/go-reuseport v0.2.0 // indirect
 	github.com/libp2p/go-yamux/v4 v4.0.0 // indirect
 	github.com/lightninglabs/gozmq v0.0.0-20191113021534-d20a764486bf // indirect
-	github.com/lightninglabs/neutrino v0.14.2 // indirect
-	github.com/lightningnetwork/lnd/clock v1.0.1 // indirect
-	github.com/lightningnetwork/lnd/queue v1.0.1 // indirect
-	github.com/lightningnetwork/lnd/ticker v1.0.0 // indirect
-	github.com/lightningnetwork/lnd/tlv v1.0.2 // indirect
+	github.com/lightninglabs/neutrino v0.15.0 // indirect
+	github.com/lightninglabs/neutrino/cache v1.1.1 // indirect
+	github.com/lightningnetwork/lnd/clock v1.1.0 // indirect
+	github.com/lightningnetwork/lnd/healthcheck v1.2.2 // indirect
+	github.com/lightningnetwork/lnd/kvdb v1.4.1 // indirect
+	github.com/lightningnetwork/lnd/queue v1.1.0 // indirect
+	github.com/lightningnetwork/lnd/ticker v1.1.0 // indirect
+	github.com/lightningnetwork/lnd/tlv v1.1.0 // indirect
+	github.com/lightningnetwork/lnd/tor v1.1.0 // indirect
 	github.com/lucas-clemente/quic-go v0.31.1 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/marten-seemann/qtls-go1-18 v0.1.3 // indirect
@@ -201,6 +206,7 @@ require (
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/raulk/go-watchdog v1.3.0 // indirect
+	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rogpeppe/fastuuid v1.2.0 // indirect
 	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
@@ -223,13 +229,13 @@ require (
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect
-	go.etcd.io/etcd/api/v3 v3.5.6 // indirect
-	go.etcd.io/etcd/client/pkg/v3 v3.5.6 // indirect
-	go.etcd.io/etcd/client/v2 v2.305.6 // indirect
-	go.etcd.io/etcd/client/v3 v3.5.6 // indirect
-	go.etcd.io/etcd/pkg/v3 v3.5.6 // indirect
-	go.etcd.io/etcd/raft/v3 v3.5.6 // indirect
-	go.etcd.io/etcd/server/v3 v3.5.6 // indirect
+	go.etcd.io/etcd/api/v3 v3.5.7 // indirect
+	go.etcd.io/etcd/client/pkg/v3 v3.5.7 // indirect
+	go.etcd.io/etcd/client/v2 v2.305.7 // indirect
+	go.etcd.io/etcd/client/v3 v3.5.7 // indirect
+	go.etcd.io/etcd/pkg/v3 v3.5.7 // indirect
+	go.etcd.io/etcd/raft/v3 v3.5.7 // indirect
+	go.etcd.io/etcd/server/v3 v3.5.7 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.28.0 // indirect
 	go.opentelemetry.io/otel v1.7.0 // indirect
@@ -244,13 +250,13 @@ require (
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/exp v0.0.0-20221205204356-47842c84f3db // indirect
-	golang.org/x/mod v0.7.0 // indirect
-	golang.org/x/net v0.7.0 // indirect
+	golang.org/x/mod v0.8.0 // indirect
+	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/term v0.5.0 // indirect
-	golang.org/x/text v0.7.0 // indirect
+	golang.org/x/term v0.6.0 // indirect
+	golang.org/x/text v0.8.0 // indirect
 	golang.org/x/time v0.1.0 // indirect
-	golang.org/x/tools v0.5.0 // indirect
+	golang.org/x/tools v0.6.0 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 // indirect
 	google.golang.org/genproto v0.0.0-20230221151758-ace64dc21148 // indirect
 	gopkg.in/errgo.v1 v1.0.1 // indirect
@@ -263,23 +269,19 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gvisor.dev/gvisor v0.0.0-20221203005347-703fd9b7fbc0 // indirect
 	lukechampine.com/blake3 v1.1.7 // indirect
+	lukechampine.com/uint128 v1.2.0 // indirect
+	modernc.org/cc/v3 v3.40.0 // indirect
+	modernc.org/ccgo/v3 v3.16.13 // indirect
+	modernc.org/libc v1.22.5 // indirect
+	modernc.org/mathutil v1.5.0 // indirect
+	modernc.org/memory v1.5.0 // indirect
+	modernc.org/opt v0.1.3 // indirect
+	modernc.org/sqlite v1.22.1 // indirect
+	modernc.org/strutil v1.1.3 // indirect
+	modernc.org/token v1.0.1 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
 replace crypto/sha256 => github.com/minio/sha256-simd v1.0.0
 
 replace math/rand => github.com/lukechampine/frand v1.4.2
-
-//replace s7v2qgqpsgnak5rkrewh3gabd4h2hfluz7hpzr7mrtmscgb2pmzq2zqd.onion/indra-labs/lnd => git-indra.lan/indra-labs/indra
-
-replace git-indra.lan/indra-labs/indra => github.com/indra-labs/indra v0.1.11
-
-replace git-indra.lan/indra-labs/lnd => github.com/indra-labs/lnd v0.15.6
-
-//replace git-indra.lan/indra-labs/lnd => ../lnd
-
-exclude github.com/indra-labs/lnd v0.15.10001
-
-exclude github.com/indra-labs/lnd v0.15.101
-
-exclude github.com/indra-labs/lnd v0.15.1

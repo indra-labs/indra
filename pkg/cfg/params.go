@@ -4,9 +4,9 @@ import (
 	"github.com/multiformats/go-multiaddr"
 	"os"
 
-	"git-indra.lan/indra-labs/indra"
-	"git-indra.lan/indra-labs/indra/pkg/node"
-	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/pkg/node"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
 )
 
 var (

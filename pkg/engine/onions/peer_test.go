@@ -4,10 +4,10 @@ import (
 	"testing"
 	"time"
 
-	"git-indra.lan/indra-labs/indra/pkg/crypto"
-	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
-	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
-	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/crypto"
+	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	"github.com/indra-labs/indra/pkg/engine/coding"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
 )
 
 func TestOnionSkins_Peer(t *testing.T) {

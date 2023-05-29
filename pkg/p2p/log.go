@@ -1,8 +1,8 @@
 package p2p
 
 import (
-	"git-indra.lan/indra-labs/indra"
-	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
 )
 
 var (

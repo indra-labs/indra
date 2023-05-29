@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"git-indra.lan/indra-labs/indra"
+	"github.com/indra-labs/indra"
 
 	"github.com/spf13/cobra"
 )

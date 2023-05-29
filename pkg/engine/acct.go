@@ -1,9 +1,9 @@
 package engine
 
 import (
-	"git-indra.lan/indra-labs/indra/pkg/engine/onions"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
-	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
+	"github.com/indra-labs/indra/pkg/engine/onions"
+	"github.com/indra-labs/indra/pkg/engine/sess"
+	"github.com/indra-labs/indra/pkg/engine/sessions"
 )
 
 // PostAcctOnion takes a slice of Skins and calculates their costs and
