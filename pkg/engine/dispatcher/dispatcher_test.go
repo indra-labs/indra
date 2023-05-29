@@ -219,7 +219,7 @@ func TestDispatcher_Rekey(t *testing.T) {
 					case <-ctx.Done():
 						return
 					default:
-						time.Sleep(time.Millisecond*20)
+						time.Sleep(time.Millisecond*100)
 						continue
 					}
 				}
