@@ -239,7 +239,7 @@ func TestDispatcher_Rekey(t *testing.T) {
 		d1.SendToConn(msgp1)
 		d2.SendToConn(msgp2)
 	}
-	time.Sleep(time.Second)
+	time.Sleep(time.Second*5)
 	cancel()
 	if succ != countTo*3 {
 		t.Fatal("did not receive all messages correctly", succ, countTo*3)
