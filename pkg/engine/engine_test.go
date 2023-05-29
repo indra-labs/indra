@@ -527,7 +527,7 @@ func TestEngine_Route(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
 	wg.Add(1)
 	counter.Inc()
-	log.D.Ln("intro", ini.ID, ini.AddrPort.String(), ini.Key.ToBase32Abbreviated(),
+	log.D.Ln("intro", ini.ID, ini.AddrPort.String(), ini.Key.ToBased32Abbreviated(),
 		ini.Expiry, ini.Validate())
 	client.SendRoute(ini.Key, ini.AddrPort,
 		func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {

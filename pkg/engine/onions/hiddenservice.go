@@ -64,7 +64,7 @@ func (x *HiddenService) Decode(s *splice.Splice) (e error) {
 
 func (x *HiddenService) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	log.D.F("%s adding introduction for key %s",
-		ng.Mgr().GetLocalNodeAddressString(), x.Key.ToBase32Abbreviated())
+		ng.Mgr().GetLocalNodeAddressString(), x.Key.ToBased32Abbreviated())
 	ng.GetHidden().AddIntro(x.Key, &Introduction{
 		Intro: &x.Intro,
 		ReplyHeader: ReplyHeader{

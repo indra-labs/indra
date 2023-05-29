@@ -2,7 +2,7 @@ package crypto
 
 import (
 	"testing"
-	
+
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 )
 
@@ -16,13 +16,26 @@ func TestBase32(t *testing.T) {
 			t.FailNow()
 		}
 		p := DerivePub(k)
-		b32 := p.ToBase32()
-		pr32 := k.ToBase32()
-		log.I.Ln("\n", len(b32), b32, len(pr32), pr32)
+		b32 := p.ToBased32()
+		pr32 := k.ToBased32()
+		//log.D.S("\nbytes", p.ToBytes(), k.ToBytes())
+		log.I.F("private key: %d %s public key: %d %s\n", len(b32), b32, len(pr32), pr32)
 		var kk *Pub
-		kk, e = PubFromBase32(b32)
-		if b32 != kk.ToBase32() {
+		if kk, e = PubFromBase32(b32); fails(e) {
 			t.Error(e)
+			t.FailNow()
+		}
+		if b32 != kk.ToBased32() {
+			t.Error("failed to decode public key")
+			t.FailNow()
+		}
+		var pk *Prv
+		if pk, e = PrvFromBased32(pr32); fails(e) {
+			t.Error(e)
+			t.FailNow()
+		}
+		if pr32 != pk.ToBased32() {
+			t.Error("failed to decode private key")
 			t.FailNow()
 		}
 	}

@@ -63,7 +63,8 @@ func makeCodec(
 		outputBytes := make([]byte, len(input)+checkLen+1)
 		outputBytes[0] = byte(checkLen)
 		copy(outputBytes[1:len(input)+1], input)
-		copy(outputBytes[len(input)+1:], cdc.MakeCheck(input, checkLen))
+		ch := cdc.MakeCheck(input, checkLen)
+		copy(outputBytes[len(input)+1:], ch)
 		outputString := enc.EncodeToString(outputBytes)
 		output = cdc.HRP + outputString[:len(outputString)-1]
 		return

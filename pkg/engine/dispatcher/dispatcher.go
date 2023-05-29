@@ -631,7 +631,7 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 		}
 		d.Conn.SetRemoteKey(o.NewPubkey)
 		log.D.Ln(d.ip, "new remote key received",
-			o.NewPubkey.ToBase32())
+			o.NewPubkey.ToBased32())
 	case AcknowledgeMagic:
 		log.D.Ln("ack: received", len(d.Done))
 		o := c.(*Acknowledge)

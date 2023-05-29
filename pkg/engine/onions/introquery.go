@@ -70,7 +70,7 @@ func (x *IntroQuery) Decode(s *splice.Splice) (e error) {
 func (x *IntroQuery) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	ng.GetHidden().Lock()
 	log.D.Ln(ng.Mgr().GetLocalNodeAddressString(), "handling introquery", x.ID,
-		x.Key.ToBase32Abbreviated())
+		x.Key.ToBased32Abbreviated())
 	var ok bool
 	var il *Intro
 	if il, ok = ng.GetHidden().KnownIntros[x.Key.ToBytes()]; !ok {

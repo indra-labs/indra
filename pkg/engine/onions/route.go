@@ -105,7 +105,7 @@ func (x *Route) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	hcl := *hc
 	if hh, ok := ng.GetHidden().Services[hcl]; ok {
 		log.D.F("we are the hidden service %s - decrypting...",
-			hh.CurrentIntros[0].Key.ToBase32Abbreviated())
+			hh.CurrentIntros[0].Key.ToBased32Abbreviated())
 		// We have the keys to unwrap this one.
 		x.Decrypt(hh.Prv, s)
 		log.D.Ln(s)

@@ -27,7 +27,7 @@ func TestFromBased32(t *testing.T) {
 		}
 		// fmt.Println("sig", s)
 		var sb SigBytes
-		if sb, e = FromBased32(s.String()); fails(e) {
+		if sb, e = SigFromBased32(s.String()); fails(e) {
 			t.FailNow()
 		}
 		if s != sb {

@@ -144,7 +144,7 @@ func (ng *Engine) SendRoute(k *crypto.Pub, ap *netip.AddrPort,
 		return
 	}
 	log.D.Ln(ng.Manager.GetLocalNodeAddressString(), "sending route",
-		k.ToBase32Abbreviated())
+		k.ToBased32Abbreviated())
 	hops := sess.StandardCircuit()
 	s := make(sessions.Sessions, len(hops))
 	s[2] = ss

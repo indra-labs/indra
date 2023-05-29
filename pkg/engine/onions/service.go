@@ -136,7 +136,7 @@ func (x *Service) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 			return
 		}
 		log.D.F("%s storing intro for %s %s",
-			ng.Mgr().GetLocalNodeAddressString(), x.Key.ToBase32Abbreviated(),
+			ng.Mgr().GetLocalNodeAddressString(), x.Key.ToBased32Abbreviated(),
 			x.ID)
 		// ng.GetHidden().KnownIntros[x.Key.ToBytes()] = x
 		var ok bool
@@ -148,7 +148,7 @@ func (x *Service) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 			return
 		}
 		log.D.F("%s sending out intro to %s to all known peers",
-			ng.Mgr().GetLocalNodeAddressString(), x.Key.ToBase32Abbreviated())
+			ng.Mgr().GetLocalNodeAddressString(), x.Key.ToBased32Abbreviated())
 		sender := ng.Mgr().FindNodeByIdentity(x.Key)
 		nn := make(map[nonce.ID]*node.Node)
 		ng.Mgr().ForEachNode(func(n *node.Node) bool {
@@ -183,7 +183,7 @@ func (x *Service) Account(res *sess.Data, sm *sess.Manager,
 
 func (x *Service) Gossip(sm *sess.Manager, c qu.C) {
 	log.D.F("propagating peer info for %s",
-		x.Key.ToBase32Abbreviated())
+		x.Key.ToBased32Abbreviated())
 	Gossip(x, sm, c)
 	log.T.Ln("finished broadcasting peer info")
 }

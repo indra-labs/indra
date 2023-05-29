@@ -26,7 +26,7 @@ func GetBlock(from *crypto.Prv, to *crypto.Pub, note string) (block cipher.Block
 	secret := crypto.ComputeSharedSecret(from, to)
 	// fb := from.ToBytes()
 	// log.T.Ln(note, "secret", color.Red.Sprint(enc(secret[:])[:52]), "<-",
-	// 	color.Blue.Sprint(enc(fb[:])[:52]), "+", to.ToBase32())
+	// 	color.Blue.Sprint(enc(fb[:])[:52]), "+", to.ToBased32())
 	block, _ = aes.NewCipher(secret[:])
 	return
 }

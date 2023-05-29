@@ -95,7 +95,7 @@ func GeneratePrvKey() (prv *Prv, e error) {
 	return (*Prv)(p), e
 }
 
-func (p *Prv) ToBase32() (s string) {
+func (p *Prv) ToBased32() (s string) {
 	b := p.ToBytes()
 	var e error
 	if s, e = based32.Codec.Encode(b[:]); fails(e) {
@@ -104,7 +104,7 @@ func (p *Prv) ToBase32() (s string) {
 	return string(ss)
 }
 
-func PrvFromBase32(s string) (k *Prv, e error) {
+func PrvFromBased32(s string) (k *Prv, e error) {
 	ss := []byte(s)
 	var b slice.Bytes
 	b, e = based32.Codec.Decode("a" + string(ss))
@@ -148,11 +148,12 @@ type (
 	PubBytes [PubKeyLen]byte
 )
 
-// The key types must satisfy these interfaces for libp2p.
-var _ crypto.Key = &Prv{}
-var _ crypto.Key = &Pub{}
-var _ crypto.PubKey = &Pub{}
-var _ crypto.PrivKey = &Prv{}
+var (
+	// The key types must satisfy these interfaces for libp2p.
+	_, _ crypto.Key     = &Prv{}, &Pub{}
+	_    crypto.PubKey  = &Pub{}
+	_    crypto.PrivKey = &Prv{}
+)
 
 func (p *Prv) Equals(key crypto.Key) (eq bool) {
 	var e error
@@ -247,15 +248,7 @@ func (k *Pub) Type() crypto_pb.KeyType {
 	return crypto_pb.KeyType_Secp256k1
 }
 
-func (pb PubBytes) String() (s string) {
-	var e error
-	if s, e = based32.Codec.Encode(pb[:]); fails(e) {
-	}
-	ss := []byte(s)
-	return color.LightGreen.Sprint(string(ss[3:]))
-}
-
-func (k *Pub) String() (s string) { return k.ToBase32() }
+func (k *Pub) String() (s string) { return k.ToBased32() }
 
 // DerivePub generates a public key from the prv.Pub.
 func DerivePub(prv *Prv) *Pub {
@@ -290,7 +283,7 @@ func (k *Pub) ToHex() (s string, e error) {
 	return
 }
 
-func (k *Pub) ToBase32() (s string) {
+func (k *Pub) ToBased32() (s string) {
 	b := k.ToBytes()
 	var e error
 	if s, e = based32.Codec.Encode(b[:]); fails(e) {
@@ -299,10 +292,14 @@ func (k *Pub) ToBase32() (s string) {
 	return string(ss)
 }
 
-func (k *Pub) ToBase32Abbreviated() (s string) {
-	s = k.ToBase32()
+func (k *Pub) ToBased32Abbreviated() (s string) {
+	s = k.ToBased32()
 	s = s[:13] + "..." + s[len(s)-8:]
 	return color.LightGreen.Sprint(string(s))
+}
+
+func (k *Pub) ToPublicKey() *secp256k1.PublicKey {
+	return (*secp256k1.PublicKey)(k)
 }
 
 func PubFromBase32(s string) (k *Pub, e error) {
@@ -314,9 +311,16 @@ func PubFromBase32(s string) (k *Pub, e error) {
 
 func (pb PubBytes) Equals(qb PubBytes) bool { return pb == qb }
 
-func (k *Pub) ToPublicKey() *secp256k1.PublicKey {
-	return (*secp256k1.PublicKey)(k)
+func (pb PubBytes) ToBased32() (s string) {
+	var e error
+	if s, e = based32.Codec.Encode(pb[:]); fails(e) {
+	}
+	ss := []byte(s)[3:]
+	return string(ss)
+
 }
+
+func (pb PubBytes) String() (s string) { return pb.ToBased32() }
 
 // SigLen is the length of the signatures used in Indra, compact keys that can
 // have the public key extracted from them.
@@ -331,7 +335,7 @@ func (s SigBytes) String() string {
 	return o[2:]
 }
 
-func FromBased32(s string) (sig SigBytes, e error) {
+func SigFromBased32(s string) (sig SigBytes, e error) {
 	var ss slice.Bytes
 	ss, e = based32.Codec.Decode("aq" + s)
 	copy(sig[:], ss)
