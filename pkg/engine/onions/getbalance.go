@@ -1,8 +1,6 @@
 package onions
 
 import (
-	"reflect"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
@@ -12,6 +10,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 	"git-indra.lan/indra-labs/indra/pkg/util/splice"
+	"reflect"
 )
 
 const (
@@ -39,18 +38,22 @@ type GetBalance struct {
 	Onion
 }
 
-func getBalanceGen() coding.Codec           { return &GetBalance{} }
-func init()                                 { Register(GetBalanceMagic, getBalanceGen) }
-func (x *GetBalance) Magic() string         { return GetBalanceMagic }
-func (x *GetBalance) Len() int              { return GetBalanceLen + x.Onion.Len() }
-func (x *GetBalance) Wrap(inner Onion)      { x.Onion = inner }
-func (x *GetBalance) GetOnion() interface{} { return x }
+func (x *GetBalance) Account(res *sess.Data, sm *sess.Manager,
+	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+	res.ID = s.ID
+	res.Billable = append(res.Billable, s.Header.Bytes)
+	skip = true
+	return
+}
 
-type GetBalanceParams struct {
-	ID         nonce.ID
-	Alice, Bob *sessions.Data
-	S          sessions.Circuit
-	KS         *crypto.KeySet
+func (x *GetBalance) Decode(s *splice.Splice) (e error) {
+	if e = magic.TooShort(s.Remaining(), GetBalanceLen-magic.Len,
+		GetBalanceMagic); fails(e) {
+		return
+	}
+	s.ReadID(&x.ID).
+		ReadCiphers(&x.Ciphers).ReadNonces(&x.Nonces)
+	return
 }
 
 func (x *GetBalance) Encode(s *splice.Splice) (e error) {
@@ -64,15 +67,7 @@ func (x *GetBalance) Encode(s *splice.Splice) (e error) {
 	)
 }
 
-func (x *GetBalance) Decode(s *splice.Splice) (e error) {
-	if e = magic.TooShort(s.Remaining(), GetBalanceLen-magic.Len,
-		GetBalanceMagic); fails(e) {
-		return
-	}
-	s.ReadID(&x.ID).
-		ReadCiphers(&x.Ciphers).ReadNonces(&x.Nonces)
-	return
-}
+func (x *GetBalance) GetOnion() interface{} { return x }
 
 func (x *GetBalance) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	log.T.S(x)
@@ -119,11 +114,16 @@ func (x *GetBalance) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	return
 }
 
-func (x *GetBalance) Account(res *sess.Data, sm *sess.Manager,
-	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
-	
-	res.ID = s.ID
-	res.Billable = append(res.Billable, s.Header.Bytes)
-	skip = true
-	return
+func (x *GetBalance) Len() int      { return GetBalanceLen + x.Onion.Len() }
+func (x *GetBalance) Magic() string { return GetBalanceMagic }
+
+type GetBalanceParams struct {
+	ID         nonce.ID
+	Alice, Bob *sessions.Data
+	S          sessions.Circuit
+	KS         *crypto.KeySet
 }
+
+func (x *GetBalance) Wrap(inner Onion) { x.Onion = inner }
+func getBalanceGen() coding.Codec      { return &GetBalance{} }
+func init()                            { Register(GetBalanceMagic, getBalanceGen) }

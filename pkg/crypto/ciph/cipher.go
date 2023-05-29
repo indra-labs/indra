@@ -7,7 +7,6 @@ package ciph
 import (
 	"crypto/aes"
 	"crypto/cipher"
-	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -19,17 +18,6 @@ var (
 	log   = log2.GetLogger(indra.PathBase)
 	fails = log.E.Chk
 )
-
-// GetBlock returns a block cipher with a secret generated from the provided
-// keys using ECDH.
-func GetBlock(from *crypto.Prv, to *crypto.Pub, note string) (block cipher.Block) {
-	secret := crypto.ComputeSharedSecret(from, to)
-	// fb := from.ToBytes()
-	// log.T.Ln(note, "secret", color.Red.Sprint(enc(secret[:])[:52]), "<-",
-	// 	color.Blue.Sprint(enc(fb[:])[:52]), "+", to.ToBased32())
-	block, _ = aes.NewCipher(secret[:])
-	return
-}
 
 // BlockFromHash creates an AES block cipher from an sha256.Hash.
 func BlockFromHash(h sha256.Hash) (block cipher.Block) {
@@ -47,4 +35,15 @@ func Encipher(blk cipher.Block, n nonce.IV, b []byte) {
 	} else {
 		cipher.NewCTR(blk, n[:]).XORKeyStream(b, b)
 	}
+}
+
+// GetBlock returns a block cipher with a secret generated from the provided
+// keys using ECDH.
+func GetBlock(from *crypto.Prv, to *crypto.Pub, note string) (block cipher.Block) {
+	secret := crypto.ComputeSharedSecret(from, to)
+	// fb := from.ToBytes()
+	// log.T.Ln(note, "secret", color.Red.Sprint(enc(secret[:])[:52]), "<-",
+	// 	color.Blue.Sprint(enc(fb[:])[:52]), "+", to.ToBased32())
+	block, _ = aes.NewCipher(secret[:])
+	return
 }

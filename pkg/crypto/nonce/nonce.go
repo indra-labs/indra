@@ -6,17 +6,16 @@ package nonce
 import (
 	"crypto/aes"
 	"crypto/rand"
-	
 	"git-indra.lan/indra-labs/indra"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 )
+
+const IVLen = aes.BlockSize
 
 var (
 	log   = log2.GetLogger(indra.PathBase)
 	fails = log.E.Chk
 )
-
-const IVLen = aes.BlockSize
 
 type IV [IVLen]byte
 

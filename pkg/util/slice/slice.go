@@ -8,44 +8,44 @@ import (
 	"crypto/rand"
 	"encoding/binary"
 	"fmt"
-	"net/netip"
-	"reflect"
-	"unsafe"
-	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"net/netip"
+	"reflect"
+	"unsafe"
+)
+
+const (
+	Uint64Len = 8
+	Uint32Len = 4
+	Uint24Len = 3
+	Uint16Len = 2
 )
 
 var (
 	log   = log2.GetLogger(indra.PathBase)
 	check = log.E.Chk
+	put64 = binary.LittleEndian.PutUint64
+	get64 = binary.LittleEndian.Uint64
+	put32 = binary.LittleEndian.PutUint32
+	get32 = binary.LittleEndian.Uint32
+	put16 = binary.LittleEndian.PutUint16
+	get16 = binary.LittleEndian.Uint16
 )
 
-func Cut(b []byte, l int) (seg []byte, rem []byte) { return b[:l], b[l:] }
+type (
+	U64Slice []uint64
+	Bytes    []byte
+)
 
-func SumLen(chunks ...[]byte) (l int) {
-	for _, c := range chunks {
-		l += len(c)
-	}
+func (u U64Slice) Copy() (o U64Slice) {
+	o = make(U64Slice, len(u))
+	copy(o, u)
 	return
 }
 
-func Segment(b []byte, segmentSize int) (segs [][]byte) {
-	lb := len(b)
-	var end int
-	for begin := 0; end < lb; begin += segmentSize {
-		end = begin + segmentSize
-		if end > lb {
-			d := b[begin:lb]
-			d = append(d, NoisePad(end-lb)...)
-			segs = append(segs, d)
-		} else {
-			segs = append(segs, b[begin:end])
-		}
-	}
-	return
-}
+type Cursor int
 
 // Cat takes a slice of byte slices and packs them together in a packet.
 // The returned packet has its capacity pre-allocated to match what gets copied
@@ -59,28 +59,16 @@ func Cat(chunks ...[]byte) (pkt []byte) {
 	return
 }
 
-var (
-	put64 = binary.LittleEndian.PutUint64
-	get64 = binary.LittleEndian.Uint64
-	put32 = binary.LittleEndian.PutUint32
-	get32 = binary.LittleEndian.Uint32
-	put16 = binary.LittleEndian.PutUint16
-	get16 = binary.LittleEndian.Uint16
-)
+func (c *Cursor) Inc(v int) Cursor {
+	*c += Cursor(v)
+	return *c
+}
 
-// DecodeUint64 returns an int containing the little endian encoded 64-bit value
+func Cut(b []byte, l int) (seg []byte, rem []byte) { return b[:l], b[l:] }
+
+// DecodeUint16 returns an int containing the little endian encoded 32bit value
 // stored in a 4 byte long slice
-func DecodeUint64(b []byte) uint64 { return get64(b) }
-
-// EncodeUint64 puts an int into a uint32 and then into 8 byte long slice.
-func EncodeUint64(b []byte, n uint64) { put64(b, n) }
-
-// DecodeUint32 returns an int containing the little endian encoded 32bit value
-// stored in a 4 byte long slice
-func DecodeUint32(b []byte) int { return int(get32(b)) }
-
-// EncodeUint32 puts an int into a uint32 and then into 4 byte long slice.
-func EncodeUint32(b []byte, n int) { put32(b, uint32(n)) }
+func DecodeUint16(b []byte) int { return int(get16(b)) }
 
 // DecodeUint24 returns an int containing the little endian encoded 24bit value
 // stored in a 3 byte long slice
@@ -90,6 +78,17 @@ func DecodeUint24(b []byte) int {
 	return int(get32(u))
 }
 
+// DecodeUint32 returns an int containing the little endian encoded 32bit value
+// stored in a 4 byte long slice
+func DecodeUint32(b []byte) int { return int(get32(b)) }
+
+// DecodeUint64 returns an int containing the little endian encoded 64-bit value
+// stored in a 4 byte long slice
+func DecodeUint64(b []byte) uint64 { return get64(b) }
+
+// EncodeUint16 puts an int into a uint32 and then into 2 byte long slice.
+func EncodeUint16(b []byte, n int) { put16(b, uint16(n)) }
+
 // EncodeUint24 puts an int into a uint32 and then into 3 byte long slice.
 func EncodeUint24(b []byte, n int) {
 	u := make([]byte, Uint32Len)
@@ -97,24 +96,29 @@ func EncodeUint24(b []byte, n int) {
 	copy(b, u[:Uint24Len])
 }
 
-// DecodeUint16 returns an int containing the little endian encoded 32bit value
-// stored in a 4 byte long slice
-func DecodeUint16(b []byte) int { return int(get16(b)) }
+// EncodeUint32 puts an int into a uint32 and then into 4 byte long slice.
+func EncodeUint32(b []byte, n int) { put32(b, uint32(n)) }
 
-// EncodeUint16 puts an int into a uint32 and then into 2 byte long slice.
-func EncodeUint16(b []byte, n int) { put16(b, uint16(n)) }
+// EncodeUint64 puts an int into a uint32 and then into 8 byte long slice.
+func EncodeUint64(b []byte, n uint64) { put64(b, n) }
 
-const (
-	Uint64Len = 8
-	Uint32Len = 4
-	Uint24Len = 3
-	Uint16Len = 2
-)
+func (b Bytes) Len() int { return len(b) }
+
+func NewBytes(length int) Bytes {
+	return make(Bytes, length)
+}
+
+func NewCursor() (c *Cursor) {
+	var cc Cursor
+	return &cc
+}
+
+func NewUint16() Bytes { return make(Bytes, Uint16Len) }
+
+func NewUint24() Bytes { return make(Bytes, Uint24Len) }
+func NewUint32() Bytes { return make(Bytes, Uint32Len) }
 
 func NewUint64() Bytes { return make(Bytes, Uint64Len) }
-func NewUint32() Bytes { return make(Bytes, Uint32Len) }
-func NewUint24() Bytes { return make(Bytes, Uint24Len) }
-func NewUint16() Bytes { return make(Bytes, Uint16Len) }
 
 func NoisePad(l int) (noise []byte) {
 	var seed sha256.Hash
@@ -137,41 +141,50 @@ func NoisePad(l int) (noise []byte) {
 	return
 }
 
-type Cursor int
-
-func NewCursor() (c *Cursor) {
-	var cc Cursor
-	return &cc
+func Segment(b []byte, segmentSize int) (segs [][]byte) {
+	lb := len(b)
+	var end int
+	for begin := 0; end < lb; begin += segmentSize {
+		end = begin + segmentSize
+		if end > lb {
+			d := b[begin:lb]
+			d = append(d, NoisePad(end-lb)...)
+			segs = append(segs, d)
+		} else {
+			segs = append(segs, b[begin:end])
+		}
+	}
+	return
 }
-
-func (c *Cursor) Inc(v int) Cursor {
-	*c += Cursor(v)
-	return *c
-}
-
-type Bytes []byte
 
 func (b Bytes) String() string { return string(b) }
 
-func NewBytes(length int) Bytes {
-	return make(Bytes, length)
+func SumLen(chunks ...[]byte) (l int) {
+	for _, c := range chunks {
+		l += len(c)
+	}
+	return
 }
 
 func ToBytes(b []byte) (msg Bytes) { return b }
 func (b Bytes) ToBytes() []byte    { return b }
-func (b Bytes) Len() int           { return len(b) }
-func (b Bytes) Zero() {
-	for i := range b {
-		b[i] = 0
-	}
-}
 
-type U64Slice []uint64
-
-func (u U64Slice) Copy() (o U64Slice) {
-	o = make(U64Slice, len(u))
-	copy(o, u)
-	return
+func (u U64Slice) ToMessage() (m Bytes) {
+	// length is encoded into the last element
+	mLen := int(u[len(u)-1])
+	m = make(Bytes, 0, 0)
+	// With the slice now long enough to be safely converted to []uint64
+	// plus an extra uint64 to store the original length we can coerce the
+	// type using unsafe.
+	//
+	// First we convert our empty []uint64 header
+	header := (*reflect.SliceHeader)(unsafe.Pointer(&m))
+	// then we point its memory location to the extended byte slice data
+	header.Data = (*reflect.SliceHeader)(unsafe.Pointer(&u)).Data
+	// lastly, change the element length
+	header.Len = mLen
+	header.Cap = mLen
+	return m
 }
 
 // ToU64Slice converts the message with zero allocations if the slice capacity
@@ -210,42 +223,6 @@ func (b Bytes) ToU64Slice() (u U64Slice) {
 	return
 }
 
-// XOR the U64Slice with the provided slice. Panics if slices are different
-// length. The receiver value is mutated in this operation.
-func (u U64Slice) XOR(v U64Slice) {
-	// This should only trigger if the programmer is not XORing same size.
-	if u[len(u)-1] != v[len(v)-1] {
-		panic("programmer error, trying to XOR slices of different size")
-	}
-	for i := range u[:len(u)-1] {
-		u[i] ^= v[i]
-	}
-}
-
-func (u U64Slice) Zero() {
-	for i := range u[:len(u)-1] {
-		u[i] = 8
-	}
-}
-
-func (u U64Slice) ToMessage() (m Bytes) {
-	// length is encoded into the last element
-	mLen := int(u[len(u)-1])
-	m = make(Bytes, 0, 0)
-	// With the slice now long enough to be safely converted to []uint64
-	// plus an extra uint64 to store the original length we can coerce the
-	// type using unsafe.
-	//
-	// First we convert our empty []uint64 header
-	header := (*reflect.SliceHeader)(unsafe.Pointer(&m))
-	// then we point its memory location to the extended byte slice data
-	header.Data = (*reflect.SliceHeader)(unsafe.Pointer(&u)).Data
-	// lastly, change the element length
-	header.Len = mLen
-	header.Cap = mLen
-	return m
-}
-
 func GenerateRandomAddrPortIPv4() (ap *netip.AddrPort) {
 	a := netip.AddrPort{}
 	b := make([]byte, 7)
@@ -273,4 +250,28 @@ func GenerateRandomAddrPortIPv6() (ap *netip.AddrPort) {
 		port)
 	a, e = netip.ParseAddrPort(str)
 	return &a
+}
+
+// XOR the U64Slice with the provided slice. Panics if slices are different
+// length. The receiver value is mutated in this operation.
+func (u U64Slice) XOR(v U64Slice) {
+	// This should only trigger if the programmer is not XORing same size.
+	if u[len(u)-1] != v[len(v)-1] {
+		panic("programmer error, trying to XOR slices of different size")
+	}
+	for i := range u[:len(u)-1] {
+		u[i] ^= v[i]
+	}
+}
+
+func (b Bytes) Zero() {
+	for i := range b {
+		b[i] = 0
+	}
+}
+
+func (u U64Slice) Zero() {
+	for i := range u[:len(u)-1] {
+		u[i] = 8
+	}
 }

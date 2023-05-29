@@ -3,10 +3,9 @@ package crypto
 import (
 	"crypto/rand"
 	"errors"
+	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	mrand "math/rand"
 	"testing"
-	
-	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 )
 
 func TestSignRecover(t *testing.T) {

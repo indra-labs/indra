@@ -1,9 +1,6 @@
 package onions
 
 import (
-	"reflect"
-	"time"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
@@ -13,6 +10,8 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 	"git-indra.lan/indra-labs/indra/pkg/util/splice"
+	"reflect"
+	"time"
 )
 
 const (
@@ -43,12 +42,39 @@ type Exit struct {
 	Onion
 }
 
-func exitGen() coding.Codec           { return &Exit{} }
-func init()                           { Register(ExitMagic, exitGen) }
-func (x *Exit) Magic() string         { return ExitMagic }
-func (x *Exit) Len() int              { return ExitLen + x.Bytes.Len() + x.Onion.Len() }
-func (x *Exit) Wrap(inner Onion)      { x.Onion = inner }
-func (x *Exit) GetOnion() interface{} { return x }
+func (x *Exit) Account(res *sess.Data, sm *sess.Manager,
+	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+	s.Node.Lock()
+	for j := range s.Node.Services {
+		if s.Node.Services[j].Port != x.Port {
+			s.Node.Unlock()
+			continue
+		}
+		s.Node.Unlock()
+		res.Port = x.Port
+		res.PostAcct = append(res.PostAcct,
+			func() {
+				sm.DecSession(s.Header.Bytes,
+					s.Node.Services[j].RelayRate*len(res.B)/2, true, "exit")
+			})
+		break
+	}
+	res.Billable = append(res.Billable, s.Header.Bytes)
+	res.ID = x.ID
+	skip = true
+	return
+}
+
+func (x *Exit) Decode(s *splice.Splice) (e error) {
+	if e = magic.TooShort(s.Remaining(), ExitLen-magic.Len,
+		ExitMagic); fails(e) {
+		return
+	}
+	s.
+		ReadID(&x.ID).ReadCiphers(&x.Ciphers).ReadNonces(&x.Nonces).
+		ReadUint16(&x.Port).ReadBytes(&x.Bytes)
+	return
+}
 
 func (x *Exit) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
@@ -62,17 +88,7 @@ func (x *Exit) Encode(s *splice.Splice) (e error) {
 	)
 }
 
-func (x *Exit) Decode(s *splice.Splice) (e error) {
-	if e = magic.TooShort(s.Remaining(), ExitLen-magic.Len,
-		ExitMagic); fails(e) {
-		
-		return
-	}
-	s.
-		ReadID(&x.ID).ReadCiphers(&x.Ciphers).ReadNonces(&x.Nonces).
-		ReadUint16(&x.Port).ReadBytes(&x.Bytes)
-	return
-}
+func (x *Exit) GetOnion() interface{} { return x }
 
 func (x *Exit) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	// payload is forwarded to a local port and the result is forwarded
@@ -122,6 +138,9 @@ func (x *Exit) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	return
 }
 
+func (x *Exit) Len() int      { return ExitLen + x.Bytes.Len() + x.Onion.Len() }
+func (x *Exit) Magic() string { return ExitMagic }
+
 type ExitParams struct {
 	Port       uint16
 	Payload    slice.Bytes
@@ -131,25 +150,6 @@ type ExitParams struct {
 	KS         *crypto.KeySet
 }
 
-func (x *Exit) Account(res *sess.Data, sm *sess.Manager,
-	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
-	s.Node.Lock()
-	for j := range s.Node.Services {
-		if s.Node.Services[j].Port != x.Port {
-			s.Node.Unlock()
-			continue
-		}
-		s.Node.Unlock()
-		res.Port = x.Port
-		res.PostAcct = append(res.PostAcct,
-			func() {
-				sm.DecSession(s.Header.Bytes,
-					s.Node.Services[j].RelayRate*len(res.B)/2, true, "exit")
-			})
-		break
-	}
-	res.Billable = append(res.Billable, s.Header.Bytes)
-	res.ID = x.ID
-	skip = true
-	return
-}
+func (x *Exit) Wrap(inner Onion) { x.Onion = inner }
+func exitGen() coding.Codec      { return &Exit{} }
+func init()                      { Register(ExitMagic, exitGen) }

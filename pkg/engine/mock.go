@@ -2,7 +2,6 @@ package engine
 
 import (
 	"context"
-	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -19,9 +18,18 @@ var (
 	fails = log.E.Chk
 )
 
+func CreateNMockCircuits(nCirc int, nReturns int,
+	ctx context.Context) (cl []*Engine, e error) {
+	return createNMockCircuits(false, nCirc, nReturns, ctx)
+}
+
+func CreateNMockCircuitsWithSessions(nCirc int, nReturns int,
+	ctx context.Context) (cl []*Engine, e error) {
+	return createNMockCircuits(true, nCirc, nReturns, ctx)
+}
+
 func createNMockCircuits(inclSessions bool, nCircuits int,
 	nReturnSessions int, ctx context.Context) (cl []*Engine, e error) {
-	
 	nTotal := 1 + nCircuits*5
 	cl = make([]*Engine, nTotal)
 	nodes := make([]*node.Node, nTotal)
@@ -75,16 +83,4 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 		}
 	}
 	return
-}
-
-func CreateNMockCircuits(nCirc int, nReturns int,
-	ctx context.Context) (cl []*Engine, e error) {
-	
-	return createNMockCircuits(false, nCirc, nReturns, ctx)
-}
-
-func CreateNMockCircuitsWithSessions(nCirc int, nReturns int,
-	ctx context.Context) (cl []*Engine, e error) {
-	
-	return createNMockCircuits(true, nCirc, nReturns, ctx)
 }

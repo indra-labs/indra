@@ -2,15 +2,76 @@ package packet
 
 import (
 	"errors"
-	"math/rand"
-	"testing"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/tests"
+	"math/rand"
+	"testing"
 )
+
+func BenchmarkSplit(b *testing.B) {
+	msgSize := 1 << 16
+	segSize := 1382
+	var e error
+	var payload []byte
+	if payload, _, e = tests.GenMessage(msgSize, ""); fails(e) {
+		b.Error(e)
+	}
+	var sp *crypto.Prv
+	var rP *crypto.Pub
+	if sp, _, _, rP, e = crypto.GenerateTestKeyPairs(); fails(e) {
+		b.FailNow()
+	}
+	addr := rP
+	for n := 0; n < b.N; n++ {
+		params := &PacketParams{
+			To:     addr,
+			From:   sp,
+			Parity: 64,
+			Data:   payload,
+		}
+		var splitted [][]byte
+		_, ks, _ := crypto.NewSigner()
+		if _, splitted, e = SplitToPackets(params, segSize, ks); fails(e) {
+			b.Error(e)
+		}
+		_ = splitted
+	}
+
+	// Example benchmark results show about 10Mb/s/thread throughput
+	// handling 64Kb messages.
+	//
+	// goos: linux
+	// goarch: amd64
+	// pkg: git-indra.lan/indra-labs/indra/pkg/packet
+	// cpu: AMD Ryzen 7 5800H with Radeon Graphics
+	// BenchmarkSplit
+	// BenchmarkSplit-16    	     157	   7670080 ns/op
+	// PASS
+}
+
+func TestRemovePacket(t *testing.T) {
+	packets := make(Packets, 10)
+	for i := range packets {
+		packets[i] = &Packet{Seq: uint16(i)}
+	}
+	var seqs []uint16
+	for i := range packets {
+		seqs = append(seqs, packets[i].Seq)
+	}
+	discard := []int{1, 5, 6}
+	for i := range discard {
+		// Subtracting the iterator accounts for the backwards shift of
+		// the shortened slice.
+		packets = RemovePacket(packets, discard[i]-i)
+	}
+	var seqs2 []uint16
+	for i := range packets {
+		seqs2 = append(seqs2, packets[i].Seq)
+	}
+}
 
 func TestSplitJoin(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
@@ -69,69 +130,6 @@ func TestSplitJoin(t *testing.T) {
 	rHash := sha256.Single(msg)
 	if pHash != rHash {
 		t.Error(errors.New("message did not decode correctly"))
-	}
-}
-
-func BenchmarkSplit(b *testing.B) {
-	msgSize := 1 << 16
-	segSize := 1382
-	var e error
-	var payload []byte
-	if payload, _, e = tests.GenMessage(msgSize, ""); fails(e) {
-		b.Error(e)
-	}
-	var sp *crypto.Prv
-	var rP *crypto.Pub
-	if sp, _, _, rP, e = crypto.GenerateTestKeyPairs(); fails(e) {
-		b.FailNow()
-	}
-	addr := rP
-	for n := 0; n < b.N; n++ {
-		params := &PacketParams{
-			To:     addr,
-			From:   sp,
-			Parity: 64,
-			Data:   payload,
-		}
-		
-		var splitted [][]byte
-		_, ks, _ := crypto.NewSigner()
-		if _, splitted, e = SplitToPackets(params, segSize, ks); fails(e) {
-			b.Error(e)
-		}
-		_ = splitted
-	}
-	
-	// Example benchmark results show about 10Mb/s/thread throughput
-	// handling 64Kb messages.
-	//
-	// goos: linux
-	// goarch: amd64
-	// pkg: git-indra.lan/indra-labs/indra/pkg/packet
-	// cpu: AMD Ryzen 7 5800H with Radeon Graphics
-	// BenchmarkSplit
-	// BenchmarkSplit-16    	     157	   7670080 ns/op
-	// PASS
-}
-
-func TestRemovePacket(t *testing.T) {
-	packets := make(Packets, 10)
-	for i := range packets {
-		packets[i] = &Packet{Seq: uint16(i)}
-	}
-	var seqs []uint16
-	for i := range packets {
-		seqs = append(seqs, packets[i].Seq)
-	}
-	discard := []int{1, 5, 6}
-	for i := range discard {
-		// Subtracting the iterator accounts for the backwards shift of
-		// the shortened slice.
-		packets = RemovePacket(packets, discard[i]-i)
-	}
-	var seqs2 []uint16
-	for i := range packets {
-		seqs2 = append(seqs2, packets[i].Seq)
 	}
 }
 

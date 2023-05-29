@@ -1,8 +1,6 @@
 package onions
 
 import (
-	"reflect"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
@@ -10,6 +8,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 	"git-indra.lan/indra-labs/indra/pkg/util/splice"
+	"reflect"
 )
 
 const (
@@ -25,23 +24,8 @@ type Response struct {
 	slice.Bytes
 }
 
-func responseGen() coding.Codec           { return &Response{} }
-func init()                               { Register(ResponseMagic, responseGen) }
-func (x *Response) Magic() string         { return ResponseMagic }
-func (x *Response) Len() int              { return ResponseLen + len(x.Bytes) }
-func (x *Response) Wrap(inner Onion)      {}
-func (x *Response) GetOnion() interface{} { return x }
-
-func (x *Response) Encode(s *splice.Splice) (e error) {
-	log.T.Ln("encoding", reflect.TypeOf(x),
-		// x.Keys, x.Port, x.Load, x.Bytes.ToBytes(),
-	)
-	s.
-		Magic(ResponseMagic).
-		ID(x.ID).
-		Uint16(x.Port).
-		Byte(x.Load).
-		Bytes(x.Bytes)
+func (x *Response) Account(res *sess.Data, sm *sess.Manager,
+	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	return
 }
 
@@ -57,6 +41,20 @@ func (x *Response) Decode(s *splice.Splice) (e error) {
 		ReadBytes(&x.Bytes)
 	return
 }
+
+func (x *Response) Encode(s *splice.Splice) (e error) {
+	log.T.Ln("encoding", reflect.TypeOf(x)) // x.Keys, x.Port, x.Load, x.Bytes.ToBytes(),
+
+	s.
+		Magic(ResponseMagic).
+		ID(x.ID).
+		Uint16(x.Port).
+		Byte(x.Load).
+		Bytes(x.Bytes)
+	return
+}
+
+func (x *Response) GetOnion() interface{} { return x }
 
 func (x *Response) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	pending := ng.Pending().Find(x.ID)
@@ -90,7 +88,8 @@ func (x *Response) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	return
 }
 
-func (x *Response) Account(res *sess.Data, sm *sess.Manager,
-	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
-	return
-}
+func (x *Response) Len() int         { return ResponseLen + len(x.Bytes) }
+func (x *Response) Magic() string    { return ResponseMagic }
+func (x *Response) Wrap(inner Onion) {}
+func init()                          { Register(ResponseMagic, responseGen) }
+func responseGen() coding.Codec      { return &Response{} }

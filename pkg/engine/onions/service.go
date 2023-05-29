@@ -39,13 +39,6 @@ type Service struct {
 	Sig       crypto.SigBytes
 }
 
-func servGen() coding.Codec              { return &Service{} }
-func init()                              { Register(ServiceMagic, servGen) }
-func (x *Service) Magic() string         { return ServiceMagic }
-func (x *Service) Len() int              { return ServiceLen }
-func (x *Service) Wrap(inner Onion)      {}
-func (x *Service) GetOnion() interface{} { return x }
-
 func NewService(id nonce.ID, key *crypto.Prv, port uint16, relayRate uint32,
 	expiry time.Time) (in *Service) {
 
@@ -73,38 +66,10 @@ func NewService(id nonce.ID, key *crypto.Prv, port uint16, relayRate uint32,
 	return
 }
 
-func (x *Service) Validate() bool {
-	s := splice.New(ServiceLen - magic.Len)
-	s.ID(x.ID).
-		Pubkey(x.Key).
-		Uint16(x.Port).
-		Uint32(x.RelayRate).
-		Uint64(uint64(x.Expiry.UnixNano()))
-	hash := sha256.Single(s.GetUntil(s.GetCursor()))
-	key, e := x.Sig.Recover(hash)
-	if fails(e) {
-		return false
-	}
-	if key.Equals(x.Key) && x.Expiry.After(time.Now()) {
-		return true
-	}
-	return false
-}
+func (x *Service) Account(res *sess.Data, sm *sess.Manager,
+	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 
-func (x *Service) Splice(s *splice.Splice) {
-	s.ID(x.ID).
-		Pubkey(x.Key).
-		Uint16(x.Port).
-		Uint32(x.RelayRate).
-		Uint64(uint64(x.Expiry.UnixNano())).
-		Signature(x.Sig)
-}
-
-func (x *Service) Encode(s *splice.Splice) (e error) {
-	log.T.S("encoding", reflect.TypeOf(x),
-		x.ID, x.Expiry, x.Sig,
-	)
-	x.Splice(s.Magic(ServiceMagic))
+	res.ID = x.ID
 	return
 }
 
@@ -121,6 +86,23 @@ func (x *Service) Decode(s *splice.Splice) (e error) {
 		ReadTime(&x.Expiry).
 		ReadSignature(&x.Sig)
 	return
+}
+
+func (x *Service) Encode(s *splice.Splice) (e error) {
+	log.T.S("encoding", reflect.TypeOf(x),
+		x.ID, x.Expiry, x.Sig,
+	)
+	x.Splice(s.Magic(ServiceMagic))
+	return
+}
+
+func (x *Service) GetOnion() interface{} { return x }
+
+func (x *Service) Gossip(sm *sess.Manager, c qu.C) {
+	log.D.F("propagating peer info for %s",
+		x.Key.ToBased32Abbreviated())
+	Gossip(x, sm, c)
+	log.T.Ln("finished broadcasting peer info")
 }
 
 func (x *Service) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
@@ -174,16 +156,36 @@ func (x *Service) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	return
 }
 
-func (x *Service) Account(res *sess.Data, sm *sess.Manager,
-	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+func (x *Service) Len() int      { return ServiceLen }
+func (x *Service) Magic() string { return ServiceMagic }
 
-	res.ID = x.ID
-	return
+func (x *Service) Splice(s *splice.Splice) {
+	s.ID(x.ID).
+		Pubkey(x.Key).
+		Uint16(x.Port).
+		Uint32(x.RelayRate).
+		Uint64(uint64(x.Expiry.UnixNano())).
+		Signature(x.Sig)
 }
 
-func (x *Service) Gossip(sm *sess.Manager, c qu.C) {
-	log.D.F("propagating peer info for %s",
-		x.Key.ToBased32Abbreviated())
-	Gossip(x, sm, c)
-	log.T.Ln("finished broadcasting peer info")
+func (x *Service) Validate() bool {
+	s := splice.New(ServiceLen - magic.Len)
+	s.ID(x.ID).
+		Pubkey(x.Key).
+		Uint16(x.Port).
+		Uint32(x.RelayRate).
+		Uint64(uint64(x.Expiry.UnixNano()))
+	hash := sha256.Single(s.GetUntil(s.GetCursor()))
+	key, e := x.Sig.Recover(hash)
+	if fails(e) {
+		return false
+	}
+	if key.Equals(x.Key) && x.Expiry.After(time.Now()) {
+		return true
+	}
+	return false
 }
+
+func (x *Service) Wrap(inner Onion) {}
+func init()                         { Register(ServiceMagic, servGen) }
+func servGen() coding.Codec { return &Service{} }

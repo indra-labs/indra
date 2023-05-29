@@ -2,8 +2,6 @@ package onions
 
 import (
 	"crypto/cipher"
-	"reflect"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -13,6 +11,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/util/splice"
+	"reflect"
 )
 
 const (
@@ -20,13 +19,6 @@ const (
 	RouteLen   = magic.Len + crypto.CloakLen + crypto.PubKeyLen + nonce.IVLen +
 		nonce.IDLen + 3*sha256.Len + 3*nonce.IVLen
 )
-
-func RouteGen() coding.Codec           { return &Route{} }
-func init()                            { Register(RouteMagic, RouteGen) }
-func (x *Route) Magic() string         { return RouteMagic }
-func (x *Route) Len() int              { return RouteLen + x.Onion.Len() }
-func (x *Route) Wrap(inner Onion)      { x.Onion = inner }
-func (x *Route) GetOnion() interface{} { return x }
 
 type Route struct {
 	HiddenService *crypto.Pub
@@ -45,6 +37,34 @@ type Route struct {
 	crypto.Nonces
 	RoutingHeaderBytes
 	Onion
+}
+
+func (x *Route) Account(res *sess.Data, sm *sess.Manager,
+	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+	copy(res.ID[:], x.ID[:])
+	res.Billable = append(res.Billable, s.Header.Bytes)
+	return
+}
+
+func (x *Route) Decode(s *splice.Splice) (e error) {
+	if e = magic.TooShort(s.Remaining(), RouteLen-magic.Len,
+		RouteMagic); fails(e) {
+		return
+	}
+	s.ReadCloak(&x.HiddenCloaked).
+		ReadPubkey(&x.SenderPub).
+		ReadIV(&x.IV)
+	return
+}
+
+// Decrypt decrypts the rest of a message after the Route segment if the
+// recipient has the hidden service private key.
+func (x *Route) Decrypt(prk *crypto.Prv, s *splice.Splice) {
+	ciph.Encipher(ciph.GetBlock(prk, x.SenderPub, "route decrypt"), x.IV,
+		s.GetRest())
+	// And now we can see the reply field for the return trip.
+	s.ReadID(&x.ID).ReadCiphers(&x.Ciphers).ReadNonces(&x.Nonces)
+	ReadRoutingHeader(s, &x.RoutingHeaderBytes)
 }
 
 func (x *Route) Encode(s *splice.Splice) (e error) {
@@ -70,26 +90,8 @@ func (x *Route) Encode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Route) Decode(s *splice.Splice) (e error) {
-	if e = magic.TooShort(s.Remaining(), RouteLen-magic.Len,
-		RouteMagic); fails(e) {
-		return
-	}
-	s.ReadCloak(&x.HiddenCloaked).
-		ReadPubkey(&x.SenderPub).
-		ReadIV(&x.IV)
-	return
-}
-
-// Decrypt decrypts the rest of a message after the Route segment if the
-// recipient has the hidden service private key.
-func (x *Route) Decrypt(prk *crypto.Prv, s *splice.Splice) {
-	ciph.Encipher(ciph.GetBlock(prk, x.SenderPub, "route decrypt"), x.IV,
-		s.GetRest())
-	// And now we can see the reply field for the return trip.
-	s.ReadID(&x.ID).ReadCiphers(&x.Ciphers).ReadNonces(&x.Nonces)
-	ReadRoutingHeader(s, &x.RoutingHeaderBytes)
-}
+func RouteGen() coding.Codec           { return &Route{} }
+func (x *Route) GetOnion() interface{} { return x }
 
 func (x *Route) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	log.D.Ln(ng.Mgr().GetLocalNodeAddressString(), "handling route")
@@ -147,10 +149,7 @@ func (x *Route) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	return
 }
 
-func (x *Route) Account(res *sess.Data, sm *sess.Manager,
-	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
-	
-	copy(res.ID[:], x.ID[:])
-	res.Billable = append(res.Billable, s.Header.Bytes)
-	return
-}
+func (x *Route) Len() int         { return RouteLen + x.Onion.Len() }
+func (x *Route) Magic() string    { return RouteMagic }
+func (x *Route) Wrap(inner Onion) { x.Onion = inner }
+func init()                       { Register(RouteMagic, RouteGen) }

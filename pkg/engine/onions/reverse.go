@@ -1,9 +1,6 @@
 package onions
 
 import (
-	"net/netip"
-	"reflect"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
@@ -11,6 +8,8 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 	"git-indra.lan/indra-labs/indra/pkg/util/splice"
+	"net/netip"
+	"reflect"
 )
 
 const (
@@ -23,12 +22,20 @@ type Reverse struct {
 	Onion
 }
 
-func reverseGen() coding.Codec           { return &Reverse{} }
-func init()                              { Register(ReverseMagic, reverseGen) }
-func (x *Reverse) Magic() string         { return ReverseMagic }
-func (x *Reverse) Len() int              { return ReverseLen + x.Onion.Len() }
-func (x *Reverse) Wrap(inner Onion)      { x.Onion = inner }
-func (x *Reverse) GetOnion() interface{} { return x }
+func (x *Reverse) Account(res *sess.Data, sm *sess.Manager,
+	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+	res.Billable = append(res.Billable, s.Header.Bytes)
+	return
+}
+
+func (x *Reverse) Decode(s *splice.Splice) (e error) {
+	if e = magic.TooShort(s.Remaining(), ReverseLen-magic.Len,
+		ReverseMagic); fails(e) {
+		return
+	}
+	s.ReadAddrPort(&x.AddrPort)
+	return
+}
 
 func (x *Reverse) Encode(s *splice.Splice) (e error) {
 	log.T.Ln("encoding", reflect.TypeOf(x), x.AddrPort)
@@ -43,14 +50,7 @@ func (x *Reverse) Encode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Reverse) Decode(s *splice.Splice) (e error) {
-	if e = magic.TooShort(s.Remaining(), ReverseLen-magic.Len,
-		ReverseMagic); fails(e) {
-		return
-	}
-	s.ReadAddrPort(&x.AddrPort)
-	return
-}
+func (x *Reverse) GetOnion() interface{} { return x }
 
 func (x *Reverse) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	if x.AddrPort.String() == ng.Mgr().GetLocalNodeAddress().String() {
@@ -109,9 +109,8 @@ func (x *Reverse) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	return e
 }
 
-func (x *Reverse) Account(res *sess.Data, sm *sess.Manager,
-	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
-	
-	res.Billable = append(res.Billable, s.Header.Bytes)
-	return
-}
+func (x *Reverse) Len() int         { return ReverseLen + x.Onion.Len() }
+func (x *Reverse) Magic() string    { return ReverseMagic }
+func (x *Reverse) Wrap(inner Onion) { x.Onion = inner }
+func init()                         { Register(ReverseMagic, reverseGen) }
+func reverseGen() coding.Codec { return &Reverse{} }

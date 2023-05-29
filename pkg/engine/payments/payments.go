@@ -1,43 +1,25 @@
 package payments
 
 import (
-	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
 )
-
-type Payment struct {
-	ID          nonce.ID
-	Preimage    sha256.Hash
-	Amount      lnwire.MilliSatoshi
-	ConfirmChan chan bool
-}
-
-type Chan chan *Payment
-
-// Send a payment on the Chan.
-func (pc Chan) Send(amount lnwire.MilliSatoshi,
-	id nonce.ID, preimage sha256.Hash, ) (confirmChan chan bool) {
-	
-	confirmChan = make(chan bool)
-	pc <- &Payment{
-		ID:          id,
-		Preimage:    preimage,
-		Amount:      amount,
-		ConfirmChan: confirmChan,
-	}
-	return
-}
-
-// Receive waits on receiving a Payment on a Chan.
-func (pc Chan) Receive() <-chan *Payment { return pc }
-
-type PendingPayments []*Payment
 
 func (p PendingPayments) Add(np *Payment) (pp PendingPayments) {
 	return append(p, np)
 }
+
+type (
+	Chan    chan *Payment
+	Payment struct {
+		ID          nonce.ID
+		Preimage    sha256.Hash
+		Amount      lnwire.MilliSatoshi
+		ConfirmChan chan bool
+	}
+	PendingPayments []*Payment
+)
 
 func (p PendingPayments) Delete(preimage sha256.Hash) (pp PendingPayments) {
 	pp = p
@@ -67,6 +49,22 @@ func (p PendingPayments) FindPreimage(pi sha256.Hash) (pp *Payment) {
 		if p[i].Preimage == pi {
 			return p[i]
 		}
+	}
+	return
+}
+
+// Receive waits on receiving a Payment on a Chan.
+func (pc Chan) Receive() <-chan *Payment { return pc }
+
+// Send a payment on the Chan.
+func (pc Chan) Send(amount lnwire.MilliSatoshi,
+	id nonce.ID, preimage sha256.Hash) (confirmChan chan bool) {
+	confirmChan = make(chan bool)
+	pc <- &Payment{
+		ID:          id,
+		Preimage:    preimage,
+		Amount:      amount,
+		ConfirmChan: confirmChan,
 	}
 	return
 }

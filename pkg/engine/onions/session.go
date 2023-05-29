@@ -1,8 +1,6 @@
 package onions
 
 import (
-	"reflect"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
@@ -11,6 +9,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/util/splice"
+	"reflect"
 )
 
 const (
@@ -24,13 +23,6 @@ type Session struct {
 	Header, Payload *crypto.Keys
 	Onion
 }
-
-func sessionGen() coding.Codec           { return &Session{} }
-func init()                              { Register(SessionMagic, sessionGen) }
-func (x *Session) Magic() string         { return SessionMagic }
-func (x *Session) Len() int              { return SessionLen + x.Onion.Len() }
-func (x *Session) Wrap(inner Onion)      { x.Onion = inner }
-func (x *Session) GetOnion() interface{} { return x }
 
 func NewSessionKeys(hop byte) (x *Session) {
 	var e error
@@ -46,15 +38,9 @@ func NewSessionKeys(hop byte) (x *Session) {
 	}
 }
 
-func (x *Session) Encode(s *splice.Splice) (e error) {
-	log.T.S("encoding", reflect.TypeOf(x),
-		x.ID, x.Hop, x.Header, x.Payload,
-	)
-	return x.Onion.Encode(s.Magic(SessionMagic).
-		ID(x.ID).
-		Prvkey(x.Header.Prv).
-		Prvkey(x.Payload.Prv),
-	)
+func (x *Session) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data,
+	last bool) (skip bool, sd *sessions.Data) {
+	return
 }
 
 func (x *Session) Decode(s *splice.Splice) (e error) {
@@ -72,13 +58,25 @@ func (x *Session) Decode(s *splice.Splice) (e error) {
 	return
 }
 
+func (x *Session) Encode(s *splice.Splice) (e error) {
+	log.T.S("encoding", reflect.TypeOf(x),
+		x.ID, x.Hop, x.Header, x.Payload,
+	)
+	return x.Onion.Encode(s.Magic(SessionMagic).
+		ID(x.ID).
+		Prvkey(x.Header.Prv).
+		Prvkey(x.Payload.Prv),
+	)
+}
+
+func (x *Session) GetOnion() interface{} { return x }
+
 func (x *Session) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
-	
 	log.T.F("incoming session %s", x.PreimageHash())
 	pi := ng.Mgr().FindPendingPreimage(x.PreimageHash())
 	if pi != nil {
 		// We need to delete this first in case somehow two such messages arrive
-		// at the same time, and we end up with duplicate 
+		// at the same time, and we end up with duplicate
 		ng.Mgr().DeletePendingPayment(pi.Preimage)
 		log.D.F("adding session %s to %s", pi.ID,
 			ng.Mgr().GetLocalNodeAddressString())
@@ -91,12 +89,14 @@ func (x *Session) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	return
 }
 
+func (x *Session) Len() int      { return SessionLen + x.Onion.Len() }
+func (x *Session) Magic() string { return SessionMagic }
+
 func (x *Session) PreimageHash() sha256.Hash {
 	h, p := x.Header.Prv.ToBytes(), x.Payload.Prv.ToBytes()
 	return sha256.Single(append(h[:], p[:]...))
 }
 
-func (x *Session) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data,
-	last bool) (skip bool, sd *sessions.Data) {
-	return
-}
+func (x *Session) Wrap(inner Onion) { x.Onion = inner }
+func init()                         { Register(SessionMagic, sessionGen) }
+func sessionGen() coding.Codec      { return &Session{} }

@@ -9,7 +9,6 @@ package based32
 import (
 	"encoding/base32"
 	"fmt"
-	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/constant"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
@@ -18,15 +17,14 @@ import (
 )
 
 var (
+	// Codec provides the encoder/decoder implementation created by makeCodec.
+	Codec = makeCodec(
+		"Base32Check",
+		constant.Based32Ciphers,
+		"",
+	)
 	log   = log2.GetLogger(indra.PathBase)
 	check = log.E.Chk
-)
-
-// Codec provides the encoder/decoder implementation created by makeCodec.
-var Codec = makeCodec(
-	"Base32Check",
-	constant.Based32Ciphers,
-	"",
 )
 
 func getCheckLen(length int) (checkLen int) {
@@ -69,7 +67,6 @@ func makeCodec(
 		output = cdc.HRP + outputString[:len(outputString)-1]
 		return
 	}
-	
 	cdc.Check = func(input []byte) (e error) {
 		switch {
 		case len(input) < 1:
@@ -91,10 +88,8 @@ func makeCodec(
 		if !valid {
 			e = fmt.Errorf("check failed")
 		}
-		
 		return
 	}
-	
 	cdc.Decoder = func(input string) (output []byte, e error) {
 		input = input[len(cdc.HRP):] + "q"
 		data := make([]byte, len(input)*5/8)

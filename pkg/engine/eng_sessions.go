@@ -2,16 +2,14 @@ package engine
 
 import (
 	"fmt"
-	
-	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-	"github.com/gookit/color"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/node"
 	"git-indra.lan/indra-labs/indra/pkg/engine/onions"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/util/cryptorand"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
+	"github.com/gookit/color"
 )
 
 // BuyNewSessions performs the initial purchase of 5 sessions as well as adding
@@ -19,7 +17,6 @@ import (
 // the sessions will be paid the amount specified, not divided up.
 func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 	fn func()) (e error) {
-	
 	var nodes [5]*node.Node
 	nodes = ng.Manager.SelectUnusedCircuit()
 	for i := range nodes {

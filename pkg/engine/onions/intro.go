@@ -42,76 +42,10 @@ type Intro struct {
 	Sig       crypto.SigBytes
 }
 
-func introGen() coding.Codec           { return &Intro{} }
-func init()                            { Register(IntroMagic, introGen) }
-func (x *Intro) Magic() string         { return IntroMagic }
-func (x *Intro) Len() int              { return IntroLen }
-func (x *Intro) Wrap(inner Onion)      {}
-func (x *Intro) GetOnion() interface{} { return x }
+func (x *Intro) Account(res *sess.Data, sm *sess.Manager,
+	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 
-func NewIntro(id nonce.ID, key *crypto.Prv, ap *netip.AddrPort,
-	relayRate uint32, port uint16, expires time.Time) (in *Intro) {
-
-	pk := crypto.DerivePub(key)
-	s := splice.New(IntroLen - magic.Len)
-	s.ID(id).
-		Pubkey(pk).
-		AddrPort(ap).
-		Uint32(relayRate).
-		Uint16(port).
-		Uint64(uint64(expires.UnixNano()))
-	hash := sha256.Single(s.GetUntil(s.GetCursor()))
-	var e error
-	var sign crypto.SigBytes
-	if sign, e = crypto.Sign(key, hash); fails(e) {
-		return nil
-	}
-	in = &Intro{
-		ID:        id,
-		Key:       pk,
-		AddrPort:  ap,
-		RelayRate: relayRate,
-		Port:      port,
-		Expiry:    expires,
-		Sig:       sign,
-	}
-	return
-}
-
-func (x *Intro) Validate() bool {
-	s := splice.New(IntroLen - magic.Len)
-	s.ID(x.ID).
-		Pubkey(x.Key).
-		AddrPort(x.AddrPort).
-		Uint32(x.RelayRate).
-		Uint16(x.Port).
-		Uint64(uint64(x.Expiry.UnixNano()))
-	hash := sha256.Single(s.GetUntil(s.GetCursor()))
-	key, e := x.Sig.Recover(hash)
-	if fails(e) {
-		return false
-	}
-	if key.Equals(x.Key) && x.Expiry.After(time.Now()) {
-		return true
-	}
-	return false
-}
-
-func (x *Intro) Splice(s *splice.Splice) {
-	s.ID(x.ID).
-		Pubkey(x.Key).
-		AddrPort(x.AddrPort).
-		Uint32(x.RelayRate).
-		Uint16(x.Port).
-		Uint64(uint64(x.Expiry.UnixNano())).
-		Signature(x.Sig)
-}
-
-func (x *Intro) Encode(s *splice.Splice) (e error) {
-	log.T.S("encoding", reflect.TypeOf(x),
-		x.ID, x.AddrPort.String(), x.Expiry, x.Sig,
-	)
-	x.Splice(s.Magic(IntroMagic))
+	res.ID = x.ID
 	return
 }
 
@@ -130,6 +64,23 @@ func (x *Intro) Decode(s *splice.Splice) (e error) {
 		ReadTime(&x.Expiry).
 		ReadSignature(&x.Sig)
 	return
+}
+
+func (x *Intro) Encode(s *splice.Splice) (e error) {
+	log.T.S("encoding", reflect.TypeOf(x),
+		x.ID, x.AddrPort.String(), x.Expiry, x.Sig,
+	)
+	x.Splice(s.Magic(IntroMagic))
+	return
+}
+
+func (x *Intro) GetOnion() interface{} { return x }
+
+func (x *Intro) Gossip(sm *sess.Manager, c qu.C) {
+	log.D.F("propagating hidden service intro for %s",
+		x.Key.ToBased32Abbreviated())
+	Gossip(x, sm, c)
+	log.T.Ln("finished broadcasting intro")
 }
 
 func (x *Intro) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
@@ -184,16 +135,68 @@ func (x *Intro) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	return
 }
 
-func (x *Intro) Account(res *sess.Data, sm *sess.Manager,
-	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+func (x *Intro) Len() int      { return IntroLen }
+func (x *Intro) Magic() string { return IntroMagic }
 
-	res.ID = x.ID
+func (x *Intro) Splice(s *splice.Splice) {
+	s.ID(x.ID).
+		Pubkey(x.Key).
+		AddrPort(x.AddrPort).
+		Uint32(x.RelayRate).
+		Uint16(x.Port).
+		Uint64(uint64(x.Expiry.UnixNano())).
+		Signature(x.Sig)
+}
+
+func (x *Intro) Validate() bool {
+	s := splice.New(IntroLen - magic.Len)
+	s.ID(x.ID).
+		Pubkey(x.Key).
+		AddrPort(x.AddrPort).
+		Uint32(x.RelayRate).
+		Uint16(x.Port).
+		Uint64(uint64(x.Expiry.UnixNano()))
+	hash := sha256.Single(s.GetUntil(s.GetCursor()))
+	key, e := x.Sig.Recover(hash)
+	if fails(e) {
+		return false
+	}
+	if key.Equals(x.Key) && x.Expiry.After(time.Now()) {
+		return true
+	}
+	return false
+}
+
+func (x *Intro) Wrap(inner Onion) {}
+
+func NewIntro(id nonce.ID, key *crypto.Prv, ap *netip.AddrPort,
+	relayRate uint32, port uint16, expires time.Time) (in *Intro) {
+
+	pk := crypto.DerivePub(key)
+	s := splice.New(IntroLen - magic.Len)
+	s.ID(id).
+		Pubkey(pk).
+		AddrPort(ap).
+		Uint32(relayRate).
+		Uint16(port).
+		Uint64(uint64(expires.UnixNano()))
+	hash := sha256.Single(s.GetUntil(s.GetCursor()))
+	var e error
+	var sign crypto.SigBytes
+	if sign, e = crypto.Sign(key, hash); fails(e) {
+		return nil
+	}
+	in = &Intro{
+		ID:        id,
+		Key:       pk,
+		AddrPort:  ap,
+		RelayRate: relayRate,
+		Port:      port,
+		Expiry:    expires,
+		Sig:       sign,
+	}
 	return
 }
 
-func (x *Intro) Gossip(sm *sess.Manager, c qu.C) {
-	log.D.F("propagating hidden service intro for %s",
-		x.Key.ToBased32Abbreviated())
-	Gossip(x, sm, c)
-	log.T.Ln("finished broadcasting intro")
-}
+func init()                  { Register(IntroMagic, introGen) }
+func introGen() coding.Codec { return &Intro{} }

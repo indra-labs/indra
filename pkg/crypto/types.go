@@ -1,48 +1,23 @@
 package crypto
 
 import (
-	"testing"
-	
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"testing"
 )
 
-type Ciphers [3]sha256.Hash
-type Nonces [3]nonce.IV
-type Privs [3]*Prv
-type Pubs [3]*Pub
-type Keys struct {
-	Pub   *Pub
-	Bytes PubBytes
-	Prv   *Prv
-}
-
-func GenerateKeys() (k *Keys, e error) {
-	k = &Keys{}
-	if k.Prv, e = GeneratePrvKey(); fails(e) {
-		return
+type (
+	Ciphers [3]sha256.Hash
+	Keys    struct {
+		Pub   *Pub
+		Bytes PubBytes
+		Prv   *Prv
 	}
-	k.Pub = DerivePub(k.Prv)
-	k.Bytes = k.Pub.ToBytes()
-	return
-}
-
-func Generate2Keys() (one, two *Keys, e error) {
-	if one, e = GenerateKeys(); fails(e) {
-		return
-	}
-	if two, e = GenerateKeys(); fails(e) {
-		return
-	}
-	return
-}
-
-func MakeKeys(pr *Prv) *Keys {
-	pubkey := DerivePub(pr)
-	return &Keys{pubkey, pubkey.ToBytes(), pr}
-}
+	Nonces [3]nonce.IV
+	Privs  [3]*Prv
+	Pubs   [3]*Pub
+)
 
 // ComputeSharedSecret computes an Elliptic Curve Diffie-Hellman shared secret
 // that can be decrypted by the holder of the private key matching the public
@@ -53,6 +28,13 @@ func ComputeSharedSecret(prv *Prv, pub *Pub) sha256.Hash {
 			(*secp256k1.PrivateKey)(prv), (*secp256k1.PublicKey)(pub),
 		),
 	)
+}
+
+func Gen3Nonces() (n Nonces) {
+	for i := range n {
+		n[i] = nonce.New()
+	}
+	return
 }
 
 func GenCiphers(prvs Privs, pubs Pubs) (ciphers Ciphers) {
@@ -71,14 +53,30 @@ func GenNonces(count int) (n []nonce.IV) {
 	return
 }
 
-func GetTwoPrvKeys(t *testing.T) (prv1, prv2 *Prv) {
-	var e error
-	if prv1, e = GeneratePrvKey(); fails(e) {
-		t.FailNow()
+func GenPingNonces() (n [6]nonce.IV) {
+	for i := range n {
+		n[i] = nonce.New()
 	}
-	if prv2, e = GeneratePrvKey(); fails(e) {
-		t.FailNow()
+	return
+}
+
+func Generate2Keys() (one, two *Keys, e error) {
+	if one, e = GenerateKeys(); fails(e) {
+		return
 	}
+	if two, e = GenerateKeys(); fails(e) {
+		return
+	}
+	return
+}
+
+func GenerateKeys() (k *Keys, e error) {
+	k = &Keys{}
+	if k.Prv, e = GeneratePrvKey(); fails(e) {
+		return
+	}
+	k.Pub = DerivePub(k.Prv)
+	k.Bytes = k.Pub.ToBytes()
 	return
 }
 
@@ -91,16 +89,18 @@ func GetCipherSet(t *testing.T) (prvs Privs, pubs Pubs) {
 	return
 }
 
-func Gen3Nonces() (n Nonces) {
-	for i := range n {
-		n[i] = nonce.New()
+func GetTwoPrvKeys(t *testing.T) (prv1, prv2 *Prv) {
+	var e error
+	if prv1, e = GeneratePrvKey(); fails(e) {
+		t.FailNow()
+	}
+	if prv2, e = GeneratePrvKey(); fails(e) {
+		t.FailNow()
 	}
 	return
 }
 
-func GenPingNonces() (n [6]nonce.IV) {
-	for i := range n {
-		n[i] = nonce.New()
-	}
-	return
+func MakeKeys(pr *Prv) *Keys {
+	pubkey := DerivePub(pr)
+	return &Keys{pubkey, pubkey.ToBytes(), pr}
 }

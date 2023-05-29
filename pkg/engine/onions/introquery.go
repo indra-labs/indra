@@ -1,8 +1,6 @@
 package onions
 
 import (
-	"reflect"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
@@ -11,6 +9,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/util/splice"
+	"reflect"
 )
 
 const (
@@ -39,12 +38,22 @@ type IntroQuery struct {
 	Onion
 }
 
-func introQueryGen() coding.Codec           { return &IntroQuery{} }
-func init()                                 { Register(IntroQueryMagic, introQueryGen) }
-func (x *IntroQuery) Magic() string         { return IntroQueryMagic }
-func (x *IntroQuery) Len() int              { return IntroQueryLen + x.Onion.Len() }
-func (x *IntroQuery) Wrap(inner Onion)      { x.Onion = inner }
-func (x *IntroQuery) GetOnion() interface{} { return x }
+func (x *IntroQuery) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+	res.ID = x.ID
+	res.Billable = append(res.Billable, s.Header.Bytes)
+	skip = true
+	return
+}
+
+func (x *IntroQuery) Decode(s *splice.Splice) (e error) {
+	if e = magic.TooShort(s.Remaining(), IntroQueryLen-magic.Len,
+		IntroQueryMagic); fails(e) {
+		return
+	}
+	s.ReadID(&x.ID).ReadCiphers(&x.Ciphers).ReadNonces(&x.Nonces).
+		ReadPubkey(&x.Key)
+	return
+}
 
 func (x *IntroQuery) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
@@ -57,15 +66,7 @@ func (x *IntroQuery) Encode(s *splice.Splice) (e error) {
 	)
 }
 
-func (x *IntroQuery) Decode(s *splice.Splice) (e error) {
-	if e = magic.TooShort(s.Remaining(), IntroQueryLen-magic.Len,
-		IntroQueryMagic); fails(e) {
-		return
-	}
-	s.ReadID(&x.ID).ReadCiphers(&x.Ciphers).ReadNonces(&x.Nonces).
-		ReadPubkey(&x.Key)
-	return
-}
+func (x *IntroQuery) GetOnion() interface{} { return x }
 
 func (x *IntroQuery) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	ng.GetHidden().Lock()
@@ -98,10 +99,8 @@ func (x *IntroQuery) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	return
 }
 
-func (x *IntroQuery) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
-	
-	res.ID = x.ID
-	res.Billable = append(res.Billable, s.Header.Bytes)
-	skip = true
-	return
-}
+func (x *IntroQuery) Len() int         { return IntroQueryLen + x.Onion.Len() }
+func (x *IntroQuery) Magic() string    { return IntroQueryMagic }
+func (x *IntroQuery) Wrap(inner Onion) { x.Onion = inner }
+func init()                            { Register(IntroQueryMagic, introQueryGen) }
+func introQueryGen() coding.Codec { return &IntroQuery{} }

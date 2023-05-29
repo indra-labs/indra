@@ -19,19 +19,9 @@ type Confirmation struct {
 	Load byte
 }
 
-func confirmationGen() coding.Codec           { return &Confirmation{} }
-func init()                                   { Register(ConfirmationMagic, confirmationGen) }
-func (x *Confirmation) Len() int              { return ConfirmationLen }
-func (x *Confirmation) Wrap(inner Onion)      {}
-func (x *Confirmation) GetOnion() interface{} { return x }
-
-func (x *Confirmation) Magic() string { return ConfirmationMagic }
-
-func (x *Confirmation) Encode(s *splice.Splice) (e error) {
-	// log.T.S("encoding", reflect.TypeOf(x),
-	// 	x.Keys, x.Load,
-	// )
-	s.Magic(ConfirmationMagic).ID(x.ID).Byte(x.Load)
+func (x *Confirmation) Account(res *sess.Data, sm *sess.Manager,
+	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+	res.ID = x.ID
 	return
 }
 
@@ -44,17 +34,25 @@ func (x *Confirmation) Decode(s *splice.Splice) (e error) {
 	return
 }
 
+func (x *Confirmation) Encode(s *splice.Splice) (e error) {
+	// log.T.S("encoding", reflect.TypeOf(x),
+	// 	x.Keys, x.Load,
+	// )
+	s.Magic(ConfirmationMagic).ID(x.ID).Byte(x.Load)
+	return
+}
+
+func (x *Confirmation) GetOnion() interface{} { return x }
+
 func (x *Confirmation) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
-	
 	// When a confirmation arrives check if it is registered for and run the
 	// hook that was registered with it.
 	ng.Pending().ProcessAndDelete(x.ID, nil, s.GetAll())
 	return
 }
 
-func (x *Confirmation) Account(res *sess.Data, sm *sess.Manager,
-	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
-	
-	res.ID = x.ID
-	return
-}
+func (x *Confirmation) Len() int         { return ConfirmationLen }
+func (x *Confirmation) Magic() string    { return ConfirmationMagic }
+func (x *Confirmation) Wrap(inner Onion) {}
+func confirmationGen() coding.Codec      { return &Confirmation{} }
+func init()                              { Register(ConfirmationMagic, confirmationGen) }

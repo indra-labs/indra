@@ -3,19 +3,22 @@ package slice
 import (
 	"crypto/rand"
 	"errors"
-	"testing"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
+	"testing"
 )
 
-func TestSize24(t *testing.T) {
-	n := 1<<24 - 1
-	u := NewUint24()
-	EncodeUint24(u, n)
-	u2 := DecodeUint24(u)
-	if n != u2 {
-		t.Error("failed to encode/decode")
+func GenMessage(msgSize int, hrp string) (msg []byte, hash sha256.Hash, e error) {
+	msg = make([]byte, msgSize)
+	var n int
+	if n, e = rand.Read(msg); check(e) && n != msgSize {
+		return
 	}
+	if hrp == "" {
+		hrp = "payload"
+	}
+	copy(msg, hrp)
+	hash = sha256.Single(msg)
+	return
 }
 
 func TestSegment(t *testing.T) {
@@ -34,19 +37,14 @@ func TestSegment(t *testing.T) {
 		t.Error(errors.New("message did not decode" +
 			" correctly"))
 	}
-	
 }
 
-func GenMessage(msgSize int, hrp string) (msg []byte, hash sha256.Hash, e error) {
-	msg = make([]byte, msgSize)
-	var n int
-	if n, e = rand.Read(msg); check(e) && n != msgSize {
-		return
+func TestSize24(t *testing.T) {
+	n := 1<<24 - 1
+	u := NewUint24()
+	EncodeUint24(u, n)
+	u2 := DecodeUint24(u)
+	if n != u2 {
+		t.Error("failed to encode/decode")
 	}
-	if hrp == "" {
-		hrp = "payload"
-	}
-	copy(msg, hrp)
-	hash = sha256.Single(msg)
-	return
 }

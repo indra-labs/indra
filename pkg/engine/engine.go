@@ -1,12 +1,6 @@
 package engine
 
 import (
-	"go.uber.org/atomic"
-	
-	"git-indra.lan/indra-labs/indra/pkg/engine/transport"
-	"git-indra.lan/indra-labs/indra/pkg/util/qu"
-	"git-indra.lan/indra-labs/indra/pkg/util/splice"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/node"
@@ -15,67 +9,37 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/engine/tpt"
+	"git-indra.lan/indra-labs/indra/pkg/engine/transport"
+	"git-indra.lan/indra-labs/indra/pkg/util/qu"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+	"git-indra.lan/indra-labs/indra/pkg/util/splice"
+	"go.uber.org/atomic"
 )
 
-// Engine processes onion messages, forwarding the relevant data to other relays
-// and locally accessible servers as indicated by the API function and message
-// parameters.
-//
-//
-type Engine struct {
-	Responses    *responses.Pending
-	Manager      *sess.Manager
-	h            *onions.Hidden
-	KeySet       *crypto.KeySet
-	Load         atomic.Uint32
-	Pause, C     qu.C
-	ShuttingDown atomic.Bool
-}
+var _ onions.Ngin = &Engine{}
 
-type Params struct {
-	tpt.Transport
-	Listener *transport.Listener
-	*crypto.Keys
-	Node            *node.Node
-	Nodes           []*node.Node
-	NReturnSessions int
-}
-
-func NewEngine(p Params) (c *Engine, e error) {
-	p.Node.Transport = p.Transport
-	p.Node.Identity = p.Keys
-	var ks *crypto.KeySet
-	if _, ks, e = crypto.NewSigner(); fails(e) {
-		return
+type (
+	// Engine processes onion messages, forwarding the relevant data to other relays
+	// and locally accessible servers as indicated by the API function and message
+	// parameters.
+	Engine struct {
+		Responses    *responses.Pending
+		Manager      *sess.Manager
+		h            *onions.Hidden
+		KeySet       *crypto.KeySet
+		Load         atomic.Uint32
+		Pause, C     qu.C
+		ShuttingDown atomic.Bool
 	}
-	c = &Engine{
-		Responses: &responses.Pending{},
-		KeySet:    ks,
-		Manager:   sess.NewSessionManager(p.Listener),
-		h:         onions.NewHiddenrouting(),
-		Pause:     qu.T(),
-		C:         qu.T(),
+	Params struct {
+		tpt.Transport
+		Listener *transport.Listener
+		*crypto.Keys
+		Node            *node.Node
+		Nodes           []*node.Node
+		NReturnSessions int
 	}
-	c.Manager.AddNodes(append([]*node.Node{p.Node}, p.Nodes...)...)
-	// AddIntro a return session for receiving responses, ideally more of these
-	// will be generated during operation and rotated out over time.
-	for i := 0; i < p.NReturnSessions; i++ {
-		c.Manager.AddSession(sessions.NewSessionData(nonce.NewID(), p.Node, 0,
-			nil, nil, 5))
-	}
-	return
-}
-
-// Start a single thread of the Engine.
-func (ng *Engine) Start() {
-	log.T.Ln("starting engine")
-	for {
-		if ng.Handler() {
-			break
-		}
-	}
-}
+)
 
 // Cleanup closes and flushes any resources the client opened that require sync
 // in order to reopen correctly.
@@ -83,16 +47,9 @@ func (ng *Engine) Cleanup() {
 	// Do cleanup stuff before shutdown.
 }
 
-// Shutdown triggers the shutdown of the client and the Cleanup before
-// finishing.
-func (ng *Engine) Shutdown() {
-	if ng.ShuttingDown.Load() {
-		return
-	}
-	ng.ShuttingDown.Store(true)
-	ng.Cleanup()
-	ng.C.Q()
-}
+func (ng *Engine) GetHidden() *onions.Hidden { return ng.h }
+
+func (ng *Engine) GetLoad() byte { return byte(ng.Load.Load()) }
 
 func (ng *Engine) HandleMessage(s *splice.Splice, pr onions.Onion) {
 	log.D.F("%s handling received message",
@@ -132,7 +89,6 @@ func (ng *Engine) Handler() (out bool) {
 	case c := <-ng.Manager.Listener.Accept():
 		go func() {
 			_ = c
-			
 		}()
 	case b := <-ng.Manager.ReceiveToLocalNode():
 		s := splice.Load(b, slice.NewCursor())
@@ -175,18 +131,59 @@ func (ng *Engine) Handler() (out bool) {
 				log.D.Ln("unpausing", ng.Manager.GetLocalNodeAddressString())
 				break out
 			}
-			
 		}
 	}
 	return
 }
 
-var _ onions.Ngin = &Engine{}
-
-func (ng *Engine) GetLoad() byte               { return byte(ng.Load.Load()) }
-func (ng *Engine) SetLoad(load byte)           { ng.Load.Store(uint32(load)) }
+func (ng *Engine) Keyset() *crypto.KeySet      { return ng.KeySet }
+func (ng *Engine) KillSwitch() qu.C            { return ng.C }
 func (ng *Engine) Mgr() *sess.Manager          { return ng.Manager }
 func (ng *Engine) Pending() *responses.Pending { return ng.Responses }
-func (ng *Engine) GetHidden() *onions.Hidden   { return ng.h }
-func (ng *Engine) KillSwitch() qu.C            { return ng.C }
-func (ng *Engine) Keyset() *crypto.KeySet      { return ng.KeySet }
+func (ng *Engine) SetLoad(load byte)           { ng.Load.Store(uint32(load)) }
+
+// Shutdown triggers the shutdown of the client and the Cleanup before
+// finishing.
+func (ng *Engine) Shutdown() {
+	if ng.ShuttingDown.Load() {
+		return
+	}
+	ng.ShuttingDown.Store(true)
+	ng.Cleanup()
+	ng.C.Q()
+}
+
+// Start a single thread of the Engine.
+func (ng *Engine) Start() {
+	log.T.Ln("starting engine")
+	for {
+		if ng.Handler() {
+			break
+		}
+	}
+}
+
+func NewEngine(p Params) (c *Engine, e error) {
+	p.Node.Transport = p.Transport
+	p.Node.Identity = p.Keys
+	var ks *crypto.KeySet
+	if _, ks, e = crypto.NewSigner(); fails(e) {
+		return
+	}
+	c = &Engine{
+		Responses: &responses.Pending{},
+		KeySet:    ks,
+		Manager:   sess.NewSessionManager(p.Listener),
+		h:         onions.NewHiddenrouting(),
+		Pause:     qu.T(),
+		C:         qu.T(),
+	}
+	c.Manager.AddNodes(append([]*node.Node{p.Node}, p.Nodes...)...)
+	// AddIntro a return session for receiving responses, ideally more of these
+	// will be generated during operation and rotated out over time.
+	for i := 0; i < p.NReturnSessions; i++ {
+		c.Manager.AddSession(sessions.NewSessionData(nonce.NewID(), p.Node, 0,
+			nil, nil, 5))
+	}
+	return
+}

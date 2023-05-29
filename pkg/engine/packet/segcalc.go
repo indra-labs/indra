@@ -2,35 +2,46 @@ package packet
 
 import (
 	"fmt"
-	
 	"github.com/templexxx/reedsolomon"
 )
 
-type PacketSegment struct {
-	DStart, DEnd, PEnd, SLen, Last int
-}
-
-// String is a printer that produces a Go syntax formatted version of the
-// PacketSegment.
-func (s PacketSegment) String() (o string) {
-	o = fmt.Sprintf(
-		"\t\tSegment{ DStart: %d, DEnd: %d, PEnd: %d, SLen: %d, Last: %d},",
-		s.DStart, s.DEnd, s.PEnd, s.SLen, s.Last)
-	return
-}
-
-type PacketSegments []PacketSegment
-
-// String is a printer that produces a Go syntax formatted version of the
-// PacketSegments.
-func (s PacketSegments) String() (o string) {
-	o += "\n\tSegments{"
+func (s PacketSegments) AddParity(segs [][]byte) (shards [][]byte, e error) {
+	var segLen int
 	for i := range s {
-		o += fmt.Sprintf("\n%s", s[i].String())
+		segLen += s[i].DEnd - s[i].DStart
 	}
-	o += "\n\t}\n"
+	if len(segs) != segLen {
+		e = fmt.Errorf("slice wrong length, got %d expected %d",
+			len(segs), segLen)
+	}
+	for i := range s {
+		dLen := s[i].DEnd - s[i].DStart
+		pLen := s[i].PEnd - s[i].DEnd
+		section := make([][]byte, 0, dLen+pLen)
+		section, segs = append(section, segs[:dLen]...), segs[dLen:]
+		for j := 0; j < pLen; j++ {
+			section = append(section, make([]byte, s[i].SLen))
+		}
+		if pLen > 0 {
+			var rs *reedsolomon.RS
+			if rs, e = reedsolomon.New(dLen, pLen); fails(e) {
+				return
+			}
+			if e = rs.Encode(section); fails(e) {
+				return
+			}
+		}
+		shards = append(shards, section...)
+	}
 	return
 }
+
+type (
+	PacketSegment struct {
+		DStart, DEnd, PEnd, SLen, Last int
+	}
+	PacketSegments []PacketSegment
+)
 
 func NewPacketSegments(payloadLen, segmentSize, overhead, parity int) (s PacketSegments) {
 	segSize := segmentSize - overhead
@@ -80,33 +91,22 @@ func NewPacketSegments(payloadLen, segmentSize, overhead, parity int) (s PacketS
 	return
 }
 
-func (s PacketSegments) AddParity(segs [][]byte) (shards [][]byte, e error) {
-	var segLen int
+// String is a printer that produces a Go syntax formatted version of the
+// PacketSegment.
+func (s PacketSegment) String() (o string) {
+	o = fmt.Sprintf(
+		"\t\tSegment{ DStart: %d, DEnd: %d, PEnd: %d, SLen: %d, Last: %d},",
+		s.DStart, s.DEnd, s.PEnd, s.SLen, s.Last)
+	return
+}
+
+// String is a printer that produces a Go syntax formatted version of the
+// PacketSegments.
+func (s PacketSegments) String() (o string) {
+	o += "\n\tSegments{"
 	for i := range s {
-		segLen += s[i].DEnd - s[i].DStart
+		o += fmt.Sprintf("\n%s", s[i].String())
 	}
-	if len(segs) != segLen {
-		e = fmt.Errorf("slice wrong length, got %d expected %d",
-			len(segs), segLen)
-	}
-	for i := range s {
-		dLen := s[i].DEnd - s[i].DStart
-		pLen := s[i].PEnd - s[i].DEnd
-		section := make([][]byte, 0, dLen+pLen)
-		section, segs = append(section, segs[:dLen]...), segs[dLen:]
-		for j := 0; j < pLen; j++ {
-			section = append(section, make([]byte, s[i].SLen))
-		}
-		if pLen > 0 {
-			var rs *reedsolomon.RS
-			if rs, e = reedsolomon.New(dLen, pLen); fails(e) {
-				return
-			}
-			if e = rs.Encode(section); fails(e) {
-				return
-			}
-		}
-		shards = append(shards, section...)
-	}
+	o += "\n\t}\n"
 	return
 }

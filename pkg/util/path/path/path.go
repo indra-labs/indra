@@ -13,26 +13,6 @@ var (
 	check = log.E.Chk
 )
 
-type Path []string
-
-func (p Path) TrimPrefix() Path {
-	if len(p) > 1 {
-		return p[1:]
-	}
-	return p[:0]
-}
-
-func (p Path) String() string { return strings.Join(p, " ") }
-
-func From(s string) (p Path) { return strings.Split(s, " ") }
-
-func (p Path) Parent() (p1 Path) {
-	if len(p) > 0 {
-		p1 = p[:len(p)-1]
-	}
-	return
-}
-
 func (p Path) Child(child string) (p1 Path) { return append(p, child) }
 
 func (p Path) Common(p2 Path) (o Path) {
@@ -59,4 +39,26 @@ func (p Path) Equal(p2 Path) bool {
 	return false
 }
 
+type (
+	Path []string
+)
+
+func From(s string) (p Path) { return strings.Split(s, " ") }
+
 func GetIndent(d int) string { return strings.Repeat("\t", d) }
+
+func (p Path) Parent() (p1 Path) {
+	if len(p) > 0 {
+		p1 = p[:len(p)-1]
+	}
+	return
+}
+
+func (p Path) String() string { return strings.Join(p, " ") }
+
+func (p Path) TrimPrefix() Path {
+	if len(p) > 1 {
+		return p[1:]
+	}
+	return p[:0]
+}

@@ -1,39 +1,31 @@
 package onions
 
 import (
-	"reflect"
-	"sync"
-	
-	"github.com/gookit/color"
-	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/splice"
+	"github.com/gookit/color"
+	"reflect"
+	"sync"
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
-	fails = log.E.Chk
+	log      = log2.GetLogger(indra.PathBase)
+	fails    = log.E.Chk
+	registry = NewRegistry()
 )
 
-var registry = NewRegistry()
-
-type CodecGenerators map[string]func() coding.Codec
-
-type Registry struct {
-	sync.Mutex
-	CodecGenerators
-}
+type (
+	CodecGenerators map[string]func() coding.Codec
+	Registry        struct {
+		sync.Mutex
+		CodecGenerators
+	}
+)
 
 func NewRegistry() *Registry {
 	return &Registry{CodecGenerators: make(CodecGenerators)}
-}
-
-func Register(magicString string, on func() coding.Codec) {
-	registry.Lock()
-	defer registry.Unlock()
-	registry.CodecGenerators[magicString] = on
 }
 
 func Recognise(s *splice.Splice) (cdc coding.Codec) {
@@ -59,4 +51,10 @@ func Recognise(s *splice.Splice) (cdc coding.Codec) {
 			color.Green.Sprint(reflect.TypeOf(cdc)))
 	}
 	return
+}
+
+func Register(magicString string, on func() coding.Codec) {
+	registry.Lock()
+	defer registry.Unlock()
+	registry.CodecGenerators[magicString] = on
 }

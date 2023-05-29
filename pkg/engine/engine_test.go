@@ -185,6 +185,109 @@ out:
 	}
 }
 
+func TestClient_SendPing(t *testing.T) {
+	log2.SetLogLevel(log2.Debug)
+	var clients []*Engine
+	var e error
+	ctx, cancel := context.WithCancel(context.Background())
+	if clients, e = CreateNMockCircuitsWithSessions(1, 2,
+		ctx); fails(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	// Start up the clients.
+	for _, v := range clients {
+		go v.Start()
+	}
+	quit := qu.T()
+	var wg sync.WaitGroup
+	go func() {
+		select {
+		case <-time.After(time.Second):
+		case <-quit:
+			return
+		}
+		quit.Q()
+		t.Error("SendPing test failed")
+	}()
+out:
+	for i := 3; i < len(clients[0].Manager.Sessions)-1; i++ {
+		wg.Add(1)
+		var c sessions.Circuit
+		sess := clients[0].Manager.Sessions[i]
+		c[sess.Hop] = clients[0].Manager.Sessions[i]
+		clients[0].SendPing(c,
+			func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
+				log.I.Ln("success")
+				wg.Done()
+				return
+			})
+		select {
+		case <-quit:
+			break out
+		default:
+		}
+		wg.Wait()
+	}
+	quit.Q()
+	cancel()
+	for _, v := range clients {
+		v.Shutdown()
+	}
+}
+
+func TestClient_SendSessionKeys(t *testing.T) {
+	log2.SetLogLevel(log2.Debug)
+	var clients []*Engine
+	var e error
+	ctx, cancel := context.WithCancel(context.Background())
+	if clients, e = CreateNMockCircuits(2, 2, ctx); fails(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	// Start up the clients.
+	for _, v := range clients {
+		go v.Start()
+	}
+	var wg sync.WaitGroup
+	var counter atomic.Int32
+	quit := qu.T()
+	go func() {
+		select {
+		case <-time.After(time.Second * 6):
+		case <-quit:
+			return
+		}
+		for i := 0; i < int(counter.Load()); i++ {
+			wg.Done()
+		}
+		t.Error("SendSessionKeys test failed")
+		quit.Q()
+	}()
+	for i := 0; i < 10; i++ {
+		log.D.Ln("buying sessions", i)
+		wg.Add(1)
+		counter.Inc()
+		e = clients[0].BuyNewSessions(1000000, func() {
+			wg.Done()
+			counter.Dec()
+		})
+		if fails(e) {
+			wg.Done()
+			counter.Dec()
+		}
+		wg.Wait()
+		for j := range clients[0].Manager.SessionCache {
+			log.D.F("%d %s %v", i, j, clients[0].Manager.SessionCache[j])
+		}
+		quit.Q()
+	}
+	for _, v := range clients {
+		v.Shutdown()
+	}
+	cancel()
+}
+
 func TestEngine_Message(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
 	log2.App.Store("")
@@ -355,57 +458,6 @@ func TestEngine_Message(t *testing.T) {
 	log.W.Ln("fin")
 }
 
-func TestClient_SendPing(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
-	var clients []*Engine
-	var e error
-	ctx, cancel := context.WithCancel(context.Background())
-	if clients, e = CreateNMockCircuitsWithSessions(1, 2,
-		ctx); fails(e) {
-		t.Error(e)
-		t.FailNow()
-	}
-	// Start up the clients.
-	for _, v := range clients {
-		go v.Start()
-	}
-	quit := qu.T()
-	var wg sync.WaitGroup
-	go func() {
-		select {
-		case <-time.After(time.Second):
-		case <-quit:
-			return
-		}
-		quit.Q()
-		t.Error("SendPing test failed")
-	}()
-out:
-	for i := 3; i < len(clients[0].Manager.Sessions)-1; i++ {
-		wg.Add(1)
-		var c sessions.Circuit
-		sess := clients[0].Manager.Sessions[i]
-		c[sess.Hop] = clients[0].Manager.Sessions[i]
-		clients[0].SendPing(c,
-			func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
-				log.I.Ln("success")
-				wg.Done()
-				return
-			})
-		select {
-		case <-quit:
-			break out
-		default:
-		}
-		wg.Wait()
-	}
-	quit.Q()
-	cancel()
-	for _, v := range clients {
-		v.Shutdown()
-	}
-}
-
 func TestEngine_Route(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
 	log2.App.Store("")
@@ -540,56 +592,4 @@ func TestEngine_Route(t *testing.T) {
 	quit.Q()
 	cancel()
 	log.W.Ln("fin")
-}
-
-func TestClient_SendSessionKeys(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
-	var clients []*Engine
-	var e error
-	ctx, cancel := context.WithCancel(context.Background())
-	if clients, e = CreateNMockCircuits(2, 2, ctx); fails(e) {
-		t.Error(e)
-		t.FailNow()
-	}
-	// Start up the clients.
-	for _, v := range clients {
-		go v.Start()
-	}
-	var wg sync.WaitGroup
-	var counter atomic.Int32
-	quit := qu.T()
-	go func() {
-		select {
-		case <-time.After(time.Second * 6):
-		case <-quit:
-			return
-		}
-		for i := 0; i < int(counter.Load()); i++ {
-			wg.Done()
-		}
-		t.Error("SendSessionKeys test failed")
-		quit.Q()
-	}()
-	for i := 0; i < 10; i++ {
-		log.D.Ln("buying sessions", i)
-		wg.Add(1)
-		counter.Inc()
-		e = clients[0].BuyNewSessions(1000000, func() {
-			wg.Done()
-			counter.Dec()
-		})
-		if fails(e) {
-			wg.Done()
-			counter.Dec()
-		}
-		wg.Wait()
-		for j := range clients[0].Manager.SessionCache {
-			log.D.F("%d %s %v", i, j, clients[0].Manager.SessionCache[j])
-		}
-		quit.Q()
-	}
-	for _, v := range clients {
-		v.Shutdown()
-	}
-	cancel()
 }

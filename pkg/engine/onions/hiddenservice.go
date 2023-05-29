@@ -31,19 +31,13 @@ type HiddenService struct {
 	Onion
 }
 
-func hiddenServiceGen() coding.Codec           { return &HiddenService{} }
-func init()                                    { Register(HiddenServiceMagic, hiddenServiceGen) }
-func (x *HiddenService) Magic() string         { return HiddenServiceMagic }
-func (x *HiddenService) Len() int              { return HiddenServiceLen + x.Onion.Len() }
-func (x *HiddenService) Wrap(inner Onion)      { x.Onion = inner }
-func (x *HiddenService) GetOnion() interface{} { return x }
+func (x *HiddenService) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data, last bool) (skip bool,
+	sd *sessions.Data) {
 
-func (x *HiddenService) Encode(s *splice.Splice) (e error) {
-	log.T.S("encoding", reflect.TypeOf(x),
-		x.ID, x.Key, x.AddrPort, x.Ciphers, x.Nonces, x.RoutingHeaderBytes,
-	)
-	x.Intro.Splice(s.Magic(HiddenServiceMagic))
-	return x.Onion.Encode(s.Ciphers(x.Ciphers).Nonces(x.Nonces))
+	res.ID = x.Intro.ID
+	res.Billable = append(res.Billable, s.Header.Bytes)
+	skip = true
+	return
 }
 
 func (x *HiddenService) Decode(s *splice.Splice) (e error) {
@@ -62,6 +56,16 @@ func (x *HiddenService) Decode(s *splice.Splice) (e error) {
 	return
 }
 
+func (x *HiddenService) Encode(s *splice.Splice) (e error) {
+	log.T.S("encoding", reflect.TypeOf(x),
+		x.ID, x.Key, x.AddrPort, x.Ciphers, x.Nonces, x.RoutingHeaderBytes,
+	)
+	x.Intro.Splice(s.Magic(HiddenServiceMagic))
+	return x.Onion.Encode(s.Ciphers(x.Ciphers).Nonces(x.Nonces))
+}
+
+func (x *HiddenService) GetOnion() interface{} { return x }
+
 func (x *HiddenService) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	log.D.F("%s adding introduction for key %s",
 		ng.Mgr().GetLocalNodeAddressString(), x.Key.ToBased32Abbreviated())
@@ -78,10 +82,9 @@ func (x *HiddenService) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	return
 }
 
-func (x *HiddenService) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+func (x *HiddenService) Len() int         { return HiddenServiceLen + x.Onion.Len() }
+func (x *HiddenService) Magic() string    { return HiddenServiceMagic }
+func (x *HiddenService) Wrap(inner Onion) { x.Onion = inner }
 
-	res.ID = x.Intro.ID
-	res.Billable = append(res.Billable, s.Header.Bytes)
-	skip = true
-	return
-}
+func hiddenServiceGen() coding.Codec { return &HiddenService{} }
+func init()                          { Register(HiddenServiceMagic, hiddenServiceGen) }

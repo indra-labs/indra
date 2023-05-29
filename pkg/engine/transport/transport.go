@@ -33,11 +33,6 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 )
 
-var (
-	log   = log2.GetLogger(indra.PathBase)
-	fails = log.E.Chk
-)
-
 const (
 	LocalhostZeroIPv4TCP  = "/ip4/127.0.0.1/tcp/0"
 	LocalhostZeroIPv4QUIC = "/ip4/127.0.0.1/udp/0/quic"
@@ -45,130 +40,119 @@ const (
 	ConnBufs              = 8192
 	IndraLibP2PID         = "/indra/relay/" + indra.SemVer
 	IndraServiceName      = "org.indra.relay"
+	ProtocolPrefix        = "/indra/" + indra.SemVer
 )
 
-type Listener struct {
-	DHT         *dht.IpfsDHT
-	MTU         int
-	Host        host.Host
-	connections map[string]*Conn
-	newConns    chan *Conn
-	*crypto.Keys
-	context.Context
-	sync.Mutex
+var (
+	blue  = color.Blue.Sprint
+	log   = log2.GetLogger(indra.PathBase)
+	fails = log.E.Chk
+)
+
+type (
+	Listener struct {
+		DHT         *dht.IpfsDHT
+		MTU         int
+		Host        host.Host
+		connections map[string]*Conn
+		newConns    chan *Conn
+		*crypto.Keys
+		context.Context
+		sync.Mutex
+	}
+	Conn struct {
+		network.Conn
+		MTU       int
+		RemoteKey *crypto.Pub
+		MultiAddr multiaddr.Multiaddr
+		Host      host.Host
+		rw        *bufio.ReadWriter
+		Transport *DuplexByteChan
+		sync.Mutex
+		qu.C
+	}
+)
+
+// concurrent safe accessors:
+
+func (c *Conn) GetMTU() int {
+	c.Lock()
+	defer c.Unlock()
+	return c.MTU
 }
 
-func badgerStore(dataPath string) (datastore.Batching, func()) {
-	log.T.Ln("dataPath", dataPath)
-	store, err := badger.NewDatastore(dataPath, nil)
-	if fails(err) {
-		return nil, func() {}
-	}
-	closer := func() {
-		store.Close()
-	}
-	return store, closer
+func (c *Conn) GetRecv() tpt.Transport { return c.Transport.Receiver }
+
+func (c *Conn) GetRemoteKey() (remoteKey *crypto.Pub) {
+	c.Lock()
+	defer c.Unlock()
+	return c.RemoteKey
 }
 
-func NewListener(rendezvous, multiAddr, storePath string, keys *crypto.Keys,
-	ctx context.Context, mtu int) (c *Listener, e error) {
+func (c *Conn) GetSend() tpt.Transport { return c.Transport.Sender }
 
-	c = &Listener{
-		Keys:        keys,
-		MTU:         mtu,
-		connections: make(map[string]*Conn),
-		newConns:    make(chan *Conn, ConnBufs),
-		Context:     ctx,
-	}
-	var ma multiaddr.Multiaddr
-	if ma, e = multiaddr.NewMultiaddr(multiAddr); fails(e) {
-		return
-	}
-	rdv := make([]multiaddr.Multiaddr, 1)
-	if rendezvous != "" {
-		if rdv[0], e = multiaddr.NewMultiaddr(rendezvous); fails(e) {
-			return
-		}
-	} else {
-		rdv = nil
-	}
-	store, closer := badgerStore(storePath)
-	if store == nil {
-		return nil, errors.New("could not open database")
-	}
-	var st peerstore.Peerstore
-	st, e = pstoreds.NewPeerstore(ctx, store, pstoreds.DefaultOpts())
-	if c.Host, e = libp2p.New(
-		libp2p.Identity(keys.Prv),
-		libp2p.ListenAddrs(ma),
-		libp2p.EnableHolePunching(),
-		libp2p.Transport(libp2pquic.NewTransport),
-		libp2p.Transport(tcp.NewTCPTransport),
-		libp2p.Transport(websocket.New),
-		//libp2p.Security(libp2ptls.ID, libp2ptls.New),
-		//libp2p.Security(noise.ID, noise.New),
-		libp2p.NoSecurity,
-		libp2p.Peerstore(st),
-	); fails(e) {
-		return
-	}
-	interrupt.AddHandler(closer)
-	if c.DHT, e = NewDHT(ctx, c.Host, rdv); fails(e) {
-		return
-	}
-	log.D.Ln("listening on", blue(GetHostOnlyAddress(c.Host)))
-	go Discover(ctx, c.Host, c.DHT, rendezvous)
-	c.Host.SetStreamHandler(IndraLibP2PID, c.handle)
-	return
+func (c *Conn) SetMTU(mtu int) {
+	c.Lock()
+	c.MTU = mtu
+	c.Unlock()
 }
 
-func (l *Listener) SetMTU(mtu int) {
-	l.Lock()
-	l.MTU = mtu
-	l.Unlock()
+func (c *Conn) SetRemoteKey(remoteKey *crypto.Pub) {
+	c.Lock()
+	c.RemoteKey = remoteKey
+	c.Unlock()
 }
 
-func (l *Listener) handle(s network.Stream) {
+func Discover(ctx context.Context, h host.Host, dht *dht.IpfsDHT,
+	rendezvous string) {
+
+	var disco = routing.NewRoutingDiscovery(dht)
+	var e error
+	var peers <-chan peer.AddrInfo
+	if _, e = disco.Advertise(ctx, rendezvous); e != nil {
+	}
+	ticker := time.NewTicker(time.Second * 1)
+	defer ticker.Stop()
 	for {
-		b := slice.NewBytes(l.MTU)
-		var e error
-		var n int
-		if n, e = s.Read(b); fails(e) {
+		select {
+		case <-ctx.Done():
 			return
-		}
-		log.T.S(blue(GetHostOnlyAddress(l.
-			Host)) + " read " + fmt.Sprint(n) + " bytes from listener",
-		// b[:n].ToBytes(),
-		)
-		id := s.Conn().RemotePeer()
-		ai := l.Host.Peerstore().PeerInfo(id)
-		aid := ai.ID.String()
-		hostAddr, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/p2p/%s", aid))
-		ha := ai.Addrs[0].Encapsulate(hostAddr)
-		as := ha.String()
-		var nc *Conn
-		if nc = l.FindConn(as); nc == nil {
-			nc = l.Dial(as)
-			if nc == nil {
-				log.D.Ln("failed to make connection to", as)
-				continue
+		case <-ticker.C:
+			if peers, e = disco.FindPeers(ctx, rendezvous); fails(e) {
+				return
 			}
-			l.AddConn(nc)
+			for p := range peers {
+				if p.ID == h.ID() {
+					continue
+				}
+				if h.Network().Connectedness(p.ID) !=
+					network.Connected {
+
+					if _, e = h.Network().DialPeer(ctx,
+						p.ID); fails(e) {
+
+						continue
+					}
+					log.D.Ln(h.Addrs()[0].String(), "Connected to peer",
+						blue(p.Addrs[0]))
+				}
+			}
 		}
-		nc.Transport.Receiver.Send(b[:n])
 	}
+}
+
+func GetHostAddress(ha host.Host) string {
+	hostAddr, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/p2p/%s",
+		ha.ID().String()))
+	addr := ha.Addrs()[0]
+	return addr.Encapsulate(hostAddr).String()
+}
+func GetHostOnlyAddress(ha host.Host) string {
+	addr := ha.Addrs()[0]
+	return addr.String()
 }
 
 func (l *Listener) Accept() <-chan *Conn { return l.newConns }
-
-func (l *Listener) FindConn(multiAddr string) (d *Conn) {
-	l.Lock()
-	var ok bool
-	if d, ok = l.connections[multiAddr]; ok {
-	}
-	l.Unlock()
-	return
-}
 
 func (l *Listener) AddConn(d *Conn) {
 	l.newConns <- d
@@ -182,76 +166,6 @@ func (l *Listener) DelConn(d *Conn) {
 	l.connections[d.MultiAddr.String()].Q()
 	delete(l.connections, d.MultiAddr.String())
 	l.Unlock()
-}
-
-func (l *Listener) GetConnSend(multiAddr string) (send tpt.Transport) {
-	l.Lock()
-	if _, ok := l.connections[multiAddr]; ok {
-		send = l.connections[multiAddr].Transport.Sender
-	}
-	l.Unlock()
-	return
-}
-
-func (l *Listener) GetConnRecv(multiAddr string) (recv tpt.Transport) {
-	l.Lock()
-	if _, ok := l.connections[multiAddr]; ok {
-		recv = l.connections[multiAddr].Transport.Receiver
-	}
-	l.Unlock()
-	return
-}
-
-type Conn struct {
-	network.Conn
-	MTU       int
-	RemoteKey *crypto.Pub
-	MultiAddr multiaddr.Multiaddr
-	Host      host.Host
-	rw        *bufio.ReadWriter
-	Transport *DuplexByteChan
-	sync.Mutex
-	qu.C
-}
-
-// concurrent safe accessors:
-
-func (c *Conn) GetMTU() int {
-	c.Lock()
-	defer c.Unlock()
-	return c.MTU
-}
-
-func (c *Conn) SetMTU(mtu int) {
-	c.Lock()
-	c.MTU = mtu
-	c.Unlock()
-}
-
-func (c *Conn) GetRemoteKey() (remoteKey *crypto.Pub) {
-	c.Lock()
-	defer c.Unlock()
-	return c.RemoteKey
-}
-
-func (c *Conn) SetRemoteKey(remoteKey *crypto.Pub) {
-	c.Lock()
-	c.RemoteKey = remoteKey
-	c.Unlock()
-}
-
-func (c *Conn) GetSend() tpt.Transport { return c.Transport.Sender }
-func (c *Conn) GetRecv() tpt.Transport { return c.Transport.Receiver }
-
-func GetHostAddress(ha host.Host) string {
-	hostAddr, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/p2p/%s",
-		ha.ID().String()))
-	addr := ha.Addrs()[0]
-	return addr.Encapsulate(hostAddr).String()
-}
-func GetHostOnlyAddress(ha host.Host) string {
-	addr := ha.Addrs()[0]
-	return addr.String()
 }
 
 func (l *Listener) Dial(multiAddr string) (d *Conn) {
@@ -311,9 +225,69 @@ func (l *Listener) Dial(multiAddr string) (d *Conn) {
 	return
 }
 
-var blue = color.Blue.Sprint
+func (l *Listener) FindConn(multiAddr string) (d *Conn) {
+	l.Lock()
+	var ok bool
+	if d, ok = l.connections[multiAddr]; ok {
+	}
+	l.Unlock()
+	return
+}
 
-const ProtocolPrefix = "/indra/" + indra.SemVer
+func (l *Listener) GetConnRecv(multiAddr string) (recv tpt.Transport) {
+	l.Lock()
+	if _, ok := l.connections[multiAddr]; ok {
+		recv = l.connections[multiAddr].Transport.Receiver
+	}
+	l.Unlock()
+	return
+}
+
+func (l *Listener) GetConnSend(multiAddr string) (send tpt.Transport) {
+	l.Lock()
+	if _, ok := l.connections[multiAddr]; ok {
+		send = l.connections[multiAddr].Transport.Sender
+	}
+	l.Unlock()
+	return
+}
+
+func (l *Listener) SetMTU(mtu int) {
+	l.Lock()
+	l.MTU = mtu
+	l.Unlock()
+}
+
+func (l *Listener) handle(s network.Stream) {
+	for {
+		b := slice.NewBytes(l.MTU)
+		var e error
+		var n int
+		if n, e = s.Read(b); fails(e) {
+			return
+		}
+		log.T.S(blue(GetHostOnlyAddress(l.
+			Host)) + " read " + fmt.Sprint(n) + " bytes from listener",
+		// b[:n].ToBytes(),
+		)
+		id := s.Conn().RemotePeer()
+		ai := l.Host.Peerstore().PeerInfo(id)
+		aid := ai.ID.String()
+		hostAddr, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/p2p/%s", aid))
+		ha := ai.Addrs[0].Encapsulate(hostAddr)
+		as := ha.String()
+		var nc *Conn
+		if nc = l.FindConn(as); nc == nil {
+			nc = l.Dial(as)
+			if nc == nil {
+				log.D.Ln("failed to make connection to", as)
+				continue
+			}
+			l.AddConn(nc)
+		}
+		nc.Transport.Receiver.Send(b[:n])
+	}
+}
 
 func NewDHT(ctx context.Context, host host.Host,
 	bootstrapPeers []multiaddr.Multiaddr) (d *dht.IpfsDHT, e error) {
@@ -357,40 +331,66 @@ func NewDHT(ctx context.Context, host host.Host,
 	return
 }
 
-func Discover(ctx context.Context, h host.Host, dht *dht.IpfsDHT,
-	rendezvous string) {
+func NewListener(rendezvous, multiAddr, storePath string, keys *crypto.Keys,
+	ctx context.Context, mtu int) (c *Listener, e error) {
 
-	var disco = routing.NewRoutingDiscovery(dht)
-	var e error
-	var peers <-chan peer.AddrInfo
-	if _, e = disco.Advertise(ctx, rendezvous); e != nil {
+	c = &Listener{
+		Keys:        keys,
+		MTU:         mtu,
+		connections: make(map[string]*Conn),
+		newConns:    make(chan *Conn, ConnBufs),
+		Context:     ctx,
 	}
-	ticker := time.NewTicker(time.Second * 1)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
+	var ma multiaddr.Multiaddr
+	if ma, e = multiaddr.NewMultiaddr(multiAddr); fails(e) {
+		return
+	}
+	rdv := make([]multiaddr.Multiaddr, 1)
+	if rendezvous != "" {
+		if rdv[0], e = multiaddr.NewMultiaddr(rendezvous); fails(e) {
 			return
-		case <-ticker.C:
-			if peers, e = disco.FindPeers(ctx, rendezvous); fails(e) {
-				return
-			}
-			for p := range peers {
-				if p.ID == h.ID() {
-					continue
-				}
-				if h.Network().Connectedness(p.ID) !=
-					network.Connected {
-
-					if _, e = h.Network().DialPeer(ctx,
-						p.ID); fails(e) {
-
-						continue
-					}
-					log.D.Ln(h.Addrs()[0].String(), "Connected to peer",
-						blue(p.Addrs[0]))
-				}
-			}
 		}
+	} else {
+		rdv = nil
 	}
+	store, closer := badgerStore(storePath)
+	if store == nil {
+		return nil, errors.New("could not open database")
+	}
+	var st peerstore.Peerstore
+	st, e = pstoreds.NewPeerstore(ctx, store, pstoreds.DefaultOpts())
+	if c.Host, e = libp2p.New(
+		libp2p.Identity(keys.Prv),
+		libp2p.ListenAddrs(ma),
+		libp2p.EnableHolePunching(),
+		libp2p.Transport(libp2pquic.NewTransport),
+		libp2p.Transport(tcp.NewTCPTransport),
+		libp2p.Transport(websocket.New),
+		//libp2p.Security(libp2ptls.ID, libp2ptls.New),
+		//libp2p.Security(noise.ID, noise.New),
+		libp2p.NoSecurity,
+		libp2p.Peerstore(st),
+	); fails(e) {
+		return
+	}
+	interrupt.AddHandler(closer)
+	if c.DHT, e = NewDHT(ctx, c.Host, rdv); fails(e) {
+		return
+	}
+	log.D.Ln("listening on", blue(GetHostOnlyAddress(c.Host)))
+	go Discover(ctx, c.Host, c.DHT, rendezvous)
+	c.Host.SetStreamHandler(IndraLibP2PID, c.handle)
+	return
+}
+
+func badgerStore(dataPath string) (datastore.Batching, func()) {
+	log.T.Ln("dataPath", dataPath)
+	store, err := badger.NewDatastore(dataPath, nil)
+	if fails(err) {
+		return nil, func() {}
+	}
+	closer := func() {
+		store.Close()
+	}
+	return store, closer
 }

@@ -1,24 +1,11 @@
 package onions
 
 import (
-	"sync"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/services"
+	"sync"
 )
-
-type MyIntros map[crypto.PubBytes]*Introduction
-
-type KnownIntros map[crypto.PubBytes]*Intro
-
-type LocalHiddenService struct {
-	Prv           *crypto.Prv
-	CurrentIntros []*Intro
-	*services.Service
-}
-
-type Services map[crypto.PubBytes]*LocalHiddenService
 
 // Hidden is a collection of data related to hidden services.
 // Introductions both own and other, hidden services.
@@ -29,17 +16,8 @@ type Hidden struct {
 	Services
 }
 
-func NewHiddenrouting() *Hidden {
-	return &Hidden{
-		MyIntros:    make(MyIntros),
-		KnownIntros: make(KnownIntros),
-		Services:    make(Services),
-	}
-}
-
 func (hr *Hidden) AddHiddenService(svc *services.Service, key *crypto.Prv,
 	in *Intro, addr string) {
-	
 	pk := crypto.DerivePub(key).ToBytes()
 	hr.Lock()
 	log.I.F("%s added hidden service with key %s", addr, pk)
@@ -52,11 +30,33 @@ func (hr *Hidden) AddHiddenService(svc *services.Service, key *crypto.Prv,
 	hr.Unlock()
 }
 
+func (hr *Hidden) AddIntro(pk *crypto.Pub, intro *Introduction) {
+	hr.Lock()
+	var ok bool
+	key := pk.ToBytes()
+	if _, ok = hr.MyIntros[key]; ok {
+		log.D.Ln("entry already exists for key %x", key)
+	} else {
+		hr.MyIntros[key] = intro
+	}
+	hr.Unlock()
+}
+
 func (hr *Hidden) AddIntroToHiddenService(key crypto.PubBytes, in *Intro) {
 	hr.Lock()
 	hr.Services[key].CurrentIntros = append(hr.Services[key].
 		CurrentIntros, in)
 	hr.Unlock()
+}
+
+func (hr *Hidden) Delete(key crypto.PubBytes) (header *Introduction) {
+	hr.Lock()
+	var ok bool
+	if header, ok = hr.MyIntros[key]; ok {
+		delete(hr.MyIntros, key)
+	}
+	hr.Unlock()
+	return
 }
 
 func (hr *Hidden) DeleteIntroByID(id nonce.ID) {
@@ -79,12 +79,21 @@ out:
 		}
 	}
 	hr.Unlock()
-	
+}
+
+func (hr *Hidden) DeleteKnownIntro(key crypto.PubBytes) (
+	header *Introduction) {
+	hr.Lock()
+	var ok bool
+	if _, ok = hr.KnownIntros[key]; ok {
+		delete(hr.KnownIntros, key)
+	}
+	hr.Unlock()
+	return
 }
 
 func (hr *Hidden) FindCloakedHiddenService(key crypto.PubKey) (
 	pubKey *crypto.PubBytes) {
-	
 	for i := range hr.MyIntros {
 		pubKey1 := hr.MyIntros[i].Key.ToBytes()
 		if crypto.Match(key, pubKey1) {
@@ -106,7 +115,6 @@ func (hr *Hidden) FindCloakedHiddenService(key crypto.PubKey) (
 
 func (hr *Hidden) FindHiddenService(key crypto.PubBytes) (
 	hs *LocalHiddenService) {
-	
 	hr.Lock()
 	var ok bool
 	if hs, ok = hr.Services[key]; ok {
@@ -126,7 +134,6 @@ func (hr *Hidden) FindIntroduction(key crypto.PubBytes) (intro *Introduction) {
 
 func (hr *Hidden) FindIntroductionUnsafe(
 	key crypto.PubBytes) (intro *Introduction) {
-	
 	var ok bool
 	if intro, ok = hr.MyIntros[key]; ok {
 	}
@@ -149,35 +156,19 @@ func (hr *Hidden) FindKnownIntroUnsafe(key crypto.PubBytes) (intro *Intro) {
 	return
 }
 
-func (hr *Hidden) Delete(key crypto.PubBytes) (header *Introduction) {
-	hr.Lock()
-	var ok bool
-	if header, ok = hr.MyIntros[key]; ok {
-		delete(hr.MyIntros, key)
-	}
-	hr.Unlock()
-	return
+type KnownIntros map[crypto.PubBytes]*Intro
+type LocalHiddenService struct {
+	Prv           *crypto.Prv
+	CurrentIntros []*Intro
+	*services.Service
 }
+type MyIntros map[crypto.PubBytes]*Introduction
+type Services map[crypto.PubBytes]*LocalHiddenService
 
-func (hr *Hidden) DeleteKnownIntro(key crypto.PubBytes) (
-	header *Introduction) {
-	hr.Lock()
-	var ok bool
-	if _, ok = hr.KnownIntros[key]; ok {
-		delete(hr.KnownIntros, key)
+func NewHiddenrouting() *Hidden {
+	return &Hidden{
+		MyIntros:    make(MyIntros),
+		KnownIntros: make(KnownIntros),
+		Services:    make(Services),
 	}
-	hr.Unlock()
-	return
-}
-
-func (hr *Hidden) AddIntro(pk *crypto.Pub, intro *Introduction) {
-	hr.Lock()
-	var ok bool
-	key := pk.ToBytes()
-	if _, ok = hr.MyIntros[key]; ok {
-		log.D.Ln("entry already exists for key %x", key)
-	} else {
-		hr.MyIntros[key] = intro
-	}
-	hr.Unlock()
 }

@@ -2,24 +2,14 @@ package qu
 
 import (
 	"fmt"
+	"git-indra.lan/indra-labs/indra"
+	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
+	"go.uber.org/atomic"
 	"runtime"
 	"strings"
 	"sync"
 	"time"
-	
-	"go.uber.org/atomic"
-	
-	"git-indra.lan/indra-labs/indra"
-	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 )
-
-var (
-	log   = log2.GetLogger(indra.PathBase)
-	fails = log.E.Chk
-)
-
-// C is your basic empty struct signalling channel
-type C chan struct{}
 
 var (
 	createdList     []string
@@ -27,17 +17,88 @@ var (
 	mx              sync.Mutex
 	logEnabled      atomic.Bool
 	KillAll         = T()
+	log             = log2.GetLogger(indra.PathBase)
+	fails           = log.E.Chk
 )
+
+// C is your basic empty struct signalling channel
+type C chan struct{}
+
+func Caller(comment string, skip int) string {
+	_, file, line, _ := runtime.Caller(skip + 1)
+	o := fmt.Sprintf("%s: %s:%d", comment, file, line)
+	return o
+}
+
+// GetOpenChanCount returns the number of qu channels that are still open
+// todo: this needs to only apply to unbuffered type
+func GetOpenChanCount() (o int) {
+	mx.Lock()
+	var c int
+	for i := range createdChannels {
+		if i >= len(createdChannels) {
+			break
+		}
+		if testChanIsClosed(createdChannels[i]) {
+			c++
+		} else {
+			o++
+		}
+	}
+	mx.Unlock()
+	return
+}
+
+// PrintChanState creates an output showing the current state of the channels being monitored
+// This is a function for use by the programmer while debugging
+func PrintChanState() {
+	mx.Lock()
+	for i := range createdChannels {
+		if i >= len(createdList) {
+			break
+		}
+		if testChanIsClosed(createdChannels[i]) {
+			log.D.Ln(">>> closed", createdList[i])
+		} else {
+			log.D.Ln("<<< open", createdList[i])
+		}
+	}
+	mx.Unlock()
+}
+
+// Q closes the channel, which makes it emit a nil every time it is selected
+func (c C) Q() {
+	l(
+		func() (o string) {
+			loc := getLocForChan(c)
+			mx.Lock()
+			defer mx.Unlock()
+			if !testChanIsClosed(c) {
+				close(c)
+				return "closing chan from " + loc + Caller(
+					"\n"+strings.Repeat(
+						" ", 48,
+					)+"from", 1,
+				)
+			} else {
+				return "from" + Caller("", 1) + "\n" + strings.Repeat(
+					" ", 48,
+				) +
+					"channel " + loc + " was already closed"
+			}
+		}(),
+	)
+}
 
 // SetLogging switches on and off the channel logging
 func SetLogging(on bool) {
 	logEnabled.Store(on)
 }
 
-func l(a ...interface{}) {
-	if logEnabled.Load() {
-		log.D.Ln(a...)
-	}
+// Signal sends struct{}{} on the channel which functions as a momentary switch, useful in pairs for stop/start
+func (c C) Signal() {
+	l(func() (o string) { return "signalling " + getLocForChan(c) }())
+	c <- struct{}{}
 }
 
 // T creates an unbuffered chan struct{} for trigger and quit signalling (momentary and breaker switches)
@@ -66,36 +127,6 @@ func Ts(n int) C {
 	return o
 }
 
-// Q closes the channel, which makes it emit a nil every time it is selected
-func (c C) Q() {
-	l(
-		func() (o string) {
-			loc := getLocForChan(c)
-			mx.Lock()
-			defer mx.Unlock()
-			if !testChanIsClosed(c) {
-				close(c)
-				return "closing chan from " + loc + Caller(
-					"\n"+strings.Repeat(
-						" ", 48,
-					)+"from", 1,
-				)
-			} else {
-				return "from" + Caller("", 1) + "\n" + strings.Repeat(
-					" ", 48,
-				) +
-					"channel " + loc + " was already closed"
-			}
-		}(),
-	)
-}
-
-// Signal sends struct{}{} on the channel which functions as a momentary switch, useful in pairs for stop/start
-func (c C) Signal() {
-	l(func() (o string) { return "signalling " + getLocForChan(c) }())
-	c <- struct{}{}
-}
-
 // Wait should be placed with a `<-` in a select case in addition to the channel variable name
 func (c C) Wait() <-chan struct{} {
 	l(
@@ -106,20 +137,6 @@ func (c C) Wait() <-chan struct{} {
 		}(),
 	)
 	return c
-}
-
-// testChanIsClosed allows you to see whether the channel has been closed so you can avoid a panic by trying to close or
-// signal on it
-func testChanIsClosed(ch C) (o bool) {
-	if ch == nil {
-		return true
-	}
-	select {
-	case <-ch:
-		o = true
-	default:
-	}
-	return
 }
 
 // getLocForChan finds which record connects to the channel in question
@@ -169,44 +186,22 @@ func init() {
 	}()
 }
 
-// PrintChanState creates an output showing the current state of the channels being monitored
-// This is a function for use by the programmer while debugging
-func PrintChanState() {
-	mx.Lock()
-	for i := range createdChannels {
-		if i >= len(createdList) {
-			break
-		}
-		if testChanIsClosed(createdChannels[i]) {
-			log.D.Ln(">>> closed", createdList[i])
-		} else {
-			log.D.Ln("<<< open", createdList[i])
-		}
+func l(a ...interface{}) {
+	if logEnabled.Load() {
+		log.D.Ln(a...)
 	}
-	mx.Unlock()
 }
 
-// GetOpenChanCount returns the number of qu channels that are still open
-// todo: this needs to only apply to unbuffered type
-func GetOpenChanCount() (o int) {
-	mx.Lock()
-	var c int
-	for i := range createdChannels {
-		if i >= len(createdChannels) {
-			break
-		}
-		if testChanIsClosed(createdChannels[i]) {
-			c++
-		} else {
-			o++
-		}
+// testChanIsClosed allows you to see whether the channel has been closed so you can avoid a panic by trying to close or
+// signal on it
+func testChanIsClosed(ch C) (o bool) {
+	if ch == nil {
+		return true
 	}
-	mx.Unlock()
+	select {
+	case <-ch:
+		o = true
+	default:
+	}
 	return
-}
-
-func Caller(comment string, skip int) string {
-	_, file, line, _ := runtime.Caller(skip + 1)
-	o := fmt.Sprintf("%s: %s:%d", comment, file, line)
-	return o
 }

@@ -40,13 +40,6 @@ type Peer struct {
 	Sig       crypto.SigBytes
 }
 
-func peerGen() coding.Codec           { return &Peer{} }
-func init()                           { Register(PeerMagic, peerGen) }
-func (x *Peer) Magic() string         { return PeerMagic }
-func (x *Peer) Len() int              { return PeerLen }
-func (x *Peer) Wrap(inner Onion)      {}
-func (x *Peer) GetOnion() interface{} { return x }
-
 func NewPeer(id nonce.ID, key *crypto.Prv, expires time.Time,
 	relayRate uint32) (in *Peer) {
 
@@ -72,36 +65,10 @@ func NewPeer(id nonce.ID, key *crypto.Prv, expires time.Time,
 	return
 }
 
-func (x *Peer) Validate() bool {
-	s := splice.New(PeerLen - magic.Len)
-	s.ID(x.ID).
-		Pubkey(x.Key).
-		Uint32(x.RelayRate).
-		Uint64(uint64(x.Expiry.UnixNano()))
-	hash := sha256.Single(s.GetUntil(s.GetCursor()))
-	key, e := x.Sig.Recover(hash)
-	if fails(e) {
-		return false
-	}
-	if key.Equals(x.Key) && x.Expiry.After(time.Now()) {
-		return true
-	}
-	return false
-}
+func (x *Peer) Account(res *sess.Data, sm *sess.Manager,
+	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 
-func (x *Peer) Splice(s *splice.Splice) {
-	s.ID(x.ID).
-		Pubkey(x.Key).
-		Uint32(x.RelayRate).
-		Uint64(uint64(x.Expiry.UnixNano())).
-		Signature(x.Sig)
-}
-
-func (x *Peer) Encode(s *splice.Splice) (e error) {
-	log.T.S("encoding", reflect.TypeOf(x),
-		x.ID, x.Expiry, x.Sig,
-	)
-	x.Splice(s.Magic(PeerMagic))
+	res.ID = x.ID
 	return
 }
 
@@ -117,6 +84,23 @@ func (x *Peer) Decode(s *splice.Splice) (e error) {
 		ReadTime(&x.Expiry).
 		ReadSignature(&x.Sig)
 	return
+}
+
+func (x *Peer) Encode(s *splice.Splice) (e error) {
+	log.T.S("encoding", reflect.TypeOf(x),
+		x.ID, x.Expiry, x.Sig,
+	)
+	x.Splice(s.Magic(PeerMagic))
+	return
+}
+
+func (x *Peer) GetOnion() interface{} { return x }
+
+func (x *Peer) Gossip(sm *sess.Manager, c qu.C) {
+	log.D.F("propagating peer info for %s",
+		x.Key.ToBased32Abbreviated())
+	Gossip(x, sm, c)
+	log.T.Ln("finished broadcasting peer info")
 }
 
 func (x *Peer) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
@@ -170,16 +154,34 @@ func (x *Peer) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	return
 }
 
-func (x *Peer) Account(res *sess.Data, sm *sess.Manager,
-	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+func (x *Peer) Len() int      { return PeerLen }
+func (x *Peer) Magic() string { return PeerMagic }
 
-	res.ID = x.ID
-	return
+func (x *Peer) Splice(s *splice.Splice) {
+	s.ID(x.ID).
+		Pubkey(x.Key).
+		Uint32(x.RelayRate).
+		Uint64(uint64(x.Expiry.UnixNano())).
+		Signature(x.Sig)
 }
 
-func (x *Peer) Gossip(sm *sess.Manager, c qu.C) {
-	log.D.F("propagating peer info for %s",
-		x.Key.ToBased32Abbreviated())
-	Gossip(x, sm, c)
-	log.T.Ln("finished broadcasting peer info")
+func (x *Peer) Validate() bool {
+	s := splice.New(PeerLen - magic.Len)
+	s.ID(x.ID).
+		Pubkey(x.Key).
+		Uint32(x.RelayRate).
+		Uint64(uint64(x.Expiry.UnixNano()))
+	hash := sha256.Single(s.GetUntil(s.GetCursor()))
+	key, e := x.Sig.Recover(hash)
+	if fails(e) {
+		return false
+	}
+	if key.Equals(x.Key) && x.Expiry.After(time.Now()) {
+		return true
+	}
+	return false
 }
+
+func (x *Peer) Wrap(inner Onion) {}
+func init()                      { Register(PeerMagic, peerGen) }
+func peerGen() coding.Codec      { return &Peer{} }

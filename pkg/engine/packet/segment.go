@@ -3,13 +3,11 @@ package packet
 import (
 	"errors"
 	"fmt"
-	"sort"
-	
-	"github.com/templexxx/reedsolomon"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/sha256"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+	"github.com/templexxx/reedsolomon"
+	"sort"
 )
 
 const (
@@ -21,38 +19,6 @@ const (
 	ErrNotEnough = "too many lost to recover in section %d, have %d, need " +
 		"%d minimum"
 )
-
-// SplitToPackets creates a series of packets including the defined Reed Solomon
-// parameters for extra parity shards and the return encryption public key for a
-// reply.
-//
-// The last packet that falls short of the segmentSize is padded random bytes.
-func SplitToPackets(pp *PacketParams, segSize int,
-	ks *crypto.KeySet) (dataShards int, packets [][]byte, e error) {
-	
-	if pp.Data == nil || len(pp.Data) == 0 {
-		e = fmt.Errorf(ErrEmptyBytes)
-		return
-	}
-	pp.Length = len(pp.Data)
-	overhead := pp.GetOverhead()
-	ss := segSize - overhead
-	segments := slice.Segment(pp.Data, ss)
-	segMap := NewPacketSegments(pp.Length, segSize, pp.GetOverhead(), pp.Parity)
-	dataShards = segMap[len(segMap)-1].DEnd
-	var p [][]byte
-	p, e = segMap.AddParity(segments)
-	for i := range p {
-		pp.Data, pp.Seq = p[i], i
-		pp.From = ks.Next()
-		var s []byte
-		if s, e = EncodePacket(pp); fails(e) {
-			return
-		}
-		packets = append(packets, s)
-	}
-	return
-}
 
 // JoinPackets a collection of Packets together.
 func JoinPackets(packets Packets) (pkts Packets, msg []byte, e error) {
@@ -102,7 +68,6 @@ func JoinPackets(packets Packets) (pkts Packets, msg []byte, e error) {
 			// if they match.
 			if sha256.Single(ps.Data) ==
 				sha256.Single(packets[prevSeq].Data) {
-				
 				discard = append(discard, int(ps.Seq))
 				// Node need to go on, we will discard this one.
 				continue
@@ -212,6 +177,41 @@ func JoinPackets(packets Packets) (pkts Packets, msg []byte, e error) {
 	return
 }
 
+func RemovePacket(slice Packets, s int) Packets {
+	return append(slice[:s], slice[s+1:]...)
+}
+
+// SplitToPackets creates a series of packets including the defined Reed Solomon
+// parameters for extra parity shards and the return encryption public key for a
+// reply.
+//
+// The last packet that falls short of the segmentSize is padded random bytes.
+func SplitToPackets(pp *PacketParams, segSize int,
+	ks *crypto.KeySet) (dataShards int, packets [][]byte, e error) {
+	if pp.Data == nil || len(pp.Data) == 0 {
+		e = fmt.Errorf(ErrEmptyBytes)
+		return
+	}
+	pp.Length = len(pp.Data)
+	overhead := pp.GetOverhead()
+	ss := segSize - overhead
+	segments := slice.Segment(pp.Data, ss)
+	segMap := NewPacketSegments(pp.Length, segSize, pp.GetOverhead(), pp.Parity)
+	dataShards = segMap[len(segMap)-1].DEnd
+	var p [][]byte
+	p, e = segMap.AddParity(segments)
+	for i := range p {
+		pp.Data, pp.Seq = p[i], i
+		pp.From = ks.Next()
+		var s []byte
+		if s, e = EncodePacket(pp); fails(e) {
+			return
+		}
+		packets = append(packets, s)
+	}
+	return
+}
+
 func join(msg []byte, segments [][]byte, sLen, last int) (b []byte) {
 	b = slice.Cat(segments...)
 	if sLen != last {
@@ -219,8 +219,4 @@ func join(msg []byte, segments [][]byte, sLen, last int) (b []byte) {
 	}
 	b = append(msg, b...)
 	return
-}
-
-func RemovePacket(slice Packets, s int) Packets {
-	return append(slice[:s], slice[s+1:]...)
 }

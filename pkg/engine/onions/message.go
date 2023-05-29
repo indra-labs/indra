@@ -1,10 +1,6 @@
 package onions
 
 import (
-	"reflect"
-	
-	"github.com/davecgh/go-spew/spew"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -15,6 +11,8 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 	"git-indra.lan/indra-labs/indra/pkg/util/splice"
+	"github.com/davecgh/go-spew/spew"
+	"reflect"
 )
 
 const (
@@ -24,19 +22,34 @@ const (
 		ReplyCiphersLen
 )
 
-func MessageGen() coding.Codec           { return &Message{} }
-func init()                              { Register(MessageMagic, MessageGen) }
-func (x *Message) Magic() string         { return MessageMagic }
-func (x *Message) Len() int              { return MessageLen + x.Payload.Len() }
-func (x *Message) Wrap(inner Onion)      {}
-func (x *Message) GetOnion() interface{} { return x }
-
 type Message struct {
 	Forwards        [2]*sessions.Data
 	Address         *crypto.Pub
 	ID, Re          nonce.ID
 	Forward, Return *ReplyHeader
 	Payload         slice.Bytes
+}
+
+func (x *Message) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+	res.ID = x.ID
+	res.Billable = append(res.Billable, s.Header.Bytes)
+	skip = true
+	return
+}
+
+func (x *Message) Decode(s *splice.Splice) (e error) {
+	if e = magic.TooShort(s.Remaining(), MessageLen-magic.Len,
+		MessageMagic); fails(e) {
+		return
+	}
+	x.Return = &ReplyHeader{}
+	s.ReadPubkey(&x.Address).
+		ReadID(&x.ID).ReadID(&x.Re)
+	ReadRoutingHeader(s, &x.Return.RoutingHeaderBytes).
+		ReadCiphers(&x.Return.Ciphers).
+		ReadNonces(&x.Return.Nonces).
+		ReadBytes(&x.Payload)
+	return
 }
 
 func (x *Message) Encode(s *splice.Splice) (e error) {
@@ -61,21 +74,8 @@ func (x *Message) Encode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Message) Decode(s *splice.Splice) (e error) {
-	if e = magic.TooShort(s.Remaining(), MessageLen-magic.Len,
-		MessageMagic); fails(e) {
-		return
-	}
-	x.Return = &ReplyHeader{}
-	s.ReadPubkey(&x.Address).
-		ReadID(&x.ID).ReadID(&x.Re)
-	
-	ReadRoutingHeader(s, &x.Return.RoutingHeaderBytes).
-		ReadCiphers(&x.Return.Ciphers).
-		ReadNonces(&x.Return.Nonces).
-		ReadBytes(&x.Payload)
-	return
-}
+func MessageGen() coding.Codec           { return &Message{} }
+func (x *Message) GetOnion() interface{} { return x }
 
 func (x *Message) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	// Forward payload out to service port.
@@ -83,10 +83,7 @@ func (x *Message) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	return
 }
 
-func (x *Message) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
-	
-	res.ID = x.ID
-	res.Billable = append(res.Billable, s.Header.Bytes)
-	skip = true
-	return
-}
+func (x *Message) Len() int         { return MessageLen + x.Payload.Len() }
+func (x *Message) Magic() string    { return MessageMagic }
+func (x *Message) Wrap(inner Onion) {}
+func init()                         { Register(MessageMagic, MessageGen) }

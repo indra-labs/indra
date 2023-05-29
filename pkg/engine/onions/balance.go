@@ -1,10 +1,6 @@
 package onions
 
 import (
-	"reflect"
-	
-	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
 	"git-indra.lan/indra-labs/indra/pkg/engine/coding"
 	"git-indra.lan/indra-labs/indra/pkg/engine/magic"
@@ -12,6 +8,8 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
 	"git-indra.lan/indra-labs/indra/pkg/util/splice"
+	"git-indra.lan/indra-labs/lnd/lnd/lnwire"
+	"reflect"
 )
 
 const (
@@ -24,22 +22,9 @@ type Balance struct {
 	lnwire.MilliSatoshi
 }
 
-func balanceGen() coding.Codec           { return &Balance{} }
-func init()                              { Register(BalanceMagic, balanceGen) }
-func (x *Balance) Magic() string         { return BalanceMagic }
-func (x *Balance) Len() int              { return BalanceLen }
-func (x *Balance) Wrap(inner Onion)      {}
-func (x *Balance) GetOnion() interface{} { return x }
-
-func (x *Balance) Encode(s *splice.Splice) (e error) {
-	log.T.S("encoding", reflect.TypeOf(x),
-		x.ID,
-		x.MilliSatoshi,
-	)
-	s.
-		Magic(BalanceMagic).
-		ID(x.ID).
-		Uint64(uint64(x.MilliSatoshi))
+func (x *Balance) Account(res *sess.Data, sm *sess.Manager,
+	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+	res.ID = x.ID
 	return
 }
 
@@ -54,8 +39,21 @@ func (x *Balance) Decode(s *splice.Splice) (e error) {
 	return
 }
 
+func (x *Balance) Encode(s *splice.Splice) (e error) {
+	log.T.S("encoding", reflect.TypeOf(x),
+		x.ID,
+		x.MilliSatoshi,
+	)
+	s.
+		Magic(BalanceMagic).
+		ID(x.ID).
+		Uint64(uint64(x.MilliSatoshi))
+	return
+}
+
+func (x *Balance) GetOnion() interface{} { return x }
+
 func (x *Balance) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
-	
 	if pending := ng.Pending().Find(x.ID); pending != nil {
 		log.D.S("found pending", pending.ID)
 		for i := range pending.Billable {
@@ -92,9 +90,8 @@ func (x *Balance) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	return
 }
 
-func (x *Balance) Account(res *sess.Data, sm *sess.Manager,
-	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
-	
-	res.ID = x.ID
-	return
-}
+func (x *Balance) Len() int         { return BalanceLen }
+func (x *Balance) Magic() string    { return BalanceMagic }
+func (x *Balance) Wrap(inner Onion) {}
+func balanceGen() coding.Codec      { return &Balance{} }
+func init()                         { Register(BalanceMagic, balanceGen) }

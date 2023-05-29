@@ -1,8 +1,6 @@
 package onions
 
 import (
-	"reflect"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -12,6 +10,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/util/splice"
+	"reflect"
 )
 
 const (
@@ -20,17 +19,29 @@ const (
 		3*sha256.Len + 3*nonce.IVLen
 )
 
-func ReadyGen() coding.Codec           { return &Ready{} }
-func init()                            { Register(ReadyMagic, ReadyGen) }
-func (x *Ready) Magic() string         { return ReadyMagic }
-func (x *Ready) Len() int              { return ReadyLen }
-func (x *Ready) Wrap(inner Onion)      {}
-func (x *Ready) GetOnion() interface{} { return x }
-
 type Ready struct {
 	ID              nonce.ID
 	Address         *crypto.Pub
 	Forward, Return *ReplyHeader
+}
+
+func (x *Ready) Account(res *sess.Data, sm *sess.Manager,
+	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+	return
+}
+
+func (x *Ready) Decode(s *splice.Splice) (e error) {
+	if e = magic.TooShort(s.Remaining(), ReadyLen-magic.Len,
+		ReadyMagic); fails(e) {
+		return
+	}
+	x.Return = &ReplyHeader{}
+	s.ReadID(&x.ID).
+		ReadPubkey(&x.Address)
+	ReadRoutingHeader(s, &x.Return.RoutingHeaderBytes).
+		ReadCiphers(&x.Return.Ciphers).
+		ReadNonces(&x.Return.Nonces)
+	return
 }
 
 func (x *Ready) Encode(s *splice.Splice) (e error) {
@@ -53,27 +64,15 @@ func (x *Ready) Encode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Ready) Decode(s *splice.Splice) (e error) {
-	if e = magic.TooShort(s.Remaining(), ReadyLen-magic.Len,
-		ReadyMagic); fails(e) {
-		return
-	}
-	x.Return = &ReplyHeader{}
-	s.ReadID(&x.ID).
-		ReadPubkey(&x.Address)
-	ReadRoutingHeader(s, &x.Return.RoutingHeaderBytes).
-		ReadCiphers(&x.Return.Ciphers).
-		ReadNonces(&x.Return.Nonces)
-	return
-}
+func ReadyGen() coding.Codec           { return &Ready{} }
+func (x *Ready) GetOnion() interface{} { return x }
 
 func (x *Ready) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	_, e = ng.Pending().ProcessAndDelete(x.ID, x, s.GetAll())
 	return
 }
 
-func (x *Ready) Account(res *sess.Data, sm *sess.Manager,
-	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
-	
-	return
-}
+func (x *Ready) Len() int         { return ReadyLen }
+func (x *Ready) Magic() string    { return ReadyMagic }
+func (x *Ready) Wrap(inner Onion) {}
+func init()                       { Register(ReadyMagic, ReadyGen) }

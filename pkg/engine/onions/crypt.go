@@ -2,8 +2,6 @@ package onions
 
 import (
 	"crypto/cipher"
-	"reflect"
-	
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/ciph"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -12,6 +10,7 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/engine/sess"
 	"git-indra.lan/indra-labs/indra/pkg/engine/sessions"
 	"git-indra.lan/indra-labs/indra/pkg/util/splice"
+	"reflect"
 )
 
 const (
@@ -33,12 +32,34 @@ type Crypt struct {
 	Onion
 }
 
-func cryptGen() coding.Codec           { return &Crypt{} }
-func init()                            { Register(CryptMagic, cryptGen) }
-func (x *Crypt) Len() int              { return CryptLen + x.Onion.Len() }
-func (x *Crypt) Wrap(inner Onion)      { x.Onion = inner }
-func (x *Crypt) GetOnion() interface{} { return x }
-func (x *Crypt) Magic() string         { return CryptMagic }
+func (x *Crypt) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+	sd = sm.FindSessionByHeaderPub(x.ToHeaderPub)
+	if sd == nil {
+		return
+	}
+	res.Sessions = append(res.Sessions, sd)
+	// The last hop needs no accounting as it's us!
+	if last {
+		res.Ret = sd.Header.Bytes
+		res.Billable = append(res.Billable, sd.Header.Bytes)
+	}
+	return
+}
+
+func (x *Crypt) Decode(s *splice.Splice) (e error) {
+	if e = magic.TooShort(s.Remaining(), CryptLen-magic.Len, CryptMagic); fails(e) {
+		return
+	}
+	s.ReadIV(&x.IV).ReadCloak(&x.Cloak).ReadPubkey(&x.FromPub)
+	return
+}
+
+// Decrypt requires the prv.Pub to be located from the Cloak, using the FromPub
+// key to derive the shared secret, and then decrypts the rest of the message.
+func (x *Crypt) Decrypt(prk *crypto.Prv, s *splice.Splice) {
+	ciph.Encipher(ciph.GetBlock(prk, x.FromPub, "decrypt crypt header"),
+		x.IV, s.GetRest())
+}
 
 func (x *Crypt) Encode(s *splice.Splice) (e error) {
 	log.T.F("encoding %s %s %x %x", reflect.TypeOf(x),
@@ -80,20 +101,7 @@ func (x *Crypt) Encode(s *splice.Splice) (e error) {
 	return e
 }
 
-func (x *Crypt) Decode(s *splice.Splice) (e error) {
-	if e = magic.TooShort(s.Remaining(), CryptLen-magic.Len, CryptMagic); fails(e) {
-		return
-	}
-	s.ReadIV(&x.IV).ReadCloak(&x.Cloak).ReadPubkey(&x.FromPub)
-	return
-}
-
-// Decrypt requires the prv.Pub to be located from the Cloak, using the FromPub
-// key to derive the shared secret, and then decrypts the rest of the message.
-func (x *Crypt) Decrypt(prk *crypto.Prv, s *splice.Splice) {
-	ciph.Encipher(ciph.GetBlock(prk, x.FromPub, "decrypt crypt header"),
-		x.IV, s.GetRest())
-}
+func (x *Crypt) GetOnion() interface{} { return x }
 
 func (x *Crypt) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	hdr, _, _, identity := ng.Mgr().FindCloaked(x.Cloak)
@@ -113,21 +121,11 @@ func (x *Crypt) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 		return e
 	}
 	ng.HandleMessage(splice.BudgeUp(s), x)
-	
 	return e
 }
 
-func (x *Crypt) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
-	
-	sd = sm.FindSessionByHeaderPub(x.ToHeaderPub)
-	if sd == nil {
-		return
-	}
-	res.Sessions = append(res.Sessions, sd)
-	// The last hop needs no accounting as it's us!
-	if last {
-		res.Ret = sd.Header.Bytes
-		res.Billable = append(res.Billable, sd.Header.Bytes)
-	}
-	return
-}
+func (x *Crypt) Len() int         { return CryptLen + x.Onion.Len() }
+func (x *Crypt) Magic() string    { return CryptMagic }
+func (x *Crypt) Wrap(inner Onion) { x.Onion = inner }
+func cryptGen() coding.Codec      { return &Crypt{} }
+func init()                       { Register(CryptMagic, cryptGen) }

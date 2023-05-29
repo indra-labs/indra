@@ -2,9 +2,6 @@ package node
 
 import (
 	"fmt"
-	"net/netip"
-	"sync"
-	
 	"git-indra.lan/indra-labs/indra"
 	"git-indra.lan/indra-labs/indra/pkg/crypto"
 	"git-indra.lan/indra-labs/indra/pkg/crypto/nonce"
@@ -13,6 +10,12 @@ import (
 	"git-indra.lan/indra-labs/indra/pkg/engine/tpt"
 	log2 "git-indra.lan/indra-labs/indra/pkg/proc/log"
 	"git-indra.lan/indra-labs/indra/pkg/util/slice"
+	"net/netip"
+	"sync"
+)
+
+const (
+	PaymentChanBuffers = 8
 )
 
 var (
@@ -32,16 +35,11 @@ type Node struct {
 	Transport tpt.Transport
 }
 
-const (
-	PaymentChanBuffers = 8
-)
-
 // NewNode creates a new Node. The Node for a client's self should use true in
 // the local parameter to not initialise the peer state ring buffers as it won't
 // use them.
 func NewNode(addr *netip.AddrPort, keys *crypto.Keys, tpt tpt.Transport,
 	relayRate int) (n *Node, id nonce.ID) {
-	
 	id = nonce.NewID()
 	n = &Node{
 		ID:        id,
@@ -93,20 +91,6 @@ func (n *Node) FindService(port uint16) (svc *services.Service) {
 	return
 }
 
-// SendTo delivers a message to a service identified by its port.
-func (n *Node) SendTo(port uint16, b slice.Bytes) (e error) {
-	n.Lock()
-	defer n.Unlock()
-	e = fmt.Errorf("%s port not registered %d", n.AddrPort.String(), port)
-	for i := range n.Services {
-		if n.Services[i].Port == port {
-			e = n.Services[i].Send(b)
-			return
-		}
-	}
-	return
-}
-
 // ReceiveFrom returns the channel that receives messages for a given port.
 func (n *Node) ReceiveFrom(port uint16) (b <-chan slice.Bytes) {
 	n.Lock()
@@ -115,6 +99,20 @@ func (n *Node) ReceiveFrom(port uint16) (b <-chan slice.Bytes) {
 		if n.Services[i].Port == port {
 			log.T.Ln("receive from")
 			b = n.Services[i].Receive()
+			return
+		}
+	}
+	return
+}
+
+// SendTo delivers a message to a service identified by its port.
+func (n *Node) SendTo(port uint16, b slice.Bytes) (e error) {
+	n.Lock()
+	defer n.Unlock()
+	e = fmt.Errorf("%s port not registered %d", n.AddrPort.String(), port)
+	for i := range n.Services {
+		if n.Services[i].Port == port {
+			e = n.Services[i].Send(b)
 			return
 		}
 	}
