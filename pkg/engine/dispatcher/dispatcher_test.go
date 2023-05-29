@@ -3,7 +3,6 @@ package dispatcher
 import (
 	"context"
 	"os"
-	"sync"
 	"testing"
 	"time"
 
@@ -175,7 +174,7 @@ func TestDispatcher_Rekey(t *testing.T) {
 	}
 	var msg1, msg2 []byte
 	_ = msg2
-	msg1, _, e = tests.GenMessage(1024, "REQUEST")
+	msg1, _, e = tests.GenMessage(4096, "REQUEST")
 	msg2, _, e = tests.GenMessage(1024, "RESPONSE")
 	_, _ = msg1, msg2
 	hn1 := transport.GetHostAddress(l2.Host)
@@ -208,7 +207,6 @@ func TestDispatcher_Rekey(t *testing.T) {
 		t.FailNow()
 	}
 	countTo, succ := 1000, 0
-	var wg sync.WaitGroup
 	go func() {
 		for {
 			select {
@@ -221,7 +219,6 @@ func TestDispatcher_Rekey(t *testing.T) {
 					return
 				} else {
 					succ++
-					wg.Done()
 					continue
 				}
 			case b := <-d2.Duplex.Receive():
@@ -231,7 +228,6 @@ func TestDispatcher_Rekey(t *testing.T) {
 					return
 				} else {
 					succ++
-					wg.Done()
 					continue
 				}
 			}
@@ -240,12 +236,12 @@ func TestDispatcher_Rekey(t *testing.T) {
 	msgp1 = sp1.GetAll()
 	msgp2 = sp2.GetAll()
 	for i := 0; i < countTo; i++ {
-		wg.Add(d1.SendToConn(msgp1))
-		wg.Add(d2.SendToConn(msgp2))
-		wg.Wait()
+		d1.SendToConn(msgp1)
+		d2.SendToConn(msgp2)
 	}
+	time.Sleep(time.Second)
 	cancel()
-	if succ != countTo*2 {
-		t.Fatal("did not receive all messages correctly")
+	if succ != countTo*3 {
+		t.Fatal("did not receive all messages correctly", succ, countTo*3)
 	}
 }
