@@ -136,7 +136,7 @@ func (l *Listener) handle(s network.Stream) {
 		if n, e = s.Read(b); fails(e) {
 			return
 		}
-		log.D.S(blue(GetHostOnlyAddress(l.
+		log.T.S(blue(GetHostOnlyAddress(l.
 			Host)) + " read " + fmt.Sprint(n) + " bytes from listener",
 		// b[:n].ToBytes(),
 		)

@@ -159,7 +159,7 @@ func TestDispatcher_Rekey(t *testing.T) {
 	if err != nil {
 		t.FailNow()
 	}
-	l1, e = transport.NewListener("", transport.LocalhostZeroIPv4QUIC,
+	l1, e = transport.NewListener("", transport.LocalhostZeroIPv4TCP,
 		dataPath, k1, ctx, transport.DefaultMTU)
 	if fails(e) {
 		t.FailNow()
@@ -169,7 +169,7 @@ func TestDispatcher_Rekey(t *testing.T) {
 		t.FailNow()
 	}
 	l2, e = transport.NewListener(transport.GetHostAddress(l1.Host),
-		transport.LocalhostZeroIPv4QUIC, dataPath, k2, ctx, transport.DefaultMTU)
+		transport.LocalhostZeroIPv4TCP, dataPath, k2, ctx, transport.DefaultMTU)
 	if fails(e) {
 		t.FailNow()
 	}
@@ -212,17 +212,6 @@ func TestDispatcher_Rekey(t *testing.T) {
 	go func() {
 		for {
 			select {
-			case <-time.After(time.Second):
-				for {
-					wg.Done()
-					select {
-					case <-ctx.Done():
-						return
-					default:
-						time.Sleep(time.Millisecond*100)
-						continue
-					}
-				}
 			case <-ctx.Done():
 				return
 			case b := <-d1.Duplex.Receive():
@@ -231,9 +220,6 @@ func TestDispatcher_Rekey(t *testing.T) {
 					t.Error("did not receive expected message")
 					return
 				} else {
-					// if succ%100 == 0 {
-					log.I.Ln("success", succ)
-					// }
 					succ++
 					wg.Done()
 					continue
@@ -244,9 +230,6 @@ func TestDispatcher_Rekey(t *testing.T) {
 					t.Error("did not receive expected message")
 					return
 				} else {
-					// if succ%1000 == 0 {
-					log.I.Ln("success", succ)
-					// }
 					succ++
 					wg.Done()
 					continue
@@ -259,10 +242,12 @@ func TestDispatcher_Rekey(t *testing.T) {
 	for i := 0; i < countTo; i++ {
 		n := d1.SendToConn(msgp1)
 		wg.Add(n)
-		d2.SendToConn(msgp2)
+		n = d2.SendToConn(msgp2)
 		wg.Add(n)
+		wg.Wait()
 	}
-	wg.Wait()
-	log.D.Ln(succ)
 	cancel()
+	if succ != countTo*2 {
+		t.Fatal("did not receive all messages correctly")
+	}
 }
