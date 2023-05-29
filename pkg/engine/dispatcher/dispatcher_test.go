@@ -240,10 +240,8 @@ func TestDispatcher_Rekey(t *testing.T) {
 	msgp1 = sp1.GetAll()
 	msgp2 = sp2.GetAll()
 	for i := 0; i < countTo; i++ {
-		d1.SendToConn(msgp1)
-		wg.Add(1)
-		d2.SendToConn(msgp2)
-		wg.Add(1)
+		wg.Add(d1.SendToConn(msgp1))
+		wg.Add(d2.SendToConn(msgp2))
 		wg.Wait()
 	}
 	cancel()
