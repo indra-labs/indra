@@ -11,7 +11,7 @@ on:
 
 jobs:
 
-  build:
+  simple:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -21,8 +21,8 @@ jobs:
       with:
         go-version: 1.19
 
-    - name: Build
-      run: go build ./pkg/...
+    - name: Build Everything
+      run: go build ./...
 
-    - name: Test
+    - name: Testing All in pkg/
       run: go test ./pkg/...
