@@ -212,6 +212,17 @@ func TestDispatcher_Rekey(t *testing.T) {
 	go func() {
 		for {
 			select {
+			case <-time.After(time.Second):
+				for {
+					wg.Done()
+					select {
+					case <-ctx.Done():
+						return
+					default:
+						time.Sleep(time.Millisecond*20)
+						continue
+					}
+				}
 			case <-ctx.Done():
 				return
 			case b := <-d1.Duplex.Receive():
@@ -252,7 +263,6 @@ func TestDispatcher_Rekey(t *testing.T) {
 		wg.Add(n)
 	}
 	wg.Wait()
-	time.Sleep(time.Second)
 	log.D.Ln(succ)
 	cancel()
 }
