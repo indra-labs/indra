@@ -39,8 +39,12 @@ type Intro struct {
 	Sig       crypto.SigBytes
 }
 
-func (x *Intro) Account(res *sess.Data, sm *sess.Manager,
-	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+func (x *Intro) Account(
+	res *sess.Data,
+	sm *sess.Manager,
+	s *sessions.Data,
+	last bool,
+) (skip bool, sd *sessions.Data) {
 
 	res.ID = x.ID
 	return
@@ -52,8 +56,7 @@ func (x *Intro) Decode(s *splice.Splice) (e error) {
 
 		return
 	}
-	s.
-		ReadID(&x.ID).
+	s.ReadID(&x.ID).
 		ReadPubkey(&x.Key).
 		ReadAddrPort(&x.AddrPort).
 		ReadUint32(&x.RelayRate).
@@ -78,8 +81,6 @@ func (x *Intro) GetOnion() interface{} { return x }
 func (x *Intro) Gossip(sm *sess.Manager, c qu.C) {
 	log.D.F("propagating hidden service intro for %s",
 		x.Key.ToBased32Abbreviated())
-	//Gossip(x, sm, c)
-	//log.T.Ln("finished broadcasting intro")
 }
 
 func (x *Intro) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
@@ -120,23 +121,35 @@ func (x *Intro) Len() int      { return IntroLen }
 func (x *Intro) Magic() string { return IntroMagic }
 
 func (x *Intro) Splice(s *splice.Splice) {
-	s.ID(x.ID).
-		Pubkey(x.Key).
-		AddrPort(x.AddrPort).
-		Uint32(x.RelayRate).
-		Uint16(x.Port).
-		Uint64(uint64(x.Expiry.UnixNano())).
-		Signature(x.Sig)
+	x.SpliceNoSig(s)
+	s.Signature(x.Sig)
+}
+
+func IntroSplice(
+	s *splice.Splice,
+	id nonce.ID,
+	key *crypto.Pub,
+	ap *netip.AddrPort,
+	relayRate uint32,
+	port uint16,
+	expires time.Time,
+) {
+
+	s.ID(id).
+		Pubkey(key).
+		AddrPort(ap).
+		Uint32(relayRate).
+		Uint16(port).
+		Time(expires)
+}
+
+func (x *Intro) SpliceNoSig(s *splice.Splice) {
+	IntroSplice(s, x.ID, x.Key, x.AddrPort, x.RelayRate, x.Port, x.Expiry)
 }
 
 func (x *Intro) Validate() bool {
 	s := splice.New(IntroLen - magic.Len)
-	s.ID(x.ID).
-		Pubkey(x.Key).
-		AddrPort(x.AddrPort).
-		Uint32(x.RelayRate).
-		Uint16(x.Port).
-		Uint64(uint64(x.Expiry.UnixNano()))
+	x.SpliceNoSig(s)
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	key, e := x.Sig.Recover(hash)
 	if fails(e) {
@@ -150,17 +163,18 @@ func (x *Intro) Validate() bool {
 
 func (x *Intro) Wrap(inner Onion) {}
 
-func NewIntro(id nonce.ID, key *crypto.Prv, ap *netip.AddrPort,
-	relayRate uint32, port uint16, expires time.Time) (in *Intro) {
+func NewIntro(
+	id nonce.ID,
+	key *crypto.Prv,
+	ap *netip.AddrPort,
+	relayRate uint32,
+	port uint16,
+	expires time.Time,
+) (in *Intro) {
 
 	pk := crypto.DerivePub(key)
 	s := splice.New(IntroLen - magic.Len)
-	s.ID(id).
-		Pubkey(pk).
-		AddrPort(ap).
-		Uint32(relayRate).
-		Uint16(port).
-		Uint64(uint64(expires.UnixNano()))
+	IntroSplice(s, id, pk, ap, relayRate, port, expires)
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	var e error
 	var sign crypto.SigBytes

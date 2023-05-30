@@ -11,12 +11,13 @@ import (
 	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
-func TestOnionSkins_Intro(t *testing.T) {
+func TestOnionSkins_IntroAd(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
 	var e error
 	pr, ks, _ := crypto.NewSigner()
 	id := nonce.NewID()
-	in := NewIntro(id, pr, slice.GenerateRandomAddrPortIPv6(), 0, 0, time.Now().Add(time.Hour))
+	in := NewIntro(id, pr, slice.GenerateRandomAddrPortIPv6(),
+		0, 0, time.Now().Add(time.Hour))
 	var prvs crypto.Privs
 	for i := range prvs {
 		prvs[i] = ks.Next()
