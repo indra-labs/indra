@@ -111,29 +111,6 @@ func (x *Intro) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 			log.D.Ln("deleted pending response", x.ID)
 			return
 		}
-		//log.D.F("%s sending out intro to %s at %s to all known peers",
-		//	ng.Mgr().GetLocalNodeAddressString(), x.Key.ToBased32Abbreviated(),
-		//	color.Yellow.Sprint(x.AddrPort.String()))
-		//sender := ng.Mgr().FindNodeByAddrPort(x.AddrPort)
-		//nn := make(map[nonce.ID]*node.Node)
-		//ng.Mgr().ForEachNode(func(n *node.Node) bool {
-		//	if n.ID != sender.ID {
-		//		nn[n.ID] = n
-		//		return true
-		//	}
-		//	return false
-		//})
-		//counter := 0
-		//for i := range nn {
-		//	log.T.F("sending intro to %s", color.Yellow.Sprint(nn[i].AddrPort.
-		//		String()))
-		//	nn[i].Transport.Send(s.GetAll())
-		//	counter++
-		//	if counter < 2 {
-		//		continue
-		//	}
-		//	break
-		//}
 	}
 	ng.GetHidden().Unlock()
 	return
