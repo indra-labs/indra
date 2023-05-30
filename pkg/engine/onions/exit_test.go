@@ -3,7 +3,7 @@ package onions
 import (
 	"math/rand"
 	"testing"
-	
+
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"

@@ -1,5 +1,10 @@
+//go:build !local
+
+// This can be overridden by a developer's version by setting the tag local.
+
 package indra
 
+import "fmt"
 
 // Put invocations to run all the generators in here (
 // check cmd/bumper/ to add them, and they will automatically run with:
@@ -7,16 +12,11 @@ package indra
 // $ go generate .
 //
 // which will run all these generators below and finish with a go install.
-//go:generate go run ./pkg/relay/gen/main.go
 //go:generate go install ./...
-
-import (
-	"fmt"
-)
 
 const (
 	// URL is the git URL for the repository.
-	URL = ""
+	URL = "github.com/indra-labs/indra"
 	// GitRef is the gitref, as in refs/heads/branchname.
 	GitRef = "refs/heads/master"
 	// ParentGitCommit is the commit hash of the parent HEAD.

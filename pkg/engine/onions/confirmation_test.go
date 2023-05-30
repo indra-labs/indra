@@ -2,7 +2,7 @@ package onions
 
 import (
 	"testing"
-	
+
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"

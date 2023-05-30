@@ -3,7 +3,7 @@ package onions
 import (
 	"testing"
 	"time"
-	
+
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 )

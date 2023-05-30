@@ -2,7 +2,7 @@
   <configuration default="false" name="go test git-indra.lan/indra-labs/indra/pkg" type="GoTestRunConfiguration" factoryName="Go Test" singleton="false">
     <module name="indra" />
     <working_directory value="$PROJECT_DIR$/pkg" />
-    <go_parameters value="-v ./..." />
+    <go_parameters value="-v ./... -tags local" />
     <root_directory value="$PROJECT_DIR$" />
     <kind value="DIRECTORY" />
     <package value="git-indra.lan/indra-labs/indra/pkg/engine" />

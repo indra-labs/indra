@@ -6,7 +6,7 @@ import (
 	"net/netip"
 	"reflect"
 	"testing"
-	
+
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/coding"
 )

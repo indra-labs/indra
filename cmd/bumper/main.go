@@ -181,8 +181,14 @@ func main() {
 	if dir, e = os.Getwd(); check(e) {
 	}
 	name := filepath.Base(dir)
-	versionFile := `package ` + name + `
+	versionFile := `//go:build !local
 
+// This can be overridden by a developer's version by setting the tag local
+// on a modified version. This is useful for the code locations in teh logs.
+
+package ` + name + `
+
+import "fmt"
 
 // Put invocations to run all the generators in here (
 // check cmd/bumper/ to add them, and they will automatically run with:
@@ -190,7 +196,6 @@ func main() {
 // $ go generate .
 //
 // which will run all these generators below and finish with a go install.
-` + `//go:generate go run ./pkg/relay/gen/main.go
 ` + `//go:generate go install ./...
 
 import (

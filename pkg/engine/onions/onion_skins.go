@@ -1,6 +1,8 @@
 package onions
 
 import (
+	"github.com/indra-labs/indra"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"net/netip"
 	"time"
 
@@ -15,7 +17,11 @@ import (
 	"github.com/indra-labs/indra/pkg/util/splice"
 )
 
-var nop = &End{}
+var (
+	log   = log2.GetLogger(indra.PathBase)
+	fails = log.E.Chk
+	nop   = &End{}
+)
 
 // Assemble inserts the slice of Layer s inside each other so the first then
 // contains the second, second contains the third, and so on, and then returns

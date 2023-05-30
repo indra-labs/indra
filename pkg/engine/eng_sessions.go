@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"github.com/gookit/color"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/node"
 	"github.com/indra-labs/indra/pkg/engine/onions"
@@ -9,7 +10,6 @@ import (
 	"github.com/indra-labs/indra/pkg/util/cryptorand"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/lightningnetwork/lnd/lnwire"
-	"github.com/gookit/color"
 )
 
 // BuyNewSessions performs the initial purchase of 5 sessions as well as adding

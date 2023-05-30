@@ -1,20 +1,15 @@
 package onions
 
 import (
-	"github.com/indra-labs/indra"
-	"github.com/indra-labs/indra/pkg/engine/coding"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/util/splice"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/gookit/color"
+	"github.com/indra-labs/indra/pkg/engine/coding"
+	"github.com/indra-labs/indra/pkg/util/splice"
 	"reflect"
 	"sync"
 )
 
-var (
-	log      = log2.GetLogger(indra.PathBase)
-	fails    = log.E.Chk
-	registry = NewRegistry()
-)
+var registry = NewRegistry()
 
 type (
 	CodecGenerators map[string]func() coding.Codec
@@ -40,11 +35,11 @@ func Recognise(s *splice.Splice) (cdc coding.Codec) {
 		cdc = in()
 	}
 	if !ok || cdc == nil {
-		// log.D.F("unrecognised magic %s ignoring message",
-		// 	color.Red.Sprint(magic),
-		// 	spew.Sdump(s.GetUntil(s.GetCursor()).ToBytes()),
-		// 	spew.Sdump(s.GetFrom(s.GetCursor()).ToBytes()),
-		// )
+		log.D.F("unrecognised magic %s ignoring message",
+			color.Red.Sprint(magic),
+			spew.Sdump(s.GetUntil(s.GetCursor()).ToBytes()),
+			spew.Sdump(s.GetFrom(s.GetCursor()).ToBytes()),
+		)
 	} else {
 		log.T.F("recognised magic %s for type %v",
 			color.Red.Sprint(magic),

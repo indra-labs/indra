@@ -1,6 +1,7 @@
 package onions
 
 import (
+	"github.com/davecgh/go-spew/spew"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/ciph"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
@@ -11,7 +12,6 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
-	"github.com/davecgh/go-spew/spew"
 	"reflect"
 )
 

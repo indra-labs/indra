@@ -20,3 +20,4 @@ vendor/
 /.idea/indra.iml
 /.idea/codeStyles/codeStyleConfig.xml
 /.idea/**
+/localversion.go

@@ -95,7 +95,7 @@ func (hr *Hidden) DeleteKnownIntro(key crypto.PubBytes) (
 func (hr *Hidden) FindCloakedHiddenService(key crypto.PubKey) (
 	pubKey *crypto.PubBytes) {
 	for i := range hr.MyIntros {
-		pubKey1 := hr.MyIntros[i].Key.ToBytes()
+		pubKey1 := hr.MyIntros[i].Intro.Key.ToBytes()
 		if crypto.Match(key, pubKey1) {
 			return &pubKey1
 		}

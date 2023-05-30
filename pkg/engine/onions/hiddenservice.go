@@ -20,7 +20,7 @@ const (
 )
 
 type HiddenService struct {
-	Intro
+	Intro Intro
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
 	crypto.Ciphers
@@ -58,7 +58,7 @@ func (x *HiddenService) Decode(s *splice.Splice) (e error) {
 
 func (x *HiddenService) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
-		x.ID, x.Key, x.AddrPort, x.Ciphers, x.Nonces, x.RoutingHeaderBytes,
+		x.Intro.ID, x.Intro.Key, x.Intro.AddrPort, x.Ciphers, x.Nonces, x.RoutingHeaderBytes,
 	)
 	x.Intro.Splice(s.Magic(HiddenServiceMagic))
 	return x.Onion.Encode(s.Ciphers(x.Ciphers).Nonces(x.Nonces))
@@ -68,8 +68,8 @@ func (x *HiddenService) GetOnion() interface{} { return x }
 
 func (x *HiddenService) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	log.D.F("%s adding introduction for key %s",
-		ng.Mgr().GetLocalNodeAddressString(), x.Key.ToBased32Abbreviated())
-	ng.GetHidden().AddIntro(x.Key, &Introduction{
+		ng.Mgr().GetLocalNodeAddressString(), x.Intro.Key.ToBased32Abbreviated())
+	ng.GetHidden().AddIntro(x.Intro.Key, &Introduction{
 		Intro: &x.Intro,
 		ReplyHeader: ReplyHeader{
 			Ciphers:            x.Ciphers,

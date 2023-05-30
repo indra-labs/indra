@@ -100,6 +100,8 @@ func (p *Pending) GetOldestPending() (pr *Response) {
 
 // ProcessAndDelete runs the callback and post accounting function list and
 // deletes the pending response.
+//
+// Returns true if it found and deleted a pending response.
 func (p *Pending) ProcessAndDelete(id nonce.ID, ifc interface{},
 	b slice.Bytes) (found bool, e error) {
 	p.Lock()
