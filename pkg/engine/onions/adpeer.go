@@ -5,6 +5,7 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
+	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
@@ -17,9 +18,12 @@ const (
 	PeerAdMagic = "prad"
 	PeerAdLen   = magic.Len +
 		nonce.IDLen +
-		slice.Uint64Len +
+		crypto.PubKeyLen +
+		slice.Uint32Len +
 		crypto.SigLen
 )
+
+var _ Ad = &PeerAd{}
 
 // PeerAd is the root identity document for an Indra peer. It is indexed by the
 // Identity field, its public key. The slices found below it are derived via
@@ -31,14 +35,28 @@ const (
 // service from their introduction solicitation, and the index from the current
 // set is given by the hidden service.
 type PeerAd struct {
-	nonce.ID  // To ensure no repeating message
-	Identity  crypto.PubBytes
-	RelayRate int
+	nonce.ID              // To ensure no repeating message
+	Identity  *crypto.Pub // Must match signature.
+	RelayRate uint32      // Zero means not relaying.
 	Sig       crypto.SigBytes
-	// Addresses - first is address, nil for hidden services,
-	// hidden services have more than one, 6 or more are kept active.
-	Addresses    []*AddressAd
-	ServiceInfos []ServiceAd
+}
+
+func NewPeerAd(
+	id nonce.ID,
+	key *crypto.Prv,
+	relayRate uint32,
+) (pa *PeerAd) {
+
+	pa = &PeerAd{
+		ID:        id,
+		Identity:  crypto.DerivePub(key),
+		RelayRate: relayRate,
+	}
+	var e error
+	if e = pa.Sign(key); fails(e) {
+		return
+	}
+	return
 }
 
 func (x *PeerAd) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
@@ -47,19 +65,20 @@ func (x *PeerAd) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data, las
 }
 
 func (x *PeerAd) Decode(s *splice.Splice) (e error) {
-	var v uint64
-	s.ReadID(&x.ID).ReadUint64(&v)
-	s.ReadSignature(&x.Sig)
-	x.RelayRate = int(v)
+	s.ReadID(&x.ID).
+		ReadPubkey(&x.Identity).
+		ReadUint32(&x.RelayRate).
+		ReadSignature(&x.Sig)
 	return nil
 }
 
 func (x *PeerAd) Encode(s *splice.Splice) (e error) {
-	s.ID(x.ID).Uint64(uint64(x.RelayRate))
+	s.Magic(PeerAdMagic)
+	x.Splice(s)
 	return nil
 }
 
-func (x *PeerAd) GetOnion() interface{} { return nil }
+func (x *PeerAd) GetOnion() interface{}           { return nil }
 func (x *PeerAd) Gossip(sm *sess.Manager, c qu.C) {}
 func (x *PeerAd) Handle(s *splice.Splice, p Onion, ni Ngin) (e error) {
 	return nil
@@ -85,17 +104,30 @@ func (x *PeerAd) Sign(prv *crypto.Prv) (e error) {
 }
 
 func (x *PeerAd) Splice(s *splice.Splice) {
-	s.
-		ID(x.ID).
-		Uint64(uint64(x.RelayRate))
+	s.ID(x.ID).
+		Pubkey(x.Identity).
+		Uint32(x.RelayRate).
+		Signature(x.Sig)
 }
 
-func (x *PeerAd) Validate(s *splice.Splice) (pk *crypto.Pub) {
-	h := sha256.Single(s.GetRange(0, nonce.IDLen+slice.Uint64Len))
+func (x *PeerAd) SpliceNoSig(s *splice.Splice) {
+	s.ID(x.ID).
+		Pubkey(x.Identity).
+		Uint32(x.RelayRate).
+		Signature(x.Sig)
+}
+
+func (x *PeerAd) Validate() (valid bool) {
+	s := splice.New(x.Len())
+	x.SpliceNoSig(s)
+	h := sha256.Single(s.GetUntil(s.GetCursor()))
 	var e error
+	var pk *crypto.Pub
 	if pk, e = x.Sig.Recover(h); fails(e) {
 	}
-	return
+	return pk != nil
 }
 
 func (x *PeerAd) Wrap(inner Onion) {}
+func init()                        { Register(PeerAdMagic, peerAdGen) }
+func peerAdGen() coding.Codec      { return &PeerAd{} }

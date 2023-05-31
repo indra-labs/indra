@@ -18,10 +18,10 @@ import (
 )
 
 const (
-	IntroMagic = "intr"
+	IntroMagic = "inad"
 	IntroLen   = magic.Len +
 		nonce.IDLen +
-		crypto.PubKeyLen + 1 + 1 +
+		crypto.PubKeyLen + 1 + 4 +
 		splice.AddrLen +
 		slice.Uint16Len +
 		slice.Uint32Len +
@@ -29,7 +29,7 @@ const (
 		crypto.SigLen
 )
 
-type Intro struct {
+type IntroAd struct {
 	ID        nonce.ID        // Ensures never a repeated signature.
 	Key       *crypto.Pub     // Hidden service address.
 	AddrPort  *netip.AddrPort // Introducer address.
@@ -39,7 +39,7 @@ type Intro struct {
 	Sig       crypto.SigBytes
 }
 
-func (x *Intro) Account(
+func (x *IntroAd) Account(
 	res *sess.Data,
 	sm *sess.Manager,
 	s *sessions.Data,
@@ -50,13 +50,14 @@ func (x *Intro) Account(
 	return
 }
 
-func (x *Intro) Decode(s *splice.Splice) (e error) {
+func (x *IntroAd) Decode(s *splice.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), IntroLen-magic.Len,
 		IntroMagic); fails(e) {
 
 		return
 	}
-	s.ReadID(&x.ID).
+	s.
+		ReadID(&x.ID).
 		ReadPubkey(&x.Key).
 		ReadAddrPort(&x.AddrPort).
 		ReadUint32(&x.RelayRate).
@@ -66,24 +67,24 @@ func (x *Intro) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Intro) Encode(s *splice.Splice) (e error) {
+func (x *IntroAd) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.AddrPort.String(), x.Expiry, x.Sig,
 	)
-	x.Splice(s.Magic(IntroMagic))
+	x.Splice(s)
 	return
 }
 
-func (x *Intro) GetOnion() interface{} { return x }
+func (x *IntroAd) GetOnion() interface{} { return x }
 
 // Gossip means adding to the node's peer message list which will be gossiped by
 // the libp2p network of Indra peers.
-func (x *Intro) Gossip(sm *sess.Manager, c qu.C) {
+func (x *IntroAd) Gossip(sm *sess.Manager, c qu.C) {
 	log.D.F("propagating hidden service intro for %s",
 		x.Key.ToBased32Abbreviated())
 }
 
-func (x *Intro) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
+func (x *IntroAd) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	log.D.Ln("handling intro")
 	ng.GetHidden().Lock()
 	valid := x.Validate()
@@ -117,37 +118,19 @@ func (x *Intro) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	return
 }
 
-func (x *Intro) Len() int      { return IntroLen }
-func (x *Intro) Magic() string { return IntroMagic }
+func (x *IntroAd) Len() int      { return IntroLen }
+func (x *IntroAd) Magic() string { return IntroMagic }
 
-func (x *Intro) Splice(s *splice.Splice) {
+func (x *IntroAd) Splice(s *splice.Splice) {
 	x.SpliceNoSig(s)
 	s.Signature(x.Sig)
 }
 
-func IntroSplice(
-	s *splice.Splice,
-	id nonce.ID,
-	key *crypto.Pub,
-	ap *netip.AddrPort,
-	relayRate uint32,
-	port uint16,
-	expires time.Time,
-) {
-
-	s.ID(id).
-		Pubkey(key).
-		AddrPort(ap).
-		Uint32(relayRate).
-		Uint16(port).
-		Time(expires)
-}
-
-func (x *Intro) SpliceNoSig(s *splice.Splice) {
+func (x *IntroAd) SpliceNoSig(s *splice.Splice) {
 	IntroSplice(s, x.ID, x.Key, x.AddrPort, x.RelayRate, x.Port, x.Expiry)
 }
 
-func (x *Intro) Validate() bool {
+func (x *IntroAd) Validate() bool {
 	s := splice.New(IntroLen - magic.Len)
 	x.SpliceNoSig(s)
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
@@ -161,19 +144,38 @@ func (x *Intro) Validate() bool {
 	return false
 }
 
-func (x *Intro) Wrap(inner Onion) {}
+func (x *IntroAd) Wrap(inner Onion) {}
 
-func NewIntro(
+func IntroSplice(
+	s *splice.Splice,
+	id nonce.ID,
+	key *crypto.Pub,
+	ap *netip.AddrPort,
+	relayRate uint32,
+	port uint16,
+	expires time.Time,
+) {
+
+	s.Magic(IntroMagic).
+		ID(id).
+		Pubkey(key).
+		AddrPort(ap).
+		Uint32(relayRate).
+		Uint16(port).
+		Time(expires)
+}
+
+func NewIntroAd(
 	id nonce.ID,
 	key *crypto.Prv,
 	ap *netip.AddrPort,
 	relayRate uint32,
 	port uint16,
 	expires time.Time,
-) (in *Intro) {
+) (in *IntroAd) {
 
 	pk := crypto.DerivePub(key)
-	s := splice.New(IntroLen - magic.Len)
+	s := splice.New(IntroLen)
 	IntroSplice(s, id, pk, ap, relayRate, port, expires)
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	var e error
@@ -181,7 +183,7 @@ func NewIntro(
 	if sign, e = crypto.Sign(key, hash); fails(e) {
 		return nil
 	}
-	in = &Intro{
+	in = &IntroAd{
 		ID:        id,
 		Key:       pk,
 		AddrPort:  ap,
@@ -194,4 +196,4 @@ func NewIntro(
 }
 
 func init()                  { Register(IntroMagic, introGen) }
-func introGen() coding.Codec { return &Intro{} }
+func introGen() coding.Codec { return &IntroAd{} }

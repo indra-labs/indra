@@ -20,7 +20,7 @@ const (
 )
 
 type HiddenService struct {
-	Intro Intro
+	Intro IntroAd
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
 	crypto.Ciphers

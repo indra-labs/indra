@@ -1,6 +1,7 @@
 package onions
 
 import (
+	"github.com/indra-labs/indra/pkg/util/splice"
 	"testing"
 	"time"
 
@@ -12,26 +13,17 @@ import (
 )
 
 func TestOnionSkins_IntroAd(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+	log2.SetLogLevel(log2.Trace)
 	var e error
-	pr, ks, _ := crypto.NewSigner()
+	pr, _, _ := crypto.NewSigner()
 	id := nonce.NewID()
-	in := NewIntro(id, pr, slice.GenerateRandomAddrPortIPv6(),
-		0, 0, time.Now().Add(time.Hour))
-	var prvs crypto.Privs
-	for i := range prvs {
-		prvs[i] = ks.Next()
+	in := NewIntroAd(id, pr, slice.GenerateRandomAddrPortIPv6(),
+		20000, 80, time.Now().Add(time.Hour))
+	log.D.S("intro", in)
+	s := splice.New(in.Len())
+	if e = in.Encode(s); fails(e) {
+		t.FailNow()
 	}
-	var pubs crypto.Pubs
-	for i := range pubs {
-		pubs[i] = crypto.DerivePub(prvs[i])
-	}
-	on1 := Skins{}.
-		Intro(id, pr, in.AddrPort, time.Now().Add(time.Hour))
-	on1 = append(on1, &End{})
-	on := on1.Assemble()
-	s := Encode(on)
-	log.D.S(s.GetAll().ToBytes())
 	s.SetCursor(0)
 	var onc coding.Codec
 	if onc = Recognise(s); onc == nil {
@@ -43,14 +35,30 @@ func TestOnionSkins_IntroAd(t *testing.T) {
 		t.FailNow()
 	}
 	log.D.S(onc)
-	var intro *Intro
+	var intro *IntroAd
 	var ok bool
-	if intro, ok = onc.(*Intro); !ok {
+	if intro, ok = onc.(*IntroAd); !ok {
 		t.Error("did not unwrap expected type")
+		t.FailNow()
+	}
+	if intro.ID != in.ID {
+		t.Errorf("ID did not decode correctly")
+		t.FailNow()
+	}
+	if intro.Port != in.Port {
+		t.Errorf("port did not decode correctly")
+		t.FailNow()
+	}
+	if intro.RelayRate != in.RelayRate {
+		t.Errorf("relay rate did not decode correctly")
 		t.FailNow()
 	}
 	if intro.AddrPort.String() != in.AddrPort.String() {
 		t.Errorf("addrport did not decode correctly")
+		t.FailNow()
+	}
+	if !intro.Key.Equals(crypto.DerivePub(pr)) {
+		t.Errorf("public key did not decode correctly")
 		t.FailNow()
 	}
 	if !intro.Validate() {

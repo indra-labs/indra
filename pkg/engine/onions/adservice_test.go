@@ -9,14 +9,15 @@ import (
 	"testing"
 )
 
-func TestOnionSkins_PeerAd(t *testing.T) {
+func TestOnionSkins_ServiceAd(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	var e error
 	pr, _, _ := crypto.NewSigner()
 	id := nonce.NewID()
-	peerAd := NewPeerAd(id, pr, 20000)
-	s := splice.New(peerAd.Len())
-	if e = peerAd.Encode(s); fails(e) {
+	sv := NewServiceAd(id, pr, 20000, 80)
+	log.D.S("service", sv)
+	s := splice.New(sv.Len())
+	if e = sv.Encode(s); fails(e) {
 		t.FailNow()
 	}
 	s.SetCursor(0)
@@ -30,18 +31,26 @@ func TestOnionSkins_PeerAd(t *testing.T) {
 		t.FailNow()
 	}
 	log.D.S(onc)
-	var pa *PeerAd
+	var svcAd *ServiceAd
 	var ok bool
-	if pa, ok = onc.(*PeerAd); !ok {
+	if svcAd, ok = onc.(*ServiceAd); !ok {
 		t.Error("did not unwrap expected type")
 		t.FailNow()
 	}
-	if pa.RelayRate != peerAd.RelayRate {
+	if svcAd.RelayRate != sv.RelayRate {
 		t.Errorf("relay rate did not decode correctly")
 		t.FailNow()
 	}
-	if !pa.Validate() {
-		t.Errorf("received intro did not validate")
+	if svcAd.Port != sv.Port {
+		t.Errorf("port did not decode correctly")
+		t.FailNow()
+	}
+	if !svcAd.Key.Equals(crypto.DerivePub(pr)) {
+		t.Errorf("public key did not decode correctly")
+		t.FailNow()
+	}
+	if !svcAd.Validate() {
+		t.Errorf("received service ad did not validate")
 		t.FailNow()
 	}
 }

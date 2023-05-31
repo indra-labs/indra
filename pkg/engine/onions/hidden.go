@@ -17,7 +17,7 @@ type Hidden struct {
 }
 
 func (hr *Hidden) AddHiddenService(svc *services.Service, key *crypto.Prv,
-	in *Intro, addr string) {
+	in *IntroAd, addr string) {
 	pk := crypto.DerivePub(key).ToBytes()
 	hr.Lock()
 	log.I.F("%s added hidden service with key %s", addr, pk)
@@ -42,7 +42,7 @@ func (hr *Hidden) AddIntro(pk *crypto.Pub, intro *Introduction) {
 	hr.Unlock()
 }
 
-func (hr *Hidden) AddIntroToHiddenService(key crypto.PubBytes, in *Intro) {
+func (hr *Hidden) AddIntroToHiddenService(key crypto.PubBytes, in *IntroAd) {
 	hr.Lock()
 	hr.Services[key].CurrentIntros = append(hr.Services[key].
 		CurrentIntros, in)
@@ -140,7 +140,7 @@ func (hr *Hidden) FindIntroductionUnsafe(
 	return
 }
 
-func (hr *Hidden) FindKnownIntro(key crypto.PubBytes) (intro *Intro) {
+func (hr *Hidden) FindKnownIntro(key crypto.PubBytes) (intro *IntroAd) {
 	hr.Lock()
 	var ok bool
 	if intro, ok = hr.KnownIntros[key]; ok {
@@ -149,17 +149,17 @@ func (hr *Hidden) FindKnownIntro(key crypto.PubBytes) (intro *Intro) {
 	return
 }
 
-func (hr *Hidden) FindKnownIntroUnsafe(key crypto.PubBytes) (intro *Intro) {
+func (hr *Hidden) FindKnownIntroUnsafe(key crypto.PubBytes) (intro *IntroAd) {
 	var ok bool
 	if intro, ok = hr.KnownIntros[key]; ok {
 	}
 	return
 }
 
-type KnownIntros map[crypto.PubBytes]*Intro
+type KnownIntros map[crypto.PubBytes]*IntroAd
 type LocalHiddenService struct {
 	Prv           *crypto.Prv
-	CurrentIntros []*Intro
+	CurrentIntros []*IntroAd
 	*services.Service
 }
 type MyIntros map[crypto.PubBytes]*Introduction

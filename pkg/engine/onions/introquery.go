@@ -73,11 +73,11 @@ func (x *IntroQuery) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	log.D.Ln(ng.Mgr().GetLocalNodeAddressString(), "handling introquery", x.ID,
 		x.Key.ToBased32Abbreviated())
 	var ok bool
-	var il *Intro
+	var il *IntroAd
 	if il, ok = ng.GetHidden().KnownIntros[x.Key.ToBytes()]; !ok {
 		// if the reply is zeroes the querant knows it needs to retry at a
 		// different relay
-		il = &Intro{}
+		il = &IntroAd{}
 		ng.GetHidden().Unlock()
 		log.E.Ln("intro not known")
 		return

@@ -50,7 +50,7 @@ func (ng *Engine) SendGetBalance(alice, bob *sessions.Data, hook responses.Callb
 func (ng *Engine) SendHiddenService(id nonce.ID, key *crypto.Prv,
 	relayRate uint32, port uint16, expiry time.Time,
 	alice, bob *sessions.Data, svc *services.Service,
-	hook responses.Callback) (in *onions.Intro) {
+	hook responses.Callback) (in *onions.IntroAd) {
 
 	hops := sess.StandardCircuit()
 	s := make(sessions.Sessions, len(hops))
@@ -58,7 +58,7 @@ func (ng *Engine) SendHiddenService(id nonce.ID, key *crypto.Prv,
 	se := ng.Manager.SelectHops(hops, s, "sendhiddenservice")
 	var c sessions.Circuit
 	copy(c[:], se[:len(c)])
-	in = onions.NewIntro(id, key, alice.Node.AddrPort, relayRate, port, expiry)
+	in = onions.NewIntroAd(id, key, alice.Node.AddrPort, relayRate, port, expiry)
 	o := onions.MakeHiddenService(in, alice, bob, c, ng.KeySet)
 	log.D.F("%s sending out hidden service onion %s",
 		ng.Manager.GetLocalNodeAddressString(),
@@ -71,7 +71,7 @@ func (ng *Engine) SendHiddenService(id nonce.ID, key *crypto.Prv,
 }
 
 func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *crypto.Pub,
-	alice, bob *sessions.Data, hook func(in *onions.Intro)) {
+	alice, bob *sessions.Data, hook func(in *onions.IntroAd)) {
 
 	fn := func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
 		s := splice.Load(b, slice.NewCursor())
@@ -79,9 +79,9 @@ func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *crypto.Pub,
 		if e = on.Decode(s); fails(e) {
 			return
 		}
-		var oni *onions.Intro
+		var oni *onions.IntroAd
 		var ok bool
-		if oni, ok = on.(*onions.Intro); !ok {
+		if oni, ok = on.(*onions.IntroAd); !ok {
 			return
 		}
 		hook(oni)

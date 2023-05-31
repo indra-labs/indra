@@ -213,7 +213,7 @@ func (h *Headers) ExitPoint() *ExitPoint {
 	}
 }
 
-func (o Skins) HiddenService(in *Intro, point *ExitPoint) Skins {
+func (o Skins) HiddenService(in *IntroAd, point *ExitPoint) Skins {
 	return append(o, &HiddenService{
 		Intro:   *in,
 		Ciphers: crypto.GenCiphers(point.Keys, point.ReturnPubs),
@@ -224,7 +224,13 @@ func (o Skins) HiddenService(in *Intro, point *ExitPoint) Skins {
 
 func (o Skins) Intro(id nonce.ID, key *crypto.Prv, ap *netip.AddrPort,
 	expires time.Time) (sk Skins) {
-	return append(o, NewIntro(id, key, ap, 0, 0, expires))
+	return append(o, NewIntroAd(id, key, ap, 0, 0, expires))
+}
+
+func (o Skins) PeerAd(id nonce.ID, key *crypto.Prv, ap *netip.AddrPort,
+	relayRate uint32, port uint16, expires time.Time) (sk Skins) {
+
+	return append(o, NewPeerAd(id, key, relayRate))
 }
 
 func (o Skins) IntroQuery(id nonce.ID, hsk *crypto.Pub, exit *ExitPoint) Skins {
@@ -267,7 +273,7 @@ func MakeGetBalance(p GetBalanceParams) Skins {
 		RoutingHeader(headers.Return)
 }
 
-func MakeHiddenService(in *Intro, alice, bob *sessions.Data,
+func MakeHiddenService(in *IntroAd, alice, bob *sessions.Data,
 	c sessions.Circuit, ks *crypto.KeySet) Skins {
 
 	headers := GetHeaders(alice, bob, c, ks)
