@@ -50,7 +50,6 @@ func TestAdAddress(t *testing.T) {
 		t.Errorf("address did not decode correctly")
 		t.FailNow()
 	}
-
 	if !ad.Key.Equals(crypto.DerivePub(pr)) {
 		t.Errorf("public key did not decode correctly")
 		t.FailNow()

@@ -43,6 +43,14 @@ func TestPeerAd(t *testing.T) {
 	if peer, ok = onc.(*PeerAd); !ok {
 		t.Fatal("did not unwrap expected type")
 	}
+	if peer.ID != pa.ID {
+		t.Errorf("ID did not decode correctly")
+		t.FailNow()
+	}
+	if !peer.Key.Equals(crypto.DerivePub(pr)) {
+		t.Errorf("public key did not decode correctly")
+		t.FailNow()
+	}
 	if !peer.Validate() {
 		t.Fatalf("received PeerAd did not validate")
 	}

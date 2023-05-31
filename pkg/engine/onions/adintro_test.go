@@ -53,6 +53,10 @@ func TestOnionSkins_IntroAd(t *testing.T) {
 		t.Errorf("relay rate did not decode correctly")
 		t.FailNow()
 	}
+	if !intro.Expiry.Equal(in.Expiry) {
+		t.Errorf("expiry did not decode correctly")
+		t.FailNow()
+	}
 	if intro.AddrPort.String() != in.AddrPort.String() {
 		t.Errorf("addrport did not decode correctly")
 		t.FailNow()
