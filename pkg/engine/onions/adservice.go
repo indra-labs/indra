@@ -37,8 +37,38 @@ type ServiceAd struct {
 	Sig       crypto.SigBytes
 }
 
-func (x *ServiceAd) Account(res *sess.Data, sm *sess.Manager,
-	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+func NewServiceAd(
+	id nonce.ID,
+	key *crypto.Prv,
+	relayRate uint32,
+	port uint16,
+) (sv *ServiceAd) {
+
+	s := splice.New(IntroLen)
+	k := crypto.DerivePub(key)
+	ServiceSplice(s, id, k, relayRate, port)
+	hash := sha256.Single(s.GetUntil(s.GetCursor()))
+	var e error
+	var sign crypto.SigBytes
+	if sign, e = crypto.Sign(key, hash); fails(e) {
+		return nil
+	}
+	sv = &ServiceAd{
+		ID:        id,
+		Key:       k,
+		RelayRate: relayRate,
+		Port:      port,
+		Sig:       sign,
+	}
+	return
+}
+
+func (x *ServiceAd) Account(
+	res *sess.Data,
+	sm *sess.Manager,
+	s *sessions.Data,
+	last bool,
+) (skip bool, sd *sessions.Data) {
 
 	return false, nil
 }
@@ -51,6 +81,7 @@ func (x *ServiceAd) Decode(s *splice.Splice) (e error) {
 		ReadSignature(&x.Sig)
 	return
 }
+
 func (x *ServiceAd) Encode(s *splice.Splice) (e error) {
 	x.Splice(s)
 	return
@@ -126,31 +157,6 @@ func ServiceSplice(
 		Uint32(relayRate)
 }
 
-func NewServiceAd(
-	id nonce.ID,
-	key *crypto.Prv,
-	relayRate uint32,
-	port uint16,
-) (sv *ServiceAd) {
-
-	s := splice.New(IntroLen)
-	k := crypto.DerivePub(key)
-	ServiceSplice(s, id, k, relayRate, port)
-	hash := sha256.Single(s.GetUntil(s.GetCursor()))
-	var e error
-	var sign crypto.SigBytes
-	if sign, e = crypto.Sign(key, hash); fails(e) {
-		return nil
-	}
-	sv = &ServiceAd{
-		ID:        id,
-		Key:       k,
-		RelayRate: relayRate,
-		Port:      port,
-		Sig:       sign,
-	}
-	return
-}
-
 func init()                      { Register(ServiceAdMagic, serviceAdGen) }
+
 func serviceAdGen() coding.Codec { return &ServiceAd{} }

@@ -23,18 +23,23 @@ func NewRegistry() *Registry {
 	return &Registry{CodecGenerators: make(CodecGenerators)}
 }
 
+func MakeCodec(magic string) (cdc coding.Codec) {
+	var in func() coding.Codec
+	var ok bool
+	if in, ok = registry.CodecGenerators[magic]; ok {
+		cdc = in()
+	}
+	return
+}
+
 func Recognise(s *splice.Splice) (cdc coding.Codec) {
 	registry.Lock()
 	defer registry.Unlock()
 	var magic string
 	// log.D.S("splice", s.GetAll().ToBytes())
 	s.ReadMagic(&magic)
-	var ok bool
-	var in func() coding.Codec
-	if in, ok = registry.CodecGenerators[magic]; ok {
-		cdc = in()
-	}
-	if !ok || cdc == nil {
+	cdc = MakeCodec(magic)
+	if cdc == nil {
 		log.D.F("unrecognised magic %s ignoring message",
 			color.Red.Sprint(magic),
 			spew.Sdump(s.GetUntil(s.GetCursor()).ToBytes()),

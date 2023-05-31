@@ -119,6 +119,7 @@ func (x *IntroAd) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 }
 
 func (x *IntroAd) Len() int      { return IntroLen }
+
 func (x *IntroAd) Magic() string { return IntroMagic }
 
 func (x *IntroAd) Splice(s *splice.Splice) {
@@ -196,4 +197,5 @@ func NewIntroAd(
 }
 
 func init()                  { Register(IntroMagic, introGen) }
+
 func introGen() coding.Codec { return &IntroAd{} }
