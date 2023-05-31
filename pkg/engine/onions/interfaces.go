@@ -32,7 +32,7 @@ type Onion interface {
 		last bool) (skip bool, sd *sessions.Data)
 }
 type Ad interface {
-	Onion
+	coding.Codec
 	Splice(s *splice.Splice)
 	Validate() bool
 	Gossip(sm *sess.Manager, c qu.C)

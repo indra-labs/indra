@@ -8,7 +8,6 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
 	"github.com/indra-labs/indra/pkg/engine/sess"
-	"github.com/indra-labs/indra/pkg/engine/sessions"
 	"github.com/indra-labs/indra/pkg/util/qu"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
@@ -26,7 +25,7 @@ const (
 
 // ServiceAd stores a specification for the fee rate and the service port, which
 // must be a well known port to match with a type of service, eg 80 for web, 53
-// for DNS, etc. These are also attached to the Peer entry via concatenating
+// for DNS, etc. These are also attached to the PeerAd entry via concatenating
 // "/service/N" where N is the index of the entry. A zero value at an index
 // signals to stop scanning for more subsequent values.
 type ServiceAd struct {
@@ -36,6 +35,8 @@ type ServiceAd struct {
 	RelayRate uint32
 	Sig       crypto.SigBytes
 }
+
+var _ coding.Codec = &ServiceAd{}
 
 func NewServiceAd(
 	id nonce.ID,
@@ -63,16 +64,6 @@ func NewServiceAd(
 	return
 }
 
-func (x *ServiceAd) Account(
-	res *sess.Data,
-	sm *sess.Manager,
-	s *sessions.Data,
-	last bool,
-) (skip bool, sd *sessions.Data) {
-
-	return false, nil
-}
-
 func (x *ServiceAd) Decode(s *splice.Splice) (e error) {
 	s.ReadID(&x.ID).
 		ReadPubkey(&x.Key).
@@ -90,10 +81,6 @@ func (x *ServiceAd) Encode(s *splice.Splice) (e error) {
 func (x *ServiceAd) GetOnion() interface{} { return nil }
 
 func (x *ServiceAd) Gossip(sm *sess.Manager, c qu.C) {
-}
-
-func (x *ServiceAd) Handle(s *splice.Splice, p Onion, ni Ngin) (e error) {
-	return nil
 }
 
 func (x *ServiceAd) Len() int { return ServiceAdLen }
@@ -139,8 +126,6 @@ func (x *ServiceAd) Validate() (valid bool) {
 	}
 	return false
 }
-
-func (x *ServiceAd) Wrap(inner Onion) {}
 
 func ServiceSplice(
 	s *splice.Splice,

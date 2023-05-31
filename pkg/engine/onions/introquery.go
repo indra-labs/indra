@@ -83,9 +83,9 @@ func (x *IntroQuery) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 		return
 	}
 	ng.GetHidden().Unlock()
-	iqr := Encode(il)
+	e = il.Encode(s)
 	rb := FormatReply(GetRoutingHeaderFromCursor(s), x.Ciphers, x.Nonces,
-		iqr.GetAll())
+		s.GetAll())
 	switch on1 := p.(type) {
 	case *Crypt:
 		sess := ng.Mgr().FindSessionByHeader(on1.ToPriv)

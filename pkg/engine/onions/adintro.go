@@ -11,7 +11,6 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
 	"github.com/indra-labs/indra/pkg/engine/sess"
-	"github.com/indra-labs/indra/pkg/engine/sessions"
 	"github.com/indra-labs/indra/pkg/util/qu"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
@@ -39,16 +38,7 @@ type IntroAd struct {
 	Sig       crypto.SigBytes
 }
 
-func (x *IntroAd) Account(
-	res *sess.Data,
-	sm *sess.Manager,
-	s *sessions.Data,
-	last bool,
-) (skip bool, sd *sessions.Data) {
-
-	res.ID = x.ID
-	return
-}
+var _ coding.Codec = &IntroAd{}
 
 func (x *IntroAd) Decode(s *splice.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), IntroLen-magic.Len,
@@ -84,41 +74,7 @@ func (x *IntroAd) Gossip(sm *sess.Manager, c qu.C) {
 		x.Key.ToBased32Abbreviated())
 }
 
-func (x *IntroAd) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
-	log.D.Ln("handling intro")
-	ng.GetHidden().Lock()
-	valid := x.Validate()
-	if valid {
-
-		// Add to our current peer state advertisements.
-		_ = valid
-
-		log.D.Ln(ng.Mgr().GetLocalNodeAddressString(), "validated intro", x.ID)
-		kb := x.Key.ToBytes()
-		if _, ok := ng.GetHidden().KnownIntros[x.Key.ToBytes()]; ok {
-			log.D.Ln(ng.Mgr().GetLocalNodeAddressString(), "already have intro")
-			ng.Pending().ProcessAndDelete(x.ID, &kb, s.GetAll())
-			ng.GetHidden().Unlock()
-			return
-		}
-		log.D.F("%s storing intro for %s %s",
-			ng.Mgr().GetLocalNodeAddressString(), x.Key.ToBased32Abbreviated(),
-			x.ID)
-		ng.GetHidden().KnownIntros[x.Key.ToBytes()] = x
-		var ok bool
-		if ok, e = ng.Pending().ProcessAndDelete(x.ID, &kb,
-			s.GetAll()); ok || !fails(e) {
-
-			ng.GetHidden().Unlock()
-			log.D.Ln("deleted pending response", x.ID)
-			return
-		}
-	}
-	ng.GetHidden().Unlock()
-	return
-}
-
-func (x *IntroAd) Len() int      { return IntroLen }
+func (x *IntroAd) Len() int { return IntroLen }
 
 func (x *IntroAd) Magic() string { return IntroMagic }
 
@@ -144,8 +100,6 @@ func (x *IntroAd) Validate() bool {
 	}
 	return false
 }
-
-func (x *IntroAd) Wrap(inner Onion) {}
 
 func IntroSplice(
 	s *splice.Splice,
@@ -196,6 +150,6 @@ func NewIntroAd(
 	return
 }
 
-func init()                  { Register(IntroMagic, introGen) }
+func init() { Register(IntroMagic, introGen) }
 
 func introGen() coding.Codec { return &IntroAd{} }

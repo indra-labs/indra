@@ -5,21 +5,23 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
+	"github.com/indra-labs/indra/pkg/engine/coding"
+	"github.com/indra-labs/indra/pkg/engine/magic"
 	"github.com/indra-labs/indra/pkg/engine/sess"
-	"github.com/indra-labs/indra/pkg/engine/sessions"
 	"github.com/indra-labs/indra/pkg/util/qu"
-	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
+	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
 	"net/netip"
-	"time"
+	"reflect"
 )
 
 const (
 	AddressAdMagic = "adad"
-	AddressAdLen   = nonce.IDLen +
+	AddressAdLen   = magic.Len +
+		nonce.IDLen +
+		crypto.PubKeyLen +
 		splice.AddrLen + 1 +
-		slice.Uint64Len +
 		crypto.SigLen
 )
 
@@ -28,80 +30,143 @@ const (
 // address. This means hidden service introducers for values over zero.
 // Hidden services have no value in the zero index, which is "<hash>/address/0".
 type AddressAd struct {
-	ID        nonce.ID            // To ensure no repeating message
-	Multiaddr multiaddr.Multiaddr // We only use a netip.AddrPort though.
-	Index     byte                // This is the index in the slice from Peer.
-	Expiry    time.Time           // zero for relay's public address (32 bit).
-	Sig       crypto.SigBytes
+	ID   nonce.ID // To ensure no repeating message
+	Key  *crypto.Pub
+	Addr multiaddr.Multiaddr
+	Sig  crypto.SigBytes
 }
 
-func (x *AddressAd) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data,
-	last bool) (skip bool, sd *sessions.Data) {
-
-	return false, nil
+func AddKeyToMultiaddr(in multiaddr.Multiaddr, pub *crypto.Pub) (ma multiaddr.Multiaddr) {
+	var pid peer.ID
+	var e error
+	if pid, e = peer.IDFromPublicKey(pub); fails(e) {
+		return
+	}
+	var k multiaddr.Multiaddr
+	if k, e = multiaddr.NewMultiaddr("/p2p/" + pid.String()); fails(e) {
+		return
+	}
+	ma = in.Encapsulate(k)
+	return
 }
 
 func (x *AddressAd) Decode(s *splice.Splice) (e error) {
-	var addr *netip.AddrPort
-	s.ReadID(&x.ID).ReadAddrPort(&addr).ReadByte(&x.Index).ReadTime(&x.Expiry)
+	if e = magic.TooShort(s.Remaining(), AddressAdLen-magic.Len,
+		PeerMagic); fails(e) {
+
+		return
+	}
+	addr := &netip.AddrPort{}
+	s.ReadID(&x.ID).
+		ReadPubkey(&x.Key).
+		ReadAddrPort(&addr).
+		ReadSignature(&x.Sig)
+	//cid.Parse(x.Key.ToBytes())
+	var ap multiaddr.Multiaddr
+	proto := "ip4"
+	if addr.Addr().Is6() {
+		proto = "ip6"
+	}
+	if ap, e = multiaddr.NewMultiaddr(
+		"/" + proto + "/" + addr.Addr().String() +
+			"/tcp/" + fmt.Sprint(addr.Port()),
+	); fails(e) {
+		return
+	}
+	x.Addr = AddKeyToMultiaddr(ap, x.Key)
 	return
 }
 
 func (x *AddressAd) Encode(s *splice.Splice) (e error) {
-	x.Splice(s.Magic(AddressAdMagic))
+	log.T.S("encoding", reflect.TypeOf(x),
+		x.ID, x.Sig,
+	)
+	x.Splice(s)
 	return
 }
 
-func (x *AddressAd) GetOnion() interface{}                               { return nil }
-func (x *AddressAd) Gossip(sm *sess.Manager, c qu.C)                     {}
-func (x *AddressAd) Handle(s *splice.Splice, p Onion, ni Ngin) (e error) { return nil }
-func (x *AddressAd) Len() int                                            { return AddressAdLen }
-func (x *AddressAd) Magic() string                                       { return "" }
+func (x *AddressAd) GetOnion() interface{} { return x }
 
-func (x *AddressAd) Sign(prv *crypto.Prv) (e error) {
-	s := splice.New(x.Len())
-	if e = x.Encode(s); fails(e) {
-		return
-	}
-	var b []byte
-	if b, e = prv.Sign(s.GetUntil(s.GetCursor())); fails(e) {
-		return
-	}
-	if len(b) != crypto.SigLen {
-		return fmt.Errorf("signature incorrect length, got %d expected %d",
-			len(b), crypto.SigLen)
-	}
-	copy(x.Sig[:], b)
-	return nil
+func (x *AddressAd) Gossip(sm *sess.Manager, c qu.C) {
+	log.D.F("propagating peer info for %s",
+		x.Key.ToBased32Abbreviated())
+	Gossip(x, sm, c)
+	log.T.Ln("finished broadcasting peer info")
 }
 
+func (x *AddressAd) Len() int { return AddressAdLen }
+
+func (x *AddressAd) Magic() string { return AddressAdMagic }
+
 func (x *AddressAd) Splice(s *splice.Splice) {
+	x.SpliceWithoutSig(s)
+	s.Signature(x.Sig)
+}
+
+func (x *AddressAd) SpliceWithoutSig(s *splice.Splice) {
 	var e error
-	var ip, port string
-	if ip, e = x.Multiaddr.ValueForProtocol(multiaddr.P_IP4); fails(e) {
+	var ap netip.AddrPort
+	if ap, e = MultiaddrToAddrPort(x.Addr); fails(e) {
+		return
 	}
-	if ip == "" {
-		if ip, e = x.Multiaddr.ValueForProtocol(multiaddr.P_IP6); fails(e) {
+	s.Magic(AddressAdMagic).
+		ID(x.ID).
+		Pubkey(x.Key).
+		AddrPort(&ap)
+}
+
+func (x *AddressAd) Validate() bool {
+	s := splice.New(AddressAdLen - magic.Len)
+	x.SpliceWithoutSig(s)
+	hash := sha256.Single(s.GetUntil(s.GetCursor()))
+	key, e := x.Sig.Recover(hash)
+	if fails(e) {
+		return false
+	}
+	if key.Equals(x.Key) {
+		return true
+	}
+	return false
+}
+
+func MultiaddrToAddrPort(ma multiaddr.Multiaddr) (ap netip.AddrPort, e error) {
+	var addrStr string
+	if addrStr, e = ma.ValueForProtocol(multiaddr.P_IP4); fails(e) {
+		if addrStr, e = ma.ValueForProtocol(multiaddr.P_IP6); fails(e) {
 			return
 		}
 	}
-	// There is really no alternative to TCP so, TCP it is.
-	if port, e = x.Multiaddr.ValueForProtocol(multiaddr.P_TCP); fails(e) {
+	var portStr string
+	if portStr, e = ma.ValueForProtocol(multiaddr.P_TCP); fails(e) {
 		return
 	}
-	var addr netip.AddrPort
-	if addr, e = netip.ParseAddrPort(ip + ":" + port); fails(e) {
-	}
-	s.ID(x.ID).AddrPort(&addr).Byte(x.Index).Time(x.Expiry)
-}
-
-func (x *AddressAd) Validate(s *splice.Splice) (pub *crypto.Pub) {
-	h := sha256.Single(s.GetRange(0, nonce.IDLen+splice.AddrLen+1+
-		slice.Uint64Len))
-	var e error
-	if pub, e = x.Sig.Recover(h); fails(e) {
+	if ap, e = netip.ParseAddrPort(addrStr + ":" + portStr); fails(e) {
+		return
 	}
 	return
 }
 
-func (x *AddressAd) Wrap(inner Onion) {}
+func NewAddressAd(id nonce.ID, key *crypto.Prv,
+	ma multiaddr.Multiaddr) (peerAd *AddressAd) {
+
+	pub := crypto.DerivePub(key)
+	ma = AddKeyToMultiaddr(ma, pub)
+	log.D.Ln("ma", ma)
+	peerAd = &AddressAd{
+		ID:   id,
+		Key:  pub,
+		Addr: ma,
+	}
+	s := splice.New(IntroLen - magic.Len)
+	peerAd.SpliceWithoutSig(s)
+	hash := sha256.Single(s.GetUntil(s.GetCursor()))
+	var e error
+	if peerAd.Sig, e = crypto.Sign(key, hash); fails(e) {
+		return nil
+	}
+	return
+}
+
+func addrGen() coding.Codec { return &AddressAd{} }
+
+func init() { Register(AddressAdMagic, addrGen) }

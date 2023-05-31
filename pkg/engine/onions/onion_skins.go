@@ -222,17 +222,6 @@ func (o Skins) HiddenService(in *IntroAd, point *ExitPoint) Skins {
 	})
 }
 
-func (o Skins) Intro(id nonce.ID, key *crypto.Prv, ap *netip.AddrPort,
-	expires time.Time) (sk Skins) {
-	return append(o, NewIntroAd(id, key, ap, 0, 0, expires))
-}
-
-func (o Skins) PeerAd(id nonce.ID, key *crypto.Prv, ap *netip.AddrPort,
-	relayRate uint32, port uint16, expires time.Time) (sk Skins) {
-
-	return append(o, NewPeerAd(id, key, relayRate))
-}
-
 func (o Skins) IntroQuery(id nonce.ID, hsk *crypto.Pub, exit *ExitPoint) Skins {
 	return append(o, &IntroQuery{
 		ID:      id,
@@ -326,10 +315,6 @@ func (o Skins) Message(msg *Message, ks *crypto.KeySet) Skins {
 		ForwardCrypt(msg.Forwards[0], ks.Next(), nonce.New()).
 		ForwardCrypt(msg.Forwards[1], ks.Next(), nonce.New()),
 		msg)
-}
-
-func (o Skins) Peer(id nonce.ID, key *crypto.Prv, relayRate uint32, expires time.Time) (sk Skins) {
-	return append(o, NewPeer(id, key, expires, relayRate))
 }
 
 // Ping is a message which checks the liveness of relays by ensuring they are
