@@ -12,7 +12,7 @@ import (
 	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
-func TestOnionSkins_IntroAd(t *testing.T) {
+func TestIntroAd(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	var e error
 	pr, _, _ := crypto.NewSigner()

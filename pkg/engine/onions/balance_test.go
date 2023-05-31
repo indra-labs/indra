@@ -10,7 +10,7 @@ import (
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 )
 
-func TestOnionSkins_Balance(t *testing.T) {
+func TestOnions_Balance(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
 	id := nonce.NewID()
 	sats := lnwire.MilliSatoshi(10000)

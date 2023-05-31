@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestOnionSkins_ServiceAd(t *testing.T) {
+func TestServiceAd(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	var e error
 	pr, _, _ := crypto.NewSigner()

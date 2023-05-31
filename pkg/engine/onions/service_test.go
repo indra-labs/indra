@@ -10,7 +10,7 @@ import (
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 )
 
-func TestOnionSkins_Service(t *testing.T) {
+func TestOnions_Service(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
 	var e error
 	pr, ks, _ := crypto.NewSigner()

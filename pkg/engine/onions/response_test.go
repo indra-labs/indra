@@ -11,7 +11,7 @@ import (
 	"github.com/indra-labs/indra/pkg/util/tests"
 )
 
-func TestOnionSkins_Response(t *testing.T) {
+func TestOnions_Response(t *testing.T) {
 	var e error
 	id := nonce.NewID()
 	var msg slice.Bytes

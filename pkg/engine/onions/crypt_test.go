@@ -9,7 +9,7 @@ import (
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 )
 
-func TestOnionSkins_SimpleCrypt(t *testing.T) {
+func TestOnions_SimpleCrypt(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
 	var e error
 	n := nonce.NewID()

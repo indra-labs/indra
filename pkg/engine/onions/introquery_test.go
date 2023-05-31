@@ -10,7 +10,7 @@ import (
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 )
 
-func TestOnionSkins_IntroQuery(t *testing.T) {
+func TestOnions_IntroQuery(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	log2.App.Store("")
 	var e error

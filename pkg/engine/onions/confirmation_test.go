@@ -8,7 +8,7 @@ import (
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 )
 
-func TestOnionSkins_Confirmation(t *testing.T) {
+func TestOnions_Confirmation(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
 	id := nonce.NewID()
 	var load byte = 128

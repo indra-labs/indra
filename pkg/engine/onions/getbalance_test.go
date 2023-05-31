@@ -9,7 +9,7 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 )
 
-func TestOnionSkins_GetBalance(t *testing.T) {
+func TestOnions_GetBalance(t *testing.T) {
 	var e error
 	n3 := crypto.Gen3Nonces()
 	id := nonce.NewID()

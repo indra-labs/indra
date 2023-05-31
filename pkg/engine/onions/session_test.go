@@ -7,7 +7,7 @@ import (
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 )
 
-func TestOnionSkins_Session(t *testing.T) {
+func TestOnions_Session(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
 	sess := NewSessionKeys(1)
 	on := Skins{}.

@@ -13,7 +13,7 @@ import (
 	"github.com/indra-labs/indra/pkg/util/tests"
 )
 
-func TestOnionSkins_Exit(t *testing.T) {
+func TestOnions_Exit(t *testing.T) {
 	var e error
 	prvs, pubs := crypto.GetCipherSet(t)
 	ciphers := crypto.GenCiphers(prvs, pubs)

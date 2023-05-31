@@ -11,7 +11,7 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/coding"
 )
 
-func TestOnionSkins_Reverse(t *testing.T) {
+func TestOnions_Reverse(t *testing.T) {
 	ipSizes := []int{net.IPv4len, net.IPv6len}
 	for i := range ipSizes {
 		n := nonce.New()

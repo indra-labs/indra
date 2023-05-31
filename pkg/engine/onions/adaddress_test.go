@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func TestAdAddress(t *testing.T) {
+func TestAddressAd(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	var e error
 	pr, _, _ := crypto.NewSigner()

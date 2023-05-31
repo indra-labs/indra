@@ -8,7 +8,7 @@ import (
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 )
 
-func TestOnionSkins_Delay(t *testing.T) {
+func TestOnions_Delay(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
 	dur := time.Second
 	on := Skins{}.
