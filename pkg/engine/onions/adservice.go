@@ -80,8 +80,7 @@ func (x *ServiceAd) Encode(s *splice.Splice) (e error) {
 
 func (x *ServiceAd) GetOnion() interface{} { return nil }
 
-func (x *ServiceAd) Gossip(sm *sess.Manager, c qu.C) {
-}
+func (x *ServiceAd) Gossip(sm *sess.Manager, c qu.C) {}
 
 func (x *ServiceAd) Len() int { return ServiceAdLen }
 
@@ -142,6 +141,6 @@ func ServiceSplice(
 		Uint32(relayRate)
 }
 
-func init()                      { Register(ServiceAdMagic, serviceAdGen) }
+func init() { Register(ServiceAdMagic, serviceAdGen) }
 
 func serviceAdGen() coding.Codec { return &ServiceAd{} }

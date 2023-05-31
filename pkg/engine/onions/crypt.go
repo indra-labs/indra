@@ -32,7 +32,9 @@ type Crypt struct {
 	Onion
 }
 
-func (x *Crypt) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+func (x *Crypt) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data,
+	last bool) (skip bool, sd *sessions.Data) {
+
 	sd = sm.FindSessionByHeaderPub(x.ToHeaderPub)
 	if sd == nil {
 		return
@@ -47,7 +49,9 @@ func (x *Crypt) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data, last
 }
 
 func (x *Crypt) Decode(s *splice.Splice) (e error) {
-	if e = magic.TooShort(s.Remaining(), CryptLen-magic.Len, CryptMagic); fails(e) {
+	if e = magic.TooShort(s.Remaining(), CryptLen-magic.Len,
+		CryptMagic); fails(e) {
+
 		return
 	}
 	s.ReadIV(&x.IV).ReadCloak(&x.Cloak).ReadPubkey(&x.FromPub)
@@ -73,7 +77,9 @@ func (x *Crypt) Encode(s *splice.Splice) (e error) {
 		IV(x.IV).Cloak(x.ToHeaderPub).Pubkey(crypto.DerivePub(x.From))
 	// Then we can encrypt the message segment
 	var blk cipher.Block
-	if blk = ciph.GetBlock(x.From, x.ToHeaderPub, "crypt header"); fails(e) {
+	if blk = ciph.GetBlock(x.From, x.ToHeaderPub,
+		"crypt header"); fails(e) {
+
 		panic(e)
 	}
 	start := s.GetCursor()

@@ -16,8 +16,12 @@ import (
 
 const (
 	ExitMagic = "exit"
-	ExitLen   = magic.Len + slice.Uint16Len + 3*sha256.Len +
-		slice.Uint32Len + nonce.IVLen*3 + nonce.IDLen
+	ExitLen   = magic.Len +
+		slice.Uint16Len +
+		3*sha256.Len +
+		slice.Uint32Len +
+		nonce.IVLen*3 +
+		nonce.IDLen
 )
 
 type Exit struct {
@@ -70,9 +74,11 @@ func (x *Exit) Decode(s *splice.Splice) (e error) {
 		ExitMagic); fails(e) {
 		return
 	}
-	s.
-		ReadID(&x.ID).ReadCiphers(&x.Ciphers).ReadNonces(&x.Nonces).
-		ReadUint16(&x.Port).ReadBytes(&x.Bytes)
+	s.ReadID(&x.ID).
+		ReadCiphers(&x.Ciphers).
+		ReadNonces(&x.Nonces).
+		ReadUint16(&x.Port).
+		ReadBytes(&x.Bytes)
 	return
 }
 

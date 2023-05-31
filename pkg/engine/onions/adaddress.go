@@ -8,6 +8,7 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
 	"github.com/indra-labs/indra/pkg/engine/sess"
+	"github.com/indra-labs/indra/pkg/util/multi"
 	"github.com/indra-labs/indra/pkg/util/qu"
 	"github.com/indra-labs/indra/pkg/util/splice"
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -106,7 +107,7 @@ func (x *AddressAd) Splice(s *splice.Splice) {
 func (x *AddressAd) SpliceWithoutSig(s *splice.Splice) {
 	var e error
 	var ap netip.AddrPort
-	if ap, e = MultiaddrToAddrPort(x.Addr); fails(e) {
+	if ap, e = multi.AddrToAddrPort(x.Addr); fails(e) {
 		return
 	}
 	s.Magic(AddressAdMagic).
@@ -127,23 +128,6 @@ func (x *AddressAd) Validate() bool {
 		return true
 	}
 	return false
-}
-
-func MultiaddrToAddrPort(ma multiaddr.Multiaddr) (ap netip.AddrPort, e error) {
-	var addrStr string
-	if addrStr, e = ma.ValueForProtocol(multiaddr.P_IP4); fails(e) {
-		if addrStr, e = ma.ValueForProtocol(multiaddr.P_IP6); fails(e) {
-			return
-		}
-	}
-	var portStr string
-	if portStr, e = ma.ValueForProtocol(multiaddr.P_TCP); fails(e) {
-		return
-	}
-	if ap, e = netip.ParseAddrPort(addrStr + ":" + portStr); fails(e) {
-		return
-	}
-	return
 }
 
 func NewAddressAd(id nonce.ID, key *crypto.Prv,

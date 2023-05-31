@@ -33,8 +33,7 @@ func (x *Balance) Decode(s *splice.Splice) (e error) {
 		BalanceMagic); fails(e) {
 		return
 	}
-	s.
-		ReadID(&x.ID).
+	s.ReadID(&x.ID).
 		ReadMilliSatoshi(&x.MilliSatoshi)
 	return
 }
