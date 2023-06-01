@@ -2,7 +2,7 @@ package dispatcher
 
 import (
 	"context"
-	"github.com/indra-labs/indra/pkg/engine/onions"
+	"github.com/indra-labs/indra/pkg/onions"
 	"os"
 	"testing"
 	"time"

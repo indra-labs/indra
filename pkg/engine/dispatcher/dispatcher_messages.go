@@ -6,8 +6,8 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/engine/coding"
-	"github.com/indra-labs/indra/pkg/engine/onions"
-	"github.com/indra-labs/indra/pkg/engine/onions/reg"
+	"github.com/indra-labs/indra/pkg/onions"
+	"github.com/indra-labs/indra/pkg/onions/reg"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
 )

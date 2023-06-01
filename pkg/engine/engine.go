@@ -4,20 +4,20 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/node"
-	"github.com/indra-labs/indra/pkg/engine/onions"
-	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	"github.com/indra-labs/indra/pkg/engine/responses"
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	"github.com/indra-labs/indra/pkg/engine/tpt"
 	"github.com/indra-labs/indra/pkg/engine/transport"
+	onions2 "github.com/indra-labs/indra/pkg/onions"
+	"github.com/indra-labs/indra/pkg/onions/reg"
 	"github.com/indra-labs/indra/pkg/util/qu"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
 	"go.uber.org/atomic"
 )
 
-var _ onions.Ngin = &Engine{}
+var _ onions2.Ngin = &Engine{}
 
 type (
 	// Engine processes onion messages, forwarding the relevant data to other relays
@@ -26,7 +26,7 @@ type (
 	Engine struct {
 		Responses    *responses.Pending
 		Manager      *sess.Manager
-		h            *onions.Hidden
+		h            *onions2.Hidden
 		KeySet       *crypto.KeySet
 		Load         atomic.Uint32
 		Pause, C     qu.C
@@ -48,11 +48,11 @@ func (ng *Engine) Cleanup() {
 	// Do cleanup stuff before shutdown.
 }
 
-func (ng *Engine) GetHidden() *onions.Hidden { return ng.h }
+func (ng *Engine) GetHidden() *onions2.Hidden { return ng.h }
 
 func (ng *Engine) GetLoad() byte { return byte(ng.Load.Load()) }
 
-func (ng *Engine) HandleMessage(s *splice.Splice, pr onions.Onion) {
+func (ng *Engine) HandleMessage(s *splice.Splice, pr onions2.Onion) {
 	log.D.F("%s handling received message",
 		ng.Manager.GetLocalNodeAddressString())
 	s.SetCursor(0)
@@ -71,7 +71,7 @@ func (ng *Engine) HandleMessage(s *splice.Splice, pr onions.Onion) {
 			log.D.Ln("did not get onion")
 			return
 		}
-		if fails(m.(onions.Onion).Handle(s, pr, ng)) {
+		if fails(m.(onions2.Onion).Handle(s, pr, ng)) {
 			log.W.S("unrecognised packet", s.GetAll().ToBytes())
 		}
 	}
@@ -81,7 +81,7 @@ func (ng *Engine) Handler() (out bool) {
 	log.T.C(func() string {
 		return ng.Manager.GetLocalNodeAddressString() + " awaiting message"
 	})
-	var prev onions.Onion
+	var prev onions2.Onion
 	select {
 	case <-ng.C.Wait():
 		ng.Shutdown()
@@ -175,7 +175,7 @@ func NewEngine(p Params) (c *Engine, e error) {
 		Responses: &responses.Pending{},
 		KeySet:    ks,
 		Manager:   sess.NewSessionManager(p.Listener),
-		h:         onions.NewHiddenrouting(),
+		h:         onions2.NewHiddenrouting(),
 		Pause:     qu.T(),
 		C:         qu.T(),
 	}

@@ -2,8 +2,8 @@ package engine
 
 import (
 	"github.com/indra-labs/indra/pkg/crypto"
-	"github.com/indra-labs/indra/pkg/engine/onions"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
+	"github.com/indra-labs/indra/pkg/onions"
 )
 
 func MakeReplyHeader(ng *Engine) (returnHeader *onions.ReplyHeader) {
