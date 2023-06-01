@@ -2,119 +2,71 @@ package onions
 
 import (
 	"github.com/indra-labs/indra"
-	"github.com/indra-labs/indra/pkg/onions/intro"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"net/netip"
-	"time"
-
-	"github.com/lightningnetwork/lnd/lnwire"
-
 	"github.com/indra-labs/indra/pkg/crypto"
-	"github.com/indra-labs/indra/pkg/crypto/ciph"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/node"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
+	"github.com/indra-labs/indra/pkg/onions/confirmation"
+	"github.com/indra-labs/indra/pkg/onions/crypt"
+	"github.com/indra-labs/indra/pkg/onions/end"
+	"github.com/indra-labs/indra/pkg/onions/exit"
+	"github.com/indra-labs/indra/pkg/onions/forward"
+	"github.com/indra-labs/indra/pkg/onions/getbalance"
+	headers2 "github.com/indra-labs/indra/pkg/onions/headers"
+	"github.com/indra-labs/indra/pkg/onions/hidden"
+	"github.com/indra-labs/indra/pkg/onions/hiddenservice"
+	"github.com/indra-labs/indra/pkg/onions/intro"
+	"github.com/indra-labs/indra/pkg/onions/introquery"
+	"github.com/indra-labs/indra/pkg/onions/message"
+	"github.com/indra-labs/indra/pkg/onions/ont"
+	"github.com/indra-labs/indra/pkg/onions/ready"
+	"github.com/indra-labs/indra/pkg/onions/response"
+	"github.com/indra-labs/indra/pkg/onions/reverse"
+	"github.com/indra-labs/indra/pkg/onions/route"
+	"github.com/indra-labs/indra/pkg/onions/session"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/indra/pkg/util/splice"
+	"net/netip"
 )
 
 var (
 	log   = log2.GetLogger(indra.PathBase)
 	fails = log.E.Chk
-	nop   = &End{}
 )
 
-// Assemble inserts the slice of Layer s inside each other so the first then
-// contains the second, second contains the third, and so on, and then returns
-// the first onion, on which you can then call Encode and generate the wire
-// message form of the onion.
-func (o Skins) Assemble() (on Onion) {
-	// First item is the outer crypt.
-	on = o[0]
-	// Iterate through the remaining layers.
-	for _, oc := range o[1:] {
-		on.Wrap(oc)
-		// Next step we are inserting inside the one we just inserted.
-		on = oc
-	}
-	// At the end, the first element contains references to every element
-	// inside it.
-	return o[0]
-}
-
-func (o Skins) Balance(id nonce.ID, amt lnwire.MilliSatoshi) Skins {
-	return append(o, NewBalance(id, amt))
-}
+//func (o Skins) Balance(id nonce.ID, amt lnwire.MilliSatoshi) Skins {
+//	return append(o, balance.NewBalance(id, amt))
+//}
 
 func (o Skins) Confirmation(id nonce.ID, load byte) Skins {
-	return append(o, NewConfirmation(id, load))
+	return append(o, confirmation.NewConfirmation(id, load))
 }
 
-func (o Skins) Crypt(toHdr, toPld *crypto.Pub, from *crypto.Prv, iv nonce.IV,
-	depth int) Skins {
 
-	return append(o, NewCrypt(toHdr, toPld, from, iv, depth))
-}
-
-func (o Skins) Delay(d time.Duration) Skins { return append(o, NewDelay(d)) }
+//func (o Skins) Delay(d time.Duration) Skins { return append(o, delay.NewDelay(d)) }
 
 type (
-	Skins   []Onion
-	Headers struct {
-		Forward, Return *Routing
-		ReturnPubs      crypto.Pubs
-	}
-	ReplyHeader struct {
-		RoutingHeaderBytes
-		// Ciphers is a set of 3 symmetric ciphers that are to be used in their
-		// given order over the reply message from the service.
-		crypto.Ciphers
-		// Nonces are the nonces to use with the cipher when creating the
-		// encryption for the reply message,
-		// they are common with the crypts in the header.
-		crypto.Nonces
-	}
-	RoutingHeaderBytes [RoutingHeaderLen]byte
-	RoutingLayer       struct {
-		*Reverse
-		*Crypt
+	Skins []ont.Onion
+	RoutingLayer struct {
+		*reverse.Reverse
+		*crypt.Crypt
 	}
 	RoutingHeader struct {
 		Layers [3]RoutingLayer
 	}
 )
 
-func Encode(on Onion) (s *splice.Splice) {
-	s = splice.New(on.Len())
-	fails(on.Encode(s))
-	return
-}
-
 func (o Skins) End() Skins {
-	return append(o, &End{})
+	return append(o, &end.End{})
 }
 
 func (o Skins) Exit(id nonce.ID, port uint16, payload slice.Bytes,
-	ep *ExitPoint) Skins {
+	ep *exit.ExitPoint) Skins {
 
-	return append(o, NewExit(id, port, payload, ep))
+	return append(o, exit.NewExit(id, port, payload, ep))
 }
 
-func FormatReply(header RoutingHeaderBytes, ciphers crypto.Ciphers,
-	nonces crypto.Nonces, res slice.Bytes) (rb *splice.Splice) {
-
-	rl := RoutingHeaderLen
-	rb = splice.New(rl + len(res))
-	copy(rb.GetUntil(rl), header[:rl])
-	copy(rb.GetFrom(rl), res)
-	for i := range ciphers {
-		blk := ciph.BlockFromHash(ciphers[i])
-		ciph.Encipher(blk, nonces[i], rb.GetFrom(rl))
-	}
-	return
-}
-
-func (o Skins) Forward(addr *netip.AddrPort) Skins { return append(o, NewForward(addr)) }
+func (o Skins) Forward(addr *netip.AddrPort) Skins { return append(o, forward.NewForward(addr)) }
 
 func (o Skins) ForwardCrypt(s *sessions.Data, k *crypto.Prv, n nonce.IV) Skins {
 	return o.Forward(s.Node.AddrPort).Crypt(s.Header.Pub, s.Payload.Pub, k,
@@ -122,69 +74,50 @@ func (o Skins) ForwardCrypt(s *sessions.Data, k *crypto.Prv, n nonce.IV) Skins {
 }
 
 func (o Skins) ForwardSession(s *node.Node,
-	k *crypto.Prv, n nonce.IV, sess *Session) Skins {
+	k *crypto.Prv, n nonce.IV, sess *session.Session) Skins {
 
 	return o.Forward(s.AddrPort).
 		Crypt(s.Identity.Pub, nil, k, n, 0).
 		Session(sess)
 }
 
-func (o Skins) GetBalance(id nonce.ID, ep *ExitPoint) Skins { return append(o, NewGetBalance(id, ep)) }
+func (o Skins) GetBalance(id nonce.ID, ep *exit.ExitPoint) Skins {
+	return append(o, getbalance.NewGetBalance(id, ep))
+}
 
-func GetHeaders(alice, bob *sessions.Data, c sessions.Circuit,
-	ks *crypto.KeySet) (h *Headers) {
+func (o Skins) HiddenService(in *intro.Ad, point *exit.ExitPoint) Skins {
+	return append(o, hiddenservice.NewHiddenService(in, point))
+}
 
-	fwKeys := ks.Next3()
-	rtKeys := ks.Next3()
-	n := crypto.GenNonces(6)
-	var rtNonces, fwNonces [3]nonce.IV
-	copy(fwNonces[:], n[:3])
-	copy(rtNonces[:], n[3:])
-	var fwSessions, rtSessions [3]*sessions.Data
-	copy(fwSessions[:], c[:2])
-	fwSessions[2] = bob
-	copy(rtSessions[:], c[3:])
-	rtSessions[2] = alice
-	var returnPubs crypto.Pubs
-	returnPubs[0] = c[3].Payload.Pub
-	returnPubs[1] = c[4].Payload.Pub
-	returnPubs[2] = alice.Payload.Pub
-	h = &Headers{
-		Forward: &Routing{
-			Sessions: fwSessions,
-			Keys:     fwKeys,
-			Nonces:   fwNonces,
-		},
-		Return: &Routing{
-			Sessions: rtSessions,
-			Keys:     rtKeys,
-			Nonces:   rtNonces,
-		},
-		ReturnPubs: returnPubs,
+func (o Skins) IntroQuery(id nonce.ID, hsk *crypto.Pub, exit *exit.ExitPoint) Skins {
+	return append(o, introquery.NewIntroQuery(id, hsk, exit))
+}
+
+func (o Skins) Reverse(ip *netip.AddrPort) Skins { return append(o, reverse.NewReverse(ip)) }
+
+func (o Skins) Crypt(toHdr, toPld *crypto.Pub, from *crypto.Prv, iv nonce.IV,
+	depth int) Skins {
+
+	return append(o, crypt.NewCrypt(toHdr, toPld, from, iv, depth))
+}
+
+func (o Skins) ReverseCrypt(s *sessions.Data, k *crypto.Prv, n nonce.IV,
+	seq int) (oo Skins) {
+
+	if s == nil || k == nil {
+		oo = append(o, &reverse.Reverse{})
+		oo = append(oo, &crypt.Crypt{})
+		return
 	}
-	return
+	return o.Reverse(s.Node.AddrPort).Crypt(s.Header.Pub, s.Payload.Pub, k, n,
+		seq)
 }
 
-func GetRoutingHeaderFromCursor(s *splice.Splice) (r RoutingHeaderBytes) {
-	rh := s.GetRange(s.GetCursor(), s.Advance(RoutingHeaderLen,
-		"routing header"))
-	copy(r[:], rh)
-	return
-}
-
-func (h *Headers) ExitPoint() *ExitPoint {
-	return &ExitPoint{
-		Routing:    h.Return,
-		ReturnPubs: h.ReturnPubs,
-	}
-}
-
-func (o Skins) HiddenService(in *intro.Ad, point *ExitPoint) Skins {
-	return append(o, NewHiddenService(in, point))
-}
-
-func (o Skins) IntroQuery(id nonce.ID, hsk *crypto.Pub, exit *ExitPoint) Skins {
-	return append(o, NewIntroQuery(id, hsk, exit))
+func (o Skins) RoutingHeader(r *exit.Routing) Skins {
+	return o.
+		ReverseCrypt(r.Sessions[0], r.Keys[0], r.Nonces[0], 3).
+		ReverseCrypt(r.Sessions[1], r.Keys[1], r.Nonces[1], 2).
+		ReverseCrypt(r.Sessions[2], r.Keys[2], r.Nonces[2], 1)
 }
 
 // MakeExit constructs a message containing an arbitrary payload to a node (3rd
@@ -199,8 +132,8 @@ func (o Skins) IntroQuery(id nonce.ID, hsk *crypto.Pub, exit *ExitPoint) Skins {
 // The header remains a constant size and each node in the Reverse trims off
 // their section at the top, moves the next crypt header to the top and pads the
 // remainder with noise, so it always looks like the first hop.
-func MakeExit(p ExitParams) Skins {
-	headers := GetHeaders(p.Alice, p.Bob, p.S, p.KS)
+func MakeExit(p exit.ExitParams) Skins {
+	headers := headers2.GetHeaders(p.Alice, p.Bob, p.S, p.KS)
 	return Skins{}.
 		RoutingHeader(headers.Forward).
 		Exit(p.ID, p.Port, p.Payload, headers.ExitPoint()).
@@ -209,8 +142,8 @@ func MakeExit(p ExitParams) Skins {
 
 // MakeGetBalance sends out a request in a similar way to Exit except the node
 // being queried can be any of the 5.
-func MakeGetBalance(p GetBalanceParams) Skins {
-	headers := GetHeaders(p.Alice, p.Bob, p.S, p.KS)
+func MakeGetBalance(p getbalance.GetBalanceParams) Skins {
+	headers := headers2.GetHeaders(p.Alice, p.Bob, p.S, p.KS)
 	return Skins{}.
 		RoutingHeader(headers.Forward).
 		GetBalance(p.ID, headers.ExitPoint()).
@@ -220,7 +153,7 @@ func MakeGetBalance(p GetBalanceParams) Skins {
 func MakeHiddenService(in *intro.Ad, alice, bob *sessions.Data,
 	c sessions.Circuit, ks *crypto.KeySet) Skins {
 
-	headers := GetHeaders(alice, bob, c, ks)
+	headers := headers2.GetHeaders(alice, bob, c, ks)
 	return Skins{}.
 		RoutingHeader(headers.Forward).
 		HiddenService(in, headers.ExitPoint()).
@@ -230,7 +163,7 @@ func MakeHiddenService(in *intro.Ad, alice, bob *sessions.Data,
 func MakeIntroQuery(id nonce.ID, hsk *crypto.Pub, alice, bob *sessions.Data,
 	c sessions.Circuit, ks *crypto.KeySet) Skins {
 
-	headers := GetHeaders(alice, bob, c, ks)
+	headers := headers2.GetHeaders(alice, bob, c, ks)
 	return Skins{}.
 		RoutingHeader(headers.Forward).
 		IntroQuery(id, hsk, headers.ExitPoint()).
@@ -240,14 +173,14 @@ func MakeIntroQuery(id nonce.ID, hsk *crypto.Pub, alice, bob *sessions.Data,
 func MakeRoute(id nonce.ID, k *crypto.Pub, ks *crypto.KeySet,
 	alice, bob *sessions.Data, c sessions.Circuit) Skins {
 
-	headers := GetHeaders(alice, bob, c, ks)
+	headers := headers2.GetHeaders(alice, bob, c, ks)
 	return Skins{}.
 		RoutingHeader(headers.Forward).
 		Route(id, k, ks, headers.ExitPoint()).
 		RoutingHeader(headers.Return)
 }
 
-func MakeSession(id nonce.ID, s [5]*Session,
+func MakeSession(id nonce.ID, s [5]*session.Session,
 	client *sessions.Data, hop []*node.Node, ks *crypto.KeySet) Skins {
 
 	n := crypto.GenNonces(6)
@@ -265,7 +198,7 @@ func MakeSession(id nonce.ID, s [5]*Session,
 		Confirmation(id, 0)
 }
 
-func (o Skins) Message(msg *Message, ks *crypto.KeySet) Skins {
+func (o Skins) Message(msg *message.Message, ks *crypto.KeySet) Skins {
 	return append(o.
 		ForwardCrypt(msg.Forwards[0], ks.Next(), nonce.New()).
 		ForwardCrypt(msg.Forwards[1], ks.Next(), nonce.New()),
@@ -294,61 +227,25 @@ func Ping(id nonce.ID, client *sessions.Data, s sessions.Circuit,
 		Confirmation(id, 0)
 }
 
-func ReadRoutingHeader(s *splice.Splice, b *RoutingHeaderBytes) *splice.Splice {
-	*b = GetRoutingHeaderFromCursor(s)
-	s.Segments = append(s.Segments,
-		splice.NameOffset{Offset: s.GetCursor(), Name: "routingheader"})
-	return s
-}
-
 func (o Skins) Ready(id nonce.ID, addr *crypto.Pub, fwHdr,
-	rvHdr RoutingHeaderBytes, fc, rc crypto.Ciphers, fn, rn crypto.Nonces) Skins {
+	rvHdr hidden.RoutingHeaderBytes, fc, rc crypto.Ciphers, fn, rn crypto.Nonces) Skins {
 
-	return append(o, NewReady(id, addr, fwHdr, rvHdr, fc, rc, fn, rn))
+	return append(o, ready.NewReady(id, addr, fwHdr, rvHdr, fc, rc, fn, rn))
 }
 
 func (o Skins) Response(id nonce.ID, res slice.Bytes, port uint16, load byte) Skins {
-	return append(o, NewResponse(id, port, res, load))
+	return append(o, response.NewResponse(id, port, res, load))
 }
 
-func (o Skins) Reverse(ip *netip.AddrPort) Skins { return append(o, NewReverse(ip)) }
-
-func (o Skins) ReverseCrypt(s *sessions.Data, k *crypto.Prv, n nonce.IV,
-	seq int) (oo Skins) {
-
-	if s == nil || k == nil {
-		oo = append(o, &Reverse{})
-		oo = append(oo, &Crypt{})
-		return
-	}
-	return o.Reverse(s.Node.AddrPort).Crypt(s.Header.Pub, s.Payload.Pub, k, n,
-		seq)
+func (o Skins) Route(id nonce.ID, k *crypto.Pub, ks *crypto.KeySet, ep *exit.ExitPoint) Skins {
+	return append(o, route.NewRoute(id, k, ks, ep))
 }
 
-func (o Skins) Route(id nonce.ID, k *crypto.Pub, ks *crypto.KeySet, ep *ExitPoint) Skins {
-	return append(o, NewRoute(id, k, ks, ep))
-}
-
-func (o Skins) RoutingHeader(r *Routing) Skins {
-	return o.
-		ReverseCrypt(r.Sessions[0], r.Keys[0], r.Nonces[0], 3).
-		ReverseCrypt(r.Sessions[1], r.Keys[1], r.Nonces[1], 2).
-		ReverseCrypt(r.Sessions[2], r.Keys[2], r.Nonces[2], 1)
-}
-
-func (o Skins) Session(sess *Session) Skins {
-	// MakeSession can apply to from 1 to 5 nodes, if either key is nil then
-	// this crypt just doesn't get added in the serialization process.
+func (o Skins) Session(sess *session.Session) Skins {
+	//	MakeSession can apply to from 1 to 5 nodes, if either key is nil then
+	//	this crypt just doesn't get added in the serialization process.
 	if sess.Header == nil || sess.Payload == nil {
 		return o
 	}
 	return append(o, sess)
-}
-
-func WriteRoutingHeader(s *splice.Splice, b RoutingHeaderBytes) *splice.Splice {
-	copy(s.GetAll()[s.GetCursor():s.Advance(RoutingHeaderLen,
-		"routing header")], b[:])
-	s.Segments = append(s.Segments,
-		splice.NameOffset{Offset: s.GetCursor(), Name: "routingheader"})
-	return s
 }

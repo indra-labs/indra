@@ -36,7 +36,7 @@ func TestEngine_Dispatcher(t *testing.T) {
 		if err != nil {
 			t.FailNow()
 		}
-		if l, e = transport.NewListener(seed, transport.LocalhostZeroIPv4QUIC,
+		if l, e = transport.NewListener(seed, transport.LocalhostZeroIPv4TCP,
 			dataPath, k, ctx, transport.DefaultMTU); fails(e) {
 			os.RemoveAll(dataPath)
 			t.FailNow()
@@ -59,12 +59,10 @@ func TestEngine_Dispatcher(t *testing.T) {
 			os.RemoveAll(dataPath)
 			t.FailNow()
 		}
-		//if port, e = ma.ValueForProtocol(multiaddr.P_TCP); fails(e) {
-		if port, e = ma.ValueForProtocol(multiaddr.P_UDP); fails(e) {
+		if port, e = ma.ValueForProtocol(multiaddr.P_TCP); fails(e) {
 			os.RemoveAll(dataPath)
 			t.FailNow()
 		}
-		//}
 		if addr, e = netip.ParseAddrPort(ip + ":" + port); fails(e) {
 			os.RemoveAll(dataPath)
 			t.FailNow()

@@ -2,7 +2,11 @@ package engine
 
 import (
 	onions2 "github.com/indra-labs/indra/pkg/onions"
+	"github.com/indra-labs/indra/pkg/onions/exit"
+	"github.com/indra-labs/indra/pkg/onions/getbalance"
 	"github.com/indra-labs/indra/pkg/onions/intro"
+	"github.com/indra-labs/indra/pkg/onions/message"
+	"github.com/indra-labs/indra/pkg/onions/ont"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	"net/netip"
 	"time"
@@ -29,7 +33,7 @@ func (ng *Engine) SendExit(port uint16, msg slice.Bytes, id nonce.ID,
 	se := ng.Manager.SelectHops(hops, s, "exit")
 	var c sessions.Circuit
 	copy(c[:], se)
-	o := onions2.MakeExit(onions2.ExitParams{port, msg, id, bob, alice, c, ng.KeySet})
+	o := onions2.MakeExit(exit.ExitParams{port, msg, id, bob, alice, c, ng.KeySet})
 	res := PostAcctOnion(ng.Manager, o)
 	ng.Manager.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.Responses)
 }
@@ -42,7 +46,7 @@ func (ng *Engine) SendGetBalance(alice, bob *sessions.Data, hook responses.Callb
 	se := ng.Manager.SelectHops(hops, s, "sendgetbalance")
 	var c sessions.Circuit
 	copy(c[:], se)
-	o := onions2.MakeGetBalance(onions2.GetBalanceParams{alice.ID, alice, bob, c,
+	o := onions2.MakeGetBalance(getbalance.GetBalanceParams{alice.ID, alice, bob, c,
 		ng.KeySet})
 	log.D.Ln("sending out getbalance onion")
 	res := PostAcctOnion(ng.Manager, o)
@@ -103,12 +107,12 @@ func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *crypto.Pub,
 	ng.Manager.SendWithOneHook(c[0].Node.AddrPort, res, fn, ng.Responses)
 }
 
-func (ng *Engine) SendMessage(mp *onions2.Message, hook responses.Callback) (id nonce.ID) {
+func (ng *Engine) SendMessage(mp *message.Message, hook responses.Callback) (id nonce.ID) {
 	// Add another two hops for security against unmasking.
 	preHops := []byte{0, 1}
 	oo := ng.Manager.SelectHops(preHops, mp.Forwards[:], "sendmessage")
 	mp.Forwards = [2]*sessions.Data{oo[0], oo[1]}
-	o := onions2.Skins{}.Message(mp, ng.KeySet)
+	o := []ont.Onion{mp}
 	res := PostAcctOnion(ng.Manager, o)
 	log.D.Ln("sending out message onion")
 	ng.Manager.SendWithOneHook(mp.Forwards[0].Node.AddrPort, res, hook,

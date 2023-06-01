@@ -26,7 +26,7 @@ func TestNewListener(t *testing.T) {
 	if err != nil {
 		t.FailNow()
 	}
-	l1, e = NewListener("", LocalhostZeroIPv4QUIC, dataPath, k1,
+	l1, e = NewListener("", LocalhostZeroIPv4TCP, dataPath, k1,
 		ctx, DefaultMTU)
 	if fails(e) {
 		t.FailNow()
@@ -35,7 +35,7 @@ func TestNewListener(t *testing.T) {
 	if err != nil {
 		t.FailNow()
 	}
-	l2, e = NewListener(GetHostAddress(l1.Host), LocalhostZeroIPv4QUIC, dataPath,
+	l2, e = NewListener(GetHostAddress(l1.Host), LocalhostZeroIPv4TCP, dataPath,
 		k2, ctx, DefaultMTU)
 	if fails(e) {
 		t.FailNow()

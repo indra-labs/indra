@@ -3,6 +3,9 @@ package dispatcher
 import (
 	"context"
 	"github.com/indra-labs/indra/pkg/onions"
+	"github.com/indra-labs/indra/pkg/onions/confirmation"
+	"github.com/indra-labs/indra/pkg/onions/ont"
+	"github.com/indra-labs/indra/pkg/onions/response"
 	"os"
 	"testing"
 	"time"
@@ -62,14 +65,12 @@ func TestDispatcher(t *testing.T) {
 	id1, id2 := nonce.NewID(), nonce.NewID()
 	var load1 byte = 128
 	// var load2 byte = 32
-	on1 := onions.Skins{}.
-		Confirmation(id1, load1).
-		Assemble()
-	on2 := onions.Skins{}.
-		Response(id2, msg1, 0, 0).
-		Assemble()
-	s1 := onions.Encode(on1)
-	s2 := onions.Encode(on2)
+	on1 := ont.Assemble(onions.Skins{
+		confirmation.NewConfirmation(id1, load1)})
+	on2 := ont.Assemble(onions.Skins{
+		response.NewResponse(id2, 0, msg1, 0)})
+	s1 := ont.Encode(on1)
+	s2 := ont.Encode(on2)
 	x1 := s1.GetAll()
 	x2 := s2.GetAll()
 	xx1 := &Onion{x1}
@@ -186,14 +187,12 @@ func TestDispatcher_Rekey(t *testing.T) {
 	_, _ = d1, d2
 	var msgp1, msgp2 slice.Bytes
 	id1, id2 := nonce.NewID(), nonce.NewID()
-	on1 := onions.Skins{}.
-		Response(id1, msg1, 0, 0).
-		Assemble()
-	on2 := onions.Skins{}.
-		Response(id2, msg2, 0, 0).
-		Assemble()
-	s1 := onions.Encode(on1)
-	s2 := onions.Encode(on2)
+	on1 := ont.Assemble(onions.Skins{
+		response.NewResponse(id1, 0, msg1, 0)})
+	on2 := ont.Assemble(onions.Skins{
+		response.NewResponse(id2, 0, msg2, 0)})
+	s1 := ont.Encode(on1)
+	s2 := ont.Encode(on2)
 	x1 := s1.GetAll()
 	x2 := s2.GetAll()
 	xx1 := &Onion{x1}

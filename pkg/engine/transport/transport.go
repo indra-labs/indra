@@ -36,7 +36,7 @@ import (
 const (
 	LocalhostZeroIPv4TCP  = "/ip4/127.0.0.1/tcp/0"
 	// LocalhostZeroIPv4QUIC - Don't use. Buffer problems on linux and fails on CI.
-	LocalhostZeroIPv4QUIC = "/ip4/127.0.0.1/udp/0/quic"
+	//LocalhostZeroIPv4QUIC = "/ip4/127.0.0.1/udp/0/quic"
 	DefaultMTU            = 1382
 	ConnBufs              = 8192
 	IndraLibP2PID         = "/indra/relay/" + indra.SemVer

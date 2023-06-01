@@ -9,7 +9,8 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	"github.com/indra-labs/indra/pkg/engine/tpt"
 	"github.com/indra-labs/indra/pkg/engine/transport"
-	onions2 "github.com/indra-labs/indra/pkg/onions"
+	"github.com/indra-labs/indra/pkg/onions/hidden"
+	onions2 "github.com/indra-labs/indra/pkg/onions/ont"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	"github.com/indra-labs/indra/pkg/util/qu"
 	"github.com/indra-labs/indra/pkg/util/slice"
@@ -26,7 +27,7 @@ type (
 	Engine struct {
 		Responses    *responses.Pending
 		Manager      *sess.Manager
-		h            *onions2.Hidden
+		h            *hidden.Hidden
 		KeySet       *crypto.KeySet
 		Load         atomic.Uint32
 		Pause, C     qu.C
@@ -48,7 +49,7 @@ func (ng *Engine) Cleanup() {
 	// Do cleanup stuff before shutdown.
 }
 
-func (ng *Engine) GetHidden() *onions2.Hidden { return ng.h }
+func (ng *Engine) GetHidden() *hidden.Hidden { return ng.h }
 
 func (ng *Engine) GetLoad() byte { return byte(ng.Load.Load()) }
 
@@ -175,7 +176,7 @@ func NewEngine(p Params) (c *Engine, e error) {
 		Responses: &responses.Pending{},
 		KeySet:    ks,
 		Manager:   sess.NewSessionManager(p.Listener),
-		h:         onions2.NewHiddenrouting(),
+		h:         hidden.NewHiddenrouting(),
 		Pause:     qu.T(),
 		C:         qu.T(),
 	}
