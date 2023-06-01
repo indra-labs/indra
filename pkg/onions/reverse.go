@@ -23,6 +23,8 @@ type Reverse struct {
 	Onion
 }
 
+func NewReverse(ip *netip.AddrPort) Onion { return &Reverse{AddrPort: ip, Onion: NewEnd()} }
+
 func (x *Reverse) Account(res *sess.Data, sm *sess.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	res.Billable = append(res.Billable, s.Header.Bytes)

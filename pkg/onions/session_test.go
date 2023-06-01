@@ -10,10 +10,9 @@ import (
 
 func TestOnions_Session(t *testing.T) {
 	log2.SetLogLevel(log2.Debug)
-	sess := NewSessionKeys(1)
-	on := Skins{}.
-		Session(sess).
-		Assemble()
+	sess := NewSession(1)
+	ss := sess.(*Session)
+	on := Skins{sess}.Assemble()
 	s := Encode(on)
 	s.SetCursor(0)
 	var onc coding.Codec
@@ -32,11 +31,11 @@ func TestOnions_Session(t *testing.T) {
 		t.Error("did not unwrap expected type")
 		t.FailNow()
 	}
-	if !ci.Header.Prv.Equals(sess.Header.Prv) {
+	if !ci.Header.Prv.Equals(ss.Header.Prv) {
 		t.Error("header key did not unwrap correctly")
 		t.FailNow()
 	}
-	if !ci.Payload.Prv.Equals(sess.Payload.Prv) {
+	if !ci.Payload.Prv.Equals(ss.Payload.Prv) {
 		t.Error("payload key did not unwrap correctly")
 		t.FailNow()
 	}

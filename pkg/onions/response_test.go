@@ -23,7 +23,7 @@ func TestOnions_Response(t *testing.T) {
 	}
 	port := uint16(cryptorand.IntN(65536))
 	on := Skins{}.
-		Response(id, msg, port).
+		Response(id, msg, port, 0).
 		End().Assemble()
 	s := Encode(on)
 	s.SetCursor(0)

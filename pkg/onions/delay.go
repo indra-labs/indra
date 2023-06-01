@@ -59,8 +59,9 @@ func (x *Delay) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	return
 }
 
-func (x *Delay) Len() int         { return DelayLen + x.Onion.Len() }
-func (x *Delay) Magic() string    { return DelayMagic }
-func (x *Delay) Wrap(inner Onion) { x.Onion = inner }
-func delayGen() coding.Codec      { return &Delay{} }
-func init()                       { reg.Register(DelayMagic, delayGen) }
+func (x *Delay) Len() int            { return DelayLen + x.Onion.Len() }
+func (x *Delay) Magic() string       { return DelayMagic }
+func (x *Delay) Wrap(inner Onion)    { x.Onion = inner }
+func NewDelay(d time.Duration) Onion { return &Delay{Duration: d, Onion: &End{}} }
+func delayGen() coding.Codec         { return &Delay{} }
+func init()                          { reg.Register(DelayMagic, delayGen) }

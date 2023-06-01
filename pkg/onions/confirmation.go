@@ -36,9 +36,6 @@ func (x *Confirmation) Decode(s *splice.Splice) (e error) {
 }
 
 func (x *Confirmation) Encode(s *splice.Splice) (e error) {
-	// log.T.S("encoding", reflect.TypeOf(x),
-	// 	x.Keys, x.Load,
-	// )
 	s.Magic(ConfirmationMagic).ID(x.ID).Byte(x.Load)
 	return
 }
@@ -52,8 +49,9 @@ func (x *Confirmation) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	return
 }
 
-func (x *Confirmation) Len() int         { return ConfirmationLen }
-func (x *Confirmation) Magic() string    { return ConfirmationMagic }
-func (x *Confirmation) Wrap(inner Onion) {}
-func confirmationGen() coding.Codec      { return &Confirmation{} }
-func init()                              { reg.Register(ConfirmationMagic, confirmationGen) }
+func (x *Confirmation) Len() int                   { return ConfirmationLen }
+func (x *Confirmation) Magic() string              { return ConfirmationMagic }
+func (x *Confirmation) Wrap(inner Onion)           {}
+func NewConfirmation(id nonce.ID, load byte) Onion { return &Confirmation{ID: id, Load: load} }
+func confirmationGen() coding.Codec                { return &Confirmation{} }
+func init()                                        { reg.Register(ConfirmationMagic, confirmationGen) }

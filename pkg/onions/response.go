@@ -14,7 +14,9 @@ import (
 
 const (
 	ResponseMagic = "resp"
-	ResponseLen   = magic.Len + slice.Uint32Len + slice.Uint16Len +
+	ResponseLen   = magic.Len +
+		slice.Uint32Len +
+		slice.Uint16Len +
 		nonce.IDLen + 1
 )
 
@@ -23,6 +25,10 @@ type Response struct {
 	Port uint16
 	Load byte
 	slice.Bytes
+}
+
+func NewResponse(id nonce.ID, port uint16, res slice.Bytes, load byte) Onion {
+	return &Response{ID: id, Port: port, Bytes: res, Load: load}
 }
 
 func (x *Response) Account(res *sess.Data, sm *sess.Manager,
@@ -92,5 +98,5 @@ func (x *Response) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 func (x *Response) Len() int         { return ResponseLen + len(x.Bytes) }
 func (x *Response) Magic() string    { return ResponseMagic }
 func (x *Response) Wrap(inner Onion) {}
-func init()                          { reg.Register(ResponseMagic, responseGen) }
-func responseGen() coding.Codec      { return &Response{} }
+func init()                     { reg.Register(ResponseMagic, responseGen) }
+func responseGen() coding.Codec { return &Response{} }

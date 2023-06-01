@@ -66,7 +66,7 @@ func TestDispatcher(t *testing.T) {
 		Confirmation(id1, load1).
 		Assemble()
 	on2 := onions.Skins{}.
-		Response(id2, msg1, 0).
+		Response(id2, msg1, 0, 0).
 		Assemble()
 	s1 := onions.Encode(on1)
 	s2 := onions.Encode(on2)
@@ -187,10 +187,10 @@ func TestDispatcher_Rekey(t *testing.T) {
 	var msgp1, msgp2 slice.Bytes
 	id1, id2 := nonce.NewID(), nonce.NewID()
 	on1 := onions.Skins{}.
-		Response(id1, msg1, 0).
+		Response(id1, msg1, 0, 0).
 		Assemble()
 	on2 := onions.Skins{}.
-		Response(id2, msg2, 0).
+		Response(id2, msg2, 0, 0).
 		Assemble()
 	s1 := onions.Encode(on1)
 	s2 := onions.Encode(on2)

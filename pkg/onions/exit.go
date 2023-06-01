@@ -156,7 +156,30 @@ type ExitParams struct {
 	S          sessions.Circuit
 	KS         *crypto.KeySet
 }
+type ExitPoint struct {
+	*Routing
+	ReturnPubs crypto.Pubs
+}
 
 func (x *Exit) Wrap(inner Onion) { x.Onion = inner }
-func exitGen() coding.Codec      { return &Exit{} }
-func init()                      { reg.Register(ExitMagic, exitGen) }
+
+type Routing struct {
+	Sessions [3]*sessions.Data
+	Keys     crypto.Privs
+	crypto.Nonces
+}
+
+func NewExit(id nonce.ID, port uint16, payload slice.Bytes,
+	ep *ExitPoint) Onion {
+	return &Exit{
+		ID:      id,
+		Ciphers: crypto.GenCiphers(ep.Keys, ep.ReturnPubs),
+		Nonces:  ep.Nonces,
+		Port:    port,
+		Bytes:   payload,
+		Onion:   &End{},
+	}
+}
+
+func exitGen() coding.Codec { return &Exit{} }
+func init()                 { reg.Register(ExitMagic, exitGen) }

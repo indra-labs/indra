@@ -93,5 +93,10 @@ func (x *Balance) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 func (x *Balance) Len() int         { return BalanceLen }
 func (x *Balance) Magic() string    { return BalanceMagic }
 func (x *Balance) Wrap(inner Onion) {}
-func balanceGen() coding.Codec      { return &Balance{} }
-func init()                         { reg.Register(BalanceMagic, balanceGen) }
+
+func NewBalance(id nonce.ID, amt lnwire.MilliSatoshi) Onion {
+	return &Balance{ID: id, MilliSatoshi: amt}
+}
+
+func balanceGen() coding.Codec { return &Balance{} }
+func init()                    { reg.Register(BalanceMagic, balanceGen) }

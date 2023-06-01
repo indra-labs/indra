@@ -104,5 +104,16 @@ func (x *IntroQuery) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 func (x *IntroQuery) Len() int         { return IntroQueryLen + x.Onion.Len() }
 func (x *IntroQuery) Magic() string    { return IntroQueryMagic }
 func (x *IntroQuery) Wrap(inner Onion) { x.Onion = inner }
-func init()                            { reg.Register(IntroQueryMagic, introQueryGen) }
-func introQueryGen() coding.Codec      { return &IntroQuery{} }
+
+func NewIntroQuery(id nonce.ID, hsk *crypto.Pub, exit *ExitPoint) Onion {
+	return &IntroQuery{
+		ID:      id,
+		Ciphers: crypto.GenCiphers(exit.Keys, exit.ReturnPubs),
+		Nonces:  exit.Nonces,
+		Key:     hsk,
+		Onion:   NewEnd(),
+	}
+}
+
+func init()                       { reg.Register(IntroQueryMagic, introQueryGen) }
+func introQueryGen() coding.Codec { return &IntroQuery{} }

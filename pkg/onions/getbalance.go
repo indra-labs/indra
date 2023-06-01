@@ -126,5 +126,13 @@ type GetBalanceParams struct {
 }
 
 func (x *GetBalance) Wrap(inner Onion) { x.Onion = inner }
+func NewGetBalance(id nonce.ID, ep *ExitPoint) Onion {
+	return &GetBalance{
+		ID:      id,
+		Ciphers: crypto.GenCiphers(ep.Keys, ep.ReturnPubs),
+		Nonces:  ep.Nonces,
+		Onion:   nop,
+	}
+}
 func getBalanceGen() coding.Codec      { return &GetBalance{} }
 func init()                            { reg.Register(GetBalanceMagic, getBalanceGen) }

@@ -17,8 +17,13 @@ import (
 
 const (
 	RouteMagic = "rout"
-	RouteLen   = magic.Len + crypto.CloakLen + crypto.PubKeyLen + nonce.IVLen +
-		nonce.IDLen + 3*sha256.Len + 3*nonce.IVLen
+	RouteLen   = magic.Len +
+		crypto.CloakLen +
+		crypto.PubKeyLen +
+		nonce.IVLen +
+		nonce.IDLen +
+		3*sha256.Len +
+		3*nonce.IVLen
 )
 
 type Route struct {
@@ -38,6 +43,22 @@ type Route struct {
 	crypto.Nonces
 	RoutingHeaderBytes
 	Onion
+}
+
+func NewRoute(id nonce.ID, k *crypto.Pub, ks *crypto.KeySet,
+	ep *ExitPoint) Onion {
+	oo := &Route{
+		HiddenService: k,
+		Sender:        ks.Next(),
+		IV:            nonce.New(),
+		ID:            id,
+		Ciphers:       crypto.GenCiphers(ep.Keys, ep.ReturnPubs),
+		Nonces:        ep.Nonces,
+		Onion:         &End{},
+	}
+	oo.SenderPub = crypto.DerivePub(oo.Sender)
+	oo.HiddenCloaked = crypto.GetCloak(k)
+	return oo
 }
 
 func (x *Route) Account(res *sess.Data, sm *sess.Manager,

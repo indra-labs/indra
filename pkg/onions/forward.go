@@ -72,8 +72,9 @@ func (x *Forward) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	return e
 }
 
-func (x *Forward) Len() int         { return ForwardLen + x.Onion.Len() }
-func (x *Forward) Magic() string    { return ForwardMagic }
-func (x *Forward) Wrap(inner Onion) { x.Onion = inner }
-func forwardGen() coding.Codec      { return &Forward{} }
-func init()                         { reg.Register(ForwardMagic, forwardGen) }
+func (x *Forward) Len() int                 { return ForwardLen + x.Onion.Len() }
+func (x *Forward) Magic() string            { return ForwardMagic }
+func (x *Forward) Wrap(inner Onion)         { x.Onion = inner }
+func NewForward(addr *netip.AddrPort) Onion { return &Forward{AddrPort: addr, Onion: &End{}} }
+func forwardGen() coding.Codec              { return &Forward{} }
+func init()                                 { reg.Register(ForwardMagic, forwardGen) }

@@ -3,6 +3,7 @@ package splice
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/gookit/color"
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
@@ -12,7 +13,6 @@ import (
 	"github.com/indra-labs/indra/pkg/util/b32/based32"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/lightningnetwork/lnd/lnwire"
-	"github.com/gookit/color"
 	"net"
 	"net/netip"
 	"sort"
@@ -40,6 +40,7 @@ type (
 		b slice.Bytes
 		c *slice.Cursor
 		Segments
+		E error
 	}
 )
 
@@ -52,11 +53,11 @@ func BudgeUp(s *Splice) (o *Splice) {
 }
 
 func Load(b slice.Bytes, c *slice.Cursor) (splicer *Splice) {
-	return &Splice{b, c, Segments{}}
+	return &Splice{b, c, Segments{}, nil}
 }
 
 func New(length int) (splicer *Splice) {
-	splicer = &Splice{make(slice.Bytes, length), slice.NewCursor(), Segments{}}
+	splicer = &Splice{make(slice.Bytes, length), slice.NewCursor(), Segments{}, nil}
 	return
 }
 
@@ -70,8 +71,7 @@ func (s *Splice) AddrPort(a *netip.AddrPort) *Splice {
 		return s
 	}
 	var ap []byte
-	var e error
-	if ap, e = a.MarshalBinary(); fails(e) {
+	if ap, s.E = a.MarshalBinary(); fails(s.E) {
 		return s
 	}
 	s.b[*s.c] = byte(len(ap))
@@ -89,7 +89,7 @@ func (s *Splice) Advance(n int, name string) int {
 }
 
 func (s *Splice) Byte(b byte) *Splice {
-	s.b[*s.c] = byte(b)
+	s.b[*s.c] = b
 	s.c.Inc(1)
 	s.Segments = append(s.Segments,
 		NameOffset{Offset: int(*s.c), Name: "byte"})
@@ -274,7 +274,7 @@ func (s *Splice) ReadAddrPort(ap **netip.AddrPort) *Splice {
 	*ap = &netip.AddrPort{}
 	apLen := s.b[*s.c]
 	apBytes := s.b[s.c.Inc(1):s.c.Inc(AddrLen)]
-	if e := (*ap).UnmarshalBinary(apBytes[:apLen]); fails(e) {
+	if s.E = (*ap).UnmarshalBinary(apBytes[:apLen]); fails(s.E) {
 	}
 	s.Segments = append(s.Segments,
 		NameOffset{Offset: int(*s.c),
@@ -382,8 +382,7 @@ func (s *Splice) ReadPrvkey(out **crypto.Prv) *Splice {
 
 func (s *Splice) ReadPubkey(from **crypto.Pub) *Splice {
 	var f *crypto.Pub
-	var e error
-	if f, e = crypto.PubFromBytes(s.b[*s.c:s.c.Inc(crypto.PubKeyLen)]); !fails(e) {
+	if f, s.E = crypto.PubFromBytes(s.b[*s.c:s.c.Inc(crypto.PubKeyLen)]); !fails(s.E) {
 		*from = f
 	}
 	s.Segments = append(s.Segments,
@@ -508,9 +507,8 @@ func (s *Splice) String() (o string) {
 			}
 			if prevString == "pubkey" {
 				var oo string
-				var e error
-				if oo, e = based32.Codec.Encode(v.ToBytes()); fails(e) {
-					o += "<error: " + e.Error() + " >"
+				if oo, s.E = based32.Codec.Encode(v.ToBytes()); fails(s.E) {
+					o += "<error: " + s.E.Error() + " >"
 				}
 				oo = oo[3:]
 				tmp := make(slice.Bytes, 0, len(oo))
@@ -521,9 +519,8 @@ func (s *Splice) String() (o string) {
 			}
 			if prevString == "Keys" {
 				var oo string
-				var e error
-				if oo, e = based32.Codec.Encode(v.ToBytes()); fails(e) {
-					o += "<error: " + e.Error() + " >"
+				if oo, s.E = based32.Codec.Encode(v.ToBytes()); fails(s.E) {
+					o += "<error: " + s.E.Error() + " >"
 				}
 				o += color.LightBlue.Sprint(oo[:13])
 			}

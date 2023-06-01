@@ -134,5 +134,18 @@ func (x *Crypt) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 func (x *Crypt) Len() int         { return CryptLen + x.Onion.Len() }
 func (x *Crypt) Magic() string    { return CryptMagic }
 func (x *Crypt) Wrap(inner Onion) { x.Onion = inner }
-func cryptGen() coding.Codec      { return &Crypt{} }
-func init()                       { reg.Register(CryptMagic, cryptGen) }
+
+func NewCrypt(toHdr, toPld *crypto.Pub, from *crypto.Prv, iv nonce.IV,
+	depth int) Onion {
+	return &Crypt{
+		Depth:        depth,
+		ToHeaderPub:  toHdr,
+		ToPayloadPub: toPld,
+		From:         from,
+		IV:           iv,
+		Onion:        nop,
+	}
+}
+
+func cryptGen() coding.Codec { return &Crypt{} }
+func init()                  { reg.Register(CryptMagic, cryptGen) }

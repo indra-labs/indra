@@ -88,5 +88,13 @@ func (x *HiddenService) Len() int         { return HiddenServiceLen + x.Onion.Le
 func (x *HiddenService) Magic() string    { return HiddenServiceMagic }
 func (x *HiddenService) Wrap(inner Onion) { x.Onion = inner }
 
+func NewHiddenService(in *intro.Ad, point *ExitPoint) Onion {
+	return &HiddenService{
+		Intro:   *in,
+		Ciphers: crypto.GenCiphers(point.Keys, point.ReturnPubs),
+		Nonces:  point.Nonces,
+		Onion:   NewEnd(),
+	}
+}
 func hiddenServiceGen() coding.Codec { return &HiddenService{} }
 func init()                          { reg.Register(HiddenServiceMagic, hiddenServiceGen) }

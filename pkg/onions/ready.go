@@ -65,7 +65,6 @@ func (x *Ready) Encode(s *splice.Splice) (e error) {
 	return
 }
 
-func ReadyGen() coding.Codec           { return &Ready{} }
 func (x *Ready) GetOnion() interface{} { return x }
 
 func (x *Ready) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
@@ -76,4 +75,18 @@ func (x *Ready) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 func (x *Ready) Len() int         { return ReadyLen }
 func (x *Ready) Magic() string    { return ReadyMagic }
 func (x *Ready) Wrap(inner Onion) {}
-func init()                       { reg.Register(ReadyMagic, ReadyGen) }
+
+func NewReady(
+	id nonce.ID,
+	addr *crypto.Pub,
+	fwHeader,
+	rvHeader RoutingHeaderBytes,
+	fc, rc crypto.Ciphers,
+	fn, rn crypto.Nonces,
+)Onion{return &Ready{id, addr,
+	&ReplyHeader{fwHeader, fc, fn},
+	&ReplyHeader{rvHeader, rc, rn},
+}}
+
+func init()                       { reg.Register(ReadyMagic, readyGen) }
+func readyGen() coding.Codec { return &Ready{} }

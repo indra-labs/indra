@@ -25,7 +25,7 @@ type Session struct {
 	Onion
 }
 
-func NewSessionKeys(hop byte) (x *Session) {
+func NewSession(hop byte) (x Onion) {
 	var e error
 	var hdr, pld *crypto.Keys
 	if hdr, pld, e = crypto.Generate2Keys(); fails(e) {
@@ -36,6 +36,7 @@ func NewSessionKeys(hop byte) (x *Session) {
 		Hop:     hop,
 		Header:  hdr,
 		Payload: pld,
+		Onion: NewEnd(),
 	}
 }
 
