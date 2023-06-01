@@ -1,6 +1,7 @@
 package onions
 
 import (
+	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	"reflect"
 
 	"github.com/indra-labs/indra/pkg/crypto"
@@ -87,4 +88,4 @@ func (x *HiddenService) Magic() string    { return HiddenServiceMagic }
 func (x *HiddenService) Wrap(inner Onion) { x.Onion = inner }
 
 func hiddenServiceGen() coding.Codec { return &HiddenService{} }
-func init()                          { Register(HiddenServiceMagic, hiddenServiceGen) }
+func init()                          { reg.Register(HiddenServiceMagic, hiddenServiceGen) }

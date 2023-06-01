@@ -4,6 +4,7 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/coding"
+	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/splice"
 	"testing"
@@ -31,7 +32,7 @@ func TestPeerAd(t *testing.T) {
 	log.D.S(s.GetAll().ToBytes())
 	s.SetCursor(0)
 	var onc coding.Codec
-	if onc = Recognise(s); onc == nil {
+	if onc = reg.Recognise(s); onc == nil {
 		t.Fatalf("did not unwrap")
 	}
 	if e = onc.Decode(s); fails(e) {

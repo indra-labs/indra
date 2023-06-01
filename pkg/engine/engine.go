@@ -5,6 +5,7 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/node"
 	"github.com/indra-labs/indra/pkg/engine/onions"
+	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	"github.com/indra-labs/indra/pkg/engine/responses"
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
@@ -56,7 +57,7 @@ func (ng *Engine) HandleMessage(s *splice.Splice, pr onions.Onion) {
 		ng.Manager.GetLocalNodeAddressString())
 	s.SetCursor(0)
 	s.Segments = s.Segments[:0]
-	on := onions.Recognise(s)
+	on := reg.Recognise(s)
 	if on != nil {
 		log.D.Ln("magic", on.Magic())
 		if fails(on.Decode(s)) {

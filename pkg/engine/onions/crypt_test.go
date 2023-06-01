@@ -1,6 +1,7 @@
 package onions
 
 import (
+	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	"testing"
 
 	"github.com/indra-labs/indra/pkg/crypto"
@@ -24,7 +25,7 @@ func TestOnions_SimpleCrypt(t *testing.T) {
 	s.SetCursor(0)
 	log.D.S("encoded, encrypted onion:\n", s.GetAll().ToBytes())
 	var oncr coding.Codec
-	if oncr = Recognise(s); oncr == nil {
+	if oncr = reg.Recognise(s); oncr == nil {
 		t.Error("did not unwrap")
 		t.FailNow()
 	}
@@ -34,7 +35,7 @@ func TestOnions_SimpleCrypt(t *testing.T) {
 	}
 	oncr.(*Crypt).Decrypt(prv1, s)
 	var oncn coding.Codec
-	if oncn = Recognise(s); oncn == nil {
+	if oncn = reg.Recognise(s); oncn == nil {
 		t.Error("did not unwrap")
 		t.FailNow()
 	}

@@ -2,11 +2,13 @@ package dispatcher
 
 import (
 	"context"
+	"github.com/VividCortex/ewma"
+	"github.com/gookit/color"
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
-	"github.com/indra-labs/indra/pkg/engine/onions"
+	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	"github.com/indra-labs/indra/pkg/engine/packet"
 	"github.com/indra-labs/indra/pkg/engine/transport"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
@@ -14,8 +16,6 @@ import (
 	"github.com/indra-labs/indra/pkg/util/qu"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
-	"github.com/VividCortex/ewma"
-	"github.com/gookit/color"
 	"github.com/libp2p/go-libp2p/p2p/protocol/ping"
 	"go.uber.org/atomic"
 	"math/big"
@@ -132,7 +132,7 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 	hash := sha256.Single(m.ToBytes())
 	copy(rxr.Hash[:], hash[:])
 	s := splice.NewFrom(m)
-	c := onions.Recognise(s)
+	c := reg.Recognise(s)
 	if c == nil {
 		return
 	}

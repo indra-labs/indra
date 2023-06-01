@@ -4,6 +4,7 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/ciph"
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
+	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	"github.com/indra-labs/indra/pkg/util/slice"
@@ -54,7 +55,7 @@ func (x *Reverse) GetOnion() interface{} { return x }
 
 func (x *Reverse) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 	if x.AddrPort.String() == ng.Mgr().GetLocalNodeAddress().String() {
-		in := Recognise(s)
+		in := reg.Recognise(s)
 		if e = in.Decode(s); fails(e) {
 			return e
 		}
@@ -112,5 +113,5 @@ func (x *Reverse) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 func (x *Reverse) Len() int         { return ReverseLen + x.Onion.Len() }
 func (x *Reverse) Magic() string    { return ReverseMagic }
 func (x *Reverse) Wrap(inner Onion) { x.Onion = inner }
-func init()                         { Register(ReverseMagic, reverseGen) }
+func init()                         { reg.Register(ReverseMagic, reverseGen) }
 func reverseGen() coding.Codec { return &Reverse{} }

@@ -8,6 +8,7 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
+	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	"github.com/indra-labs/indra/pkg/util/splice"
@@ -152,4 +153,4 @@ func (x *Route) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 func (x *Route) Len() int         { return RouteLen + x.Onion.Len() }
 func (x *Route) Magic() string    { return RouteMagic }
 func (x *Route) Wrap(inner Onion) { x.Onion = inner }
-func init()                       { Register(RouteMagic, RouteGen) }
+func init()                       { reg.Register(RouteMagic, RouteGen) }

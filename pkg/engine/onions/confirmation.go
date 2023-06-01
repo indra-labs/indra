@@ -4,6 +4,7 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
+	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	"github.com/indra-labs/indra/pkg/util/splice"
@@ -55,4 +56,4 @@ func (x *Confirmation) Len() int         { return ConfirmationLen }
 func (x *Confirmation) Magic() string    { return ConfirmationMagic }
 func (x *Confirmation) Wrap(inner Onion) {}
 func confirmationGen() coding.Codec      { return &Confirmation{} }
-func init()                              { Register(ConfirmationMagic, confirmationGen) }
+func init()                              { reg.Register(ConfirmationMagic, confirmationGen) }

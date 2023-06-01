@@ -1,6 +1,7 @@
 package onions
 
 import (
+	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	"reflect"
 	"time"
 
@@ -187,5 +188,5 @@ func (x *Service) Validate() bool {
 }
 
 func (x *Service) Wrap(inner Onion) {}
-func init()                         { Register(ServiceMagic, servGen) }
+func init()                         { reg.Register(ServiceMagic, servGen) }
 func servGen() coding.Codec { return &Service{} }

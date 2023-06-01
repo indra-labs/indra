@@ -3,6 +3,7 @@ package onions
 import (
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
+	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	"github.com/indra-labs/indra/pkg/util/slice"
@@ -62,4 +63,4 @@ func (x *Delay) Len() int         { return DelayLen + x.Onion.Len() }
 func (x *Delay) Magic() string    { return DelayMagic }
 func (x *Delay) Wrap(inner Onion) { x.Onion = inner }
 func delayGen() coding.Codec      { return &Delay{} }
-func init()                       { Register(DelayMagic, delayGen) }
+func init()                       { reg.Register(DelayMagic, delayGen) }

@@ -8,6 +8,7 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
+	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	"github.com/indra-labs/indra/pkg/util/slice"
@@ -86,4 +87,4 @@ func (x *Message) Handle(s *splice.Splice, p Onion, ng Ngin) (e error) {
 func (x *Message) Len() int         { return MessageLen + x.Payload.Len() }
 func (x *Message) Magic() string    { return MessageMagic }
 func (x *Message) Wrap(inner Onion) {}
-func init()                         { Register(MessageMagic, MessageGen) }
+func init()                         { reg.Register(MessageMagic, MessageGen) }

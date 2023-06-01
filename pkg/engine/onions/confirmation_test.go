@@ -1,6 +1,7 @@
 package onions
 
 import (
+	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	"testing"
 
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
@@ -18,7 +19,7 @@ func TestOnions_Confirmation(t *testing.T) {
 	s := Encode(on)
 	s.SetCursor(0)
 	var onc coding.Codec
-	if onc = Recognise(s); onc == nil {
+	if onc = reg.Recognise(s); onc == nil {
 		
 		t.Error("did not unwrap")
 		t.FailNow()

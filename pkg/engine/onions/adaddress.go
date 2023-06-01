@@ -7,11 +7,11 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
+	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/util/multi"
 	"github.com/indra-labs/indra/pkg/util/qu"
 	"github.com/indra-labs/indra/pkg/util/splice"
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
 	"net/netip"
 	"reflect"
@@ -37,20 +37,6 @@ type AddressAd struct {
 	Sig  crypto.SigBytes
 }
 
-func AddKeyToMultiaddr(in multiaddr.Multiaddr, pub *crypto.Pub) (ma multiaddr.Multiaddr) {
-	var pid peer.ID
-	var e error
-	if pid, e = peer.IDFromPublicKey(pub); fails(e) {
-		return
-	}
-	var k multiaddr.Multiaddr
-	if k, e = multiaddr.NewMultiaddr("/p2p/" + pid.String()); fails(e) {
-		return
-	}
-	ma = in.Encapsulate(k)
-	return
-}
-
 func (x *AddressAd) Decode(s *splice.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), AddressAdLen-magic.Len,
 		PeerMagic); fails(e) {
@@ -74,7 +60,7 @@ func (x *AddressAd) Decode(s *splice.Splice) (e error) {
 	); fails(e) {
 		return
 	}
-	x.Addr = AddKeyToMultiaddr(ap, x.Key)
+	x.Addr = multi.AddKeyToMultiaddr(ap, x.Key)
 	return
 }
 
@@ -134,7 +120,7 @@ func NewAddressAd(id nonce.ID, key *crypto.Prv,
 	ma multiaddr.Multiaddr) (peerAd *AddressAd) {
 
 	pub := crypto.DerivePub(key)
-	ma = AddKeyToMultiaddr(ma, pub)
+	ma = multi.AddKeyToMultiaddr(ma, pub)
 	log.D.Ln("ma", ma)
 	peerAd = &AddressAd{
 		ID:   id,
@@ -153,4 +139,4 @@ func NewAddressAd(id nonce.ID, key *crypto.Prv,
 
 func addrGen() coding.Codec { return &AddressAd{} }
 
-func init() { Register(AddressAdMagic, addrGen) }
+func init() { reg.Register(AddressAdMagic, addrGen) }

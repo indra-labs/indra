@@ -7,6 +7,7 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
+	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/util/qu"
 	"github.com/indra-labs/indra/pkg/util/slice"
@@ -141,6 +142,6 @@ func ServiceSplice(
 		Uint32(relayRate)
 }
 
-func init() { Register(ServiceAdMagic, serviceAdGen) }
+func init() { reg.Register(ServiceAdMagic, serviceAdGen) }
 
 func serviceAdGen() coding.Codec { return &ServiceAd{} }

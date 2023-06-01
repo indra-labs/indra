@@ -6,6 +6,7 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
+	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	"github.com/indra-labs/indra/pkg/util/splice"
@@ -98,5 +99,5 @@ func (x *Session) PreimageHash() sha256.Hash {
 }
 
 func (x *Session) Wrap(inner Onion) { x.Onion = inner }
-func init()                         { Register(SessionMagic, sessionGen) }
+func init()                         { reg.Register(SessionMagic, sessionGen) }
 func sessionGen() coding.Codec      { return &Session{} }

@@ -1,6 +1,7 @@
 package onions
 
 import (
+	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	"testing"
 	"time"
 
@@ -32,7 +33,7 @@ func TestOnions_Service(t *testing.T) {
 	log.D.S(s.GetAll().ToBytes())
 	s.SetCursor(0)
 	var onc coding.Codec
-	if onc = Recognise(s); onc == nil {
+	if onc = reg.Recognise(s); onc == nil {
 		t.Error("did not unwrap")
 		t.FailNow()
 	}

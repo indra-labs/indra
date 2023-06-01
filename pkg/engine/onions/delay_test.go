@@ -1,6 +1,7 @@
 package onions
 
 import (
+	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	"testing"
 	"time"
 
@@ -17,7 +18,7 @@ func TestOnions_Delay(t *testing.T) {
 	s := Encode(on)
 	s.SetCursor(0)
 	var onc coding.Codec
-	if onc = Recognise(s); onc == nil {
+	if onc = reg.Recognise(s); onc == nil {
 		t.Error("did not unwrap")
 		t.FailNow()
 	}

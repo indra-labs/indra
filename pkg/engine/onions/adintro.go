@@ -1,6 +1,7 @@
 package onions
 
 import (
+	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	"net/netip"
 	"reflect"
 	"time"
@@ -150,6 +151,6 @@ func NewIntroAd(
 	return
 }
 
-func init() { Register(IntroMagic, introGen) }
+func init() { reg.Register(IntroMagic, introGen) }
 
 func introGen() coding.Codec { return &IntroAd{} }

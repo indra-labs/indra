@@ -3,6 +3,7 @@ package onions
 import (
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
+	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	"github.com/indra-labs/indra/pkg/util/splice"
@@ -75,4 +76,4 @@ func (x *Forward) Len() int         { return ForwardLen + x.Onion.Len() }
 func (x *Forward) Magic() string    { return ForwardMagic }
 func (x *Forward) Wrap(inner Onion) { x.Onion = inner }
 func forwardGen() coding.Codec      { return &Forward{} }
-func init()                         { Register(ForwardMagic, forwardGen) }
+func init()                         { reg.Register(ForwardMagic, forwardGen) }

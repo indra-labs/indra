@@ -7,6 +7,7 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/onions"
+	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
 )
@@ -113,7 +114,7 @@ func (m *Onion) Magic() string { return OnionMagic }
 
 func (m Onion) Unpack() (mu onions.Onion) {
 	s := splice.NewFrom(m.Bytes)
-	mm := onions.Recognise(s)
+	mm := reg.Recognise(s)
 	var ok bool
 	if mu, ok = mm.(onions.Onion); !ok {
 		log.D.Ln("type not recognised as a onion")
@@ -121,6 +122,6 @@ func (m Onion) Unpack() (mu onions.Onion) {
 	return
 }
 
-func init() { onions.Register(NewKeyMagic, InitRekeyGen) }
-func init() { onions.Register(AcknowledgeMagic, AcknowledgeGen) }
-func init() { onions.Register(OnionMagic, OnionGen) }
+func init() { reg.Register(NewKeyMagic, InitRekeyGen) }
+func init() { reg.Register(AcknowledgeMagic, AcknowledgeGen) }
+func init() { reg.Register(OnionMagic, OnionGen) }

@@ -6,6 +6,7 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
+	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	"github.com/indra-labs/indra/pkg/util/slice"
@@ -126,4 +127,4 @@ type GetBalanceParams struct {
 
 func (x *GetBalance) Wrap(inner Onion) { x.Onion = inner }
 func getBalanceGen() coding.Codec      { return &GetBalance{} }
-func init()                            { Register(GetBalanceMagic, getBalanceGen) }
+func init()                            { reg.Register(GetBalanceMagic, getBalanceGen) }

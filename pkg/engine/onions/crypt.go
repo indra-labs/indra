@@ -7,6 +7,7 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
+	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	"github.com/indra-labs/indra/pkg/util/splice"
@@ -134,4 +135,4 @@ func (x *Crypt) Len() int         { return CryptLen + x.Onion.Len() }
 func (x *Crypt) Magic() string    { return CryptMagic }
 func (x *Crypt) Wrap(inner Onion) { x.Onion = inner }
 func cryptGen() coding.Codec      { return &Crypt{} }
-func init()                       { Register(CryptMagic, cryptGen) }
+func init()                       { reg.Register(CryptMagic, cryptGen) }

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	"net/netip"
 	"time"
 
@@ -75,7 +76,7 @@ func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *crypto.Pub,
 
 	fn := func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
 		s := splice.Load(b, slice.NewCursor())
-		on := onions.Recognise(s)
+		on := reg.Recognise(s)
 		if e = on.Decode(s); fails(e) {
 			return
 		}

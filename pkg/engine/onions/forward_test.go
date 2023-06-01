@@ -1,6 +1,7 @@
 package onions
 
 import (
+	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	"math/rand"
 	"net"
 	"net/netip"
@@ -36,7 +37,7 @@ func TestOnions_Forward(t *testing.T) {
 		s := Encode(on)
 		s.SetCursor(0)
 		var onr coding.Codec
-		if onr = Recognise(s); onr == nil {
+		if onr = reg.Recognise(s); onr == nil {
 			t.Error("did not unwrap")
 			t.FailNow()
 		}

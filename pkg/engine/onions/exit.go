@@ -6,6 +6,7 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
+	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	"github.com/indra-labs/indra/pkg/util/slice"
@@ -158,4 +159,4 @@ type ExitParams struct {
 
 func (x *Exit) Wrap(inner Onion) { x.Onion = inner }
 func exitGen() coding.Codec      { return &Exit{} }
-func init()                      { Register(ExitMagic, exitGen) }
+func init()                      { reg.Register(ExitMagic, exitGen) }

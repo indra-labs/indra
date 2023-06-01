@@ -2,6 +2,7 @@ package onions
 
 import (
 	"github.com/indra-labs/indra/pkg/engine/coding"
+	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	"github.com/indra-labs/indra/pkg/util/splice"
@@ -28,4 +29,4 @@ func (x *End) Len() int                                            { return EndL
 func (x *End) Magic() string                                       { return EndMagic }
 func (x *End) Wrap(inner Onion)                                    {}
 func NewEnd() *End                                                 { return &End{} }
-func init()                                                        { Register(EndMagic, EndGen) }
+func init()                                                        { reg.Register(EndMagic, EndGen) }

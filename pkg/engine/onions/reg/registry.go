@@ -1,42 +1,43 @@
-package onions
+package reg
 
 import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gookit/color"
+	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/engine/coding"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/splice"
 	"reflect"
 	"sync"
 )
 
-var registry = NewRegistry()
+var (
+	log   = log2.GetLogger(indra.PathBase)
+	fails = log.E.Chk
+)
+var reg = newRegistry()
 
 type (
 	CodecGenerators map[string]func() coding.Codec
-	Registry        struct {
+	registry        struct {
 		sync.Mutex
 		CodecGenerators
 	}
 )
 
-func NewRegistry() *Registry {
-	return &Registry{CodecGenerators: make(CodecGenerators)}
-}
-
 func MakeCodec(magic string) (cdc coding.Codec) {
 	var in func() coding.Codec
 	var ok bool
-	if in, ok = registry.CodecGenerators[magic]; ok {
+	if in, ok = reg.CodecGenerators[magic]; ok {
 		cdc = in()
 	}
 	return
 }
 
 func Recognise(s *splice.Splice) (cdc coding.Codec) {
-	registry.Lock()
-	defer registry.Unlock()
+	reg.Lock()
+	defer reg.Unlock()
 	var magic string
-	// log.D.S("splice", s.GetAll().ToBytes())
 	s.ReadMagic(&magic)
 	cdc = MakeCodec(magic)
 	if cdc == nil {
@@ -53,8 +54,12 @@ func Recognise(s *splice.Splice) (cdc coding.Codec) {
 	return
 }
 
-func Register(magicString string, on func() coding.Codec) {
-	registry.Lock()
-	defer registry.Unlock()
-	registry.CodecGenerators[magicString] = on
+func Register(magicString string, cdc func() coding.Codec) {
+	reg.Lock()
+	defer reg.Unlock()
+	reg.CodecGenerators[magicString] = cdc
+}
+
+func newRegistry() *registry {
+	return &registry{CodecGenerators: make(CodecGenerators)}
 }

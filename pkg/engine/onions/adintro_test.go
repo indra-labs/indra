@@ -1,6 +1,7 @@
 package onions
 
 import (
+	"github.com/indra-labs/indra/pkg/engine/onions/reg"
 	"github.com/indra-labs/indra/pkg/util/splice"
 	"testing"
 	"time"
@@ -26,7 +27,7 @@ func TestIntroAd(t *testing.T) {
 	}
 	s.SetCursor(0)
 	var onc coding.Codec
-	if onc = Recognise(s); onc == nil {
+	if onc = reg.Recognise(s); onc == nil {
 		t.Error("did not unwrap")
 		t.FailNow()
 	}
