@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func TestAddress(t *testing.T) {
+func TestCloakedPubKey(t *testing.T) {
 	var e error
 	var sendPriv *Prv
 	if sendPriv, e = GeneratePrvKey(); fails(e) {

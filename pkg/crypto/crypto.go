@@ -3,20 +3,17 @@ package crypto
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"fmt"
 	"sync"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 	"github.com/gookit/color"
-	"github.com/libp2p/go-libp2p/core/crypto"
-	crypto_pb "github.com/libp2p/go-libp2p/core/crypto/pb"
-
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/b32/based32"
 	"github.com/indra-labs/indra/pkg/util/slice"
+	"github.com/libp2p/go-libp2p/core/crypto"
 )
 
 const (
@@ -161,31 +158,6 @@ func Match(r CloakedPubKey, k PubBytes) bool {
 	return r == hash
 }
 
-// Equals is an implementation of the libp2p crypto.Key interface, allowing the
-// Indra keys to be used by libp2p as peer identity keys.
-func (p *Prv) Equals(key crypto.Key) (eq bool) {
-	var e error
-	var rawA, rawB []byte
-	if rawA, e = key.Raw(); fails(e) {
-		return
-	}
-	if rawB, e = p.Raw(); fails(e) {
-		return
-	}
-	if len(rawA) != len(rawB) {
-		return
-	}
-	for i := range rawA {
-		if rawA[i] != rawB[i] {
-			for j := range rawA {
-				rawA[j], rawB[j] = 0, 0
-			}
-			return
-		}
-	}
-	return true
-}
-
 // PrvFromBased32 decodes a Based32 encoded private key.
 func PrvFromBased32(s string) (k *Prv, e error) {
 	ss := []byte(s)
@@ -195,34 +167,9 @@ func PrvFromBased32(s string) (k *Prv, e error) {
 	return
 }
 
-// GetPublic derives the public key matching a private key, an implementation of
-// the libp2p crypto.PrivKey interface, allowing the Indra keys to be used by libp2p
-// as peer identity keys.
-func (p *Prv) GetPublic() crypto.PubKey {
-	if p == nil {
-		return nil
-	}
-	return DerivePub(p)
-}
-
 // PrvKeyFromBytes converts a byte slice into a private key.
 func PrvKeyFromBytes(b []byte) *Prv {
 	return (*Prv)(secp256k1.PrivKeyFromBytes(b))
-}
-
-// Raw is an implementation of the libp2p crypto.Key interface, allowing the
-// Indra keys to be used by libp2p as peer identity keys.
-func (p *Prv) Raw() ([]byte, error) {
-	b := p.ToBytes()
-	return b[:], nil
-}
-
-// Sign is an implementation of the libp2p crypto.PrivKey interface, allowing the
-// Indra keys to be used by libp2p as peer identity keys.
-func (p *Prv) Sign(bytes []byte) ([]byte, error) {
-	hash := sha256.Single(bytes)
-	s := ecdsa.Sign((*secp256k1.PrivateKey)(p), hash[:])
-	return s.Serialize(), nil
 }
 
 // ToBased32 returns the Based32 encoded string of the private key.
@@ -242,12 +189,6 @@ func (p *Prv) ToBytes() (b PrvBytes) {
 	return
 }
 
-// Type is an implementation of the libp2p crypto.Key interface, allowing the
-// Indra keys to be used by libp2p as peer identity keys.
-func (p *Prv) Type() crypto_pb.KeyType {
-	return crypto_pb.KeyType_Secp256k1
-}
-
 // PubFromBytes converts a byte slice into a public key, if it is valid and on
 // the secp256k1 elliptic curve.
 func PubFromBytes(b []byte) (pub *Pub, e error) {
@@ -259,13 +200,6 @@ func PubFromBytes(b []byte) (pub *Pub, e error) {
 	return
 }
 
-// Raw is an implementation of the libp2p crypto.Key interface, allowing the
-// Indra keys to be used by libp2p as peer identity keys.
-func (k *Pub) Raw() ([]byte, error) {
-	b := k.ToBytes()
-	return b[:], nil
-}
-
 // ToPublicKey unwraps the secp256k1.PublicKey inside the Pub.
 func (k *Pub) ToPublicKey() *secp256k1.PublicKey {
 	return (*secp256k1.PublicKey)(k)
@@ -273,10 +207,10 @@ func (k *Pub) ToPublicKey() *secp256k1.PublicKey {
 
 // Recover the public key corresponding to the signing private key used to
 // create a signature on the hash of a message.
-func (sig SigBytes) Recover(hash sha256.Hash) (p *Pub, e error) {
+func (sb SigBytes) Recover(hash sha256.Hash) (p *Pub, e error) {
 	var pk *secp256k1.PublicKey
 	// We are only using compressed keys, so we can ignore the compressed bool.
-	if pk, _, e = ecdsa.RecoverCompact(sig[:], hash[:]); !fails(e) {
+	if pk, _, e = ecdsa.RecoverCompact(sb[:], hash[:]); !fails(e) {
 		p = (*Pub)(pk)
 	}
 	return
@@ -305,30 +239,6 @@ func (p *Prv) Zero() { (*secp256k1.PrivateKey)(p).Zero() }
 
 // Pub is a public key.
 type Pub secp256k1.PublicKey
-
-// Equals compares two public keys and returns true if they match.
-func (k *Pub) Equals(key crypto.Key) (eq bool) {
-	var e error
-	var rawA, rawB []byte
-	if rawA, e = key.Raw(); fails(e) {
-		return
-	}
-	if rawB, e = k.Raw(); fails(e) {
-		return
-	}
-	if len(rawA) != len(rawB) {
-		return
-	}
-	for i := range rawA {
-		if rawA[i] != rawB[i] {
-			for j := range rawA {
-				rawA[j], rawB[j] = 0, 0
-			}
-			return
-		}
-	}
-	return true
-}
 
 // PubFromBased32 decodes a Based32 encoded form of the Pub.
 func PubFromBased32(s string) (k *Pub, e error) {
@@ -370,29 +280,6 @@ func (k *Pub) ToHex() (s string, e error) {
 	return
 }
 
-// Type is an implementation of the libp2p crypto.Key interface, allowing the
-// Indra keys to be used by libp2p as peer identity keys.
-func (k *Pub) Type() crypto_pb.KeyType {
-	return crypto_pb.KeyType_Secp256k1
-}
-
-// Verify is an implementation of the libp2p crypto.PkbKey interface, allowing the
-// Indra keys to be used by libp2p as peer identity keys.
-func (k *Pub) Verify(data []byte, sigBytes []byte) (is bool,
-	e error) {
-
-	var s SigBytes
-	if len(sigBytes) != len(s) {
-		return false, fmt.Errorf("length mismatch")
-	}
-	copy(s[:], sigBytes[:])
-	hash := sha256.Single(data)
-	var pk *Pub
-	if pk, e = s.Recover(hash); fails(e) {
-		return false, e
-	}
-	return pk.ToBytes().Equals(k.ToBytes()), nil
-}
 
 // SigFromBased32 decodes a SigBytes encoded in Based32.
 func SigFromBased32(s string) (sig SigBytes, e error) {
@@ -410,8 +297,8 @@ func Sign(prv *Prv, hash sha256.Hash) (sig SigBytes, e error) {
 }
 
 // String returns the Based32 encoded form of a signature.
-func (s SigBytes) String() string {
-	o, _ := based32.Codec.Encode(s[:])
+func (sb SigBytes) String() string {
+	o, _ := based32.Codec.Encode(sb[:])
 	return o[2:]
 }
 
