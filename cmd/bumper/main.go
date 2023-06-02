@@ -198,10 +198,6 @@ import "fmt"
 // which will run all these generators below and finish with a go install.
 ` + `//go:generate go install ./...
 
-import (
-	"fmt"
-)
-
 const (
 	// URL is the git URL for the repository.
 	URL = "%s"

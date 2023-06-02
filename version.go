@@ -15,19 +15,15 @@ import "fmt"
 // which will run all these generators below and finish with a go install.
 //go:generate go install ./...
 
-import (
-	"fmt"
-)
-
 const (
 	// URL is the git URL for the repository.
 	URL = "github.com/indra-labs/indra"
 	// GitRef is the gitref, as in refs/heads/branchname.
 	GitRef = "refs/heads/protocol"
 	// ParentGitCommit is the commit hash of the parent HEAD.
-	ParentGitCommit = "c67bd0ea723f4af6571e49b56291ac1d8cdc6eae"
+	ParentGitCommit = "9b5282fbc1879b9c68eebdf09271cc254cc4efc4"
 	// BuildTime stores the time when the current binary was built.
-	BuildTime = "2023-06-02T10:40:48+01:00"
+	BuildTime = "2023-06-02T10:43:00+01:00"
 	// SemVer lists the (latest) git tag on the release.
 	SemVer = "v0.1.12"
 	// PathBase is the path base returned from runtime caller.
