@@ -14,14 +14,14 @@ func TestAddress(t *testing.T) {
 	}
 	sendPub := DerivePub(sendPriv)
 	sendBytes := sendPub.ToBytes()
-	var cloaked PubKey
+	var cloaked CloakedPubKey
 	cloaked = GetCloak(sendPub)
 	if !Match(cloaked, sendBytes) {
 		t.Error("failed to recognise cloaked address")
 	}
 	rand.Seed(time.Now().Unix())
 	flip := rand.Intn(CloakLen)
-	var broken PubKey
+	var broken CloakedPubKey
 	copy(broken[:], cloaked[:])
 	broken[flip] = ^broken[flip]
 	if Match(broken, sendBytes) {

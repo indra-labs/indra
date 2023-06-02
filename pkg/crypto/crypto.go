@@ -20,13 +20,23 @@ import (
 )
 
 const (
-	BlindLen  = 3
-	CloakLen  = BlindLen + HashLen
-	HashLen   = 5
+	// BlindLen is the length of the blinding factor in bytes for a Cloak.
+	BlindLen = 3
+
+	// HashLen is the length from the hash of the key with the Blinder appended to
+	// the Cloak.
+	HashLen = 5
+
+	// CloakLen is the sum of the Blinder truncated hash from blinder and public key.
+	CloakLen = BlindLen + HashLen
+
+	// PrvKeyLen is the length of a private key, inherited from secp256k1.
 	PrvKeyLen = secp256k1.PrivKeyBytesLen
+
 	// PubKeyLen is the length of the serialized key. It is an ECDSA compressed
-	// key.
+	// key, 33 bytes with a 2 or 3 prefix to signify the sign of the key.
 	PubKeyLen = secp256k1.PubKeyBytesLenCompressed
+
 	// SigLen is the length of the signatures used in Indra, compact keys that can
 	// have the public key extracted from them.
 	SigLen = 65
@@ -41,27 +51,26 @@ var (
 	log                  = log2.GetLogger(indra.PathBase)
 )
 
+// Blinder is the bytes concatenated after a key to generate the Cloak hash.
 type Blinder [BlindLen]byte
 
-func (c PubKey) CopyBlinder() (blinder Blinder) {
-	copy(blinder[:], c[:BlindLen])
-	return
-}
-
+// Hash is the truncated SHA256 hash of the Blinder with a PubBytes.
 type Hash [HashLen]byte
 
-// Prv is a private key.
+// Prv is a secp256k1 private key.
 type Prv secp256k1.PrivateKey
+
+// PrvBytes is the binary encoded form of a secp256k1 private key.
 type PrvBytes [PrvKeyLen]byte
 
-// PubBytes is the serialised form of a public key.
+// PubBytes is the serialised form of a secp256k1 public key.
 type PubBytes [PubKeyLen]byte
 
-// PubKey is the blinded hash of a public key used to conceal a message public
+// CloakedPubKey is the blinded hash of a public key used to conceal a message public
 // key from attackers.
-type PubKey [CloakLen]byte
+type CloakedPubKey [CloakLen]byte
 
-func Cloak(b Blinder, key PubBytes) (c PubKey) {
+func Cloak(b Blinder, key PubBytes) (c CloakedPubKey) {
 	h := sha256.Single(append(b[:], key[:]...))
 	copy(c[:BlindLen], b[:BlindLen])
 	copy(c[BlindLen:BlindLen+HashLen], h[:HashLen])
@@ -76,14 +85,18 @@ func DerivePub(prv *Prv) *Pub {
 	return (*Pub)((*secp256k1.PrivateKey)(prv).PubKey())
 }
 
+// Equals checks if two binary encoded public keys are equal.
 func (pb PubBytes) Equals(qb PubBytes) bool { return pb == qb }
 
+// KeySet is a fast private key generator that uses two random base private keys
+// and combines one with the other repeatedly to generate a new, valid private key,
+// using scalar multiplication.
 type KeySet struct {
 	Mutex           sync.Mutex
 	Base, Increment *Prv
 }
 
-// GeneratePrvKey a private key.
+// GeneratePrvKey generates a secp256k1 private key.
 func GeneratePrvKey() (prv *Prv, e error) {
 	var p *secp256k1.PrivateKey
 	if p, e = secp256k1.GeneratePrivateKey(); fails(e) {
@@ -97,10 +110,10 @@ func GeneratePrvKey() (prv *Prv, e error) {
 // key to generate the message cipher.
 //
 // The three byte blinding factor concatenated in front of the public key
-// generates the 5 bytes at the end of the PubKey code. In this way the source
-// public key it relates to is hidden to any who don't have this public key,
-// which only the parties know.
-func GetCloak(s *Pub) (c PubKey) {
+// generates the 5 bytes at the end of the CloakedPubKey code. In this way the
+// source public key it relates to is hidden to any who don't have this public
+// key, which only the parties know.
+func GetCloak(s *Pub) (c CloakedPubKey) {
 	var blinder Blinder
 	var n int
 	var e error
@@ -111,8 +124,8 @@ func GetCloak(s *Pub) (c PubKey) {
 	return
 }
 
-// Next adds Increment to Base, assigns the new value to the Base and returns
-// the new value.
+// Next adds Increment to Base, assigns the new private key to the Base and
+// returns the new private key.
 func (ks *KeySet) Next() (n *Prv) {
 	ks.Mutex.Lock()
 	next := ks.Base.Key.Add(&ks.Increment.Key)
@@ -122,6 +135,7 @@ func (ks *KeySet) Next() (n *Prv) {
 	return
 }
 
+// Next2 returns two private keys from the KeySet.
 func (ks *KeySet) Next2() (n [2]*Prv) {
 	for i := range n {
 		n[i] = ks.Next()
@@ -129,6 +143,7 @@ func (ks *KeySet) Next2() (n [2]*Prv) {
 	return
 }
 
+// Next3 returns three private keys from the KeySet.
 func (ks *KeySet) Next3() (n [3]*Prv) {
 	for i := range n {
 		n[i] = ks.Next()
@@ -136,16 +151,18 @@ func (ks *KeySet) Next3() (n [3]*Prv) {
 	return
 }
 
-// Match uses the cached public key and the provided blinding factor to match
-// the source public key so the packet address field is only recognisable to the
+// Match uses the cached public key and the provided blinding factor to match the
+// source public key so the packet address field is only recognisable to the
 // intended recipient.
-func Match(r PubKey, k PubBytes) bool {
+func Match(r CloakedPubKey, k PubBytes) bool {
 	var b Blinder
 	copy(b[:], r[:BlindLen])
 	hash := Cloak(b, k)
 	return r == hash
 }
 
+// Equals is an implementation of the libp2p crypto.Key interface, allowing the
+// Indra keys to be used by libp2p as peer identity keys.
 func (p *Prv) Equals(key crypto.Key) (eq bool) {
 	var e error
 	var rawA, rawB []byte
@@ -169,6 +186,7 @@ func (p *Prv) Equals(key crypto.Key) (eq bool) {
 	return true
 }
 
+// PrvFromBased32 decodes a Based32 encoded private key.
 func PrvFromBased32(s string) (k *Prv, e error) {
 	ss := []byte(s)
 	var b slice.Bytes
@@ -177,6 +195,9 @@ func PrvFromBased32(s string) (k *Prv, e error) {
 	return
 }
 
+// GetPublic derives the public key matching a private key, an implementation of
+// the libp2p crypto.PrivKey interface, allowing the Indra keys to be used by libp2p
+// as peer identity keys.
 func (p *Prv) GetPublic() crypto.PubKey {
 	if p == nil {
 		return nil
@@ -189,17 +210,22 @@ func PrvKeyFromBytes(b []byte) *Prv {
 	return (*Prv)(secp256k1.PrivKeyFromBytes(b))
 }
 
+// Raw is an implementation of the libp2p crypto.Key interface, allowing the
+// Indra keys to be used by libp2p as peer identity keys.
 func (p *Prv) Raw() ([]byte, error) {
 	b := p.ToBytes()
 	return b[:], nil
 }
 
+// Sign is an implementation of the libp2p crypto.PrivKey interface, allowing the
+// Indra keys to be used by libp2p as peer identity keys.
 func (p *Prv) Sign(bytes []byte) ([]byte, error) {
 	hash := sha256.Single(bytes)
 	s := ecdsa.Sign((*secp256k1.PrivateKey)(p), hash[:])
 	return s.Serialize(), nil
 }
 
+// ToBased32 returns the Based32 encoded string of the private key.
 func (p *Prv) ToBased32() (s string) {
 	b := p.ToBytes()
 	var e error
@@ -216,6 +242,8 @@ func (p *Prv) ToBytes() (b PrvBytes) {
 	return
 }
 
+// Type is an implementation of the libp2p crypto.Key interface, allowing the
+// Indra keys to be used by libp2p as peer identity keys.
 func (p *Prv) Type() crypto_pb.KeyType {
 	return crypto_pb.KeyType_Secp256k1
 }
@@ -231,11 +259,14 @@ func PubFromBytes(b []byte) (pub *Pub, e error) {
 	return
 }
 
+// Raw is an implementation of the libp2p crypto.Key interface, allowing the
+// Indra keys to be used by libp2p as peer identity keys.
 func (k *Pub) Raw() ([]byte, error) {
 	b := k.ToBytes()
 	return b[:], nil
 }
 
+// ToPublicKey unwraps the secp256k1.PublicKey inside the Pub.
 func (k *Pub) ToPublicKey() *secp256k1.PublicKey {
 	return (*secp256k1.PublicKey)(k)
 }
@@ -275,6 +306,7 @@ func (p *Prv) Zero() { (*secp256k1.PrivateKey)(p).Zero() }
 // Pub is a public key.
 type Pub secp256k1.PublicKey
 
+// Equals compares two public keys and returns true if they match.
 func (k *Pub) Equals(key crypto.Key) (eq bool) {
 	var e error
 	var rawA, rawB []byte
@@ -298,7 +330,8 @@ func (k *Pub) Equals(key crypto.Key) (eq bool) {
 	return true
 }
 
-func PubFromBase32(s string) (k *Pub, e error) {
+// PubFromBased32 decodes a Based32 encoded form of the Pub.
+func PubFromBased32(s string) (k *Pub, e error) {
 	ss := []byte(s)
 	var b slice.Bytes
 	b, e = based32.Codec.Decode("ayb" + string(ss))
@@ -330,16 +363,21 @@ func (k *Pub) ToBytes() (p PubBytes) {
 	return
 }
 
+// ToHex returns the hex encoding of a Pub.
 func (k *Pub) ToHex() (s string, e error) {
 	b := k.ToBytes()
 	s = hex.EncodeToString(b[:])
 	return
 }
 
+// Type is an implementation of the libp2p crypto.Key interface, allowing the
+// Indra keys to be used by libp2p as peer identity keys.
 func (k *Pub) Type() crypto_pb.KeyType {
 	return crypto_pb.KeyType_Secp256k1
 }
 
+// Verify is an implementation of the libp2p crypto.PkbKey interface, allowing the
+// Indra keys to be used by libp2p as peer identity keys.
 func (k *Pub) Verify(data []byte, sigBytes []byte) (is bool,
 	e error) {
 
@@ -356,6 +394,7 @@ func (k *Pub) Verify(data []byte, sigBytes []byte) (is bool,
 	return pk.ToBytes().Equals(k.ToBytes()), nil
 }
 
+// SigFromBased32 decodes a SigBytes encoded in Based32.
 func SigFromBased32(s string) (sig SigBytes, e error) {
 	var ss slice.Bytes
 	ss, e = based32.Codec.Decode("aq" + s)
@@ -370,13 +409,16 @@ func Sign(prv *Prv, hash sha256.Hash) (sig SigBytes, e error) {
 	return
 }
 
+// String returns the Based32 encoded form of a signature.
 func (s SigBytes) String() string {
 	o, _ := based32.Codec.Encode(s[:])
 	return o[2:]
 }
 
+// String returns the based32 form of a public key's compact encoded bytes.
 func (pb PubBytes) String() (s string) { return pb.ToBased32() }
 
+// ToBased32 returns the based32 form of a public key's compact encoded bytes.
 func (pb PubBytes) ToBased32() (s string) {
 	var e error
 	if s, e = based32.Codec.Encode(pb[:]); fails(e) {

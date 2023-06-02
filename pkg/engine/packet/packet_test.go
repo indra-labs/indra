@@ -39,7 +39,7 @@ func TestEncode_Decode(t *testing.T) {
 		t.Error(e)
 	}
 	var from *crypto.Pub
-	var to crypto.PubKey
+	var to crypto.CloakedPubKey
 	_ = to
 	var iv nonce.IV
 	if from, to, iv, e = GetKeysFromPacket(pkt); fails(e) {

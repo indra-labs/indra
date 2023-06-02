@@ -10,6 +10,7 @@ import (
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 )
 
+// IVLen is the length of Initialization Vectors used in Indra.
 const IVLen = aes.BlockSize
 
 var (
@@ -17,9 +18,10 @@ var (
 	fails = log.E.Chk
 )
 
+// IV is an Initialization Vector for AES-CTR encryption used in Indra.
 type IV [IVLen]byte
 
-// New reads a nonce from a cryptographically secure random number source
+// New reads a nonce from a cryptographically secure random number source.
 func New() (n IV) {
 	if c, e := rand.Read(n[:]); fails(e) && c != IDLen {
 	}

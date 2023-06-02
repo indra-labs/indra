@@ -312,7 +312,7 @@ func (s *Splice) ReadCiphers(h *crypto.Ciphers) *Splice {
 	return s
 }
 
-func (s *Splice) ReadCloak(ck *crypto.PubKey) *Splice {
+func (s *Splice) ReadCloak(ck *crypto.CloakedPubKey) *Splice {
 	copy((*ck)[:], s.b[*s.c:s.c.Inc(crypto.CloakLen)])
 	s.Segments = append(s.Segments,
 		NameOffset{Offset: int(*s.c), Name: "cloak"})

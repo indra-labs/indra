@@ -35,7 +35,7 @@ type Crypt struct {
 	From                      *crypto.Prv
 	IV                        nonce.IV
 	// The remainder here are for Decode.
-	Cloak   crypto.PubKey
+	Cloak   crypto.CloakedPubKey
 	ToPriv  *crypto.Prv
 	FromPub *crypto.Pub
 	ont.Onion

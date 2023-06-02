@@ -18,6 +18,8 @@ var (
 	fails = log.E.Chk
 )
 
+// Ngin is the generic interface for onion encoders to access the engine without
+// tying the dependencies together.
 type Ngin interface {
 	HandleMessage(s *splice.Splice, pr Onion)
 	GetLoad() byte
@@ -40,12 +42,15 @@ type Onion interface {
 		last bool) (skip bool, sd *sessions.Data)
 }
 
+// Encode is the generic encoder for an onion, all onions can be encoded with it.
 func Encode(on Onion) (s *splice.Splice) {
 	s = splice.New(on.Len())
 	fails(on.Encode(s))
 	return
 }
 
+// Assemble takes a slice and inserts the tail into the onion of the head until
+// there is no tail left.
 func Assemble(o []Onion) (on Onion) {
 	// First item is the outer crypt.
 	on = o[0]

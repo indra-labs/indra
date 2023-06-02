@@ -43,7 +43,7 @@ const (
 
 type Route struct {
 	HiddenService *crypto.Pub
-	HiddenCloaked crypto.PubKey
+	HiddenCloaked crypto.CloakedPubKey
 	Sender        *crypto.Prv
 	SenderPub     *crypto.Pub
 	nonce.IV

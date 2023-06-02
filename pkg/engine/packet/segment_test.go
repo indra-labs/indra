@@ -106,7 +106,7 @@ func TestSplitJoin(t *testing.T) {
 	for i := range splitted {
 		var pkt *Packet
 		var from *crypto.Pub
-		var to crypto.PubKey
+		var to crypto.CloakedPubKey
 		_ = to
 		var iv nonce.IV
 		if from, to, iv, e = GetKeysFromPacket(splitted[i]); fails(e) {
@@ -214,7 +214,7 @@ func TestSplitJoinFEC(t *testing.T) {
 			for s := range splitted {
 				var pkt *Packet
 				var from *crypto.Pub
-				var to crypto.PubKey
+				var to crypto.CloakedPubKey
 				_ = to
 				var iv nonce.IV
 				if from, to, iv, e = GetKeysFromPacket(

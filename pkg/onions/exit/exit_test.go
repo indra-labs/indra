@@ -17,7 +17,7 @@ import (
 
 func TestOnions_Exit(t *testing.T) {
 	var e error
-	prvs, pubs := crypto.GetCipherSet(t)
+	prvs, pubs := crypto.GetCipherSet()
 	ciphers := crypto.GenCiphers(prvs, pubs)
 	var msg slice.Bytes
 	var hash sha256.Hash

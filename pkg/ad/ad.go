@@ -15,6 +15,8 @@ var (
 	fails = log.E.Chk
 )
 
+// Ad is an interface for the signed messages stored in the PeerStore of the
+// libp2p host inside an indra engine.
 type Ad interface {
 	coding.Codec
 	Splice(s *splice.Splice)
@@ -22,6 +24,10 @@ type Ad interface {
 	Gossip(sm *sess.Manager, c qu.C)
 }
 
+// Gossip writes a new Ad out to the p2p network.
+//
+// todo: this will be changed to use the engine host peer store. An interface
+//  will be required.
 func Gossip(x Ad, sm *sess.Manager, c qu.C) {
 	done := qu.T()
 	msg := splice.New(x.Len())

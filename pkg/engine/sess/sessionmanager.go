@@ -196,7 +196,7 @@ func (sm *Manager) DeleteSession(id crypto.PubBytes) {
 // FindCloaked searches the client identity key and the sessions for a match. It
 // returns the session as well, though not all users of this function will need
 // this.
-func (sm *Manager) FindCloaked(clk crypto.PubKey) (hdr *crypto.Prv,
+func (sm *Manager) FindCloaked(clk crypto.CloakedPubKey) (hdr *crypto.Prv,
 	pld *crypto.Prv, sess *sessions.Data, identity bool) {
 
 	var b crypto.Blinder

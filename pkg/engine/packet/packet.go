@@ -159,7 +159,7 @@ func EncodePacket(ep *PacketParams) (pkt []byte, e error) {
 // found, it is combined with the public key to generate the cipher and the
 // entire packet should then be decrypted, and the DecodePacket function will
 // then decode a OnionSkin.
-func GetKeysFromPacket(d []byte) (from *crypto.Pub, to crypto.PubKey, iv nonce.IV,
+func GetKeysFromPacket(d []byte) (from *crypto.Pub, to crypto.CloakedPubKey, iv nonce.IV,
 	e error) {
 	pktLen := len(d)
 	if pktLen < Overhead {

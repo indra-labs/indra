@@ -18,9 +18,9 @@ func TestOnions_IntroQuery(t *testing.T) {
 	log2.SetLogLevel(log2.Trace)
 	log2.App.Store("")
 	var e error
-	prvs, pubs := crypto.GetCipherSet(t)
+	prvs, pubs := crypto.GetCipherSet()
 	ciphers := crypto.GenCiphers(prvs, pubs)
-	prv1, _ := crypto.GetTwoPrvKeys(t)
+	prv1, _ := crypto.GetTwoPrvKeys()
 	pub1 := crypto.DerivePub(prv1)
 	n3 := crypto.Gen3Nonces()
 	ep := &exit.ExitPoint{

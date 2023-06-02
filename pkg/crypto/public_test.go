@@ -21,7 +21,7 @@ func TestBase32(t *testing.T) {
 		//log.D.S("\nbytes", p.ToBytes(), k.ToBytes())
 		log.I.F("pub key: %d %s priv key: %d %s\n", len(b32), b32, len(pr32), pr32)
 		var kk *Pub
-		if kk, e = PubFromBase32(b32); fails(e) {
+		if kk, e = PubFromBased32(b32); fails(e) {
 			t.Error(e)
 			t.FailNow()
 		}

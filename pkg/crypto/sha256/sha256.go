@@ -5,6 +5,7 @@ package sha256
 
 import (
 	"encoding/base32"
+	"encoding/hex"
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/constant"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
@@ -23,10 +24,12 @@ var (
 	fails = log.E.Chk
 )
 
-// func (h Hash) String() string {
-// 	return hex.EncodeToString(h[:])
-// }
+// String returns the hex encoded form of a SHA256 hash.
+func (h Hash) String() string {
+	return hex.EncodeToString(h[:])
+}
 
+// Based32String returns the Basde32 encoded form of a SHA256 hash.
 func (h Hash) Based32String() string {
 	return enc(h[:])[:52]
 }
@@ -43,7 +46,7 @@ func Double(b []byte) Hash {
 // New creates a correctly sized slice for a Hash.
 func New() Hash { return Hash{} }
 
-// Single runs a standard SHA256 hash and does all the slicing for you.
+// Single runs a standard SHA256 hash.
 func Single(b []byte) Hash { return sha256.Sum256(b) }
 
 // Zero copies a cleanly initialised empty slice over top of the provided Hash.

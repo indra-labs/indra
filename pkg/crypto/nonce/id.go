@@ -30,14 +30,17 @@ func NewID() (t ID) {
 	idMx.Lock()
 	defer idMx.Unlock()
 	if counter == 0 {
+		// We reseed when the counter value overflows.
 		reseed()
 	}
 	s := sha256.Single(seed[:])
 	copy(seed[:], s[:])
 	copy(t[:], seed[:IDLen])
+	counter++
 	return
 }
 
+// String encodes the ID using Based32.
 func (id ID) String() string {
 	return enc(id[:])[:13]
 }

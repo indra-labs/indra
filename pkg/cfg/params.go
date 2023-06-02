@@ -14,6 +14,13 @@ var (
 	check = log.E.Chk
 )
 
+const (
+	MainNet = "mainnet"
+	TestNet = "testnet"
+	SimNet  = "simnet"
+)
+
+// Params is the specification for an indranet swarm (mainnet, testnet, etc).
 type Params struct {
 
 	// Name defines a human-readable identifier for the network
@@ -29,20 +36,12 @@ type Params struct {
 	DNSSeedAddresses []*SeedAddress
 }
 
+// SelectNetworkParams returns the network parameters associated with the network name.
 func SelectNetworkParams(network string) *Params {
 
-	if network == "mainnet" {
-		return MainNetServerParams
+	if nw, ok := params[network];ok{
+		return nw
 	}
-
-	if network == "testnet" {
-		return TestNetServerParams
-	}
-
-	if network == "simnet" {
-		return SimnetServerParams
-	}
-
 	panic("invalid network, exiting...")
 
 	os.Exit(1)
@@ -68,58 +67,60 @@ func (self *Params) ParseSeedMultiAddresses() (addresses []multiaddr.Multiaddr, 
 	return
 }
 
-var MainNetServerParams = &Params{
+var (
+	params = map[string]*Params{
+		MainNet: {
 
-	Name: "mainnet",
+			Name: "mainnet",
 
-	Net: node.MainNet,
+			Net: node.MainNet,
 
-	DefaultPort: "8337",
+			DefaultPort: "8337",
 
-	DNSSeedAddresses: []*SeedAddress{
-		NewSeedAddress("seed0.indra.org", "12D3KooWCfTmWavthiVV7Vkm9eouCdiLdGnhd2PShQ2hiu2VVU6Q"),
-		NewSeedAddress("seed1.indra.org", "12D3KooWASwYWP2gMh581EQG25nauvWfwAU3g6v8TugEoEzL5Ags"),
-		NewSeedAddress("seed2.indra.org", "12D3KooWFW7k2YcxjZrqWXJhmoCTNiNtgjLkEUeqgvZRAF3xHZjs"),
-		NewSeedAddress("seed3.indra.org", "12D3KooWPxx3WMiCv3SwBNfrM6peGBWDypJqqxfdGgZKpr7BF9Vo"),
-		// NewSeedAddress("seed0.example.com", "12D3KooWDj2wXRVPRVP8HcQXTyAXeigAAjaX6hgdgALyNFuK1Htv"),
-		// NewSeedAddress("seed1.example.com", "12D3KooWMkBp6E2qjz2saq9eocT9FTh3zuoP5yAcFgFGSfXoZN8K"),
-		// NewSeedAddress("seed2.example.com", "12D3KooWEonhWcCp6FMwycNFrE5hSDbPdezy5ftBcHLxLPoESzgZ"),
-		// NewSeedAddress("seed3.example.com", "12D3KooWFq8irCNNCdE4zxjcUGVdG47fnPSd4hj9MsxH8RAunHTx"),
-	},
-}
+			DNSSeedAddresses: []*SeedAddress{
+				NewSeedAddress("seed0.indra.org", "12D3KooWCfTmWavthiVV7Vkm9eouCdiLdGnhd2PShQ2hiu2VVU6Q"),
+				NewSeedAddress("seed1.indra.org", "12D3KooWASwYWP2gMh581EQG25nauvWfwAU3g6v8TugEoEzL5Ags"),
+				NewSeedAddress("seed2.indra.org", "12D3KooWFW7k2YcxjZrqWXJhmoCTNiNtgjLkEUeqgvZRAF3xHZjs"),
+				NewSeedAddress("seed3.indra.org", "12D3KooWPxx3WMiCv3SwBNfrM6peGBWDypJqqxfdGgZKpr7BF9Vo"),
+				// NewSeedAddress("seed0.example.com", "12D3KooWDj2wXRVPRVP8HcQXTyAXeigAAjaX6hgdgALyNFuK1Htv"),
+				// NewSeedAddress("seed1.example.com", "12D3KooWMkBp6E2qjz2saq9eocT9FTh3zuoP5yAcFgFGSfXoZN8K"),
+				// NewSeedAddress("seed2.example.com", "12D3KooWEonhWcCp6FMwycNFrE5hSDbPdezy5ftBcHLxLPoESzgZ"),
+				// NewSeedAddress("seed3.example.com", "12D3KooWFq8irCNNCdE4zxjcUGVdG47fnPSd4hj9MsxH8RAunHTx"),
+			},
+		},
+		TestNet: {
 
-var TestNetServerParams = &Params{
+			Name: "testnet",
 
-	Name: "testnet",
+			Net: node.TestNet,
 
-	Net: node.TestNet,
+			DefaultPort: "58337",
 
-	DefaultPort: "58337",
+			DNSSeedAddresses: []*SeedAddress{
+				// NewSeedAddress("seed0.indra.org", "12D3KooWCfTmWavthiVV7Vkm9eouCdiLdGnhd2PShQ2hiu2VVU6Q"),
+				// NewSeedAddress("seed1.indra.org", "12D3KooWASwYWP2gMh581EQG25nauvWfwAU3g6v8TugEoEzL5Ags"),
+				// NewSeedAddress("seed2.indra.org", "12D3KooWFW7k2YcxjZrqWXJhmoCTNiNtgjLkEUeqgvZRAF3xHZjs"),
+				// NewSeedAddress("seed3.indra.org", "12D3KooWPxx3WMiCv3SwBNfrM6peGBWDypJqqxfdGgZKpr7BF9Vo"),
+				// NewSeedAddress("seed0.example.com", "12D3KooWDj2wXRVPRVP8HcQXTyAXeigAAjaX6hgdgALyNFuK1Htv"),
+				// NewSeedAddress("seed1.example.com", "12D3KooWMkBp6E2qjz2saq9eocT9FTh3zuoP5yAcFgFGSfXoZN8K"),
+				// NewSeedAddress("seed2.example.com", "12D3KooWEonhWcCp6FMwycNFrE5hSDbPdezy5ftBcHLxLPoESzgZ"),
+				// NewSeedAddress("seed3.example.com", "12D3KooWFq8irCNNCdE4zxjcUGVdG47fnPSd4hj9MsxH8RAunHTx"),
+			},
+		},
+		SimNet: {
 
-	DNSSeedAddresses: []*SeedAddress{
-		// NewSeedAddress("seed0.indra.org", "12D3KooWCfTmWavthiVV7Vkm9eouCdiLdGnhd2PShQ2hiu2VVU6Q"),
-		// NewSeedAddress("seed1.indra.org", "12D3KooWASwYWP2gMh581EQG25nauvWfwAU3g6v8TugEoEzL5Ags"),
-		// NewSeedAddress("seed2.indra.org", "12D3KooWFW7k2YcxjZrqWXJhmoCTNiNtgjLkEUeqgvZRAF3xHZjs"),
-		// NewSeedAddress("seed3.indra.org", "12D3KooWPxx3WMiCv3SwBNfrM6peGBWDypJqqxfdGgZKpr7BF9Vo"),
-		// NewSeedAddress("seed0.example.com", "12D3KooWDj2wXRVPRVP8HcQXTyAXeigAAjaX6hgdgALyNFuK1Htv"),
-		// NewSeedAddress("seed1.example.com", "12D3KooWMkBp6E2qjz2saq9eocT9FTh3zuoP5yAcFgFGSfXoZN8K"),
-		// NewSeedAddress("seed2.example.com", "12D3KooWEonhWcCp6FMwycNFrE5hSDbPdezy5ftBcHLxLPoESzgZ"),
-		// NewSeedAddress("seed3.example.com", "12D3KooWFq8irCNNCdE4zxjcUGVdG47fnPSd4hj9MsxH8RAunHTx"),
-	},
-}
+			Name: "simnet",
 
-var SimnetServerParams = &Params{
+			Net: node.SimNet,
 
-	Name: "simnet",
+			DefaultPort: "62134",
 
-	Net: node.SimNet,
-
-	DefaultPort: "62134",
-
-	// Should be passed via --seed
-	DNSSeedAddresses: []*SeedAddress{
-		NewSeedAddress("seed0", "16Uiu2HAmHL9cwDdGdGEQk7K5xTBH3rUKoRWS3tWgjej9WmjMG6L9"),
-		NewSeedAddress("seed1", "16Uiu2HAm3ZVpmNPnk67eCKsR3HCMSLhbw3THcBDpyKwCE5GNgHVN"),
-		NewSeedAddress("seed2", "16Uiu2HAmTP7o9yyuFz8f5sRGr7KTamuMo6UguuTqPMaJavdGX7Ju"),
-	},
-}
+			// Should be passed via --seed
+			DNSSeedAddresses: []*SeedAddress{
+				NewSeedAddress("seed0", "16Uiu2HAmHL9cwDdGdGEQk7K5xTBH3rUKoRWS3tWgjej9WmjMG6L9"),
+				NewSeedAddress("seed1", "16Uiu2HAm3ZVpmNPnk67eCKsR3HCMSLhbw3THcBDpyKwCE5GNgHVN"),
+				NewSeedAddress("seed2", "16Uiu2HAmTP7o9yyuFz8f5sRGr7KTamuMo6UguuTqPMaJavdGX7Ju"),
+			},
+		},
+	}
+)

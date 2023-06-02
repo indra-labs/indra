@@ -128,7 +128,7 @@ func GetRoutingHeaderFromCursor(s *splice.Splice) (r RoutingHeaderBytes) {
 	return
 }
 
-func (hr *Hidden) FindCloakedHiddenService(key crypto.PubKey) (
+func (hr *Hidden) FindCloakedHiddenService(key crypto.CloakedPubKey) (
 	pubKey *crypto.PubBytes) {
 	for i := range hr.MyIntros {
 		pubKey1 := hr.MyIntros[i].Intro.Key.ToBytes()
