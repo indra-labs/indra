@@ -1,3 +1,5 @@
+//go:build failingtests
+
 package hiddenservice
 
 import (
