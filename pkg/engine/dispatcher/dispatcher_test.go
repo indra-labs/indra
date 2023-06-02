@@ -23,8 +23,9 @@ import (
 )
 
 func TestDispatcher(t *testing.T) {
-	if indra.CI!="false" {
-		log2.SetLogLevel(log2.Debug)
+	if indra.CI=="false" {
+		log2.SetLogLevel(log2.Trace)
+		log.D.Ln("debug")
 	}
 	var e error
 	var l1, l2 *transport.Listener

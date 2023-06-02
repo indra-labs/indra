@@ -3,9 +3,9 @@ package sess
 import (
 	"errors"
 	"net/netip"
-	
+
 	"github.com/gookit/color"
-	
+
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/node"
 	"github.com/indra-labs/indra/pkg/engine/responses"
@@ -33,13 +33,14 @@ func (sm *Manager) Send(addr *netip.AddrPort, s *splice.Splice) {
 // layer in an onion.Skins.
 func (sm *Manager) SendWithOneHook(ap *netip.AddrPort,
 	res *Data, responseHook responses.Callback, p *responses.Pending) {
-	
+
 	if responseHook == nil {
 		responseHook = func(_ nonce.ID, _ interface{}, _ slice.Bytes) (e error) {
 			log.D.Ln("nil response hook")
 			return errors.New("nil response hook")
 		}
 	}
+	log.I.S("res", res.ID)
 	p.Add(responses.ResponseParams{
 		ID:       res.ID,
 		SentSize: res.B.Len(),

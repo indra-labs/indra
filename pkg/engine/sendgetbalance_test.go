@@ -1,5 +1,3 @@
-//go:build failingtests
-
 package engine
 
 import (
@@ -17,13 +15,13 @@ import (
 )
 
 func TestClient_SendGetBalance(t *testing.T) {
-	if indra.CI!="false" {
-		log2.SetLogLevel(log2.Debug)
+	if indra.CI == "false" {
+		log2.SetLogLevel(log2.Trace)
 	}
 	var clients []*Engine
 	var e error
 	ctx, cancel := context.WithCancel(context.Background())
-	if clients, e = CreateNMockCircuitsWithSessions(2, 2,
+	if clients, e = CreateNMockCircuitsWithSessions(4, 4,
 		ctx); fails(e) {
 		t.Error(e)
 		t.FailNow()
@@ -36,7 +34,7 @@ func TestClient_SendGetBalance(t *testing.T) {
 	}
 	quit := qu.T()
 	var wg sync.WaitGroup
-	go func() {
+ 	go func() {
 		select {
 		case <-time.After(5 * time.Second):
 		case <-quit:
@@ -46,32 +44,25 @@ func TestClient_SendGetBalance(t *testing.T) {
 		quit.Q()
 		t.Error("SendGetBalance test failed")
 	}()
-out:
-	for i := 1; i < len(clients[0].Manager.Sessions)-1; i++ {
-		wg.Add(1)
-		returnHops := client.Manager.GetSessionsAtHop(5)
-		var returner *sessions.Data
-		if len(returnHops) > 1 {
-			cryptorand.Shuffle(len(returnHops), func(i, j int) {
-				returnHops[i], returnHops[j] = returnHops[j],
-					returnHops[i]
-			})
-		}
-		returner = returnHops[0]
-		clients[0].SendGetBalance(returner, clients[0].Manager.Sessions[i],
-			func(cf nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
-				log.I.Ln("success")
-				wg.Done()
-				quit.Q()
-				return
-			})
-		select {
-		case <-quit:
-			break out
-		default:
-		}
-		wg.Wait()
+ 	i := 0
+	wg.Add(1)
+	returnHops := client.Manager.GetSessionsAtHop(5)
+	var returner *sessions.Data
+	if len(returnHops) > 1 {
+		cryptorand.Shuffle(len(returnHops), func(i, j int) {
+			returnHops[i], returnHops[j] = returnHops[j],
+				returnHops[i]
+		})
 	}
+	returner = returnHops[0]
+	clients[0].SendGetBalance(returner, clients[0].Manager.Sessions[i],
+		func(cf nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
+			log.I.Ln("success")
+			wg.Done()
+			quit.Q()
+			return
+		})
+ 	wg.Wait()
 	quit.Q()
 	cancel()
 	for _, v := range clients {

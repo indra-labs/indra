@@ -47,7 +47,7 @@ func (ng *Engine) SendGetBalance(alice, bob *sessions.Data, hook responses.Callb
 	copy(c[:], se)
 	o := MakeGetBalance(getbalance.GetBalanceParams{alice.ID, alice, bob, c,
 		ng.KeySet})
-	log.D.Ln("sending out getbalance onion")
+	log.D.S("sending out getbalance onion", o)
 	res := PostAcctOnion(ng.Manager, o)
 	ng.Manager.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.Responses)
 }

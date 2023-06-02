@@ -54,7 +54,7 @@ type GetBalance struct {
 
 func (x *GetBalance) Account(res *sess.Data, sm *sess.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
-	res.ID = s.ID
+	res.ID = x.ID
 	res.Billable = append(res.Billable, s.Header.Bytes)
 	skip = true
 	return
@@ -91,6 +91,7 @@ func (x *GetBalance) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error
 		if sd.ID == x.ID {
 			log.D.S("sessiondata", sd.ID, sd.Remaining)
 			bal = &balance.Balance{ID: x.ID, MilliSatoshi: sd.Remaining}
+			log.D.S("bal", bal)
 			found = true
 			return true
 		}

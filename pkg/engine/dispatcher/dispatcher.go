@@ -136,8 +136,7 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 	if c == nil {
 		return
 	}
-	log.T.S(blue(d.Conn.LocalMultiaddr()) + " handling message")// m.ToBytes(),
-
+	log.T.S(blue(d.Conn.LocalMultiaddr()) + " handling message") // m.ToBytes(),
 	magic := c.Magic()
 	log.T.Ln(d.ip, "decoding message with magic",
 		color.Red.Sprint(magic))
@@ -375,6 +374,7 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 							tmpD = append(tmpD, d.Done[i])
 						}
 					}
+
 					return true
 				}
 			}
@@ -515,7 +515,7 @@ func (d *Dispatcher) SendAck(rxr *RxRecord) {
 }
 
 func (d *Dispatcher) SendToConn(m slice.Bytes) (pieces int) {
-	log.T.Ln(d.ip, "message dispatching to conn")// m.ToBytes(),
+	log.T.Ln(d.ip, "message dispatching to conn") // m.ToBytes(),
 
 	// Data received for sending through the Conn.
 	id := nonce.NewID()

@@ -62,6 +62,8 @@ func (x *Balance) Encode(s *splice.Splice) (e error) {
 func (x *Balance) GetOnion() interface{} { return x }
 
 func (x *Balance) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
+	log.D.Ln("handling balance", x.ID)
+	log.D.S("pending", ng.Pending())
 	if pending := ng.Pending().Find(x.ID); pending != nil {
 		log.D.S("found pending", pending.ID)
 		for i := range pending.Billable {
