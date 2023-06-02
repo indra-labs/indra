@@ -223,6 +223,8 @@ const (
 	Patch = %d
 )
 
+var CI = %s
+
 // Version returns a pretty printed version information string.
 func Version() string {
 	return fmt.Sprint(
@@ -246,6 +248,7 @@ func Version() string {
 		Major,
 		Minor,
 		Patch,
+		"false",
 	)
 	path := filepath.Join(PathBase, "version.go")
 	if e = os.WriteFile(path, []byte(versionFileOut), 0666); check(e) {

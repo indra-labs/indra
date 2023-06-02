@@ -1,4 +1,4 @@
-//go:build failingtests
+//go:build !failingtests
 
 package headers
 
