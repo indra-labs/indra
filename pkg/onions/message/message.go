@@ -28,8 +28,12 @@ var (
 
 const (
 	MessageMagic    = "mess"
-	ReplyCiphersLen = 2*consts.RoutingHeaderLen + 6*sha256.Len + 6*nonce.IVLen
-	MessageLen      = magic.Len + 2*nonce.IDLen + 2*consts.RoutingHeaderLen +
+	ReplyCiphersLen = 2*consts.RoutingHeaderLen +
+		6*sha256.Len +
+		6*nonce.IVLen
+	MessageLen      = magic.Len +
+		2*nonce.IDLen +
+		2*consts.RoutingHeaderLen +
 		ReplyCiphersLen
 )
 

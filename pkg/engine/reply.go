@@ -3,7 +3,6 @@ package engine
 import (
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
-	"github.com/indra-labs/indra/pkg/onions"
 	"github.com/indra-labs/indra/pkg/onions/exit"
 	"github.com/indra-labs/indra/pkg/onions/hidden"
 	"github.com/indra-labs/indra/pkg/onions/ont"
@@ -20,7 +19,7 @@ func MakeReplyHeader(ng *Engine) (returnHeader *hidden.ReplyHeader) {
 		Keys:     crypto.Privs{rvKeys[0], rvKeys[1], rvKeys[2]},
 		Nonces:   crypto.Nonces{n[0], n[1], n[2]},
 	}
-	rh := onions.Skins{}.RoutingHeader(rt)
+	rh := Skins{}.RoutingHeader(rt)
 	rHdr := ont.Encode(ont.Assemble(rh))
 	rHdr.SetCursor(0)
 	ep := exit.ExitPoint{

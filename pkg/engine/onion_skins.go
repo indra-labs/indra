@@ -1,7 +1,6 @@
-package onions
+package engine
 
 import (
-	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/node"
@@ -24,14 +23,8 @@ import (
 	"github.com/indra-labs/indra/pkg/onions/reverse"
 	"github.com/indra-labs/indra/pkg/onions/route"
 	"github.com/indra-labs/indra/pkg/onions/session"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"net/netip"
-)
-
-var (
-	log   = log2.GetLogger(indra.PathBase)
-	fails = log.E.Chk
 )
 
 //func (o Skins) Balance(id nonce.ID, amt lnwire.MilliSatoshi) Skins {

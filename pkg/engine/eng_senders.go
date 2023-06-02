@@ -1,7 +1,6 @@
 package engine
 
 import (
-	onions2 "github.com/indra-labs/indra/pkg/onions"
 	"github.com/indra-labs/indra/pkg/onions/exit"
 	"github.com/indra-labs/indra/pkg/onions/getbalance"
 	"github.com/indra-labs/indra/pkg/onions/intro"
@@ -33,7 +32,7 @@ func (ng *Engine) SendExit(port uint16, msg slice.Bytes, id nonce.ID,
 	se := ng.Manager.SelectHops(hops, s, "exit")
 	var c sessions.Circuit
 	copy(c[:], se)
-	o := onions2.MakeExit(exit.ExitParams{port, msg, id, bob, alice, c, ng.KeySet})
+	o := MakeExit(exit.ExitParams{port, msg, id, bob, alice, c, ng.KeySet})
 	res := PostAcctOnion(ng.Manager, o)
 	ng.Manager.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.Responses)
 }
@@ -46,7 +45,7 @@ func (ng *Engine) SendGetBalance(alice, bob *sessions.Data, hook responses.Callb
 	se := ng.Manager.SelectHops(hops, s, "sendgetbalance")
 	var c sessions.Circuit
 	copy(c[:], se)
-	o := onions2.MakeGetBalance(getbalance.GetBalanceParams{alice.ID, alice, bob, c,
+	o := MakeGetBalance(getbalance.GetBalanceParams{alice.ID, alice, bob, c,
 		ng.KeySet})
 	log.D.Ln("sending out getbalance onion")
 	res := PostAcctOnion(ng.Manager, o)
@@ -65,7 +64,7 @@ func (ng *Engine) SendHiddenService(id nonce.ID, key *crypto.Prv,
 	var c sessions.Circuit
 	copy(c[:], se[:len(c)])
 	in = intro.NewIntroAd(id, key, alice.Node.AddrPort, relayRate, port, expiry)
-	o := onions2.MakeHiddenService(in, alice, bob, c, ng.KeySet)
+	o := MakeHiddenService(in, alice, bob, c, ng.KeySet)
 	log.D.F("%s sending out hidden service onion %s",
 		ng.Manager.GetLocalNodeAddressString(),
 		color.Yellow.Sprint(alice.Node.AddrPort.String()))
@@ -101,7 +100,7 @@ func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *crypto.Pub,
 	se := ng.Manager.SelectHops(hops, s, "sendintroquery")
 	var c sessions.Circuit
 	copy(c[:], se)
-	o := onions2.MakeIntroQuery(id, hsk, bob, alice, c, ng.KeySet)
+	o := MakeIntroQuery(id, hsk, bob, alice, c, ng.KeySet)
 	res := PostAcctOnion(ng.Manager, o)
 	log.D.Ln(res.ID)
 	ng.Manager.SendWithOneHook(c[0].Node.AddrPort, res, fn, ng.Responses)
@@ -127,7 +126,7 @@ func (ng *Engine) SendPing(c sessions.Circuit, hook responses.Callback) {
 	se := ng.Manager.SelectHops(hops, s, "sendping")
 	copy(c[:], se)
 	id := nonce.NewID()
-	o := onions2.Ping(id, se[len(se)-1], c, ng.KeySet)
+	o := Ping(id, se[len(se)-1], c, ng.KeySet)
 	res := PostAcctOnion(ng.Manager, o)
 	ng.Manager.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.Responses)
 }
@@ -157,7 +156,7 @@ func (ng *Engine) SendRoute(k *crypto.Pub, ap *netip.AddrPort,
 	se := ng.Manager.SelectHops(hops, s, "sendroute")
 	var c sessions.Circuit
 	copy(c[:], se)
-	o := onions2.MakeRoute(nonce.NewID(), k, ng.KeySet, se[5], c[2], c)
+	o := MakeRoute(nonce.NewID(), k, ng.KeySet, se[5], c[2], c)
 	res := PostAcctOnion(ng.Manager, o)
 	log.D.Ln("sending out route request onion")
 	ng.Manager.SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.Responses)

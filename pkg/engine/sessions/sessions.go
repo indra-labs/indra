@@ -2,6 +2,7 @@ package sessions
 
 import (
 	"fmt"
+	"github.com/gookit/color"
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
@@ -9,7 +10,6 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/node"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/lightningnetwork/lnd/lnwire"
-	"github.com/gookit/color"
 )
 
 var (
@@ -88,7 +88,7 @@ func NewSessionData(
 	}
 	h, p := hdr.Prv.ToBytes(), pld.Prv.ToBytes()
 	s = &Data{
-		// Keys:        id,
+		ID:        id,
 		Node:      node,
 		Remaining: rem,
 		Header:    hdr,

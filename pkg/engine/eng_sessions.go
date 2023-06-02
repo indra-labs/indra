@@ -6,7 +6,6 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/node"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
-	onions2 "github.com/indra-labs/indra/pkg/onions"
 	"github.com/indra-labs/indra/pkg/onions/session"
 	"github.com/indra-labs/indra/pkg/util/cryptorand"
 	"github.com/indra-labs/indra/pkg/util/slice"
@@ -78,7 +77,7 @@ func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 		}
 	}
 	// todo: handle payment failures!
-	o := onions2.MakeSession(conf, s, returnSession, nodes[:], ng.KeySet)
+	o := MakeSession(conf, s, returnSession, nodes[:], ng.KeySet)
 	res := PostAcctOnion(ng.Manager, o)
 	ng.Manager.SendWithOneHook(nodes[0].AddrPort, res, func(id nonce.ID,
 		ifc interface{},

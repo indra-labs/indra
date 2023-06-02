@@ -290,7 +290,7 @@ func TestClient_SendSessionKeys(t *testing.T) {
 }
 
 func TestEngine_Message(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+	log2.SetLogLevel(log2.Info)
 	log2.App.Store("")
 	var clients []*Engine
 	var e error
@@ -368,7 +368,6 @@ func TestEngine_Message(t *testing.T) {
 		})
 	}
 	returner = returnHops[0]
-	const localPort = 25234
 	log.D.Ln("getting sessions for introducer...")
 	for i := range clients {
 		if introducer.Node.ID == clients[i].Manager.GetLocalNode().ID {
@@ -388,6 +387,7 @@ func TestEngine_Message(t *testing.T) {
 			break
 		}
 	}
+	log2.SetLogLevel(log2.Trace)
 	wg.Add(1)
 	counter.Inc()
 	svc := &services.Service{
@@ -417,7 +417,6 @@ func TestEngine_Message(t *testing.T) {
 			return
 		})
 	wg.Wait()
-	log2.SetLogLevel(log2.Debug)
 	msg, _, _ := tests.GenMessage(256, "hidden service message test")
 	wg.Add(1)
 	counter.Inc()
