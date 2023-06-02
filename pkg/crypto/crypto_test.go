@@ -2,6 +2,7 @@ package crypto
 
 import (
 	rand2 "crypto/rand"
+	"github.com/indra-labs/indra"
 	"testing"
 
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
@@ -9,7 +10,9 @@ import (
 )
 
 func TestFromBased32(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	if indra.CI!="false" {
+		log2.SetLogLevel(log2.Trace)
+	}
 	var rBytes sha256.Hash
 	var n int
 	var e error

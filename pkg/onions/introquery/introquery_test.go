@@ -1,6 +1,7 @@
 package introquery
 
 import (
+	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/onions/end"
 	"github.com/indra-labs/indra/pkg/onions/exit"
 	"github.com/indra-labs/indra/pkg/onions/ont"
@@ -15,7 +16,9 @@ import (
 )
 
 func TestOnions_IntroQuery(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	if indra.CI!="false" {
+		log2.SetLogLevel(log2.Trace)
+	}
 	log2.App.Store("")
 	var e error
 	prvs, pubs := crypto.GetCipherSet()

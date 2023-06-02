@@ -2,6 +2,7 @@ package dispatcher
 
 import (
 	"context"
+	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/engine"
 	"github.com/indra-labs/indra/pkg/onions/confirmation"
 	"github.com/indra-labs/indra/pkg/onions/ont"
@@ -22,7 +23,9 @@ import (
 )
 
 func TestDispatcher(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+	if indra.CI!="false" {
+		log2.SetLogLevel(log2.Debug)
+	}
 	var e error
 	var l1, l2 *transport.Listener
 	_ = l2
@@ -96,7 +99,7 @@ func TestDispatcher(t *testing.T) {
 					t.Error("did not receive expected message")
 					return
 				} else {
-					log.I.Ln("success", count)
+					log.D.Ln("success", count)
 					count++
 					// wg.Done()
 					continue
@@ -107,7 +110,7 @@ func TestDispatcher(t *testing.T) {
 					t.Error("did not receive expected message")
 					return
 				} else {
-					log.I.Ln("success", count)
+					log.D.Ln("success", count)
 					count++
 					// wg.Done()
 					continue
@@ -121,15 +124,15 @@ func TestDispatcher(t *testing.T) {
 	// var n int
 	d1.SendToConn(msgp1)
 	// wg.Add(n)
-	log.I.Ln("sent 1")
+	log.D.Ln("sent 1")
 	time.Sleep(time.Second)
 	d2.SendToConn(msgp2)
 	// wg.Add(n)
-	log.I.Ln("sent 2")
+	log.D.Ln("sent 2")
 	time.Sleep(time.Second)
 	d1.SendToConn(msgp1)
 	// wg.Add(n)
-	log.I.Ln("sent 3")
+	log.D.Ln("sent 3")
 	time.Sleep(time.Second)
 	d2.SendToConn(msgp2)
 	// wg.Add(n)

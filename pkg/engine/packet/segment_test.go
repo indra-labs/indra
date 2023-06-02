@@ -2,6 +2,7 @@ package packet
 
 import (
 	"errors"
+	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
@@ -74,7 +75,9 @@ func TestRemovePacket(t *testing.T) {
 }
 
 func TestSplitJoin(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+	if indra.CI!="false" {
+		log2.SetLogLevel(log2.Debug)
+	}
 	msgSize := 1 << 19
 	segSize := 1382
 	var e error
@@ -134,7 +137,9 @@ func TestSplitJoin(t *testing.T) {
 }
 
 func TestSplitJoinFEC(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+	if indra.CI!="false" {
+		log2.SetLogLevel(log2.Debug)
+	}
 	msgSize := 1 << 18
 	segSize := 1382
 	var e error

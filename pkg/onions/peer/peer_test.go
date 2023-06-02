@@ -1,6 +1,8 @@
 package peer
 
 import (
+	"fmt"
+	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/coding"
@@ -11,7 +13,10 @@ import (
 )
 
 func TestPeerAd(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	if indra.CI != "false" {
+		log2.SetLogLevel(log2.Trace)
+		fmt.Println("logging")
+	}
 	var e error
 	pr, ks, _ := crypto.NewSigner()
 	id := nonce.NewID()

@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"github.com/indra-labs/indra"
 	"sync"
 	"testing"
 	"time"
@@ -22,7 +23,9 @@ import (
 )
 
 func TestClient_SendExit(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+	if indra.CI!="false" {
+		log2.SetLogLevel(log2.Debug)
+	}
 	var clients []*Engine
 	var e error
 	ctx, cancel := context.WithCancel(context.Background())
@@ -96,7 +99,7 @@ out:
 			if id != idd {
 				t.Error("failed to receive expected message Keys")
 			}
-			log.I.F("success\n\n")
+			log.D.F("success\n\n")
 			wg.Done()
 			return
 		})
@@ -121,7 +124,9 @@ out:
 }
 
 func TestClient_SendPing(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+	if indra.CI!="false" {
+		log2.SetLogLevel(log2.Debug)
+	}
 	var clients []*Engine
 	var e error
 	ctx, cancel := context.WithCancel(context.Background())
@@ -153,7 +158,7 @@ out:
 		c[sess.Hop] = clients[0].Manager.Sessions[i]
 		clients[0].SendPing(c,
 			func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
-				log.I.Ln("success")
+				log.D.Ln("success")
 				wg.Done()
 				return
 			})
@@ -172,7 +177,9 @@ out:
 }
 
 func TestClient_SendSessionKeys(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+	if indra.CI!="false" {
+		log2.SetLogLevel(log2.Debug)
+	}
 	var clients []*Engine
 	var e error
 	ctx, cancel := context.WithCancel(context.Background())

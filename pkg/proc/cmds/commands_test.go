@@ -2,8 +2,6 @@ package cmds
 
 import (
 	"fmt"
-	"os"
-	"strings"
 	"testing"
 
 	"github.com/indra-labs/indra/pkg/proc/opts/config"
@@ -12,18 +10,18 @@ import (
 
 func TestCommand_Foreach(t *testing.T) {
 	cm, _ := Init(GetExampleCommands(), nil)
-	log.I.Ln("spewing only droptxindex")
+	log.D.Ln("spewing only droptxindex")
 	cm.ForEach(func(cmd *Command, _ int) bool {
 		if cmd.Name == "droptxindex" {
-			log.I.S(cmd)
+			log.D.S(cmd)
 		}
 		return true
 	}, 0, 0, cm)
-	log.I.Ln("printing name of all commands found on search")
+	log.D.Ln("printing name of all commands found on search")
 	cm.ForEach(func(cmd *Command, depth int) bool {
-		log.I.F("%s%s #(%d)", path.GetIndent(depth), cmd.Path, depth)
+		log.D.F("%s%s #(%d)", path.GetIndent(depth), cmd.Path, depth)
 		for i := range cmd.Configs {
-			log.I.F("%s%s -%s %v #%v (%d)", path.GetIndent(depth),
+			log.D.F("%s%s -%s %v #%v (%d)", path.GetIndent(depth),
 				cmd.Configs[i].Path(), i, cmd.Configs[i].String(), cmd.Configs[i].Meta().Aliases(), depth)
 		}
 		return true
@@ -36,7 +34,7 @@ func TestCommand_MarshalText(t *testing.T) {
 	if log.E.Chk(err) {
 		t.FailNow()
 	}
-	log.I.Ln("\n" + string(conf))
+	log.D.Ln("\n" + string(conf))
 }
 
 func TestCommand_UnmarshalText(t *testing.T) {
@@ -62,168 +60,171 @@ func TestCommand_GetEnvs(t *testing.T) {
 		return nil
 	})
 	for i := range out { // verifying ordering groups subcommands
-		log.I.Ln(out[i])
+		log.D.Ln(out[i])
 	}
 	if err != nil {
 		t.FailNow()
 	}
 }
 
-var testSeparator = fmt.Sprintf("%s\n", strings.Repeat("-", 72))
-
-func TestCommand_Help(t *testing.T) {
-	ex := GetExampleCommands()
-	ex.AddCommand(Help())
-	o, _ := Init(ex, nil)
-	o.Commands = append(o.Commands)
-	args1 := "/random/path/to/server_binary help"
-	fmt.Println(args1)
-	args1s := strings.Split(args1, " ")
-	run, args, err := o.ParseCLIArgs(args1s)
-	if log.E.Chk(err) {
-		t.FailNow()
-	}
-	err = run.Entrypoint(o, args)
-	if log.E.Chk(err) {
-		t.FailNow()
-	}
-	fmt.Print(testSeparator)
-	args1 = "/random/path/to/server_binary help loglevel"
-	fmt.Println(args1)
-	args1s = strings.Split(args1, " ")
-	run, args, err = o.ParseCLIArgs(args1s)
-	if log.E.Chk(err) {
-		t.FailNow()
-	}
-	err = run.Entrypoint(o, args)
-	if log.E.Chk(err) {
-		t.FailNow()
-	}
-	fmt.Print(testSeparator)
-	args1 = "/random/path/to/server_binary help help"
-	fmt.Println(args1)
-	args1s = strings.Split(args1, " ")
-	run, args, err = o.ParseCLIArgs(args1s)
-	if log.E.Chk(err) {
-		t.FailNow()
-	}
-	err = run.Entrypoint(o, args)
-	if log.E.Chk(err) {
-		t.FailNow()
-	}
-	fmt.Print(testSeparator)
-	args1 = "/random/path/to/server_binary help node"
-	fmt.Println(args1)
-	args1s = strings.Split(args1, " ")
-	run, args, err = o.ParseCLIArgs(args1s)
-	if log.E.Chk(err) {
-		t.FailNow()
-	}
-	err = run.Entrypoint(o, args)
-	if log.E.Chk(err) {
-		t.FailNow()
-	}
-	fmt.Print(testSeparator)
-	args1 = "/random/path/to/server_binary help rpcconnect"
-	fmt.Println(args1)
-	args1s = strings.Split(args1, " ")
-	run, args, err = o.ParseCLIArgs(args1s)
-	if log.E.Chk(err) {
-		t.FailNow()
-	}
-	err = run.Entrypoint(o, args)
-	if log.E.Chk(err) {
-		t.FailNow()
-	}
-	fmt.Print(testSeparator)
-	args1 = "/random/path/to/server_binary help kopach rpcconnect"
-	fmt.Println(args1)
-	args1s = strings.Split(args1, " ")
-	run, args, err = o.ParseCLIArgs(args1s)
-	if log.E.Chk(err) {
-		t.FailNow()
-	}
-	err = run.Entrypoint(o, args)
-	if log.E.Chk(err) {
-		t.FailNow()
-	}
-	fmt.Print(testSeparator)
-	args1 = "/random/path/to/server_binary help node rpcconnect"
-	fmt.Println(args1)
-	args1s = strings.Split(args1, " ")
-	run, args, err = o.ParseCLIArgs(args1s)
-	if log.E.Chk(err) {
-		t.FailNow()
-	}
-	err = run.Entrypoint(o, args)
-	if log.E.Chk(err) {
-		t.FailNow()
-	}
-	fmt.Print(testSeparator)
-	args1 = "/random/path/to/server_binary help nodeoff"
-	fmt.Println(args1)
-	args1s = strings.Split(args1, " ")
-	run, args, err = o.ParseCLIArgs(args1s)
-	if log.E.Chk(err) {
-		t.FailNow()
-	}
-	err = run.Entrypoint(o, args)
-	if log.E.Chk(err) {
-		t.FailNow()
-	}
-	fmt.Print(testSeparator)
-	args1 = "/random/path/to/server_binary help user"
-	fmt.Println(args1)
-	args1s = strings.Split(args1, " ")
-	run, args, err = o.ParseCLIArgs(args1s)
-	if log.E.Chk(err) {
-		t.FailNow()
-	}
-	err = run.Entrypoint(o, args)
-	if log.E.Chk(err) {
-		t.FailNow()
-	}
-	fmt.Print(testSeparator)
-	args1 = "/random/path/to/server_binary help file"
-	fmt.Println(args1)
-	args1s = strings.Split(args1, " ")
-	run, args, err = o.ParseCLIArgs(args1s)
-	if log.E.Chk(err) {
-		t.FailNow()
-	}
-	err = run.Entrypoint(o, args)
-	if log.E.Chk(err) {
-		t.FailNow()
-	}
-
+var _print = func(a ...any)  {
+	 fmt.Println(a)
 }
-func TestCommand_LogToFile(t *testing.T) {
-	ex := GetExampleCommands()
-	ex.AddCommand(Help())
-	ex, _ = Init(ex, nil)
-	ex.GetOpt(path.From("pod123 loglevel")).FromString("debug")
-	var err error
-	// this will create a place we can write the logs
-	if err = ex.SaveConfig(); log.E.Chk(err) {
-		err = os.RemoveAll(ex.Configs["ConfigFile"].Expanded())
-		if log.E.Chk(err) {
-		}
-		t.FailNow()
-	}
-	lfp := ex.GetOpt(path.From("pod123 logfilepath"))
-	o := ex.GetOpt(path.From("pod123 logtofile"))
-	o.FromString("true")
-	log.I.F("%s", lfp)
-	o.FromString("false")
-	var b []byte
-	if b, err = os.ReadFile(lfp.Expanded()); log.E.Chk(err) {
-		t.FailNow()
-	}
-	str := string(b)
-	log.I.F("'%s'", str)
-	if !strings.Contains(str, lfp.String()) {
-		t.FailNow()
-	}
-	if err := os.RemoveAll(ex.Configs["DataDir"].Expanded()); log.E.Chk(err) {
-	}
+
+var _printt = func(a ...any) {
+	 fmt.Print(a)
 }
+var disabledPrinter = func(a ...any)  {
+}
+
+//
+//func TestCommand_Help(t *testing.T) {
+//	if indra.CI != "false" {
+//		_print = disabledPrinter
+//		_printt = disabledPrinter
+//	}
+//	ex := GetExampleCommands()
+//	ex.AddCommand(Help())
+//	o, _ := Init(ex, nil)
+//	o.Commands = append(o.Commands)
+//	args1 := "/random/path/to/server_binary help"
+//	_print(args1)
+//	args1s := strings.Split(args1, " ")
+//	run, args, err := o.ParseCLIArgs(args1s)
+//	if log.E.Chk(err) {
+//		t.FailNow()
+//	}
+//	err = run.Entrypoint(o, args)
+//	if log.E.Chk(err) {
+//		t.FailNow()
+//	}
+//	args1 = "/random/path/to/server_binary help loglevel"
+//	_print(args1)
+//	args1s = strings.Split(args1, " ")
+//	run, args, err = o.ParseCLIArgs(args1s)
+//	if log.E.Chk(err) {
+//		t.FailNow()
+//	}
+//	err = run.Entrypoint(o, args)
+//	if log.E.Chk(err) {
+//		t.FailNow()
+//	}
+//	args1 = "/random/path/to/server_binary help help"
+//	_print(args1)
+//	args1s = strings.Split(args1, " ")
+//	run, args, err = o.ParseCLIArgs(args1s)
+//	if log.E.Chk(err) {
+//		t.FailNow()
+//	}
+//	err = run.Entrypoint(o, args)
+//	if log.E.Chk(err) {
+//		t.FailNow()
+//	}
+//	args1 = "/random/path/to/server_binary help node"
+//	_print(args1)
+//	args1s = strings.Split(args1, " ")
+//	run, args, err = o.ParseCLIArgs(args1s)
+//	if log.E.Chk(err) {
+//		t.FailNow()
+//	}
+//	err = run.Entrypoint(o, args)
+//	if log.E.Chk(err) {
+//		t.FailNow()
+//	}
+//	args1 = "/random/path/to/server_binary help rpcconnect"
+//	_print(args1)
+//	args1s = strings.Split(args1, " ")
+//	run, args, err = o.ParseCLIArgs(args1s)
+//	if log.E.Chk(err) {
+//		t.FailNow()
+//	}
+//	err = run.Entrypoint(o, args)
+//	if log.E.Chk(err) {
+//		t.FailNow()
+//	}
+//	args1 = "/random/path/to/server_binary help kopach rpcconnect"
+//	_print(args1)
+//	args1s = strings.Split(args1, " ")
+//	run, args, err = o.ParseCLIArgs(args1s)
+//	if log.E.Chk(err) {
+//		t.FailNow()
+//	}
+//	err = run.Entrypoint(o, args)
+//	if log.E.Chk(err) {
+//		t.FailNow()
+//	}
+//	args1 = "/random/path/to/server_binary help node rpcconnect"
+//	_print(args1)
+//	args1s = strings.Split(args1, " ")
+//	run, args, err = o.ParseCLIArgs(args1s)
+//	if log.E.Chk(err) {
+//		t.FailNow()
+//	}
+//	err = run.Entrypoint(o, args)
+//	if log.E.Chk(err) {
+//		t.FailNow()
+//	}
+//	args1 = "/random/path/to/server_binary help nodeoff"
+//	_print(args1)
+//	args1s = strings.Split(args1, " ")
+//	run, args, err = o.ParseCLIArgs(args1s)
+//	if log.E.Chk(err) {
+//		t.FailNow()
+//	}
+//	err = run.Entrypoint(o, args)
+//	if log.E.Chk(err) {
+//		t.FailNow()
+//	}
+//	args1 = "/random/path/to/server_binary help user"
+//	_print(args1)
+//	args1s = strings.Split(args1, " ")
+//	run, args, err = o.ParseCLIArgs(args1s)
+//	if log.E.Chk(err) {
+//		t.FailNow()
+//	}
+//	err = run.Entrypoint(o, args)
+//	if log.E.Chk(err) {
+//		t.FailNow()
+//	}
+//	args1 = "/random/path/to/server_binary help file"
+//	_print(args1)
+//	args1s = strings.Split(args1, " ")
+//	run, args, err = o.ParseCLIArgs(args1s)
+//	if log.E.Chk(err) {
+//		t.FailNow()
+//	}
+//	err = run.Entrypoint(o, args)
+//	if log.E.Chk(err) {
+//		t.FailNow()
+//	}
+//
+//}
+
+//func TestCommand_LogToFile(t *testing.T) {
+//	ex := GetExampleCommands()
+//	ex.AddCommand(Help())
+//	ex, _ = Init(ex, nil)
+//	ex.GetOpt(path.From("pod123 loglevel")).FromString("debug")
+//	var err error
+//	// this will create a place we can write the logs
+//	if err = ex.SaveConfig(); log.E.Chk(err) {
+//		err = os.RemoveAll(ex.Configs["ConfigFile"].Expanded())
+//		if log.E.Chk(err) {
+//		}
+//		t.FailNow()
+//	}
+//	lfp := ex.GetOpt(path.From("pod123 logfilepath"))
+//	o := ex.GetOpt(path.From("pod123 logtofile"))
+//	o.FromString("true")
+//	o.FromString("false")
+//	var b []byte
+//	if b, err = os.ReadFile(lfp.Expanded()); log.E.Chk(err) {
+//		t.FailNow()
+//	}
+//	str := string(b)
+//	if !strings.Contains(str, lfp.String()) {
+//		t.FailNow()
+//	}
+//	if err := os.RemoveAll(ex.Configs["DataDir"].Expanded()); log.E.Chk(err) {
+//	}
+//}

@@ -1,6 +1,7 @@
 package balance
 
 import (
+	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/onions/ont"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	"testing"
@@ -13,7 +14,9 @@ import (
 )
 
 func TestOnions_Balance(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+	if indra.CI!="false" {
+		log2.SetLogLevel(log2.Debug)
+	}
 	id := nonce.NewID()
 	sats := lnwire.MilliSatoshi(10000)
 	on := ont.Assemble([]ont.Onion{NewBalance(id, sats)})

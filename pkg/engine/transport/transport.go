@@ -320,7 +320,7 @@ func NewDHT(ctx context.Context, host host.Host,
 				wg.Done()
 				return
 			}
-			log.I.F(
+			log.D.F(
 				"%s: Connection established with bootstrap node: %s",
 				blue(GetHostOnlyAddress(host)),
 				blue((*peerinfo).Addrs[0]))

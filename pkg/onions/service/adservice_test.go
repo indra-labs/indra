@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/coding"
@@ -11,7 +12,9 @@ import (
 )
 
 func TestServiceAd(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	if indra.CI!="false" {
+		log2.SetLogLevel(log2.Trace)
+	}
 	var e error
 	pr, _, _ := crypto.NewSigner()
 	id := nonce.NewID()

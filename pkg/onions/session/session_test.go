@@ -1,6 +1,7 @@
 package session
 
 import (
+	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/onions/ont"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	"testing"
@@ -10,7 +11,9 @@ import (
 )
 
 func TestOnions_Session(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+	if indra.CI!="false" {
+		log2.SetLogLevel(log2.Debug)
+	}
 	sess := NewSession(1)
 	ss := sess.(*Session)
 	s := ont.Encode(sess)

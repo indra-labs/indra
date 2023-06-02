@@ -1,6 +1,7 @@
 package confirmation
 
 import (
+	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/onions/ont"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	"testing"
@@ -11,7 +12,9 @@ import (
 )
 
 func TestOnions_Confirmation(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+	if indra.CI!="false" {
+		log2.SetLogLevel(log2.Debug)
+	}
 	id := nonce.NewID()
 	var load byte = 128
 	on := ont.Assemble([]ont.Onion{NewConfirmation(id, load)})

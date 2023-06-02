@@ -76,7 +76,7 @@ var _ encoding.TextMarshaler = &Command{}
 func (c *Command) MarshalText() (text []byte, err error) {
 	c.ForEach(func(cmd *Command, depth int) bool {
 		if cmd == nil {
-			log.I.Ln("cmd empty")
+			log.D.Ln("cmd empty")
 			return true
 		}
 		cfgNames := make([]string, 0, len(cmd.Configs))

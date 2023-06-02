@@ -1,6 +1,7 @@
 package delay
 
 import (
+	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/onions/ont"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	"testing"
@@ -11,7 +12,9 @@ import (
 )
 
 func TestOnions_Delay(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+	if indra.CI!="false" {
+		log2.SetLogLevel(log2.Debug)
+	}
 	dur := time.Second
 	on := ont.Assemble([]ont.Onion{NewDelay(dur)})
 	s := ont.Encode(on)

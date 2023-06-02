@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"github.com/indra-labs/indra"
 	"math/rand"
 	"testing"
 	
@@ -52,8 +53,10 @@ func TestCodec(t *testing.T) {
 	}
 	
 	generated += "}\n"
-	t.Log(generated)
-	
+	if indra.CI!="false" {
+		t.Log(generated)
+	}
+
 	expected := []string{
 		"ee94d6cef460b180c995b2f8672e53006aced15fe4d5cc0da332d041feaa1514",
 		"0f92907a4d76ece96b042e2cbd60e2378039cc92c95ac99f73e8eacbdd38a7d3",
@@ -156,8 +159,10 @@ func TestCodec(t *testing.T) {
 	}
 	
 	encoded += "}\n"
-	t.Log(encoded)
-	
+	if indra.CI!="false" {
+		t.Log(encoded)
+	}
+
 	// Next, decode the encodedStr above, which should be the output of the
 	// original generated seeds, with the index mod 5 truncations performed on
 	// each as was done to generate them.

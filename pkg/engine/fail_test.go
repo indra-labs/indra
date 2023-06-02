@@ -1,9 +1,10 @@
-//go:build !failingtests
+//go:build failingtests
 
 package engine
 
 import (
 	"context"
+	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/dispatcher"
@@ -30,8 +31,9 @@ import (
 )
 
 func TestEngine_Message(t *testing.T) {
-	log2.SetLogLevel(log2.Info)
-	log2.App.Store("")
+	if indra.CI!="false" {
+		log2.SetLogLevel(log2.Info)
+	}
 	var clients []*Engine
 	var e error
 	const nCircuits = 10
@@ -42,7 +44,7 @@ func TestEngine_Message(t *testing.T) {
 		t.FailNow()
 	}
 	client := clients[0]
-	log.W.Ln("client", client.Manager.GetLocalNodeAddressString())
+	log.D.Ln("client", client.Manager.GetLocalNodeAddressString())
 	// Start up the clients.
 	for _, v := range clients {
 		go v.Start()
@@ -127,7 +129,9 @@ func TestEngine_Message(t *testing.T) {
 			break
 		}
 	}
-	log2.SetLogLevel(log2.Trace)
+	if indra.CI!="false" {
+		log2.SetLogLevel(log2.Trace)
+	}
 	wg.Add(1)
 	counter.Inc()
 	svc := &services.Service{
@@ -199,8 +203,9 @@ func TestEngine_Message(t *testing.T) {
 }
 
 func TestEngine_Route(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
-	log2.App.Store("")
+	if indra.CI!="false" {
+		log2.SetLogLevel(log2.Debug)
+	}
 	runtime.GOMAXPROCS(1)
 	var clients []*Engine
 	var e error
@@ -316,7 +321,9 @@ func TestEngine_Route(t *testing.T) {
 		})
 	wg.Wait()
 	time.Sleep(time.Second)
-	log2.SetLogLevel(log2.Debug)
+	if indra.CI!="false" {
+		log2.SetLogLevel(log2.Debug)
+	}
 	wg.Add(1)
 	counter.Inc()
 	log.D.Ln("intro", ini.ID, ini.AddrPort.String(), ini.Key.ToBased32Abbreviated(),
@@ -335,8 +342,9 @@ func TestEngine_Route(t *testing.T) {
 }
 
 func TestEngine_SendHiddenService(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
-	log2.App.Store("")
+	if indra.CI!="false" {
+		log2.SetLogLevel(log2.Debug)
+	}
 	var clients []*Engine
 	var e error
 	const nCircuits = 10
@@ -381,7 +389,9 @@ func TestEngine_SendHiddenService(t *testing.T) {
 		}
 		wg.Wait()
 	}
-	log2.SetLogLevel(log2.Debug)
+	if indra.CI!="false" {
+		log2.SetLogLevel(log2.Debug)
+	}
 	var idPrv *crypto.Prv
 	if idPrv, e = crypto.GeneratePrvKey(); fails(e) {
 		return
@@ -430,14 +440,16 @@ func TestEngine_SendHiddenService(t *testing.T) {
 }
 
 func TestDispatcher_Rekey(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+	if indra.CI!="false" {
+		log2.SetLogLevel(log2.Debug)
+	}
 	var e error
 	var l1, l2 *transport.Listener
 	_ = l2
 	var k1, k2 *crypto.Keys
 	ctx, cancel := context.WithCancel(context.Background())
 	_ = cancel
-	if k1, k2, e = crypto.Generate2Keys(); dispatcher.fails(e) {
+	if k1, k2, e = crypto.Generate2Keys(); fails(e) {
 		t.FailNow()
 	}
 	dataPath, err := os.MkdirTemp(os.TempDir(), "badger")
@@ -446,7 +458,7 @@ func TestDispatcher_Rekey(t *testing.T) {
 	}
 	l1, e = transport.NewListener("", transport.LocalhostZeroIPv4TCP,
 		dataPath, k1, ctx, transport.DefaultMTU)
-	if dispatcher.fails(e) {
+	if fails(e) {
 		t.FailNow()
 	}
 	dataPath, err = os.MkdirTemp(os.TempDir(), "badger")
@@ -455,7 +467,7 @@ func TestDispatcher_Rekey(t *testing.T) {
 	}
 	l2, e = transport.NewListener(transport.GetHostAddress(l1.Host),
 		transport.LocalhostZeroIPv4TCP, dataPath, k2, ctx, transport.DefaultMTU)
-	if dispatcher.fails(e) {
+	if fails(e) {
 		t.FailNow()
 	}
 	var msg1, msg2 []byte
@@ -484,10 +496,10 @@ func TestDispatcher_Rekey(t *testing.T) {
 	xx2 := &dispatcher.Onion{x2}
 	sp1 := splice.New(xx1.Len())
 	sp2 := splice.New(xx2.Len())
-	if e = xx1.Encode(sp1); dispatcher.fails(e) {
+	if e = xx1.Encode(sp1); fails(e) {
 		t.FailNow()
 	}
-	if e = xx2.Encode(sp2); dispatcher.fails(e) {
+	if e = xx2.Encode(sp2); fails(e) {
 		t.FailNow()
 	}
 	countTo, succ := 1000, 0

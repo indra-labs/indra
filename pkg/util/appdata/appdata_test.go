@@ -192,7 +192,7 @@ func TestAppDataDir(t *testing.T) {
 		{"plan9", ".", false, "."},
 		{"unrecognized", ".", false, "."},
 	}
-	t.Logf("Running %d tests", len(tests))
+	//t.Logf("Running %d tests", len(tests))
 	for i, test := range tests {
 		ret := TstAppDataDir(test.goos, test.appName, test.roaming)
 		if ret != test.want {

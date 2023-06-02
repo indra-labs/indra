@@ -286,7 +286,7 @@ func GetExampleCommands() (c *Command) {
 				Description:   "ParallelCoin blockchain node",
 				Documentation: lorem,
 				Entrypoint: func(c *Command, args []string) error {
-					log.I.Ln("running node")
+					log.D.Ln("running node")
 					return nil
 				},
 				Commands: []*Command{

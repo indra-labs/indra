@@ -1,6 +1,7 @@
 package crypt
 
 import (
+	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/onions/confirmation"
 	"github.com/indra-labs/indra/pkg/onions/ont"
 	"github.com/indra-labs/indra/pkg/onions/reg"
@@ -13,7 +14,9 @@ import (
 )
 
 func TestOnions_SimpleCrypt(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+	if indra.CI!="false" {
+		log2.SetLogLevel(log2.Debug)
+	}
 	var e error
 	n := nonce.NewID()
 	n1 := nonce.New()
@@ -21,7 +24,7 @@ func TestOnions_SimpleCrypt(t *testing.T) {
 	pub1, pub2 := crypto.DerivePub(prv1), crypto.DerivePub(prv2)
 	on := ont.Assemble([]ont.Onion{
 		NewCrypt(pub1, pub2, prv2, n1, 0),
-		confirmation.NewConfirmation(n,0),
+		confirmation.NewConfirmation(n, 0),
 	})
 	s := ont.Encode(on)
 	s.SetCursor(0)

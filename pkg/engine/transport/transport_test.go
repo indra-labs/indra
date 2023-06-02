@@ -2,6 +2,7 @@ package transport
 
 import (
 	"context"
+	"github.com/indra-labs/indra"
 	"os"
 	"testing"
 	"time"
@@ -12,7 +13,9 @@ import (
 )
 
 func TestNewListener(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
+	if indra.CI!="false" {
+		log2.SetLogLevel(log2.Debug)
+	}
 	var e error
 	var l1, l2 *Listener
 	_ = l2

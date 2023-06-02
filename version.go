@@ -36,7 +36,7 @@ const (
 	Patch = 12
 )
 
-var CI = false
+var CI = "false"
 
 // Version returns a pretty printed version information string.
 func Version() string {

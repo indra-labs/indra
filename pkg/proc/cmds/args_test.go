@@ -1,6 +1,7 @@
 package cmds
 
 import (
+	"github.com/indra-labs/indra"
 	"strings"
 	"testing"
 	
@@ -8,8 +9,9 @@ import (
 )
 
 func TestCommand_ParseCLIArgs(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
-	
+	if indra.CI!="false" {
+		log2.SetLogLevel(log2.Debug)
+	}
 	ec := GetExampleCommands()
 	o, _ := Init(ec, nil)
 	args6 := "/random/path/to/server_binary --cafile ~/some/cafile --LC=cn " +

@@ -265,7 +265,7 @@ func (d *Dispatcher) ReKey() {
 	cryptorand.Shuffle(len(packets), func(i, j int) {
 		packets[i], packets[j] = packets[j], packets[i]
 	})
-	log.W.Ln(d.ip, "sending new key")
+	log.D.Ln(d.ip, "sending new key")
 	sendChan := d.Conn.GetSend()
 	for i := range packets {
 		sendChan.Send(packets[i])

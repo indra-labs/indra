@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"github.com/indra-labs/indra"
 	"net/netip"
 	"os"
 	"testing"
@@ -16,7 +17,9 @@ import (
 )
 
 func TestEngine_Dispatcher(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	if indra.CI!="false" {
+		log2.SetLogLevel(log2.Trace)
+	}
 	var e error
 	const nTotal = 26
 	ctx, cancel := context.WithCancel(context.Background())

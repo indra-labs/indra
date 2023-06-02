@@ -32,7 +32,7 @@ func (hr *Hidden) AddHiddenService(svc *services.Service, key *crypto.Prv,
 	in *intro.Ad, addr string) {
 	pk := crypto.DerivePub(key).ToBytes()
 	hr.Lock()
-	log.I.F("%s added hidden service with key %s", addr, pk)
+	log.D.F("%s added hidden service with key %s", addr, pk)
 	hr.Services[pk] = &LocalHiddenService{
 		Prv:     key,
 		Service: svc,

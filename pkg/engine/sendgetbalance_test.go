@@ -1,11 +1,11 @@
-//go:build !failingtests
+//go:build failingtests
 
-package headers
+package engine
 
 import (
 	"context"
+	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/engine"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/cryptorand"
@@ -17,17 +17,19 @@ import (
 )
 
 func TestClient_SendGetBalance(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
-	var clients []*engine.Engine
+	if indra.CI!="false" {
+		log2.SetLogLevel(log2.Debug)
+	}
+	var clients []*Engine
 	var e error
 	ctx, cancel := context.WithCancel(context.Background())
-	if clients, e = engine.CreateNMockCircuitsWithSessions(2, 2,
-		ctx); engine.fails(e) {
+	if clients, e = CreateNMockCircuitsWithSessions(2, 2,
+		ctx); fails(e) {
 		t.Error(e)
 		t.FailNow()
 	}
 	client := clients[0]
-	engine.log.D.Ln("client", client.Manager.GetLocalNodeAddressString())
+	log.D.Ln("client", client.Manager.GetLocalNodeAddressString())
 	// Start up the clients.
 	for _, v := range clients {
 		go v.Start()
@@ -58,7 +60,7 @@ out:
 		returner = returnHops[0]
 		clients[0].SendGetBalance(returner, clients[0].Manager.Sessions[i],
 			func(cf nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
-				engine.log.I.Ln("success")
+				log.I.Ln("success")
 				wg.Done()
 				quit.Q()
 				return

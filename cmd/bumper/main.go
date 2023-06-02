@@ -219,7 +219,7 @@ const (
 	Patch = %d
 )
 
-var CI = %s
+var CI = "%s"
 
 // Version returns a pretty printed version information string.
 func Version() string {

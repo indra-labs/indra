@@ -1,10 +1,17 @@
 package headers
 
 import (
+	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	"github.com/indra-labs/indra/pkg/onions/exit"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
+)
+
+var (
+	log   = log2.GetLogger(indra.PathBase)
+	fails = log.E.Chk
 )
 
 type Headers struct {

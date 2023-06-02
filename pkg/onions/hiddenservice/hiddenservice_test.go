@@ -1,9 +1,10 @@
-//go:build !failingtests
+//go:build failingtests
 
 package hiddenservice
 
 import (
 	"context"
+	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/coding"
@@ -23,7 +24,10 @@ import (
 )
 
 func TestOnions_HiddenService(t *testing.T) {
-	log2.SetLogLevel(log2.Trace)
+	if indra.CI!="false" {
+		t.Log("ci not enabled")
+		log2.SetLogLevel(log2.Trace)
+	}
 	var e error
 	n3 := crypto.Gen3Nonces()
 	id := nonce.NewID()

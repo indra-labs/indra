@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/indra-labs/indra"
 	"os"
 	"strings"
 	"testing"
@@ -10,8 +11,10 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	log2.SetLogLevel(log2.Debug)
-	
+	if indra.CI!="false" {
+		log2.SetLogLevel(log2.Debug)
+	}
+
 	args1 := "/random/path/to/server_binary --cafile ~/some/cafile --LC=cn node -addrindex --BD 48h30s"
 	args1s := strings.Split(args1, " ")
 	var a *App
