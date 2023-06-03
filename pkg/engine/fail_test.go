@@ -31,7 +31,7 @@ import (
 )
 
 func TestEngine_Message(t *testing.T) {
-	if indra.CI!="false" {
+	if indra.CI=="false" {
 		log2.SetLogLevel(log2.Info)
 	}
 	var clients []*Engine
@@ -129,7 +129,7 @@ func TestEngine_Message(t *testing.T) {
 			break
 		}
 	}
-	if indra.CI!="false" {
+	if indra.CI=="false" {
 		log2.SetLogLevel(log2.Trace)
 	}
 	wg.Add(1)
@@ -203,7 +203,7 @@ func TestEngine_Message(t *testing.T) {
 }
 
 func TestEngine_Route(t *testing.T) {
-	if indra.CI!="false" {
+	if indra.CI=="false" {
 		log2.SetLogLevel(log2.Debug)
 	}
 	runtime.GOMAXPROCS(1)
@@ -321,7 +321,7 @@ func TestEngine_Route(t *testing.T) {
 		})
 	wg.Wait()
 	time.Sleep(time.Second)
-	if indra.CI!="false" {
+	if indra.CI=="false" {
 		log2.SetLogLevel(log2.Debug)
 	}
 	wg.Add(1)
@@ -342,7 +342,7 @@ func TestEngine_Route(t *testing.T) {
 }
 
 func TestEngine_SendHiddenService(t *testing.T) {
-	if indra.CI!="false" {
+	if indra.CI=="false" {
 		log2.SetLogLevel(log2.Debug)
 	}
 	var clients []*Engine
@@ -389,7 +389,7 @@ func TestEngine_SendHiddenService(t *testing.T) {
 		}
 		wg.Wait()
 	}
-	if indra.CI!="false" {
+	if indra.CI=="false" {
 		log2.SetLogLevel(log2.Debug)
 	}
 	var idPrv *crypto.Prv
@@ -440,7 +440,7 @@ func TestEngine_SendHiddenService(t *testing.T) {
 }
 
 func TestDispatcher_Rekey(t *testing.T) {
-	if indra.CI!="false" {
+	if indra.CI=="false" {
 		log2.SetLogLevel(log2.Debug)
 	}
 	var e error

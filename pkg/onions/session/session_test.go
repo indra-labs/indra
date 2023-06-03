@@ -11,7 +11,7 @@ import (
 )
 
 func TestOnions_Session(t *testing.T) {
-	if indra.CI!="false" {
+	if indra.CI=="false" {
 		log2.SetLogLevel(log2.Debug)
 	}
 	sess := NewSession(1)

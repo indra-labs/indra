@@ -14,7 +14,7 @@ import (
 )
 
 func TestOnions_SimpleCrypt(t *testing.T) {
-	if indra.CI!="false" {
+	if indra.CI=="false" {
 		log2.SetLogLevel(log2.Debug)
 	}
 	var e error

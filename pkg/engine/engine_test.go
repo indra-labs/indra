@@ -23,7 +23,7 @@ import (
 )
 
 func TestClient_SendExit(t *testing.T) {
-	if indra.CI!="false" {
+	if indra.CI=="false" {
 		log2.SetLogLevel(log2.Debug)
 	}
 	var clients []*Engine
@@ -124,7 +124,7 @@ out:
 }
 
 func TestClient_SendPing(t *testing.T) {
-	if indra.CI!="false" {
+	if indra.CI=="false" {
 		log2.SetLogLevel(log2.Debug)
 	}
 	var clients []*Engine
@@ -177,7 +177,7 @@ out:
 }
 
 func TestClient_SendSessionKeys(t *testing.T) {
-	if indra.CI!="false" {
+	if indra.CI=="false" {
 		log2.SetLogLevel(log2.Debug)
 	}
 	var clients []*Engine

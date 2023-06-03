@@ -8,7 +8,7 @@ import (
 )
 
 func TestBase32(t *testing.T) {
-	if indra.CI!="false" {
+	if indra.CI=="false" {
 		log2.SetLogLevel(log2.Debug)
 	}
 	for i := 0; i < 10000; i++ {

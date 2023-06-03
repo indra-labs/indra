@@ -16,7 +16,7 @@ import (
 )
 
 func TestOnions_IntroQuery(t *testing.T) {
-	if indra.CI!="false" {
+	if indra.CI=="false" {
 		log2.SetLogLevel(log2.Trace)
 	}
 	log2.App.Store("")

@@ -24,7 +24,7 @@ import (
 )
 
 func TestOnions_HiddenService(t *testing.T) {
-	if indra.CI!="false" {
+	if indra.CI=="false" {
 		t.Log("ci not enabled")
 		log2.SetLogLevel(log2.Trace)
 	}

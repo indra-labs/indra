@@ -53,7 +53,7 @@ func TestCodec(t *testing.T) {
 	}
 	
 	generated += "}\n"
-	if indra.CI!="false" {
+	if indra.CI=="false" {
 		t.Log(generated)
 	}
 
@@ -159,7 +159,7 @@ func TestCodec(t *testing.T) {
 	}
 	
 	encoded += "}\n"
-	if indra.CI!="false" {
+	if indra.CI=="false" {
 		t.Log(encoded)
 	}
 

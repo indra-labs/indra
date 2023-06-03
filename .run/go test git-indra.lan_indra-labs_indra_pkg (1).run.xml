@@ -1,0 +1,14 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="go test git-indra.lan/indra-labs/indra/pkg (1)" type="GoTestRunConfiguration" factoryName="Go Test" singleton="false">
+    <module name="indra" />
+    <working_directory value="$PROJECT_DIR$/pkg" />
+    <go_parameters value="-v ./... -tags local -ldflags &quot;-X indra.CI=true&quot;" />
+    <root_directory value="$PROJECT_DIR$" />
+    <kind value="DIRECTORY" />
+    <package value="git-indra.lan/indra-labs/indra/pkg/engine" />
+    <directory value="$PROJECT_DIR$/pkg" />
+    <filePath value="$PROJECT_DIR$" />
+    <framework value="gotest" />
+    <method v="2" />
+  </configuration>
+</component>

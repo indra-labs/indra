@@ -75,7 +75,7 @@ func TestRemovePacket(t *testing.T) {
 }
 
 func TestSplitJoin(t *testing.T) {
-	if indra.CI!="false" {
+	if indra.CI=="false" {
 		log2.SetLogLevel(log2.Debug)
 	}
 	msgSize := 1 << 19
@@ -137,7 +137,7 @@ func TestSplitJoin(t *testing.T) {
 }
 
 func TestSplitJoinFEC(t *testing.T) {
-	if indra.CI!="false" {
+	if indra.CI=="false" {
 		log2.SetLogLevel(log2.Debug)
 	}
 	msgSize := 1 << 18

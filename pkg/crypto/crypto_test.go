@@ -10,7 +10,7 @@ import (
 )
 
 func TestFromBased32(t *testing.T) {
-	if indra.CI!="false" {
+	if indra.CI=="false" {
 		log2.SetLogLevel(log2.Trace)
 	}
 	var rBytes sha256.Hash
