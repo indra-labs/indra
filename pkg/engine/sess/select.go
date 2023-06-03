@@ -6,6 +6,7 @@ import (
 	"github.com/indra-labs/indra/pkg/util/cryptorand"
 )
 
+// SelectHops picks out a set of sessions to use in a circuit.
 func (sm *Manager) SelectHops(hops []byte, alreadyHave sessions.Sessions,
 	note string) (so sessions.Sessions) {
 	log.T.Ln(sm.GetLocalNodeAddressString(), "selecting hops", note)
@@ -117,4 +118,5 @@ out:
 	return
 }
 
+// StandardCircuit is a slice defining a standard circuit (5 is the return session).
 func StandardCircuit() []byte { return []byte{0, 1, 2, 3, 4, 5} }

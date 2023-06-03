@@ -106,6 +106,8 @@ type Dispatcher struct {
 	rekeying        atomic.Bool
 }
 
+// GetRxRecordAndPartials returns the receive record and packets received so far
+// for a message with a given ID>
 func (d *Dispatcher) GetRxRecordAndPartials(id nonce.ID) (rxr *RxRecord,
 	packets packet.Packets) {
 	for _, v := range d.PendingInbound {
@@ -204,6 +206,8 @@ func (d *Dispatcher) Handle(m slice.Bytes, rxr *RxRecord) {
 	}
 }
 
+// HandlePing adds a current ping result and combines it into the running
+// exponential weighted moving average.
 func (d *Dispatcher) HandlePing(p ping.Result) {
 	d.Mx(func() (rtn bool) {
 		d.Ping.Add(float64(p.RTT))
@@ -211,12 +215,15 @@ func (d *Dispatcher) HandlePing(p ping.Result) {
 	})
 }
 
+// Mx runs a closure with the dispatcher mutex locked which returns a bool that
+// passes through to the result of the dispatcher.Mx function.
 func (d *Dispatcher) Mx(fn func() bool) bool {
 	d.Mutex.Lock()
 	defer d.Mutex.Unlock()
 	return fn()
 }
 
+// ReKey sends a new key for the other party to use for sending future messages.
 func (d *Dispatcher) ReKey() {
 	d.lastRekey = d.lastRekey.SetBytes(d.TotalReceived.Bytes())
 	if d.rekeying.Load() {
@@ -284,6 +291,8 @@ func (d *Dispatcher) ReKey() {
 	log.D.Ln("previous keys", len(d.Prv))
 }
 
+// RecvFromConn receives a new message from the connection, checks if it can be
+// reassembled and if it can, dispatches it to the receiver channel.
 func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 	log.T.Ln(color.Blue.Sprint(blue(d.Conn.LocalMultiaddr())), "received", len(m),
 		"bytes from conn to dispatcher",
@@ -418,6 +427,8 @@ func (d *Dispatcher) RecvFromConn(m slice.Bytes) {
 	}
 }
 
+// RunGC runs the garbage collection for the dispatcher. Stale data and completed
+// transmissions are purged from memory.
 func (d *Dispatcher) RunGC() {
 	log.T.Ln(d.ip, "RunGC")
 	// remove successful receives after all pieces arrived. Successful
@@ -487,6 +498,8 @@ func (d *Dispatcher) RunGC() {
 	}
 }
 
+// SendAck sends an acknowledgement record for a successful transmission of a
+// message.
 func (d *Dispatcher) SendAck(rxr *RxRecord) {
 	// Remove Rx from pending.
 	log.T.Ln(d.ip, "mutex lock")
@@ -514,6 +527,8 @@ func (d *Dispatcher) SendAck(rxr *RxRecord) {
 	})
 }
 
+// SendToConn delivers a buffer to be sent over the connection, and returns the
+// number of packets that were sent.
 func (d *Dispatcher) SendToConn(m slice.Bytes) (pieces int) {
 	log.T.Ln(d.ip, "message dispatching to conn") // m.ToBytes(),
 
