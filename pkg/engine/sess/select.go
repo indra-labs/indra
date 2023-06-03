@@ -91,19 +91,19 @@ func (sm *Manager) SelectUnusedCircuit() (c [5]*node.Node) {
 	nodeList := make([]*node.Node, len(sm.nodes)-1)
 	copy(nodeList, sm.nodes[1:])
 	for i := range nodeList {
-		if _, ok := sm.SessionCache[nodeList[i].ID]; !ok {
+		if _, ok := sm.CircuitCache[nodeList[i].ID]; !ok {
 			log.T.F("adding session cache entry for node %s", nodeList[i].ID)
-			sm.SessionCache[nodeList[i].ID] = &sessions.Circuit{}
+			sm.CircuitCache[nodeList[i].ID] = &sessions.Circuit{}
 		}
 	}
 	var counter int
 out:
 	for counter < 5 {
-		for i := range sm.SessionCache {
+		for i := range sm.CircuitCache {
 			if counter == 5 {
 				break out
 			}
-			if sm.SessionCache[i][counter] == nil {
+			if sm.CircuitCache[i][counter] == nil {
 				for j := range nodeList {
 					if nodeList[j].ID == i {
 						c[counter] = nodeList[j]

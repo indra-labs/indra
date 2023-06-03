@@ -76,7 +76,7 @@ func (x *Response) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) 
 	log.T.F("searching for pending Keys %s", x.ID)
 	if pending != nil {
 		for i := range pending.Billable {
-			se := ng.Mgr().FindSession(pending.Billable[i])
+			se := ng.Mgr().FindSessionByPubkey(pending.Billable[i])
 			if se != nil {
 				typ := "response"
 				relayRate := se.Node.RelayRate

@@ -10,7 +10,7 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/tpt"
 	"github.com/indra-labs/indra/pkg/engine/transport"
 	"github.com/indra-labs/indra/pkg/onions/hidden"
-	onions2 "github.com/indra-labs/indra/pkg/onions/ont"
+	"github.com/indra-labs/indra/pkg/onions/ont"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	"github.com/indra-labs/indra/pkg/util/qu"
 	"github.com/indra-labs/indra/pkg/util/slice"
@@ -18,7 +18,7 @@ import (
 	"go.uber.org/atomic"
 )
 
-var _ onions2.Ngin = &Engine{}
+var _ ont.Ngin = &Engine{}
 
 type (
 	// Engine processes onion messages, forwarding the relevant data to other relays
@@ -53,7 +53,7 @@ func (ng *Engine) GetHidden() *hidden.Hidden { return ng.h }
 
 func (ng *Engine) GetLoad() byte { return byte(ng.Load.Load()) }
 
-func (ng *Engine) HandleMessage(s *splice.Splice, pr onions2.Onion) {
+func (ng *Engine) HandleMessage(s *splice.Splice, pr ont.Onion) {
 	log.D.F("%s handling received message",
 		ng.Manager.GetLocalNodeAddressString())
 	s.SetCursor(0)
@@ -72,7 +72,7 @@ func (ng *Engine) HandleMessage(s *splice.Splice, pr onions2.Onion) {
 			log.D.Ln("did not get onion")
 			return
 		}
-		if fails(m.(onions2.Onion).Handle(s, pr, ng)) {
+		if fails(m.(ont.Onion).Handle(s, pr, ng)) {
 			log.W.S("unrecognised packet", s.GetAll().ToBytes())
 		}
 	}
@@ -82,7 +82,7 @@ func (ng *Engine) Handler() (out bool) {
 	log.T.C(func() string {
 		return ng.Manager.GetLocalNodeAddressString() + " awaiting message"
 	})
-	var prev onions2.Onion
+	var prev ont.Onion
 	select {
 	case <-ng.C.Wait():
 		ng.Shutdown()

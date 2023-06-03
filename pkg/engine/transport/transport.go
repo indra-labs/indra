@@ -34,14 +34,21 @@ import (
 )
 
 const (
-	LocalhostZeroIPv4TCP  = "/ip4/127.0.0.1/tcp/0"
+	// LocalhostZeroIPv4TCP is the default localhost to bind to any address. Used in
+	// tests.
+	LocalhostZeroIPv4TCP = "/ip4/127.0.0.1/tcp/0"
+
 	// LocalhostZeroIPv4QUIC - Don't use. Buffer problems on linux and fails on CI.
-	//LocalhostZeroIPv4QUIC = "/ip4/127.0.0.1/udp/0/quic"
-	DefaultMTU            = 1382
-	ConnBufs              = 8192
-	IndraLibP2PID         = "/indra/relay/" + indra.SemVer
-	IndraServiceName      = "org.indra.relay"
-	ProtocolPrefix        = "/indra/" + indra.SemVer
+	// LocalhostZeroIPv4QUIC = "/ip4/127.0.0.1/udp/0/quic"
+
+	// DefaultMTU is the default maximum size for a packet.
+	DefaultMTU = 1382
+
+	// ConnBufs is the number of buffers to use in message dispatch channels.
+	ConnBufs = 8192
+
+	// IndraLibP2PID is the indra protocol identifier.
+	IndraLibP2PID = "/indra/relay/" + indra.SemVer
 )
 
 var (
@@ -298,7 +305,7 @@ func NewDHT(ctx context.Context, host host.Host,
 		options = append(options, dht.Mode(dht.ModeServer))
 	}
 	options = append(options,
-		dht.ProtocolPrefix(ProtocolPrefix),
+		dht.ProtocolPrefix(IndraLibP2PID),
 	)
 	if d, e = dht.New(ctx, host, options...); fails(e) {
 		return
