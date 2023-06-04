@@ -31,8 +31,6 @@ func (ep PacketParams) GetOverhead() int {
 	return Overhead + nonce.IDLen + 7
 }
 
-// sort.Interface implementation.
-
 func (p Packets) Len() int           { return len(p) }
 func (p Packets) Less(i, j int) bool { return p[i].Seq < p[j].Seq }
 

@@ -15,6 +15,7 @@ import (
 )
 
 const (
+	// PaymentChanBuffers is the default number of buffers used in a payment channel.
 	PaymentChanBuffers = 8
 )
 
@@ -52,6 +53,7 @@ func NewNode(addr *netip.AddrPort, keys *crypto.Keys, tpt tpt.Transport,
 	return
 }
 
+// AddService adds a service to a Node.
 func (n *Node) AddService(s *services.Service) (e error) {
 	n.Lock()
 	defer n.Unlock()
@@ -64,6 +66,7 @@ func (n *Node) AddService(s *services.Service) (e error) {
 	return
 }
 
+// DeleteService removes a service from a Node.
 func (n *Node) DeleteService(port uint16) {
 	n.Lock()
 	defer n.Unlock()
@@ -80,6 +83,7 @@ func (n *Node) DeleteService(port uint16) {
 	}
 }
 
+// FindService searches for a local service with a given port number.
 func (n *Node) FindService(port uint16) (svc *services.Service) {
 	n.Lock()
 	defer n.Unlock()

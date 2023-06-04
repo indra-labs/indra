@@ -18,9 +18,21 @@ const (
 	OnionMagic       = "onio"
 )
 
-type Acknowledge struct {
-	*RxRecord
-}
+type (
+	// Acknowledge wraps up an RxRecord to tell the other side how a message
+	// transmission went.
+	Acknowledge struct {
+		*RxRecord
+	}
+	// NewKey delivers a new public key for the other side to use to encrypt
+	// messages.
+	NewKey struct {
+		NewPubkey *crypto.Pub
+	}
+	Onion struct {
+		slice.Bytes // contains an encoded Onion.
+	}
+)
 
 func (a *Acknowledge) Decode(s *splice.Splice) (e error) {
 	if s.Len() < a.Len() {
@@ -49,11 +61,8 @@ func (a *Acknowledge) Encode(s *splice.Splice) (e error) {
 	return
 }
 
-type NewKey struct {
-	NewPubkey *crypto.Pub
-}
+func AcknowledgeGen() coding.Codec { return &Acknowledge{&RxRecord{}} }
 
-func AcknowledgeGen() coding.Codec           { return &Acknowledge{&RxRecord{}} }
 func (a *Acknowledge) GetOnion() interface{} { return nil }
 
 func (a *Acknowledge) Len() int {
@@ -85,10 +94,6 @@ func (k *NewKey) GetOnion() interface{} { return nil }
 func (k *NewKey) Len() int              { return 4 + crypto.PubKeyLen }
 
 func (k *NewKey) Magic() string { return NewKeyMagic }
-
-type Onion struct {
-	slice.Bytes // contains an encoded Onion.
-}
 
 func (m *Onion) Decode(s *splice.Splice) (e error) {
 	if s.Len() < m.Len() {
@@ -122,6 +127,8 @@ func (m Onion) Unpack() (mu ont.Onion) {
 	return
 }
 
-func init() { reg.Register(NewKeyMagic, InitRekeyGen) }
-func init() { reg.Register(AcknowledgeMagic, AcknowledgeGen) }
-func init() { reg.Register(OnionMagic, OnionGen) }
+func init() {
+	reg.Register(NewKeyMagic, InitRekeyGen)
+	reg.Register(AcknowledgeMagic, AcknowledgeGen)
+	reg.Register(OnionMagic, OnionGen)
+}
