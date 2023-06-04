@@ -147,6 +147,7 @@ func (ng *Engine) SetLoad(load byte)           { ng.Load.Store(uint32(load)) }
 // Shutdown triggers the shutdown of the client and the Cleanup before
 // finishing.
 func (ng *Engine) Shutdown() {
+	log.D.Ln("shutting down", ng.Manager.GetLocalNodeAddress().String())
 	if ng.ShuttingDown.Load() {
 		return
 	}
