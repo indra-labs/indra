@@ -1,4 +1,4 @@
-package address
+package adaddress
 
 import (
 	"github.com/indra-labs/indra"

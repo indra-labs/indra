@@ -1,4 +1,4 @@
-package service
+package adservice
 
 import (
 	"github.com/indra-labs/indra"

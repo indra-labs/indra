@@ -1,4 +1,4 @@
-package intro
+package adintro
 
 import (
 	"github.com/indra-labs/indra"

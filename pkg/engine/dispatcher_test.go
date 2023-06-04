@@ -71,7 +71,6 @@ func TestEngine_PeerStore(t *testing.T) {
 	}
 	time.Sleep(time.Second)
 	log.I.Ln("starting peerstore test")
-	engines[0].Publish(engines[0].Manager.Listener.Host.ID(), "", "")
 	time.Sleep(time.Second)
 	cancel()
 	for i := range engines {

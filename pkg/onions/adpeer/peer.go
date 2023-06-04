@@ -1,4 +1,4 @@
-package peer
+package adpeer
 
 import (
 	"github.com/indra-labs/indra"
