@@ -11,6 +11,9 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/transport"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/slice"
+	"github.com/multiformats/go-multiaddr"
+	"net/netip"
+	"os"
 )
 
 var (
@@ -81,6 +84,63 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 			}
 			cl[i].Manager.AddNodes(nodes[j])
 		}
+	}
+	return
+}
+
+// CreateMockEngine creates an indra Engine with a random localhost listener.
+func CreateMockEngine(seed, dataPath string) (ng *Engine, cancel func(), e error) {
+	var ctx context.Context
+	ctx, cancel = context.WithCancel(context.Background())
+	var keys []*crypto.Keys
+	var nodes []*node.Node
+	var k *crypto.Keys
+	if k, e = crypto.GenerateKeys(); fails(e) {
+		return
+	}
+	keys = append(keys, k)
+	var l *transport.Listener
+	if l, e = transport.NewListener(seed, transport.LocalhostZeroIPv4TCP,
+		dataPath, k, ctx, transport.DefaultMTU); fails(e) {
+		os.RemoveAll(dataPath)
+		return
+	}
+	sa := transport.GetHostAddress(l.Host)
+	var addr netip.AddrPort
+	var ma multiaddr.Multiaddr
+	if ma, e = multiaddr.NewMultiaddr(sa); fails(e) {
+		e = os.RemoveAll(dataPath)
+		return
+	}
+
+	var ip, port string
+	if ip, e = ma.ValueForProtocol(multiaddr.P_IP4); fails(e) {
+		// we specified ipv4 previously.
+		fails(os.RemoveAll(dataPath))
+		return
+	}
+	if port, e = ma.ValueForProtocol(multiaddr.P_TCP); fails(e) {
+		fails(os.RemoveAll(dataPath))
+		return
+	}
+	if addr, e = netip.ParseAddrPort(ip + ":" + port); fails(e) {
+		fails(os.RemoveAll(dataPath))
+		return
+	}
+	var nod *node.Node
+	if nod, _ = node.NewNode(&addr, k, nil, 50000); fails(e) {
+		fails(os.RemoveAll(dataPath))
+		return
+	}
+	nodes = append(nodes, nod)
+	if ng, e = NewEngine(Params{
+		Transport: transport.NewByteChan(transport.ConnBufs),
+		Listener: l,
+		Keys:     k,
+		Node:     nod,
+	}); fails(e) {
+		os.RemoveAll(dataPath)
+		return
 	}
 	return
 }

@@ -14,7 +14,7 @@ import (
 
 func TestNewListener(t *testing.T) {
 	if indra.CI=="false" {
-		log2.SetLogLevel(log2.Debug)
+		log2.SetLogLevel(log2.Trace)
 	}
 	var e error
 	var l1, l2 *Listener
