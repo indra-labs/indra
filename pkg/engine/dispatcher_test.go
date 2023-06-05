@@ -2,6 +2,9 @@ package engine
 
 import (
 	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	"github.com/indra-labs/indra/pkg/onions/adpeer"
+	"github.com/indra-labs/indra/pkg/util/splice"
 	"os"
 	"testing"
 	"time"
@@ -71,7 +74,23 @@ func TestEngine_PeerStore(t *testing.T) {
 	}
 	time.Sleep(time.Second)
 	log.I.Ln("starting peerstore test")
-	time.Sleep(time.Second)
+	newAd := adpeer.New(nonce.NewID(),
+		engines[0].Manager.GetLocalNodeIdentityPrv(), 20000)
+	s := splice.New(newAd.Len())
+	if e = newAd.Encode(s); fails(e) {
+		t.FailNow()
+	}
+	const key = "testkey"
+	if e = engines[0].Publish(engines[0].Manager.Listener.Host.ID(),
+		key, s.GetAll().ToBytes());fails(e){
+		t.FailNow()
+	}
+	var val interface{}
+	val, e = engines[1].FindPeerRecord(engines[0].Manager.Listener.Host.ID(), key)
+	log.D.S("val", val)
+	val, e = engines[0].FindPeerRecord(engines[0].Manager.Listener.Host.ID(), key)
+	log.D.S("val", val)
+	time.Sleep(time.Second*3)
 	cancel()
 	for i := range engines {
 		engines[i].Shutdown()

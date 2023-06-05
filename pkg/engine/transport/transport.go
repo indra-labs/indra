@@ -5,11 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	libp2pquic "github.com/libp2p/go-libp2p/p2p/transport/quic"
-	"github.com/libp2p/go-libp2p/p2p/transport/websocket"
-	"sync"
-	"time"
-
 	"github.com/gookit/color"
 	"github.com/ipfs/go-datastore"
 	badger "github.com/ipfs/go-ds-badger"
@@ -19,10 +14,12 @@ import (
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/peerstore"
-	"github.com/libp2p/go-libp2p/p2p/discovery/routing"
 	"github.com/libp2p/go-libp2p/p2p/host/peerstore/pstoreds"
+	libp2pquic "github.com/libp2p/go-libp2p/p2p/transport/quic"
 	"github.com/libp2p/go-libp2p/p2p/transport/tcp"
+	"github.com/libp2p/go-libp2p/p2p/transport/websocket"
 	"github.com/multiformats/go-multiaddr"
+	"sync"
 
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto"
@@ -57,30 +54,6 @@ var (
 	fails = log.E.Chk
 )
 
-type (
-	Listener struct {
-		DHT         *dht.IpfsDHT
-		MTU         int
-		Host        host.Host
-		connections map[string]*Conn
-		newConns    chan *Conn
-		*crypto.Keys
-		context.Context
-		sync.Mutex
-	}
-	Conn struct {
-		network.Conn
-		MTU       int
-		RemoteKey *crypto.Pub
-		MultiAddr multiaddr.Multiaddr
-		Host      host.Host
-		rw        *bufio.ReadWriter
-		Transport *DuplexByteChan
-		sync.Mutex
-		qu.C
-	}
-)
-
 // concurrent safe accessors:
 
 func (c *Conn) GetMTU() int {
@@ -111,43 +84,29 @@ func (c *Conn) SetRemoteKey(remoteKey *crypto.Pub) {
 	c.Unlock()
 }
 
-func Discover(ctx context.Context, h host.Host, dht *dht.IpfsDHT,
-	rendezvous string) {
-
-	var disco = routing.NewRoutingDiscovery(dht)
-	var e error
-	var peers <-chan peer.AddrInfo
-	if _, e = disco.Advertise(ctx, rendezvous); e != nil {
+type (
+	Listener struct {
+		DHT         *dht.IpfsDHT
+		MTU         int
+		Host        host.Host
+		connections map[string]*Conn
+		newConns    chan *Conn
+		*crypto.Keys
+		context.Context
+		sync.Mutex
 	}
-	ticker := time.NewTicker(time.Second * 1)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			if peers, e = disco.FindPeers(ctx, rendezvous); fails(e) {
-				return
-			}
-			for p := range peers {
-				if p.ID == h.ID() {
-					continue
-				}
-				if h.Network().Connectedness(p.ID) !=
-					network.Connected {
-
-					if _, e = h.Network().DialPeer(ctx,
-						p.ID); fails(e) {
-
-						continue
-					}
-					log.D.Ln(h.Addrs()[0].String(), "Connected to peer",
-						blue(p.Addrs[0]))
-				}
-			}
-		}
+	Conn struct {
+		network.Conn
+		MTU       int
+		RemoteKey *crypto.Pub
+		MultiAddr multiaddr.Multiaddr
+		Host      host.Host
+		rw        *bufio.ReadWriter
+		Transport *DuplexByteChan
+		sync.Mutex
+		qu.C
 	}
-}
+)
 
 func GetHostAddress(ha host.Host) string {
 	hostAddr, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/p2p/%s",
@@ -295,48 +254,6 @@ func (l *Listener) handle(s network.Stream) {
 		}
 		nc.Transport.Receiver.Send(b[:n])
 	}
-}
-
-func NewDHT(ctx context.Context, host host.Host,
-	bootstrapPeers []multiaddr.Multiaddr) (d *dht.IpfsDHT, e error) {
-
-	var options []dht.Option
-	if len(bootstrapPeers) == 0 {
-		options = append(options, dht.Mode(dht.ModeServer))
-	}
-	options = append(options,
-		dht.ProtocolPrefix(IndraLibP2PID),
-	)
-	if d, e = dht.New(ctx, host, options...); fails(e) {
-		return
-	}
-	if e = d.Bootstrap(ctx); fails(e) {
-		return
-	}
-	var wg sync.WaitGroup
-	for _, peerAddr := range bootstrapPeers {
-		var peerinfo *peer.AddrInfo
-		if peerinfo, e = peer.AddrInfoFromP2pAddr(peerAddr); fails(e) {
-			continue
-		}
-		wg.Add(1)
-		go func() {
-			if e := host.Connect(ctx, *peerinfo); fails(e) {
-				log.D.F("Error while connecting to node %q: %-v",
-					peerinfo, e)
-				wg.Done()
-				return
-			}
-			log.D.F(
-				"%s: Connection established with bootstrap node: %s",
-				blue(GetHostOnlyAddress(host)),
-				blue((*peerinfo).Addrs[0]))
-
-			wg.Done()
-		}()
-	}
-	wg.Wait()
-	return
 }
 
 func NewListener(rendezvous, multiAddr, storePath string, keys *crypto.Keys,
