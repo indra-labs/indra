@@ -1,7 +1,6 @@
 package splice
 
 import (
-	"encoding/hex"
 	"fmt"
 	"github.com/gookit/color"
 	"github.com/indra-labs/indra"
@@ -10,7 +9,6 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	magic2 "github.com/indra-labs/indra/pkg/engine/magic"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/util/b32/based32"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/lightningnetwork/lnd/lnwire"
 	"net"
@@ -456,78 +454,78 @@ func (s *Splice) StoreCursor(c *int) *Splice {
 	return s
 }
 
-func (s *Splice) String() (o string) {
-	o = "splice:"
-	seg := s.GetSlicesFromSegments()
-	var prevString string
-	for i := range seg {
-		switch v := seg[i].(type) {
-		case string:
-			o += "\n" + v + " "
-			prevString = v
-		case slice.Bytes:
-			if len(v) > 72 {
-				o += "\n "
-			}
-			var oe string
-			for j := range v {
-				if (j)%4 == 0 && j != 0 {
-					oe += ""
-				}
-				if j == 0 {
-					oe += ""
-				}
-				if v[j] >= '0' && v[j] <= '9' ||
-					v[j] >= 'a' && v[j] <= 'z' ||
-					v[j] >= 'A' && v[j] <= 'Z' {
-					oe += string(v[j])
-				} else {
-					oe += "."
-				}
-			}
-			if prevString == "magic" {
-				o += color.Red.Sprint(oe) + " "
-			} else {
-				o += color.Gray.Sprint(oe) + " "
-			}
-			if prevString != "remainder" {
-				hexed := hex.EncodeToString(v.ToBytes())
-				var oHexed string
-				var revHex string
-				for {
-					if len(hexed) >= 8 {
-						revHex, hexed = hexed[:8], hexed[8:]
-						oHexed += revHex + " "
-					} else {
-						oHexed += hexed
-						break
-					}
-				}
-				o += color.Gray.Sprint(color.Bold.Sprint(oHexed))
-			}
-			if prevString == "pubkey" {
-				var oo string
-				if oo, s.E = based32.Codec.Encode(v.ToBytes()); fails(s.E) {
-					o += "<error: " + s.E.Error() + " >"
-				}
-				oo = oo[3:]
-				tmp := make(slice.Bytes, 0, len(oo))
-				tmp = append(tmp[:13], append([]byte("..."),
-					tmp[len(tmp)-8:]...)...)
-				oo = string(tmp)
-				o += color.LightGreen.Sprint(" ", oo)
-			}
-			if prevString == "Keys" {
-				var oo string
-				if oo, s.E = based32.Codec.Encode(v.ToBytes()); fails(s.E) {
-					o += "<error: " + s.E.Error() + " >"
-				}
-				o += color.LightBlue.Sprint(oo[:13])
-			}
-		}
-	}
-	return
-}
+//func (s *Splice) String() (o string) {
+//	o = "splice:"
+//	seg := s.GetSlicesFromSegments()
+//	var prevString string
+//	for i := range seg {
+//		switch v := seg[i].(type) {
+//		case string:
+//			o += "\n" + v + " "
+//			prevString = v
+//		case slice.Bytes:
+//			if len(v) > 72 {
+//				o += "\n "
+//			}
+//			var oe string
+//			for j := range v {
+//				if (j)%4 == 0 && j != 0 {
+//					oe += ""
+//				}
+//				if j == 0 {
+//					oe += ""
+//				}
+//				if v[j] >= '0' && v[j] <= '9' ||
+//					v[j] >= 'a' && v[j] <= 'z' ||
+//					v[j] >= 'A' && v[j] <= 'Z' {
+//					oe += string(v[j])
+//				} else {
+//					oe += "."
+//				}
+//			}
+//			if prevString == "magic" {
+//				o += color.Red.Sprint(oe) + " "
+//			} else {
+//				o += color.Gray.Sprint(oe) + " "
+//			}
+//			if prevString != "remainder" {
+//				hexed := hex.EncodeToString(v.ToBytes())
+//				var oHexed string
+//				var revHex string
+//				for {
+//					if len(hexed) >= 8 {
+//						revHex, hexed = hexed[:8], hexed[8:]
+//						oHexed += revHex + " "
+//					} else {
+//						oHexed += hexed
+//						break
+//					}
+//				}
+//				o += color.Gray.Sprint(color.Bold.Sprint(oHexed))
+//			}
+//			if prevString == "pubkey" {
+//				var oo string
+//				if oo, s.E = based32.Codec.Encode(v.ToBytes()); fails(s.E) {
+//					o += "<error: " + s.E.Error() + " >"
+//				}
+//				oo = oo[3:]
+//				tmp := make(slice.Bytes, 0, len(oo))
+//				tmp = append(tmp[:13], append([]byte("..."),
+//					tmp[len(tmp)-8:]...)...)
+//				oo = string(tmp)
+//				o += color.LightGreen.Sprint(" ", oo)
+//			}
+//			if prevString == "Keys" {
+//				var oo string
+//				if oo, s.E = based32.Codec.Encode(v.ToBytes()); fails(s.E) {
+//					o += "<error: " + s.E.Error() + " >"
+//				}
+//				o += color.LightBlue.Sprint(oo[:13])
+//			}
+//		}
+//	}
+//	return
+//}
 
 func (s *Splice) Time(v time.Time) *Splice {
 	slice.EncodeUint64(s.b[*s.c:s.c.Inc(slice.Uint64Len)], uint64(v.UnixNano()))
@@ -562,11 +560,11 @@ func (s *Splice) Uint64(v uint64) *Splice {
 	return s
 }
 
-func (s Segments) String() (o string) {
-	for i := range s {
-		o += fmt.Sprintf("%s %d ", s[i].Name, s[i].Offset)
-	}
-	return
-}
+//func (s Segments) String() (o string) {
+//	for i := range s {
+//		o += fmt.Sprintf("%s %d ", s[i].Name, s[i].Offset)
+//	}
+//	return
+//}
 
 func (s Segments) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
