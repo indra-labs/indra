@@ -5,6 +5,7 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/node"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
+	"github.com/indra-labs/indra/pkg/onions/adintro"
 	"github.com/indra-labs/indra/pkg/onions/confirmation"
 	"github.com/indra-labs/indra/pkg/onions/crypt"
 	"github.com/indra-labs/indra/pkg/onions/end"
@@ -14,7 +15,6 @@ import (
 	headers2 "github.com/indra-labs/indra/pkg/onions/headers"
 	"github.com/indra-labs/indra/pkg/onions/hidden"
 	"github.com/indra-labs/indra/pkg/onions/hiddenservice"
-	"github.com/indra-labs/indra/pkg/onions/intro"
 	"github.com/indra-labs/indra/pkg/onions/introquery"
 	"github.com/indra-labs/indra/pkg/onions/message"
 	"github.com/indra-labs/indra/pkg/onions/ont"
@@ -35,11 +35,10 @@ func (o Skins) Confirmation(id nonce.ID, load byte) Skins {
 	return append(o, confirmation.NewConfirmation(id, load))
 }
 
-
 //func (o Skins) Delay(d time.Duration) Skins { return append(o, delay.NewDelay(d)) }
 
 type (
-	Skins []ont.Onion
+	Skins        []ont.Onion
 	RoutingLayer struct {
 		*reverse.Reverse
 		*crypt.Crypt
@@ -78,7 +77,7 @@ func (o Skins) GetBalance(id nonce.ID, ep *exit.ExitPoint) Skins {
 	return append(o, getbalance.NewGetBalance(id, ep))
 }
 
-func (o Skins) HiddenService(in *intro.Ad, point *exit.ExitPoint) Skins {
+func (o Skins) HiddenService(in *adintro.Ad, point *exit.ExitPoint) Skins {
 	return append(o, hiddenservice.NewHiddenService(in, point))
 }
 
@@ -143,7 +142,7 @@ func MakeGetBalance(p getbalance.GetBalanceParams) Skins {
 		RoutingHeader(headers.Return)
 }
 
-func MakeHiddenService(in *intro.Ad, alice, bob *sessions.Data,
+func MakeHiddenService(in *adintro.Ad, alice, bob *sessions.Data,
 	c sessions.Circuit, ks *crypto.KeySet) Skins {
 
 	headers := headers2.GetHeaders(alice, bob, c, ks)

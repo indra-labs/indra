@@ -6,8 +6,8 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/ciph"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/services"
+	"github.com/indra-labs/indra/pkg/onions/adintro"
 	"github.com/indra-labs/indra/pkg/onions/consts"
-	"github.com/indra-labs/indra/pkg/onions/intro"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
@@ -29,7 +29,7 @@ type Hidden struct {
 }
 
 func (hr *Hidden) AddHiddenService(svc *services.Service, key *crypto.Prv,
-	in *intro.Ad, addr string) {
+	in *adintro.Ad, addr string) {
 	pk := crypto.DerivePub(key).ToBytes()
 	hr.Lock()
 	log.D.F("%s added hidden service with key %s", addr, pk)
@@ -54,7 +54,7 @@ func (hr *Hidden) AddIntro(pk *crypto.Pub, intro *Introduction) {
 	hr.Unlock()
 }
 
-func (hr *Hidden) AddIntroToHiddenService(key crypto.PubBytes, in *intro.Ad) {
+func (hr *Hidden) AddIntroToHiddenService(key crypto.PubBytes, in *adintro.Ad) {
 	hr.Lock()
 	hr.Services[key].CurrentIntros = append(hr.Services[key].
 		CurrentIntros, in)
@@ -176,7 +176,7 @@ func (hr *Hidden) FindIntroductionUnsafe(
 	return
 }
 
-func (hr *Hidden) FindKnownIntro(key crypto.PubBytes) (intro *intro.Ad) {
+func (hr *Hidden) FindKnownIntro(key crypto.PubBytes) (intro *adintro.Ad) {
 	hr.Lock()
 	var ok bool
 	if intro, ok = hr.KnownIntros[key]; ok {
@@ -185,7 +185,7 @@ func (hr *Hidden) FindKnownIntro(key crypto.PubBytes) (intro *intro.Ad) {
 	return
 }
 
-func (hr *Hidden) FindKnownIntroUnsafe(key crypto.PubBytes) (intro *intro.Ad) {
+func (hr *Hidden) FindKnownIntroUnsafe(key crypto.PubBytes) (intro *adintro.Ad) {
 	var ok bool
 	if intro, ok = hr.KnownIntros[key]; ok {
 	}
@@ -193,13 +193,13 @@ func (hr *Hidden) FindKnownIntroUnsafe(key crypto.PubBytes) (intro *intro.Ad) {
 }
 
 type Introduction struct {
-	Intro *intro.Ad
+	Intro *adintro.Ad
 	ReplyHeader
 }
-type KnownIntros map[crypto.PubBytes]*intro.Ad
+type KnownIntros map[crypto.PubBytes]*adintro.Ad
 type LocalHiddenService struct {
 	Prv           *crypto.Prv
-	CurrentIntros []*intro.Ad
+	CurrentIntros []*adintro.Ad
 	*services.Service
 }
 type MyIntros map[crypto.PubBytes]*Introduction

@@ -1,9 +1,9 @@
 package engine
 
 import (
+	"github.com/indra-labs/indra/pkg/onions/adintro"
 	"github.com/indra-labs/indra/pkg/onions/exit"
 	"github.com/indra-labs/indra/pkg/onions/getbalance"
-	"github.com/indra-labs/indra/pkg/onions/intro"
 	"github.com/indra-labs/indra/pkg/onions/message"
 	"github.com/indra-labs/indra/pkg/onions/ont"
 	"github.com/indra-labs/indra/pkg/onions/reg"
@@ -55,7 +55,7 @@ func (ng *Engine) SendGetBalance(alice, bob *sessions.Data, hook responses.Callb
 func (ng *Engine) SendHiddenService(id nonce.ID, key *crypto.Prv,
 	relayRate uint32, port uint16, expiry time.Time,
 	alice, bob *sessions.Data, svc *services.Service,
-	hook responses.Callback) (in *intro.Ad) {
+	hook responses.Callback) (in *adintro.Ad) {
 
 	hops := sess.StandardCircuit()
 	s := make(sessions.Sessions, len(hops))
@@ -63,7 +63,7 @@ func (ng *Engine) SendHiddenService(id nonce.ID, key *crypto.Prv,
 	se := ng.Manager.SelectHops(hops, s, "sendhiddenservice")
 	var c sessions.Circuit
 	copy(c[:], se[:len(c)])
-	in = intro.NewIntroAd(id, key, alice.Node.AddrPort, relayRate, port, expiry)
+	in = adintro.NewIntroAd(id, key, alice.Node.AddrPort, relayRate, port, expiry)
 	o := MakeHiddenService(in, alice, bob, c, ng.KeySet)
 	log.D.F("%s sending out hidden service onion %s",
 		ng.Manager.GetLocalNodeAddressString(),
@@ -76,7 +76,7 @@ func (ng *Engine) SendHiddenService(id nonce.ID, key *crypto.Prv,
 }
 
 func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *crypto.Pub,
-	alice, bob *sessions.Data, hook func(in *intro.Ad)) {
+	alice, bob *sessions.Data, hook func(in *adintro.Ad)) {
 
 	fn := func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
 		s := splice.Load(b, slice.NewCursor())
@@ -84,9 +84,9 @@ func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *crypto.Pub,
 		if e = on.Decode(s); fails(e) {
 			return
 		}
-		var oni *intro.Ad
+		var oni *adintro.Ad
 		var ok bool
-		if oni, ok = on.(*intro.Ad); !ok {
+		if oni, ok = on.(*adintro.Ad); !ok {
 			return
 		}
 		hook(oni)

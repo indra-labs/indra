@@ -9,7 +9,7 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
 	"github.com/indra-labs/indra/pkg/engine/sess"
-	"github.com/indra-labs/indra/pkg/onions/intro"
+	"github.com/indra-labs/indra/pkg/onions/adintro"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/qu"
@@ -54,7 +54,7 @@ func NewServiceAd(
 	port uint16,
 ) (sv *Ad) {
 
-	s := splice.New(intro.Len)
+	s := splice.New(adintro.Len)
 	k := crypto.DerivePub(key)
 	ServiceSplice(s, id, k, relayRate, port)
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
@@ -122,7 +122,7 @@ func (x *Ad) SpliceNoSig(s *splice.Splice) {
 }
 
 func (x *Ad) Validate() (valid bool) {
-	s := splice.New(intro.Len - magic.Len)
+	s := splice.New(adintro.Len - magic.Len)
 	x.SpliceNoSig(s)
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	key, e := x.Sig.Recover(hash)

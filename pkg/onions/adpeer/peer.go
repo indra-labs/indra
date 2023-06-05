@@ -9,7 +9,7 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
 	"github.com/indra-labs/indra/pkg/engine/sess"
-	"github.com/indra-labs/indra/pkg/onions/intro"
+	"github.com/indra-labs/indra/pkg/onions/adintro"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/qu"
@@ -43,7 +43,7 @@ func New(id nonce.ID, key *crypto.Prv,
 	relayRate uint32) (peerAd *Ad) {
 
 	pk := crypto.DerivePub(key)
-	s := splice.New(intro.Len - magic.Len)
+	s := splice.New(adintro.Len - magic.Len)
 	s.ID(id).
 		Pubkey(pk).
 		Uint32(relayRate)

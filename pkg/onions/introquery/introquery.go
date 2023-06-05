@@ -9,11 +9,11 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/magic"
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
+	"github.com/indra-labs/indra/pkg/onions/adintro"
 	"github.com/indra-labs/indra/pkg/onions/crypt"
 	"github.com/indra-labs/indra/pkg/onions/end"
 	"github.com/indra-labs/indra/pkg/onions/exit"
 	"github.com/indra-labs/indra/pkg/onions/hidden"
-	"github.com/indra-labs/indra/pkg/onions/intro"
 	"github.com/indra-labs/indra/pkg/onions/ont"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
@@ -87,11 +87,11 @@ func (x *IntroQuery) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error
 	log.D.Ln(ng.Mgr().GetLocalNodeAddressString(), "handling introquery", x.ID,
 		x.Key.ToBased32Abbreviated())
 	var ok bool
-	var il *intro.Ad
+	var il *adintro.Ad
 	if il, ok = ng.GetHidden().KnownIntros[x.Key.ToBytes()]; !ok {
 		// if the reply is zeroes the querant knows it needs to retry at a
 		// different relay
-		il = &intro.Ad{}
+		il = &adintro.Ad{}
 		ng.GetHidden().Unlock()
 		log.E.Ln("intro not known")
 		return
