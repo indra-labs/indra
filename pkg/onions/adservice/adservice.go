@@ -10,11 +10,13 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/magic"
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/onions/adintro"
+	"github.com/indra-labs/indra/pkg/onions/adproto"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/qu"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
+	"time"
 )
 
 var (
@@ -24,12 +26,9 @@ var (
 
 const (
 	Magic = "svad"
-	Len   = magic.Len +
-		nonce.IDLen +
-		crypto.PubKeyLen +
+	Len   = adproto.Len +
 		slice.Uint16Len +
-		slice.Uint32Len +
-		crypto.SigLen
+		slice.Uint32Len
 )
 
 // Ad stores a specification for the fee rate and the service port, which
@@ -38,25 +37,20 @@ const (
 // "/service/N" where N is the index of the entry. A zero value at an index
 // signals to stop scanning for more subsequent values.
 type Ad struct {
-	ID        nonce.ID    // To ensure no repeating message.
-	Key       *crypto.Pub // Server offering service.
+	adproto.Ad
 	Port      uint16
 	RelayRate uint32
-	Sig       crypto.SigBytes
 }
 
 var _ coding.Codec = &Ad{}
 
-func NewServiceAd(
-	id nonce.ID,
-	key *crypto.Prv,
-	relayRate uint32,
-	port uint16,
-) (sv *Ad) {
+// NewServiceAd ...
+func NewServiceAd(id nonce.ID, key *crypto.Prv, relayRate uint32, port uint16,
+	expiry time.Time, ) (sv *Ad) {
 
 	s := splice.New(adintro.Len)
 	k := crypto.DerivePub(key)
-	ServiceSplice(s, id, k, relayRate, port)
+	ServiceSplice(s, id, k, relayRate, port, expiry)
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	var e error
 	var sign crypto.SigBytes
@@ -64,11 +58,14 @@ func NewServiceAd(
 		return nil
 	}
 	sv = &Ad{
-		ID:        id,
-		Key:       k,
+		Ad: adproto.Ad{
+			ID:     id,
+			Key:    k,
+			Expiry: time.Now().Add(adproto.TTL),
+			Sig:    sign,
+		},
 		RelayRate: relayRate,
 		Port:      port,
-		Sig:       sign,
 	}
 	return
 }
@@ -78,6 +75,7 @@ func (x *Ad) Decode(s *splice.Splice) (e error) {
 		ReadPubkey(&x.Key).
 		ReadUint16(&x.Port).
 		ReadUint32(&x.RelayRate).
+		ReadTime(&x.Expiry).
 		ReadSignature(&x.Sig)
 	return
 }
@@ -118,7 +116,7 @@ func (x *Ad) Splice(s *splice.Splice) {
 }
 
 func (x *Ad) SpliceNoSig(s *splice.Splice) {
-	ServiceSplice(s, x.ID, x.Key, x.RelayRate, x.Port)
+	ServiceSplice(s, x.ID, x.Key, x.RelayRate, x.Port, x.Expiry)
 }
 
 func (x *Ad) Validate() (valid bool) {
@@ -135,19 +133,14 @@ func (x *Ad) Validate() (valid bool) {
 	return false
 }
 
-func ServiceSplice(
-	s *splice.Splice,
-	id nonce.ID,
-	key *crypto.Pub,
-	relayRate uint32,
-	port uint16,
-) {
+func ServiceSplice(s *splice.Splice, id nonce.ID, key *crypto.Pub, relayRate uint32, port uint16, expiry time.Time, ) {
 
 	s.Magic(Magic).
 		ID(id).
 		Pubkey(key).
 		Uint16(port).
-		Uint32(relayRate)
+		Uint32(relayRate).
+		Time(expiry)
 }
 
 func init() { reg.Register(Magic, serviceAdGen) }

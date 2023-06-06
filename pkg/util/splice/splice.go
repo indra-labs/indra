@@ -396,8 +396,9 @@ func (s *Splice) ReadSignature(sb *crypto.SigBytes) *Splice {
 }
 
 func (s *Splice) ReadTime(v *time.Time) *Splice {
-	*v = time.Unix(0,
-		int64(slice.DecodeUint64(s.b[*s.c:s.c.Inc(slice.Uint64Len)])))
+	n := slice.DecodeUint64(s.b[*s.c:s.c.Inc(slice.Uint64Len)])
+	*v = time.Unix(
+		int64(n),0)
 	s.Segments = append(s.Segments,
 		NameOffset{Offset: int(*s.c), Name: fmt.Sprint(*v)})
 	return s
@@ -528,7 +529,8 @@ func (s *Splice) StoreCursor(c *int) *Splice {
 //}
 
 func (s *Splice) Time(v time.Time) *Splice {
-	slice.EncodeUint64(s.b[*s.c:s.c.Inc(slice.Uint64Len)], uint64(v.UnixNano()))
+	n := v.Unix()
+	slice.EncodeUint64(s.b[*s.c:s.c.Inc(slice.Uint64Len)], uint64(n))
 	s.Segments = append(s.Segments,
 		NameOffset{Offset: int(*s.c), Name: fmt.Sprint(v)})
 	return s

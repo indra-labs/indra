@@ -19,8 +19,7 @@ func TestProtoAd(t *testing.T) {
 	var e error
 	pr, _, _ := crypto.NewSigner()
 	id := nonce.NewID()
-	aa := NewAddressAd(id, pr, time.Now().Add(time.Hour))
-	log.D.S("ad", aa)
+	aa := NewProtoAd(id, pr, time.Now().Add(time.Hour))
 	s := splice.New(aa.Len())
 	if e = aa.Encode(s); fails(e) {
 		t.FailNow()
@@ -35,18 +34,18 @@ func TestProtoAd(t *testing.T) {
 		t.Error("did not decode")
 		t.FailNow()
 	}
-	log.D.S(onc)
 	var ad *Ad
 	var ok bool
 	if ad, ok = onc.(*Ad); !ok {
 		t.Error("did not unwrap expected type")
 		t.FailNow()
 	}
+	log.D.S(ad)
 	if ad.ID != aa.ID {
 		t.Errorf("ID did not decode correctly")
 		t.FailNow()
 	}
-	if ad.Expiry == aa.Expiry {
+	if ad.Expiry.Unix() != aa.Expiry.Unix() {
 		t.Errorf("expiry did not decode correctly")
 		t.FailNow()
 	}

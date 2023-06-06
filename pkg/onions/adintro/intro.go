@@ -2,6 +2,7 @@ package adintro
 
 import (
 	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/pkg/onions/adproto"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"net/netip"
@@ -26,24 +27,14 @@ var (
 
 const (
 	Magic = "inad"
-	Len   = magic.Len +
-		nonce.IDLen +
-		crypto.PubKeyLen + 1 + 4 +
-		splice.AddrLen +
-		slice.Uint16Len +
-		slice.Uint32Len +
-		slice.Uint64Len +
-		crypto.SigLen
+	Len   = adproto.Len + splice.AddrLen + 1 + slice.Uint16Len + slice.Uint32Len
 )
 
 type Ad struct {
-	ID        nonce.ID        // Ensures never a repeated signature.
-	Key       *crypto.Pub     // Hidden service address.
+	adproto.Ad
 	AddrPort  *netip.AddrPort // Introducer address.
 	Port      uint16          // Well known port of protocol available.
 	RelayRate uint32          // mSat/Mb
-	Expiry    time.Time
-	Sig       crypto.SigBytes
 }
 
 var _ coding.Codec = &Ad{}
@@ -147,13 +138,15 @@ func NewIntroAd(
 		return nil
 	}
 	in = &Ad{
-		ID:        id,
-		Key:       pk,
+		Ad: adproto.Ad{
+			ID:     id,
+			Key:    pk,
+			Expiry: time.Now().Add(adproto.TTL),
+			Sig:    sign,
+		},
 		AddrPort:  ap,
 		RelayRate: relayRate,
 		Port:      port,
-		Expiry:    expires,
-		Sig:       sign,
 	}
 	return
 }

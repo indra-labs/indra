@@ -9,16 +9,17 @@ import (
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/splice"
 	"testing"
+	"time"
 )
 
 func TestServiceAd(t *testing.T) {
-	if indra.CI=="false" {
+	if indra.CI == "false" {
 		log2.SetLogLevel(log2.Trace)
 	}
 	var e error
 	pr, _, _ := crypto.NewSigner()
 	id := nonce.NewID()
-	sv := NewServiceAd(id, pr, 20000, 80)
+	sv := NewServiceAd(id, pr, 20000, 80, time.Now().Add(time.Hour))
 	log.D.S("service", sv)
 	s := splice.New(sv.Len())
 	if e = sv.Encode(s); fails(e) {

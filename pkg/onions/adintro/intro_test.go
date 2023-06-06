@@ -15,7 +15,7 @@ import (
 )
 
 func TestIntroAd(t *testing.T) {
-	if indra.CI=="false" {
+	if indra.CI == "false" {
 		log2.SetLogLevel(log2.Trace)
 	}
 	var e error
@@ -57,7 +57,7 @@ func TestIntroAd(t *testing.T) {
 		t.Errorf("relay rate did not decode correctly")
 		t.FailNow()
 	}
-	if !intro.Expiry.Equal(in.Expiry) {
+	if intro.Expiry.Unix() != in.Expiry.Unix() {
 		t.Errorf("expiry did not decode correctly")
 		t.FailNow()
 	}

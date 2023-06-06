@@ -13,7 +13,7 @@ import (
 )
 
 func TestAddressAd(t *testing.T) {
-	if indra.CI=="false" {
+	if indra.CI == "false" {
 		log2.SetLogLevel(log2.Trace)
 	}
 	var e error
@@ -24,7 +24,7 @@ func TestAddressAd(t *testing.T) {
 		t.FailNow()
 	}
 	aa := NewAddressAd(id, pr, ma)
-	log.D.S("ad", aa)
+	log.D.S("ad", aa.Expiry.Unix())
 	s := splice.New(aa.Len())
 	if e = aa.Encode(s); fails(e) {
 		t.FailNow()
@@ -39,11 +39,15 @@ func TestAddressAd(t *testing.T) {
 		t.Error("did not decode")
 		t.FailNow()
 	}
-	log.D.S(onc)
 	var ad *Ad
 	var ok bool
 	if ad, ok = onc.(*Ad); !ok {
 		t.Error("did not unwrap expected type")
+		t.FailNow()
+	}
+	log.D.S(ad.Expiry.Unix())
+	if ad.Expiry.Unix() != aa.Expiry.Unix() {
+		t.Errorf("expiry did not decode correctly")
 		t.FailNow()
 	}
 	if ad.ID != aa.ID {
