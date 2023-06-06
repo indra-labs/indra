@@ -34,7 +34,7 @@ type (
 		ShuttingDown atomic.Bool
 	}
 	Params struct {
-		tpt.Transport
+		Transport tpt.Transport
 		Listener *transport.Listener
 		*crypto.Keys
 		Node            *node.Node

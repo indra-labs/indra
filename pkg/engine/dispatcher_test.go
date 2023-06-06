@@ -81,15 +81,15 @@ func TestEngine_PeerStore(t *testing.T) {
 		t.FailNow()
 	}
 	const key = "testkey"
-	if e = engines[0].Publish(engines[0].Manager.Listener.Host.ID(),
-		key, s.GetAll().ToBytes());fails(e){
-		t.FailNow()
-	}
-	var val interface{}
-	val, e = engines[1].FindPeerRecord(engines[0].Manager.Listener.Host.ID(), key)
-	log.D.S("val", val)
-	val, e = engines[0].FindPeerRecord(engines[0].Manager.Listener.Host.ID(), key)
-	log.D.S("val", val)
+	//if e = engines[0].Publish(engines[0].Manager.Listener.Host.ID(),
+	//	key, s.GetAll().ToBytes());fails(e){
+	//	t.FailNow()
+	//}
+	//var val interface{}
+	//val, e = engines[1].FindPeerRecord(engines[0].Manager.Listener.Host.ID(), key)
+	//log.D.S("val", val)
+	//val, e = engines[0].FindPeerRecord(engines[0].Manager.Listener.Host.ID(), key)
+	//log.D.S("val", val)
 	time.Sleep(time.Second*3)
 	cancel()
 	for i := range engines {

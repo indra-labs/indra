@@ -34,7 +34,7 @@ func NewDuplexByteChan(bufs int) *DuplexByteChan {
 }
 
 // NewSimDuplex creates a DuplexByteChan that behaves like a single ByteChan by
-// forwarding from the send channel to the receive channel. This creates
+// forwarding from the send channel to the receiver channel. This creates
 // something like a virtual in memory packet connection, as used in many of the
 // Onion tests for testing correct forwarding without a full network.
 //

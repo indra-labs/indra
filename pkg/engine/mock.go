@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"errors"
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
@@ -12,8 +13,10 @@ import (
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/multiformats/go-multiaddr"
+	manet "github.com/multiformats/go-multiaddr/net"
 	"net/netip"
 	"os"
+	"strconv"
 )
 
 var (
@@ -90,6 +93,11 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 
 // CreateMockEngine creates an indra Engine with a random localhost listener.
 func CreateMockEngine(seed, dataPath string) (ng *Engine, cancel func(), e error) {
+	defer func(f *error) {
+		if *f != nil {
+			fails(os.RemoveAll(dataPath))
+		}
+	}(&e)
 	var ctx context.Context
 	ctx, cancel = context.WithCancel(context.Background())
 	var keys []*crypto.Keys
@@ -102,45 +110,48 @@ func CreateMockEngine(seed, dataPath string) (ng *Engine, cancel func(), e error
 	var l *transport.Listener
 	if l, e = transport.NewListener(seed, transport.LocalhostZeroIPv4TCP,
 		dataPath, k, ctx, transport.DefaultMTU); fails(e) {
-		os.RemoveAll(dataPath)
 		return
 	}
 	sa := transport.GetHostAddress(l.Host)
-	var addr netip.AddrPort
+	var ap *netip.AddrPort
 	var ma multiaddr.Multiaddr
 	if ma, e = multiaddr.NewMultiaddr(sa); fails(e) {
-		e = os.RemoveAll(dataPath)
 		return
 	}
-
-	var ip, port string
-	if ip, e = ma.ValueForProtocol(multiaddr.P_IP4); fails(e) {
-		// we specified ipv4 previously.
-		fails(os.RemoveAll(dataPath))
-		return
-	}
-	if port, e = ma.ValueForProtocol(multiaddr.P_TCP); fails(e) {
-		fails(os.RemoveAll(dataPath))
-		return
-	}
-	if addr, e = netip.ParseAddrPort(ip + ":" + port); fails(e) {
-		fails(os.RemoveAll(dataPath))
+	if ap = MultiaddrToAddrPort(ma); ap == nil {
+		e = errors.New("unable to parse multiaddr")
 		return
 	}
 	var nod *node.Node
-	if nod, _ = node.NewNode(&addr, k, nil, 50000); fails(e) {
-		fails(os.RemoveAll(dataPath))
+	if nod, _ = node.NewNode(ap, k, nil, 50000); fails(e) {
 		return
 	}
 	nodes = append(nodes, nod)
 	if ng, e = NewEngine(Params{
-		Transport: transport.NewByteChan(transport.ConnBufs),
-		Listener: l,
-		Keys:     k,
-		Node:     nod,
+		Transport: transport.NewDuplexByteChan(transport.ConnBufs),
+		Listener:  l,
+		Keys:      k,
+		Node:      nod,
 	}); fails(e) {
-		os.RemoveAll(dataPath)
-		return
 	}
 	return
+}
+
+// MultiaddrToAddrPort returns the ip and port for a. p should be either ma.P_TCP or ma.P_UDP.
+// a must be an (ip, TCP) or (ip, udp) address.
+func MultiaddrToAddrPort(a multiaddr.Multiaddr) (ap *netip.AddrPort) {
+	ip, _ := manet.ToIP(a)
+	var port string
+	var e error
+	for _, p := range []int{multiaddr.P_TCP, multiaddr.P_UDP} {
+		if port, e = a.ValueForProtocol(p); e == nil {
+			break
+		} else {
+			return
+		}
+	}
+	pi, _ := strconv.Atoi(port)
+	addr, _ := netip.AddrFromSlice(ip)
+	aap := netip.AddrPortFrom(addr, uint16(pi))
+	return &aap
 }
