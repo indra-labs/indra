@@ -1,7 +1,6 @@
 package forward
 
 import (
-	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
 	"github.com/indra-labs/indra/pkg/engine/sess"
@@ -17,7 +16,7 @@ import (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	fails = log.E.Chk
 )
 

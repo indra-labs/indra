@@ -1,7 +1,6 @@
 package adintro
 
 import (
-	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/onions/adproto"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
@@ -20,7 +19,7 @@ import (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	fails = log.E.Chk
 )
 

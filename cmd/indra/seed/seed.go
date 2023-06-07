@@ -1,7 +1,6 @@
 package seed
 
 import (
-	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/cmd/indra/seed/client"
 	"github.com/indra-labs/indra/pkg/p2p"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
@@ -11,7 +10,7 @@ import (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	check = log.E.Chk
 )
 

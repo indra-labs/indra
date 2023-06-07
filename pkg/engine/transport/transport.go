@@ -50,7 +50,7 @@ const (
 
 var (
 	blue  = color.Blue.Sprint
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	fails = log.E.Chk
 )
 

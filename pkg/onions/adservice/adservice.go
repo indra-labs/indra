@@ -2,7 +2,6 @@ package adservice
 
 import (
 	"fmt"
-	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
@@ -20,7 +19,7 @@ import (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	fails = log.E.Chk
 )
 
@@ -46,7 +45,7 @@ var _ coding.Codec = &Ad{}
 
 // NewServiceAd ...
 func NewServiceAd(id nonce.ID, key *crypto.Prv, relayRate uint32, port uint16,
-	expiry time.Time, ) (sv *Ad) {
+	expiry time.Time) (sv *Ad) {
 
 	s := splice.New(adintro.Len)
 	k := crypto.DerivePub(key)
@@ -133,7 +132,7 @@ func (x *Ad) Validate() (valid bool) {
 	return false
 }
 
-func ServiceSplice(s *splice.Splice, id nonce.ID, key *crypto.Pub, relayRate uint32, port uint16, expiry time.Time, ) {
+func ServiceSplice(s *splice.Splice, id nonce.ID, key *crypto.Pub, relayRate uint32, port uint16, expiry time.Time) {
 
 	s.Magic(Magic).
 		ID(id).

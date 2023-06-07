@@ -1,13 +1,12 @@
 package client
 
 import (
-	"github.com/indra-labs/indra"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/spf13/cobra"
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	check = log.E.Chk
 )
 

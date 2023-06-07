@@ -1,7 +1,6 @@
 package hiddenservice
 
 import (
-	"github.com/indra-labs/indra"
 	intro "github.com/indra-labs/indra/pkg/onions/adintro"
 	"github.com/indra-labs/indra/pkg/onions/consts"
 	"github.com/indra-labs/indra/pkg/onions/end"
@@ -23,7 +22,7 @@ import (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	fails = log.E.Chk
 )
 

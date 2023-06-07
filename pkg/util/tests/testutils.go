@@ -2,14 +2,13 @@ package tests
 
 import (
 	"crypto/rand"
-	
-	"github.com/indra-labs/indra"
+
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	fails = log.E.Chk
 )
 

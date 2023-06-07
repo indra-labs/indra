@@ -1,7 +1,6 @@
 package response
 
 import (
-	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
@@ -16,7 +15,7 @@ import (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	fails = log.E.Chk
 )
 

@@ -8,7 +8,6 @@ import (
 	"crypto/rand"
 	"encoding/binary"
 	"fmt"
-	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"net/netip"
@@ -24,7 +23,7 @@ const (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	check = log.E.Chk
 	put64 = binary.LittleEndian.PutUint64
 	get64 = binary.LittleEndian.Uint64

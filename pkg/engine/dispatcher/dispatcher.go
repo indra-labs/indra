@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/VividCortex/ewma"
 	"github.com/gookit/color"
-	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
@@ -33,7 +32,7 @@ const (
 
 var (
 	blue  = color.Blue.Sprint
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	fails = log.E.Chk
 )
 

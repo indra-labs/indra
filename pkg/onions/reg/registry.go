@@ -3,7 +3,6 @@ package reg
 import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gookit/color"
-	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/splice"
@@ -12,7 +11,7 @@ import (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	fails = log.E.Chk
 )
 var reg = newRegistry()

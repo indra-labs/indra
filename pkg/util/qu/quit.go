@@ -2,7 +2,6 @@ package qu
 
 import (
 	"fmt"
-	"github.com/indra-labs/indra"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"go.uber.org/atomic"
 	"runtime"
@@ -17,7 +16,7 @@ var (
 	mx              sync.Mutex
 	logEnabled      atomic.Bool
 	KillAll         = T()
-	log             = log2.GetLogger(indra.PathBase)
+	log             = log2.GetLogger()
 	fails           = log.E.Chk
 )
 

@@ -1,7 +1,6 @@
 package session
 
 import (
-	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
@@ -18,7 +17,7 @@ import (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	fails = log.E.Chk
 )
 
@@ -109,5 +108,5 @@ func (x *Session) PreimageHash() sha256.Hash {
 }
 
 func (x *Session) Wrap(inner ont.Onion) { x.Onion = inner }
-func init()                                { reg.Register(SessionMagic, sessionGen) }
-func sessionGen() coding.Codec             { return &Session{} }
+func init()                             { reg.Register(SessionMagic, sessionGen) }
+func sessionGen() coding.Codec          { return &Session{} }

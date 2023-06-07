@@ -8,7 +8,6 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 	"github.com/gookit/color"
-	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/b32/based32"
@@ -45,7 +44,7 @@ var (
 	_     crypto.PubKey  = &Pub{}
 	_     crypto.PrivKey = &Prv{}
 	fails                = log.E.Chk
-	log                  = log2.GetLogger(indra.PathBase)
+	log                  = log2.GetLogger()
 )
 
 // Blinder is the bytes concatenated after a key to generate the Cloak hash.
@@ -279,7 +278,6 @@ func (k *Pub) ToHex() (s string, e error) {
 	s = hex.EncodeToString(b[:])
 	return
 }
-
 
 // SigFromBased32 decodes a SigBytes encoded in Based32.
 func SigFromBased32(s string) (sig SigBytes, e error) {

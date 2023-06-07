@@ -1,7 +1,6 @@
 package getbalance
 
 import (
-	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
@@ -23,7 +22,7 @@ import (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	fails = log.E.Chk
 )
 
@@ -148,5 +147,5 @@ func NewGetBalance(id nonce.ID, ep *exit.ExitPoint) ont.Onion {
 		Onion:   end.NewEnd(),
 	}
 }
-func getBalanceGen() coding.Codec      { return &GetBalance{} }
-func init()                            { reg.Register(GetBalanceMagic, getBalanceGen) }
+func getBalanceGen() coding.Codec { return &GetBalance{} }
+func init()                       { reg.Register(GetBalanceMagic, getBalanceGen) }

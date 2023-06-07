@@ -2,7 +2,6 @@ package message
 
 import (
 	"github.com/davecgh/go-spew/spew"
-	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/ciph"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
@@ -22,7 +21,7 @@ import (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	fails = log.E.Chk
 )
 
@@ -31,7 +30,7 @@ const (
 	ReplyCiphersLen = 2*consts.RoutingHeaderLen +
 		6*sha256.Len +
 		6*nonce.IVLen
-	MessageLen      = magic.Len +
+	MessageLen = magic.Len +
 		2*nonce.IDLen +
 		2*consts.RoutingHeaderLen +
 		ReplyCiphersLen
@@ -45,7 +44,7 @@ type Message struct {
 	Payload         slice.Bytes
 }
 
-func NewMessage() (msg *Message){
+func NewMessage() (msg *Message) {
 
 	return
 }

@@ -2,7 +2,6 @@ package route
 
 import (
 	"crypto/cipher"
-	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/ciph"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
@@ -26,7 +25,7 @@ import (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	fails = log.E.Chk
 )
 
@@ -160,11 +159,11 @@ func (x *Route) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 		}
 		rh := []ont.Onion{
 			reverse.NewReverse(rt.Sessions[0].Node.AddrPort),
-			crypt.NewCrypt(rt.Sessions[0].Header.Pub, rt.Sessions[0].Payload.Pub, rt.Keys[0],rt.Nonces[0], 3),
+			crypt.NewCrypt(rt.Sessions[0].Header.Pub, rt.Sessions[0].Payload.Pub, rt.Keys[0], rt.Nonces[0], 3),
 			reverse.NewReverse(rt.Sessions[1].Node.AddrPort),
-			crypt.NewCrypt(rt.Sessions[1].Header.Pub, rt.Sessions[1].Payload.Pub, rt.Keys[1],rt.Nonces[1], 2),
+			crypt.NewCrypt(rt.Sessions[1].Header.Pub, rt.Sessions[1].Payload.Pub, rt.Keys[1], rt.Nonces[1], 2),
 			reverse.NewReverse(rt.Sessions[2].Node.AddrPort),
-			crypt.NewCrypt(rt.Sessions[2].Header.Pub, rt.Sessions[2].Payload.Pub, rt.Keys[2],rt.Nonces[2], 1),
+			crypt.NewCrypt(rt.Sessions[2].Header.Pub, rt.Sessions[2].Payload.Pub, rt.Keys[2], rt.Nonces[2], 1),
 		}
 		//.RoutingHeader(rt)
 		rHdr := ont.Encode(ont.Assemble(rh))

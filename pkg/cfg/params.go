@@ -4,13 +4,12 @@ import (
 	"github.com/multiformats/go-multiaddr"
 	"os"
 
-	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/node"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	check = log.E.Chk
 )
 
@@ -39,7 +38,7 @@ type Params struct {
 // SelectNetworkParams returns the network parameters associated with the network name.
 func SelectNetworkParams(network string) *Params {
 
-	if nw, ok := params[network];ok{
+	if nw, ok := params[network]; ok {
 		return nw
 	}
 	panic("invalid network, exiting...")

@@ -12,12 +12,11 @@ import (
 	"github.com/libp2p/go-libp2p/core/protocol"
 	"github.com/multiformats/go-multiaddr"
 
-	"github.com/indra-labs/indra"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	check = log.E.Chk
 )
 

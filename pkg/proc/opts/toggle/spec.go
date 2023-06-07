@@ -7,7 +7,6 @@ import (
 
 	"go.uber.org/atomic"
 
-	"github.com/indra-labs/indra"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/proc/opts/config"
 	"github.com/indra-labs/indra/pkg/proc/opts/meta"
@@ -15,7 +14,7 @@ import (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	check = log.E.Chk
 )
 

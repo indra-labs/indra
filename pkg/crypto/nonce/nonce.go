@@ -6,7 +6,6 @@ package nonce
 import (
 	"crypto/aes"
 	"crypto/rand"
-	"github.com/indra-labs/indra"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 )
 
@@ -14,7 +13,7 @@ import (
 const IVLen = aes.BlockSize
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	fails = log.E.Chk
 )
 

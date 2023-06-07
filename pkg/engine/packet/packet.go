@@ -3,7 +3,6 @@ package packet
 import (
 	"crypto/cipher"
 	"fmt"
-	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/ciph"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
@@ -21,7 +20,7 @@ const (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	fails = log.E.Chk
 )
 

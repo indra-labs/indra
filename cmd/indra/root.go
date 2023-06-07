@@ -81,12 +81,7 @@ func initLogging() {
 	}
 
 	log2.SetLogLevel(log2.GetLevelByString(viper.GetString("logs-level"), log2.Debug))
-	log2.CodeLocations(false)
-
-	if log2.GetLogLevel() == log2.Debug {
-		log2.CodeLocations(true)
-	}
-}
+ }
 
 func initConfig() {
 

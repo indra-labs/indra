@@ -1,7 +1,6 @@
 package ad
 
 import (
-	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
@@ -11,7 +10,7 @@ import (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	fails = log.E.Chk
 )
 
@@ -27,7 +26,8 @@ type Ad interface {
 // Gossip writes a new Ad out to the p2p network.
 //
 // todo: this will be changed to use the engine host peer store. An interface
-//  will be required.
+//
+//	will be required.
 func Gossip(x Ad, sm *sess.Manager, c qu.C) {
 	done := qu.T()
 	msg := splice.New(x.Len())

@@ -1,7 +1,6 @@
 package multi
 
 import (
-	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -10,7 +9,7 @@ import (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	fails = log.E.Chk
 )
 
@@ -44,4 +43,3 @@ func AddKeyToMultiaddr(in multiaddr.Multiaddr, pub *crypto.Pub) (ma multiaddr.Mu
 	ma = in.Encapsulate(k)
 	return
 }
-

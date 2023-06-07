@@ -1,7 +1,6 @@
 package ready
 
 import (
-	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/ciph"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
@@ -20,7 +19,7 @@ import (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	fails = log.E.Chk
 )
 
@@ -93,10 +92,12 @@ func NewReady(
 	rvHeader hidden.RoutingHeaderBytes,
 	fc, rc crypto.Ciphers,
 	fn, rn crypto.Nonces,
-) ont.Onion {return &Ready{id, addr,
-	&hidden.ReplyHeader{fwHeader, fc, fn},
-	&hidden.ReplyHeader{rvHeader, rc, rn},
-}}
+) ont.Onion {
+	return &Ready{id, addr,
+		&hidden.ReplyHeader{fwHeader, fc, fn},
+		&hidden.ReplyHeader{rvHeader, rc, rn},
+	}
+}
 
-func init()                       { reg.Register(ReadyMagic, readyGen) }
+func init()                  { reg.Register(ReadyMagic, readyGen) }
 func readyGen() coding.Codec { return &Ready{} }

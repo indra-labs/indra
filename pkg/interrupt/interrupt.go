@@ -6,13 +6,11 @@ import (
 	"os/exec"
 	"os/signal"
 	"runtime"
-	"strings"
 	"syscall"
 
 	"go.uber.org/atomic"
 	"golang.org/x/sys/unix"
 
-	"github.com/indra-labs/indra"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 
 	"github.com/kardianos/osext"
@@ -35,7 +33,7 @@ var (
 	HandlersDone             = make(chan struct{})
 	interruptCallbackSources []string
 	interruptCallbacks       []func()
-	log                      = log2.GetLogger(indra.PathBase)
+	log                      = log2.GetLogger()
 	check                    = log.E.Chk
 )
 
@@ -49,9 +47,8 @@ func AddHandler(handler func()) {
 	// Create the channel and start the main interrupt handler that invokes
 	// all other callbacks and exits if not already done.
 	_, loc, line, _ := runtime.Caller(1)
-	loc = strings.Split(loc, indra.PathBase)[1]
-	msg := fmt.Sprintf("\r%s:%d", loc, line)
-	log.T.Ln(msg, "added interrupt handler")
+	msg := fmt.Sprintf("%s:%d", loc, line)
+	log.T.F("added interrupt handler from %s", msg)
 	if ch == nil {
 		ch = make(chan os.Signal)
 		signal.Notify(ch, signals...)
@@ -77,8 +74,7 @@ func Listener() {
 		var callSrc string
 		for i := range interruptCallbackSources {
 			callSrc += fmt.Sprintf("\n-> %s running callback %d",
-				strings.Split(interruptCallbackSources[i], indra.PathBase)[0],
-				i)
+				interruptCallbackSources[i], i)
 		}
 		log.T.Ln("running interrupt callbacks", callSrc)
 		// run handlers in LIFO order.

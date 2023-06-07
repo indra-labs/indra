@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gookit/color"
-	"github.com/indra-labs/indra"
 	"go.uber.org/atomic"
 	"io"
 	"os"
@@ -57,7 +56,7 @@ var (
 	// log is your generic Logger creation invocation that uses the version data
 	// in version.go that provides the current compilation path prefix for making
 	// relative paths for log printing code locations.
-	log     = GetLogger(indra.PathBase)
+	log     = GetLogger()
 	lvlStrs = map[string]LogLevel{
 		"off":   Off,
 		"fatal": Fatal,
@@ -82,7 +81,6 @@ var (
 	// allSubsystems stores all package subsystem names found in the current
 	// application.
 	allSubsystems []string
-	codeLoc       = true
 )
 
 type (
@@ -130,30 +128,14 @@ type (
 
 // Add adds a subsystem to the list of known subsystems and returns the
 // string.
-func Add(pathBase string) (subsystem string) {
-	var ok bool
-	var fh string
-	_, fh, _, ok = runtime.Caller(2)
-	if ok {
-		r := strings.Split(fh, pathBase)
-		fromRoot := filepath.Base(fh)
-		if len(r) > 1 {
-			fromRoot = r[1]
-		}
-		split := strings.Split(fromRoot, "/")
-		subsystem = strings.Join(split[:len(split)-1], "/")
-		writerMx.Lock()
-		defer writerMx.Unlock()
-		allSubsystems = append(allSubsystems, subsystem)
-		sortSubsystemsList()
-	}
-	return
-}
-
-func CodeLocations(on bool) {
+func Add() (subsystem string) {
 	writerMx.Lock()
 	defer writerMx.Unlock()
-	codeLoc = on
+	_, f, _, _ := runtime.Caller(1)
+	subsystemPath := filepath.Dir(f)
+	allSubsystems = append(allSubsystems, subsystemPath)
+	sortSubsystemsList()
+	return
 }
 
 func GetAllSubsystems() (o []string) {
@@ -202,22 +184,22 @@ func GetLoc(skip int, subsystem string) (output string) {
 			)
 		}
 	}()
-	split := strings.Split(file, subsystem)
-	if len(split) < 2 {
-		output = fmt.Sprint(
-			color.White.Sprint(subsystem),
-			color.Gray.Sprint(
-				file, ":", line,
-			),
-		)
-	} else {
-		output = fmt.Sprint(
-			color.White.Sprint(subsystem),
-			color.Gray.Sprint(
-				split[1], ":", line,
-			),
-		)
-	}
+	//split := strings.Split(file, subsystem)
+	//if len(split) < 2 {
+	//	output = fmt.Sprint(
+	//		color.White.Sprint(subsystem),
+	//		color.Gray.Sprint(
+	//			file, ":", line,
+	//		),
+	//	)
+	//} else {
+	output = fmt.Sprint(
+		color.White.Sprint(subsystem),
+		color.Gray.Sprint(
+			file, ":", line,
+		),
+	)
+	//}
 	return
 }
 
@@ -229,8 +211,8 @@ func GetLogLevel() (l LogLevel) {
 }
 
 // GetLogger returns a set of LevelPrinter with their subsystem preloaded
-func GetLogger(pathBase string) (l *Logger) {
-	ss := Add(pathBase)
+func GetLogger() (l *Logger) {
+	ss := Add()
 	return &Logger{
 		getOnePrinter(Fatal, ss),
 		getOnePrinter(Error, ss),
@@ -345,7 +327,7 @@ func _s(level LogLevel, subsystem string) Prints {
 		}
 		logPrint(
 			level, subsystem, func() string {
-				return fmt.Sprint(text + spew.Sdump(a...))
+				return color.Gray.Sprint(text + spew.Sdump(a...))
 			},
 		)()
 	}
@@ -401,54 +383,28 @@ func logPrint(
 		if level > logLevel {
 			return
 		}
-		formatString := "%v%s%s%-6v %s"
+		formatString := "%s %s %-6v %s %v"
 		loc := ""
 		tsf := timeStampFormat
 		timeText := getTimeText(tsf)
-		if codeLoc {
-			formatString = "%-64v%s%s%-6v %s"
-			loc = GetLoc(3, subsystem)
-			tsf = LocTimeStampFormat
-			nns := int(time.Now().Sub(startTime).
-				Nanoseconds())
-			ns := fmt.Sprintf("%24d", nns)
-			end := len(ns)
-			timeStamp := []string{
-				ns[:end-9],
-				ns[end-9 : end-6],
-				ns[end-6 : end-3],
-				ns[end-3 : end],
-			}
-			aboveS := " "
-			if nns > int(time.Second) {
-				aboveS = "."
-			}
-			timeText = fmt.Sprintf("%18s",
-				fmt.Sprintf("%s%s%s %s %s",
-					timeStamp[0],
-					aboveS,
-					timeStamp[1],
-					timeStamp[2],
-					timeStamp[3],
-				),
-			)
-			// /float64(time.Second))
-			// timeText = getTimeText(LocTimeStampFormat)
-			// timeText = ""
+		if level > Info {
+			formatString = "%s %-6v %s %s %s"
+			loc = color.Gray.Sprint(GetLoc(3, subsystem))
+			timeText = time.Now().Format(time.StampNano)
 		}
 		var app string
 		if len(App.Load()) > 0 {
-			app = fmt.Sprint(" [" + App.Load() + "]")
+			app = fmt.Sprint(App.Load())
 		}
 		s := fmt.Sprintf(
 			formatString,
-			loc,
-			color.Gray.Sprint(timeText),
 			app,
 			LevelSpecs[level].Colorizer(
-				" "+LevelSpecs[level].Name+" ",
+				LevelSpecs[level].Name,
 			),
 			printFunc(),
+			loc,
+			timeText,
 		)
 		s = strings.TrimSuffix(s, "\n")
 		fmt.Fprintln(writer, s)

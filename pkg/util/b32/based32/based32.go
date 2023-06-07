@@ -9,7 +9,6 @@ package based32
 import (
 	"encoding/base32"
 	"fmt"
-	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/constant"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
@@ -23,7 +22,7 @@ var (
 		constant.Based32Ciphers,
 		"",
 	)
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	check = log.E.Chk
 )
 

@@ -3,7 +3,6 @@ package splice
 import (
 	"fmt"
 	"github.com/gookit/color"
-	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
@@ -20,7 +19,7 @@ import (
 const AddrLen = net.IPv6len + 2
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	fails = log.E.Chk
 )
 
@@ -398,7 +397,7 @@ func (s *Splice) ReadSignature(sb *crypto.SigBytes) *Splice {
 func (s *Splice) ReadTime(v *time.Time) *Splice {
 	n := slice.DecodeUint64(s.b[*s.c:s.c.Inc(slice.Uint64Len)])
 	*v = time.Unix(
-		int64(n),0)
+		int64(n), 0)
 	s.Segments = append(s.Segments,
 		NameOffset{Offset: int(*s.c), Name: fmt.Sprint(*v)})
 	return s

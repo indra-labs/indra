@@ -26,8 +26,6 @@ const (
 	BuildTime = "2023-06-02T10:43:00+01:00"
 	// SemVer lists the (latest) git tag on the release.
 	SemVer = "v0.1.12"
-	// PathBase is the path base returned from runtime caller.
-	PathBase = "/home/loki/indra-labs/indra/"
 	// Major is the major number from the tag.
 	Major = 0
 	// Minor is the minor number from the tag.

@@ -2,7 +2,6 @@ package adaddress
 
 import (
 	"fmt"
-	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/ad"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
@@ -23,7 +22,7 @@ import (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	fails = log.E.Chk
 )
 

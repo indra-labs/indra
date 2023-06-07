@@ -15,12 +15,11 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-	
+
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
-	
-	"github.com/indra-labs/indra"
+
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 )
 
@@ -35,7 +34,7 @@ var (
 )
 
 var (
-	log   = log2.GetLogger(indra.PathBase)
+	log   = log2.GetLogger()
 	check = log.E.Chk
 )
 
@@ -209,8 +208,6 @@ const (
 	BuildTime = "%s"
 	// SemVer lists the (latest) git tag on the release.
 	SemVer = "%s"
-	// PathBase is the path base returned from runtime caller.
-	PathBase = "%s"
 	// Major is the major number from the tag.
 	Major = %d
 	// Minor is the minor number from the tag.
@@ -240,13 +237,13 @@ func Version() string {
 		ParentGitCommit,
 		BuildTime,
 		SemVer,
-		PathBase,
 		Major,
 		Minor,
 		Patch,
 		"false",
 	)
-	path := filepath.Join(PathBase, "version.go")
+	wd, _ := os.Getwd()
+	path := filepath.Join(wd, "version.go")
 	if e = os.WriteFile(path, []byte(versionFileOut), 0666); check(e) {
 		os.Exit(1)
 	}
