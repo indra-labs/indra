@@ -16,7 +16,6 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/payments"
 	"github.com/indra-labs/indra/pkg/engine/services"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
-	"github.com/indra-labs/indra/pkg/engine/transport"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/slice"
 )
@@ -38,6 +37,21 @@ func (sc CircuitCache) Add(s *sessions.Data) CircuitCache {
 	sc[s.Node.ID][s.Hop] = s
 	return sc
 }
+
+type (
+	// A CircuitCache stores each of the 5 hops of a peer node.
+	CircuitCache map[nonce.ID]*sessions.Circuit
+)
+type (
+	// Manager is a session manager for Indra, handling sessions and services.
+	Manager struct {
+		nodes           []*node.Node
+		PendingPayments payments.PendingPayments
+		sessions.Sessions
+		CircuitCache
+		sync.Mutex
+	}
+)
 
 // AddNodes adds a Node to a Nodes.
 func (sm *Manager) AddNodes(nn ...*node.Node) {
@@ -290,18 +304,6 @@ func (sm *Manager) FindPendingPreimage(pi sha256.Hash) (pp *payments.Payment) {
 	return sm.PendingPayments.FindPreimage(pi)
 }
 
-// FindSessionByPubkey searches for a session with a matching public key.
-func (sm *Manager) FindSessionByPubkey(id crypto.PubBytes) *sessions.Data {
-	sm.Lock()
-	defer sm.Unlock()
-	for i := range sm.Sessions {
-		if sm.Sessions[i].Header.Bytes == id {
-			return sm.Sessions[i]
-		}
-	}
-	return nil
-}
-
 // FindSessionByHeader searches for a session with a matching header private key.
 func (sm *Manager) FindSessionByHeader(prvKey *crypto.Prv) *sessions.Data {
 	sm.Lock()
@@ -321,6 +323,18 @@ func (sm *Manager) FindSessionByHeaderPub(pubKey *crypto.Pub) *sessions.Data {
 	defer sm.Unlock()
 	for i := range sm.Sessions {
 		if sm.Sessions[i].Header.Pub.Equals(pubKey) {
+			return sm.Sessions[i]
+		}
+	}
+	return nil
+}
+
+// FindSessionByPubkey searches for a session with a matching public key.
+func (sm *Manager) FindSessionByPubkey(id crypto.PubBytes) *sessions.Data {
+	sm.Lock()
+	defer sm.Unlock()
+	for i := range sm.Sessions {
+		if sm.Sessions[i].Header.Bytes == id {
 			return sm.Sessions[i]
 		}
 	}
@@ -536,26 +550,10 @@ func (sm *Manager) UpdateSessionCache() {
 	}
 }
 
-type (
-	// A CircuitCache stores each of the 5 hops of a peer node.
-	CircuitCache map[nonce.ID]*sessions.Circuit
-
-	// Manager is a session manager for Indra, handling sessions and services.
-	Manager      struct {
-		nodes           []*node.Node
-		Listener        *transport.Listener
-		PendingPayments payments.PendingPayments
-		sessions.Sessions
-		CircuitCache
-		sync.Mutex
-	}
-)
-
 // NewSessionManager creates a new session manager.
-func NewSessionManager(listener *transport.Listener) *Manager {
+func NewSessionManager() *Manager {
 	return &Manager{
 		CircuitCache:    make(CircuitCache),
 		PendingPayments: make(payments.PendingPayments, 0),
-		Listener:        listener,
 	}
 }

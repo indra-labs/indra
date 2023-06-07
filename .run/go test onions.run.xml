@@ -5,7 +5,7 @@
     <go_parameters value="-v ./... -tags local" />
     <root_directory value="$PROJECT_DIR$" />
     <kind value="DIRECTORY" />
-    <package value="git-indra.lan/indra-labs/indra/pkg/engine" />
+    <package value="git-indra.lan/indra-labs/indra/pkg/onions" />
     <directory value="$PROJECT_DIR$/pkg/onions" />
     <filePath value="$PROJECT_DIR$" />
     <framework value="gotest" />

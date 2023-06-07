@@ -27,6 +27,7 @@ type (
 	Engine struct {
 		Responses    *responses.Pending
 		Manager      *sess.Manager
+		Listener     *transport.Listener
 		h            *hidden.Hidden
 		KeySet       *crypto.KeySet
 		Load         atomic.Uint32
@@ -35,7 +36,7 @@ type (
 	}
 	Params struct {
 		Transport tpt.Transport
-		Listener *transport.Listener
+		Listener  *transport.Listener
 		*crypto.Keys
 		Node            *node.Node
 		Nodes           []*node.Node
@@ -88,8 +89,9 @@ func (ng *Engine) Handler() (out bool) {
 		ng.Shutdown()
 		out = true
 		break
-	case c := <-ng.Manager.Listener.Accept():
+	case c := <-ng.Listener.Accept():
 		go func() {
+			log.D.Ln("new connection inbound (TODO):", c.Host.Addrs()[0])
 			_ = c
 		}()
 	case b := <-ng.Manager.ReceiveToLocalNode():
@@ -176,7 +178,8 @@ func NewEngine(p Params) (c *Engine, e error) {
 	c = &Engine{
 		Responses: &responses.Pending{},
 		KeySet:    ks,
-		Manager:   sess.NewSessionManager(p.Listener),
+		Listener:  p.Listener,
+		Manager:   sess.NewSessionManager(),
 		h:         hidden.NewHiddenrouting(),
 		Pause:     qu.T(),
 		C:         qu.T(),

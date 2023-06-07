@@ -36,9 +36,8 @@ type Node struct {
 	Transport tpt.Transport
 }
 
-// NewNode creates a new Node. The Node for a client's self should use true in
-// the local parameter to not initialise the peer state ring buffers as it won't
-// use them.
+// NewNode creates a new Node. The transport should be from either dialing out or
+// a peer dialing in and the self model does not need to do this.
 func NewNode(addr *netip.AddrPort, keys *crypto.Keys, tpt tpt.Transport,
 	relayRate int) (n *Node, id nonce.ID) {
 	id = nonce.NewID()

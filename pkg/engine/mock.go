@@ -11,12 +11,11 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/tpt"
 	"github.com/indra-labs/indra/pkg/engine/transport"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/util/multi"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/multiformats/go-multiaddr"
-	manet "github.com/multiformats/go-multiaddr/net"
 	"net/netip"
 	"os"
-	"strconv"
 )
 
 var (
@@ -101,7 +100,6 @@ func CreateMockEngine(seed, dataPath string) (ng *Engine, cancel func(), e error
 	var ctx context.Context
 	ctx, cancel = context.WithCancel(context.Background())
 	var keys []*crypto.Keys
-	var nodes []*node.Node
 	var k *crypto.Keys
 	if k, e = crypto.GenerateKeys(); fails(e) {
 		return
@@ -112,21 +110,28 @@ func CreateMockEngine(seed, dataPath string) (ng *Engine, cancel func(), e error
 		dataPath, k, ctx, transport.DefaultMTU); fails(e) {
 		return
 	}
+	log.D.Ln("listener", l != nil)
+	//time.Sleep(time.Second/2)
+	if l == nil {
+		cancel()
+		return nil, nil, errors.New("got nil listener")
+	}
+	log.D.Ln("getting address")
 	sa := transport.GetHostAddress(l.Host)
-	var ap *netip.AddrPort
+	var ap netip.AddrPort
 	var ma multiaddr.Multiaddr
 	if ma, e = multiaddr.NewMultiaddr(sa); fails(e) {
 		return
 	}
-	if ap = MultiaddrToAddrPort(ma); ap == nil {
-		e = errors.New("unable to parse multiaddr")
+	if ap, e = multi.AddrToAddrPort(ma); fails(e) {
 		return
 	}
+	log.D.Ln("making node for engine")
 	var nod *node.Node
-	if nod, _ = node.NewNode(ap, k, nil, 50000); fails(e) {
+	if nod, _ = node.NewNode(&ap, k, nil, 50000); fails(e) {
 		return
 	}
-	nodes = append(nodes, nod)
+	log.D.Ln("appending engine")
 	if ng, e = NewEngine(Params{
 		Transport: transport.NewDuplexByteChan(transport.ConnBufs),
 		Listener:  l,
@@ -135,23 +140,4 @@ func CreateMockEngine(seed, dataPath string) (ng *Engine, cancel func(), e error
 	}); fails(e) {
 	}
 	return
-}
-
-// MultiaddrToAddrPort returns the ip and port for a. p should be either ma.P_TCP or ma.P_UDP.
-// a must be an (ip, TCP) or (ip, udp) address.
-func MultiaddrToAddrPort(a multiaddr.Multiaddr) (ap *netip.AddrPort) {
-	ip, _ := manet.ToIP(a)
-	var port string
-	var e error
-	for _, p := range []int{multiaddr.P_TCP, multiaddr.P_UDP} {
-		if port, e = a.ValueForProtocol(p); e == nil {
-			break
-		} else {
-			return
-		}
-	}
-	pi, _ := strconv.Atoi(port)
-	addr, _ := netip.AddrFromSlice(ip)
-	aap := netip.AddrPortFrom(addr, uint16(pi))
-	return &aap
 }
