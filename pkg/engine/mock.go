@@ -50,7 +50,7 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 		}
 		addr := slice.GenerateRandomAddrPortIPv4()
 		nodes[i], _ = node.NewNode(addr, id, tpts[i], 50000)
-		if cl[i], e = NewEngine(Params{
+		if cl[i], e = New(Params{
 			Listener: &transport.Listener{
 				MTU: 1382,
 			},
@@ -127,7 +127,7 @@ func CreateMockEngine(seed, dataPath string) (ng *Engine, cancel func(), e error
 	if nod, _ = node.NewNode(&ap, k, nil, 50000); fails(e) {
 		return
 	}
-	if ng, e = NewEngine(Params{
+	if ng, e = New(Params{
 		Transport: transport.NewDuplexByteChan(transport.ConnBufs),
 		Listener:  l,
 		Keys:      k,

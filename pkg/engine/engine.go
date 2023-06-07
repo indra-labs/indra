@@ -179,7 +179,7 @@ func (ng *Engine) Start() {
 	}
 }
 
-func NewEngine(p Params) (c *Engine, e error) {
+func New(p Params) (c *Engine, e error) {
 	p.Node.Transport = p.Transport
 	p.Node.Identity = p.Keys
 	var ks *crypto.KeySet
