@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
-	
+
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/proc/opts/config"
 	"github.com/indra-labs/indra/pkg/proc/opts/meta"
@@ -79,27 +79,13 @@ loaded from at application startup, and where it will be written if changed.
 `),
 			Default: defaultConfigFile,
 		}, text.NormalizeFilesystemPath(abs, appName)),
-		
+
 		"DataDir": text.New(meta.Data{
 			Aliases:     []string{"DD"},
 			Label:       "Data Directory",
 			Description: "root folder where application data is stored",
 			Default:     defaultDataDir,
 		}, text.NormalizeFilesystemPath(abs, appName)),
-		
-		"LogCodeLocations": toggle.New(meta.Data{
-			Aliases:     []string{"LCL"},
-			Label:       "Log Code Locations",
-			Description: "whether to print code locations in logs",
-			Documentation: strings.TrimSpace(strings.TrimSpace(`
-Toggles on and off the printing of code locations in logs.
-`)),
-			Default: "false",
-		}, func(o *toggle.Opt) (err error) {
-			log2.CodeLocations(o.Value().Bool())
-			return
-		}),
-		
 		"LogLevel": text.New(meta.Data{
 			Aliases: []string{"LL"},
 			Label:   "Log Level",
@@ -134,7 +120,7 @@ trace log statements will not print.
 			log2.SetLogLevel(lvl)
 			return
 		}),
-		
+
 		"LogFilePath": text.New(meta.Data{
 			Aliases:     Tags("LFP"),
 			Label:       "Log ToHeaderPub File",
@@ -147,7 +133,7 @@ Sets the path of the file to write logs to.
 			err = log2.SetLogFilePath(o.Expanded())
 			return
 		}, text.NormalizeFilesystemPath(abs, appName)),
-		
+
 		"LogToFile": toggle.New(meta.Data{
 			Aliases:     Tags("LTF"),
 			Label:       "Log ToHeaderPub File",

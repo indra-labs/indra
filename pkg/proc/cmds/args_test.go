@@ -15,7 +15,7 @@ func TestCommand_ParseCLIArgs(t *testing.T) {
 	ec := GetExampleCommands()
 	o, _ := Init(ec, nil)
 	args6 := "/random/path/to/server_binary --cafile ~/some/cafile --LC=cn " +
-		"--lcl node -addrindex false --blocksonly"
+		"node -addrindex false --blocksonly"
 	args6s := strings.Split(args6, " ")
 	run, _, e := o.ParseCLIArgs(args6s)
 	if log.E.Chk(e) {
@@ -40,15 +40,7 @@ func TestCommand_ParseCLIArgs(t *testing.T) {
 		t.Error(e)
 		t.FailNow()
 	}
-	args4 := "/random/path/to/server_binary --lcl"
-	args4s := strings.Split(args4, " ")
-	run, _, e = o.ParseCLIArgs(args4s)
-	if log.E.Chk(e) {
-		t.Error(e)
-		t.FailNow()
-	}
-	args5 := "/random/path/to/server_binary --cafile ~/some/cafile --LC=cn " +
-		"--lcl"
+	args5 := "/random/path/to/server_binary --cafile ~/some/cafile --LC=cn "
 	args5s := strings.Split(args5, " ")
 	run, _, e = o.ParseCLIArgs(args5s)
 	if log.E.Chk(e) {
