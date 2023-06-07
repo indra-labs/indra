@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/node"
@@ -15,7 +16,12 @@ import (
 	"github.com/indra-labs/indra/pkg/util/qu"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
+	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"go.uber.org/atomic"
+)
+
+const (
+	PubSubTopic = "indra"
 )
 
 var _ ont.Ngin = &Engine{}
@@ -25,13 +31,18 @@ type (
 	// and locally accessible servers as indicated by the API function and message
 	// parameters.
 	Engine struct {
+		ctx          context.Context
+		cancel       func()
 		Responses    *responses.Pending
 		Manager      *sess.Manager
 		Listener     *transport.Listener
+		PubSub       *pubsub.PubSub
+		topic        *pubsub.Topic
+		sub          *pubsub.Subscription
 		h            *hidden.Hidden
 		KeySet       *crypto.KeySet
 		Load         atomic.Uint32
-		Pause, C     qu.C
+		Pause        qu.C
 		ShuttingDown atomic.Bool
 	}
 	Params struct {
@@ -85,7 +96,7 @@ func (ng *Engine) Handler() (out bool) {
 	})
 	var prev ont.Onion
 	select {
-	case <-ng.C.Wait():
+	case <-ng.ctx.Done():
 		ng.Shutdown()
 		out = true
 		break
@@ -128,7 +139,7 @@ func (ng *Engine) Handler() (out bool) {
 				log.D.Ln("discarding payments while in pause")
 			case <-ng.Manager.ReceiveToLocalNode():
 				log.D.Ln("discarding messages while in pause")
-			case <-ng.C.Wait():
+			case <-ng.ctx.Done():
 				break out
 			case <-ng.Pause:
 				// This will then resume to the top level select.
@@ -141,7 +152,7 @@ func (ng *Engine) Handler() (out bool) {
 }
 
 func (ng *Engine) Keyset() *crypto.KeySet      { return ng.KeySet }
-func (ng *Engine) KillSwitch() qu.C            { return ng.C }
+func (ng *Engine) KillSwitch() <-chan struct{} { return ng.ctx.Done() }
 func (ng *Engine) Mgr() *sess.Manager          { return ng.Manager }
 func (ng *Engine) Pending() *responses.Pending { return ng.Responses }
 func (ng *Engine) SetLoad(load byte)           { ng.Load.Store(uint32(load)) }
@@ -149,13 +160,13 @@ func (ng *Engine) SetLoad(load byte)           { ng.Load.Store(uint32(load)) }
 // Shutdown triggers the shutdown of the client and the Cleanup before
 // finishing.
 func (ng *Engine) Shutdown() {
-	log.D.Ln("shutting down", ng.Manager.GetLocalNodeAddress().String())
+	log.T.Ln("shutting down", ng.Manager.GetLocalNodeAddress().String())
 	if ng.ShuttingDown.Load() {
 		return
 	}
 	ng.ShuttingDown.Store(true)
 	ng.Cleanup()
-	ng.C.Q()
+	ng.cancel()
 }
 
 // Start a single thread of the Engine.
@@ -175,14 +186,31 @@ func NewEngine(p Params) (c *Engine, e error) {
 	if _, ks, e = crypto.NewSigner(); fails(e) {
 		return
 	}
+	ctx, cancel := context.WithCancel(context.Background())
 	c = &Engine{
+		ctx:       ctx,
+		cancel:    cancel,
 		Responses: &responses.Pending{},
 		KeySet:    ks,
 		Listener:  p.Listener,
 		Manager:   sess.NewSessionManager(),
 		h:         hidden.NewHiddenrouting(),
 		Pause:     qu.T(),
-		C:         qu.T(),
+	}
+	var ps *pubsub.PubSub
+	if p.Listener.Host != nil {
+		if ps, e = pubsub.NewGossipSub(ctx, p.Listener.Host); fails(e) {
+			cancel()
+			return
+		}
+		c.PubSub = ps
+		if c.topic, e = c.PubSub.Join(PubSubTopic); fails(e) {
+			return
+		}
+		if c.sub, e = c.topic.Subscribe(); fails(e) {
+			return
+		}
+		log.D.Ln("subscribed to", PubSubTopic, "topic on gossip network")
 	}
 	c.Manager.AddNodes(append([]*node.Node{p.Node}, p.Nodes...)...)
 	// AddIntro a return session for receiving responses, ideally more of these

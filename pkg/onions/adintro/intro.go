@@ -15,7 +15,6 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
 	"github.com/indra-labs/indra/pkg/engine/sess"
-	"github.com/indra-labs/indra/pkg/util/qu"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
 )
@@ -68,7 +67,7 @@ func (x *Ad) GetOnion() interface{} { return x }
 
 // Gossip means adding to the node's peer message list which will be gossiped by
 // the libp2p network of Indra peers.
-func (x *Ad) Gossip(sm *sess.Manager, c qu.C) {
+func (x *Ad) Gossip(sm *sess.Manager, c <-chan struct{}) {
 	log.D.F("propagating hidden service intro for %s",
 		x.Key.ToBased32Abbreviated())
 }

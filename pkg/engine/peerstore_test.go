@@ -37,18 +37,14 @@ func TestEngine_PeerStore(t *testing.T) {
 		}
 		defer os.RemoveAll(dataPath)
 		go eng.Start()
-		log.D.Ln("started engine", i)
 	}
-	time.Sleep(time.Second)
-	log.I.Ln("starting peerstore test")
 	newAd := adpeer.New(nonce.NewID(),
 		engines[0].Manager.GetLocalNodeIdentityPrv(), 20000)
 	s := splice.New(newAd.Len())
 	if e = newAd.Encode(s); fails(e) {
 		t.FailNow()
 	}
-	const key = "testkey"
-	// todo: read and write things
+
 	time.Sleep(time.Second * 3)
 	cancel()
 	for i := range engines {

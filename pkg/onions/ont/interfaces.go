@@ -9,7 +9,6 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	"github.com/indra-labs/indra/pkg/onions/hidden"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/util/qu"
 	"github.com/indra-labs/indra/pkg/util/splice"
 )
 
@@ -27,7 +26,7 @@ type Ngin interface {
 	Mgr() *sess.Manager
 	Pending() *responses.Pending
 	GetHidden() *hidden.Hidden
-	KillSwitch() qu.C
+	KillSwitch() <-chan struct{}
 	Keyset() *crypto.KeySet
 }
 

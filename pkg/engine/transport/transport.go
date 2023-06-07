@@ -302,7 +302,6 @@ func NewListener(rendezvous, multiAddr, storePath string, keys *crypto.Keys,
 	if c.DHT, e = NewDHT(ctx, c.Host, rdv); fails(e) {
 		return
 	}
-	log.D.Ln("listening on", blue(GetHostOnlyAddress(c.Host)))
 	go Discover(ctx, c.Host, c.DHT, rendezvous)
 	c.Host.SetStreamHandler(IndraLibP2PID, c.handle)
 	return

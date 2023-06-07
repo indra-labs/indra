@@ -110,13 +110,10 @@ func CreateMockEngine(seed, dataPath string) (ng *Engine, cancel func(), e error
 		dataPath, k, ctx, transport.DefaultMTU); fails(e) {
 		return
 	}
-	log.D.Ln("listener", l != nil)
-	//time.Sleep(time.Second/2)
 	if l == nil {
 		cancel()
 		return nil, nil, errors.New("got nil listener")
 	}
-	log.D.Ln("getting address")
 	sa := transport.GetHostAddress(l.Host)
 	var ap netip.AddrPort
 	var ma multiaddr.Multiaddr
@@ -126,12 +123,10 @@ func CreateMockEngine(seed, dataPath string) (ng *Engine, cancel func(), e error
 	if ap, e = multi.AddrToAddrPort(ma); fails(e) {
 		return
 	}
-	log.D.Ln("making node for engine")
 	var nod *node.Node
 	if nod, _ = node.NewNode(&ap, k, nil, 50000); fails(e) {
 		return
 	}
-	log.D.Ln("appending engine")
 	if ng, e = NewEngine(Params{
 		Transport: transport.NewDuplexByteChan(transport.ConnBufs),
 		Listener:  l,
