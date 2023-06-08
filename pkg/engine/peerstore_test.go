@@ -44,7 +44,8 @@ func TestEngine_PeerStore(t *testing.T) {
 	if e = newAd.Encode(s); fails(e) {
 		t.FailNow()
 	}
-
+	//engines[0].sub.Next(engines[0].ctx)
+	//engines[1].topic.Publish()
 	time.Sleep(time.Second * 3)
 	cancel()
 	for i := range engines {

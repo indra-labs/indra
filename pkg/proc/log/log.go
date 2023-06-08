@@ -77,7 +77,8 @@ var (
 	logLevel        = Info
 	// App is the name of the application. Change this at the beginning of
 	// an application main.
-	App atomic.String
+	App     atomic.String
+	Longest atomic.Uint32
 	// allSubsystems stores all package subsystem names found in the current
 	// application.
 	allSubsystems []string
@@ -194,10 +195,8 @@ func GetLoc(skip int, subsystem string) (output string) {
 	//	)
 	//} else {
 	output = fmt.Sprint(
-		color.White.Sprint(subsystem),
-		color.Gray.Sprint(
-			file, ":", line,
-		),
+		subsystem,
+		file, ":", line,
 	)
 	//}
 	return
@@ -383,18 +382,18 @@ func logPrint(
 		if level > logLevel {
 			return
 		}
-		formatString := "%s %s %-6v %s %v"
-		loc := ""
 		tsf := timeStampFormat
 		timeText := getTimeText(tsf)
-		if level > Info {
-			formatString = "%s %-6v %s %s %s"
-			loc = color.Gray.Sprint(GetLoc(3, subsystem))
-			timeText = time.Now().Format(time.StampNano)
+		loc := GetLoc(3, subsystem)
+		if int(Longest.Load()) < len(loc) {
+			Longest.Store(uint32(len(loc)))
 		}
+		loc = color.OpItalic.Sprint(color.OpUnderscore.Sprint(loc)) + strings.Repeat(" ", int(Longest.Load())-len(loc)+1)
+		formatString := fmt.Sprint("%s%-6v %s %s %s")
+		timeText = time.Now().Format("2006-01-02 15:04:05.999999999 UTC+0700")
 		var app string
 		if len(App.Load()) > 0 {
-			app = fmt.Sprint(App.Load())
+			app = fmt.Sprint(App.Load(), " ")
 		}
 		s := fmt.Sprintf(
 			formatString,
@@ -402,9 +401,9 @@ func logPrint(
 			LevelSpecs[level].Colorizer(
 				LevelSpecs[level].Name,
 			),
+			LevelSpecs[level].Colorizer(loc),
 			printFunc(),
-			loc,
-			timeText,
+			LevelSpecs[level].Colorizer(timeText),
 		)
 		s = strings.TrimSuffix(s, "\n")
 		fmt.Fprintln(writer, s)
