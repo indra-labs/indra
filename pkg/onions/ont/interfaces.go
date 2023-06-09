@@ -41,9 +41,9 @@ type Onion interface {
 }
 
 // Encode is the generic encoder for an onion, all onions can be encoded with it.
-func Encode(on Onion) (s *splice.Splice) {
-	s = splice.New(on.Len())
-	fails(on.Encode(s))
+func Encode(d coding.Codec) (s *splice.Splice) {
+	s = splice.New(d.Len())
+	fails(d.Encode(s))
 	return
 }
 

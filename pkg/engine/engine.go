@@ -172,6 +172,7 @@ func (ng *Engine) Shutdown() {
 // Start a single thread of the Engine.
 func (ng *Engine) Start() {
 	log.T.Ln("starting engine")
+	ng.RunAdHandler(ng.HandleAd)
 	for {
 		if ng.Handler() {
 			break
@@ -197,13 +198,11 @@ func New(p Params) (c *Engine, e error) {
 		h:         hidden.NewHiddenrouting(),
 		Pause:     qu.T(),
 	}
-	var ps *pubsub.PubSub
 	if p.Listener.Host != nil {
-		if ps, e = pubsub.NewGossipSub(ctx, p.Listener.Host); fails(e) {
+		if c.PubSub, e = pubsub.NewGossipSub(ctx, p.Listener.Host); fails(e) {
 			cancel()
 			return
 		}
-		c.PubSub = ps
 		if c.topic, e = c.PubSub.Join(PubSubTopic); fails(e) {
 			return
 		}

@@ -389,7 +389,7 @@ func logPrint(
 			Longest.Store(uint32(len(loc)))
 		}
 		loc = color.OpItalic.Sprint(color.OpUnderscore.Sprint(loc)) + strings.Repeat(" ", int(Longest.Load())-len(loc)+1)
-		formatString := fmt.Sprint("%s%-6v %s %s %s")
+		formatString := "%s%-6v %s %s   %s"
 		timeText = time.Now().Format("2006-01-02 15:04:05.999999999 UTC+0700")
 		var app string
 		if len(App.Load()) > 0 {
