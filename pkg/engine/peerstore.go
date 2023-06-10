@@ -11,7 +11,6 @@ import (
 	"github.com/indra-labs/indra/pkg/onions/adservice"
 	"github.com/indra-labs/indra/pkg/onions/ont"
 	"github.com/indra-labs/indra/pkg/onions/reg"
-	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"reflect"
@@ -21,7 +20,7 @@ func (ng *Engine) SendAd(a ad.Ad) (e error) {
 	return ng.topic.Publish(ng.ctx, ont.Encode(a).GetAll())
 }
 
-func (ng *Engine) RunAdHandler(handler func(b slice.Bytes, ctx context.Context) (e error)) {
+func (ng *Engine) RunAdHandler(handler func(p *pubsub.Message, ctx context.Context) (e error)) {
 	// Since the frequency of updates should be around 1 hour we run here only one
 	// thread here. Relays indicate their loading as part of the response message
 	// protocol for ranking in the session cache.
@@ -33,7 +32,8 @@ func (ng *Engine) RunAdHandler(handler func(b slice.Bytes, ctx context.Context) 
 			if m, e = ng.sub.Next(ng.ctx); e != nil {
 				continue
 			}
-			if e = handler(m.Data, ng.ctx); fails(e) {
+
+			if e = handler(m, ng.ctx); fails(e) {
 				continue
 			}
 			select {
@@ -47,12 +47,12 @@ func (ng *Engine) RunAdHandler(handler func(b slice.Bytes, ctx context.Context) 
 
 const ErrWrongTypeDecode = "magic '%s' but type is '%s'"
 
-func (ng *Engine) HandleAd(b slice.Bytes, ctx context.Context) (e error) {
-	if len(b) < 1 {
+func (ng *Engine) HandleAd(p *pubsub.Message, ctx context.Context) (e error) {
+	if len(p.Data) < 1 {
 		log.E.Ln("received slice of no length")
 		return
 	}
-	s := splice.NewFrom(b)
+	s := splice.NewFrom(p.Data)
 	c := reg.Recognise(s)
 	if c == nil {
 		return errors.New("message not recognised")
@@ -92,10 +92,11 @@ func (ng *Engine) HandleAd(b slice.Bytes, ctx context.Context) (e error) {
 		if peer, ok := c.(*adpeer.Ad); !ok {
 			return fmt.Errorf(ErrWrongTypeDecode,
 				adpeer.Magic, reflect.TypeOf(c).String())
-		} else {
-			_ = peer
-			log.T.Ln("received", reflect.TypeOf(c))
+		} else if !peer.Validate() {
+			return errors.New("peer ad failed validation")
 		}
+		// If we got to here now we can add to the PeerStore.
+
 	}
 	return
 }

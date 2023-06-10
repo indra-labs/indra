@@ -42,7 +42,7 @@ func NewDHT(ctx context.Context, host host.Host,
 				wg.Done()
 				return
 			}
-			log.D.F(
+			log.T.F(
 				"%s: Connection established with bootstrap node: %s",
 				blue(GetHostOnlyAddress(host)),
 				blue((*peerinfo).Addrs[0]))
@@ -83,7 +83,7 @@ func Discover(ctx context.Context, h host.Host, dht *dht.IpfsDHT,
 
 						continue
 					}
-					log.D.Ln(h.Addrs()[0].String(), "Connected to peer",
+					log.T.Ln(h.Addrs()[0].String(), "Connected to peer",
 						blue(p.Addrs[0]))
 				}
 			}

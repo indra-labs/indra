@@ -15,7 +15,7 @@ import (
 
 func TestEngine_PeerStore(t *testing.T) {
 	if indra.CI == "false" {
-		log2.SetLogLevel(log2.Trace)
+		log2.SetLogLevel(log2.Debug)
 	}
 	const nTotal = 26
 	var cancel func()
