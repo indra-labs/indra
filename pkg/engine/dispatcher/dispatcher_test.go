@@ -2,14 +2,15 @@ package dispatcher
 
 import (
 	"context"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/engine"
 	"github.com/indra-labs/indra/pkg/onions/confirmation"
 	"github.com/indra-labs/indra/pkg/onions/ont"
 	"github.com/indra-labs/indra/pkg/onions/response"
-	"os"
-	"testing"
-	"time"
 
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
@@ -23,6 +24,7 @@ import (
 )
 
 func TestDispatcher(t *testing.T) {
+	t.Log(indra.CI)
 	if indra.CI=="false" {
 		log2.SetLogLevel(log2.Trace)
 		log.D.Ln("debug")

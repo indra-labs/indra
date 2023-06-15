@@ -2,6 +2,10 @@ package dispatcher
 
 import (
 	"context"
+	"math/big"
+	"sync"
+	"time"
+
 	"github.com/VividCortex/ewma"
 	"github.com/gookit/color"
 	"github.com/indra-labs/indra/pkg/crypto"
@@ -17,9 +21,6 @@ import (
 	"github.com/indra-labs/indra/pkg/util/splice"
 	"github.com/libp2p/go-libp2p/p2p/protocol/ping"
 	"go.uber.org/atomic"
-	"math/big"
-	"sync"
-	"time"
 )
 
 const (
@@ -641,7 +642,7 @@ func NewDispatcher(l *transport.Conn, ctx context.Context,
 	d.rekeying.Store(false)
 	d.ip = blue(d.Conn.RemoteMultiaddr())
 	var e error
-	prk := d.Conn.LocalPrivateKey()
+	prk := d.Conn.RemotePublicKey()
 	var rprk slice.Bytes
 	if rprk, e = prk.Raw(); fails(e) {
 		return

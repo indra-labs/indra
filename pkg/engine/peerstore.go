@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
+
 	"github.com/indra-labs/indra/pkg/ad"
 	"github.com/indra-labs/indra/pkg/onions/adaddress"
 	"github.com/indra-labs/indra/pkg/onions/adintro"
@@ -13,17 +15,18 @@ import (
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	"github.com/indra-labs/indra/pkg/util/splice"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
-	"reflect"
 )
 
 func (ng *Engine) SendAd(a ad.Ad) (e error) {
 	return ng.topic.Publish(ng.ctx, ont.Encode(a).GetAll())
 }
 
-func (ng *Engine) RunAdHandler(handler func(p *pubsub.Message, ctx context.Context) (e error)) {
-	// Since the frequency of updates should be around 1 hour we run here only one
-	// thread here. Relays indicate their loading as part of the response message
-	// protocol for ranking in the session cache.
+func (ng *Engine) RunAdHandler(handler func(p *pubsub.Message,
+	ctx context.Context) (e error)) {
+
+	// Since the frequency of updates should be around 1 hour we run here only
+	// one thread here. Relays indicate their loading as part of the response
+	// message protocol for ranking in the session cache.
 	go func(ng *Engine) {
 	out:
 		for {

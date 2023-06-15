@@ -2,10 +2,9 @@ package main
 
 import (
 	"context"
-	
+
 	"github.com/docker/docker/client"
-	
-	"github.com/indra-labs/indra"
+
 	"github.com/indra-labs/indra/pkg/docker"
 	"github.com/indra-labs/indra/pkg/proc/app"
 	"github.com/indra-labs/indra/pkg/proc/cmds"
@@ -13,7 +12,7 @@ import (
 	"github.com/indra-labs/indra/pkg/proc/opts/config"
 	"github.com/indra-labs/indra/pkg/proc/opts/meta"
 	"github.com/indra-labs/indra/pkg/proc/opts/toggle"
-	
+
 	"os"
 	"time"
 )
@@ -54,66 +53,66 @@ var commands = &cmds.Command{
 		}),
 	},
 	Entrypoint: func(command *cmds.Command, args []string) error {
-		
+
 		// If we've flagged stable, we should also build a stable tag
 		if command.GetValue("stable").Bool() {
 			docker.SetRelease()
 		}
-		
+
 		// If we've flagged push, the tags will be pushed to all repositories.
 		if command.GetValue("push").Bool() {
 			docker.SetPush()
 		}
-		
+
 		// Set a Timeout for 120 seconds
 		ctx, cancel := context.WithTimeout(context.Background(), defaultBuildingTimeout)
 		defer cancel()
-		
+
 		// Setup a new instance of the docker client
-		
+
 		var err error
 		var cli *client.Client
-		
+
 		if cli, err = client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation()); check(err) {
 			return err
 		}
-		
+
 		defer cli.Close()
-		
+
 		// Get ready to submit the builds
 		var builder = docker.NewBuilder(ctx, cli, sourceConfigurations, buildConfigurations, packagingConfigurations)
-		
+
 		if err = builder.Build(); check(err) {
 			return err
 		}
-		
+
 		if err = builder.Push(); check(err) {
 			return err
 		}
-		
+
 		if err = builder.Close(); check(err) {
 			return err
 		}
-		
+
 		return nil
 	},
 }
 
 func main() {
-	
+
 	var err error
 	var application *app.App
-	
+
 	// Creates a new application
 	if application, err = app.New(commands, os.Args); check(err) {
 		os.Exit(1)
 	}
-	
+
 	// Launches the application
 	if err = application.Launch(); check(err) {
 		os.Exit(1)
 	}
-	
+
 	os.Exit(0)
 }
 

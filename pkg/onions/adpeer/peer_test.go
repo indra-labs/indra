@@ -1,7 +1,8 @@
 package adpeer
 
 import (
-	"fmt"
+	"testing"
+
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
@@ -9,13 +10,11 @@ import (
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/splice"
-	"testing"
 )
 
 func TestPeerAd(t *testing.T) {
 	if indra.CI != "false" {
 		log2.SetLogLevel(log2.Trace)
-		fmt.Println("logging")
 	}
 	var e error
 	pr, ks, _ := crypto.NewSigner()
