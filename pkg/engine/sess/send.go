@@ -40,7 +40,6 @@ func (sm *Manager) SendWithOneHook(ap *netip.AddrPort,
 			return errors.New("nil response hook")
 		}
 	}
-	log.I.S("res", res.ID)
 	p.Add(responses.ResponseParams{
 		ID:       res.ID,
 		SentSize: res.B.Len(),

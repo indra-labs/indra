@@ -172,7 +172,10 @@ func (ng *Engine) Shutdown() {
 // Start a single thread of the Engine.
 func (ng *Engine) Start() {
 	log.T.Ln("starting engine")
-	ng.RunAdHandler(ng.HandleAd)
+	if ng.sub != nil {
+		log.I.Ln("starting gossip handling")
+		ng.RunAdHandler(ng.HandleAd)
+	}
 	for {
 		if ng.Handler() {
 			break

@@ -642,7 +642,7 @@ func NewDispatcher(l *transport.Conn, ctx context.Context,
 	d.rekeying.Store(false)
 	d.ip = blue(d.Conn.RemoteMultiaddr())
 	var e error
-	prk := d.Conn.RemotePublicKey()
+	prk := d.Conn.LocalPrivateKey()
 	var rprk slice.Bytes
 	if rprk, e = prk.Raw(); fails(e) {
 		return
