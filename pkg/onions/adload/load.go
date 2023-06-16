@@ -12,9 +12,7 @@ import (
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/qu"
-	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
-	"reflect"
 	"time"
 )
 
@@ -24,26 +22,25 @@ var (
 )
 
 const (
-	Magic = "peer"
-	Len   = adproto.Len +
-		slice.Uint32Len
+	Magic = "load"
+	Len   = adproto.Len +1
 )
 
 // Ad stores a specification for the fee rate and existence of a peer.
 type Ad struct {
 	adproto.Ad
-	RelayRate uint32
+	Load byte
 }
 
 var _ coding.Codec = &Ad{}
 
 // New ...
-func New(id nonce.ID, key *crypto.Prv, relayRate uint32,
+func New(id nonce.ID, key *crypto.Prv, load byte,
 	expiry time.Time) (sv *Ad) {
 
 	s := splice.New(adintro.Len)
 	k := crypto.DerivePub(key)
-	Splice(s, id, k, relayRate, expiry)
+	Splice(s, id, k, load, expiry)
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	var e error
 	var sign crypto.SigBytes
@@ -57,10 +54,7 @@ func New(id nonce.ID, key *crypto.Prv, relayRate uint32,
 			Expiry: time.Now().Add(adproto.TTL),
 			Sig:    sign,
 		},
-		RelayRate: relayRate,
-	}
-	if sv.Sig, e = crypto.Sign(key, hash); fails(e) {
-		return nil
+		Load: load,
 	}
 	return
 }
@@ -68,14 +62,13 @@ func New(id nonce.ID, key *crypto.Prv, relayRate uint32,
 func (x *Ad) Decode(s *splice.Splice) (e error) {
 	s.ReadID(&x.ID).
 		ReadPubkey(&x.Key).
-		ReadUint32(&x.RelayRate).
+		ReadByte(&x.Load).
 		ReadTime(&x.Expiry).
 		ReadSignature(&x.Sig)
 	return
 }
 
 func (x *Ad) Encode(s *splice.Splice) (e error) {
-	log.T.S("encoding", reflect.TypeOf(x), x)
 	x.Splice(s)
 	return
 }
@@ -105,7 +98,7 @@ func (x *Ad) Splice(s *splice.Splice) {
 }
 
 func (x *Ad) SpliceNoSig(s *splice.Splice) {
-	Splice(s, x.ID, x.Key, x.RelayRate, x.Expiry)
+	Splice(s, x.ID, x.Key, x.Load, x.Expiry)
 }
 
 func (x *Ad) Validate() (valid bool) {
@@ -123,12 +116,12 @@ func (x *Ad) Validate() (valid bool) {
 }
 
 func Splice(s *splice.Splice, id nonce.ID, key *crypto.Pub,
-	relayRate uint32, expiry time.Time) {
+	load byte, expiry time.Time) {
 
 	s.Magic(Magic).
 		ID(id).
 		Pubkey(key).
-		Uint32(relayRate).
+		Byte(load).
 		Time(expiry)
 }
 

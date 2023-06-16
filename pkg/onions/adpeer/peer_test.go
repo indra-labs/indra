@@ -14,50 +14,52 @@ import (
 )
 
 func TestPeerAd(t *testing.T) {
-	if indra.CI != "false" {
+	if indra.CI == "false" {
 		log2.SetLogLevel(log2.Trace)
 	}
 	var e error
-	pr, ks, _ := crypto.NewSigner()
+	pr, _, _ := crypto.NewSigner()
 	id := nonce.NewID()
-	// in := New(id, pr, time.Now().Add(time.Hour))
-	var prvs crypto.Privs
-	for i := range prvs {
-		prvs[i] = ks.Next()
+	aa := New(id, pr, 20000, time.Now().Add(time.Hour))
+	s := splice.New(aa.Len())
+	if e = aa.Encode(s); fails(e) {
+		t.FailNow()
 	}
-	var pubs crypto.Pubs
-	for i := range pubs {
-		pubs[i] = crypto.DerivePub(prvs[i])
-	}
-	pa := New(id, pr, 20000, time.Now().Add(time.Hour*24*7))
-	s := splice.New(pa.Len())
-	if e = pa.Encode(s); fails(e) {
-		t.Fatalf("did not encode")
-	}
-	log.D.S(s.GetAll().ToBytes())
 	s.SetCursor(0)
 	var onc coding.Codec
 	if onc = reg.Recognise(s); onc == nil {
-		t.Fatalf("did not unwrap")
+		t.Error("did not unwrap")
+		t.FailNow()
 	}
 	if e = onc.Decode(s); fails(e) {
-		t.Fatalf("did not decode")
+		t.Error("did not decode")
+		t.FailNow()
 	}
-	log.D.S(onc)
-	var peer *Ad
+	var ad *Ad
 	var ok bool
-	if peer, ok = onc.(*Ad); !ok {
-		t.Fatal("did not unwrap expected type")
+	if ad, ok = onc.(*Ad); !ok {
+		t.Error("did not unwrap expected type")
+		t.FailNow()
 	}
-	if peer.ID != pa.ID {
+	log.D.S(ad)
+	if ad.ID != aa.ID {
 		t.Errorf("ID did not decode correctly")
 		t.FailNow()
 	}
-	if !peer.Key.Equals(crypto.DerivePub(pr)) {
+	if ad.Expiry.Unix() != aa.Expiry.Unix() {
+		t.Errorf("expiry did not decode correctly")
+		t.FailNow()
+	}
+	if !ad.Key.Equals(crypto.DerivePub(pr)) {
 		t.Errorf("public key did not decode correctly")
 		t.FailNow()
 	}
-	if !peer.Validate() {
-		t.Fatalf("received Ad did not validate")
+	if ad.RelayRate != aa.RelayRate {
+		t.Errorf("received ad did not have same relay rate")
+		t.FailNow()
+	}
+	if !ad.Validate() {
+		t.Errorf("received ad did not validate")
+		t.FailNow()
 	}
 }
