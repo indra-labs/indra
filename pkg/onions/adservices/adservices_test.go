@@ -1,4 +1,4 @@
-package adservice
+package adservices
 
 import (
 	"github.com/indra-labs/indra"
@@ -19,7 +19,7 @@ func TestServiceAd(t *testing.T) {
 	var e error
 	pr, _, _ := crypto.NewSigner()
 	id := nonce.NewID()
-	sv := NewServiceAd(id, pr, 20000, 80, time.Now().Add(time.Hour))
+	sv := NewServiceAd(id, pr, []Service{{80, 50000},{443, 50000}}, time.Now().Add(time.Hour))
 	log.D.S("service", sv)
 	s := splice.New(sv.Len())
 	if e = sv.Encode(s); fails(e) {
@@ -42,13 +42,19 @@ func TestServiceAd(t *testing.T) {
 		t.Error("did not unwrap expected type")
 		t.FailNow()
 	}
-	if svcAd.RelayRate != sv.RelayRate {
-		t.Errorf("relay rate did not decode correctly")
+	if len(sv.Services) != len(svcAd.Services) {
+		t.Errorf("number of services incorrectly decoded")
 		t.FailNow()
 	}
-	if svcAd.Port != sv.Port {
-		t.Errorf("port did not decode correctly")
-		t.FailNow()
+	for i := range sv.Services {
+		if svcAd.Services[i].RelayRate != sv.Services[i].RelayRate {
+			t.Errorf("relay rate did not decode correctly")
+			t.FailNow()
+		}
+		if svcAd.Services[i].Port != sv.Services[i].Port {
+			t.Errorf("port did not decode correctly")
+			t.FailNow()
+		}
 	}
 	if !svcAd.Key.Equals(crypto.DerivePub(pr)) {
 		t.Errorf("public key did not decode correctly")

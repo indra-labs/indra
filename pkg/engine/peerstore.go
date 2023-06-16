@@ -11,7 +11,7 @@ import (
 	"github.com/indra-labs/indra/pkg/onions/adaddress"
 	"github.com/indra-labs/indra/pkg/onions/adintro"
 	"github.com/indra-labs/indra/pkg/onions/adpeer"
-	"github.com/indra-labs/indra/pkg/onions/adservice"
+	"github.com/indra-labs/indra/pkg/onions/adservices"
 	"github.com/indra-labs/indra/pkg/onions/ont"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	"github.com/indra-labs/indra/pkg/util/splice"
@@ -82,11 +82,11 @@ func (ng *Engine) HandleAd(p *pubsub.Message, ctx context.Context) (e error) {
 			_ = intr
 
 		}
-	case *adservice.Ad:
+	case *adservices.Ad:
 		log.D.Ln("received", reflect.TypeOf(c), "from gossip network")
-		if serv, ok := c.(*adservice.Ad); !ok {
+		if serv, ok := c.(*adservices.Ad); !ok {
 			return fmt.Errorf(ErrWrongTypeDecode,
-				adservice.Magic, reflect.TypeOf(c).String())
+				adservices.Magic, reflect.TypeOf(c).String())
 		} else {
 		// If we got to here now we can add to the PeerStore.
 		log.D.S("new ad for service:", c)

@@ -55,7 +55,7 @@ func TestEngine_PeerStore(t *testing.T) {
 		t.FailNow()
 	}
 	//time.Sleep(time.Second)
-	//newServiceAd := adservice.NewServiceAd(nonce.NewID(),
+	//newServiceAd := adservices.NewServiceAd(nonce.NewID(),
 	//	engines[0].Manager.GetLocalNodeIdentityPrv(),
 	//	20000, 54321, time.Now().Add(time.Hour*24*7))
 	//ss := splice.New(newServiceAd.Len())
