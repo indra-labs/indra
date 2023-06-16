@@ -121,12 +121,11 @@ func (x *Ad) Validate() bool {
 	return false
 }
 
-func NewAddressAd(id nonce.ID, key *crypto.Prv,
+func New(id nonce.ID, key *crypto.Prv,
 	ma multiaddr.Multiaddr) (peerAd *Ad) {
 
 	pub := crypto.DerivePub(key)
 	ma = multi.AddKeyToMultiaddr(ma, pub)
-	log.D.Ln("ma", ma)
 	peerAd = &Ad{
 		Ad: adproto.Ad{
 			ID:     id,

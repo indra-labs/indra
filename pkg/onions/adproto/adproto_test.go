@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func TestProtoAd(t *testing.T) {
+func TestNew(t *testing.T) {
 	if indra.CI == "false" {
 		log2.SetLogLevel(log2.Trace)
 	}

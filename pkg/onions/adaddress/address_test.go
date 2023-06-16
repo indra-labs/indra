@@ -12,7 +12,7 @@ import (
 	"testing"
 )
 
-func TestAddressAd(t *testing.T) {
+func TestNew(t *testing.T) {
 	if indra.CI == "false" {
 		log2.SetLogLevel(log2.Trace)
 	}
@@ -23,8 +23,7 @@ func TestAddressAd(t *testing.T) {
 	if ma, e = multiaddr.NewMultiaddr("/ip4/127.0.0.1/tcp/4242"); fails(e) {
 		t.FailNow()
 	}
-	aa := NewAddressAd(id, pr, ma)
-	log.D.S("ad", aa.Expiry.Unix())
+	aa := New(id, pr, ma)
 	s := splice.New(aa.Len())
 	if e = aa.Encode(s); fails(e) {
 		t.FailNow()
@@ -45,11 +44,11 @@ func TestAddressAd(t *testing.T) {
 		t.Error("did not unwrap expected type")
 		t.FailNow()
 	}
-	log.D.S(ad.Expiry.Unix())
 	if ad.Expiry.Unix() != aa.Expiry.Unix() {
 		t.Errorf("expiry did not decode correctly")
 		t.FailNow()
 	}
+	log.D.S(ad)
 	if ad.ID != aa.ID {
 		t.Errorf("ID did not decode correctly")
 		t.FailNow()
