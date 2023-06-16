@@ -63,7 +63,7 @@ func (ng *Engine) SendHiddenService(id nonce.ID, key *crypto.Prv,
 	se := ng.Manager.SelectHops(hops, s, "sendhiddenservice")
 	var c sessions.Circuit
 	copy(c[:], se[:len(c)])
-	in = adintro.NewIntroAd(id, key, alice.Node.AddrPort, relayRate, port, expiry)
+	in = adintro.New(id, key, alice.Node.AddrPort, relayRate, port, expiry)
 	o := MakeHiddenService(in, alice, bob, c, ng.KeySet)
 	log.D.F("%s sending out hidden service onion %s",
 		ng.Manager.GetLocalNodeAddressString(),

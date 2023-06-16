@@ -78,7 +78,7 @@ func TestOnions_HiddenService(t *testing.T) {
 		ReturnPubs: pubs,
 	}
 	log.D.S("ep", ep)
-	in := intro.NewIntroAd(id, pr, slice.GenerateRandomAddrPortIPv6(),
+	in := intro.New(id, pr, slice.GenerateRandomAddrPortIPv6(),
 		20000, 80, time.Now().Add(time.Hour))
 	on := ont.Assemble([]ont.Onion{NewHiddenService(in, ep)})
 	s := ont.Encode(on)

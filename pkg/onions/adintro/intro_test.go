@@ -14,16 +14,15 @@ import (
 	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
-func TestIntroAd(t *testing.T) {
+func TestNew(t *testing.T) {
 	if indra.CI == "false" {
 		log2.SetLogLevel(log2.Trace)
 	}
 	var e error
 	pr, _, _ := crypto.NewSigner()
 	id := nonce.NewID()
-	in := NewIntroAd(id, pr, slice.GenerateRandomAddrPortIPv6(),
+	in := New(id, pr, slice.GenerateRandomAddrPortIPv6(),
 		20000, 80, time.Now().Add(time.Hour))
-	log.D.S("intro", in)
 	s := splice.New(in.Len())
 	if e = in.Encode(s); fails(e) {
 		t.FailNow()
@@ -38,38 +37,38 @@ func TestIntroAd(t *testing.T) {
 		t.Error("did not decode")
 		t.FailNow()
 	}
-	log.D.S(onc)
-	var intro *Ad
+	var ad *Ad
 	var ok bool
-	if intro, ok = onc.(*Ad); !ok {
+	if ad, ok = onc.(*Ad); !ok {
 		t.Error("did not unwrap expected type")
 		t.FailNow()
 	}
-	if intro.ID != in.ID {
+	log.D.S(ad)
+	if ad.ID != in.ID {
 		t.Errorf("ID did not decode correctly")
 		t.FailNow()
 	}
-	if intro.Port != in.Port {
+	if ad.Port != in.Port {
 		t.Errorf("port did not decode correctly")
 		t.FailNow()
 	}
-	if intro.RelayRate != in.RelayRate {
+	if ad.RelayRate != in.RelayRate {
 		t.Errorf("relay rate did not decode correctly")
 		t.FailNow()
 	}
-	if intro.Expiry.Unix() != in.Expiry.Unix() {
+	if ad.Expiry.Unix() != in.Expiry.Unix() {
 		t.Errorf("expiry did not decode correctly")
 		t.FailNow()
 	}
-	if intro.AddrPort.String() != in.AddrPort.String() {
+	if ad.AddrPort.String() != in.AddrPort.String() {
 		t.Errorf("addrport did not decode correctly")
 		t.FailNow()
 	}
-	if !intro.Key.Equals(crypto.DerivePub(pr)) {
+	if !ad.Key.Equals(crypto.DerivePub(pr)) {
 		t.Errorf("public key did not decode correctly")
 		t.FailNow()
 	}
-	if !intro.Validate() {
+	if !ad.Validate() {
 		t.Errorf("received intro did not validate")
 		t.FailNow()
 	}

@@ -13,14 +13,14 @@ import (
 	"github.com/indra-labs/indra/pkg/util/splice"
 )
 
-func TestLoadAd(t *testing.T) {
-	if indra.CI != "false" {
+func TestNew(t *testing.T) {
+	if indra.CI == "false" {
 		log2.SetLogLevel(log2.Trace)
 	}
 	var e error
 	pr, _, _ := crypto.NewSigner()
 	id := nonce.NewID()
-	aa := New(id, pr, 10, time.Now().Add(time.Hour*24*7))
+	aa := New(id, pr, 10, time.Now().Add(time.Hour))
 	s := splice.New(aa.Len())
 	if e = aa.Encode(s); fails(e) {
 		t.FailNow()
@@ -52,6 +52,10 @@ func TestLoadAd(t *testing.T) {
 	}
 	if !ad.Key.Equals(crypto.DerivePub(pr)) {
 		t.Errorf("public key did not decode correctly")
+		t.FailNow()
+	}
+	if ad.Load != aa.Load {
+		t.Errorf("received ad did not have same load")
 		t.FailNow()
 	}
 	if !ad.Validate() {
