@@ -2,6 +2,7 @@ package adpeer
 
 import (
 	"testing"
+	"time"
 
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto"
@@ -28,7 +29,7 @@ func TestPeerAd(t *testing.T) {
 	for i := range pubs {
 		pubs[i] = crypto.DerivePub(prvs[i])
 	}
-	pa := New(id, pr, 20000)
+	pa := New(id, pr, 20000, time.Now().Add(time.Hour*24*7))
 	s := splice.New(pa.Len())
 	if e = pa.Encode(s); fails(e) {
 		t.Fatalf("did not encode")

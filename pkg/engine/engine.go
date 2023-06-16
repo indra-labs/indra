@@ -173,7 +173,7 @@ func (ng *Engine) Shutdown() {
 func (ng *Engine) Start() {
 	log.T.Ln("starting engine")
 	if ng.sub != nil {
-		log.I.Ln("starting gossip handling")
+		log.T.Ln("starting gossip handling")
 		ng.RunAdHandler(ng.HandleAd)
 	}
 	for {

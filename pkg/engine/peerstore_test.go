@@ -38,15 +38,33 @@ func TestEngine_PeerStore(t *testing.T) {
 		defer os.RemoveAll(dataPath)
 		go eng.Start()
 	}
-	newAd := adpeer.New(nonce.NewID(),
-		engines[0].Manager.GetLocalNodeIdentityPrv(), 20000)
-	s := splice.New(newAd.Len())
-	if e = newAd.Encode(s); fails(e) {
+	time.Sleep(time.Second)
+	prvKey := engines[0].Manager.GetLocalNodeIdentityPrv()
+	newPeerAd := adpeer.New(nonce.NewID(),
+		prvKey, 20000,
+		time.Now().Add(time.Hour*24*7))
+	if e = newPeerAd.Sign(prvKey); fails(e) {
+		return
+	}
+	log.D.S("peer ad", newPeerAd)
+	s := splice.New(newPeerAd.Len())
+	if e = newPeerAd.Encode(s); fails(e) {
 		t.FailNow()
 	}
-	if e = engines[0].SendAd(newAd); fails(e) {
+	if e = engines[0].SendAd(newPeerAd); fails(e) {
 		t.FailNow()
 	}
+	//time.Sleep(time.Second)
+	//newServiceAd := adservice.NewServiceAd(nonce.NewID(),
+	//	engines[0].Manager.GetLocalNodeIdentityPrv(),
+	//	20000, 54321, time.Now().Add(time.Hour*24*7))
+	//ss := splice.New(newServiceAd.Len())
+	//if e = newServiceAd.Encode(ss); fails(e) {
+	//	t.FailNow()
+	//}
+	//if e = engines[0].SendAd(newServiceAd); fails(e) {
+	//	t.FailNow()
+	//}
 	time.Sleep(time.Second * 3)
 	cancel()
 	for i := range engines {

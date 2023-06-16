@@ -1,7 +1,6 @@
 package adpeer
 
 import (
-	"github.com/indra-labs/indra/pkg/ad"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
@@ -9,12 +8,13 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/magic"
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/onions/adintro"
+	"github.com/indra-labs/indra/pkg/onions/adproto"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/qu"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
-	"reflect"
+	"time"
 )
 
 var (
@@ -24,87 +24,92 @@ var (
 
 const (
 	Magic = "peer"
-	Len   = magic.Len +
-		nonce.IDLen +
-		crypto.PubKeyLen + 1 +
-		slice.Uint32Len +
-		crypto.SigLen
+	Len   = adproto.Len +
+		slice.Uint32Len
 )
 
+// Ad stores a specification for the fee rate and the service port, which
+// must be a well known port to match with a type of service, eg 80 for web, 53
+// for DNS, etc. These are also attached to the PeerAd entry via concatenating
+// "/service/N" where N is the index of the entry. A zero value at an index
+// signals to stop scanning for more subsequent values.
 type Ad struct {
-	ID        nonce.ID    // This ensures never a repeated signed message.
-	Key       *crypto.Pub // Identity key.
+	adproto.Ad
 	RelayRate uint32
-	Sig       crypto.SigBytes
 }
 
-func New(id nonce.ID, key *crypto.Prv,
-	relayRate uint32) (peerAd *Ad) {
+var _ coding.Codec = &Ad{}
 
-	pk := crypto.DerivePub(key)
-	s := splice.New(adintro.Len - magic.Len)
-	s.ID(id).
-		Pubkey(pk).
-		Uint32(relayRate)
+// New ...
+func New(id nonce.ID, key *crypto.Prv, relayRate uint32,
+	expiry time.Time) (sv *Ad) {
+
+	s := splice.New(adintro.Len)
+	k := crypto.DerivePub(key)
+	Splice(s, id, k, relayRate, expiry)
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	var e error
 	var sign crypto.SigBytes
 	if sign, e = crypto.Sign(key, hash); fails(e) {
 		return nil
 	}
-	peerAd = &Ad{
-		ID:        id,
-		Key:       pk,
+	sv = &Ad{
+		Ad: adproto.Ad{
+			ID:     id,
+			Key:    k,
+			Expiry: time.Now().Add(adproto.TTL),
+			Sig:    sign,
+		},
 		RelayRate: relayRate,
-		Sig:       sign,
 	}
 	return
 }
 
 func (x *Ad) Decode(s *splice.Splice) (e error) {
-	if e = magic.TooShort(s.Remaining(), Len-magic.Len,
-		Magic); fails(e) {
-
-		return
-	}
 	s.ReadID(&x.ID).
 		ReadPubkey(&x.Key).
 		ReadUint32(&x.RelayRate).
+		ReadTime(&x.Expiry).
 		ReadSignature(&x.Sig)
 	return
 }
 
 func (x *Ad) Encode(s *splice.Splice) (e error) {
-	log.T.S("encoding "+reflect.TypeOf(x).String(), x)
-	x.Splice(s.Magic(Magic))
+	x.Splice(s)
 	return
 }
 
-func (x *Ad) GetOnion() interface{} { return x }
+func (x *Ad) GetOnion() interface{} { return nil }
 
-func (x *Ad) Gossip(sm *sess.Manager, c qu.C) {
-	log.D.F("propagating peer info for %s",
-		x.Key.ToBased32Abbreviated())
-	ad.Gossip(x, sm, c)
-	log.T.Ln("finished broadcasting peer info")
-}
+func (x *Ad) Gossip(sm *sess.Manager, c qu.C) {}
 
 func (x *Ad) Len() int { return Len }
 
-func (x *Ad) Magic() string { return Magic }
+func (x *Ad) Magic() string { return "" }
 
-func (x *Ad) Splice(s *splice.Splice) {
-	s.ID(x.ID).
-		Pubkey(x.Key).
-		Uint32(x.RelayRate).
-		Signature(x.Sig)
+func (x *Ad) Sign(prv *crypto.Prv) (e error) {
+	s := splice.New(x.Len())
+	x.SpliceNoSig(s)
+	var b crypto.SigBytes
+	if b, e = crypto.Sign(prv, sha256.Single(s.GetUntil(s.GetCursor()))); fails(e) {
+		return
+	}
+	copy(x.Sig[:], b[:])
+	return nil
 }
 
-func (x *Ad) Validate() bool {
-	s := splice.New(Len - magic.Len)
-	s.ID(x.ID).
-		Pubkey(x.Key).
-		Uint32(x.RelayRate)
+func (x *Ad) Splice(s *splice.Splice) {
+	x.SpliceNoSig(s)
+	s.Signature(x.Sig)
+}
+
+func (x *Ad) SpliceNoSig(s *splice.Splice) {
+	Splice(s, x.ID, x.Key, x.RelayRate, x.Expiry)
+}
+
+func (x *Ad) Validate() (valid bool) {
+	s := splice.New(adintro.Len - magic.Len)
+	x.SpliceNoSig(s)
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	key, e := x.Sig.Recover(hash)
 	if fails(e) {
@@ -116,6 +121,16 @@ func (x *Ad) Validate() bool {
 	return false
 }
 
-func init() { reg.Register(Magic, peerGen) }
+func Splice(s *splice.Splice, id nonce.ID, key *crypto.Pub,
+	relayRate uint32, expiry time.Time) {
 
-func peerGen() coding.Codec { return &Ad{} }
+	s.Magic(Magic).
+		ID(id).
+		Pubkey(key).
+		Uint32(relayRate).
+		Time(expiry)
+}
+
+func init() { reg.Register(Magic, serviceAdGen) }
+
+func serviceAdGen() coding.Codec { return &Ad{} }
