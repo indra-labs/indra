@@ -63,7 +63,7 @@ func (ng *Engine) HandleAd(p *pubsub.Message, ctx context.Context) (e error) {
 	s := splice.NewFrom(p.Data)
 	c := reg.Recognise(s)
 	if c == nil {
-		return errors.New("message not recognised")
+		return errors.New("ad not recognised")
 	}
 	if e = c.Decode(s); fails(e) {
 		return
@@ -86,7 +86,7 @@ func (ng *Engine) HandleAd(p *pubsub.Message, ctx context.Context) (e error) {
 			return
 		}
 		if e = ng.Listener.Host.
-			Peerstore().Put(id, "services", s.GetAll().ToBytes()); fails(e) {
+			Peerstore().Put(id, adaddress.Magic, s.GetAll().ToBytes()); fails(e) {
 			return
 		}
 	case *adintro.Ad:
@@ -105,7 +105,7 @@ func (ng *Engine) HandleAd(p *pubsub.Message, ctx context.Context) (e error) {
 			return
 		}
 		if e = ng.Listener.Host.
-			Peerstore().Put(id, "services", s.GetAll().ToBytes()); fails(e) {
+			Peerstore().Put(id, adintro.Magic, s.GetAll().ToBytes()); fails(e) {
 			return
 		}
 	case *adload.Ad:
@@ -124,7 +124,7 @@ func (ng *Engine) HandleAd(p *pubsub.Message, ctx context.Context) (e error) {
 			return
 		}
 		if e = ng.Listener.Host.
-			Peerstore().Put(id, "services", s.GetAll().ToBytes()); fails(e) {
+			Peerstore().Put(id, adservices.Magic, s.GetAll().ToBytes()); fails(e) {
 			return
 		}
 	case *adpeer.Ad:
@@ -143,7 +143,7 @@ func (ng *Engine) HandleAd(p *pubsub.Message, ctx context.Context) (e error) {
 			return
 		}
 		if e = ng.Listener.Host.
-			Peerstore().Put(id, "peer", s.GetAll().ToBytes()); fails(e) {
+			Peerstore().Put(id, adpeer.Magic, s.GetAll().ToBytes()); fails(e) {
 			return
 		}
 	case *adservices.Ad:
@@ -162,7 +162,7 @@ func (ng *Engine) HandleAd(p *pubsub.Message, ctx context.Context) (e error) {
 			return
 		}
 		if e = ng.Listener.Host.
-			Peerstore().Put(id, "services", s.GetAll().ToBytes()); fails(e) {
+			Peerstore().Put(id, adservices.Magic, s.GetAll().ToBytes()); fails(e) {
 			return
 		}
 	}
@@ -174,24 +174,26 @@ func (ng *Engine) GetPeerRecord(id peer.ID, key string) (add ad.Ad, e error) {
 	if a, e = ng.Listener.Host.Peerstore().Get(id, key); fails(e) {
 		return
 	}
-
 	var ok bool
 	var adb slice.Bytes
 	if adb, ok = a.(slice.Bytes); !ok {
 		e = errors.New("peer record did not decode slice.Bytes")
 		return
 	}
+	if len(adb) < 1 {
+		e = fmt.Errorf("record for peer ID %v key %s has expired", id, key)
+	}
 	s := splice.NewFrom(adb)
 	c := reg.Recognise(s)
 	if c == nil {
-		e = errors.New("message not recognised")
+		e = errors.New(key + " peer record not recognised")
 		return
 	}
 	if e = c.Decode(s); fails(e) {
 		return
 	}
 	if add, ok = c.(ad.Ad); !ok {
-		e = errors.New("peer record did not decode as Ad")
+		e = errors.New(key + " peer record did not decode as Ad")
 	}
 	return
 }
