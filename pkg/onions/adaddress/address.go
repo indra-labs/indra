@@ -122,7 +122,7 @@ func (x *Ad) Validate() bool {
 }
 
 func New(id nonce.ID, key *crypto.Prv,
-	ma multiaddr.Multiaddr) (peerAd *Ad) {
+	ma multiaddr.Multiaddr, expiry time.Time) (peerAd *Ad) {
 
 	pub := crypto.DerivePub(key)
 	ma = multi.AddKeyToMultiaddr(ma, pub)
@@ -130,7 +130,7 @@ func New(id nonce.ID, key *crypto.Prv,
 		Ad: adproto.Ad{
 			ID:     id,
 			Key:    crypto.DerivePub(key),
-			Expiry: time.Now().Add(adproto.TTL),
+			Expiry: expiry,
 		},
 		Addr: ma,
 	}

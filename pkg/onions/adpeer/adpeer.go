@@ -59,7 +59,7 @@ func New(id nonce.ID, key *crypto.Prv, relayRate uint32,
 		},
 		RelayRate: relayRate,
 	}
-	if sv.Sig, e = crypto.Sign(key, hash); fails(e) {
+	if e = sv.Sign(key); fails(e) {
 		return nil
 	}
 	return
