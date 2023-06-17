@@ -49,23 +49,21 @@ var _ coding.Codec = &Ad{}
 func New(id nonce.ID, key *crypto.Prv, services []Service,
 	expiry time.Time) (sv *Ad) {
 
-	s := splice.New(adintro.Len)
 	k := crypto.DerivePub(key)
-	ServiceSplice(s, id, k, services, expiry)
-	hash := sha256.Single(s.GetUntil(s.GetCursor()))
-	var e error
-	var sign crypto.SigBytes
-	if sign, e = crypto.Sign(key, hash); fails(e) {
-		return nil
-	}
 	sv = &Ad{
 		Ad: adproto.Ad{
 			ID:     id,
 			Key:    k,
 			Expiry: time.Now().Add(adproto.TTL),
-			Sig:    sign,
 		},
 		Services: services,
+	}
+	s := splice.New(adintro.Len)
+	sv.SpliceNoSig(s)
+	hash := sha256.Single(s.GetUntil(s.GetCursor()))
+	var e error
+	if sv.Sig, e = crypto.Sign(key, hash); fails(e) {
+		return nil
 	}
 	return
 }

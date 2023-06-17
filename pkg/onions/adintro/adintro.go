@@ -125,24 +125,23 @@ func New(
 ) (in *Ad) {
 
 	pk := crypto.DerivePub(key)
-	s := splice.New(Len)
-	IntroSplice(s, id, pk, ap, relayRate, port, expires)
-	hash := sha256.Single(s.GetUntil(s.GetCursor()))
-	var e error
-	var sign crypto.SigBytes
-	if sign, e = crypto.Sign(key, hash); fails(e) {
-		return nil
-	}
+
 	in = &Ad{
 		Ad: adproto.Ad{
 			ID:     id,
 			Key:    pk,
-			Expiry: time.Now().Add(adproto.TTL),
-			Sig:    sign,
+			Expiry: expires,
 		},
 		AddrPort:  ap,
 		RelayRate: relayRate,
 		Port:      port,
+	}
+	s := splice.New(in.Len())
+	in.SpliceNoSig(s)
+	hash := sha256.Single(s.GetUntil(s.GetCursor()))
+	var e error
+	if in.Sig, e = crypto.Sign(key, hash); fails(e) {
+		return nil
 	}
 	return
 }

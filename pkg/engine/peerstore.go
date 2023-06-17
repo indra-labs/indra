@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/indra-labs/indra/pkg/ad"
 	"github.com/indra-labs/indra/pkg/onions/adload"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -67,61 +68,67 @@ func (ng *Engine) HandleAd(p *pubsub.Message, ctx context.Context) (e error) {
 	if e = c.Decode(s); fails(e) {
 		return
 	}
+	var ok bool
 	switch c.(type) {
 	case *adaddress.Ad:
 		log.D.Ln("received", reflect.TypeOf(c), "from gossip network")
-		if addr, ok := c.(*adaddress.Ad); !ok {
+		var addr *adaddress.Ad
+		if addr, ok = c.(*adaddress.Ad); !ok {
 			return fmt.Errorf(ErrWrongTypeDecode,
 				adaddress.Magic, reflect.TypeOf(c).String())
-		} else {
-			// If we got to here now we can add to the PeerStore.
-			log.D.S("new ad for address:", c)
-			var id peer.ID
-			if id, e = peer.IDFromPublicKey(addr.Key); fails(e) {
-				return
-			}
-			if e = ng.Listener.Host.
-				Peerstore().Put(id, "services", s.GetAll().ToBytes()); fails(e) {
-				return
-			}
+		} else if !addr.Validate() {
+			return errors.New("addr ad failed validation")
+		}
+		// If we got to here now we can add to the PeerStore.
+		log.D.S("new ad for address:", c)
+		var id peer.ID
+		if id, e = peer.IDFromPublicKey(addr.Key); fails(e) {
+			return
+		}
+		if e = ng.Listener.Host.
+			Peerstore().Put(id, "services", s.GetAll().ToBytes()); fails(e) {
+			return
 		}
 	case *adintro.Ad:
 		log.D.Ln("received", reflect.TypeOf(c), "from gossip network")
-		if intr, ok := c.(*adintro.Ad); !ok {
+		var intr *adintro.Ad
+		if intr, ok = c.(*adintro.Ad); !ok {
 			return fmt.Errorf(ErrWrongTypeDecode,
 				adintro.Magic, reflect.TypeOf(c).String())
-		} else {
-			// If we got to here now we can add to the PeerStore.
-			log.D.S("new ad for intro:", c)
-			var id peer.ID
-			if id, e = peer.IDFromPublicKey(intr.Key); fails(e) {
-				return
-			}
-			if e = ng.Listener.Host.
-				Peerstore().Put(id, "services", s.GetAll().ToBytes()); fails(e) {
-				return
-			}
+		} else if !intr.Validate() {
+			return errors.New("intro ad failed validation")
+		}
+		// If we got to here now we can add to the PeerStore.
+		log.D.S("new ad for intro:", c)
+		var id peer.ID
+		if id, e = peer.IDFromPublicKey(intr.Key); fails(e) {
+			return
+		}
+		if e = ng.Listener.Host.
+			Peerstore().Put(id, "services", s.GetAll().ToBytes()); fails(e) {
+			return
 		}
 	case *adload.Ad:
 		log.D.Ln("received", reflect.TypeOf(c), "from gossip network")
-		if lod, ok := c.(*adload.Ad); !ok {
+		var lod *adload.Ad
+		if lod, ok = c.(*adload.Ad); !ok {
 			return fmt.Errorf(ErrWrongTypeDecode,
 				adaddress.Magic, reflect.TypeOf(c).String())
-		} else {
-			// If we got to here now we can add to the PeerStore.
-			log.D.S("new ad for load:", c)
-			var id peer.ID
-			if id, e = peer.IDFromPublicKey(lod.Key); fails(e) {
-				return
-			}
-			if e = ng.Listener.Host.
-				Peerstore().Put(id, "services", s.GetAll().ToBytes()); fails(e) {
-				return
-			}
+		} else if !lod.Validate() {
+			return errors.New("load ad failed validation")
+		}
+		// If we got to here now we can add to the PeerStore.
+		log.D.S("new ad for load:", c)
+		var id peer.ID
+		if id, e = peer.IDFromPublicKey(lod.Key); fails(e) {
+			return
+		}
+		if e = ng.Listener.Host.
+			Peerstore().Put(id, "services", s.GetAll().ToBytes()); fails(e) {
+			return
 		}
 	case *adpeer.Ad:
 		log.D.Ln("received", reflect.TypeOf(c), "from gossip network")
-		var ok bool
 		var pa *adpeer.Ad
 		if pa, ok = c.(*adpeer.Ad); !ok {
 			return fmt.Errorf(ErrWrongTypeDecode,
@@ -141,21 +148,61 @@ func (ng *Engine) HandleAd(p *pubsub.Message, ctx context.Context) (e error) {
 		}
 	case *adservices.Ad:
 		log.D.Ln("received", reflect.TypeOf(c), "from gossip network")
-		if serv, ok := c.(*adservices.Ad); !ok {
+		var sa *adservices.Ad
+		if sa, ok = c.(*adservices.Ad); !ok {
 			return fmt.Errorf(ErrWrongTypeDecode,
 				adservices.Magic, reflect.TypeOf(c).String())
-		} else {
-			// If we got to here now we can add to the PeerStore.
-			log.D.S("new ad for services:", c)
-			var id peer.ID
-			if id, e = peer.IDFromPublicKey(serv.Key); fails(e) {
-				return
-			}
-			if e = ng.Listener.Host.
-				Peerstore().Put(id, "services", s.GetAll().ToBytes()); fails(e) {
-				return
-			}
+		} else if !sa.Validate() {
+			return errors.New("services ad failed validation")
 		}
+		// If we got to here now we can add to the PeerStore.
+		log.D.S("new ad for services:", c)
+		var id peer.ID
+		if id, e = peer.IDFromPublicKey(sa.Key); fails(e) {
+			return
+		}
+		if e = ng.Listener.Host.
+			Peerstore().Put(id, "services", s.GetAll().ToBytes()); fails(e) {
+			return
+		}
+	}
+	return
+}
+
+func (ng *Engine) GetPeerRecord(id peer.ID, key string) (add ad.Ad, e error) {
+	var a interface{}
+	if a, e = ng.Listener.Host.Peerstore().Get(id, key); fails(e) {
+		return
+	}
+
+	var ok bool
+	var adb slice.Bytes
+	if adb, ok = a.(slice.Bytes); !ok {
+		e = errors.New("peer record did not decode slice.Bytes")
+		return
+	}
+	s := splice.NewFrom(adb)
+	c := reg.Recognise(s)
+	if c == nil {
+		e = errors.New("message not recognised")
+		return
+	}
+	if e = c.Decode(s); fails(e) {
+		return
+	}
+	if add, ok = c.(ad.Ad); !ok {
+		e = errors.New("peer record did not decode as Ad")
+	}
+	return
+}
+
+func (ng *Engine) ClearPeerRecord(id peer.ID, key string) (add ad.Ad, e error) {
+	if _, e = ng.Listener.Host.Peerstore().Get(id, key); fails(e) {
+		return
+	}
+	if e = ng.Listener.Host.
+		Peerstore().Put(id, key, []byte{}); fails(e) {
+		return
 	}
 	return
 }

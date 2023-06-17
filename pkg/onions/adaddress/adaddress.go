@@ -87,11 +87,11 @@ func (x *Ad) Len() int { return Len }
 func (x *Ad) Magic() string { return Magic }
 
 func (x *Ad) Splice(s *splice.Splice) {
-	x.SpliceWithoutSig(s)
+	x.SpliceNoSig(s)
 	s.Signature(x.Sig)
 }
 
-func (x *Ad) SpliceWithoutSig(s *splice.Splice) {
+func (x *Ad) SpliceNoSig(s *splice.Splice) {
 	var e error
 	var ap netip.AddrPort
 	if ap, e = multi.AddrToAddrPort(x.Addr); fails(e) {
@@ -107,13 +107,13 @@ func (x *Ad) SpliceWithoutSig(s *splice.Splice) {
 
 func (x *Ad) Validate() bool {
 	s := splice.New(Len - magic.Len)
-	x.SpliceWithoutSig(s)
+	x.SpliceNoSig(s)
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	key, e := x.Sig.Recover(hash)
 	if fails(e) {
 		return false
 	}
-	if key.Equals(x.Key) {
+	if key.Equals(x.Key) && x.Expiry.After(time.Now()) {
 		return true
 	}
 	return false
@@ -133,7 +133,7 @@ func New(id nonce.ID, key *crypto.Prv,
 		Addr: ma,
 	}
 	s := splice.New(Len)
-	peerAd.SpliceWithoutSig(s)
+	peerAd.SpliceNoSig(s)
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	var e error
 	if peerAd.Sig, e = crypto.Sign(key, hash); fails(e) {
