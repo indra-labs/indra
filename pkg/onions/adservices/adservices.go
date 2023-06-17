@@ -45,8 +45,8 @@ type Ad struct {
 
 var _ coding.Codec = &Ad{}
 
-// NewServiceAd ...
-func NewServiceAd(id nonce.ID, key *crypto.Prv, services []Service,
+// New ...
+func New(id nonce.ID, key *crypto.Prv, services []Service,
 	expiry time.Time) (sv *Ad) {
 
 	s := splice.New(adintro.Len)

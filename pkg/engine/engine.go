@@ -212,7 +212,7 @@ func New(p Params) (c *Engine, e error) {
 		if c.sub, e = c.topic.Subscribe(); fails(e) {
 			return
 		}
-		log.D.Ln("subscribed to", PubSubTopic, "topic on gossip network")
+		log.T.Ln("subscribed to", PubSubTopic, "topic on gossip network")
 	}
 	c.Manager.AddNodes(append([]*node.Node{p.Node}, p.Nodes...)...)
 	// AddIntro a return session for receiving responses, ideally more of these

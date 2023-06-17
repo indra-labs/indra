@@ -1,4 +1,4 @@
-package adpeer
+package adload
 
 import (
 	"github.com/indra-labs/indra/pkg/crypto"

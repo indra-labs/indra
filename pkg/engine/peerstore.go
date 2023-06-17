@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/indra-labs/indra/pkg/onions/adload"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"reflect"
 
@@ -33,16 +34,19 @@ func (ng *Engine) RunAdHandler(handler func(p *pubsub.Message,
 		for {
 			var m *pubsub.Message
 			var e error
+			log.D.Ln("waiting for next message from gossip network")
 			if m, e = ng.sub.Next(ng.ctx); e != nil {
 				continue
 			}
-
+			log.D.Ln("received message from gossip network")
 			if e = handler(m, ng.ctx); fails(e) {
 				continue
 			}
 			select {
 			case <-ng.ctx.Done():
+				log.D.Ln("shutting down ad handler")
 				break out
+			default:
 			}
 		}
 		return
@@ -71,7 +75,16 @@ func (ng *Engine) HandleAd(p *pubsub.Message, ctx context.Context) (e error) {
 			return fmt.Errorf(ErrWrongTypeDecode,
 				adaddress.Magic, reflect.TypeOf(c).String())
 		} else {
-			_ = addr
+			// If we got to here now we can add to the PeerStore.
+			log.D.S("new ad for services:", c)
+			var id peer.ID
+			if id, e = peer.IDFromPublicKey(addr.Key); fails(e) {
+				return
+			}
+			if e = ng.Listener.Host.
+				Peerstore().Put(id, "services", s.GetAll().ToBytes()); fails(e) {
+				return
+			}
 		}
 	case *adintro.Ad:
 		log.D.Ln("received", reflect.TypeOf(c), "from gossip network")
@@ -79,8 +92,33 @@ func (ng *Engine) HandleAd(p *pubsub.Message, ctx context.Context) (e error) {
 			return fmt.Errorf(ErrWrongTypeDecode,
 				adintro.Magic, reflect.TypeOf(c).String())
 		} else {
-			_ = intr
-
+			// If we got to here now we can add to the PeerStore.
+			log.D.S("new ad for services:", c)
+			var id peer.ID
+			if id, e = peer.IDFromPublicKey(intr.Key); fails(e) {
+				return
+			}
+			if e = ng.Listener.Host.
+				Peerstore().Put(id, "services", s.GetAll().ToBytes()); fails(e) {
+				return
+			}
+		}
+	case *adload.Ad:
+		log.D.Ln("received", reflect.TypeOf(c), "from gossip network")
+		if lod, ok := c.(*adload.Ad); !ok {
+			return fmt.Errorf(ErrWrongTypeDecode,
+				adaddress.Magic, reflect.TypeOf(c).String())
+		} else {
+			// If we got to here now we can add to the PeerStore.
+			log.D.S("new ad for services:", c)
+			var id peer.ID
+			if id, e = peer.IDFromPublicKey(lod.Key); fails(e) {
+				return
+			}
+			if e = ng.Listener.Host.
+				Peerstore().Put(id, "services", s.GetAll().ToBytes()); fails(e) {
+				return
+			}
 		}
 	case *adservices.Ad:
 		log.D.Ln("received", reflect.TypeOf(c), "from gossip network")
@@ -88,17 +126,16 @@ func (ng *Engine) HandleAd(p *pubsub.Message, ctx context.Context) (e error) {
 			return fmt.Errorf(ErrWrongTypeDecode,
 				adservices.Magic, reflect.TypeOf(c).String())
 		} else {
-		// If we got to here now we can add to the PeerStore.
-		log.D.S("new ad for service:", c)
-		var id peer.ID
-		if id, e = peer.IDFromPublicKey(serv.Key); fails(e) {
-			return
-		}
-		if e = ng.Listener.Host.
-			Peerstore().Put(id, "service", s.GetAll().ToBytes()); fails(e) {
-			return
-		}
-
+			// If we got to here now we can add to the PeerStore.
+			log.D.S("new ad for services:", c)
+			var id peer.ID
+			if id, e = peer.IDFromPublicKey(serv.Key); fails(e) {
+				return
+			}
+			if e = ng.Listener.Host.
+				Peerstore().Put(id, "services", s.GetAll().ToBytes()); fails(e) {
+				return
+			}
 		}
 	case *adpeer.Ad:
 		log.D.Ln("received", reflect.TypeOf(c), "from gossip network")

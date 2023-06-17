@@ -1,4 +1,4 @@
-package adpeer
+package adload
 
 import (
 	"testing"

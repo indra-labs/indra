@@ -4,6 +4,7 @@ import (
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/onions/adpeer"
+	"github.com/indra-labs/indra/pkg/onions/adservices"
 	"github.com/indra-labs/indra/pkg/util/splice"
 	"os"
 	"testing"
@@ -54,17 +55,18 @@ func TestEngine_PeerStore(t *testing.T) {
 	if e = engines[0].SendAd(newPeerAd); fails(e) {
 		t.FailNow()
 	}
-	//time.Sleep(time.Second)
-	//newServiceAd := adservices.NewServiceAd(nonce.NewID(),
-	//	engines[0].Manager.GetLocalNodeIdentityPrv(),
-	//	20000, 54321, time.Now().Add(time.Hour*24*7))
-	//ss := splice.New(newServiceAd.Len())
-	//if e = newServiceAd.Encode(ss); fails(e) {
-	//	t.FailNow()
-	//}
-	//if e = engines[0].SendAd(newServiceAd); fails(e) {
-	//	t.FailNow()
-	//}
+	time.Sleep(time.Second * 3)
+	newServiceAd := adservices.New(nonce.NewID(),
+		engines[0].Manager.GetLocalNodeIdentityPrv(),
+		[]adservices.Service{{20000, 54321}},
+		time.Now().Add(time.Hour*24*7))
+	ss := splice.New(newServiceAd.Len())
+	if e = newServiceAd.Encode(ss); fails(e) {
+		t.FailNow()
+	}
+	if e = engines[0].SendAd(newServiceAd); fails(e) {
+		t.FailNow()
+	}
 	time.Sleep(time.Second * 3)
 	cancel()
 	for i := range engines {
