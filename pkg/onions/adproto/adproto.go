@@ -23,7 +23,7 @@ var (
 )
 
 const (
-	Magic = "prot"
+	Magic = "prad"
 	Len   = magic.Len +
 		nonce.IDLen +
 		crypto.PubKeyLen +

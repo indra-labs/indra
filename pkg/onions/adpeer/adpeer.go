@@ -24,7 +24,7 @@ var (
 )
 
 const (
-	Magic = "peer"
+	Magic = "pead"
 	Len   = adproto.Len +
 		slice.Uint32Len
 )

@@ -68,9 +68,7 @@ func (x *Ad) Decode(s *splice.Splice) (e error) {
 }
 
 func (x *Ad) Encode(s *splice.Splice) (e error) {
-	log.T.S("encoding", reflect.TypeOf(x),
-		x.ID, x.Sig,
-	)
+	log.T.S("encoding", reflect.TypeOf(x), x)
 	x.Splice(s)
 	return
 }

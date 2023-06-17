@@ -10,6 +10,7 @@ import (
 	"github.com/indra-labs/indra/pkg/util/splice"
 	"github.com/multiformats/go-multiaddr"
 	"testing"
+	"time"
 )
 
 func TestNew(t *testing.T) {
@@ -23,7 +24,7 @@ func TestNew(t *testing.T) {
 	if ma, e = multiaddr.NewMultiaddr("/ip4/127.0.0.1/tcp/4242"); fails(e) {
 		t.FailNow()
 	}
-	aa := New(id, pr, ma)
+	aa := New(id, pr, ma, time.Now().Add(time.Hour*24*7))
 	s := splice.New(aa.Len())
 	if e = aa.Encode(s); fails(e) {
 		t.FailNow()
