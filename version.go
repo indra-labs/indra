@@ -21,20 +21,20 @@ const (
 	// GitRef is the gitref, as in refs/heads/branchname.
 	GitRef = "refs/heads/master"
 	// ParentGitCommit is the commit hash of the parent HEAD.
-	ParentGitCommit = "556b0661a703c00cf149a6d32c5374cbc6153a76"
+	ParentGitCommit = "5380d5f01e7d712258d7c1baa99172cc4bf014ef"
 	// BuildTime stores the time when the current binary was built.
-	BuildTime = "2023-06-07T20:01:04+01:00"
+	BuildTime = "2023-06-17T09:14:01+01:00"
 	// SemVer lists the (latest) git tag on the release.
-	SemVer = "v0.1.14"
+	SemVer = "v0.1.15"
 	// Major is the major number from the tag.
 	Major = 0
 	// Minor is the minor number from the tag.
 	Minor = 1
 	// Patch is the patch version number from the tag.
-	Patch = 14
+	Patch = 15
 )
 
-var CI = "true"
+var CI = "false"
 
 // Version returns a pretty printed version information string.
 func Version() string {
