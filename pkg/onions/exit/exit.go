@@ -71,7 +71,7 @@ func (x *Exit) Account(res *sess.Data, sm *sess.Manager,
 		res.PostAcct = append(res.PostAcct,
 			func() {
 				sm.DecSession(s.Header.Bytes,
-					s.Node.Services[j].RelayRate*len(res.B)/2, true, "exit")
+					int(s.Node.Services[j].RelayRate)*len(res.B)/2, true, "exit")
 			})
 		break
 	}
@@ -145,8 +145,8 @@ func (x *Exit) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 				sess.Node.Unlock()
 				continue
 			}
-			in := sess.Node.Services[i].RelayRate * s.Len() / 2
-			out := sess.Node.Services[i].RelayRate * rb.Len() / 2
+			in := int(sess.Node.Services[i].RelayRate) * s.Len() / 2
+			out := int(sess.Node.Services[i].RelayRate) * rb.Len() / 2
 			sess.Node.Unlock()
 			ng.Mgr().DecSession(sess.Header.Bytes, in+out, false, "exit")
 			break

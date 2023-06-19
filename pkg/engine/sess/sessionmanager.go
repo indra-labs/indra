@@ -405,7 +405,7 @@ func (sm *Manager) GetLocalNodePaymentChan() payments.Chan {
 }
 
 // GetLocalNodeRelayRate returns the relay rate for the local node.
-func (sm *Manager) GetLocalNodeRelayRate() (rate int) {
+func (sm *Manager) GetLocalNodeRelayRate() (rate uint32) {
 	sm.Lock()
 	defer sm.Unlock()
 	return sm.GetLocalNode().RelayRate

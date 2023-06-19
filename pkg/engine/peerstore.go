@@ -34,7 +34,6 @@ func (ng *Engine) RunAdHandler(handler func(p *pubsub.Message,
 		for {
 			var m *pubsub.Message
 			var e error
-			log.D.Ln("waiting for next message from gossip network")
 			if m, e = ng.sub.Next(ng.ctx); e != nil {
 				continue
 			}
@@ -198,7 +197,7 @@ func (ng *Engine) GetPeerRecord(id peer.ID, key string) (add ad.Ad, e error) {
 	return
 }
 
-func (ng *Engine) ClearPeerRecord(id peer.ID, key string) (add ad.Ad, e error) {
+func (ng *Engine) ClearPeerRecord(id peer.ID, key string) (e error) {
 	if _, e = ng.Listener.Host.Peerstore().Get(id, key); fails(e) {
 		return
 	}

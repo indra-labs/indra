@@ -67,9 +67,9 @@ func (x *Balance) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 		log.D.S("found pending", pending.ID)
 		for i := range pending.Billable {
 			session := ng.Mgr().FindSessionByPubkey(pending.Billable[i])
-			out := session.Node.RelayRate * s.Len()
+			out := int(session.Node.RelayRate) * s.Len()
 			if session != nil {
-				in := session.Node.RelayRate * pending.SentSize
+				in := int(session.Node.RelayRate) * pending.SentSize
 				switch {
 				case i < 2:
 					ng.Mgr().DecSession(session.Header.Bytes, in, true, "reverse")

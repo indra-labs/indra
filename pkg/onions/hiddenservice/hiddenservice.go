@@ -97,7 +97,7 @@ func (x *HiddenService) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e er
 		},
 	})
 	log.D.Ln("stored new introduction, starting broadcast")
-	go x.Intro.Gossip(ng.Mgr(), ng.KillSwitch())
+	// go x.Intro.Gossip(ng.Mgr(), ng.WaitForShutdown())
 	return
 }
 

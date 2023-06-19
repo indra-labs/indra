@@ -110,7 +110,7 @@ func (x *Reverse) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 		sess := ng.Mgr().FindSessionByHeader(hdr)
 		if sess != nil {
 			ng.Mgr().DecSession(sess.Header.Bytes,
-				ng.Mgr().GetLocalNodeRelayRate()*s.Len(), false, "reverse")
+				int(ng.Mgr().GetLocalNodeRelayRate())*s.Len(), false, "reverse")
 			ng.HandleMessage(splice.BudgeUp(s.SetCursor(start)), on)
 		}
 	} else if p != nil {

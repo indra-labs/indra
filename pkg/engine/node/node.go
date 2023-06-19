@@ -29,7 +29,7 @@ type Node struct {
 	sync.Mutex
 	AddrPort  *netip.AddrPort
 	Identity  *crypto.Keys
-	RelayRate int               // Base relay price mSAT/Mb.
+	RelayRate uint32               // Base relay price mSAT/Mb.
 	Services  services.Services // Services offered by this peer.
 	payments.Chan
 	Transport tpt.Transport
@@ -38,7 +38,7 @@ type Node struct {
 // NewNode creates a new Node. The transport should be from either dialing out or
 // a peer dialing in and the self model does not need to do this.
 func NewNode(addr *netip.AddrPort, keys *crypto.Keys, tpt tpt.Transport,
-	relayRate int) (n *Node, id nonce.ID) {
+	relayRate uint32) (n *Node, id nonce.ID) {
 	id = nonce.NewID()
 	n = &Node{
 		ID:        id,

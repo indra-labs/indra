@@ -77,7 +77,7 @@ func (ng *Engine) HandleMessage(s *splice.Splice, pr ont.Onion) {
 			return
 		}
 		if pr != nil && on.Magic() != pr.Magic() {
-			log.D.S("",s.GetAll().ToBytes())
+			log.D.S("", s.GetAll().ToBytes())
 		}
 		m := on.GetOnion()
 		if m == nil {
@@ -102,7 +102,7 @@ func (ng *Engine) Handler() (out bool) {
 		break
 	case c := <-ng.Listener.Accept():
 		go func() {
-			log.D.Ln("new connection inbound (TODO):", c.Host.Addrs()[0])
+			log.D.Ln("new connection inbound (TODO):", c.Host.Addrs())
 			_ = c
 		}()
 	case b := <-ng.Manager.ReceiveToLocalNode():
@@ -151,11 +151,11 @@ func (ng *Engine) Handler() (out bool) {
 	return
 }
 
-func (ng *Engine) Keyset() *crypto.KeySet      { return ng.KeySet }
-func (ng *Engine) KillSwitch() <-chan struct{} { return ng.ctx.Done() }
-func (ng *Engine) Mgr() *sess.Manager          { return ng.Manager }
-func (ng *Engine) Pending() *responses.Pending { return ng.Responses }
-func (ng *Engine) SetLoad(load byte)           { ng.Load.Store(uint32(load)) }
+func (ng *Engine) Keyset() *crypto.KeySet           { return ng.KeySet }
+func (ng *Engine) WaitForShutdown() <-chan struct{} { return ng.ctx.Done() }
+func (ng *Engine) Mgr() *sess.Manager               { return ng.Manager }
+func (ng *Engine) Pending() *responses.Pending      { return ng.Responses }
+func (ng *Engine) SetLoad(load byte)                { ng.Load.Store(uint32(load)) }
 
 // Shutdown triggers the shutdown of the client and the Cleanup before
 // finishing.
@@ -183,6 +183,7 @@ func (ng *Engine) Start() {
 	}
 }
 
+// New creates a new Engine according to the Params given.
 func New(p Params) (c *Engine, e error) {
 	p.Node.Transport = p.Transport
 	p.Node.Identity = p.Keys
@@ -201,7 +202,7 @@ func New(p Params) (c *Engine, e error) {
 		h:         hidden.NewHiddenrouting(),
 		Pause:     qu.T(),
 	}
-	if p.Listener.Host != nil {
+	if p.Listener != nil && p.Listener.Host != nil {
 		if c.PubSub, e = pubsub.NewGossipSub(ctx, p.Listener.Host); fails(e) {
 			cancel()
 			return
@@ -215,7 +216,7 @@ func New(p Params) (c *Engine, e error) {
 		log.T.Ln("subscribed to", PubSubTopic, "topic on gossip network")
 	}
 	c.Manager.AddNodes(append([]*node.Node{p.Node}, p.Nodes...)...)
-	// AddIntro a return session for receiving responses, ideally more of these
+	// Add return sessions for receiving responses, ideally more of these
 	// will be generated during operation and rotated out over time.
 	for i := 0; i < p.NReturnSessions; i++ {
 		c.Manager.AddSession(sessions.NewSessionData(nonce.NewID(), p.Node, 0,

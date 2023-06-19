@@ -25,7 +25,7 @@ type Ngin interface {
 	Mgr() *sess.Manager
 	Pending() *responses.Pending
 	GetHidden() *hidden.Hidden
-	KillSwitch() <-chan struct{}
+	WaitForShutdown() <-chan struct{}
 	Keyset() *crypto.KeySet
 }
 

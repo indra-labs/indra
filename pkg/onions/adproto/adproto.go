@@ -1,16 +1,13 @@
 package adproto
 
 import (
-	"github.com/indra-labs/indra/pkg/ad"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
-	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/util/qu"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
 	"reflect"
@@ -63,13 +60,6 @@ func (x *Ad) Encode(s *splice.Splice) (e error) {
 }
 
 func (x *Ad) GetOnion() interface{} { return x }
-
-func (x *Ad) Gossip(sm *sess.Manager, c qu.C) {
-	log.D.F("propagating peer info for %s",
-		x.Key.ToBased32Abbreviated())
-	ad.Gossip(x, sm, c)
-	log.T.Ln("finished broadcasting peer info")
-}
 
 func (x *Ad) Len() int { return Len }
 
