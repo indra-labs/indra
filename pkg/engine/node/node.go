@@ -31,7 +31,7 @@ type Node struct {
 	Identity  *crypto.Keys
 	RelayRate uint32               // Base relay price mSAT/Mb.
 	Services  services.Services // Services offered by this peer.
-	payments.Chan
+	payments.PayChan
 	Transport tpt.Transport
 }
 
@@ -45,7 +45,7 @@ func NewNode(addr *netip.AddrPort, keys *crypto.Keys, tpt tpt.Transport,
 		AddrPort:  addr,
 		Identity:  keys,
 		RelayRate: relayRate,
-		Chan:      make(payments.Chan, PaymentChanBuffers),
+		PayChan:   make(payments.PayChan, PaymentChanBuffers),
 		Transport: tpt,
 	}
 	return

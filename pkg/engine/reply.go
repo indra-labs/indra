@@ -13,7 +13,7 @@ func MakeReplyHeader(ng *Engine) (returnHeader *hidden.ReplyHeader) {
 	rvKeys := ng.KeySet.Next3()
 	hops := []byte{3, 4, 5}
 	s := make(sessions.Sessions, len(hops))
-	ng.Manager.SelectHops(hops, s, "make message reply header")
+	ng.Mgr().SelectHops(hops, s, "make message reply header")
 	rt := &exit.Routing{
 		Sessions: [3]*sessions.Data{s[0], s[1], s[2]},
 		Keys:     crypto.Privs{rvKeys[0], rvKeys[1], rvKeys[2]},

@@ -18,7 +18,7 @@ import (
 func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 	fn func()) (e error) {
 	var nodes [5]*node.Node
-	nodes = ng.Manager.SelectUnusedCircuit()
+	nodes = ng.Mgr().SelectUnusedCircuit()
 	for i := range nodes {
 		if nodes[i] == nil {
 			e = fmt.Errorf("failed to find nodes %d", i)
@@ -27,7 +27,7 @@ func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 	}
 	// Get a random return hop session (index 5).
 	var returnSession *sessions.Data
-	returnHops := ng.Manager.GetSessionsAtHop(5)
+	returnHops := ng.Mgr().GetSessionsAtHop(5)
 	if len(returnHops) > 1 {
 		cryptorand.Shuffle(len(returnHops), func(i, j int) {
 			returnHops[i], returnHops[j] = returnHops[j], returnHops[i]
@@ -45,7 +45,7 @@ func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 	var pendingConfirms int
 	for i := range nodes {
 		confirmChans[i] = nodes[i].
-			Chan.Send(amount, s[i].ID, s[i].PreimageHash())
+			PayChan.Send(amount, s[i].ID, s[i].PreimageHash())
 		pendingConfirms++
 	}
 	var success bool
@@ -78,12 +78,12 @@ func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 	}
 	// todo: handle payment failures!
 	o := MakeSession(conf, s, returnSession, nodes[:], ng.KeySet)
-	res := PostAcctOnion(ng.Manager, o)
-	ng.Manager.SendWithOneHook(nodes[0].AddrPort, res, func(id nonce.ID,
+	res := PostAcctOnion(ng.Mgr(), o)
+	ng.Mgr().SendWithOneHook(nodes[0].AddrPort, res, func(id nonce.ID,
 		ifc interface{},
 		b slice.Bytes) (e error) {
-		ng.Manager.Lock()
-		defer ng.Manager.Unlock()
+		ng.Mgr().Lock()
+		defer ng.Mgr().Unlock()
 		var ss [5]*sessions.Data
 		for i := range nodes {
 			log.D.F("confirming and storing session at hop %d %s for %s with"+
@@ -93,9 +93,9 @@ func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 				amount)
 			ss[i] = sessions.NewSessionData(s[i].ID, nodes[i], amount,
 				s[i].Header, s[i].Payload, byte(i))
-			ng.Manager.Add(ss[i])
-			ng.Manager.Sessions = append(ng.Manager.Sessions, ss[i])
-			ng.Manager.PendingPayments.Delete(s[i].PreimageHash())
+			ng.Mgr().Add(ss[i])
+			ng.Mgr().Sessions = append(ng.manager.Sessions, ss[i])
+			ng.Mgr().PendingPayments.Delete(s[i].PreimageHash())
 		}
 		fn()
 		return

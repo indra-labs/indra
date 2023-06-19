@@ -27,7 +27,7 @@ func TestClient_SendGetBalance(t *testing.T) {
 		t.FailNow()
 	}
 	client := clients[0]
-	log.D.Ln("client", client.Manager.GetLocalNodeAddressString())
+	log.D.Ln("client", client.Mgr().GetLocalNodeAddressString())
 	// Start up the clients.
 	for _, v := range clients {
 		go v.Start()
@@ -46,7 +46,7 @@ func TestClient_SendGetBalance(t *testing.T) {
 	}()
  	i := 0
 	wg.Add(1)
-	returnHops := client.Manager.GetSessionsAtHop(5)
+	returnHops := client.Mgr().GetSessionsAtHop(5)
 	var returner *sessions.Data
 	if len(returnHops) > 1 {
 		cryptorand.Shuffle(len(returnHops), func(i, j int) {
@@ -55,7 +55,7 @@ func TestClient_SendGetBalance(t *testing.T) {
 		})
 	}
 	returner = returnHops[0]
-	clients[0].SendGetBalance(returner, clients[0].Manager.Sessions[i],
+	clients[0].SendGetBalance(returner, clients[0].Mgr().Sessions[i],
 		func(cf nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
 			log.I.Ln("success")
 			wg.Done()

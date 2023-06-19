@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	"github.com/indra-labs/indra/pkg/engine/ads"
 	"github.com/indra-labs/indra/pkg/engine/node"
 	"github.com/indra-labs/indra/pkg/engine/responses"
 	"github.com/indra-labs/indra/pkg/engine/sess"
@@ -33,8 +34,9 @@ type (
 	Engine struct {
 		ctx          context.Context
 		cancel       func()
-		Responses    *responses.Pending
-		Manager      *sess.Manager
+		Responses *responses.Pending
+		manager   *sess.Manager
+		NodeAds   *ads.NodeAds
 		Listener     *transport.Listener
 		PubSub       *pubsub.PubSub
 		topic        *pubsub.Topic
@@ -67,7 +69,7 @@ func (ng *Engine) GetLoad() byte { return byte(ng.Load.Load()) }
 
 func (ng *Engine) HandleMessage(s *splice.Splice, pr ont.Onion) {
 	log.D.F("%s handling received message",
-		ng.Manager.GetLocalNodeAddressString())
+		ng.Mgr().GetLocalNodeAddressString())
 	s.SetCursor(0)
 	s.Segments = s.Segments[:0]
 	on := reg.Recognise(s)
@@ -92,7 +94,7 @@ func (ng *Engine) HandleMessage(s *splice.Splice, pr ont.Onion) {
 
 func (ng *Engine) Handler() (out bool) {
 	log.T.C(func() string {
-		return ng.Manager.GetLocalNodeAddressString() + " awaiting message"
+		return ng.Mgr().GetLocalNodeAddressString() + " awaiting message"
 	})
 	var prev ont.Onion
 	select {
@@ -105,13 +107,13 @@ func (ng *Engine) Handler() (out bool) {
 			log.D.Ln("new connection inbound (TODO):", c.Host.Addrs())
 			_ = c
 		}()
-	case b := <-ng.Manager.ReceiveToLocalNode():
+	case b := <-ng.Mgr().ReceiveToLocalNode():
 		s := splice.Load(b, slice.NewCursor())
 		ng.HandleMessage(s, prev)
-	case p := <-ng.Manager.GetLocalNode().Chan.Receive():
+	case p := <-ng.Mgr().GetLocalNode().PayChan.Receive():
 		log.D.F("incoming payment for %s: %v", p.ID, p.Amount)
 		topUp := false
-		ng.Manager.IterateSessions(func(s *sessions.Data) bool {
+		ng.Mgr().IterateSessions(func(s *sessions.Data) bool {
 			if s.Preimage == p.Preimage {
 				s.IncSats(p.Amount, false, "top-up")
 				topUp = true
@@ -121,7 +123,7 @@ func (ng *Engine) Handler() (out bool) {
 			return false
 		})
 		if !topUp {
-			ng.Manager.AddPendingPayment(p)
+			ng.Mgr().AddPendingPayment(p)
 			log.T.F("awaiting session keys for preimage %s session Keys %s",
 				p.Preimage, p.ID)
 		}
@@ -129,21 +131,21 @@ func (ng *Engine) Handler() (out bool) {
 		// a timeout on the lnd node returning the success to trigger this.
 		p.ConfirmChan <- true
 	case <-ng.Pause:
-		log.D.Ln("pausing", ng.Manager.GetLocalNodeAddressString())
+		log.D.Ln("pausing", ng.Mgr().GetLocalNodeAddressString())
 		// For testing purposes we need to halt this Handler and discard channel
 		// messages.
 	out:
 		for {
 			select {
-			case <-ng.Manager.GetLocalNode().Chan.Receive():
+			case <-ng.Mgr().GetLocalNode().PayChan.Receive():
 				log.D.Ln("discarding payments while in pause")
-			case <-ng.Manager.ReceiveToLocalNode():
+			case <-ng.Mgr().ReceiveToLocalNode():
 				log.D.Ln("discarding messages while in pause")
 			case <-ng.ctx.Done():
 				break out
 			case <-ng.Pause:
 				// This will then resume to the top level select.
-				log.D.Ln("unpausing", ng.Manager.GetLocalNodeAddressString())
+				log.D.Ln("unpausing", ng.Mgr().GetLocalNodeAddressString())
 				break out
 			}
 		}
@@ -153,14 +155,14 @@ func (ng *Engine) Handler() (out bool) {
 
 func (ng *Engine) Keyset() *crypto.KeySet           { return ng.KeySet }
 func (ng *Engine) WaitForShutdown() <-chan struct{} { return ng.ctx.Done() }
-func (ng *Engine) Mgr() *sess.Manager               { return ng.Manager }
+func (ng *Engine) Mgr() *sess.Manager               { return ng.manager }
 func (ng *Engine) Pending() *responses.Pending      { return ng.Responses }
 func (ng *Engine) SetLoad(load byte)                { ng.Load.Store(uint32(load)) }
 
 // Shutdown triggers the shutdown of the client and the Cleanup before
 // finishing.
 func (ng *Engine) Shutdown() {
-	log.T.Ln("shutting down", ng.Manager.GetLocalNodeAddress().String())
+	log.T.Ln("shutting down", ng.Mgr().GetLocalNodeAddress().String())
 	if ng.ShuttingDown.Load() {
 		return
 	}
@@ -184,7 +186,7 @@ func (ng *Engine) Start() {
 }
 
 // New creates a new Engine according to the Params given.
-func New(p Params) (c *Engine, e error) {
+func New(p Params) (ng *Engine, e error) {
 	p.Node.Transport = p.Transport
 	p.Node.Identity = p.Keys
 	var ks *crypto.KeySet
@@ -192,34 +194,40 @@ func New(p Params) (c *Engine, e error) {
 		return
 	}
 	ctx, cancel := context.WithCancel(context.Background())
-	c = &Engine{
+	ng = &Engine{
 		ctx:       ctx,
 		cancel:    cancel,
 		Responses: &responses.Pending{},
 		KeySet:    ks,
 		Listener:  p.Listener,
-		Manager:   sess.NewSessionManager(),
+		manager:   sess.NewSessionManager(),
 		h:         hidden.NewHiddenrouting(),
 		Pause:     qu.T(),
 	}
 	if p.Listener != nil && p.Listener.Host != nil {
-		if c.PubSub, e = pubsub.NewGossipSub(ctx, p.Listener.Host); fails(e) {
+		if ng.PubSub, e = pubsub.NewGossipSub(ctx, p.Listener.Host); fails(e) {
 			cancel()
 			return
 		}
-		if c.topic, e = c.PubSub.Join(PubSubTopic); fails(e) {
+		if ng.topic, e = ng.PubSub.Join(PubSubTopic); fails(e) {
+			cancel()
 			return
 		}
-		if c.sub, e = c.topic.Subscribe(); fails(e) {
+		if ng.sub, e = ng.topic.Subscribe(); fails(e) {
+			cancel()
 			return
 		}
 		log.T.Ln("subscribed to", PubSubTopic, "topic on gossip network")
 	}
-	c.Manager.AddNodes(append([]*node.Node{p.Node}, p.Nodes...)...)
+	if ng.NodeAds, e = ads.GenerateAds(p.Node, 25); fails(e) {
+		cancel()
+		return
+	}
+	ng.Mgr().AddNodes(append([]*node.Node{p.Node}, p.Nodes...)...)
 	// Add return sessions for receiving responses, ideally more of these
 	// will be generated during operation and rotated out over time.
 	for i := 0; i < p.NReturnSessions; i++ {
-		c.Manager.AddSession(sessions.NewSessionData(nonce.NewID(), p.Node, 0,
+		ng.Mgr().AddSession(sessions.NewSessionData(nonce.NewID(), p.Node, 0,
 			nil, nil, 5))
 	}
 	return
