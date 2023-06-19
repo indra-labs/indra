@@ -3,6 +3,8 @@ package main
 import (
 	"errors"
 	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/cmd/indra/client"
+	"github.com/indra-labs/indra/cmd/indra/relay"
 	"github.com/indra-labs/indra/cmd/indra/seed"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/spf13/cobra"
@@ -13,7 +15,7 @@ import (
 
 var indraTxt = `indra (` + indra.SemVer + `) - Network Freedom.
 
-indra is a lightning powered, distributed virtual private network for anonymising traffic on decentralised protocol networks.
+indra is a lightning powered, distributed virtual private network that protects you from metadata collection and enables novel service models.
 `
 
 var (
@@ -55,6 +57,8 @@ func init() {
 	viper.BindPFlag("data-dir", rootCmd.PersistentFlags().Lookup("data-dir"))
 	viper.BindPFlag("network", rootCmd.PersistentFlags().Lookup("network"))
 
+	relay.Init(rootCmd)
+	client.Init(rootCmd)
 	seed.Init(rootCmd)
 }
 

@@ -29,8 +29,9 @@ type Node struct {
 	sync.Mutex
 	AddrPort  *netip.AddrPort
 	Identity  *crypto.Keys
-	RelayRate uint32               // Base relay price mSAT/Mb.
+	RelayRate uint32            // Base relay price mSAT/Mb.
 	Services  services.Services // Services offered by this peer.
+	Load      byte
 	payments.PayChan
 	Transport tpt.Transport
 }

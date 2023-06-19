@@ -34,9 +34,9 @@ type (
 	Engine struct {
 		ctx          context.Context
 		cancel       func()
-		Responses *responses.Pending
-		manager   *sess.Manager
-		NodeAds   *ads.NodeAds
+		Responses    *responses.Pending
+		manager      *sess.Manager
+		NodeAds      *ads.NodeAds
 		Listener     *transport.Listener
 		PubSub       *pubsub.PubSub
 		topic        *pubsub.Topic
