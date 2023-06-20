@@ -109,8 +109,8 @@ func (x *GetBalance) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error
 	case *crypt.Crypt:
 		sess := ng.Mgr().FindSessionByHeader(on1.ToPriv)
 		if sess != nil {
-			in := sess.Node.RelayRate * s.Len() / 2
-			out := sess.Node.RelayRate * len(rb) / 2
+			in := int(sess.Node.RelayRate) * s.Len() / 2
+			out := int(sess.Node.RelayRate) * len(rb) / 2
 			ng.Mgr().DecSession(sess.Header.Bytes, in+out, false, "getbalance")
 		}
 	}

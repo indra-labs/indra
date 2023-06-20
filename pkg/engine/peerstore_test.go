@@ -44,7 +44,7 @@ func TestEngine_PeerStore(t *testing.T) {
 	}
 	time.Sleep(time.Second)
 	newAddressAd := adaddress.New(nonce.NewID(),
-		engines[0].Manager.GetLocalNodeIdentityPrv(),
+		engines[0].Mgr().GetLocalNodeIdentityPrv(),
 		engines[0].Listener.Host.Addrs()[0],
 		time.Now().Add(time.Hour*24*7))
 	sa := splice.New(newAddressAd.Len())
@@ -56,8 +56,8 @@ func TestEngine_PeerStore(t *testing.T) {
 	}
 	time.Sleep(time.Second)
 	newIntroAd := adintro.New(nonce.NewID(),
-		engines[0].Manager.GetLocalNodeIdentityPrv(),
-		engines[0].Manager.GetLocalNodeAddress(),
+		engines[0].Mgr().GetLocalNodeIdentityPrv(),
+		engines[0].Mgr().GetLocalNodeAddress(),
 		20000, 443,
 		time.Now().Add(time.Hour*24*7))
 	si := splice.New(newIntroAd.Len())
@@ -69,7 +69,7 @@ func TestEngine_PeerStore(t *testing.T) {
 	}
 	time.Sleep(time.Second)
 	newLoadAd := adload.New(nonce.NewID(),
-		engines[0].Manager.GetLocalNodeIdentityPrv(),
+		engines[0].Mgr().GetLocalNodeIdentityPrv(),
 		17,
 		time.Now().Add(time.Hour*24*7))
 	sl := splice.New(newLoadAd.Len())
@@ -81,7 +81,7 @@ func TestEngine_PeerStore(t *testing.T) {
 	}
 	time.Sleep(time.Second)
 	newPeerAd := adpeer.New(nonce.NewID(),
-		engines[0].Manager.GetLocalNodeIdentityPrv(),
+		engines[0].Mgr().GetLocalNodeIdentityPrv(),
 		20000,
 		time.Now().Add(time.Hour*24*7))
 	log.D.S("peer ad", newPeerAd)
@@ -94,7 +94,7 @@ func TestEngine_PeerStore(t *testing.T) {
 	}
 	time.Sleep(time.Second * 1)
 	newServiceAd := adservices.New(nonce.NewID(),
-		engines[0].Manager.GetLocalNodeIdentityPrv(),
+		engines[0].Mgr().GetLocalNodeIdentityPrv(),
 		[]adservices.Service{{20000, 54321}},
 		time.Now().Add(time.Hour*24*7))
 	ss := splice.New(newServiceAd.Len())

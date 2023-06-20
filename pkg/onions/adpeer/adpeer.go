@@ -6,12 +6,10 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
-	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/onions/adintro"
 	"github.com/indra-labs/indra/pkg/onions/adproto"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/util/qu"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
 	"reflect"
@@ -81,8 +79,6 @@ func (x *Ad) Encode(s *splice.Splice) (e error) {
 }
 
 func (x *Ad) GetOnion() interface{} { return nil }
-
-func (x *Ad) Gossip(sm *sess.Manager, c qu.C) {}
 
 func (x *Ad) Len() int { return Len }
 

@@ -3,8 +3,11 @@ package main
 import (
 	"errors"
 	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/cmd/indra/client"
+	"github.com/indra-labs/indra/cmd/indra/relay"
 	"github.com/indra-labs/indra/cmd/indra/seed"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/util/appdata"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"
@@ -13,7 +16,7 @@ import (
 
 var indraTxt = `indra (` + indra.SemVer + `) - Network Freedom.
 
-indra is a lightning powered, distributed virtual private network for anonymising traffic on decentralised protocol networks.
+indra is a lightning powered, distributed virtual private network that protects you from metadata collection and enables novel service models.
 `
 
 var (
@@ -47,7 +50,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&cfgSave, "config-save", "", false, "saves the config file with any eligible envs/flags passed")
 	rootCmd.PersistentFlags().StringVarP(&logsDir, "logs-dir", "L", "", "logging directory (default is $HOME/.indra/logs)")
 	rootCmd.PersistentFlags().StringVarP(&logsLevel, "logs-level", "", "info", "set logging level  off|fatal|error|warn|info|check|debug|trace")
-	rootCmd.PersistentFlags().StringVarP(&dataDir, "data-dir", "D", "", "data directory (default is $HOME/.indra/data)")
+	rootCmd.PersistentFlags().StringVarP(&dataDir, "data-dir", "D", appdata.Dir("indra", false), "data directory (default is $HOME/.indra/data)")
 	rootCmd.PersistentFlags().StringVarP(&network, "network", "N", "mainnet", "selects the network  mainnet|testnet|simnet")
 
 	viper.BindPFlag("logs-dir", rootCmd.PersistentFlags().Lookup("logs-dir"))
@@ -55,17 +58,15 @@ func init() {
 	viper.BindPFlag("data-dir", rootCmd.PersistentFlags().Lookup("data-dir"))
 	viper.BindPFlag("network", rootCmd.PersistentFlags().Lookup("network"))
 
+	relay.Init(rootCmd)
+	client.Init(rootCmd)
 	seed.Init(rootCmd)
 }
 
 func initData() {
 
 	if viper.GetString("data-dir") == "" {
-		home, err := os.UserHomeDir()
-
-		cobra.CheckErr(err)
-
-		viper.Set("data-dir", home+"/.indra/data")
+		viper.Set("data-dir", appdata.Dir("indra", false))
 	}
 
 }

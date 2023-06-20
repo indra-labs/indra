@@ -35,12 +35,12 @@ func TestClient_SendExit(t *testing.T) {
 		t.FailNow()
 	}
 	client := clients[0]
-	log.D.Ln("client", client.Manager.GetLocalNodeAddressString())
+	log.D.Ln("client", client.Mgr().GetLocalNodeAddressString())
 	// set up forwarding port service
 	const port = 3455
 	sim := transport.NewByteChan(0)
 	for i := range clients {
-		e = clients[i].Manager.AddServiceToLocalNode(&services.Service{
+		e = clients[i].Mgr().AddServiceToLocalNode(&services.Service{
 			Port:      port,
 			Transport: sim,
 			RelayRate: 58000,
@@ -66,7 +66,7 @@ func TestClient_SendExit(t *testing.T) {
 		t.Error("Exit test failed")
 	}()
 out:
-	for i := 3; i < len(clients[0].Manager.Sessions)-1; i++ {
+	for i := 3; i < len(clients[0].Mgr().Sessions)-1; i++ {
 		wg.Add(1)
 		var msg slice.Bytes
 		if msg, _, e = tests.GenMessage(64, "request"); fails(e) {
@@ -80,8 +80,8 @@ out:
 			t.Error(e)
 			t.FailNow()
 		}
-		bob := clients[0].Manager.Sessions[i]
-		returnHops := client.Manager.GetSessionsAtHop(5)
+		bob := clients[0].Mgr().Sessions[i]
+		returnHops := client.Mgr().GetSessionsAtHop(5)
 		var alice *sessions.Data
 		if len(returnHops) > 1 {
 			cryptorand.Shuffle(len(returnHops), func(i, j int) {
@@ -105,7 +105,7 @@ out:
 		})
 		bb := <-clients[3].Mgr().GetLocalNode().ReceiveFrom(port)
 		log.T.S(bb.ToBytes())
-		if e = clients[3].Manager.SendFromLocalNode(port, respMsg); fails(e) {
+		if e = clients[3].Mgr().SendFromLocalNode(port, respMsg); fails(e) {
 			t.Error("fail send")
 		}
 		log.T.Ln("response sent")
@@ -151,11 +151,11 @@ func TestClient_SendPing(t *testing.T) {
 		t.Error("SendPing test failed")
 	}()
 out:
-	for i := 3; i < len(clients[0].Manager.Sessions)-1; i++ {
+	for i := 3; i < len(clients[0].Mgr().Sessions)-1; i++ {
 		wg.Add(1)
 		var c sessions.Circuit
-		sess := clients[0].Manager.Sessions[i]
-		c[sess.Hop] = clients[0].Manager.Sessions[i]
+		sess := clients[0].Mgr().Sessions[i]
+		c[sess.Hop] = clients[0].Mgr().Sessions[i]
 		clients[0].SendPing(c,
 			func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
 				log.D.Ln("success")
@@ -219,8 +219,8 @@ func TestClient_SendSessionKeys(t *testing.T) {
 			counter.Dec()
 		}
 		wg.Wait()
-		for j := range clients[0].Manager.CircuitCache {
-			log.D.F("%d %s %v", i, j, clients[0].Manager.CircuitCache[j])
+		for j := range clients[0].Mgr().CircuitCache {
+			log.D.F("%d %s %v", i, j, clients[0].Mgr().CircuitCache[j])
 		}
 		quit.Q()
 	}

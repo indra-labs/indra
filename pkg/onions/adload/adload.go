@@ -6,12 +6,9 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
-	"github.com/indra-labs/indra/pkg/engine/sess"
-	"github.com/indra-labs/indra/pkg/onions/adintro"
 	"github.com/indra-labs/indra/pkg/onions/adproto"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/util/qu"
 	"github.com/indra-labs/indra/pkg/util/splice"
 	"reflect"
 	"time"
@@ -24,7 +21,7 @@ var (
 
 const (
 	Magic = "load"
-	Len   = adproto.Len +1
+	Len   = adproto.Len + 1
 )
 
 // Ad stores a specification for the fee rate and existence of a peer.
@@ -39,23 +36,21 @@ var _ coding.Codec = &Ad{}
 func New(id nonce.ID, key *crypto.Prv, load byte,
 	expiry time.Time) (sv *Ad) {
 
-	s := splice.New(adintro.Len)
 	k := crypto.DerivePub(key)
-	Splice(s, id, k, load, expiry)
-	hash := sha256.Single(s.GetUntil(s.GetCursor()))
-	var e error
-	var sign crypto.SigBytes
-	if sign, e = crypto.Sign(key, hash); fails(e) {
-		return nil
-	}
 	sv = &Ad{
 		Ad: adproto.Ad{
 			ID:     id,
 			Key:    k,
-			Expiry: time.Now().Add(adproto.TTL),
-			Sig:    sign,
+			Expiry: expiry,
 		},
 		Load: load,
+	}
+	s := splice.New(sv.Len())
+	sv.SpliceNoSig(s)
+	hash := sha256.Single(s.GetUntil(s.GetCursor()))
+	var e error
+	if sv.Sig, e = crypto.Sign(key, hash); fails(e) {
+		return nil
 	}
 	return
 }
@@ -77,22 +72,9 @@ func (x *Ad) Encode(s *splice.Splice) (e error) {
 
 func (x *Ad) GetOnion() interface{} { return nil }
 
-func (x *Ad) Gossip(sm *sess.Manager, c qu.C) {}
-
 func (x *Ad) Len() int { return Len }
 
 func (x *Ad) Magic() string { return "" }
-
-func (x *Ad) Sign(prv *crypto.Prv) (e error) {
-	s := splice.New(x.Len())
-	x.SpliceNoSig(s)
-	var b crypto.SigBytes
-	if b, e = crypto.Sign(prv, sha256.Single(s.GetUntil(s.GetCursor()))); fails(e) {
-		return
-	}
-	copy(x.Sig[:], b[:])
-	return nil
-}
 
 func (x *Ad) Splice(s *splice.Splice) {
 	x.SpliceNoSig(s)
@@ -104,14 +86,14 @@ func (x *Ad) SpliceNoSig(s *splice.Splice) {
 }
 
 func (x *Ad) Validate() (valid bool) {
-	s := splice.New(adintro.Len - magic.Len)
+	s := splice.New(x.Len() - magic.Len)
 	x.SpliceNoSig(s)
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	key, e := x.Sig.Recover(hash)
 	if fails(e) {
 		return false
 	}
-	if key.Equals(x.Key) {
+	if key.Equals(x.Key) && x.Expiry.After(time.Now()) {
 		return true
 	}
 	return false

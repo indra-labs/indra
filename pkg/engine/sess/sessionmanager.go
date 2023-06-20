@@ -399,13 +399,13 @@ func (sm *Manager) GetLocalNodeIdentityPrv() (ident *crypto.Prv) {
 	return sm.GetLocalNode().Identity.Prv
 }
 
-// GetLocalNodePaymentChan returns the engine's local Node Chan.
-func (sm *Manager) GetLocalNodePaymentChan() payments.Chan {
-	return sm.nodes[0].Chan
+// GetLocalNodePaymentChan returns the engine's local Node PayChan.
+func (sm *Manager) GetLocalNodePaymentChan() payments.PayChan {
+	return sm.nodes[0].PayChan
 }
 
 // GetLocalNodeRelayRate returns the relay rate for the local node.
-func (sm *Manager) GetLocalNodeRelayRate() (rate int) {
+func (sm *Manager) GetLocalNodeRelayRate() (rate uint32) {
 	sm.Lock()
 	defer sm.Unlock()
 	return sm.GetLocalNode().RelayRate

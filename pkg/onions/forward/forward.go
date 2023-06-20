@@ -35,7 +35,7 @@ func (x *Forward) Account(res *sess.Data, sm *sess.Manager,
 	res.Billable = append(res.Billable, s.Header.Bytes)
 	res.PostAcct = append(res.PostAcct,
 		func() {
-			sm.DecSession(s.Header.Bytes, s.Node.RelayRate*len(res.B),
+			sm.DecSession(s.Header.Bytes, int(s.Node.RelayRate)*len(res.B),
 				true, "forward")
 		})
 	return
@@ -71,7 +71,7 @@ func (x *Forward) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 			sess := ng.Mgr().FindSessionByHeader(on1.ToPriv)
 			if sess != nil {
 				ng.Mgr().DecSession(sess.Header.Bytes,
-					ng.Mgr().GetLocalNodeRelayRate()*s.Len(),
+					int(ng.Mgr().GetLocalNodeRelayRate())*s.Len(),
 					false, "forward")
 			}
 		}

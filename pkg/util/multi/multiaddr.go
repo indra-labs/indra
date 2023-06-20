@@ -1,6 +1,7 @@
 package multi
 
 import (
+	"fmt"
 	"github.com/indra-labs/indra/pkg/crypto"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -25,6 +26,20 @@ func AddrToAddrPort(ma multiaddr.Multiaddr) (ap netip.AddrPort, e error) {
 		return
 	}
 	if ap, e = netip.ParseAddrPort(addrStr + ":" + portStr); fails(e) {
+		return
+	}
+	return
+}
+
+func AddrFromAddrPort(ap netip.AddrPort) (ma multiaddr.Multiaddr, e error) {
+	var ipv string
+	if ap.Addr().Is6() {
+		ipv = "ip6"
+	} else {
+		ipv = "ip4"
+	}
+	if ma, e = multiaddr.NewMultiaddr(fmt.Sprintf("/%s/%s/tcp/%d",
+		ipv, ap.Addr().String(), ap.Port())); fails(e) {
 		return
 	}
 	return

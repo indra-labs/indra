@@ -11,7 +11,7 @@ func (p PendingPayments) Add(np *Payment) (pp PendingPayments) {
 }
 
 type (
-	Chan    chan *Payment
+	PayChan chan *Payment
 	Payment struct {
 		ID          nonce.ID
 		Preimage    sha256.Hash
@@ -53,11 +53,11 @@ func (p PendingPayments) FindPreimage(pi sha256.Hash) (pp *Payment) {
 	return
 }
 
-// Receive waits on receiving a Payment on a Chan.
-func (pc Chan) Receive() <-chan *Payment { return pc }
+// Receive waits on receiving a Payment on a PayChan.
+func (pc PayChan) Receive() <-chan *Payment { return pc }
 
-// Send a payment on the Chan.
-func (pc Chan) Send(amount lnwire.MilliSatoshi,
+// Send a payment on the PayChan.
+func (pc PayChan) Send(amount lnwire.MilliSatoshi,
 	id nonce.ID, preimage sha256.Hash) (confirmChan chan bool) {
 	confirmChan = make(chan bool)
 	pc <- &Payment{

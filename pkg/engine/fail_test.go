@@ -44,7 +44,7 @@ func TestEngine_Message(t *testing.T) {
 		t.FailNow()
 	}
 	client := clients[0]
-	log.D.Ln("client", client.Manager.GetLocalNodeAddressString())
+	log.D.Ln("client", client.Mgr().GetLocalNodeAddressString())
 	// Start up the clients.
 	for _, v := range clients {
 		go v.Start()
@@ -89,9 +89,9 @@ func TestEngine_Message(t *testing.T) {
 	}
 	id := nonce.NewID()
 	_ = id
-	introducerHops := client.Manager.GetSessionsAtHop(2)
+	introducerHops := client.Mgr().GetSessionsAtHop(2)
 	var introducer *sessions.Data
-	returnHops := client.Manager.GetSessionsAtHop(5)
+	returnHops := client.Mgr().GetSessionsAtHop(5)
 	var returner *sessions.Data
 	_ = returner
 	if len(introducerHops) > 1 {
@@ -112,7 +112,7 @@ func TestEngine_Message(t *testing.T) {
 	returner = returnHops[0]
 	log.D.Ln("getting sessions for introducer...")
 	for i := range clients {
-		if introducer.Node.ID == clients[i].Manager.GetLocalNode().ID {
+		if introducer.Node.ID == clients[i].Mgr().GetLocalNode().ID {
 			for j := 0; j < nCircuits; j++ {
 				wg.Add(1)
 				counter.Inc()
@@ -217,7 +217,7 @@ func TestEngine_Route(t *testing.T) {
 		t.FailNow()
 	}
 	client := clients[0]
-	log.W.Ln("client", client.Manager.GetLocalNodeAddressString())
+	log.W.Ln("client", client.Mgr().GetLocalNodeAddressString())
 	// Start up the clients.
 	for _, v := range clients {
 		go v.Start()
@@ -262,9 +262,9 @@ func TestEngine_Route(t *testing.T) {
 	}
 	id := nonce.NewID()
 	_ = id
-	introducerHops := client.Manager.GetSessionsAtHop(2)
+	introducerHops := client.Mgr().GetSessionsAtHop(2)
 	var introducer *sessions.Data
-	returnHops := client.Manager.GetSessionsAtHop(5)
+	returnHops := client.Mgr().GetSessionsAtHop(5)
 	var returner *sessions.Data
 	_ = returner
 	if len(introducerHops) > 1 {
@@ -286,7 +286,7 @@ func TestEngine_Route(t *testing.T) {
 	const localPort = 25234
 	log.D.Ln("getting sessions for introducer...")
 	for i := range clients {
-		if introducer.Node.ID == clients[i].Manager.GetLocalNode().ID {
+		if introducer.Node.ID == clients[i].Mgr().GetLocalNode().ID {
 			for j := 0; j < nCircuits; j++ {
 				wg.Add(1)
 				counter.Inc()
@@ -397,8 +397,8 @@ func TestEngine_SendHiddenService(t *testing.T) {
 		return
 	}
 	id := nonce.NewID()
-	introducerHops := clients[0].Manager.GetSessionsAtHop(2)
-	returnHops := clients[0].Manager.GetSessionsAtHop(5)
+	introducerHops := clients[0].Mgr().GetSessionsAtHop(2)
+	returnHops := clients[0].Mgr().GetSessionsAtHop(5)
 	var introducer *sessions.Data
 	if len(introducerHops) > 1 {
 		cryptorand.Shuffle(len(introducerHops), func(i, j int) {

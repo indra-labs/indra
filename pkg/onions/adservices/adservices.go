@@ -7,12 +7,10 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
-	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/onions/adintro"
 	"github.com/indra-labs/indra/pkg/onions/adproto"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/util/qu"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
 	"time"
@@ -49,23 +47,21 @@ var _ coding.Codec = &Ad{}
 func New(id nonce.ID, key *crypto.Prv, services []Service,
 	expiry time.Time) (sv *Ad) {
 
-	s := splice.New(adintro.Len)
 	k := crypto.DerivePub(key)
-	ServiceSplice(s, id, k, services, expiry)
-	hash := sha256.Single(s.GetUntil(s.GetCursor()))
-	var e error
-	var sign crypto.SigBytes
-	if sign, e = crypto.Sign(key, hash); fails(e) {
-		return nil
-	}
 	sv = &Ad{
 		Ad: adproto.Ad{
 			ID:     id,
 			Key:    k,
 			Expiry: time.Now().Add(adproto.TTL),
-			Sig:    sign,
 		},
 		Services: services,
+	}
+	s := splice.New(adintro.Len)
+	sv.SpliceNoSig(s)
+	hash := sha256.Single(s.GetUntil(s.GetCursor()))
+	var e error
+	if sv.Sig, e = crypto.Sign(key, hash); fails(e) {
+		return nil
 	}
 	return
 }
@@ -92,8 +88,6 @@ func (x *Ad) Encode(s *splice.Splice) (e error) {
 }
 
 func (x *Ad) GetOnion() interface{} { return nil }
-
-func (x *Ad) Gossip(sm *sess.Manager, c qu.C) {}
 
 func (x *Ad) Len() int { return adproto.Len + len(x.Services)*ServiceLen + slice.Uint32Len }
 
