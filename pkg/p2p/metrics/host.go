@@ -43,11 +43,11 @@ func HostStatus(ctx context.Context, host host.Host) {
 			select {
 			case <-time.After(hostStatusInterval):
 
-				log.I.Ln()
-				log.I.Ln("---- host status ----")
-				log.I.Ln("-- peers:", len(host.Network().Peers()))
-				log.I.Ln("-- connections:", len(host.Network().Conns()))
-				log.I.Ln("---- ---- ------ ----")
+				log.I.Ln(`
+---- host status ----
+-- peers:`, len(host.Network().Peers()),`
+-- connections:`, len(host.Network().Conns()),`
+`)
 
 			case <-ctx.Done():
 

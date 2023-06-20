@@ -83,35 +83,35 @@ func configureKey() {
 		return
 	}
 
-	log.W.Ln("")
-	log.W.Ln("--------------------------------------------------------")
-	log.W.Ln("--")
-	log.W.Ln("-- WARNING: The following key will be used to store")
-	log.W.Ln("-- your database securely, please ensure that you make")
-	log.W.Ln("-- a copy and store it in a secure place before using")
-	log.W.Ln("-- this software in a production environment.")
-	log.W.Ln("--")
-	log.W.Ln("--")
-	log.W.Ln("-- Failure to store this key properly will result in")
-	log.W.Ln("-- no longer being able to decrypt this database.")
-	log.W.Ln("--")
-	log.W.Ln("--")
-	log.W.Ln("-- It is recommended to use the following to generate")
-	log.W.Ln("-- your key:")
-	log.W.Ln("--")
-	log.W.Ln("-- indra seed keygen")
-	log.W.Ln("--")
-	log.W.Ln("--  OR")
-	log.W.Ln("--")
-	log.W.Ln("-- indra seed keygen --keyfile=/path/to/keyfile")
-	log.W.Ln("--")
-	log.W.Ln("--")
-	log.W.Ln("-- YOU HAVE BEEN WARNED!")
-	log.W.Ln("--")
-	log.W.Ln("-------------------------------------------------------")
-	log.W.Ln("-- KEY:", key.Encode(), "--")
-	log.W.Ln("-------------------------------------------------------")
-	log.W.Ln("")
+	log.W.Ln(`
+--------------------------------------------------------
+--
+-- WARNING: The following key will be used to store
+-- your database securely, please ensure that you make
+-- a copy and store it in a secure place before using
+-- this software in a production environment.
+--
+--
+-- Failure to store this key properly will result in
+-- no longer being able to decrypt this database.
+--
+--
+-- It is recommended to use the following to generate
+-- your key:
+--
+--     indra seed keygen
+--
+-- OR
+--
+--     indra seed keygen --keyfile=/path/to/keyfile
+--
+--
+-- YOU HAVE BEEN WARNED!
+--
+-------------------------------------------------------
+-- KEY:`, key.Encode(), `--
+-------------------------------------------------------
+`)
 
 	newKeyGenerated = true
 
