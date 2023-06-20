@@ -35,5 +35,9 @@ var relayCommand = &cobra.Command{
 	Long:  "Runs indra as a full relay, with optional client.",
 	Run: func(cmd *cobra.Command, args []string) {
 		log.I.Ln(log2.App.Load(), indra.SemVer)
+		nw, _ := cmd.Parent().PersistentFlags().GetString("network")
+		var dd string
+		dd, _ = cmd.Parent().PersistentFlags().GetString("data-dir")
+		log.T.S("cmd", dd, nw, args)
 	},
 }

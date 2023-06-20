@@ -57,7 +57,7 @@ func TestClient_SendGetBalance(t *testing.T) {
 	returner = returnHops[0]
 	clients[0].SendGetBalance(returner, clients[0].Mgr().Sessions[i],
 		func(cf nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
-			log.I.Ln("success")
+			log.D.Ln("success")
 			wg.Done()
 			quit.Q()
 			return

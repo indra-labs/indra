@@ -403,7 +403,7 @@ func logPrint(
 			),
 			LevelSpecs[level].Colorizer(loc),
 			printFunc(),
-			LevelSpecs[level].Colorizer(timeText),
+			color.Black.Sprint(timeText),
 		)
 		s = strings.TrimSuffix(s, "\n")
 		fmt.Fprintln(writer, s)
