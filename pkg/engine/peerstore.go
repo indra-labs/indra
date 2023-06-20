@@ -7,6 +7,7 @@ import (
 	"github.com/indra-labs/indra/pkg/ad"
 	"github.com/indra-labs/indra/pkg/onions/adload"
 	"github.com/indra-labs/indra/pkg/util/slice"
+	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"reflect"
 
@@ -19,12 +20,31 @@ import (
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 )
 
+func SetupGossip(ctx context.Context, host host.Host,
+	cancel func()) (PubSub *pubsub.PubSub, topic *pubsub.Topic,
+	sub *pubsub.Subscription, e error) {
+
+	if PubSub, e = pubsub.NewGossipSub(ctx, host); fails(e) {
+		cancel()
+		return
+	}
+	if topic, e = PubSub.Join(PubSubTopic); fails(e) {
+		cancel()
+		return
+	}
+	if sub, e = topic.Subscribe(); fails(e) {
+		cancel()
+		return
+	}
+	log.T.Ln("subscribed to", PubSubTopic, "topic on gossip network")
+	return
+}
+
 func (ng *Engine) SendAd(a slice.Bytes) (e error) {
 	return ng.topic.Publish(ng.ctx, a)
 }
 
-func (ng *Engine) RunAdHandler(handler func(p *pubsub.Message,
-	ctx context.Context) (e error)) {
+func (ng *Engine) RunAdHandler(handler func(p *pubsub.Message) (e error)) {
 
 	// Since the frequency of updates should be around 1 hour we run here only
 	// one thread here. Relays indicate their loading as part of the response
@@ -38,7 +58,7 @@ func (ng *Engine) RunAdHandler(handler func(p *pubsub.Message,
 				continue
 			}
 			log.D.Ln("received message from gossip network")
-			if e = handler(m, ng.ctx); fails(e) {
+			if e = handler(m); fails(e) {
 				continue
 			}
 			select {
@@ -54,7 +74,7 @@ func (ng *Engine) RunAdHandler(handler func(p *pubsub.Message,
 
 const ErrWrongTypeDecode = "magic '%s' but type is '%s'"
 
-func (ng *Engine) HandleAd(p *pubsub.Message, ctx context.Context) (e error) {
+func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 	if len(p.Data) < 1 {
 		log.E.Ln("received slice of no length")
 		return

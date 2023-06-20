@@ -3,7 +3,7 @@ package storage
 import (
 	"github.com/spf13/viper"
 	"os"
-	"strings"
+	"path/filepath"
 )
 
 var (
@@ -123,11 +123,11 @@ func configureDirPath() {
 	var err error
 
 	if viper.GetString(storeFilePathFlag) == "" {
-		viper.Set(storeFilePathFlag, viper.GetString("data-dir")+"/"+fileName)
+		viper.Set(storeFilePathFlag, filepath.Join(viper.GetString("data-dir"), fileName))
 	}
 
 	err = os.MkdirAll(
-		strings.TrimSuffix(viper.GetString(storeFilePathFlag), "/"+fileName),
+		filepath.Dir(storeFilePathFlag),
 		0755,
 	)
 

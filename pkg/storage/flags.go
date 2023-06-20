@@ -1,8 +1,10 @@
 package storage
 
 import (
+	"github.com/indra-labs/indra/pkg/util/appdata"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"path/filepath"
 )
 
 var (
@@ -38,7 +40,7 @@ func InitFlags(cmd *cobra.Command) {
 	viper.BindPFlag(storeKeyFileFlag, cmd.PersistentFlags().Lookup(storeKeyFileFlag))
 
 	cmd.PersistentFlags().StringVarP(&storeFilePath, storeFilePathFlag, "",
-		"",
+		filepath.Join(appdata.Dir("indra", false), "indra.db"),
 		"the path of the database  (default is <data-dir>/indra.db)",
 	)
 

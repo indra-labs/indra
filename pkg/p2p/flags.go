@@ -21,8 +21,8 @@ func InitFlags(cmd *cobra.Command) {
 
 	cmd.PersistentFlags().StringSliceVarP(&listeners, listenFlag, "",
 		[]string{
-			"/ip4/127.0.0.1/tcp/8337",
-			"/ip6/::1/tcp/8337",
+			"/ip4/0.0.0.0/tcp/8337",
+			"/ip6/::/tcp/8337",
 		},
 		"binds to an interface",
 	)
