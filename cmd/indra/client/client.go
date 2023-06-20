@@ -14,5 +14,6 @@ var clientCommand = &cobra.Command{
 	Long: "Runs indra as a client, providing a wireguard tunnel and socks5 " +
 		"proxy as connectivity options",
 	Run: func(cmd *cobra.Command, args []string) {
+
 	},
 }

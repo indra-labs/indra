@@ -1,4 +1,0 @@
-#!/usr/bin/zsh
-cd /home/loki/work/loki/indra-labs/indra
-export PATH=/home/loki/work/loki/indra-labs/indra/scripts:$PATH
-zsh
