@@ -396,7 +396,11 @@ func logPrint(
 		//timeText = time.Now().Format("2006-01-02 15:04:05.999999999 UTC+0700")
 		if logLevel > Info {
 			loc = GetLoc(3, subsystem)
-			loc = loc + strings.Repeat(" ", int(Longest.Load())-len(loc)+1)
+			ll := int(Longest.Load()) - len(loc) + 1
+			if ll < 0 {
+				ll = 0
+			}
+			loc = loc + strings.Repeat(" ", ll)
 		}
 		var app string
 		if len(App.Load()) > 0 {
