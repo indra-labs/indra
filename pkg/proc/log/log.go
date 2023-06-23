@@ -44,11 +44,11 @@ var (
 	// LvlStr is a map that provides the uniform width strings that are printed
 	// to identify the LogLevel of a log entry.
 	LvlStr = LevelMap{
-		Off:   "off  ",
+		Off:   "off",
 		Fatal: "fatal",
 		Error: "error",
-		Warn:  "warn ",
-		Info:  "info ",
+		Warn:  "warn",
+		Info:  "info",
 		Check: "check",
 		Debug: "debug",
 		Trace: "trace",
@@ -68,7 +68,7 @@ var (
 		"trace": Trace,
 	}
 	startTime                 = time.Now()
-	timeStampFormat           = "15:04:05.000"
+	timeStampFormat           = "15:04:05.000000"
 	tty             io.Writer = os.Stderr
 	file            *os.File
 	path            string
@@ -83,6 +83,10 @@ var (
 	// application.
 	allSubsystems []string
 )
+
+func init() {
+	Longest.Store(maxLen)
+}
 
 type (
 	LevelMap map[LogLevel]string
@@ -326,7 +330,7 @@ func _s(level LogLevel, subsystem string) Prints {
 		}
 		logPrint(
 			level, subsystem, func() string {
-				return color.Gray.Sprint(text + spew.Sdump(a...))
+				return text + spew.Sdump(a...)
 			},
 		)()
 	}
@@ -384,26 +388,29 @@ func logPrint(
 		}
 		tsf := timeStampFormat
 		timeText := getTimeText(tsf)
-		loc := GetLoc(3, subsystem)
+		var loc string
 		if int(Longest.Load()) < len(loc) {
 			Longest.Store(uint32(len(loc)))
 		}
-		loc = color.OpItalic.Sprint(color.OpUnderscore.Sprint(loc)) + strings.Repeat(" ", int(Longest.Load())-len(loc)+1)
-		formatString := "%s%-6v %s  %s   %s"
-		timeText = time.Now().Format("2006-01-02 15:04:05.999999999 UTC+0700")
+		formatString := "%s%s %s %s"
+		//timeText = time.Now().Format("2006-01-02 15:04:05.999999999 UTC+0700")
+		if logLevel > Info {
+			loc = GetLoc(3, subsystem)
+			loc = loc + strings.Repeat(" ", int(Longest.Load())-len(loc)+1)
+		}
 		var app string
 		if len(App.Load()) > 0 {
-			app = fmt.Sprint(App.Load(), " ")
+			//	app = fmt.Sprint(App.Load(), "")
+			app = App.Load()
 		}
 		s := fmt.Sprintf(
 			formatString,
-			app,
+			loc,
+			timeText,
 			LevelSpecs[level].Colorizer(
-				LevelSpecs[level].Name,
+				strings.ToUpper(app),
 			),
-			LevelSpecs[level].Colorizer(loc),
 			printFunc(),
-			color.Black.Sprint(timeText),
 		)
 		s = strings.TrimSuffix(s, "\n")
 		fmt.Fprintln(writer, s)
