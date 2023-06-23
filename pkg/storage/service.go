@@ -1,8 +1,8 @@
 package storage
 
 import (
-	"github.com/indra-labs/indra/pkg/rpc"
 	"github.com/dgraph-io/badger/v3"
+	"github.com/indra-labs/indra/pkg/rpc"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"sync"

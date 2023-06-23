@@ -77,19 +77,9 @@ func New(p Params) (ng *Engine, e error) {
 		Pause:     qu.T(),
 	}
 	if p.Listener != nil && p.Listener.Host != nil {
-		if ng.PubSub, e = pubsub.NewGossipSub(ctx, p.Listener.Host); fails(e) {
-			cancel()
+		if ng.PubSub, ng.topic, ng.sub, e = SetupGossip(ctx, p.Listener.Host, cancel); fails(e) {
 			return
 		}
-		if ng.topic, e = ng.PubSub.Join(PubSubTopic); fails(e) {
-			cancel()
-			return
-		}
-		if ng.sub, e = ng.topic.Subscribe(); fails(e) {
-			cancel()
-			return
-		}
-		log.T.Ln("subscribed to", PubSubTopic, "topic on gossip network")
 	}
 	if ng.NodeAds, e = ads.GenerateAds(p.Node, 25); fails(e) {
 		cancel()
@@ -103,6 +93,32 @@ func New(p Params) (ng *Engine, e error) {
 			nil, nil, 5))
 	}
 	return
+}
+
+// Shutdown triggers the shutdown of the client and the Cleanup before
+// finishing.
+func (ng *Engine) Shutdown() {
+	log.T.Ln("shutting down", ng.Mgr().GetLocalNodeAddress().String())
+	if ng.ShuttingDown.Load() {
+		return
+	}
+	ng.ShuttingDown.Store(true)
+	ng.Cleanup()
+	ng.cancel()
+}
+
+// Start a single thread of the Engine.
+func (ng *Engine) Start() {
+	log.T.Ln("starting engine")
+	if ng.sub != nil {
+		log.T.Ln("starting gossip handling")
+		ng.RunAdHandler(ng.HandleAd)
+	}
+	for {
+		if ng.Handler() {
+			break
+		}
+	}
 }
 
 // Cleanup closes and flushes any resources the client opened that require sync
@@ -205,29 +221,3 @@ func (ng *Engine) WaitForShutdown() <-chan struct{} { return ng.ctx.Done() }
 func (ng *Engine) Mgr() *sess.Manager               { return ng.manager }
 func (ng *Engine) Pending() *responses.Pending      { return ng.Responses }
 func (ng *Engine) SetLoad(load byte)                { ng.Load.Store(uint32(load)) }
-
-// Shutdown triggers the shutdown of the client and the Cleanup before
-// finishing.
-func (ng *Engine) Shutdown() {
-	log.T.Ln("shutting down", ng.Mgr().GetLocalNodeAddress().String())
-	if ng.ShuttingDown.Load() {
-		return
-	}
-	ng.ShuttingDown.Store(true)
-	ng.Cleanup()
-	ng.cancel()
-}
-
-// Start a single thread of the Engine.
-func (ng *Engine) Start() {
-	log.T.Ln("starting engine")
-	if ng.sub != nil {
-		log.T.Ln("starting gossip handling")
-		ng.RunAdHandler(ng.HandleAd)
-	}
-	for {
-		if ng.Handler() {
-			break
-		}
-	}
-}

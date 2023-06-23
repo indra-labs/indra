@@ -3,6 +3,7 @@ package introducer
 import (
 	"context"
 	"errors"
+	"fmt"
 	record "github.com/libp2p/go-libp2p-record"
 	"sync"
 
@@ -47,13 +48,14 @@ func Bootstrap(ctx context.Context, host host.Host, seeds []multiaddr.Multiaddr)
 	c = ctx
 	h = host
 
-	log.I.Ln("using seeds:")
+
+	o := "using seeds:\n\n"
 
 	var bootstrapPeer *peer.AddrInfo
 
 	for _, seed := range seeds {
 
-		log.I.Ln("-", seed.String())
+		o+=fmt.Sprintln("-", seed.String())
 
 		if bootstrapPeer, err = peer.AddrInfoFromP2pAddr(seed); check(err) {
 			return
@@ -66,6 +68,8 @@ func Bootstrap(ctx context.Context, host host.Host, seeds []multiaddr.Multiaddr)
 
 		bootstrapPeers = append(bootstrapPeers, *bootstrapPeer)
 	}
+
+	log.I.Ln(o)
 
 	var options = []dht.Option{
 		dht.Mode(dht.ModeServer),
