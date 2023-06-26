@@ -1,3 +1,3 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env bash
 cd pkg
 go test -v -tags local -gcflags "all=-trimpath=$INDRAROOT" ./...
