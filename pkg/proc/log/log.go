@@ -386,7 +386,7 @@ func logPrint(
 		if level > logLevel {
 			return
 		}
-		tsf := timeStampFormat
+		tsf := "15:04:05"
 		timeText := getTimeText(tsf)
 		var loc string
 		if int(Longest.Load()) < len(loc) {
@@ -397,6 +397,7 @@ func logPrint(
 		if logLevel > Info {
 			loc = GetLoc(3, subsystem)
 			loc = loc + strings.Repeat(" ", int(Longest.Load())-len(loc)+1)
+			tsf = timeStampFormat
 		}
 		var app string
 		if len(App.Load()) > 0 {

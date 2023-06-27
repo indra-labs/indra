@@ -63,5 +63,5 @@ arbitrary hidden service addresses such as web applications.
 
 notes:
 
-`([a-zA-z0-9\_\-\.][a-zA-z0-9\/\_\-\.]+)\:([0-9]+) ([a-zA-z0-9\_\-\.][a-zA-z0-9\/\_\-\.]+)\:([0-9]+)` is a regex that 
+`([a-zA-z0-9\_\-\.][a-zA-z0-9\/\_\-\.]+)\:([0-9]+)` is a regex that 
 matches the relative file paths in the log output. $1 and $2 from this are the relative path and the line number.
