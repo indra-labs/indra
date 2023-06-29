@@ -15,9 +15,8 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/peerstore"
 	"github.com/libp2p/go-libp2p/p2p/host/peerstore/pstoreds"
-	libp2pquic "github.com/libp2p/go-libp2p/p2p/transport/quic"
+	"github.com/libp2p/go-libp2p/p2p/security/noise"
 	"github.com/libp2p/go-libp2p/p2p/transport/tcp"
-	"github.com/libp2p/go-libp2p/p2p/transport/websocket"
 	"github.com/multiformats/go-multiaddr"
 	"sync"
 
@@ -49,10 +48,18 @@ const (
 )
 
 var (
+	userAgent = "/indra:" + indra.SemVer + "/"
+
 	blue  = color.Blue.Sprint
 	log   = log2.GetLogger()
 	fails = log.E.Chk
 )
+
+// SetUserAgent changes the user agent. Note that this will only have an effect
+// before a new listener is created.
+func SetUserAgent(s string) {
+	userAgent = "/indra " + indra.SemVer + " " + s + "/"
+}
 
 // concurrent safe accessors:
 
@@ -256,8 +263,9 @@ func (l *Listener) handle(s network.Stream) {
 	}
 }
 
-func NewListener(rendezvous, multiAddr, storePath string, keys *crypto.Keys,
-	ctx context.Context, mtu int) (c *Listener, e error) {
+func NewListener(rendezvous, multiAddr []string, storePath string,
+	keys *crypto.Keys, ctx context.Context, mtu int) (c *Listener,
+	e error) {
 
 	c = &Listener{
 		Keys:        keys,
@@ -266,17 +274,23 @@ func NewListener(rendezvous, multiAddr, storePath string, keys *crypto.Keys,
 		newConns:    make(chan *Conn, ConnBufs),
 		Context:     ctx,
 	}
-	var ma multiaddr.Multiaddr
-	if ma, e = multiaddr.NewMultiaddr(multiAddr); fails(e) {
-		return
-	}
-	rdv := make([]multiaddr.Multiaddr, 1)
-	if rendezvous != "" {
-		if rdv[0], e = multiaddr.NewMultiaddr(rendezvous); fails(e) {
+	var ma []multiaddr.Multiaddr
+	for i := range multiAddr {
+		var m multiaddr.Multiaddr
+		if m, e = multiaddr.NewMultiaddr(multiAddr[i]); fails(e) {
 			return
 		}
-	} else {
-		rdv = nil
+		ma = append(ma, m)
+	}
+	var rdv []multiaddr.Multiaddr
+	if rendezvous != nil || len(rendezvous) > 0 {
+		for i := range rendezvous {
+			var r multiaddr.Multiaddr
+			if r, e = multiaddr.NewMultiaddr(rendezvous[i]); e != nil {
+				continue
+			}
+			rdv = append(rdv, r)
+		}
 	}
 	store, closer := badgerStore(storePath)
 	if store == nil {
@@ -286,14 +300,15 @@ func NewListener(rendezvous, multiAddr, storePath string, keys *crypto.Keys,
 	st, e = pstoreds.NewPeerstore(ctx, store, pstoreds.DefaultOpts())
 	if c.Host, e = libp2p.New(
 		libp2p.Identity(keys.Prv),
-		libp2p.ListenAddrs(ma),
+		libp2p.UserAgent(userAgent),
+		libp2p.ListenAddrs(ma...),
 		libp2p.EnableHolePunching(),
-		libp2p.Transport(libp2pquic.NewTransport),
+		//libp2p.Transport(libp2pquic.NewTransport),
 		libp2p.Transport(tcp.NewTCPTransport),
-		libp2p.Transport(websocket.New),
+		//libp2p.Transport(websocket.New),
 		//libp2p.Security(libp2ptls.ID, libp2ptls.New),
-		//libp2p.Security(noise.ID, noise.New),
-		libp2p.NoSecurity,
+		libp2p.Security(noise.ID, noise.New),
+		//libp2p.NoSecurity,
 		libp2p.Peerstore(st),
 	); fails(e) {
 		return
@@ -302,7 +317,7 @@ func NewListener(rendezvous, multiAddr, storePath string, keys *crypto.Keys,
 	if c.DHT, e = NewDHT(ctx, c.Host, rdv); fails(e) {
 		return
 	}
-	go Discover(ctx, c.Host, c.DHT, rendezvous)
+	go Discover(ctx, c.Host, c.DHT, rdv)
 	c.Host.SetStreamHandler(IndraLibP2PID, c.handle)
 	return
 }

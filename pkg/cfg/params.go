@@ -48,21 +48,29 @@ func SelectNetworkParams(network string) *Params {
 	return nil
 }
 
-func (self *Params) ParseSeedMultiAddresses() (addresses []multiaddr.Multiaddr, err error) {
+func (p *Params) ParseSeedMultiAddresses() (addresses []multiaddr.Multiaddr, err error) {
 
 	var adr multiaddr.Multiaddr
 
 	addresses = []multiaddr.Multiaddr{}
 
-	for _, addr := range self.DNSSeedAddresses {
+	for _, addr := range p.DNSSeedAddresses {
 
-		if adr, err = multiaddr.NewMultiaddr("/dns4/" + addr.DNSAddress + "/tcp/" + self.DefaultPort + "/p2p/" + addr.ID); check(err) {
+		if adr, err = multiaddr.NewMultiaddr("/dns4/" + addr.DNSAddress + "/tcp/" + p.DefaultPort + "/p2p/" + addr.ID); check(err) {
 			return
 		}
 
 		addresses = append(addresses, adr)
 	}
 
+	return
+}
+
+func (p *Params) GetSeedsMultiAddrStrings() (seeds []string) {
+	for _, addr := range p.DNSSeedAddresses {
+		seeds = append(seeds, "/dns4/"+addr.DNSAddress+"/tcp/"+
+			p.DefaultPort+"/p2p/"+addr.ID)
+	}
 	return
 }
 

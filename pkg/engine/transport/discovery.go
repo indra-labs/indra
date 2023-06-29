@@ -54,12 +54,14 @@ func NewDHT(ctx context.Context, host host.Host,
 }
 
 func Discover(ctx context.Context, h host.Host, dht *dht.IpfsDHT,
-	rendezvous string) {
+	rendezvous []multiaddr.Multiaddr) {
 
 	var disco = routing.NewRoutingDiscovery(dht)
 	var e error
 	var peers <-chan peer.AddrInfo
-	if _, e = disco.Advertise(ctx, rendezvous); e != nil {
+	for i := range rendezvous {
+		if _, e = disco.Advertise(ctx, rendezvous[i].String()); e != nil {
+		}
 	}
 	ticker := time.NewTicker(time.Second * 1)
 	defer ticker.Stop()
@@ -68,8 +70,11 @@ func Discover(ctx context.Context, h host.Host, dht *dht.IpfsDHT,
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			if peers, e = disco.FindPeers(ctx, rendezvous); fails(e) {
-				return
+			for i := range rendezvous {
+				if peers, e = disco.FindPeers(ctx,
+					rendezvous[i].String()); fails(e) {
+					return
+				}
 			}
 			for p := range peers {
 				if p.ID == h.ID() {

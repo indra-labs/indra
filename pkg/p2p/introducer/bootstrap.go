@@ -36,18 +36,18 @@ var (
 	bootstrapPeers []peer.AddrInfo
 )
 
-func Bootstrap(ctx context.Context, host host.Host, seeds []multiaddr.Multiaddr) (err error) {
+func Bootstrap(ctx context.Context, host host.Host,
+	seeds []multiaddr.Multiaddr) (err error) {
 
 	log.I.Ln("starting [introducer.bootstrap]")
 
 	// Guarding against multiple instantiations
 	if !m.TryLock() {
-		return errors.New("[introducer.bootstrap] service is in use.")
+		return errors.New("[introducer.bootstrap] service is in use")
 	}
 
 	c = ctx
 	h = host
-
 
 	o := "using seeds:\n\n"
 
@@ -55,7 +55,7 @@ func Bootstrap(ctx context.Context, host host.Host, seeds []multiaddr.Multiaddr)
 
 	for _, seed := range seeds {
 
-		o+=fmt.Sprintln("-", seed.String())
+		o += fmt.Sprintln("-", seed.String())
 
 		if bootstrapPeer, err = peer.AddrInfoFromP2pAddr(seed); check(err) {
 			return

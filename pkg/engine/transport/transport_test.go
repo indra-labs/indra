@@ -13,7 +13,7 @@ import (
 )
 
 func TestNewListener(t *testing.T) {
-	if indra.CI=="false" {
+	if indra.CI == "false" {
 		log2.SetLogLevel(log2.Trace)
 	}
 	var e error
@@ -29,7 +29,7 @@ func TestNewListener(t *testing.T) {
 	if err != nil {
 		t.FailNow()
 	}
-	l1, e = NewListener("", LocalhostZeroIPv4TCP, dataPath, k1,
+	l1, e = NewListener([]string{""}, []string{LocalhostZeroIPv4TCP}, dataPath, k1,
 		ctx, DefaultMTU)
 	if fails(e) {
 		t.FailNow()
@@ -38,8 +38,8 @@ func TestNewListener(t *testing.T) {
 	if err != nil {
 		t.FailNow()
 	}
-	l2, e = NewListener(GetHostAddress(l1.Host), LocalhostZeroIPv4TCP, dataPath,
-		k2, ctx, DefaultMTU)
+	l2, e = NewListener([]string{GetHostAddress(l1.Host)},
+		[]string{LocalhostZeroIPv4TCP}, dataPath, k2, ctx, DefaultMTU)
 	if fails(e) {
 		t.FailNow()
 	}

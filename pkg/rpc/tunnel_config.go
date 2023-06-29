@@ -1,5 +1,7 @@
 package rpc
 
+import "errors"
+
 func configureTunnel() {
 
 	if !o.tunEnable {
@@ -33,7 +35,7 @@ func configureTunnelKey() {
 		return
 	}
 
-	if err != ErrKeyNotExists {
+	if !errors.Is(err, ErrKeyNotExists) {
 		return
 	}
 
@@ -55,7 +57,7 @@ func configureTunnelPort() {
 
 	log.I.Ln("rpc tunnel port not provided, generating a random one.")
 
-	o.tunPort = genRandomPort(10000)
+	o.tunPort = genRandomPort(10000) // no paricular reason why 10000 minimum, would be better to just use 0 bind?
 }
 
 func configurePeerWhitelist() {

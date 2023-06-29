@@ -25,7 +25,7 @@ import (
 
 func TestDispatcher(t *testing.T) {
 	t.Log(indra.CI)
-	if indra.CI=="false" {
+	if indra.CI == "false" {
 		log2.SetLogLevel(log2.Trace)
 		log.D.Ln("debug")
 	}
@@ -42,7 +42,8 @@ func TestDispatcher(t *testing.T) {
 	if err != nil {
 		t.FailNow()
 	}
-	l1, e = transport.NewListener("", transport.LocalhostZeroIPv4TCP,
+	l1, e = transport.NewListener([]string{""},
+		[]string{transport.LocalhostZeroIPv4TCP},
 		dataPath, k1, ctx, transport.DefaultMTU)
 	if fails(e) {
 		t.FailNow()
@@ -51,8 +52,9 @@ func TestDispatcher(t *testing.T) {
 	if err != nil {
 		t.FailNow()
 	}
-	l2, e = transport.NewListener(transport.GetHostAddress(l1.Host),
-		transport.LocalhostZeroIPv4TCP, dataPath, k2, ctx, transport.DefaultMTU)
+	l2, e = transport.NewListener([]string{transport.GetHostAddress(l1.Host)},
+		[]string{transport.LocalhostZeroIPv4TCP}, dataPath, k2, ctx,
+		transport.DefaultMTU)
 	if fails(e) {
 		t.FailNow()
 	}
@@ -149,4 +151,3 @@ func TestDispatcher(t *testing.T) {
 	d2.Mutex.Unlock()
 	cancel()
 }
-

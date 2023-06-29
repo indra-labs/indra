@@ -3,17 +3,18 @@ package p2p
 import (
 	"context"
 	"github.com/indra-labs/indra/pkg/cfg"
+	"github.com/indra-labs/indra/pkg/engine/transport"
+	"github.com/indra-labs/indra/pkg/interrupt"
 	"github.com/indra-labs/indra/pkg/p2p/metrics"
-	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/host"
+	"github.com/spf13/viper"
 	"time"
 
 	"github.com/multiformats/go-multiaddr"
 
 	"github.com/indra-labs/indra"
-	"github.com/indra-labs/indra/pkg/interrupt"
-	"github.com/indra-labs/indra/pkg/p2p/introducer"
+	crypto2 "github.com/indra-labs/indra/pkg/crypto"
 )
 
 var (
@@ -33,33 +34,6 @@ func init() {
 	listenAddresses = []multiaddr.Multiaddr{}
 }
 
-func run() {
-
-	log.I.Ln("starting p2p server")
-
-	log.I.Ln("host id:")
-	log.I.Ln("-", p2pHost.ID())
-
-	log.I.Ln("p2p listeners:")
-	log.I.Ln("-", p2pHost.Addrs())
-
-	// Here we create a context with cancel and add it to the interrupt handler
-	var ctx context.Context
-	var cancel context.CancelFunc
-
-	ctx, cancel = context.WithCancel(context.Background())
-
-	interrupt.AddHandler(cancel)
-
-	introducer.Bootstrap(ctx, p2pHost, seedAddresses)
-
-	metrics.SetInterval(30 * time.Second)
-
-	metrics.HostStatus(ctx, p2pHost)
-
-	isReadyChan <- true
-}
-
 func Run() {
 
 	//storage.Update(func(txn *badger.Txn) error {
@@ -69,19 +43,44 @@ func Run() {
 
 	configure()
 
-	var err error
+	var e error
 
-	p2pHost, err = libp2p.New(
-		libp2p.Identity(privKey),
-		libp2p.UserAgent(userAgent),
-		libp2p.ListenAddrs(listenAddresses...),
-	)
-
-	if check(err) {
+	netParams = cfg.SelectNetworkParams(viper.GetString("network"))
+	dataPath := viper.GetString("")
+	var pkr []byte
+	if pkr, e = privKey.Raw(); check(e) {
 		return
 	}
+	var ctx context.Context
+	var cancel context.CancelFunc
+	ctx, cancel = context.WithCancel(context.Background())
+	interrupt.AddHandler(cancel)
+	pkk := crypto2.PrvKeyFromBytes(pkr)
+	keys := crypto2.MakeKeys(pkk)
+	var l []*transport.Listener
+	var la []string
+	for i := range listenAddresses {
+		la = append(la, listenAddresses[i].String())
+	}
+	var list *transport.Listener
+	list, e = transport.NewListener(netParams.GetSeedsMultiAddrStrings(),
+		la, dataPath, keys, ctx,
+		transport.DefaultMTU)
+	l = append(l, list)
+	p2pHost = list.Host
+	log.I.Ln("starting p2p server")
 
-	run()
+	log.I.Ln("host id:")
+	log.I.Ln("-", p2pHost.ID())
+
+	log.I.Ln("p2p listeners:")
+	log.I.Ln("-", p2pHost.Addrs())
+
+	metrics.SetInterval(30 * time.Second)
+
+	metrics.HostStatus(ctx, p2pHost)
+
+	isReadyChan <- true
 }
 
 func Shutdown() (err error) {
