@@ -392,11 +392,15 @@ func logPrint(
 		if int(Longest.Load()) < len(loc) {
 			Longest.Store(uint32(len(loc)))
 		}
-		formatString := "%s%s %s %s"
+		formatString := "%s%s %s%s %s"
 		//timeText = time.Now().Format("2006-01-02 15:04:05.999999999 UTC+0700")
 		if logLevel > Info {
 			loc = GetLoc(3, subsystem)
-			loc = loc + strings.Repeat(" ", int(Longest.Load())-len(loc)+1)
+			count := int(Longest.Load()) - len(loc) + 1
+			if count < 0 {
+				count = 0
+			}
+			loc = loc + strings.Repeat(" ", count)
 			tsf = timeStampFormat
 		}
 		var app string
@@ -408,8 +412,9 @@ func logPrint(
 			formatString,
 			loc,
 			timeText,
+			strings.ToUpper(app)+" ",
 			LevelSpecs[level].Colorizer(
-				strings.ToUpper(app),
+				LvlStr[level],
 			),
 			printFunc(),
 		)

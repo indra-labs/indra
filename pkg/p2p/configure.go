@@ -1,6 +1,7 @@
 package p2p
 
 import (
+	"errors"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/indra-labs/indra/pkg/cfg"
 	"github.com/indra-labs/indra/pkg/storage"
@@ -41,7 +42,7 @@ func configureKey() {
 		return nil
 	})
 
-	if err == badger.ErrKeyNotFound {
+	if errors.Is(err, badger.ErrKeyNotFound) {
 
 		log.I.Ln("key not found, generating a new one")
 
