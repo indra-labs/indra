@@ -46,7 +46,7 @@ func Run() {
 	var e error
 
 	netParams = cfg.SelectNetworkParams(viper.GetString("network"))
-	dataPath := viper.GetString("")
+	dataPath := viper.GetString("data-dir")
 	var pkr []byte
 	if pkr, e = privKey.Raw(); check(e) {
 		return

@@ -37,8 +37,8 @@ func NewDHT(ctx context.Context, host host.Host,
 		wg.Add(1)
 		go func() {
 			if e := host.Connect(ctx, *peerinfo); fails(e) {
-				log.D.F("Error while connecting to node %q: %-v",
-					peerinfo, e)
+				log.D.F("Error while connecting to node %q",
+					peerinfo)
 				wg.Done()
 				return
 			}
