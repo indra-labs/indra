@@ -2,7 +2,7 @@
   <configuration default="false" name="go test local CI" type="GoTestRunConfiguration" factoryName="Go Test">
     <module name="indra" />
     <working_directory value="$PROJECT_DIR$/pkg" />
-    <go_parameters value="-v ./... -tags local  -gcflags &quot;all=-trimpath=$ContentRoot$&quot;" />
+    <go_parameters value="-v ./... -gcflags &quot;all=-trimpath=$ContentRoot$&quot;" />
     <root_directory value="$PROJECT_DIR$" />
     <kind value="DIRECTORY" />
     <package value="git-indra.lan/indra-labs/indra/pkg/engine" />
