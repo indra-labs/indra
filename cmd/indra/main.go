@@ -1,3 +1,6 @@
+// Indra is a low latency, source routed mixnet distributed virtual private network protocol.
+//
+// This application includes a client, client GUI, relay and seed node according to the subcommand invocation.
 package main
 
 import (

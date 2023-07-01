@@ -1,11 +1,12 @@
-// Package main is a tool for creating version information to be placed at the
-// repository root of a project.
+// Bumper is a tool for creating version information to be placed at the repository root of a project.
 //
-// It provides basic release information, references the parent Git commit hash,
-// automatically increments the minor version, tags the commit with the version
-// so that it is easy for importing projects to use a Semantic Versioning
-// version code instead of depending on automatic generated codes from Go's
-// module system.
+// It provides basic release information, references the parent Git commit hash, automatically increments the minor version, tags the commit with the version so that it is easy for importing projects to use a Semantic Versioning version code instead of depending on automatic generated codes from Go's module system.
+//
+// If 'minor' or 'major' are the first space-separated command line parameter, it bumps the respective number instead of the patch version.
+//
+// To indicate a line break, to make 72 column commit comments with additional lines, use '--' and it and the surrounding spaces are converted to a double line break/carriage return, inserting an empty line, effectively.
+//
+// todo: maybe even better, just have it automatically break the thing at the last whole word before 72?
 package main
 
 import (
@@ -43,16 +44,17 @@ func errPrintln(a ...interface{}) {
 }
 
 func main() {
+	log2.App.Store("bumper")
 	if len(os.Args) < 2 {
-		log.E.Ln("arguments required in order to bump and push this repo")
+		log.E.Ln("at least one argument is required in order to bump and push this repo")
 		os.Exit(1)
 	}
 	var minor, major bool
-	if os.Args[1] == "minor" {
+	switch {
+	case os.Args[1] == "minor":
 		minor = true
 		os.Args = append(os.Args[0:1], os.Args[2:]...)
-	}
-	if os.Args[1] == "major" {
+	case os.Args[1] == "major":
 		major = true
 		os.Args = append(os.Args[0:1], os.Args[2:]...)
 	}
@@ -182,20 +184,20 @@ func main() {
 	name := filepath.Base(dir)
 	versionFile := `//go:build !local
 
-// This can be overridden by a developer's version by setting the tag local
-// on a modified version. This is useful for the code locations in teh logs.
-
-package ` + name + `
-
-import "fmt"
-
-// Put invocations to run all the generators in here (
-// check cmd/bumper/ to add them, and they will automatically run with:
+// Package indra is the root of the repository for the Indra distributed VPN, containing mainly the version information for included executables to use for information and identification on the network.
+//
+// See [pkg/github.com/indra-labs/indra/cmd/indra] for the main server executable.
+//
+// Put invocations to run all the generators in here check [pkg/github.com/indra-labs/indra/cmd/bumper] to add them, and they will automatically run with:
 //
 // $ go generate .
 //
 // which will run all these generators below and finish with a go install.
-` + `//go:generate go install ./...
+//
+//` + `go:generate go install ./...
+package ` + name + `
+
+import "fmt"
 
 const (
 	// URL is the git URL for the repository.

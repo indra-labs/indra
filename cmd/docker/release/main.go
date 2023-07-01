@@ -1,3 +1,6 @@
+// Package release is a tool to create and publish docker images.
+//
+// Currently only has the LND build implemented.
 package main
 
 import (

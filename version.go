@@ -1,19 +1,19 @@
 //go:build !local
 
-// This can be overridden by a developer's version by setting the tag local
-// on a modified version. This is useful for the code locations in teh logs.
-
-package indra
-
-import "fmt"
-
-// Put invocations to run all the generators in here (
-// check cmd/bumper/ to add them, and they will automatically run with:
+// Package indra is the root of the repository for the Indra distributed VPN, containing mainly the version information for included executables to use for information and identification on the network.
+//
+// See [pkg/github.com/indra-labs/indra/cmd/indra] for the main server executable.
+//
+// Put invocations to run all the generators in here check [pkg/github.com/indra-labs/indra/cmd/bumper] to add them, and they will automatically run with:
 //
 // $ go generate .
 //
 // which will run all these generators below and finish with a go install.
+//
 //go:generate go install ./...
+package indra
+
+import "fmt"
 
 const (
 	// URL is the git URL for the repository.

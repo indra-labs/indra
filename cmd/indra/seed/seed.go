@@ -1,3 +1,4 @@
+// Package seed is a non-relay node that simply accepts and propagates peer advertisment gossip to clients and relays on the network.
 package seed
 
 import (

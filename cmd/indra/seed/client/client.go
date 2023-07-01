@@ -1,3 +1,4 @@
+// Package client is a client for the seed RPC service for remote unlock and management.
 package client
 
 import (
