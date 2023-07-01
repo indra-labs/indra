@@ -25,13 +25,13 @@ const (
 	// BuildTime stores the time when the current binary was built.
 	BuildTime = "2023-06-17T09:14:01+01:00"
 	// SemVer lists the (latest) git tag on the release.
-	SemVer = "v0.1.15"
+	SemVer = "v0.1.17"
 	// Major is the major number from the tag.
 	Major = 0
 	// Minor is the minor number from the tag.
 	Minor = 1
 	// Patch is the patch version number from the tag.
-	Patch = 15
+	Patch = 17
 )
 
 var CI = "false"
