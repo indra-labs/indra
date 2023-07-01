@@ -9,35 +9,13 @@ import (
 )
 
 var (
-	fileName string = "indra.db"
+	fileName = "indra.db"
 	db       *badger.DB
 	opts     badger.Options
+	running  sync.Mutex
 )
 
-var (
-	running sync.Mutex
-)
-
-func run() {
-
-	if noKeyProvided {
-		log.I.Ln("storage is locked")
-		isLockedChan <- true
-		return
-	}
-
-	log.I.Ln("attempting to unlock database")
-	isUnlocked, err := attempt_unlock()
-
-	if !isUnlocked {
-		log.I.Ln("unlock attempt failed")
-		startupErrors <- err
-	}
-
-	log.I.Ln("successfully unlocked database")
-	isUnlockedChan <- true
-}
-
+// Run is the main entry point for the storage service.
 func Run() {
 
 	if !running.TryLock() {
@@ -77,6 +55,26 @@ signals:
 
 	log.I.Ln("storage is ready")
 	isReadyChan <- true
+}
+
+func run() {
+
+	if noKeyProvided {
+		log.I.Ln("storage is locked")
+		isLockedChan <- true
+		return
+	}
+
+	log.I.Ln("attempting to unlock database")
+	isUnlocked, err := attempt_unlock()
+
+	if !isUnlocked {
+		log.I.Ln("unlock attempt failed")
+		startupErrors <- err
+	}
+
+	log.I.Ln("successfully unlocked database")
+	isUnlockedChan <- true
 }
 
 func Shutdown() (err error) {

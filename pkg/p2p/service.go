@@ -18,10 +18,7 @@ import (
 )
 
 var (
-	userAgent = "/indra:" + indra.SemVer + "/"
-)
-
-var (
+	userAgent       = "/indra:" + indra.SemVer + "/"
 	privKey         crypto.PrivKey
 	p2pHost         host.Host
 	seedAddresses   []multiaddr.Multiaddr
@@ -34,6 +31,7 @@ func init() {
 	listenAddresses = []multiaddr.Multiaddr{}
 }
 
+// Run is the main entrypoint for the seed p2p service.
 func Run() {
 
 	//storage.Update(func(txn *badger.Txn) error {
