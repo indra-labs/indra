@@ -46,7 +46,7 @@ type Builder struct {
 	pkg_configs    []BuildConfiguration
 }
 
-func (self *Builder) build(buildConfig BuildConfiguration) (err error) {
+func (b *Builder) build(buildConfig BuildConfiguration) (err error) {
 
 	// We need the absolute path for build tags to be valid
 	buildConfig.BuildOpts.Tags = buildConfig.FixTagPrefix()
@@ -76,7 +76,7 @@ func (self *Builder) build(buildConfig BuildConfiguration) (err error) {
 
 	var response types.ImageBuildResponse
 
-	if response, err = self.ImageBuild(self.ctx, tar, buildConfig.BuildOpts); check(err) {
+	if response, err = b.ImageBuild(b.ctx, tar, buildConfig.BuildOpts); check(err) {
 		return
 	}
 
@@ -94,7 +94,7 @@ func (self *Builder) build(buildConfig BuildConfiguration) (err error) {
 
 	log.I.Ln("pruning release container(s)...")
 
-	if _, err = self.ImagesPrune(self.ctx, filters.NewArgs()); check(err) {
+	if _, err = b.ImagesPrune(b.ctx, filters.NewArgs()); check(err) {
 		return
 	}
 
@@ -104,25 +104,25 @@ func (self *Builder) build(buildConfig BuildConfiguration) (err error) {
 	return
 }
 
-func (self *Builder) Build() (err error) {
+func (b *Builder) Build() (err error) {
 
-	for _, buildConfig := range self.source_configs {
+	for _, buildConfig := range b.source_configs {
 
-		if err = self.build(buildConfig); check(err) {
+		if err = b.build(buildConfig); check(err) {
 			return
 		}
 	}
 
-	for _, buildConfig := range self.configs {
+	for _, buildConfig := range b.configs {
 
-		if err = self.build(buildConfig); check(err) {
+		if err = b.build(buildConfig); check(err) {
 			return
 		}
 	}
 
-	for _, buildConfig := range self.pkg_configs {
+	for _, buildConfig := range b.pkg_configs {
 
-		if err = self.build(buildConfig); check(err) {
+		if err = b.build(buildConfig); check(err) {
 			return
 		}
 	}
@@ -130,7 +130,7 @@ func (self *Builder) Build() (err error) {
 	return nil
 }
 
-func (self *Builder) push(buildConfig BuildConfiguration) (err error) {
+func (b *Builder) push(buildConfig BuildConfiguration) (err error) {
 
 	if !isPushable {
 		return nil
@@ -175,7 +175,7 @@ func (self *Builder) push(buildConfig BuildConfiguration) (err error) {
 
 			log.I.Ln("pushing", tag)
 
-			if pushResponse, err = self.ImagePush(self.ctx, tag, buildConfig.PushOpts); check(err) {
+			if pushResponse, err = b.ImagePush(b.ctx, tag, buildConfig.PushOpts); check(err) {
 				return
 			}
 
@@ -194,11 +194,11 @@ func (self *Builder) push(buildConfig BuildConfiguration) (err error) {
 	return nil
 }
 
-func (self *Builder) Push() (err error) {
+func (b *Builder) Push() (err error) {
 
-	for _, buildConfig := range self.configs {
+	for _, buildConfig := range b.configs {
 
-		if err = self.push(buildConfig); check(err) {
+		if err = b.push(buildConfig); check(err) {
 			return
 		}
 	}
