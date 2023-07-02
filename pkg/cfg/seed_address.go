@@ -10,6 +10,7 @@ type SeedAddress struct {
 	DNSAddress string
 }
 
+// NewSeedAddress creates a new seed from a network address and seed public key in base58 encoding.
 func NewSeedAddress(dns string, id string) *SeedAddress {
 
 	return &SeedAddress{

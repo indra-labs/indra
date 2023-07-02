@@ -1,6 +1,7 @@
 // Package nonce provides a simple interface for generating standard AES
 // encryption nonces that give strong cryptographic entropy to message
-// encryption.
+// encryption, as well as 8 byte (64 bit) random private identifiers for
+// references between types.
 package nonce
 
 import (

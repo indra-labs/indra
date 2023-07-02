@@ -11,10 +11,11 @@ import (
 	"github.com/minio/sha256-simd"
 )
 
+// Len is the number of bytes in a sha256 hash.
 const Len = 32
 
 var (
-	// enc is a raw base32 encoder as 256 bit hashes have a consistent set of
+	// enc is a raw base32 encoder as 256-bit hashes have a consistent set of
 	// extraneous characters after 52 digits from padding and do not need check
 	// bytes as they are compact large numbers for logs and message digests for
 	// other things.

@@ -220,7 +220,7 @@ func (sb SigBytes) Recover(hash sha256.Hash) (p *Pub, e error) {
 type SigBytes [SigLen]byte
 
 // NewSigner creates a new KeySet which enables (relatively) fast generation of
-// new private keys by using scalar addition.
+// new private keys for use with ECDH encryption by using scalar addition.
 func NewSigner() (first *Prv, ks *KeySet, e error) {
 	ks = &KeySet{}
 	if ks.Base, e = GeneratePrvKey(); fails(e) {
@@ -247,8 +247,10 @@ func PubFromBased32(s string) (k *Pub, e error) {
 	return PubFromBytes(b)
 }
 
+// String returns a Based32 encoded string of the public key.
 func (k *Pub) String() (s string) { return k.ToBased32() }
 
+// ToBased32 returns the Based32 formatted form of the public key.
 func (k *Pub) ToBased32() (s string) {
 	b := k.ToBytes()
 	var e error
@@ -258,6 +260,7 @@ func (k *Pub) ToBased32() (s string) {
 	return string(ss)
 }
 
+// ToBased32Abbreviated returns a concatenated form with the middle replaced with an ellipsis.
 func (k *Pub) ToBased32Abbreviated() (s string) {
 	s = k.ToBased32()
 	s = s[:13] + "..." + s[len(s)-8:]

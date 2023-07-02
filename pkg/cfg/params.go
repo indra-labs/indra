@@ -14,9 +14,12 @@ var (
 )
 
 const (
+	// MainNet is the identifier string for the main production network.
 	MainNet = "mainnet"
+	// TestNet is the identifier string for the test network.
 	TestNet = "testnet"
-	SimNet  = "simnet"
+	// SimNet is the identifier string for simulation networks.
+	SimNet = "simnet"
 )
 
 // Params is the specification for an indranet swarm (mainnet, testnet, etc).
@@ -48,6 +51,7 @@ func SelectNetworkParams(network string) *Params {
 	return nil
 }
 
+// ParseSeedMultiAddresses returns the addresses of the seeds as a slice of multiaddr.Multiaddr.
 func (p *Params) ParseSeedMultiAddresses() (addresses []multiaddr.Multiaddr, err error) {
 
 	var adr multiaddr.Multiaddr
@@ -66,6 +70,7 @@ func (p *Params) ParseSeedMultiAddresses() (addresses []multiaddr.Multiaddr, err
 	return
 }
 
+// GetSeedsMultiAddrStrings returns the seeds multiaddrs as encoded strings.
 func (p *Params) GetSeedsMultiAddrStrings() (seeds []string) {
 	for _, addr := range p.DNSSeedAddresses {
 		seeds = append(seeds, "/dns4/"+addr.DNSAddress+"/tcp/"+

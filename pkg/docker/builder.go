@@ -30,14 +30,17 @@ var (
 	isPushable = false
 )
 
+// SetRelease enables releasing of docker images.
 func SetRelease() {
 	isRelease = true
 }
 
+// SetPush enables pushing of dockre images.
 func SetPush() {
 	isPushable = true
 }
 
+// Builder is a data structure defining a docker build.
 type Builder struct {
 	*client.Client
 	ctx            context.Context
@@ -104,6 +107,7 @@ func (b *Builder) build(buildConfig BuildConfiguration) (err error) {
 	return
 }
 
+// Build runs a Builder specification.
 func (b *Builder) Build() (err error) {
 
 	for _, buildConfig := range b.source_configs {
@@ -194,6 +198,7 @@ func (b *Builder) push(buildConfig BuildConfiguration) (err error) {
 	return nil
 }
 
+// Push a build to the configured docker registry/repository.
 func (b *Builder) Push() (err error) {
 
 	for _, buildConfig := range b.configs {
@@ -206,13 +211,9 @@ func (b *Builder) Push() (err error) {
 	return nil
 }
 
-func NewBuilder(ctx context.Context, cli *client.Client, sourceConfigs []BuildConfiguration, buildConfigs []BuildConfiguration, pkgConfigs []BuildConfiguration) (builder *Builder) {
+// NewBuilder bundles a builder together from its parts.
+func NewBuilder(ctx context.Context, cli *client.Client, sourceConfigs []BuildConfiguration,
+	buildConfigs []BuildConfiguration, pkgConfigs []BuildConfiguration) (builder *Builder) {
 
-	return &Builder{
-		cli,
-		ctx,
-		buildConfigs,
-		sourceConfigs,
-		pkgConfigs,
-	}
+	return &Builder{cli, ctx, buildConfigs, sourceConfigs, pkgConfigs}
 }

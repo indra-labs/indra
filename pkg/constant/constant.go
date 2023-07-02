@@ -1,3 +1,4 @@
+// Package constant is an isolated package for storing constants. Currently only the Based32 binary codec.
 package constant
 
 // Based32Ciphers is the list of symbols forming the digits for Indra's

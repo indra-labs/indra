@@ -11,13 +11,12 @@ type BuildConfiguration struct {
 	PushOpts        types.ImagePushOptions
 }
 
-func (self *BuildConfiguration) FixTagPrefix() []string {
+// FixTagPrefix returns the full set of tags in the BuildConfiguration.
+func (bc *BuildConfiguration) FixTagPrefix() (fullTags []string) {
 
-	var fullTags = []string{}
+	for _, tag := range bc.BuildOpts.Tags {
 
-	for _, tag := range self.BuildOpts.Tags {
-
-		fullTags = append(fullTags, self.Name+":"+tag)
+		fullTags = append(fullTags, bc.Name+":"+tag)
 	}
 
 	return fullTags

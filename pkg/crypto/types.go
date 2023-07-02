@@ -31,7 +31,7 @@ type (
 
 // ComputeSharedSecret computes an Elliptic Curve Diffie-Hellman shared secret
 // that can be decrypted by the holder of the private key matching the public
-// key provided.
+// key provided, and the public key is provided as part of the message.
 func ComputeSharedSecret(prv *Prv, pub *Pub) sha256.Hash {
 	return sha256.Single(
 		secp256k1.GenerateSharedSecret(
