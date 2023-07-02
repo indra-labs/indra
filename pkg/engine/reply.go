@@ -3,8 +3,8 @@ package engine
 import (
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
+	"github.com/indra-labs/indra/pkg/hidden"
 	"github.com/indra-labs/indra/pkg/onions/exit"
-	"github.com/indra-labs/indra/pkg/onions/hidden"
 	"github.com/indra-labs/indra/pkg/onions/ont"
 )
 

@@ -1,3 +1,6 @@
+// Package session provides an onion message type that delivers the two session private keys to be associated with a session, for which the hash of the secrets was used as the payment preimage for starting a session.
+//
+// Topping up sessions does not require following up with this message as the handler finds the session and adjusts the balance according to the payment.
 package session
 
 import (

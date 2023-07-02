@@ -1,3 +1,4 @@
+// Package exit is an onion message type that contains a payload intended to be forwarded to the exit service of a relay.
 package exit
 
 import (
@@ -8,9 +9,9 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/magic"
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
+	"github.com/indra-labs/indra/pkg/hidden"
 	"github.com/indra-labs/indra/pkg/onions/crypt"
 	"github.com/indra-labs/indra/pkg/onions/end"
-	"github.com/indra-labs/indra/pkg/onions/hidden"
 	"github.com/indra-labs/indra/pkg/onions/ont"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	"github.com/indra-labs/indra/pkg/onions/response"

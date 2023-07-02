@@ -1,3 +1,4 @@
+// Package sessions defines some key data structures relating to the data for sessions, imported by sess package for reading and writing session and circuit metadata.
 package sessions
 
 import (

@@ -1,3 +1,4 @@
+// Package metrics provides a simple logging update of the status of a seed node and its peer and connection counts.
 package metrics
 
 import (
@@ -45,8 +46,8 @@ func HostStatus(ctx context.Context, host host.Host) {
 
 				log.I.Ln(`
 ---- host status ----
--- peers:`, len(host.Network().Peers()),`
--- connections:`, len(host.Network().Conns()),`
+-- peers:`, len(host.Network().Peers()), `
+-- connections:`, len(host.Network().Conns()), `
 `)
 
 			case <-ctx.Done():

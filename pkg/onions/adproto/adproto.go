@@ -1,3 +1,4 @@
+// Package adproto is an abstract message type that composes the common elements of all ads - nonce ID, public key (identity), expiry and signature.
 package adproto
 
 import (

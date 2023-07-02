@@ -1,3 +1,4 @@
+// Package path provides a simple string slice representation for paths, equally usable for filesystems or HD keychain schemes.
 package path
 
 import (
@@ -5,6 +6,10 @@ import (
 
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/norm"
+)
+
+type (
+	Path []string
 )
 
 var (
@@ -37,10 +42,6 @@ func (p Path) Equal(p2 Path) bool {
 	}
 	return false
 }
-
-type (
-	Path []string
-)
 
 func From(s string) (p Path) { return strings.Split(s, " ") }
 

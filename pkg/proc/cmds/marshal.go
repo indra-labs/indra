@@ -3,14 +3,15 @@ package cmds
 import (
 	"encoding"
 	"fmt"
+	path2 "github.com/indra-labs/indra/pkg/util/path"
 	"io"
 	"os"
 	"sort"
 	"strings"
 	"time"
-	
+
 	"github.com/naoina/toml"
-	
+
 	"github.com/indra-labs/indra/pkg/proc/opts/duration"
 	"github.com/indra-labs/indra/pkg/proc/opts/float"
 	"github.com/indra-labs/indra/pkg/proc/opts/integer"
@@ -18,7 +19,6 @@ import (
 	"github.com/indra-labs/indra/pkg/proc/opts/meta"
 	"github.com/indra-labs/indra/pkg/proc/opts/text"
 	"github.com/indra-labs/indra/pkg/proc/opts/toggle"
-	path2 "github.com/indra-labs/indra/pkg/util/path/path"
 )
 
 type Entry struct {
@@ -64,7 +64,7 @@ func walk(p []string, v interface{}, in Entries) (o Entries) {
 					name:  i,
 					value: vv[i],
 				})
-				
+
 			}
 		}
 	}

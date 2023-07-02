@@ -1,3 +1,8 @@
+// Package reg is a registry for message types that implement the coding.Codec interface.
+//
+// It is essentially a factory for messages, each registered message type has a function that returns a codec.Codec interface type containing the concrete type specified by the magic bytes.
+//
+// It can either be used to manually generate a type as in the factory model, or is used as a recogniser, accepting a splice.Splice and returning the concrete type indicated by the magic prefix of the splice.
 package reg
 
 import (

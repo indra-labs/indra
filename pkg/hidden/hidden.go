@@ -1,3 +1,4 @@
+// Package hidden is a manager for hidden services.
 package hidden
 
 import (

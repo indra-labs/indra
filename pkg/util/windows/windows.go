@@ -1,3 +1,4 @@
+// Package windows provides some tools for handling launching subprocesses on windows using cmd.exe.
 package windows
 
 import (

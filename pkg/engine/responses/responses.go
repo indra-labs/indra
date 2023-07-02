@@ -1,3 +1,4 @@
+// Package responses handles waiting for and responding to received responses, including tracking the session billing and custom callback hooks when responses arrive.
 package responses
 
 import (

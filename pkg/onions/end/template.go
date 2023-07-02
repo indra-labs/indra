@@ -1,3 +1,4 @@
+// Package end is a null tombstone type onion message that indicates there is no more data in the onion (used with encoding only).
 package end
 
 import (

@@ -1,3 +1,4 @@
+// Package splice is a collection of tools for encoding and decoding variables into byte buffers with a fluent chained method interface.
 package splice
 
 import (

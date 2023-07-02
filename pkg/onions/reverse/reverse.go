@@ -1,3 +1,4 @@
+// Package reverse provides a message type for the forwarding directions in a 3 layer routing header.
 package reverse
 
 import (

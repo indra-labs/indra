@@ -1,3 +1,4 @@
+// Package ready provides an onion message type that is sent via client provided routing header back to the client after an introducer forwards a route message to initiate a hidden service connection.
 package ready
 
 import (
@@ -9,8 +10,8 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/magic"
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
+	"github.com/indra-labs/indra/pkg/hidden"
 	"github.com/indra-labs/indra/pkg/onions/consts"
-	"github.com/indra-labs/indra/pkg/onions/hidden"
 	"github.com/indra-labs/indra/pkg/onions/ont"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"

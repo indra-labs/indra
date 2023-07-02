@@ -1,3 +1,4 @@
+// Package seed provides an implementation of an indra seed server, its purpose to be a rendezvous point for non-routeable clients as well as gathering and distributing current peer information metadata.
 package seed
 
 import (

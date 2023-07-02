@@ -1,3 +1,4 @@
+// Package appdata provides access to the current operating system's proper default application data directory, where we can read and write, and ideally, not have other processes also read and write (as in android/iOS).
 package appdata
 
 import (

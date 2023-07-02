@@ -1,3 +1,4 @@
+// Package adaddress defines the message format that provides the network multi-address of a peer with a given public identity key.
 package adaddress
 
 import (

@@ -1,3 +1,4 @@
+// Package multi provides several functions for working with multiaddr.Multiaddr and netip.AddrPort types, including public key p2p identifiers.
 package multi
 
 import (

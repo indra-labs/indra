@@ -1,3 +1,4 @@
+// Package magic is a simple specification and error helper for message identifying 4 byte strings that are used for the switching logic of a relay.
 package magic
 
 import "fmt"
@@ -14,5 +15,5 @@ func TooShort(got, found int, magic string) (e error) {
 	}
 	e = fmt.Errorf(ErrTooShort, magic, got, found)
 	return
-	
+
 }

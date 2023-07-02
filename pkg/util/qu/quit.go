@@ -1,3 +1,4 @@
+// Package qu provides observable quit and trigger signal channels that forgive common errors like closing closed channels and signaling closed channels, normally causing a panic.
 package qu
 
 import (
@@ -23,6 +24,7 @@ var (
 // C is your basic empty struct signalling channel
 type C chan struct{}
 
+// Caller returns a formatted string /path/to/file.ext:line with a preceding comment.
 func Caller(comment string, skip int) string {
 	_, file, line, _ := runtime.Caller(skip + 1)
 	o := fmt.Sprintf("%s: %s:%d", comment, file, line)

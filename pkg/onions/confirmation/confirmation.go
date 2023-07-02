@@ -1,3 +1,4 @@
+// Package confirmation provides an onion message type that simply returns a confirmation for an associated nonce.ID of a previous message that we want to confirm was received.
 package confirmation
 
 import (

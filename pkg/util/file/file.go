@@ -1,3 +1,4 @@
+// Package file provides some helpers for working with files and folders, specifically making possibly multi-level deep new directories based on a pathspec and testing whether a file exists.
 package file
 
 import (

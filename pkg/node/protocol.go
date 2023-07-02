@@ -1,3 +1,4 @@
+// Package node provides the magic keys that identify each network swarm in the Indra network - mainnet, testnet and simnet.
 package node
 
 type IndraNet uint32

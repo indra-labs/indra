@@ -2,6 +2,7 @@ package cmds
 
 import (
 	"fmt"
+	"github.com/indra-labs/indra/pkg/util/path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -13,7 +14,6 @@ import (
 	"github.com/indra-labs/indra/pkg/proc/opts/text"
 	"github.com/indra-labs/indra/pkg/proc/opts/toggle"
 	"github.com/indra-labs/indra/pkg/util/norm"
-	"github.com/indra-labs/indra/pkg/util/path/path"
 )
 
 type Op func(c *Command, args []string) error

@@ -1,3 +1,4 @@
+// Package tests provides some helpers for tests.
 package tests
 
 import (

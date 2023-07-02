@@ -1,3 +1,4 @@
+// Package payments provides an abstraction above the implementation for handling Lightning Network payments and storing pending payments awaiting session keys.
 package payments
 
 import (

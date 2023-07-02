@@ -1,12 +1,12 @@
 package cmds
 
 import (
+	"github.com/indra-labs/indra/pkg/util/path"
 	"os"
 	"sort"
 	"strings"
 
 	"github.com/indra-labs/indra/pkg/proc/opts/config"
-	"github.com/indra-labs/indra/pkg/util/path/path"
 )
 
 type Env struct {

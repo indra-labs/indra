@@ -1,3 +1,4 @@
+// Package adintro defines a message type that provides information about an introduction point for a hidden service.
 package adintro
 
 import (

@@ -11,10 +11,10 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/node"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	"github.com/indra-labs/indra/pkg/engine/transport"
+	headers2 "github.com/indra-labs/indra/pkg/headers"
 	intro "github.com/indra-labs/indra/pkg/onions/adintro"
 	"github.com/indra-labs/indra/pkg/onions/exit"
 	"github.com/indra-labs/indra/pkg/onions/getbalance"
-	headers2 "github.com/indra-labs/indra/pkg/onions/headers"
 	"github.com/indra-labs/indra/pkg/onions/ont"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
@@ -24,7 +24,7 @@ import (
 )
 
 func TestOnions_HiddenService(t *testing.T) {
-	if indra.CI=="false" {
+	if indra.CI == "false" {
 		t.Log("ci not enabled")
 		log2.SetLogLevel(log2.Trace)
 	}

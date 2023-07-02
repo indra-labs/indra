@@ -1,3 +1,4 @@
+// Package headers is a set of helpers for defining the data to put in a reverse message to enable source routed messages to return anonymously to the client who sent them. These are used for exits and hidden service routing headers.
 package headers
 
 import (

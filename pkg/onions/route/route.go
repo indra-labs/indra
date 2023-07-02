@@ -1,3 +1,4 @@
+// Package route provides an onion mesage type that initiates a hidden service connection with a designated introducer who holds the forwarding routing header to send the route message to a hidden service, who replies to the client using their reply routing header with a ready message.
 package route
 
 import (
@@ -10,11 +11,11 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/magic"
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
+	"github.com/indra-labs/indra/pkg/hidden"
 	"github.com/indra-labs/indra/pkg/onions/crypt"
 	"github.com/indra-labs/indra/pkg/onions/end"
 	"github.com/indra-labs/indra/pkg/onions/exit"
 	"github.com/indra-labs/indra/pkg/onions/forward"
-	"github.com/indra-labs/indra/pkg/onions/hidden"
 	"github.com/indra-labs/indra/pkg/onions/ont"
 	"github.com/indra-labs/indra/pkg/onions/ready"
 	"github.com/indra-labs/indra/pkg/onions/reg"

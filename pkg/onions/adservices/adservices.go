@@ -1,3 +1,4 @@
+// Package adservices provides a message type for advertising what kinds of exit services a peer provides to clients, including the port number and the cost per megabyte of data.
 package adservices
 
 import (

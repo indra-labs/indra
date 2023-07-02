@@ -1,3 +1,4 @@
+// Package math provides a simple 32 bit unsigned integer minimum function.
 package math
 
 // MinUint32 is a helper function to return the minimum of two uint32s. This avoids a math import and the need to cast

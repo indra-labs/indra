@@ -11,7 +11,7 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	"github.com/indra-labs/indra/pkg/engine/tpt"
 	"github.com/indra-labs/indra/pkg/engine/transport"
-	"github.com/indra-labs/indra/pkg/onions/hidden"
+	"github.com/indra-labs/indra/pkg/hidden"
 	"github.com/indra-labs/indra/pkg/onions/ont"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	"github.com/indra-labs/indra/pkg/util/qu"

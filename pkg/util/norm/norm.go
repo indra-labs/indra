@@ -1,3 +1,4 @@
+// Package norm is a string comparison library that makes everything lowercase before comparison for case insensitive equality testing.
 package norm
 
 import (

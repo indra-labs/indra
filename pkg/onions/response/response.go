@@ -1,3 +1,4 @@
+// Package response provides a message type in response to an Exit message.
 package response
 
 import (

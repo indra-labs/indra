@@ -1,6 +1,7 @@
 package integer
 
 import (
+	"github.com/indra-labs/indra/pkg/util/path"
 	"strconv"
 	"strings"
 
@@ -9,7 +10,6 @@ import (
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/proc/opts/config"
 	"github.com/indra-labs/indra/pkg/proc/opts/meta"
-	"github.com/indra-labs/indra/pkg/util/path/path"
 )
 
 var (

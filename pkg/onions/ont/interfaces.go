@@ -1,3 +1,4 @@
+// Package ont defines interfaces for the engine: Ngin and Onion coding.Codec subtypes, and some helpers that use the abstraction.
 package ont
 
 import (
@@ -6,7 +7,7 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/responses"
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
-	"github.com/indra-labs/indra/pkg/onions/hidden"
+	"github.com/indra-labs/indra/pkg/hidden"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/splice"
 )

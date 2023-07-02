@@ -1,3 +1,4 @@
+// Package cryptorand augments the standard math/rand library with cryptographic entropy seeding.
 package cryptorand
 
 import (

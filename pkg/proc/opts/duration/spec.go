@@ -2,6 +2,7 @@ package duration
 
 import (
 	"fmt"
+	"github.com/indra-labs/indra/pkg/util/path"
 	"strings"
 	"time"
 
@@ -10,7 +11,6 @@ import (
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/proc/opts/config"
 	"github.com/indra-labs/indra/pkg/proc/opts/meta"
-	"github.com/indra-labs/indra/pkg/util/path/path"
 )
 
 var (

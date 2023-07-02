@@ -1,3 +1,6 @@
+// Package introquery is an onion message that verifies a relay is an introducer for a given hidden service, returning its adintro.Ad.
+//
+// After receiving this message if the intro is valid a client can use a route message to start a connection.
 package introquery
 
 import (
@@ -8,11 +11,11 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/magic"
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
+	"github.com/indra-labs/indra/pkg/hidden"
 	"github.com/indra-labs/indra/pkg/onions/adintro"
 	"github.com/indra-labs/indra/pkg/onions/crypt"
 	"github.com/indra-labs/indra/pkg/onions/end"
 	"github.com/indra-labs/indra/pkg/onions/exit"
-	"github.com/indra-labs/indra/pkg/onions/hidden"
 	"github.com/indra-labs/indra/pkg/onions/ont"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
@@ -103,8 +106,8 @@ func (x *IntroQuery) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error
 	case *crypt.Crypt:
 		sess := ng.Mgr().FindSessionByHeader(on1.ToPriv)
 		if sess != nil {
-			in :=  int(sess.Node.RelayRate) * s.Len() / 2
-			out :=   int(sess.Node.RelayRate) * rb.Len() / 2
+			in := int(sess.Node.RelayRate) * s.Len() / 2
+			out := int(sess.Node.RelayRate) * rb.Len() / 2
 			ng.Mgr().DecSession(sess.Header.Bytes, in+out, false, "introquery")
 		}
 	}

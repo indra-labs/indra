@@ -1,11 +1,16 @@
+// Package hiddenservice provides a message type for hidden services to send to designated introducer relays.
+//
+// These are a message type that does not go into a peer's ad bundle, they are simply gossiped when they are received, and will stop being gossiped after the expiry in the embedded intro message expiry is passed.
+//
+// Of course a hidden service can decide to unilaterally stop sending these before this expiry for any reason, and each new client triggers the generation of a new intro, which is forwarded to the introducer after it performs an introduction with this data, but usually it will continue to give a new intro each time a client connects through until the expiry time.
 package hiddenservice
 
 import (
+	"github.com/indra-labs/indra/pkg/hidden"
 	intro "github.com/indra-labs/indra/pkg/onions/adintro"
 	"github.com/indra-labs/indra/pkg/onions/consts"
 	"github.com/indra-labs/indra/pkg/onions/end"
 	"github.com/indra-labs/indra/pkg/onions/exit"
-	"github.com/indra-labs/indra/pkg/onions/hidden"
 	"github.com/indra-labs/indra/pkg/onions/ont"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"

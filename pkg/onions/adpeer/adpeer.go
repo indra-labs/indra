@@ -1,3 +1,4 @@
+// Package adpeer provides a message type that provides the base information, identity key and relay rate for an Indra relay.
 package adpeer
 
 import (

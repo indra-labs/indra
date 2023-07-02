@@ -1,3 +1,4 @@
+// Package consts is a series of constants common to several different onion message types.
 package consts
 
 import (
@@ -17,4 +18,3 @@ const CryptLen = magic.Len +
 	crypto.PubKeyLen
 
 const ReverseLen = magic.Len + 1 + splice.AddrLen
-

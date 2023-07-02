@@ -1,3 +1,4 @@
+// Package delay provides an onion message type that allows a client to specify an arbitrary delay time before processing the rest of an onion message.
 package delay
 
 import (

@@ -1,6 +1,7 @@
 package text
 
 import (
+	"github.com/indra-labs/indra/pkg/util/path"
 	"strings"
 
 	"go.uber.org/atomic"
@@ -9,7 +10,6 @@ import (
 	"github.com/indra-labs/indra/pkg/proc/opts/config"
 	"github.com/indra-labs/indra/pkg/proc/opts/meta"
 	"github.com/indra-labs/indra/pkg/proc/opts/normalize"
-	"github.com/indra-labs/indra/pkg/util/path/path"
 )
 
 var (

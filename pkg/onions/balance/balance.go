@@ -1,3 +1,4 @@
+// Package balance provides an onion layer message that comes in response to a getbalance query, informing the client of the balance of a session, identified by the getbalance nonce.ID.
 package balance
 
 import (

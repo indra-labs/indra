@@ -1,3 +1,8 @@
+// Package crypt is an onion message layer which specifies that subsequent content will be encrypted.
+//
+// The cloaked receiver key, and the ephemeral per-message/per-packet "from" keys are intended to be single use only (generated via scalar multiplication with pairs of secrets).
+//
+// todo: note reference of this algorithm.
 package crypt
 
 import (

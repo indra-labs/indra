@@ -1,3 +1,6 @@
+// Package message provides a message type for sending a message to a hidden service, or back to a hidden service client.
+//
+// These messages are the same for both sides after a route message forwards via the intro routing header an introducer receives for a hidden service, as there is no intermediary bridge like in rendezvous routing.
 package message
 
 import (
@@ -10,8 +13,8 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/magic"
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
+	"github.com/indra-labs/indra/pkg/hidden"
 	"github.com/indra-labs/indra/pkg/onions/consts"
-	"github.com/indra-labs/indra/pkg/onions/hidden"
 	"github.com/indra-labs/indra/pkg/onions/ont"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"

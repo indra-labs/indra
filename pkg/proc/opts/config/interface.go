@@ -1,10 +1,10 @@
 package config
 
 import (
+	"github.com/indra-labs/indra/pkg/util/path"
 	"time"
 
 	"github.com/indra-labs/indra/pkg/proc/opts/meta"
-	"github.com/indra-labs/indra/pkg/util/path/path"
 )
 
 // Concrete is a struct of functions that return the concrete values. Only the

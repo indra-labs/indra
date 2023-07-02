@@ -1,3 +1,4 @@
+// Package adload provides a message type that provides information about the current load level of a node identified by its public key.
 package adload
 
 import (

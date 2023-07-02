@@ -2,10 +2,10 @@ package cmds
 
 import (
 	"fmt"
+	"github.com/indra-labs/indra/pkg/util/path"
 	"testing"
 
 	"github.com/indra-labs/indra/pkg/proc/opts/config"
-	"github.com/indra-labs/indra/pkg/util/path/path"
 )
 
 func TestCommand_Foreach(t *testing.T) {
@@ -67,14 +67,14 @@ func TestCommand_GetEnvs(t *testing.T) {
 	}
 }
 
-var _print = func(a ...any)  {
-	 fmt.Println(a)
+var _print = func(a ...any) {
+	fmt.Println(a)
 }
 
 var _printt = func(a ...any) {
-	 fmt.Print(a)
+	fmt.Print(a)
 }
-var disabledPrinter = func(a ...any)  {
+var disabledPrinter = func(a ...any) {
 }
 
 //

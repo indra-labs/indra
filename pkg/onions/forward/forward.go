@@ -1,3 +1,6 @@
+// Package forward is an onion message layer that specifies a single redirection for the remainder of the onion.
+//
+// This is in contrast to the reverse message, which contains a 3 layer header, needed for when there will be a reply, or just for a compact and indistinguishable 1, 2 or 3 hop relaying that does not leak its position in the route.
 package forward
 
 import (
