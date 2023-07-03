@@ -22,11 +22,14 @@ var (
 	fails = log.E.Chk
 )
 
+// CreateNMockCircuits creates an arbitrary number of mock circuits from the given specification.
 func CreateNMockCircuits(nCirc int, nReturns int,
 	ctx context.Context) (cl []*Engine, e error) {
 	return createNMockCircuits(false, nCirc, nReturns, ctx)
 }
 
+// CreateNMockCircuitsWithSessions creates an arbitrary number of mock circuits
+// from the given specification, with an arbitrary number of mock sessions.
 func CreateNMockCircuitsWithSessions(nCirc int, nReturns int,
 	ctx context.Context) (cl []*Engine, e error) {
 	return createNMockCircuits(true, nCirc, nReturns, ctx)

@@ -8,6 +8,7 @@ import (
 	"github.com/indra-labs/indra/pkg/onions/ont"
 )
 
+// MakeReplyHeader constructs a reply header for hidden service messages.
 func MakeReplyHeader(ng *Engine) (returnHeader *hidden.ReplyHeader) {
 	n := crypto.GenNonces(3)
 	rvKeys := ng.KeySet.Next3()

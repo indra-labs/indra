@@ -20,6 +20,8 @@ import (
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 )
 
+// SetupGossip establishes a connection of a Host to the pubsub gossip network
+// used by Indra to propagate peer metadata.
 func SetupGossip(ctx context.Context, host host.Host,
 	cancel func()) (PubSub *pubsub.PubSub, topic *pubsub.Topic,
 	sub *pubsub.Subscription, e error) {
@@ -40,10 +42,13 @@ func SetupGossip(ctx context.Context, host host.Host,
 	return
 }
 
+// SendAd dispatches an encoded byte slice ostensibly of a peer advertisement to gossip to the rest of the network.
 func (ng *Engine) SendAd(a slice.Bytes) (e error) {
 	return ng.topic.Publish(ng.ctx, a)
 }
 
+// RunAdHandler listens to the gossip and dispatches messages to be handled and
+// update the peerstore.
 func (ng *Engine) RunAdHandler(handler func(p *pubsub.Message) (e error)) {
 
 	// Since the frequency of updates should be around 1 hour we run here only
@@ -72,8 +77,10 @@ func (ng *Engine) RunAdHandler(handler func(p *pubsub.Message) (e error)) {
 	}(ng)
 }
 
+// ErrWrongTypeDecode indicates a message has the wrong magic.
 const ErrWrongTypeDecode = "magic '%s' but type is '%s'"
 
+// HandleAd correctly recognises, validates, and stores the ads in the peerstore.
 func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 	if len(p.Data) < 1 {
 		log.E.Ln("received slice of no length")
@@ -188,6 +195,9 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 	return
 }
 
+// GetPeerRecord queries the peerstore for an ad from a given peer.ID and the ad
+// type key. The ad type keys are the same as the Magic of each ad type, to be
+// simple.
 func (ng *Engine) GetPeerRecord(id peer.ID, key string) (add ad.Ad, e error) {
 	var a interface{}
 	if a, e = ng.Listener.Host.Peerstore().Get(id, key); fails(e) {
@@ -217,6 +227,9 @@ func (ng *Engine) GetPeerRecord(id peer.ID, key string) (add ad.Ad, e error) {
 	return
 }
 
+// ClearPeerRecord places an empty slice into a peer record by way of deleting it.
+//
+// todo: these should be purged from the peerstore in a GC pass.
 func (ng *Engine) ClearPeerRecord(id peer.ID, key string) (e error) {
 	if _, e = ng.Listener.Host.Peerstore().Get(id, key); fails(e) {
 		return
