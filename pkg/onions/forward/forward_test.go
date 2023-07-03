@@ -27,7 +27,7 @@ func TestOnions_Forward(t *testing.T) {
 		}
 		var ok bool
 		if adr, ok = netip.AddrFromSlice(ip); !ok {
-			t.Error("unable to get netip.Addr")
+			t.Error("unable to get netip.Addrs")
 			t.FailNow()
 		}
 		port := uint16(rand.Uint32())
@@ -45,7 +45,7 @@ func TestOnions_Forward(t *testing.T) {
 		if e := onr.Decode(s); fails(e) {
 			t.Error("did not decode")
 			t.FailNow()
-			
+
 		}
 		var cf *Forward
 		if cf, ok = onr.(*Forward); !ok {

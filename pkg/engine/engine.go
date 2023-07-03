@@ -22,9 +22,11 @@ import (
 )
 
 const (
+	// PubSubTopic is the pubsub topic identifier for indra peer information advertisements.
 	PubSubTopic = "indra"
 )
 
+// This ensures the engine implements the interface.
 var _ ont.Ngin = &Engine{}
 
 type (
@@ -47,6 +49,7 @@ type (
 		Pause        qu.C
 		ShuttingDown atomic.Bool
 	}
+	// Params are the inputs required to create a new Engine.
 	Params struct {
 		Transport       tpt.Transport
 		Listener        *transport.Listener
@@ -127,10 +130,14 @@ func (ng *Engine) Cleanup() {
 	// Do cleanup stuff before shutdown.
 }
 
+// GetHidden returns the hidden services management handle.
 func (ng *Engine) GetHidden() *hidden.Hidden { return ng.h }
 
+// GetLoad returns the current load level reported by the Engine.
 func (ng *Engine) GetLoad() byte { return byte(ng.Load.Load()) }
 
+// HandleMessage is called to process a message received via the Transport, and
+// invokes the onion's Handle function to process it.
 func (ng *Engine) HandleMessage(s *splice.Splice, pr ont.Onion) {
 	log.D.F("%s handling received message",
 		ng.Mgr().GetLocalNodeAddressString())
@@ -156,6 +163,7 @@ func (ng *Engine) HandleMessage(s *splice.Splice, pr ont.Onion) {
 	}
 }
 
+// Handler is the main select switch for handling events for the Engine.
 func (ng *Engine) Handler() (terminate bool) {
 	log.T.C(func() string {
 		return ng.Mgr().GetLocalNodeAddressString() + " awaiting message"
@@ -216,8 +224,17 @@ func (ng *Engine) Handler() (terminate bool) {
 	return
 }
 
-func (ng *Engine) Keyset() *crypto.KeySet           { return ng.KeySet }
+// Keyset returns the engine's private key generator.
+func (ng *Engine) Keyset() *crypto.KeySet { return ng.KeySet }
+
+// WaitForShutdown returns when the engine has been triggered to stop.
 func (ng *Engine) WaitForShutdown() <-chan struct{} { return ng.ctx.Done() }
-func (ng *Engine) Mgr() *sess.Manager               { return ng.manager }
-func (ng *Engine) Pending() *responses.Pending      { return ng.Responses }
-func (ng *Engine) SetLoad(load byte)                { ng.Load.Store(uint32(load)) }
+
+// Mgr gives access to the session manager.
+func (ng *Engine) Mgr() *sess.Manager { return ng.manager }
+
+// Pending gives access to the pending responses' manager.
+func (ng *Engine) Pending() *responses.Pending { return ng.Responses }
+
+// SetLoad puts a value in the Engine Load level.
+func (ng *Engine) SetLoad(load byte) { ng.Load.Store(uint32(load)) }

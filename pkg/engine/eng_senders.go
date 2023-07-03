@@ -22,6 +22,7 @@ import (
 	"github.com/indra-labs/indra/pkg/util/splice"
 )
 
+// SendExit constructs and dispatches an exit message containing the desired message for the service at the exit.
 func (ng *Engine) SendExit(port uint16, msg slice.Bytes, id nonce.ID,
 	alice, bob *sessions.Data, hook responses.Callback) {
 
@@ -37,6 +38,7 @@ func (ng *Engine) SendExit(port uint16, msg slice.Bytes, id nonce.ID,
 	ng.Mgr().SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.Responses)
 }
 
+// SendGetBalance sends out a balance request to a specific relay we have a session with.
 func (ng *Engine) SendGetBalance(alice, bob *sessions.Data, hook responses.Callback) {
 	hops := sess.StandardCircuit()
 	s := make(sessions.Sessions, len(hops))
@@ -52,6 +54,8 @@ func (ng *Engine) SendGetBalance(alice, bob *sessions.Data, hook responses.Callb
 	ng.Mgr().SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.Responses)
 }
 
+// SendHiddenService dispatches a hiddenservice message, providing a relay the
+// ability to refer clients to the hidden service and initiate connections.
 func (ng *Engine) SendHiddenService(id nonce.ID, key *crypto.Prv,
 	relayRate uint32, port uint16, expiry time.Time,
 	alice, bob *sessions.Data, svc *services.Service,
@@ -75,6 +79,7 @@ func (ng *Engine) SendHiddenService(id nonce.ID, key *crypto.Prv,
 	return
 }
 
+// SendIntroQuery delivers a query for a specified hidden service public key.
 func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *crypto.Pub,
 	alice, bob *sessions.Data, hook func(in *adintro.Ad)) {
 
@@ -106,6 +111,8 @@ func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *crypto.Pub,
 	ng.Mgr().SendWithOneHook(c[0].Node.AddrPort, res, fn, ng.Responses)
 }
 
+// SendMessage delivers a message to a hidden service for which we have an
+// existing routing header from a previous or initial message cycle.
 func (ng *Engine) SendMessage(mp *message.Message, hook responses.Callback) (id nonce.ID) {
 	// Add another two hops for security against unmasking.
 	preHops := []byte{0, 1}
@@ -119,6 +126,9 @@ func (ng *Engine) SendMessage(mp *message.Message, hook responses.Callback) (id 
 	return res.ID
 }
 
+// SendPing sends out a ping message, which provides some low-precision
+// information about the online status and latency of a set of 5 peers we have
+// sessions with.
 func (ng *Engine) SendPing(c sessions.Circuit, hook responses.Callback) {
 	hops := sess.StandardCircuit()
 	s := make(sessions.Sessions, len(hops))
@@ -131,6 +141,8 @@ func (ng *Engine) SendPing(c sessions.Circuit, hook responses.Callback) {
 	ng.Mgr().SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.Responses)
 }
 
+// SendRoute delivers a message to establish a connection to a hidden service via
+// an introducing relay found either through gossip or introquery.
 func (ng *Engine) SendRoute(k *crypto.Pub, ap *netip.AddrPort,
 	hook responses.Callback) {
 

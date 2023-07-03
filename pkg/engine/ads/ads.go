@@ -24,8 +24,16 @@ var (
 	fails = log.E.Chk
 )
 
+// DefaultAdExpiry is the base expiry duration
+//
+// todo: 1 week? Should this be shorter?
 const DefaultAdExpiry = time.Hour * 24 * 7 // one week
 
+// NodeAds are all the ads associated with a peer.
+//
+// Some are longer lived than others, mostly Peer and Address ads will last a
+// long time but services might change more often and load will be updated
+// whenever it dramatically changes or every few minutes.
 type NodeAds struct {
 	Peer     *adpeer.Ad
 	Address  *adaddress.Ad
@@ -33,6 +41,7 @@ type NodeAds struct {
 	Load     *adload.Ad
 }
 
+// GetMultiaddr returns a node's listener address.
 func GetMultiaddr(n *node.Node) (ma multiaddr.Multiaddr, e error) {
 	if ma, e = multi.AddrFromAddrPort(*n.AddrPort); fails(e) {
 		return
@@ -69,7 +78,7 @@ func GenerateAds(n *node.Node, load byte) (na *NodeAds, e error) {
 				Key:    n.Identity.Pub,
 				Expiry: expiry,
 			},
-			Addr: ma,
+			Addrs: ma,
 		},
 		Services: &adservices.Ad{
 			Ad: adproto.Ad{
@@ -100,7 +109,7 @@ func NodeFromAds(a *NodeAds) (n *node.Node, e error) {
 		return n, errors.New(ErrNilNodeAds)
 	}
 	var ap netip.AddrPort
-	if ap, e = multi.AddrToAddrPort(a.Address.Addr); fails(e) {
+	if ap, e = multi.AddrToAddrPort(a.Address.Addrs); fails(e) {
 		return
 	}
 	var svcs services.Services
@@ -121,8 +130,8 @@ func NodeFromAds(a *NodeAds) (n *node.Node, e error) {
 		RelayRate: a.Peer.RelayRate,
 		Services:  svcs,
 		Load:      a.Load.Load,
-		PayChan:  make(payments.PayChan, node.PaymentChanBuffers), // todo: other end stuff
-		Transport: nil, // this is populated when we dial it.
+		PayChan:   make(payments.PayChan, node.PaymentChanBuffers), // todo: other end stuff
+		Transport: nil,                                             // this is populated when we dial it.
 	}
 	return
 }

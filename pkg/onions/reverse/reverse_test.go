@@ -27,7 +27,7 @@ func TestOnions_Reverse(t *testing.T) {
 		}
 		var ok bool
 		if adr, ok = netip.AddrFromSlice(ip); !ok {
-			t.Error("unable to get netip.Addr")
+			t.Error("unable to get netip.Addrs")
 			t.FailNow()
 		}
 		port := uint16(rand.Uint32())

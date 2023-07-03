@@ -54,7 +54,7 @@ func TestNew(t *testing.T) {
 		t.Errorf("ID did not decode correctly")
 		t.FailNow()
 	}
-	if ad.Addr.String() != aa.Addr.String() {
+	if ad.Addrs.String() != aa.Addrs.String() {
 		t.Errorf("address did not decode correctly")
 		t.FailNow()
 	}
