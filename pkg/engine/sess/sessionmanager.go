@@ -24,6 +24,7 @@ var (
 	fails = log.E.Chk
 )
 
+// Add a session to a CircuitCache.
 func (sc CircuitCache) Add(s *sessions.Data) CircuitCache {
 	var sce *sessions.Circuit
 	var exists bool
@@ -38,16 +39,33 @@ func (sc CircuitCache) Add(s *sessions.Data) CircuitCache {
 }
 
 type (
-	// A CircuitCache stores each of the 5 hops of a peer node.
+	// A CircuitCache stores each of the 5 hops of a peer node. Ideally a client puts
+	// equal balance on these and selects them randomly in each of their hops.
+	//
+	// todo: hop 2, the exit, kinda has a different semantic, in that it pays for
+	//  exit fees primarily.
 	CircuitCache map[nonce.ID]*sessions.Circuit
 )
 type (
 	// Manager is a session manager for Indra, handling sessions and services.
 	Manager struct {
-		nodes           []*node.Node
+
+		// the nodes known by the Manager. The first (0) is the node itself, client,
+		// relay, seed, whatever.
+		nodes []*node.Node
+
+		// PendingPayments are tracked by the Manager as these should correlate to
+		// incoming Session onions giving the keys.
 		PendingPayments payments.PendingPayments
+
+		// Sessions that the Manager is managing.
 		sessions.Sessions
+
+		// CircuitCache is an index that groups Sessions together by the peer they relate
+		// to.
 		CircuitCache
+
+		// This is concurrently accessed, so it needs locking.
 		sync.Mutex
 	}
 )

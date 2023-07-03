@@ -20,18 +20,41 @@ var (
 type (
 	// Sessions are arbitrary length lists of Data.
 	Sessions []*Data
+
 	// A Circuit is the generic fixed-length path used for most messages.
 	Circuit [5]*Data
+
 	// A Data keeps track of a connection session. It specifically maintains
 	// the account of available bandwidth allocation before it needs to be recharged
 	// with new credit, and the current state of the encryption.
 	Data struct {
-		ID              nonce.ID
-		Node            *node.Node
-		Remaining       lnwire.MilliSatoshi
+
+		// ID is the internal reference used by other data structures referring to this
+		// one.
+		ID nonce.ID
+
+		// Node is the node.Node that is providing the relaying service.
+		Node *node.Node
+
+		// Remaining is the current balance on the session.
+		Remaining lnwire.MilliSatoshi
+
+		// Header and Payload are the two key sets used for data relayed for this
+		// session. Header keys are embedded in the 3 layer RoutingHeader, and Payload
+		// keys are only used to derive the secrets used with the given public sender key
+		// that enables the Exit and Hidden Service to encrypt replies that then get
+		// unwrapped successively on the return path.
 		Header, Payload *crypto.Keys
-		Preimage        sha256.Hash
-		Hop             byte
+
+		// Preimage is essentially the hash of the bytes of the Header and Payload keys.
+		// This enables the relay to associate a payment with a session key pair and thus
+		// to be able to account the client's usage.
+		Preimage sha256.Hash
+
+		// Hop is the position at which this session is used, private and secret to the
+		// client. Sessions are prescribed to be used at a given position only, in order
+		// to prevent any cross correlations being visible.
+		Hop byte
 	}
 )
 
@@ -99,6 +122,8 @@ func NewSessionData(
 	return
 }
 
+// String is a stringer for Circuits that attempts to make them readable as like
+// a table.
 func (c Circuit) String() (o string) {
 	o += "[ "
 	for i := range c {

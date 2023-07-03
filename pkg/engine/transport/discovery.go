@@ -12,6 +12,7 @@ import (
 	"time"
 )
 
+// NewDHT sets up a DHT for use in searching and propagating peer information.
 func NewDHT(ctx context.Context, host host.Host,
 	bootstrapPeers []multiaddr.Multiaddr) (d *dht.IpfsDHT, e error) {
 
@@ -53,6 +54,8 @@ func NewDHT(ctx context.Context, host host.Host,
 	return
 }
 
+// Discover uses the DHT to share and distribute peer lists between nodes on
+// Indranet.
 func Discover(ctx context.Context, h host.Host, dht *dht.IpfsDHT,
 	rendezvous []multiaddr.Multiaddr) {
 

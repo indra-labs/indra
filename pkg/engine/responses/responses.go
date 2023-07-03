@@ -18,18 +18,49 @@ var (
 )
 
 type (
+	// Response is a record stored in anticipation of a response coming back from the
+	// peer processing an Exit or message for a service available at a relay.
 	Response struct {
-		ID       nonce.ID
+
+		// ID is an internal reference code for associating data together.
+		ID nonce.ID
+
+		// SentSize is the number of bytes total in the outgoing message (before
+		// padding).
 		SentSize int
-		Port     uint16
+
+		// Port is the destination port of the service the Exit or other reply-enabling
+		// onion is intended for.
+		Port uint16
+
+		// Billable is a list of the public keys of the sessions that are used in the
+		// circuit.
 		Billable []crypto.PubBytes
-		Return   crypto.PubBytes
+
+		// Return is the last hop return session used for this message.
+		Return crypto.PubBytes
+
+		// PostAcct is a slice of functions that action the balance adjustment of the
+		// message for each of the hops in the circuit. This enables the engine to
+		// contact the relays in a circuit in outbound order to both correctly update the
+		// session balance and diagnose which peer the message did not get to (due to
+		// being offline or congested).
 		PostAcct []func()
+
+		// Sessions that were used in the circuit.
 		sessions.Sessions
+
+		// Callback is a hook added to the dispatch for the message that will be executed with the reassembled response packet.
 		Callback Callback
-		Time     time.Time
-		Success  qu.C
+
+		// Time records the time this message was dispatched.
+		Time time.Time
+
+		// Success channel is closed when the transmission is successful. todo: nothing is actually using this?
+		Success qu.C
 	}
+
+	// ResponseParams is the inputs required to construct a Response.
 	ResponseParams struct {
 		ID       nonce.ID
 		SentSize int
@@ -40,13 +71,24 @@ type (
 		Callback Callback
 		PostAcct []func()
 	}
+
+	// Callback is a function signature of the callback hook to be added to the
+	// dispatch parameters that is intended to be called when the response arrives.
+	// This is distinct from the billing callbacks, this is application-specific.
 	Callback func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error)
-	Pending  struct {
+
+	// Pending is a mutex protected data structure for storing pending Response data.
+	Pending struct {
+
+		// This data must not be read and written concurrently.
 		sync.Mutex
+
+		// The collection of responses still waiting.
 		responses []*Response
 	}
 )
 
+// Add a new response using the ResponseParams.
 func (p *Pending) Add(pr ResponseParams) {
 	p.Lock()
 	defer p.Unlock()
@@ -65,6 +107,7 @@ func (p *Pending) Add(pr ResponseParams) {
 	p.responses = append(p.responses, r)
 }
 
+// Find the response with the matching nonce.ID.
 func (p *Pending) Find(id nonce.ID) (pr *Response) {
 	//p.Lock()
 	//defer p.Unlock()
@@ -76,6 +119,7 @@ func (p *Pending) Find(id nonce.ID) (pr *Response) {
 	return
 }
 
+// FindOlder returns all Response data that is is older than a specified time.
 func (p *Pending) FindOlder(t time.Time) (r []*Response) {
 	p.Lock()
 	defer p.Unlock()
@@ -87,6 +131,12 @@ func (p *Pending) FindOlder(t time.Time) (r []*Response) {
 	return
 }
 
+// GetOldestPending returns the oldest pending response. In fact, this is just
+// the last one with the lowest index, because they are not sorted and are
+// always added in chronological order.
+//
+// New items are always added to the end, and so the first index is the oldest in
+// the slice.
 func (p *Pending) GetOldestPending() (pr *Response) {
 	p.Lock()
 	defer p.Unlock()
