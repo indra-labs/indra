@@ -14,11 +14,20 @@ var (
 	fails = log.E.Chk
 )
 
+// Headers is a collection of keys and sessions required to construct reply
+// headers for the return path, including the forward and return paths.
 type Headers struct {
+
+	// Forward and Return - the sessions in the forward hops and return hops.
 	Forward, Return *exit.Routing
-	ReturnPubs      crypto.Pubs
+
+	// ReturnPubs
+	ReturnPubs crypto.Pubs
 }
 
+// GetHeaders returns a Headers constructed using a (partially preloaded)
+// circuit, the client's node, and the node of the exit, and all the session keys
+// required for each layer of encryption.
 func GetHeaders(alice, bob *sessions.Data, c sessions.Circuit,
 	ks *crypto.KeySet) (h *Headers) {
 
@@ -53,6 +62,8 @@ func GetHeaders(alice, bob *sessions.Data, c sessions.Circuit,
 	return
 }
 
+// ExitPoint is similar to GetHeaders except it does not include the forward
+// path.
 func (h *Headers) ExitPoint() *exit.ExitPoint {
 	return &exit.ExitPoint{
 		Routing:    h.Return,

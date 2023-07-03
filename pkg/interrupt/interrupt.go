@@ -17,26 +17,42 @@ import (
 )
 
 var (
-	Restart   bool
+	// Restart should be set to true prior to signalling the ShutdownRequestChan.
+	Restart bool
+
+	// requested indicates a shutdown/restart request has been registered.
 	requested atomic.Bool
+
 	// ch is used to receive SIGINT (Ctrl+C) signals.
 	ch chan os.Signal
-	// signals is the list of signals that cause the interrupt
+
+	// signals is the list of signals that cause the interrupt. This is revised if we
+	// are using a *nix type OS.
 	signals = []os.Signal{syscall.SIGINT}
+
 	// ShutdownRequestChan is a channel that can receive shutdown requests
 	ShutdownRequestChan = make(chan struct{})
+
 	// addHandlerChan is used to add an interrupt handler to the list of
 	// handlers to be invoked on SIGINT (Ctrl+C) signals.
 	addHandlerChan = make(chan HandlerWithSource)
+
 	// HandlersDone is closed after all interrupt handlers run the first
 	// time an interrupt is signaled.
-	HandlersDone             = make(chan struct{})
+	HandlersDone = make(chan struct{})
+
+	// interruptCallbackSources is the source locations for all the registered
+	// callbacks that will trigger on the shutdown signal.
 	interruptCallbackSources []string
-	interruptCallbacks       []func()
-	log                      = log2.GetLogger()
-	check                    = log.E.Chk
+
+	// interruptCallbacks are the actual functions we will execute prior to terminating or restarting.
+	interruptCallbacks []func()
+
+	log   = log2.GetLogger()
+	fails = log.E.Chk
 )
 
+// HandlerWithSource is a callback and its origin source code location bundled.
 type HandlerWithSource struct {
 	Source string
 	Fn     func()
