@@ -1,3 +1,6 @@
+// Package node is a specification for the in-memory metadata related to an indra network peer.
+//
+// This structure aggregates the address, identity keys, relay rate, services and payments channel for the peer.
 package node
 
 import (
@@ -25,14 +28,36 @@ var (
 
 // Node is a representation of a messaging counterparty.
 type Node struct {
+
+	// ID is a unique identifier used internally for references.
 	ID nonce.ID
+
+	// Mutex to stop concurrent read/write.
 	sync.Mutex
-	AddrPort  *netip.AddrPort
-	Identity  *crypto.Keys
-	RelayRate uint32            // Base relay price mSAT/Mb.
-	Services  services.Services // Services offered by this peer.
-	Load      byte
+
+	// AddrPort is the network address a node is listening to.
+	//
+	// TODO: this should be plural.
+	AddrPort *netip.AddrPort
+
+	// Identity is the crypto.Keys identifying the node on the Indra network.
+	Identity *crypto.Keys
+
+	// RelayRate is the base relay price mSAT/Mb.
+	RelayRate uint32
+
+	// Services offered by this peer.
+	Services services.Services
+
+	// Load is the current level of utilisation of the node's resources.
+	Load byte
+
+	// PayChan is the channel that payments to this node are sent/received on (internal/external node).
 	payments.PayChan
+
+	// Transport is the way to contact the node. Sending messages on this channel go
+	// to the dispatcher to be segmented and delivered, or conversely assembled and
+	// received.
 	Transport tpt.Transport
 }
 

@@ -4,7 +4,12 @@ package magic
 import "fmt"
 
 const (
-	Len         = 4
+	// Len is the length in bytes of the magic bytes that prefixes all Indra
+	// messages.
+	Len = 4
+
+	// ErrTooShort is an error for codec.Codec implementations to signal a message
+	// buffer is shorter than the minimum defined for the message type.
 	ErrTooShort = "'%s' message  minimum size: %d got: %d"
 )
 

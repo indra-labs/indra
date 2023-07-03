@@ -75,7 +75,7 @@ func TestRemovePacket(t *testing.T) {
 }
 
 func TestSplitJoin(t *testing.T) {
-	if indra.CI=="false" {
+	if indra.CI == "false" {
 		log2.SetLogLevel(log2.Debug)
 	}
 	msgSize := 1 << 19
@@ -137,7 +137,7 @@ func TestSplitJoin(t *testing.T) {
 }
 
 func TestSplitJoinFEC(t *testing.T) {
-	if indra.CI=="false" {
+	if indra.CI == "false" {
 		log2.SetLogLevel(log2.Debug)
 	}
 	msgSize := 1 << 18
@@ -189,7 +189,7 @@ func TestSplitJoinFEC(t *testing.T) {
 			}
 			log.D.Ln(ds, len(splitted))
 			overhead := ep.GetOverhead()
-			segMap := NewPacketSegments(ep.Length, segSize, overhead,
+			segMap := NewSegments(ep.Length, segSize, overhead,
 				ep.Parity)
 			log.D.Ln(len(payload), len(splitted))
 			for segs := range segMap {

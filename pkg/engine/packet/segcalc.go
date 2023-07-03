@@ -5,7 +5,9 @@ import (
 	"github.com/templexxx/reedsolomon"
 )
 
-func (s PacketSegments) AddParity(segs [][]byte) (shards [][]byte, e error) {
+// AddParity adds the expected additional parity segments as specified in the
+// packets.
+func (s Segments) AddParity(segs [][]byte) (shards [][]byte, e error) {
 	var segLen int
 	for i := range s {
 		segLen += s[i].DEnd - s[i].DStart
@@ -37,13 +39,19 @@ func (s PacketSegments) AddParity(segs [][]byte) (shards [][]byte, e error) {
 }
 
 type (
-	PacketSegment struct {
+	// Segment is the specification of a segment of a larger message as regards
+	// to its position, composition of original or redundant segments, and the size
+	// of the last, possibly padded segment of the message.
+	Segment struct {
 		DStart, DEnd, PEnd, SLen, Last int
 	}
-	PacketSegments []PacketSegment
+
+	// Segments is a slice of Segment specifying how a message should be
+	// packetised for dispatch.
+	Segments []Segment
 )
 
-func NewPacketSegments(payloadLen, segmentSize, overhead, parity int) (s PacketSegments) {
+func NewSegments(payloadLen, segmentSize, overhead, parity int) (s Segments) {
 	segSize := segmentSize - overhead
 	nSegs := payloadLen/segSize + 1
 	lastSeg := payloadLen % segSize
@@ -65,7 +73,7 @@ func NewPacketSegments(payloadLen, segmentSize, overhead, parity int) (s PacketS
 		}
 		for i := 0; i < sects; i++ {
 			s = append(s,
-				PacketSegment{DStart: start,
+				Segment{DStart: start,
 					DEnd: start + sectsD,
 					PEnd: start + 256,
 					SLen: segSize,
@@ -80,7 +88,7 @@ func NewPacketSegments(payloadLen, segmentSize, overhead, parity int) (s PacketS
 		if withR == endD && parity > 0 {
 			withR++
 		}
-		s = append(s, PacketSegment{
+		s = append(s, Segment{
 			DStart: start,
 			DEnd:   endD,
 			PEnd:   withR,
@@ -92,8 +100,8 @@ func NewPacketSegments(payloadLen, segmentSize, overhead, parity int) (s PacketS
 }
 
 // String is a printer that produces a Go syntax formatted version of the
-// PacketSegment.
-func (s PacketSegment) String() (o string) {
+// Segment. For debugging.
+func (s Segment) String() (o string) {
 	o = fmt.Sprintf(
 		"\t\tSegment{ DStart: %d, DEnd: %d, PEnd: %d, SLen: %d, Last: %d},",
 		s.DStart, s.DEnd, s.PEnd, s.SLen, s.Last)
@@ -101,8 +109,8 @@ func (s PacketSegment) String() (o string) {
 }
 
 // String is a printer that produces a Go syntax formatted version of the
-// PacketSegments.
-func (s PacketSegments) String() (o string) {
+// Segments. For debugging.
+func (s Segments) String() (o string) {
 	o += "\n\tSegments{"
 	for i := range s {
 		o += fmt.Sprintf("\n%s", s[i].String())

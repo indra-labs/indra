@@ -16,7 +16,7 @@ const (
 	// Overhead is the base overhead on a packet, use GetOverhead to add any extra
 	// as found in a Packet.
 	Overhead    = 4 + crypto.PubKeyLen + crypto.CloakLen + nonce.IVLen
-	PacketMagic = "rpkt"
+	PacketMagic = "rpkt" // todo: this is really not necessary I think.
 )
 
 var (
@@ -30,7 +30,12 @@ func (ep PacketParams) GetOverhead() int {
 	return Overhead + nonce.IDLen + 7
 }
 
-func (p Packets) Len() int           { return len(p) }
+// Len returns the number of packets in a Packets (they are a uniform size so
+// this is 1:1 with the amount of data encoded.
+func (p Packets) Len() int { return len(p) }
+
+// Less implements the sorter interface method for determining the original
+// sequence of messages, as encoded in their sequence number.
 func (p Packets) Less(i, j int) bool { return p[i].Seq < p[j].Seq }
 
 // GetOverhead returns the packet frame overhead given the settings found in the
@@ -40,34 +45,64 @@ func (p *Packet) GetOverhead() int {
 }
 
 type (
-	// PacketParams defines the parameters for creating a ( split) packet given a
-	// set of keys, cipher, and data. To, From, Data are required, Parity is
-	// optional, set it to define a level of Reed Solomon redundancy on the split
-	// packets.
+	// PacketParams defines the parameters for creating a ( split) packet given a set
+	// of keys, cipher, and data. To, From, Data are required, Parity is optional,
+	// set it to define a level of Reed Solomon redundancy on the split packets.
 	PacketParams struct {
-		ID     nonce.ID
-		To     *crypto.Pub
-		From   *crypto.Prv
+
+		// ID is a unique identifier for the packet, internal reference.
+		ID nonce.ID
+
+		// To is the public key of the intended recipient of the message.
+		To *crypto.Pub
+
+		// From is a private key used by the sender to derive an ECDH shared secret
+		// combined with the receiver public key. Conversely, the receiver can generate
+		// the same secret using the public key given in the header plus the private key
+		// referred to by the cloaked To key.
+		//
+		// Note that everything below this is encrypted. Each packet has its own unique 16 byte nonce.
+		From *crypto.Prv
+
+		// Parity is the ratio out of 1-255 of data that is added to prevent transmission
+		// failure as measured and computed by the dispatcher.
 		Parity int
-		Seq    int
+
+		// Seq is the position of the packet in the original ordering of the message for
+		// reconstruction.
+		Seq int
+
+		// Length is the number of packets in this transmission.
 		Length int
-		Data   []byte
+
+		// Data is the payload of this message segment.
+		Data []byte
 	}
+
 	// Packet is the standard format for an encrypted, possibly segmented message
 	// container with parameters for Reed Solomon Forward Error Correction.
 	Packet struct {
+
+		// ID is an internal identifier for this transmission.
 		ID nonce.ID
+
 		// Seq specifies the segment number of the message, 4 bytes long.
 		Seq uint16
+
 		// Length is the number of segments in the batch
 		Length uint32
+
 		// Parity is the ratio of redundancy. The remainder from 256 is the
 		// proportion from 256 of data shards in a packet batch.
 		Parity byte
+
 		// Data is the message.
-		Data      []byte
+		Data []byte
+
+		// TimeStamp is the time at which this message was submitted for dispatch.
 		TimeStamp time.Time
 	}
+
 	// Packets is a slice of pointers to packets.
 	Packets []*Packet
 )
@@ -186,4 +221,7 @@ func GetKeysFromPacket(d []byte) (from *crypto.Pub, to crypto.CloakedPubKey, iv 
 	return
 }
 
+// Swap is part of the sorter interface implementation that flips the position of
+// two slice elements that fail the Less test and are in ascending relation when
+// they should be descending.
 func (p Packets) Swap(i, j int) { p[i], p[j] = p[j], p[i] }

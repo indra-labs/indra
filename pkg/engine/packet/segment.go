@@ -10,6 +10,7 @@ import (
 	"sort"
 )
 
+// Errors that can be thrown by methods in this package:
 const (
 	ErrEmptyBytes      = "cannot encode empty bytes"
 	ErrDupe            = "found duplicate packet, no redundancy, decoding failed"
@@ -42,7 +43,7 @@ func JoinPackets(packets Packets) (pkts Packets, msg []byte, e error) {
 	overhead := p.GetOverhead()
 	// log.D.Ln(
 	// 	int(p.Length), len(p.Data)+overhead, overhead, int(p.Parity))
-	segMap := NewPacketSegments(
+	segMap := NewSegments(
 		int(p.Length), len(p.Data)+overhead, overhead, int(p.Parity))
 	segCount := segMap[len(segMap)-1].PEnd
 	// log.D.S("segMap", segMap)
@@ -196,7 +197,7 @@ func SplitToPackets(pp *PacketParams, segSize int,
 	overhead := pp.GetOverhead()
 	ss := segSize - overhead
 	segments := slice.Segment(pp.Data, ss)
-	segMap := NewPacketSegments(pp.Length, segSize, pp.GetOverhead(), pp.Parity)
+	segMap := NewSegments(pp.Length, segSize, pp.GetOverhead(), pp.Parity)
 	dataShards = segMap[len(segMap)-1].DEnd
 	var p [][]byte
 	p, e = segMap.AddParity(segments)
