@@ -128,9 +128,7 @@ func (x *Ad) Validate() bool {
 
 // New generates a new address ad and signs it with the provided private key.
 //
-// TODO: create a schnorr based signature that recovers the pubkey so the address
-//
-//	in the adproto is shorter.
+// TODO: create a schnorr based signature that recovers the pubkey so the address in the adproto can be shorter.
 func New(id nonce.ID, key *crypto.Prv,
 	ma multiaddr.Multiaddr, expiry time.Time) (peerAd *Ad) {
 

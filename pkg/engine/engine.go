@@ -76,7 +76,7 @@ func New(p Params) (ng *Engine, e error) {
 		KeySet:    ks,
 		Listener:  p.Listener,
 		manager:   sess.NewSessionManager(),
-		h:         hidden.NewHiddenrouting(),
+		h:         hidden.NewHiddenRouting(),
 		Pause:     qu.T(),
 	}
 	if p.Listener != nil && p.Listener.Host != nil {
