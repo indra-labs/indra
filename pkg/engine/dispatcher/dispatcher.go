@@ -26,9 +26,13 @@ import (
 const (
 	// DefaultStartingParity is set to 64, or 25%
 	DefaultStartingParity = 64
+
 	// DefaultDispatcherRekey is 16mb to trigger rekey.
 	DefaultDispatcherRekey = 1 << 20
-	TimeoutPingCount       = 10
+
+	// TimeoutPingCount defines the number of pings that fail to be sure the peer is
+	// offline.
+	TimeoutPingCount = 10
 )
 
 var (
@@ -37,6 +41,7 @@ var (
 	fails = log.E.Chk
 )
 
+// Completion is a record of a completed transmission, identified by its nonce.ID.
 type Completion struct {
 	ID   nonce.ID
 	Time time.Time
@@ -45,6 +50,9 @@ type Completion struct {
 // Dispatcher is a message splitter/joiner and error correction adjustment system
 // that aims to minimise message latency by trading it for bandwidth especially
 // to cope with radio connections.
+//
+// Each connection has a dispatcher for handling messages, all relevant values in
+// the structure relate to the connection to a single peer.
 //
 // In its initial implementation by necessity reliable network transports are
 // used, which means that the message transit time is increased for packet
@@ -61,25 +69,36 @@ type Completion struct {
 // used in combination with the PingDivergence to recompute the Parity parameter
 // used for adjusting error correction redundancy as each message is decoded.
 type Dispatcher struct {
+
 	// Parity is the parity parameter to use in packet segments, this value
 	// should be adjusted up and down in proportion with collected data on how
 	// many packets led to receipt against the ratio of DataSent / TotalSent *
 	// PingDivergence.
 	Parity atomic.Uint32
+
 	// DataSent is the amount of actual data sent in messages.
 	DataSent *big.Int
+
 	// DataReceived is the amount of actual data received in messages.
 	DataReceived *big.Int
+
 	// TotalSent is the amount of bytes that were needed to successfully
 	// transmit, including packet overhead. This is the raw size of the
 	// segmented packets that were sent.
 	TotalSent *big.Int
+
 	// TotalReceived is the amount of bytes that were needed to successfully
 	// transmit, including packet overhead. This is the raw size of the
 	// segmented packets that were received.
 	TotalReceived *big.Int
-	ErrorEWMA     ewma.MovingAverage
-	Ping          ewma.MovingAverage
+
+	// ErrorEWMA is the exponential weighted moving average of the error rate in
+	// transmissions to a peer.
+	ErrorEWMA ewma.MovingAverage
+
+	// Ping records the exponential wegihted moving average of the round trip time to a peer.
+	Ping ewma.MovingAverage
+
 	// PingDivergence represents the proportion of time between start of send
 	// and receiving acknowledgement, versus the ping RTT being actively
 	// measured concurrently. Shorter/equal time means it can reduce redundancy,
@@ -89,25 +108,63 @@ type Dispatcher struct {
 	// parameter for a given transmission that minimises latency. Onion routing
 	// necessarily amplifies any latency so making a transmission get across
 	// before/without retransmits is as good as the path can provide.
-	PingDivergence  ewma.MovingAverage
-	Duplex          *transport.DuplexByteChan
-	Done            []Completion
-	PendingInbound  []*RxRecord
+	PingDivergence ewma.MovingAverage
+
+	// Duplex is the in-memory atomic FIFO that is used in process to read and write
+	// to the network data processing pipeline.
+	Duplex *transport.DuplexByteChan
+
+	// Done stores the completed transmissions and their completion time. Used to
+	// evaluate the quality of the connection via relative time delays.
+	Done []Completion
+
+	// PendingInbound stores records for transmissions that are in process but have
+	// not either failed all pieces recieved yet.
+	PendingInbound []*RxRecord
+
+	// PendingOutbound keeps track of all the messages dispatched to the peer but not
+	// yet acknowledged or timed out.
 	PendingOutbound []*TxRecord
-	Partials        map[nonce.ID]packet.Packets
-	Prv             []*crypto.Prv
-	KeyLock         sync.Mutex
-	lastRekey       *big.Int
-	ks              *crypto.KeySet
-	Conn            *transport.Conn
-	Mutex           sync.Mutex
-	Ready           qu.C
-	ip              string
-	rekeying        atomic.Bool
+
+	// Partials stores the received message segments identified by the transmission
+	// nonce.ID.
+	Partials map[nonce.ID]packet.Packets
+
+	// Prv is the list of keys used in this connection, in case a transmission gets
+	// delayed extraordinarily long time it can still be decrypted. GC should be done
+	// on these to keep no more than a dozen or so past keys.
+	Prv []*crypto.Prv
+
+	// KeyLock is a mutex specifically for accessing the Prv field above.
+	KeyLock sync.Mutex
+
+	// lastRekey stores the total number of bytes received at the point the key was
+	// last changed. Keys are rotated according to data volume as the greater volume
+	// of data the more likely a repeating message or receiver cloaked key blinding
+	// factor.
+	lastRekey *big.Int
+
+	// ks is a crypto.KeySet for generating sender private keys used with ECDH for
+	// encryption.
+	ks *crypto.KeySet
+
+	// Conn is the transport connection that messages to this peer are sent to and
+	// received from.
+	Conn *transport.Conn
+
+	// Mutex lock for (todo: maybe we don't need so many of these?)
+	Mutex sync.Mutex
+
+	// Ready is a signal channel that is closed when the dispatcher is operational.
+	Ready qu.C
+
+	// ip is the multiaddr.Multiaddr of the peer
+	ip       string
+	rekeying atomic.Bool
 }
 
 // GetRxRecordAndPartials returns the receive record and packets received so far
-// for a message with a given ID>
+// for a message with a given nonce.ID.
 func (d *Dispatcher) GetRxRecordAndPartials(id nonce.ID) (rxr *RxRecord,
 	packets packet.Packets) {
 	for _, v := range d.PendingInbound {
@@ -216,7 +273,8 @@ func (d *Dispatcher) HandlePing(p ping.Result) {
 }
 
 // Mx runs a closure with the dispatcher mutex locked which returns a bool that
-// passes through to the result of the dispatcher.Mx function.
+// passes through to the result of the dispatcher.Mx function. Don't
+// call anything that touches the dispatcher's Mutex in this closure.
 func (d *Dispatcher) Mx(fn func() bool) bool {
 	d.Mutex.Lock()
 	defer d.Mutex.Unlock()

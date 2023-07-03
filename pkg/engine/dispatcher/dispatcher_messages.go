@@ -12,6 +12,7 @@ import (
 	"github.com/indra-labs/indra/pkg/util/splice"
 )
 
+// Magic bytes message prefixes for Dispatcher messages.
 const (
 	NewKeyMagic      = "newK"
 	AcknowledgeMagic = "ackn"
@@ -24,16 +25,21 @@ type (
 	Acknowledge struct {
 		*RxRecord
 	}
+
 	// NewKey delivers a new public key for the other side to use to encrypt
 	// messages.
 	NewKey struct {
 		NewPubkey *crypto.Pub
 	}
+
+	// Onion is an onion, intended to be processed by the recipient, its layer
+	// decoded and the enclosed message received and processed appropriately.
 	Onion struct {
 		slice.Bytes // contains an encoded Onion.
 	}
 )
 
+// Decode a splice with the cursor at the first byte after the magic.
 func (a *Acknowledge) Decode(s *splice.Splice) (e error) {
 	if s.Len() < a.Len() {
 		return fmt.Errorf("message too short, got %d, require %d", a.Len(),
@@ -49,6 +55,7 @@ func (a *Acknowledge) Decode(s *splice.Splice) (e error) {
 	return
 }
 
+// Encode an Acknowledge message to a splice.
 func (a *Acknowledge) Encode(s *splice.Splice) (e error) {
 	s.Magic(AcknowledgeMagic).
 		ID(a.ID).
@@ -61,18 +68,26 @@ func (a *Acknowledge) Encode(s *splice.Splice) (e error) {
 	return
 }
 
+// AcknowledgeGen is a factory function that will be added to the registry for
+// recognition and generation.
 func AcknowledgeGen() coding.Codec { return &Acknowledge{&RxRecord{}} }
 
+// GetOnion returns nil because there is no onion inside an Acknowledge.
 func (a *Acknowledge) GetOnion() interface{} { return nil }
 
+// Len returns the length of an Acknowledge message in bytes.
 func (a *Acknowledge) Len() int {
 	return 4 + nonce.IDLen + sha256.Len + 5*slice.Uint64Len
 }
 
+// Magic is the identifying 4 byte prefix of an Acknowledge in binary form.
 func (a *Acknowledge) Magic() string { return AcknowledgeMagic }
 
+// InitRekeyGen is a factory function to generate a NewKey.
 func InitRekeyGen() coding.Codec { return &NewKey{} }
 
+// Decode a NewKey out of a splice with cursor pointing to the first byte after
+// the magic.
 func (k *NewKey) Decode(s *splice.Splice) (e error) {
 	if s.Len() < k.Len() {
 		return fmt.Errorf("message too short, got %d, require %d", k.Len(),
@@ -85,40 +100,51 @@ func (k *NewKey) Decode(s *splice.Splice) (e error) {
 	return
 }
 
+// Encode a NewKey into the provided splice.
 func (k *NewKey) Encode(s *splice.Splice) (e error) {
 	s.Magic(NewKeyMagic).Pubkey(k.NewPubkey)
 	return
 }
 
+// GetOnion returns nil because there is no onion inside an NewKey.
 func (k *NewKey) GetOnion() interface{} { return nil }
-func (k *NewKey) Len() int              { return 4 + crypto.PubKeyLen }
 
+// Len returns the length of an NewKey message in bytes.
+func (k *NewKey) Len() int { return 4 + crypto.PubKeyLen }
+
+// Magic is the identifying 4 byte prefix of an NewKey in binary form.
 func (k *NewKey) Magic() string { return NewKeyMagic }
 
-func (m *Onion) Decode(s *splice.Splice) (e error) {
-	if s.Len() < m.Len() {
-		return fmt.Errorf("message too short, got %d, require %d", m.Len(),
+// Decode an Onion out of a splice with cursor pointing to the first byte after
+// the magic.
+func (o *Onion) Decode(s *splice.Splice) (e error) {
+	if s.Len() < o.Len() {
+		return fmt.Errorf("message too short, got %d, require %d", o.Len(),
 			s.Len())
 	}
-	s.ReadBytes(&m.Bytes)
+	s.ReadBytes(&o.Bytes)
 	return
 }
 
-func (m *Onion) Encode(s *splice.Splice) (e error) {
-	s.Magic(OnionMagic).Bytes(m.Bytes)
+// Encode an Onion into the provided splice.
+func (o *Onion) Encode(s *splice.Splice) (e error) {
+	s.Magic(OnionMagic).Bytes(o.Bytes)
 	return
 }
 
-func OnionGen() coding.Codec           { return &Onion{} }
-func (m *Onion) GetOnion() interface{} { return nil }
+// OnionGen is a factory function for creating a new Onion.
+func OnionGen() coding.Codec { return &Onion{} }
 
-func (m *Onion) Len() int {
-	return 4 + len(m.Bytes) + 4
+// GetOnion invockes Unpack, which returns the onion.
+func (o *Onion) GetOnion() interface{} { return o.Unpack() }
+
+func (o *Onion) Len() int {
+	return 4 + len(o.Bytes) + 4
 }
-func (m *Onion) Magic() string { return OnionMagic }
+func (o *Onion) Magic() string { return OnionMagic }
 
-func (m Onion) Unpack() (mu ont.Onion) {
-	s := splice.NewFrom(m.Bytes)
+func (o Onion) Unpack() (mu ont.Onion) {
+	s := splice.NewFrom(o.Bytes)
 	mm := reg.Recognise(s)
 	var ok bool
 	if mu, ok = mm.(ont.Onion); !ok {

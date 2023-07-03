@@ -1,3 +1,4 @@
+// Package ads provides a bundle for peer information advertisement types and initial generation of them, and deriving a peer node data structure from the ad set received over the gossip network.
 package ads
 
 import (
@@ -50,6 +51,7 @@ func GetMultiaddr(n *node.Node) (ma multiaddr.Multiaddr, e error) {
 	return
 }
 
+// GenerateAds takes a node.Node and creates the NodeAds matching it.
 func GenerateAds(n *node.Node, load byte) (na *NodeAds, e error) {
 	expiry := time.Now().Add(DefaultAdExpiry)
 	var svcs []adservices.Service
@@ -100,8 +102,11 @@ func GenerateAds(n *node.Node, load byte) (na *NodeAds, e error) {
 	return
 }
 
+// ErrNilNodeAds indicates that the NodeAds provided was nil.
 const ErrNilNodeAds = "cannot process nil NodeAds"
 
+// NodeFromAds generates a node.Node from a NodeAds. Used by clients to create
+// models for peers they have sessions with.
 func NodeFromAds(a *NodeAds) (n *node.Node, e error) {
 	if a == nil ||
 		a.Services == nil || a.Load == nil ||
