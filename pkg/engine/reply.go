@@ -20,7 +20,7 @@ func MakeReplyHeader(ng *Engine) (returnHeader *hidden.ReplyHeader) {
 		Keys:     crypto.Privs{rvKeys[0], rvKeys[1], rvKeys[2]},
 		Nonces:   crypto.Nonces{n[0], n[1], n[2]},
 	}
-	rh := Skins{}.RoutingHeader(rt)
+	rh := Skins{}.RoutingHeader(rt, ng.Mgr().Protocols)
 	rHdr := ont.Encode(ont.Assemble(rh))
 	rHdr.SetCursor(0)
 	ep := exit.ExitPoint{

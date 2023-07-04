@@ -77,9 +77,9 @@ func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 		}
 	}
 	// todo: handle payment failures!
-	o := MakeSession(conf, s, returnSession, nodes[:], ng.KeySet)
+	o := MakeSession(conf, s, returnSession, nodes[:], ng.KeySet, ng.Mgr().Protocols)
 	res := PostAcctOnion(ng.Mgr(), o)
-	ng.Mgr().SendWithOneHook(nodes[0].AddrPort, res, func(id nonce.ID,
+	ng.Mgr().SendWithOneHook(nodes[0].Addresses, res, func(id nonce.ID,
 		ifc interface{},
 		b slice.Bytes) (e error) {
 		ng.Mgr().Lock()
@@ -89,7 +89,7 @@ func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 			log.D.F("confirming and storing session at hop %d %s for %s with"+
 				" %v initial balance",
 				i, s[i].ID,
-				color.Yellow.Sprint(nodes[i].AddrPort.String()),
+				color.Yellow.Sprint(nodes[0].Addresses[0].String()),
 				amount)
 			ss[i] = sessions.NewSessionData(s[i].ID, nodes[i], amount,
 				s[i].Header, s[i].Payload, byte(i))

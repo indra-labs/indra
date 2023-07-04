@@ -29,7 +29,7 @@ type Params struct {
 	Name string
 
 	// Net is a uint32 magic byte identifier for the network
-	Net node.IndraNet
+	Net node.Swarm
 
 	// DefaultPort is the default port for p2p listening
 	DefaultPort string

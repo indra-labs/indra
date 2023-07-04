@@ -11,7 +11,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	"reflect"
 
-	"github.com/indra-labs/indra/pkg/onions/adaddress"
+	"github.com/indra-labs/indra/pkg/onions/adaddresses"
 	"github.com/indra-labs/indra/pkg/onions/adintro"
 	"github.com/indra-labs/indra/pkg/onions/adpeer"
 	"github.com/indra-labs/indra/pkg/onions/adservices"
@@ -96,12 +96,12 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 	}
 	var ok bool
 	switch c.(type) {
-	case *adaddress.Ad:
+	case *adaddresses.Ad:
 		log.D.Ln("received", reflect.TypeOf(c), "from gossip network")
-		var addr *adaddress.Ad
-		if addr, ok = c.(*adaddress.Ad); !ok {
+		var addr *adaddresses.Ad
+		if addr, ok = c.(*adaddresses.Ad); !ok {
 			return fmt.Errorf(ErrWrongTypeDecode,
-				adaddress.Magic, reflect.TypeOf(c).String())
+				adaddresses.Magic, reflect.TypeOf(c).String())
 		} else if !addr.Validate() {
 			return errors.New("addr ad failed validation")
 		}
@@ -112,7 +112,7 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 			return
 		}
 		if e = ng.Listener.Host.
-			Peerstore().Put(id, adaddress.Magic, s.GetAll().ToBytes()); fails(e) {
+			Peerstore().Put(id, adaddresses.Magic, s.GetAll().ToBytes()); fails(e) {
 			return
 		}
 	case *adintro.Ad:
@@ -139,7 +139,7 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 		var lod *adload.Ad
 		if lod, ok = c.(*adload.Ad); !ok {
 			return fmt.Errorf(ErrWrongTypeDecode,
-				adaddress.Magic, reflect.TypeOf(c).String())
+				adaddresses.Magic, reflect.TypeOf(c).String())
 		} else if !lod.Validate() {
 			return errors.New("load ad failed validation")
 		}

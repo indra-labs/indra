@@ -65,7 +65,7 @@ func NewFrom(b slice.Bytes) (splicer *Splice) {
 
 func (s *Splice) AddrPort(a *netip.AddrPort) *Splice {
 	if a == nil {
-		s.Advance(AddrLen, "nil AddrPort")
+		s.Advance(AddrLen, "nil Addresses")
 		return s
 	}
 	var ap []byte

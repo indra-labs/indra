@@ -71,7 +71,7 @@ func (s *Data) DecSats(sats lnwire.MilliSatoshi, sender bool,
 		who = "client"
 	}
 	log.D.F("%s %s session %s %s current %v decrementing by %v",
-		color.Yellow.Sprint(s.Node.AddrPort.String()), who,
+		color.Yellow.Sprint(s.Node.Addresses[0].String()), who,
 		typ, s.Header.Bytes.String(), s.Remaining, sats)
 	s.Remaining -= sats
 	return true
@@ -91,7 +91,7 @@ func (s *Data) IncSats(sats lnwire.MilliSatoshi, sender bool, typ string) {
 
 func (s *Data) String() string {
 	return fmt.Sprintf("%s sesssion %s node %s hop %d",
-		s.Node.AddrPort.String(), s.Header.Bytes.String(),
+		s.Node.Addresses[0].String(), s.Header.Bytes.String(),
 		s.Node.ID, s.Hop)
 }
 

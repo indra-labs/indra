@@ -3,12 +3,14 @@ package engine
 import (
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/onions/adaddress"
+	"github.com/indra-labs/indra/pkg/onions/adaddresses"
 	"github.com/indra-labs/indra/pkg/onions/adintro"
 	"github.com/indra-labs/indra/pkg/onions/adload"
 	"github.com/indra-labs/indra/pkg/onions/adpeer"
 	"github.com/indra-labs/indra/pkg/onions/adservices"
+	"github.com/indra-labs/indra/pkg/util/multi"
 	"github.com/indra-labs/indra/pkg/util/splice"
+	"net/netip"
 	"os"
 	"testing"
 	"time"
@@ -43,9 +45,15 @@ func TestEngine_PeerStore(t *testing.T) {
 		go eng.Start()
 	}
 	time.Sleep(time.Second)
-	newAddressAd := adaddress.New(nonce.NewID(),
+	adz := engines[0].Listener.Host.Addrs()
+	addrs := make([]*netip.AddrPort, len(adz))
+	for i := range adz {
+		addy, _ := multi.AddrToAddrPort(adz[i])
+		addrs[i] = &addy
+	}
+	newAddressAd := adaddresses.New(nonce.NewID(),
 		engines[0].Mgr().GetLocalNodeIdentityPrv(),
-		engines[0].Listener.Host.Addrs()[0],
+		addrs,
 		time.Now().Add(time.Hour*24*7))
 	sa := splice.New(newAddressAd.Len())
 	if e = newAddressAd.Encode(sa); fails(e) {

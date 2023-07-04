@@ -7,6 +7,7 @@ import (
 	"github.com/indra-labs/indra/pkg/onions/message"
 	"github.com/indra-labs/indra/pkg/onions/ont"
 	"github.com/indra-labs/indra/pkg/onions/reg"
+	"github.com/indra-labs/indra/pkg/util/multi"
 	"net/netip"
 	"time"
 
@@ -33,9 +34,9 @@ func (ng *Engine) SendExit(port uint16, msg slice.Bytes, id nonce.ID,
 	se := ng.Mgr().SelectHops(hops, s, "exit")
 	var c sessions.Circuit
 	copy(c[:], se)
-	o := MakeExit(exit.ExitParams{port, msg, id, bob, alice, c, ng.KeySet})
+	o := MakeExit(exit.ExitParams{port, msg, id, bob, alice, c, ng.KeySet}, ng.Mgr().Protocols)
 	res := PostAcctOnion(ng.Mgr(), o)
-	ng.Mgr().SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.Responses)
+	ng.Mgr().SendWithOneHook(c[0].Node.Addresses, res, hook, ng.Responses)
 }
 
 // SendGetBalance sends out a balance request to a specific relay we have a session with.
@@ -48,18 +49,15 @@ func (ng *Engine) SendGetBalance(alice, bob *sessions.Data, hook responses.Callb
 	var c sessions.Circuit
 	copy(c[:], se)
 	o := MakeGetBalance(getbalance.GetBalanceParams{alice.ID, alice, bob, c,
-		ng.KeySet})
+		ng.KeySet}, ng.Mgr().Protocols)
 	log.D.S("sending out getbalance onion", o)
 	res := PostAcctOnion(ng.Mgr(), o)
-	ng.Mgr().SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.Responses)
+	ng.Mgr().SendWithOneHook(c[0].Node.Addresses, res, hook, ng.Responses)
 }
 
 // SendHiddenService dispatches a hiddenservice message, providing a relay the
 // ability to refer clients to the hidden service and initiate connections.
-func (ng *Engine) SendHiddenService(id nonce.ID, key *crypto.Prv,
-	relayRate uint32, port uint16, expiry time.Time,
-	alice, bob *sessions.Data, svc *services.Service,
-	hook responses.Callback) (in *adintro.Ad) {
+func (ng *Engine) SendHiddenService(id nonce.ID, key *crypto.Prv, relayRate uint32, port uint16, expiry time.Time, alice, bob *sessions.Data, svc *services.Service, hook responses.Callback) (in *adintro.Ad, e error) {
 
 	hops := sess.StandardCircuit()
 	s := make(sessions.Sessions, len(hops))
@@ -67,15 +65,19 @@ func (ng *Engine) SendHiddenService(id nonce.ID, key *crypto.Prv,
 	se := ng.Mgr().SelectHops(hops, s, "sendhiddenservice")
 	var c sessions.Circuit
 	copy(c[:], se[:len(c)])
-	in = adintro.New(id, key, alice.Node.AddrPort, relayRate, port, expiry)
-	o := MakeHiddenService(in, alice, bob, c, ng.KeySet)
+	var addr netip.AddrPort
+	if addr, e = multi.AddrToAddrPort(alice.Node.PickAddress(ng.Mgr().Protocols)); fails(e) {
+		return
+	}
+	in = adintro.New(id, key, &addr, relayRate, port, expiry)
+	o := MakeHiddenService(in, alice, bob, c, ng.KeySet, ng.Mgr().Protocols)
 	log.D.F("%s sending out hidden service onion %s",
 		ng.Mgr().GetLocalNodeAddressString(),
-		color.Yellow.Sprint(alice.Node.AddrPort.String()))
+		color.Yellow.Sprint(addr.String()))
 	res := PostAcctOnion(ng.Mgr(), o)
 	ng.GetHidden().AddHiddenService(svc, key, in,
 		ng.Mgr().GetLocalNodeAddressString())
-	ng.Mgr().SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.Responses)
+	ng.Mgr().SendWithOneHook(c[0].Node.Addresses, res, hook, ng.Responses)
 	return
 }
 
@@ -105,10 +107,10 @@ func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *crypto.Pub,
 	se := ng.Mgr().SelectHops(hops, s, "sendintroquery")
 	var c sessions.Circuit
 	copy(c[:], se)
-	o := MakeIntroQuery(id, hsk, bob, alice, c, ng.KeySet)
+	o := MakeIntroQuery(id, hsk, bob, alice, c, ng.KeySet, ng.Mgr().Protocols)
 	res := PostAcctOnion(ng.Mgr(), o)
 	log.D.Ln(res.ID)
-	ng.Mgr().SendWithOneHook(c[0].Node.AddrPort, res, fn, ng.Responses)
+	ng.Mgr().SendWithOneHook(c[0].Node.Addresses, res, fn, ng.Responses)
 }
 
 // SendMessage delivers a message to a hidden service for which we have an
@@ -121,7 +123,7 @@ func (ng *Engine) SendMessage(mp *message.Message, hook responses.Callback) (id 
 	o := []ont.Onion{mp}
 	res := PostAcctOnion(ng.Mgr(), o)
 	log.D.Ln("sending out message onion")
-	ng.Mgr().SendWithOneHook(mp.Forwards[0].Node.AddrPort, res, hook,
+	ng.Mgr().SendWithOneHook(mp.Forwards[0].Node.Addresses, res, hook,
 		ng.Responses)
 	return res.ID
 }
@@ -136,9 +138,9 @@ func (ng *Engine) SendPing(c sessions.Circuit, hook responses.Callback) {
 	se := ng.Mgr().SelectHops(hops, s, "sendping")
 	copy(c[:], se)
 	id := nonce.NewID()
-	o := Ping(id, se[len(se)-1], c, ng.KeySet)
+	o := Ping(id, se[len(se)-1], c, ng.KeySet, ng.Mgr().Protocols)
 	res := PostAcctOnion(ng.Mgr(), o)
-	ng.Mgr().SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.Responses)
+	ng.Mgr().SendWithOneHook(c[0].Node.Addresses, res, hook, ng.Responses)
 }
 
 // SendRoute delivers a message to establish a connection to a hidden service via
@@ -149,9 +151,11 @@ func (ng *Engine) SendRoute(k *crypto.Pub, ap *netip.AddrPort,
 	ng.Mgr().FindNodeByAddrPort(ap)
 	var ss *sessions.Data
 	ng.Mgr().IterateSessions(func(s *sessions.Data) bool {
-		if s.Node.AddrPort.String() == ap.String() {
-			ss = s
-			return true
+		for _, v := range s.Node.Addresses {
+			if v.String() == ap.String() {
+				ss = s
+				return true
+			}
 		}
 		return false
 	})
@@ -168,8 +172,8 @@ func (ng *Engine) SendRoute(k *crypto.Pub, ap *netip.AddrPort,
 	se := ng.Mgr().SelectHops(hops, s, "sendroute")
 	var c sessions.Circuit
 	copy(c[:], se)
-	o := MakeRoute(nonce.NewID(), k, ng.KeySet, se[5], c[2], c)
+	o := MakeRoute(nonce.NewID(), k, ng.KeySet, se[5], c[2], c, ng.Mgr().Protocols)
 	res := PostAcctOnion(ng.Mgr(), o)
 	log.D.Ln("sending out route request onion")
-	ng.Mgr().SendWithOneHook(c[0].Node.AddrPort, res, hook, ng.Responses)
+	ng.Mgr().SendWithOneHook(c[0].Node.Addresses, res, hook, ng.Responses)
 }

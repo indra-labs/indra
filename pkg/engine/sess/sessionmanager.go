@@ -2,6 +2,8 @@ package sess
 
 import (
 	"fmt"
+	"github.com/indra-labs/indra/pkg/engine/protocols"
+	"github.com/indra-labs/indra/pkg/util/cryptorand"
 	"net/netip"
 	"sync"
 
@@ -65,6 +67,8 @@ type (
 		// to.
 		CircuitCache
 
+		Protocols protocols.NetworkProtocols
+
 		// This is concurrently accessed, so it needs locking.
 		sync.Mutex
 	}
@@ -85,8 +89,8 @@ func (sm *Manager) AddNodes(nn ...*node.Node) {
 func (sm *Manager) AddPendingPayment(np *payments.Payment) {
 	sm.Lock()
 	defer sm.Unlock()
-	log.D.F("%s adding pending payment %s for %v",
-		sm.nodes[0].AddrPort.String(), np.ID,
+	log.D.F("%v adding pending payment %s for %v",
+		sm.nodes[0].Addresses, np.ID,
 		np.Amount)
 	sm.PendingPayments = sm.PendingPayments.Add(np)
 }
@@ -188,11 +192,14 @@ func (sm *Manager) DeleteNodeByAddrPort(ip *netip.AddrPort) (e error) {
 	sm.Lock()
 	defer sm.Unlock()
 	e = fmt.Errorf("node with ip %v not found", ip)
+out:
 	for i := range sm.nodes {
-		if sm.nodes[i].AddrPort.String() == ip.String() {
-			sm.nodes = append(sm.nodes[:i], sm.nodes[i+1:]...)
-			e = nil
-			break
+		for j := range sm.nodes[i].Addresses {
+			if sm.nodes[i].Addresses[j].String() == ip.String() {
+				sm.nodes = append(sm.nodes[:i], sm.nodes[i+1:]...)
+				e = nil
+				break out
+			}
 		}
 	}
 	return
@@ -264,10 +271,13 @@ func (sm *Manager) FindCloaked(clk crypto.CloakedPubKey) (hdr *crypto.Prv,
 func (sm *Manager) FindNodeByAddrPort(id *netip.AddrPort) (no *node.Node) {
 	sm.Lock()
 	defer sm.Unlock()
+out:
 	for _, nn := range sm.nodes {
-		if nn.AddrPort.String() == id.String() {
-			no = nn
-			break
+		for i := range nn.Addresses {
+			if nn.Addresses[i].String() == id.String() {
+				no = nn
+				break out
+			}
 		}
 	}
 	return
@@ -391,11 +401,20 @@ func (sm *Manager) ForEachNode(fn func(n *node.Node) bool) {
 // GetLocalNode returns the engine's local Node.
 func (sm *Manager) GetLocalNode() *node.Node { return sm.nodes[0] }
 
-// GetLocalNodeAddress returns the AddrPort of the local node.
+// GetLocalNodeAddress returns an Addresse of the local node. This is done randomly. Only addresses of the types configured in the manager (default is the same as the default gateway's interfaces. IPv4 and maybe IPv6.
 func (sm *Manager) GetLocalNodeAddress() (addr *netip.AddrPort) {
 	//sm.Lock()
 	//defer sm.Unlock()
-	return sm.GetLocalNode().AddrPort
+	addys := sm.nodes[0].Addresses
+	shuf := make([]*netip.AddrPort, len(addys))
+	for i := range addys {
+		shuf[i] = addys[i]
+	}
+	cryptorand.Shuffle(len(shuf), func(i, j int) {
+		shuf[i], shuf[j] = shuf[j], shuf[i]
+	})
+	addr = shuf[0]
+	return
 }
 
 // GetLocalNodeAddressString returns the string form of the local node address.
@@ -542,11 +561,33 @@ func (sm *Manager) SetLocalNode(n *node.Node) {
 	sm.nodes[0] = n
 }
 
-// SetLocalNodeAddress changes the local node address.
-func (sm *Manager) SetLocalNodeAddress(addr *netip.AddrPort) {
+// AddLocalNodeAddress changes the local node address.
+func (sm *Manager) AddLocalNodeAddress(addr *netip.AddrPort) {
 	sm.Lock()
 	defer sm.Unlock()
-	sm.GetLocalNode().AddrPort = addr
+	sm.GetLocalNode().Addresses = append(sm.GetLocalNode().Addresses, addr)
+}
+
+// AddLocalNodeAddresses changes the local node address.
+func (sm *Manager) AddLocalNodeAddresses(addr []*netip.AddrPort) {
+	sm.Lock()
+	defer sm.Unlock()
+	for i := range addr {
+		sm.GetLocalNode().Addresses = append(sm.GetLocalNode().Addresses, addr[i])
+	}
+}
+
+// RemoveLocalNodeAddress removes a local node address.
+func (sm *Manager) RemoveLocalNodeAddress(addr *netip.AddrPort) {
+	sm.Lock()
+	defer sm.Unlock()
+	tmp := make([]*netip.AddrPort, len(sm.nodes[0].Addresses))
+	for _, v := range sm.GetLocalNode().Addresses {
+		if *v != *addr {
+			tmp = append(tmp, v)
+		}
+	}
+	sm.nodes[0].Addresses = tmp
 }
 
 // UpdateSessionCache reads the main Sessions cache and populates the
@@ -568,9 +609,10 @@ func (sm *Manager) UpdateSessionCache() {
 }
 
 // NewSessionManager creates a new session manager.
-func NewSessionManager() *Manager {
+func NewSessionManager(protocols protocols.NetworkProtocols) *Manager {
 	return &Manager{
 		CircuitCache:    make(CircuitCache),
 		PendingPayments: make(payments.PendingPayments, 0),
+		Protocols:       protocols,
 	}
 }

@@ -8,10 +8,13 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/payments"
+	"github.com/indra-labs/indra/pkg/engine/protocols"
 	"github.com/indra-labs/indra/pkg/engine/services"
 	"github.com/indra-labs/indra/pkg/engine/tpt"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/util/multi"
 	"github.com/indra-labs/indra/pkg/util/slice"
+	"github.com/multiformats/go-multiaddr"
 	"net/netip"
 	"sync"
 )
@@ -35,10 +38,10 @@ type Node struct {
 	// Mutex to stop concurrent read/write.
 	sync.Mutex
 
-	// AddrPort is the network address a node is listening to.
+	// Addresses is the network addresses a node is listening to.
 	//
-	// TODO: this should be plural.
-	AddrPort *netip.AddrPort
+	// These can be multiple, but for reasons of complexity, they are filtered by the available protocols for the session manager, ie ip4 always, ip6 sometimes.
+	Addresses []*netip.AddrPort
 
 	// Identity is the crypto.Keys identifying the node on the Indra network.
 	Identity *crypto.Keys
@@ -63,16 +66,37 @@ type Node struct {
 
 // NewNode creates a new Node. The transport should be from either dialing out or
 // a peer dialing in and the self model does not need to do this.
-func NewNode(addr *netip.AddrPort, keys *crypto.Keys, tpt tpt.Transport,
+func NewNode(addr []*netip.AddrPort, keys *crypto.Keys, tpt tpt.Transport,
 	relayRate uint32) (n *Node, id nonce.ID) {
 	id = nonce.NewID()
 	n = &Node{
 		ID:        id,
-		AddrPort:  addr,
+		Addresses: addr,
 		Identity:  keys,
 		RelayRate: relayRate,
 		PayChan:   make(payments.PayChan, PaymentChanBuffers),
 		Transport: tpt,
+	}
+	return
+}
+
+func (n *Node) PickAddress(p protocols.NetworkProtocols) (ma multiaddr.Multiaddr) {
+	var tmp []multiaddr.Multiaddr
+	var e error
+	for i := range n.Addresses {
+		var temp multiaddr.Multiaddr
+		if temp, e = multi.AddrFromAddrPort(*n.Addresses[i]); e == nil {
+		}
+		if p&protocols.IP4 != 0 {
+			if _, e = temp.ValueForProtocol(multiaddr.P_IP4); e == nil {
+				tmp = append(tmp, multi.AddKeyToMultiaddr(temp, n.Identity.Pub))
+			}
+		}
+		if p&protocols.IP6 != 0 {
+			if _, e = temp.ValueForProtocol(multiaddr.P_IP6); e == nil {
+				tmp = append(tmp, multi.AddKeyToMultiaddr(temp, n.Identity.Pub))
+			}
+		}
 	}
 	return
 }
@@ -137,12 +161,13 @@ func (n *Node) ReceiveFrom(port uint16) (b <-chan slice.Bytes) {
 func (n *Node) SendTo(port uint16, b slice.Bytes) (e error) {
 	n.Lock()
 	defer n.Unlock()
-	e = fmt.Errorf("%s port not registered %d", n.AddrPort.String(), port)
+	e = fmt.Errorf("%v port not registered %d", n.Addresses, port)
 	for i := range n.Services {
 		if n.Services[i].Port == port {
 			e = n.Services[i].Send(b)
 			return
 		}
 	}
+	e = fmt.Errorf("%v port not registered %d", n.Addresses, port)
 	return
 }

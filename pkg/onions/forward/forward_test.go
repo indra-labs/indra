@@ -55,7 +55,7 @@ func TestOnions_Forward(t *testing.T) {
 		}
 		if cf.AddrPort.String() != ap.String() {
 			log.I.S(cf.AddrPort, ap)
-			t.Error("reverse AddrPort did not unwrap correctly")
+			t.Error("reverse Addresses did not unwrap correctly")
 			t.FailNow()
 		}
 	}

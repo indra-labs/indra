@@ -8,7 +8,7 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/node"
 	"github.com/indra-labs/indra/pkg/engine/payments"
 	"github.com/indra-labs/indra/pkg/engine/services"
-	"github.com/indra-labs/indra/pkg/onions/adaddress"
+	"github.com/indra-labs/indra/pkg/onions/adaddresses"
 	"github.com/indra-labs/indra/pkg/onions/adload"
 	"github.com/indra-labs/indra/pkg/onions/adpeer"
 	"github.com/indra-labs/indra/pkg/onions/adproto"
@@ -37,17 +37,20 @@ const DefaultAdExpiry = time.Hour * 24 * 7 // one week
 // whenever it dramatically changes or every few minutes.
 type NodeAds struct {
 	Peer     *adpeer.Ad
-	Address  *adaddress.Ad
+	Address  *adaddresses.Ad
 	Services *adservices.Ad
 	Load     *adload.Ad
 }
 
-// GetMultiaddr returns a node's listener address.
-func GetMultiaddr(n *node.Node) (ma multiaddr.Multiaddr, e error) {
-	if ma, e = multi.AddrFromAddrPort(*n.AddrPort); fails(e) {
-		return
+// GetMultiaddrs returns a node's listener addresses.
+func GetMultiaddrs(n *node.Node) (ma []multiaddr.Multiaddr, e error) {
+	for i := range n.Addresses {
+		var aa multiaddr.Multiaddr
+		if aa, e = multi.AddrFromAddrPort(*n.Addresses[i]); fails(e) {
+			return
+		}
+		ma = append(ma, multi.AddKeyToMultiaddr(aa, n.Identity.Pub))
 	}
-	ma = multi.AddKeyToMultiaddr(ma, n.Identity.Pub)
 	return
 }
 
@@ -61,9 +64,17 @@ func GenerateAds(n *node.Node, load byte) (na *NodeAds, e error) {
 			RelayRate: n.Services[i].RelayRate,
 		})
 	}
-	var ma multiaddr.Multiaddr
-	if ma, e = GetMultiaddr(n); fails(e) {
+	var ma []multiaddr.Multiaddr
+	if ma, e = GetMultiaddrs(n); fails(e) {
 		return
+	}
+	addrPorts := make([]*netip.AddrPort, len(ma))
+	for i := range ma {
+		var addy netip.AddrPort
+		if addy, e = multi.AddrToAddrPort(ma[i]); fails(e) {
+			return
+		}
+		addrPorts[i] = &addy
 	}
 	na = &NodeAds{
 		Peer: &adpeer.Ad{
@@ -74,13 +85,13 @@ func GenerateAds(n *node.Node, load byte) (na *NodeAds, e error) {
 			},
 			RelayRate: n.RelayRate,
 		},
-		Address: &adaddress.Ad{
+		Address: &adaddresses.Ad{
 			Ad: adproto.Ad{
 				ID:     nonce.NewID(),
 				Key:    n.Identity.Pub,
 				Expiry: expiry,
 			},
-			Addrs: ma,
+			Addresses: addrPorts,
 		},
 		Services: &adservices.Ad{
 			Ad: adproto.Ad{
@@ -113,10 +124,6 @@ func NodeFromAds(a *NodeAds) (n *node.Node, e error) {
 		a.Address == nil || a.Peer == nil {
 		return n, errors.New(ErrNilNodeAds)
 	}
-	var ap netip.AddrPort
-	if ap, e = multi.AddrToAddrPort(a.Address.Addrs); fails(e) {
-		return
-	}
 	var svcs services.Services
 	for i := range a.Services.Services {
 		svcs = append(svcs, &services.Service{
@@ -126,8 +133,8 @@ func NodeFromAds(a *NodeAds) (n *node.Node, e error) {
 		})
 	}
 	n = &node.Node{
-		ID:       nonce.NewID(),
-		AddrPort: &ap,
+		ID:        nonce.NewID(),
+		Addresses: a.Address.Addresses,
 		Identity: &crypto.Keys{
 			Pub:   a.Address.Key,
 			Bytes: a.Address.Key.ToBytes(),

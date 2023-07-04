@@ -1,4 +1,4 @@
-package adaddress
+package adaddresses
 
 import (
 	"github.com/indra-labs/indra"
@@ -7,8 +7,10 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/util/multi"
 	"github.com/indra-labs/indra/pkg/util/splice"
 	"github.com/multiformats/go-multiaddr"
+	"net/netip"
 	"testing"
 	"time"
 )
@@ -20,11 +22,21 @@ func TestNew(t *testing.T) {
 	var e error
 	pr, _, _ := crypto.NewSigner()
 	id := nonce.NewID()
-	var ma multiaddr.Multiaddr
-	if ma, e = multiaddr.NewMultiaddr("/ip4/127.0.0.1/tcp/4242"); fails(e) {
+	var ma4, ma6 multiaddr.Multiaddr
+	if ma4, e = multiaddr.NewMultiaddr("/ip4/127.0.0.1/tcp/4242"); fails(e) {
 		t.FailNow()
 	}
-	aa := New(id, pr, ma, time.Now().Add(time.Hour*24*7))
+	if ma6, e = multiaddr.NewMultiaddr("/ip6/::1/tcp/4242"); fails(e) {
+		t.FailNow()
+	}
+	var ap4, ap6 netip.AddrPort
+	if ap4, e = multi.AddrToAddrPort(ma4); fails(e) {
+		t.FailNow()
+	}
+	if ap6, e = multi.AddrToAddrPort(ma6); fails(e) {
+		t.FailNow()
+	}
+	aa := New(id, pr, []*netip.AddrPort{&ap4, &ap6}, time.Now().Add(time.Hour*24*7))
 	s := splice.New(aa.Len())
 	if e = aa.Encode(s); fails(e) {
 		t.FailNow()
@@ -54,9 +66,11 @@ func TestNew(t *testing.T) {
 		t.Errorf("ID did not decode correctly")
 		t.FailNow()
 	}
-	if ad.Addrs.String() != aa.Addrs.String() {
-		t.Errorf("address did not decode correctly")
-		t.FailNow()
+	for i := range ad.Addresses {
+		if *ad.Addresses[i] != *aa.Addresses[i] {
+			t.Errorf("address did not decode correctly")
+			t.FailNow()
+		}
 	}
 	if !ad.Key.Equals(crypto.DerivePub(pr)) {
 		t.Errorf("public key did not decode correctly")

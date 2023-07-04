@@ -401,7 +401,7 @@ func logPrint(
 			if count < 0 {
 				count = 0
 			}
-			loc = loc + strings.Repeat(" ", count)
+			loc = loc + strings.Repeat(" ", count+1)
 			tsf = timeStampFormat
 		}
 		var app string

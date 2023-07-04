@@ -7,6 +7,7 @@ import (
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/engine/dispatcher"
 	"github.com/indra-labs/indra/pkg/engine/services"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
@@ -31,7 +32,7 @@ import (
 )
 
 func TestEngine_Message(t *testing.T) {
-	if indra.CI=="false" {
+	if indra.CI == "false" {
 		log2.SetLogLevel(log2.Info)
 	}
 	var clients []*Engine
@@ -129,7 +130,7 @@ func TestEngine_Message(t *testing.T) {
 			break
 		}
 	}
-	if indra.CI=="false" {
+	if indra.CI == "false" {
 		log2.SetLogLevel(log2.Trace)
 	}
 	wg.Add(1)
@@ -139,7 +140,7 @@ func TestEngine_Message(t *testing.T) {
 		RelayRate: 43523,
 		Transport: transport.NewByteChan(64),
 	}
-	ini := client.SendHiddenService(id, idPrv, 0, 0,
+	ini, _ := client.SendHiddenService(id, idPrv, 0, 0,
 		time.Now().Add(time.Hour), returner, introducer, svc,
 		func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
 			log.I.F("hidden service %s successfully propagated", ifc)
@@ -203,7 +204,7 @@ func TestEngine_Message(t *testing.T) {
 }
 
 func TestEngine_Route(t *testing.T) {
-	if indra.CI=="false" {
+	if indra.CI == "false" {
 		log2.SetLogLevel(log2.Debug)
 	}
 	runtime.GOMAXPROCS(1)
@@ -310,7 +311,7 @@ func TestEngine_Route(t *testing.T) {
 		RelayRate: 43523,
 		Transport: transport.NewByteChan(64),
 	}
-	ini := client.SendHiddenService(id, idPrv, 0, 0,
+	ini, _ := client.SendHiddenService(id, idPrv, 0, 0,
 		time.Now().Add(time.Hour),
 		returner, introducer, svc,
 		func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
@@ -321,7 +322,7 @@ func TestEngine_Route(t *testing.T) {
 		})
 	wg.Wait()
 	time.Sleep(time.Second)
-	if indra.CI=="false" {
+	if indra.CI == "false" {
 		log2.SetLogLevel(log2.Debug)
 	}
 	wg.Add(1)
@@ -342,7 +343,7 @@ func TestEngine_Route(t *testing.T) {
 }
 
 func TestEngine_SendHiddenService(t *testing.T) {
-	if indra.CI=="false" {
+	if indra.CI == "false" {
 		log2.SetLogLevel(log2.Debug)
 	}
 	var clients []*Engine
@@ -389,7 +390,7 @@ func TestEngine_SendHiddenService(t *testing.T) {
 		}
 		wg.Wait()
 	}
-	if indra.CI=="false" {
+	if indra.CI == "false" {
 		log2.SetLogLevel(log2.Debug)
 	}
 	var idPrv *crypto.Prv
@@ -440,7 +441,7 @@ func TestEngine_SendHiddenService(t *testing.T) {
 }
 
 func TestDispatcher_Rekey(t *testing.T) {
-	if indra.CI=="false" {
+	if indra.CI == "false" {
 		log2.SetLogLevel(log2.Debug)
 	}
 	var e error
@@ -539,5 +540,269 @@ func TestDispatcher_Rekey(t *testing.T) {
 	cancel()
 	if succ != countTo*3 {
 		t.Fatal("did not receive all messages correctly", succ, countTo*3)
+	}
+}
+
+func TestClient_SendExit(t *testing.T) {
+	if indra.CI == "false" {
+		log2.SetLogLevel(log2.Debug)
+	}
+	var clients []*Engine
+	var e error
+	ctx, cancel := context.WithCancel(context.Background())
+	if clients, e = CreateNMockCircuitsWithSessions(2, 2,
+		ctx); fails(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	client := clients[0]
+	log.D.Ln("client", client.Mgr().GetLocalNodeAddressString())
+	// set up forwarding port service
+	const port = 3455
+	sim := transport.NewByteChan(0)
+	for i := range clients {
+		e = clients[i].Mgr().AddServiceToLocalNode(&services.Service{
+			Port:      port,
+			Transport: sim,
+			RelayRate: 58000,
+		})
+		if fails(e) {
+			t.Error(e)
+			t.FailNow()
+		}
+	}
+	// Start up the clients.
+	for _, v := range clients {
+		go v.Start()
+	}
+	quit := qu.T()
+	var wg sync.WaitGroup
+	go func() {
+		select {
+		case <-time.After(time.Second):
+		case <-quit:
+			return
+		}
+		quit.Q()
+		t.Error("Exit test failed")
+	}()
+out:
+	for i := 3; i < len(clients[0].Mgr().Sessions)-1; i++ {
+		wg.Add(1)
+		var msg slice.Bytes
+		if msg, _, e = tests.GenMessage(64, "request"); fails(e) {
+			t.Error(e)
+			t.FailNow()
+		}
+		var respMsg slice.Bytes
+		var respHash sha256.Hash
+		if respMsg, respHash, e = tests.GenMessage(32,
+			"response"); fails(e) {
+			t.Error(e)
+			t.FailNow()
+		}
+		bob := clients[0].Mgr().Sessions[i]
+		returnHops := client.Mgr().GetSessionsAtHop(5)
+		var alice *sessions.Data
+		if len(returnHops) > 1 {
+			cryptorand.Shuffle(len(returnHops), func(i, j int) {
+				returnHops[i], returnHops[j] = returnHops[j],
+					returnHops[i]
+			})
+		}
+		alice = returnHops[0] // c[bob.Hop] = clients[0].Sessions[i]
+		id := nonce.NewID()
+		client.SendExit(port, msg, id, bob, alice, func(idd nonce.ID,
+			ifc interface{}, b slice.Bytes) (e error) {
+			if sha256.Single(b) != respHash {
+				t.Error("failed to receive expected message")
+			}
+			if id != idd {
+				t.Error("failed to receive expected message Keys")
+			}
+			log.D.F("success\n\n")
+			wg.Done()
+			return
+		})
+		bb := <-clients[3].Mgr().GetLocalNode().ReceiveFrom(port)
+		log.T.S(bb.ToBytes())
+		if e = clients[3].Mgr().SendFromLocalNode(port, respMsg); fails(e) {
+			t.Error("fail send")
+		}
+		log.T.Ln("response sent")
+		select {
+		case <-quit:
+			break out
+		default:
+		}
+		wg.Wait()
+	}
+	quit.Q()
+	cancel()
+	for _, v := range clients {
+		v.Shutdown()
+	}
+}
+
+func TestClient_SendPing(t *testing.T) {
+	if indra.CI == "false" {
+		log2.SetLogLevel(log2.Debug)
+	}
+	var clients []*Engine
+	var e error
+	ctx, cancel := context.WithCancel(context.Background())
+	if clients, e = CreateNMockCircuitsWithSessions(1, 2,
+		ctx); fails(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	// Start up the clients.
+	for _, v := range clients {
+		go v.Start()
+	}
+	quit := qu.T()
+	var wg sync.WaitGroup
+	go func() {
+		select {
+		case <-time.After(time.Second):
+		case <-quit:
+			return
+		}
+		quit.Q()
+		t.Error("SendPing test failed")
+	}()
+out:
+	for i := 3; i < len(clients[0].Mgr().Sessions)-1; i++ {
+		wg.Add(1)
+		var c sessions.Circuit
+		sess := clients[0].Mgr().Sessions[i]
+		c[sess.Hop] = clients[0].Mgr().Sessions[i]
+		clients[0].SendPing(c,
+			func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
+				log.D.Ln("success")
+				wg.Done()
+				return
+			})
+		select {
+		case <-quit:
+			break out
+		default:
+		}
+		wg.Wait()
+	}
+	quit.Q()
+	cancel()
+	for _, v := range clients {
+		v.Shutdown()
+	}
+}
+
+func TestClient_SendSessionKeys(t *testing.T) {
+	if indra.CI == "false" {
+		log2.SetLogLevel(log2.Debug)
+	}
+	var clients []*Engine
+	var e error
+	ctx, cancel := context.WithCancel(context.Background())
+	if clients, e = CreateNMockCircuits(2, 2, ctx); fails(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	// Start up the clients.
+	for _, v := range clients {
+		go v.Start()
+	}
+	var wg sync.WaitGroup
+	var counter atomic.Int32
+	quit := qu.T()
+	go func() {
+		select {
+		case <-time.After(time.Second * 6):
+		case <-quit:
+			return
+		}
+		for i := 0; i < int(counter.Load()); i++ {
+			wg.Done()
+		}
+		t.Error("SendSessionKeys test failed")
+		quit.Q()
+	}()
+	for i := 0; i < 10; i++ {
+		log.D.Ln("buying sessions", i)
+		wg.Add(1)
+		counter.Inc()
+		e = clients[0].BuyNewSessions(1000000, func() {
+			wg.Done()
+			counter.Dec()
+		})
+		if fails(e) {
+			wg.Done()
+			counter.Dec()
+		}
+		wg.Wait()
+		for j := range clients[0].Mgr().CircuitCache {
+			log.D.F("%d %s %v", i, j, clients[0].Mgr().CircuitCache[j])
+		}
+		quit.Q()
+	}
+	for _, v := range clients {
+		v.Shutdown()
+	}
+	cancel()
+}
+
+func TestClient_SendGetBalance(t *testing.T) {
+	if indra.CI == "false" {
+		log2.SetLogLevel(log2.Trace)
+	}
+	var clients []*Engine
+	var e error
+	ctx, cancel := context.WithCancel(context.Background())
+	if clients, e = CreateNMockCircuitsWithSessions(4, 4,
+		ctx); fails(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	client := clients[0]
+	log.D.Ln("client", client.Mgr().GetLocalNodeAddressString())
+	// Start up the clients.
+	for _, v := range clients {
+		go v.Start()
+	}
+	quit := qu.T()
+	var wg sync.WaitGroup
+	go func() {
+		select {
+		case <-time.After(5 * time.Second):
+		case <-quit:
+			return
+		}
+		cancel()
+		quit.Q()
+		t.Error("SendGetBalance test failed")
+	}()
+	i := 0
+	wg.Add(1)
+	returnHops := client.Mgr().GetSessionsAtHop(5)
+	var returner *sessions.Data
+	if len(returnHops) > 1 {
+		cryptorand.Shuffle(len(returnHops), func(i, j int) {
+			returnHops[i], returnHops[j] = returnHops[j],
+				returnHops[i]
+		})
+	}
+	returner = returnHops[0]
+	clients[0].SendGetBalance(returner, clients[0].Mgr().Sessions[i],
+		func(cf nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
+			log.D.Ln("success")
+			wg.Done()
+			quit.Q()
+			return
+		})
+	wg.Wait()
+	quit.Q()
+	cancel()
+	for _, v := range clients {
+		v.Shutdown()
 	}
 }

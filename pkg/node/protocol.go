@@ -1,15 +1,16 @@
 // Package node provides the magic keys that identify each network swarm in the Indra network - mainnet, testnet and simnet.
 package node
 
-type IndraNet uint32
+// Swarm is an Indra network. Encodes a network identifier for mainnet, testnet and simnet.
+type Swarm uint32
 
 const (
 	// MainNet represents the main indra network.
-	MainNet IndraNet = 0xd9b4bef9
+	MainNet Swarm = 0xd9b4bef9
 
 	// TestNet represents the regression test network.
-	TestNet IndraNet = 0xdab5bffa
+	TestNet Swarm = 0xdab5bffa
 
 	// SimNet represents the simulation test network.
-	SimNet IndraNet = 0x12141c16
+	SimNet Swarm = 0x12141c16
 )

@@ -75,7 +75,7 @@ func New(p Params) (ng *Engine, e error) {
 		Responses: &responses.Pending{},
 		KeySet:    ks,
 		Listener:  p.Listener,
-		manager:   sess.NewSessionManager(),
+		manager:   sess.NewSessionManager(p.Listener.ProtocolsAvailable()),
 		h:         hidden.NewHiddenRouting(),
 		Pause:     qu.T(),
 	}

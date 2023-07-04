@@ -4,6 +4,7 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/node"
+	"github.com/indra-labs/indra/pkg/engine/protocols"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	headers2 "github.com/indra-labs/indra/pkg/headers"
 	"github.com/indra-labs/indra/pkg/hidden"
@@ -23,6 +24,7 @@ import (
 	"github.com/indra-labs/indra/pkg/onions/reverse"
 	"github.com/indra-labs/indra/pkg/onions/route"
 	"github.com/indra-labs/indra/pkg/onions/session"
+	"github.com/indra-labs/indra/pkg/util/multi"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"net/netip"
 )
@@ -39,6 +41,14 @@ func (o Skins) Confirmation(id nonce.ID, load byte) Skins {
 
 type (
 	// Skins is a slice of onions that can be assembled into a message.
+	//
+	// Note that if an address is not found for the enabled protocols the segment
+	// will be omitted from the chain, and report the error. It is thus expected that
+	// sessions and nodes referenced in a Skins constructor were selected because
+	// they have an available protocol.
+	//
+	// It would be very uncommon to not have at least IPv4 anyway, but we handle this
+	// in an ugly way that should never see the light outside a dev lab.
 	Skins []ont.Onion
 
 	// RoutingLayer is the reverse and crypt message layers used in a RoutingHeader.
@@ -73,17 +83,33 @@ func (o Skins) Forward(addr *netip.AddrPort) Skins { return append(o, forward.Ne
 // ForwardCrypt is a forwarding and encryption layer for simple forwarding of a
 // message. Used with hidden service messages and pings for legs of the route
 // that do not need to carry a reply.
-func (o Skins) ForwardCrypt(s *sessions.Data, k *crypto.Prv, n nonce.IV) Skins {
-	return o.Forward(s.Node.AddrPort).Crypt(s.Header.Pub, s.Payload.Pub, k,
+func (o Skins) ForwardCrypt(s *sessions.Data, k *crypto.Prv, n nonce.IV, p protocols.NetworkProtocols) Skins {
+	ma := s.Node.PickAddress(p)
+	addr, e := multi.AddrToAddrPort(ma)
+	if fails(e) {
+		// report error but pass through the receiver.
+		return o
+	}
+	return o.Forward(&addr).Crypt(s.Header.Pub, s.Payload.Pub, k,
 		n, 0)
 }
 
 // ForwardSession is an onion layer that delivers the two session keys matching a
 // payment preimage to establish a new session.
 func (o Skins) ForwardSession(s *node.Node,
-	k *crypto.Prv, n nonce.IV, sess *session.Session) Skins {
+	k *crypto.Prv, n nonce.IV, sess *session.Session,
+	p protocols.NetworkProtocols) Skins {
 
-	return o.Forward(s.AddrPort).
+	ma := s.PickAddress(p)
+	addr, e := multi.AddrToAddrPort(ma)
+	if fails(e) {
+		// report error but pass through the receiver.
+		//
+		// The absense of a reachable protocol should preclude calling this method
+		// anyway. That is a contract. Make note in type definition.
+		return o
+	}
+	return o.Forward(&addr).
 		Crypt(s.Identity.Pub, nil, k, n, 0).
 		Session(sess)
 }
@@ -122,25 +148,36 @@ func (o Skins) Crypt(toHdr, toPld *crypto.Pub, from *crypto.Prv, iv nonce.IV,
 
 // ReverseCrypt is a single layer of a RoutingHeader designating the session and relay for one of the hops in a Route.
 func (o Skins) ReverseCrypt(s *sessions.Data, k *crypto.Prv, n nonce.IV,
-	seq int) (oo Skins) {
+	seq int, p protocols.NetworkProtocols) (oo Skins) {
 
 	if s == nil || k == nil {
 		oo = append(o, &reverse.Reverse{})
 		oo = append(oo, &crypt.Crypt{})
 		return
 	}
-	return o.Reverse(s.Node.AddrPort).Crypt(s.Header.Pub, s.Payload.Pub, k, n,
+	ma := s.Node.PickAddress(p)
+	addr, e := multi.AddrToAddrPort(ma)
+	if fails(e) {
+		// report error but pass through the receiver.
+		//
+		// The absense of a reachable protocol should preclude calling this method
+		// anyway. That is a contract. Make note in type definition.
+		//return o
+		e = nil
+	}
+	return o.Reverse(&addr).Crypt(s.Header.Pub, s.Payload.Pub, k, n,
 		seq)
 }
 
 // RoutingHeader constructs a RoutingHeader using inputs from an exit.Routing.
 // These are used in all hidden service messages too as the path back to both
 // ends of the path provided by the recipient at it.
-func (o Skins) RoutingHeader(r *exit.Routing) Skins {
+func (o Skins) RoutingHeader(r *exit.Routing,
+	p protocols.NetworkProtocols) Skins {
 	return o.
-		ReverseCrypt(r.Sessions[0], r.Keys[0], r.Nonces[0], 3).
-		ReverseCrypt(r.Sessions[1], r.Keys[1], r.Nonces[1], 2).
-		ReverseCrypt(r.Sessions[2], r.Keys[2], r.Nonces[2], 1)
+		ReverseCrypt(r.Sessions[0], r.Keys[0], r.Nonces[0], 3, p).
+		ReverseCrypt(r.Sessions[1], r.Keys[1], r.Nonces[1], 2, p).
+		ReverseCrypt(r.Sessions[2], r.Keys[2], r.Nonces[2], 1, p)
 }
 
 // MakeExit constructs a message containing an arbitrary payload to a node (3rd
@@ -155,64 +192,69 @@ func (o Skins) RoutingHeader(r *exit.Routing) Skins {
 // The header remains a constant size and each node in the Reverse trims off
 // their section at the top, moves the next crypt header to the top and pads the
 // remainder with noise, so it always looks like the first hop.
-func MakeExit(p exit.ExitParams) Skins {
+func MakeExit(p exit.ExitParams, np protocols.NetworkProtocols) Skins {
 	headers := headers2.GetHeaders(p.Alice, p.Bob, p.S, p.KS)
 	return Skins{}.
-		RoutingHeader(headers.Forward).
+		RoutingHeader(headers.Forward, np).
 		Exit(p.ID, p.Port, p.Payload, headers.ExitPoint()).
-		RoutingHeader(headers.Return)
+		RoutingHeader(headers.Return, np)
 }
 
 // MakeGetBalance sends out a request in a similar way to Exit except the node
 // being queried can be any of the 5.
-func MakeGetBalance(p getbalance.GetBalanceParams) Skins {
+func MakeGetBalance(p getbalance.GetBalanceParams,
+	np protocols.NetworkProtocols) Skins {
 	headers := headers2.GetHeaders(p.Alice, p.Bob, p.S, p.KS)
 	return Skins{}.
-		RoutingHeader(headers.Forward).
+		RoutingHeader(headers.Forward, np).
 		GetBalance(p.ID, headers.ExitPoint()).
-		RoutingHeader(headers.Return)
+		RoutingHeader(headers.Return, np)
 }
 
 // MakeHiddenService constructs a hiddenservice message for designating
 // introducers to refer clients to hidden services.
 func MakeHiddenService(in *adintro.Ad, alice, bob *sessions.Data,
-	c sessions.Circuit, ks *crypto.KeySet) Skins {
+	c sessions.Circuit, ks *crypto.KeySet,
+	p protocols.NetworkProtocols) Skins {
 
 	headers := headers2.GetHeaders(alice, bob, c, ks)
 	return Skins{}.
-		RoutingHeader(headers.Forward).
+		RoutingHeader(headers.Forward, p).
 		HiddenService(in, headers.ExitPoint()).
-		RoutingHeader(headers.Return)
+		RoutingHeader(headers.Return, p)
 }
 
 // MakeIntroQuery constructs a message to query a peer for an intro for a designated hidden service address.
 func MakeIntroQuery(id nonce.ID, hsk *crypto.Pub, alice, bob *sessions.Data,
-	c sessions.Circuit, ks *crypto.KeySet) Skins {
+	c sessions.Circuit, ks *crypto.KeySet,
+	p protocols.NetworkProtocols) Skins {
 
 	headers := headers2.GetHeaders(alice, bob, c, ks)
 	return Skins{}.
-		RoutingHeader(headers.Forward).
+		RoutingHeader(headers.Forward, p).
 		IntroQuery(id, hsk, headers.ExitPoint()).
-		RoutingHeader(headers.Return)
+		RoutingHeader(headers.Return, p)
 }
 
 // MakeRoute constructs a Route message, which a client sends a RoutingHeader to
 // a hidden service for them to reply with a Ready message for establishing a
 // session with a hidden service.
 func MakeRoute(id nonce.ID, k *crypto.Pub, ks *crypto.KeySet,
-	alice, bob *sessions.Data, c sessions.Circuit) Skins {
+	alice, bob *sessions.Data, c sessions.Circuit,
+	p protocols.NetworkProtocols) Skins {
 
 	headers := headers2.GetHeaders(alice, bob, c, ks)
 	return Skins{}.
-		RoutingHeader(headers.Forward).
+		RoutingHeader(headers.Forward, p).
 		Route(id, k, ks, headers.ExitPoint()).
-		RoutingHeader(headers.Return)
+		RoutingHeader(headers.Return, p)
 }
 
 // MakeSession constructs a set of 5 ForwardSession messages to deliver the
 // session keys to newly established sessions paid for via LN.
 func MakeSession(id nonce.ID, s [5]*session.Session,
-	client *sessions.Data, hop []*node.Node, ks *crypto.KeySet) Skins {
+	client *sessions.Data, hop []*node.Node, ks *crypto.KeySet,
+	p protocols.NetworkProtocols) Skins {
 
 	n := crypto.GenNonces(6)
 	sk := Skins{}
@@ -221,21 +263,23 @@ func MakeSession(id nonce.ID, s [5]*session.Session,
 			sk = sk.Crypt(hop[i].Identity.Pub, nil, ks.Next(),
 				n[i], 0).Session(s[i])
 		} else {
-			sk = sk.ForwardSession(hop[i], ks.Next(), n[i], s[i])
+			sk = sk.ForwardSession(hop[i], ks.Next(), n[i], s[i], p)
 		}
 	}
 	return sk.
-		ForwardCrypt(client, ks.Next(), n[5]).
+		ForwardCrypt(client, ks.Next(), n[5], p).
 		Confirmation(id, 0)
 }
 
 // Message constructs a hidden service message, used on both ends, with the
 // RoutingHeader received in the previosu message from the client or hidden
 // service.
-func (o Skins) Message(msg *message.Message, ks *crypto.KeySet) Skins {
+func (o Skins) Message(msg *message.Message, ks *crypto.KeySet,
+	p protocols.NetworkProtocols) Skins {
+
 	return append(o.
-		ForwardCrypt(msg.Forwards[0], ks.Next(), nonce.New()).
-		ForwardCrypt(msg.Forwards[1], ks.Next(), nonce.New()),
+		ForwardCrypt(msg.Forwards[0], ks.Next(), nonce.New(), p).
+		ForwardCrypt(msg.Forwards[1], ks.Next(), nonce.New(), p),
 		msg)
 }
 
@@ -248,16 +292,16 @@ func (o Skins) Message(msg *message.Message, ks *crypto.KeySet) Skins {
 // offline their scores will fall to zero after a time whereas live nodes will
 // have steadily increasing scores from successful pings.
 func Ping(id nonce.ID, client *sessions.Data, s sessions.Circuit,
-	ks *crypto.KeySet) Skins {
+	ks *crypto.KeySet, p protocols.NetworkProtocols) Skins {
 
 	n := crypto.GenPingNonces()
 	return Skins{}.
 		Crypt(s[0].Header.Pub, nil, ks.Next(), n[0], 0).
-		ForwardCrypt(s[1], ks.Next(), n[1]).
-		ForwardCrypt(s[2], ks.Next(), n[2]).
-		ForwardCrypt(s[3], ks.Next(), n[3]).
-		ForwardCrypt(s[4], ks.Next(), n[4]).
-		ForwardCrypt(client, ks.Next(), n[5]).
+		ForwardCrypt(s[1], ks.Next(), n[1], p).
+		ForwardCrypt(s[2], ks.Next(), n[2], p).
+		ForwardCrypt(s[3], ks.Next(), n[3], p).
+		ForwardCrypt(s[4], ks.Next(), n[4], p).
+		ForwardCrypt(client, ks.Next(), n[5], p).
 		Confirmation(id, 0)
 }
 

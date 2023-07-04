@@ -51,7 +51,7 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 			return
 		}
 		addr := slice.GenerateRandomAddrPortIPv4()
-		nodes[i], _ = node.NewNode(addr, id, tpts[i], 50000)
+		nodes[i], _ = node.NewNode([]*netip.AddrPort{addr}, id, tpts[i], 50000)
 		if cl[i], e = New(Params{
 			Listener: &transport.Listener{
 				MTU: 1382,
@@ -63,7 +63,7 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 		}); fails(e) {
 			return
 		}
-		cl[i].Mgr().SetLocalNodeAddress(nodes[i].AddrPort)
+		cl[i].Mgr().AddLocalNodeAddresses(nodes[i].Addresses)
 		cl[i].Mgr().SetLocalNode(nodes[i])
 		if inclSessions {
 			// Create a session for all but the first.
@@ -127,7 +127,7 @@ func CreateMockEngine(seed, dataPath string) (ng *Engine, cancel func(), e error
 		return
 	}
 	var nod *node.Node
-	if nod, _ = node.NewNode(&ap, k, nil, 50000); fails(e) {
+	if nod, _ = node.NewNode([]*netip.AddrPort{&ap}, k, nil, 50000); fails(e) {
 		return
 	}
 	if ng, e = New(Params{

@@ -1,5 +1,5 @@
-// Package adservices provides a message type for advertising what kinds of exit services a peer provides to clients, including the port number and the cost per megabyte of data.
-package adservices
+// Package adaddresses defines the message format that provides the network multi-address of a peer with a given public identity key.
+package adaddresses
 
 import (
 	"fmt"
@@ -14,6 +14,7 @@ import (
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
+	"net/netip"
 	"time"
 )
 
@@ -23,14 +24,9 @@ var (
 )
 
 const (
-	Magic      = "svad"
-	ServiceLen = slice.Uint16Len + slice.Uint32Len
+	Magic   = "svad"
+	AddrLen = splice.AddrLen
 )
-
-type Service struct {
-	Port      uint16
-	RelayRate uint32
-}
 
 // Ad stores a specification for the fee rate and the service port, which
 // must be a well known port to match with a type of service, eg 80 for web, 53
@@ -39,13 +35,13 @@ type Service struct {
 // signals to stop scanning for more subsequent values.
 type Ad struct {
 	adproto.Ad
-	Services []Service
+	Addresses []*netip.AddrPort
 }
 
 var _ coding.Codec = &Ad{}
 
 // New ...
-func New(id nonce.ID, key *crypto.Prv, services []Service,
+func New(id nonce.ID, key *crypto.Prv, addrs []*netip.AddrPort,
 	expiry time.Time) (sv *Ad) {
 
 	k := crypto.DerivePub(key)
@@ -55,7 +51,7 @@ func New(id nonce.ID, key *crypto.Prv, services []Service,
 			Key:    k,
 			Expiry: expiry,
 		},
-		Services: services,
+		Addresses: addrs,
 	}
 	s := splice.New(adintro.Len)
 	sv.SpliceNoSig(s)
@@ -72,10 +68,11 @@ func (x *Ad) Decode(s *splice.Splice) (e error) {
 	s.ReadID(&x.ID).
 		ReadPubkey(&x.Key).
 		ReadUint32(&count)
-	x.Services = make([]Service, count)
+	x.Addresses = make([]*netip.AddrPort, count)
 	for ; i < count; i++ {
-		s.ReadUint16(&x.Services[i].Port).
-			ReadUint32(&x.Services[i].RelayRate)
+		addy := &netip.AddrPort{}
+		s.ReadAddrPort(&addy)
+		x.Addresses[i] = addy
 	}
 	s.
 		ReadTime(&x.Expiry).
@@ -90,7 +87,7 @@ func (x *Ad) Encode(s *splice.Splice) (e error) {
 
 func (x *Ad) GetOnion() interface{} { return nil }
 
-func (x *Ad) Len() int { return adproto.Len + len(x.Services)*ServiceLen + slice.Uint32Len }
+func (x *Ad) Len() int { return adproto.Len + len(x.Addresses)*AddrLen + slice.Uint32Len + 2 }
 
 func (x *Ad) Magic() string { return "" }
 
@@ -117,7 +114,7 @@ func (x *Ad) Splice(s *splice.Splice) {
 }
 
 func (x *Ad) SpliceNoSig(s *splice.Splice) {
-	ServiceSplice(s, x.ID, x.Key, x.Services, x.Expiry)
+	ServiceSplice(s, x.ID, x.Key, x.Addresses, x.Expiry)
 }
 
 func (x *Ad) Validate() (valid bool) {
@@ -134,16 +131,14 @@ func (x *Ad) Validate() (valid bool) {
 	return false
 }
 
-func ServiceSplice(s *splice.Splice, id nonce.ID, key *crypto.Pub, services []Service, expiry time.Time) {
+func ServiceSplice(s *splice.Splice, id nonce.ID, key *crypto.Pub, addrs []*netip.AddrPort, expiry time.Time) {
 
 	s.Magic(Magic).
 		ID(id).
 		Pubkey(key).
-		Uint32(uint32(len(services)))
-	for i := range services {
-		s.
-			Uint16(services[i].Port).
-			Uint32(services[i].RelayRate)
+		Uint32(uint32(len(addrs)))
+	for i := range addrs {
+		s.AddrPort(addrs[i])
 	}
 	s.Time(expiry)
 }

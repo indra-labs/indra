@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gookit/color"
+	"github.com/indra-labs/indra/pkg/engine/protocols"
 	"github.com/ipfs/go-datastore"
 	badger "github.com/ipfs/go-ds-badger"
 	"github.com/libp2p/go-libp2p"
@@ -190,6 +191,21 @@ func GetHostAddress(ha host.Host) string {
 func GetHostOnlyAddress(ha host.Host) string {
 	addr := ha.Addrs()[0]
 	return addr.String()
+}
+
+func (l *Listener) ProtocolsAvailable() (p protocols.NetworkProtocols) {
+	if l == nil || l.Host == nil {
+		return protocols.IP4 | protocols.IP6
+	}
+	for _, v := range l.Host.Addrs() {
+		if _, e := v.ValueForProtocol(multiaddr.P_IP4); fails(e) {
+			p &= protocols.IP4
+		}
+		if _, e := v.ValueForProtocol(multiaddr.P_IP4); fails(e) {
+			p &= protocols.IP6
+		}
+	}
+	return
 }
 
 // Accept waits on inbound connections and hands them out to listeners on the

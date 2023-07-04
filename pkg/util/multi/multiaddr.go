@@ -2,6 +2,7 @@
 package multi
 
 import (
+	"errors"
 	"fmt"
 	"github.com/indra-labs/indra/pkg/crypto"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
@@ -16,15 +17,25 @@ var (
 )
 
 func AddrToAddrPort(ma multiaddr.Multiaddr) (ap netip.AddrPort, e error) {
+	if ma == nil {
+		e = errors.New("nil multiaddr.Multiaddr")
+		return
+	}
 	var addrStr string
+	var is6 bool
 	if addrStr, e = ma.ValueForProtocol(multiaddr.P_IP4); fails(e) {
 		if addrStr, e = ma.ValueForProtocol(multiaddr.P_IP6); fails(e) {
 			return
+		} else {
+			is6 = true
 		}
 	}
 	var portStr string
 	if portStr, e = ma.ValueForProtocol(multiaddr.P_TCP); fails(e) {
 		return
+	}
+	if is6 {
+		addrStr = "[" + addrStr + "]"
 	}
 	if ap, e = netip.ParseAddrPort(addrStr + ":" + portStr); fails(e) {
 		return

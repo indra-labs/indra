@@ -2,6 +2,8 @@ package sess
 
 import (
 	"errors"
+	"github.com/indra-labs/indra/pkg/util/cryptorand"
+	"github.com/indra-labs/indra/pkg/util/multi"
 	"net/netip"
 
 	"github.com/gookit/color"
@@ -13,12 +15,26 @@ import (
 	"github.com/indra-labs/indra/pkg/util/splice"
 )
 
-// Send a message to a peer via their AddrPort.
+// Send a message to a peer via their Addresses.
 func (sm *Manager) Send(addr *netip.AddrPort, s *splice.Splice) {
 	// first search if we already have the node available with connection open.
 	as := addr.String()
 	sm.ForEachNode(func(n *node.Node) bool {
-		if as == n.AddrPort.String() {
+		// Shouldn't happen, now won't make a problem.
+		if len(n.Addresses) < 1 {
+			log.T.Ln(n.Identity.Bytes.String() + " node has no addresses!")
+			return false
+		}
+		var addy string
+		shuf := make([]string, len(n.Addresses))
+		for i := range n.Addresses {
+			shuf[i] = n.Addresses[i].String()
+		}
+		cryptorand.Shuffle(len(shuf), func(i, j int) {
+			shuf[i], shuf[j] = shuf[j], shuf[i]
+		})
+		addy = shuf[0]
+		if as == addy {
 			log.D.F("%s sending message to %v",
 				sm.GetLocalNodeAddressString(), color.Yellow.Sprint(addr))
 			n.Transport.Send(s.GetAll())
@@ -31,7 +47,7 @@ func (sm *Manager) Send(addr *netip.AddrPort, s *splice.Splice) {
 // SendWithOneHook is used for onions with only one confirmation hook. Usually
 // as returned from PostAcctOnion this is the last, confirmation or response
 // layer in an onion.Skins.
-func (sm *Manager) SendWithOneHook(ap *netip.AddrPort,
+func (sm *Manager) SendWithOneHook(ap []*netip.AddrPort,
 	res *Data, responseHook responses.Callback, p *responses.Pending) {
 
 	if responseHook == nil {
@@ -39,6 +55,12 @@ func (sm *Manager) SendWithOneHook(ap *netip.AddrPort,
 			log.D.Ln("nil response hook")
 			return errors.New("nil response hook")
 		}
+	}
+	var addr netip.AddrPort
+	var e error
+	if addr, e = multi.AddrToAddrPort(sm.nodes[0].PickAddress(sm.Protocols)); fails(e) {
+		// only in tests this condition happens, normally.
+		e = nil
 	}
 	p.Add(responses.ResponseParams{
 		ID:       res.ID,
@@ -51,6 +73,6 @@ func (sm *Manager) SendWithOneHook(ap *netip.AddrPort,
 		PostAcct: res.PostAcct},
 	)
 	log.T.Ln(sm.GetLocalNodeAddressString(), "sending out onion", res.ID,
-		"to", color.Yellow.Sprint(ap.String()))
-	sm.Send(ap, splice.Load(res.B, slice.NewCursor()))
+		"to", color.Yellow.Sprint(addr.String()))
+	sm.Send(&addr, splice.Load(res.B, slice.NewCursor()))
 }

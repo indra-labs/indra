@@ -56,11 +56,14 @@ out:
 			}
 			if ws[cur].Hop == hops[i] {
 				for _, v := range so[:i] {
-					if v.Node.AddrPort.String() == sm.
-						GetLocalNodeAddressString() ||
-						v.Node.AddrPort.String() == ws[cur].Node.
-							AddrPort.String() {
-						continue
+					for a := range v.Node.Addresses {
+						if v.Node.Addresses[a].String() == sm.
+							GetLocalNodeAddressString() ||
+							v.Node.Addresses[a].String() == ws[cur].Node.
+								Addresses[a].String() {
+							continue
+						}
+
 					}
 				}
 				so[i] = ws[cur]
@@ -76,7 +79,9 @@ out:
 	}
 	var str string
 	for i := range so {
-		str += so[i].Node.AddrPort.String() + " "
+		for j := range so[i].Node.Addresses {
+			str += so[i].Node.Addresses[j].String() + " "
+		}
 	}
 	log.D.F("circuit\n%s", str)
 	return
