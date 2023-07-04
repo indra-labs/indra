@@ -8,11 +8,11 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/node"
 	"github.com/indra-labs/indra/pkg/engine/payments"
 	"github.com/indra-labs/indra/pkg/engine/services"
-	"github.com/indra-labs/indra/pkg/onions/adaddresses"
-	"github.com/indra-labs/indra/pkg/onions/adload"
-	"github.com/indra-labs/indra/pkg/onions/adpeer"
-	"github.com/indra-labs/indra/pkg/onions/adproto"
-	"github.com/indra-labs/indra/pkg/onions/adservices"
+	"github.com/indra-labs/indra/pkg/onions/ad"
+	"github.com/indra-labs/indra/pkg/onions/ad/addresses"
+	"github.com/indra-labs/indra/pkg/onions/ad/load"
+	"github.com/indra-labs/indra/pkg/onions/ad/peer"
+	services2 "github.com/indra-labs/indra/pkg/onions/ad/services"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/multi"
 	"github.com/multiformats/go-multiaddr"
@@ -36,10 +36,10 @@ const DefaultAdExpiry = time.Hour * 24 * 7 // one week
 // long time but services might change more often and load will be updated
 // whenever it dramatically changes or every few minutes.
 type NodeAds struct {
-	Peer     *adpeer.Ad
-	Address  *adaddresses.Ad
-	Services *adservices.Ad
-	Load     *adload.Ad
+	Peer     *peer.Ad
+	Address  *addresses.Ad
+	Services *services2.Ad
+	Load     *load.Ad
 }
 
 // GetMultiaddrs returns a node's listener addresses.
@@ -55,11 +55,11 @@ func GetMultiaddrs(n *node.Node) (ma []multiaddr.Multiaddr, e error) {
 }
 
 // GenerateAds takes a node.Node and creates the NodeAds matching it.
-func GenerateAds(n *node.Node, load byte) (na *NodeAds, e error) {
+func GenerateAds(n *node.Node, ld byte) (na *NodeAds, e error) {
 	expiry := time.Now().Add(DefaultAdExpiry)
-	var svcs []adservices.Service
+	var svcs []services2.Service
 	for i := range n.Services {
-		svcs = append(svcs, adservices.Service{
+		svcs = append(svcs, services2.Service{
 			Port:      n.Services[i].Port,
 			RelayRate: n.Services[i].RelayRate,
 		})
@@ -77,37 +77,37 @@ func GenerateAds(n *node.Node, load byte) (na *NodeAds, e error) {
 		addrPorts[i] = &addy
 	}
 	na = &NodeAds{
-		Peer: &adpeer.Ad{
-			Ad: adproto.Ad{
+		Peer: &peer.Ad{
+			Ad: ad.Ad{
 				ID:     nonce.NewID(),
 				Key:    n.Identity.Pub,
 				Expiry: expiry,
 			},
 			RelayRate: n.RelayRate,
 		},
-		Address: &adaddresses.Ad{
-			Ad: adproto.Ad{
+		Address: &addresses.Ad{
+			Ad: ad.Ad{
 				ID:     nonce.NewID(),
 				Key:    n.Identity.Pub,
 				Expiry: expiry,
 			},
 			Addresses: addrPorts,
 		},
-		Services: &adservices.Ad{
-			Ad: adproto.Ad{
+		Services: &services2.Ad{
+			Ad: ad.Ad{
 				ID:     nonce.NewID(),
 				Key:    n.Identity.Pub,
 				Expiry: expiry,
 			},
 			Services: svcs,
 		},
-		Load: &adload.Ad{
-			Ad: adproto.Ad{
+		Load: &load.Ad{
+			Ad: ad.Ad{
 				ID:     nonce.NewID(),
 				Key:    n.Identity.Pub,
 				Expiry: time.Now().Add(time.Minute * 10),
 			},
-			Load: load,
+			Load: ld,
 		},
 	}
 	return

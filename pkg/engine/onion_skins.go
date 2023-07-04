@@ -8,7 +8,7 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	headers2 "github.com/indra-labs/indra/pkg/headers"
 	"github.com/indra-labs/indra/pkg/hidden"
-	"github.com/indra-labs/indra/pkg/onions/adintro"
+	"github.com/indra-labs/indra/pkg/onions/ad/intro"
 	"github.com/indra-labs/indra/pkg/onions/confirmation"
 	"github.com/indra-labs/indra/pkg/onions/crypt"
 	"github.com/indra-labs/indra/pkg/onions/end"
@@ -123,7 +123,7 @@ func (o Skins) GetBalance(id nonce.ID, ep *exit.ExitPoint) Skins {
 
 // HiddenService is a message that delivers an intro and a referral RoutingHeader
 // to enable a relay to introduce a client to a hidden service.
-func (o Skins) HiddenService(in *adintro.Ad, point *exit.ExitPoint) Skins {
+func (o Skins) HiddenService(in *intro.Ad, point *exit.ExitPoint) Skins {
 	return append(o, hiddenservice.NewHiddenService(in, point))
 }
 
@@ -213,7 +213,7 @@ func MakeGetBalance(p getbalance.GetBalanceParams,
 
 // MakeHiddenService constructs a hiddenservice message for designating
 // introducers to refer clients to hidden services.
-func MakeHiddenService(in *adintro.Ad, alice, bob *sessions.Data,
+func MakeHiddenService(in *intro.Ad, alice, bob *sessions.Data,
 	c sessions.Circuit, ks *crypto.KeySet,
 	p protocols.NetworkProtocols) Skins {
 

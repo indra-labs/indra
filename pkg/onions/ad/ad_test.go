@@ -1,4 +1,4 @@
-package adservices
+package ad
 
 import (
 	"github.com/indra-labs/indra"
@@ -12,17 +12,16 @@ import (
 	"time"
 )
 
-func TestServiceAd(t *testing.T) {
+func TestNew(t *testing.T) {
 	if indra.CI == "false" {
 		log2.SetLogLevel(log2.Trace)
 	}
 	var e error
 	pr, _, _ := crypto.NewSigner()
 	id := nonce.NewID()
-	sv := New(id, pr, []Service{{80, 50000},{443, 50000}}, time.Now().Add(time.Hour))
-	log.D.S("service", sv)
-	s := splice.New(sv.Len())
-	if e = sv.Encode(s); fails(e) {
+	aa := New(id, pr, time.Now().Add(time.Hour))
+	s := splice.New(aa.Len())
+	if e = aa.Encode(s); fails(e) {
 		t.FailNow()
 	}
 	s.SetCursor(0)
@@ -35,33 +34,27 @@ func TestServiceAd(t *testing.T) {
 		t.Error("did not decode")
 		t.FailNow()
 	}
-	log.D.S(onc)
-	var svcAd *Ad
+	var ad *Ad
 	var ok bool
-	if svcAd, ok = onc.(*Ad); !ok {
+	if ad, ok = onc.(*Ad); !ok {
 		t.Error("did not unwrap expected type")
 		t.FailNow()
 	}
-	if len(sv.Services) != len(svcAd.Services) {
-		t.Errorf("number of services incorrectly decoded")
+	log.D.S(ad)
+	if ad.ID != aa.ID {
+		t.Errorf("ID did not decode correctly")
 		t.FailNow()
 	}
-	for i := range sv.Services {
-		if svcAd.Services[i].RelayRate != sv.Services[i].RelayRate {
-			t.Errorf("relay rate did not decode correctly")
-			t.FailNow()
-		}
-		if svcAd.Services[i].Port != sv.Services[i].Port {
-			t.Errorf("port did not decode correctly")
-			t.FailNow()
-		}
+	if ad.Expiry.Unix() != aa.Expiry.Unix() {
+		t.Errorf("expiry did not decode correctly")
+		t.FailNow()
 	}
-	if !svcAd.Key.Equals(crypto.DerivePub(pr)) {
+	if !ad.Key.Equals(crypto.DerivePub(pr)) {
 		t.Errorf("public key did not decode correctly")
 		t.FailNow()
 	}
-	if !svcAd.Validate() {
-		t.Errorf("received service ad did not validate")
+	if !ad.Validate() {
+		t.Errorf("received ad did not validate")
 		t.FailNow()
 	}
 }

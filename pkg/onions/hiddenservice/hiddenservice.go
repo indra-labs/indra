@@ -7,7 +7,7 @@ package hiddenservice
 
 import (
 	"github.com/indra-labs/indra/pkg/hidden"
-	intro "github.com/indra-labs/indra/pkg/onions/adintro"
+	"github.com/indra-labs/indra/pkg/onions/ad/intro"
 	"github.com/indra-labs/indra/pkg/onions/consts"
 	"github.com/indra-labs/indra/pkg/onions/end"
 	"github.com/indra-labs/indra/pkg/onions/exit"
@@ -32,28 +32,38 @@ var (
 )
 
 const (
-	HiddenServiceMagic = "hids"
-	HiddenServiceLen   = magic.Len +
+	Magic = "hids"
+	Len   = magic.Len +
 		intro.Len +
 		3*sha256.Len +
 		nonce.IVLen*3 +
 		consts.RoutingHeaderLen
 )
 
+// HiddenService is a message providing an Intro and the necessary Ciphers,
+// Nonces and RoutingHeaderBytes to forward a Route message through to the hidden
+// service, using the client's reply RoutingHeader.
 type HiddenService struct {
+
+	// Intro of the hidden service.
 	Intro intro.Ad
+
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
 	crypto.Ciphers
+
 	// Nonces are the nonces to use with the cipher when creating the encryption
 	// for the reply message, they are common with the crypts in the header.
 	crypto.Nonces
+
 	hidden.RoutingHeaderBytes
+
 	ont.Onion
 }
 
-func (x *HiddenService) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data, last bool) (skip bool,
-	sd *sessions.Data) {
+// Account the traffic for the relay handling this message.
+func (x *HiddenService) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data,
+	last bool) (skip bool, sd *sessions.Data) {
 
 	res.ID = x.Intro.ID
 	res.Billable = append(res.Billable, s.Header.Bytes)
@@ -61,9 +71,9 @@ func (x *HiddenService) Account(res *sess.Data, sm *sess.Manager, s *sessions.Da
 	return
 }
 
+// Decode the HiddenService message from the next bytes of a Splice.
 func (x *HiddenService) Decode(s *splice.Splice) (e error) {
-	if e = magic.TooShort(s.Remaining(), HiddenServiceLen-magic.Len,
-		HiddenServiceMagic); fails(e) {
+	if e = magic.TooShort(s.Remaining(), Len-magic.Len, Magic); fails(e) {
 		return
 	}
 	if e = x.Intro.Decode(s); fails(e) {
@@ -77,16 +87,19 @@ func (x *HiddenService) Decode(s *splice.Splice) (e error) {
 	return
 }
 
+// Encode a HiddenService into a the next bytes of a Splice.
 func (x *HiddenService) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.Intro.ID, x.Intro.Key, x.Intro.AddrPort, x.Ciphers, x.Nonces, x.RoutingHeaderBytes,
 	)
-	x.Intro.Splice(s.Magic(HiddenServiceMagic))
+	x.Intro.Splice(s.Magic(Magic))
 	return x.Onion.Encode(s.Ciphers(x.Ciphers).Nonces(x.Nonces))
 }
 
+// GetOnion returns the inner onion or remaining parts of the message prototype.
 func (x *HiddenService) GetOnion() interface{} { return x }
 
+// Handle defines how the ont.Ngin should deal with this onion type.
 func (x *HiddenService) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 	log.D.S("intro", x.Intro)
 	log.D.F("%s adding introduction for key %s",
@@ -106,10 +119,18 @@ func (x *HiddenService) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e er
 	return
 }
 
-func (x *HiddenService) Len() int             { return HiddenServiceLen + x.Onion.Len() }
-func (x *HiddenService) Magic() string        { return HiddenServiceMagic }
+// Len returns the length of the onion starting from this one (used to size a
+// Splice).
+func (x *HiddenService) Len() int { return Len + x.Onion.Len() }
+
+// Magic bytes identifying a HiddenService message is up next.
+func (x *HiddenService) Magic() string { return Magic }
+
+// Wrap places another onion inside this one in its slot.
 func (x *HiddenService) Wrap(inner ont.Onion) { x.Onion = inner }
 
+// NewHiddenService generates a new HiddenService data structure and returns it
+// as an ont.Onion interface.
 func NewHiddenService(in *intro.Ad, point *exit.ExitPoint) ont.Onion {
 	return &HiddenService{
 		Intro:   *in,
@@ -118,5 +139,8 @@ func NewHiddenService(in *intro.Ad, point *exit.ExitPoint) ont.Onion {
 		Onion:   end.NewEnd(),
 	}
 }
-func hiddenServiceGen() coding.Codec { return &HiddenService{} }
-func init()                          { reg.Register(HiddenServiceMagic, hiddenServiceGen) }
+
+// Gen is a factory function for a HiddenService.
+func Gen() coding.Codec { return &HiddenService{} }
+
+func init() { reg.Register(Magic, Gen) }

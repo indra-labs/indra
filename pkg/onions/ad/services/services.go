@@ -1,5 +1,5 @@
-// Package adservices provides a message type for advertising what kinds of exit services a peer provides to clients, including the port number and the cost per megabyte of data.
-package adservices
+// Package services provides a message type for advertising what kinds of exit services a peer provides to clients, including the port number and the cost per megabyte of data.
+package services
 
 import (
 	"fmt"
@@ -8,8 +8,8 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
-	"github.com/indra-labs/indra/pkg/onions/adintro"
-	"github.com/indra-labs/indra/pkg/onions/adproto"
+	"github.com/indra-labs/indra/pkg/onions/ad"
+	"github.com/indra-labs/indra/pkg/onions/ad/intro"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/slice"
@@ -38,7 +38,7 @@ type Service struct {
 // "/service/N" where N is the index of the entry. A zero value at an index
 // signals to stop scanning for more subsequent values.
 type Ad struct {
-	adproto.Ad
+	ad.Ad
 	Services []Service
 }
 
@@ -50,14 +50,14 @@ func New(id nonce.ID, key *crypto.Prv, services []Service,
 
 	k := crypto.DerivePub(key)
 	sv = &Ad{
-		Ad: adproto.Ad{
+		Ad: ad.Ad{
 			ID:     id,
 			Key:    k,
 			Expiry: expiry,
 		},
 		Services: services,
 	}
-	s := splice.New(adintro.Len)
+	s := splice.New(intro.Len)
 	sv.SpliceNoSig(s)
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	var e error
@@ -90,7 +90,7 @@ func (x *Ad) Encode(s *splice.Splice) (e error) {
 
 func (x *Ad) GetOnion() interface{} { return nil }
 
-func (x *Ad) Len() int { return adproto.Len + len(x.Services)*ServiceLen + slice.Uint32Len }
+func (x *Ad) Len() int { return ad.Len + len(x.Services)*ServiceLen + slice.Uint32Len }
 
 func (x *Ad) Magic() string { return "" }
 
@@ -121,7 +121,7 @@ func (x *Ad) SpliceNoSig(s *splice.Splice) {
 }
 
 func (x *Ad) Validate() (valid bool) {
-	s := splice.New(adintro.Len - magic.Len)
+	s := splice.New(intro.Len - magic.Len)
 	x.SpliceNoSig(s)
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	key, e := x.Sig.Recover(hash)

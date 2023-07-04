@@ -3,11 +3,11 @@ package engine
 import (
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/onions/adaddresses"
-	"github.com/indra-labs/indra/pkg/onions/adintro"
-	"github.com/indra-labs/indra/pkg/onions/adload"
-	"github.com/indra-labs/indra/pkg/onions/adpeer"
-	"github.com/indra-labs/indra/pkg/onions/adservices"
+	"github.com/indra-labs/indra/pkg/onions/ad/addresses"
+	"github.com/indra-labs/indra/pkg/onions/ad/intro"
+	"github.com/indra-labs/indra/pkg/onions/ad/load"
+	"github.com/indra-labs/indra/pkg/onions/ad/peer"
+	"github.com/indra-labs/indra/pkg/onions/ad/services"
 	"github.com/indra-labs/indra/pkg/util/multi"
 	"github.com/indra-labs/indra/pkg/util/splice"
 	"net/netip"
@@ -51,7 +51,7 @@ func TestEngine_PeerStore(t *testing.T) {
 		addy, _ := multi.AddrToAddrPort(adz[i])
 		addrs[i] = &addy
 	}
-	newAddressAd := adaddresses.New(nonce.NewID(),
+	newAddressAd := addresses.New(nonce.NewID(),
 		engines[0].Mgr().GetLocalNodeIdentityPrv(),
 		addrs,
 		time.Now().Add(time.Hour*24*7))
@@ -63,7 +63,7 @@ func TestEngine_PeerStore(t *testing.T) {
 		t.FailNow()
 	}
 	time.Sleep(time.Second)
-	newIntroAd := adintro.New(nonce.NewID(),
+	newIntroAd := intro.New(nonce.NewID(),
 		engines[0].Mgr().GetLocalNodeIdentityPrv(),
 		engines[0].Mgr().GetLocalNodeAddress(),
 		20000, 443,
@@ -76,7 +76,7 @@ func TestEngine_PeerStore(t *testing.T) {
 		t.FailNow()
 	}
 	time.Sleep(time.Second)
-	newLoadAd := adload.New(nonce.NewID(),
+	newLoadAd := load.New(nonce.NewID(),
 		engines[0].Mgr().GetLocalNodeIdentityPrv(),
 		17,
 		time.Now().Add(time.Hour*24*7))
@@ -88,7 +88,7 @@ func TestEngine_PeerStore(t *testing.T) {
 		t.FailNow()
 	}
 	time.Sleep(time.Second)
-	newPeerAd := adpeer.New(nonce.NewID(),
+	newPeerAd := peer.New(nonce.NewID(),
 		engines[0].Mgr().GetLocalNodeIdentityPrv(),
 		20000,
 		time.Now().Add(time.Hour*24*7))
@@ -101,9 +101,9 @@ func TestEngine_PeerStore(t *testing.T) {
 		t.FailNow()
 	}
 	time.Sleep(time.Second * 1)
-	newServiceAd := adservices.New(nonce.NewID(),
+	newServiceAd := services.New(nonce.NewID(),
 		engines[0].Mgr().GetLocalNodeIdentityPrv(),
-		[]adservices.Service{{20000, 54321}},
+		[]services.Service{{20000, 54321}},
 		time.Now().Add(time.Hour*24*7))
 	ss := splice.New(newServiceAd.Len())
 	if e = newServiceAd.Encode(ss); fails(e) {

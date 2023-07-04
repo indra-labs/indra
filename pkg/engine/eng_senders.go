@@ -1,7 +1,7 @@
 package engine
 
 import (
-	"github.com/indra-labs/indra/pkg/onions/adintro"
+	"github.com/indra-labs/indra/pkg/onions/ad/intro"
 	"github.com/indra-labs/indra/pkg/onions/exit"
 	"github.com/indra-labs/indra/pkg/onions/getbalance"
 	"github.com/indra-labs/indra/pkg/onions/message"
@@ -57,7 +57,9 @@ func (ng *Engine) SendGetBalance(alice, bob *sessions.Data, hook responses.Callb
 
 // SendHiddenService dispatches a hiddenservice message, providing a relay the
 // ability to refer clients to the hidden service and initiate connections.
-func (ng *Engine) SendHiddenService(id nonce.ID, key *crypto.Prv, relayRate uint32, port uint16, expiry time.Time, alice, bob *sessions.Data, svc *services.Service, hook responses.Callback) (in *adintro.Ad, e error) {
+func (ng *Engine) SendHiddenService(id nonce.ID, key *crypto.Prv, relayRate uint32,
+	port uint16, expiry time.Time, alice, bob *sessions.Data, svc *services.Service,
+	hook responses.Callback) (in *intro.Ad, e error) {
 
 	hops := sess.StandardCircuit()
 	s := make(sessions.Sessions, len(hops))
@@ -69,7 +71,7 @@ func (ng *Engine) SendHiddenService(id nonce.ID, key *crypto.Prv, relayRate uint
 	if addr, e = multi.AddrToAddrPort(alice.Node.PickAddress(ng.Mgr().Protocols)); fails(e) {
 		return
 	}
-	in = adintro.New(id, key, &addr, relayRate, port, expiry)
+	in = intro.New(id, key, &addr, relayRate, port, expiry)
 	o := MakeHiddenService(in, alice, bob, c, ng.KeySet, ng.Mgr().Protocols)
 	log.D.F("%s sending out hidden service onion %s",
 		ng.Mgr().GetLocalNodeAddressString(),
@@ -83,7 +85,7 @@ func (ng *Engine) SendHiddenService(id nonce.ID, key *crypto.Prv, relayRate uint
 
 // SendIntroQuery delivers a query for a specified hidden service public key.
 func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *crypto.Pub,
-	alice, bob *sessions.Data, hook func(in *adintro.Ad)) {
+	alice, bob *sessions.Data, hook func(in *intro.Ad)) {
 
 	fn := func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
 		s := splice.Load(b, slice.NewCursor())
@@ -91,9 +93,9 @@ func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *crypto.Pub,
 		if e = on.Decode(s); fails(e) {
 			return
 		}
-		var oni *adintro.Ad
+		var oni *intro.Ad
 		var ok bool
-		if oni, ok = on.(*adintro.Ad); !ok {
+		if oni, ok = on.(*intro.Ad); !ok {
 			return
 		}
 		hook(oni)

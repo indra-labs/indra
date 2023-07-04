@@ -1,4 +1,4 @@
-// Package introquery is an onion message that verifies a relay is an introducer for a given hidden service, returning its adintro.Ad.
+// Package introquery is an onion message that verifies a relay is an introducer for a given hidden service, returning its intro.Ad.
 //
 // After receiving this message if the intro is valid a client can use a route message to start a connection.
 package introquery
@@ -12,7 +12,7 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	"github.com/indra-labs/indra/pkg/hidden"
-	"github.com/indra-labs/indra/pkg/onions/adintro"
+	"github.com/indra-labs/indra/pkg/onions/ad/intro"
 	"github.com/indra-labs/indra/pkg/onions/crypt"
 	"github.com/indra-labs/indra/pkg/onions/end"
 	"github.com/indra-labs/indra/pkg/onions/exit"
@@ -89,11 +89,11 @@ func (x *IntroQuery) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error
 	log.D.Ln(ng.Mgr().GetLocalNodeAddressString(), "handling introquery", x.ID,
 		x.Key.ToBased32Abbreviated())
 	var ok bool
-	var il *adintro.Ad
+	var il *intro.Ad
 	if il, ok = ng.GetHidden().KnownIntros[x.Key.ToBytes()]; !ok {
 		// if the reply is zeroes the querant knows it needs to retry at a
 		// different relay
-		il = &adintro.Ad{}
+		il = &intro.Ad{}
 		ng.GetHidden().Unlock()
 		log.E.Ln("intro not known")
 		return

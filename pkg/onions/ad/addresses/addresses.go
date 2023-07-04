@@ -1,5 +1,5 @@
-// Package adaddresses defines the message format that provides the network multi-address of a peer with a given public identity key.
-package adaddresses
+// Package addresses defines the message format that provides the network multi-address of a peer with a given public identity key.
+package addresses
 
 import (
 	"fmt"
@@ -8,8 +8,8 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
-	"github.com/indra-labs/indra/pkg/onions/adintro"
-	"github.com/indra-labs/indra/pkg/onions/adproto"
+	"github.com/indra-labs/indra/pkg/onions/ad"
+	"github.com/indra-labs/indra/pkg/onions/ad/intro"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/slice"
@@ -34,26 +34,26 @@ const (
 // "/service/N" where N is the index of the entry. A zero value at an index
 // signals to stop scanning for more subsequent values.
 type Ad struct {
-	adproto.Ad
+	ad.Ad
 	Addresses []*netip.AddrPort
 }
 
 var _ coding.Codec = &Ad{}
 
-// New ...
+// New creates a new addresses.Ad.
 func New(id nonce.ID, key *crypto.Prv, addrs []*netip.AddrPort,
 	expiry time.Time) (sv *Ad) {
 
 	k := crypto.DerivePub(key)
 	sv = &Ad{
-		Ad: adproto.Ad{
+		Ad: ad.Ad{
 			ID:     id,
 			Key:    k,
 			Expiry: expiry,
 		},
 		Addresses: addrs,
 	}
-	s := splice.New(adintro.Len)
+	s := splice.New(intro.Len)
 	sv.SpliceNoSig(s)
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	var e error
@@ -63,6 +63,7 @@ func New(id nonce.ID, key *crypto.Prv, addrs []*netip.AddrPort,
 	return
 }
 
+// Decode a splice.Splice's next bytes into an Ad.
 func (x *Ad) Decode(s *splice.Splice) (e error) {
 	var i, count uint32
 	s.ReadID(&x.ID).
@@ -80,17 +81,23 @@ func (x *Ad) Decode(s *splice.Splice) (e error) {
 	return
 }
 
+// Encode an Ad into a splice.Splice's next bytes.
 func (x *Ad) Encode(s *splice.Splice) (e error) {
 	x.Splice(s)
 	return
 }
 
+// GetOnion returns nothing because there isn't an onion inside an Ad.
 func (x *Ad) GetOnion() interface{} { return nil }
 
-func (x *Ad) Len() int { return adproto.Len + len(x.Addresses)*AddrLen + slice.Uint32Len + 2 }
+// Len returns the length of bytes required to encode the Ad, based on the number
+// of Addresses inside it.
+func (x *Ad) Len() int { return ad.Len + len(x.Addresses)*AddrLen + slice.Uint32Len + 2 }
 
-func (x *Ad) Magic() string { return "" }
+// Magic bytes that identify this message
+func (x *Ad) Magic() string { return Magic }
 
+// Sign the encoded form of the bytes in order to authorise it.
 func (x *Ad) Sign(prv *crypto.Prv) (e error) {
 	s := splice.New(x.Len())
 	if e = x.Encode(s); fails(e) {
@@ -108,17 +115,20 @@ func (x *Ad) Sign(prv *crypto.Prv) (e error) {
 	return nil
 }
 
+// Splice together an Ad.
 func (x *Ad) Splice(s *splice.Splice) {
 	x.SpliceNoSig(s)
 	s.Signature(x.Sig)
 }
 
+// SpliceNoSig splices until the signature.
 func (x *Ad) SpliceNoSig(s *splice.Splice) {
-	ServiceSplice(s, x.ID, x.Key, x.Addresses, x.Expiry)
+	Splice(s, x.ID, x.Key, x.Addresses, x.Expiry)
 }
 
+// Validate checks that the signature matches the public key.
 func (x *Ad) Validate() (valid bool) {
-	s := splice.New(adintro.Len - magic.Len)
+	s := splice.New(intro.Len - magic.Len)
 	x.SpliceNoSig(s)
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	key, e := x.Sig.Recover(hash)
@@ -131,7 +141,9 @@ func (x *Ad) Validate() (valid bool) {
 	return false
 }
 
-func ServiceSplice(s *splice.Splice, id nonce.ID, key *crypto.Pub, addrs []*netip.AddrPort, expiry time.Time) {
+// Splice is a function that serializes the parts of an Ad.
+func Splice(s *splice.Splice, id nonce.ID, key *crypto.Pub,
+	addrs []*netip.AddrPort, expiry time.Time) {
 
 	s.Magic(Magic).
 		ID(id).
@@ -143,6 +155,6 @@ func ServiceSplice(s *splice.Splice, id nonce.ID, key *crypto.Pub, addrs []*neti
 	s.Time(expiry)
 }
 
-func init() { reg.Register(Magic, serviceAdGen) }
+func init() { reg.Register(Magic, Gen) }
 
-func serviceAdGen() coding.Codec { return &Ad{} }
+func Gen() coding.Codec { return &Ad{} }

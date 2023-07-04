@@ -6,7 +6,7 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/ciph"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/services"
-	"github.com/indra-labs/indra/pkg/onions/adintro"
+	"github.com/indra-labs/indra/pkg/onions/ad/intro"
 	"github.com/indra-labs/indra/pkg/onions/consts"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/slice"
@@ -42,7 +42,7 @@ type Hidden struct {
 //
 // todo: looks like that addr parameter should be in a logging closure derived from the key.
 func (hr *Hidden) AddHiddenService(svc *services.Service, key *crypto.Prv,
-	in *adintro.Ad, addr string) {
+	in *intro.Ad, addr string) {
 	pk := crypto.DerivePub(key).ToBytes()
 	hr.Lock()
 	log.D.F("%s added hidden service with key %s", addr, pk)
@@ -71,10 +71,9 @@ func (hr *Hidden) AddIntro(pk *crypto.Pub, intro *Introduction) {
 // AddIntroToHiddenService adds an intro to a given hidden service.
 //
 // todo: this looks like it isn't used.
-func (hr *Hidden) AddIntroToHiddenService(key crypto.PubBytes, in *adintro.Ad) {
+func (hr *Hidden) AddIntroToHiddenService(key crypto.PubBytes, in *intro.Ad) {
 	hr.Lock()
-	hr.Services[key].CurrentIntros = append(hr.Services[key].
-		CurrentIntros, in)
+	hr.Services[key].CurrentIntros = append(hr.Services[key].CurrentIntros, in)
 	hr.Unlock()
 }
 
@@ -192,7 +191,7 @@ func (hr *Hidden) FindHiddenService(key crypto.PubBytes) (
 	return
 }
 
-// FindIntroduction returns the adintro.Ad matching a provided public key bytes.
+// FindIntroduction returns the intro.Ad matching a provided public key bytes.
 func (hr *Hidden) FindIntroduction(key crypto.PubBytes) (intro *Introduction) {
 	hr.Lock()
 	intro = hr.FindIntroductionUnsafe(key)
@@ -213,7 +212,7 @@ func (hr *Hidden) FindIntroductionUnsafe(
 // FindKnownIntro searches non-local intros for a matching public key bytes.
 //
 // todo: this definitely should be part of peerstore.
-func (hr *Hidden) FindKnownIntro(key crypto.PubBytes) (intro *adintro.Ad) {
+func (hr *Hidden) FindKnownIntro(key crypto.PubBytes) (intro *intro.Ad) {
 	hr.Lock()
 	intro = hr.FindKnownIntroUnsafe(key)
 	hr.Unlock()
@@ -221,25 +220,25 @@ func (hr *Hidden) FindKnownIntro(key crypto.PubBytes) (intro *adintro.Ad) {
 }
 
 // FindKnownIntroUnsafe searches for a KnownIntro without locking.
-func (hr *Hidden) FindKnownIntroUnsafe(key crypto.PubBytes) (intro *adintro.Ad) {
+func (hr *Hidden) FindKnownIntroUnsafe(key crypto.PubBytes) (intro *intro.Ad) {
 	var ok bool
 	if intro, ok = hr.KnownIntros[key]; ok {
 	}
 	return
 }
 
-// Introduction is the combination of an adintro.Ad and a ReplyHeader, used to
+// Introduction is the combination of an intro.Ad and a ReplyHeader, used to
 // forward the Route message from a client and establish the connection between
 // client and hidden service.
 type Introduction struct {
-	Intro *adintro.Ad
+	Intro *intro.Ad
 	ReplyHeader
 }
 
 // KnownIntros is a key/value store of hidden service intros we know of.
 //
 // todo: This definitely should be peerstore
-type KnownIntros map[crypto.PubBytes]*adintro.Ad
+type KnownIntros map[crypto.PubBytes]*intro.Ad
 
 // LocalHiddenService is a hidden service being served from this node.
 type LocalHiddenService struct {
@@ -247,10 +246,10 @@ type LocalHiddenService struct {
 	// Prv is the private key for the hidden service.
 	Prv *crypto.Prv
 
-	// CurrentIntros are adintro.Ad that are current for this hidden service.
-	//
-	// todo: why more than one?
-	CurrentIntros []*adintro.Ad
+	// CurrentIntros are intro.Ad that are current for this hidden service. Not sure
+	// yet how many this should be. 6 or more, it really depends, perhaps have it
+	// scale up if demand exceeds supply to some sort of reasonable ceiling.
+	CurrentIntros []*intro.Ad
 
 	// Service is the definition of the hidden service. There should be a server
 	// listening on or forwarding from the service port on localhost that provides

@@ -1,5 +1,5 @@
-// Package adpeer provides a message type that provides the base information, identity key and relay rate for an Indra relay.
-package adpeer
+// Package peer provides a message type that provides the base information, identity key and relay rate for an Indra relay.
+package peer
 
 import (
 	"github.com/indra-labs/indra/pkg/crypto"
@@ -7,8 +7,8 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
-	"github.com/indra-labs/indra/pkg/onions/adintro"
-	"github.com/indra-labs/indra/pkg/onions/adproto"
+	"github.com/indra-labs/indra/pkg/onions/ad"
+	"github.com/indra-labs/indra/pkg/onions/ad/intro"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/slice"
@@ -24,13 +24,13 @@ var (
 
 const (
 	Magic = "pead"
-	Len   = adproto.Len +
+	Len   = ad.Len +
 		slice.Uint32Len
 )
 
 // Ad stores a specification for the fee rate and existence of a peer.
 type Ad struct {
-	adproto.Ad
+	ad.Ad
 	RelayRate uint32
 }
 
@@ -40,7 +40,7 @@ var _ coding.Codec = &Ad{}
 func New(id nonce.ID, key *crypto.Prv, relayRate uint32,
 	expiry time.Time) (sv *Ad) {
 
-	s := splice.New(adintro.Len)
+	s := splice.New(intro.Len)
 	k := crypto.DerivePub(key)
 	Splice(s, id, k, relayRate, expiry)
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
@@ -50,10 +50,10 @@ func New(id nonce.ID, key *crypto.Prv, relayRate uint32,
 		return nil
 	}
 	sv = &Ad{
-		Ad: adproto.Ad{
+		Ad: ad.Ad{
 			ID:     id,
 			Key:    k,
-			Expiry: time.Now().Add(adproto.TTL),
+			Expiry: time.Now().Add(ad.TTL),
 			Sig:    sign,
 		},
 		RelayRate: relayRate,
@@ -106,7 +106,7 @@ func (x *Ad) SpliceNoSig(s *splice.Splice) {
 }
 
 func (x *Ad) Validate() (valid bool) {
-	s := splice.New(adintro.Len - magic.Len)
+	s := splice.New(intro.Len - magic.Len)
 	x.SpliceNoSig(s)
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
 	key, e := x.Sig.Recover(hash)

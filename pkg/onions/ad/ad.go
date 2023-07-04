@@ -1,5 +1,7 @@
-// Package adproto is an abstract message type that composes the common elements of all ads - nonce ID, public key (identity), expiry and signature.
-package adproto
+// Package ad is an abstract message type that composes the common elements of all ads - nonce ID, public key (identity), expiry and signature.
+//
+// The concrete ad types are in subfolders of this package.
+package ad
 
 import (
 	"github.com/indra-labs/indra/pkg/crypto"

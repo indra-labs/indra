@@ -1,5 +1,5 @@
-// Package adload provides a message type that provides information about the current load level of a node identified by its public key.
-package adload
+// Package load provides a message type that provides information about the current load level of a node identified by its public key.
+package load
 
 import (
 	"github.com/indra-labs/indra/pkg/crypto"
@@ -7,7 +7,7 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	"github.com/indra-labs/indra/pkg/engine/magic"
-	"github.com/indra-labs/indra/pkg/onions/adproto"
+	"github.com/indra-labs/indra/pkg/onions/ad"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/splice"
@@ -22,12 +22,12 @@ var (
 
 const (
 	Magic = "load"
-	Len   = adproto.Len + 1
+	Len   = ad.Len + 1
 )
 
 // Ad stores a specification for the fee rate and existence of a peer.
 type Ad struct {
-	adproto.Ad
+	ad.Ad
 	Load byte
 }
 
@@ -39,7 +39,7 @@ func New(id nonce.ID, key *crypto.Prv, load byte,
 
 	k := crypto.DerivePub(key)
 	sv = &Ad{
-		Ad: adproto.Ad{
+		Ad: ad.Ad{
 			ID:     id,
 			Key:    k,
 			Expiry: expiry,
