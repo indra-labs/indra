@@ -11,7 +11,6 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/coding"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
 func TestNew(t *testing.T) {
@@ -19,9 +18,10 @@ func TestNew(t *testing.T) {
 		log2.SetLogLevel(log2.Trace)
 	}
 	var e error
-	pr, _, _ := crypto.NewSigner()
+	pr, ks, _ := crypto.NewSigner()
+	introducer := ks.Next()
 	id := nonce.NewID()
-	in := New(id, pr, slice.GenerateRandomAddrPortIPv6(),
+	in := New(id, pr, crypto.DerivePub(introducer),
 		20000, 80, time.Now().Add(time.Hour))
 	s := splice.New(in.Len())
 	if e = in.Encode(s); fails(e) {
@@ -60,11 +60,11 @@ func TestNew(t *testing.T) {
 		t.Errorf("expiry did not decode correctly")
 		t.FailNow()
 	}
-	if ad.AddrPort.String() != in.AddrPort.String() {
-		t.Errorf("addrport did not decode correctly")
+	if !ad.Key.Equals(crypto.DerivePub(pr)) {
+		t.Errorf("public key did not decode correctly")
 		t.FailNow()
 	}
-	if !ad.Key.Equals(crypto.DerivePub(pr)) {
+	if !ad.Introducer.Equals(crypto.DerivePub(introducer)) {
 		t.Errorf("public key did not decode correctly")
 		t.FailNow()
 	}

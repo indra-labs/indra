@@ -5,7 +5,6 @@ import (
 	"github.com/indra-labs/indra/pkg/onions/ad"
 	"github.com/indra-labs/indra/pkg/onions/reg"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"net/netip"
 	"reflect"
 	"time"
 
@@ -25,18 +24,25 @@ var (
 
 const (
 	Magic = "inad"
-	Len   = ad.Len + splice.AddrLen + 1 + slice.Uint16Len + slice.Uint32Len
+	Len   = ad.Len + crypto.PubKeyLen + slice.Uint16Len + slice.Uint32Len
 )
 
 // Ad is an Intro message that signals that a hidden service can be accessed from
-// a given relay at a given address.
-//
-// todo: needs to be plural too!
+// a given relay identifiable by its public key.
 type Ad struct {
+
+	// Embed ad.Ad for the common fields
 	ad.Ad
-	AddrPort  *netip.AddrPort // Introducer address.
-	Port      uint16          // Well known port of protocol available.
-	RelayRate uint32          // mSat/Mb
+
+	// Introducer is the key of the node that can forward a Route message to help
+	// establish a connection to a hidden service.
+	Introducer *crypto.Pub
+	// Port is the well known port of protocol available.
+	Port uint16
+
+	// Rate for accessing the hidden service (covers the hidden service routing
+	// header relaying).
+	RelayRate uint32
 }
 
 var _ coding.Codec = &Ad{}
@@ -51,7 +57,7 @@ func (x *Ad) Decode(s *splice.Splice) (e error) {
 	s.
 		ReadID(&x.ID).
 		ReadPubkey(&x.Key).
-		ReadAddrPort(&x.AddrPort).
+		ReadPubkey(&x.Introducer).
 		ReadUint32(&x.RelayRate).
 		ReadUint16(&x.Port).
 		ReadTime(&x.Expiry).
@@ -70,8 +76,6 @@ func (x *Ad) Encode(s *splice.Splice) (e error) {
 func (x *Ad) GetOnion() interface{} { return nil }
 
 // Len returns the length of the binary encoded Ad.
-//
-// todo: plural.
 func (x *Ad) Len() int { return Len }
 
 // Magic is the identifier indicating an Ad is encoded in the following bytes.
@@ -85,7 +89,7 @@ func (x *Ad) Splice(s *splice.Splice) {
 
 // SpliceNoSig serializes the Ad but stops at the signature.
 func (x *Ad) SpliceNoSig(s *splice.Splice) {
-	IntroSplice(s, x.ID, x.Key, x.AddrPort, x.RelayRate, x.Port, x.Expiry)
+	IntroSplice(s, x.ID, x.Key, x.Introducer, x.RelayRate, x.Port, x.Expiry)
 }
 
 // Validate checks the signature matches the public key of the Ad.
@@ -108,7 +112,7 @@ func IntroSplice(
 	s *splice.Splice,
 	id nonce.ID,
 	key *crypto.Pub,
-	ap *netip.AddrPort,
+	introducer *crypto.Pub,
 	relayRate uint32,
 	port uint16,
 	expires time.Time,
@@ -117,7 +121,7 @@ func IntroSplice(
 	s.Magic(Magic).
 		ID(id).
 		Pubkey(key).
-		AddrPort(ap).
+		Pubkey(introducer).
 		Uint32(relayRate).
 		Uint16(port).
 		Time(expires)
@@ -127,7 +131,7 @@ func IntroSplice(
 func New(
 	id nonce.ID,
 	key *crypto.Prv,
-	ap *netip.AddrPort,
+	introducer *crypto.Pub,
 	relayRate uint32,
 	port uint16,
 	expires time.Time,
@@ -141,9 +145,9 @@ func New(
 			Key:    pk,
 			Expiry: expires,
 		},
-		AddrPort:  ap,
-		RelayRate: relayRate,
-		Port:      port,
+		Introducer: introducer,
+		RelayRate:  relayRate,
+		Port:       port,
 	}
 	s := splice.New(in.Len())
 	in.SpliceNoSig(s)
@@ -157,4 +161,5 @@ func New(
 
 func init() { reg.Register(Magic, Gen) }
 
+// Gen is a factory function for an Ad.
 func Gen() coding.Codec { return &Ad{} }

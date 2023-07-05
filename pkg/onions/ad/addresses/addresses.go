@@ -28,13 +28,17 @@ const (
 	AddrLen = splice.AddrLen
 )
 
-// Ad stores a specification for the fee rate and the service port, which
-// must be a well known port to match with a type of service, eg 80 for web, 53
-// for DNS, etc. These are also attached to the PeerAd entry via concatenating
-// "/service/N" where N is the index of the entry. A zero value at an index
-// signals to stop scanning for more subsequent values.
+// Ad stores a specification for the fee rate and the service ports of a set of
+// services being offered at a relay
+//
+// These must be a well known port to match with a type of service, eg 80 for
+// web, 53 for DNS, 8333 for bitcoin p2p, 8334 for bitcoin JSONRPC... For simplicity.
 type Ad struct {
+
+	// Embed ad.Ad for the common fields
 	ad.Ad
+
+	// Addresses that the peer can be reached on (though may not be listeners).
 	Addresses []*netip.AddrPort
 }
 
@@ -157,4 +161,5 @@ func Splice(s *splice.Splice, id nonce.ID, key *crypto.Pub,
 
 func init() { reg.Register(Magic, Gen) }
 
+// Gen is a factory function to generate an Ad.
 func Gen() coding.Codec { return &Ad{} }

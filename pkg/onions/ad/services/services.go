@@ -38,13 +38,17 @@ type Service struct {
 // "/service/N" where N is the index of the entry. A zero value at an index
 // signals to stop scanning for more subsequent values.
 type Ad struct {
+
+	// Embed ad.Ad for the common fields
 	ad.Ad
+
+	// Services available on the relay identified by the public key.
 	Services []Service
 }
 
 var _ coding.Codec = &Ad{}
 
-// New ...
+// New creates a new Ad and signs it.
 func New(id nonce.ID, key *crypto.Prv, services []Service,
 	expiry time.Time) (sv *Ad) {
 
@@ -67,6 +71,7 @@ func New(id nonce.ID, key *crypto.Prv, services []Service,
 	return
 }
 
+// Decode an Ad out of the next bytes of a splice.Splice.
 func (x *Ad) Decode(s *splice.Splice) (e error) {
 	var i, count uint32
 	s.ReadID(&x.ID).
@@ -83,17 +88,24 @@ func (x *Ad) Decode(s *splice.Splice) (e error) {
 	return
 }
 
+// Encode an Ad into the next bytes of a splice.Splice.
 func (x *Ad) Encode(s *splice.Splice) (e error) {
 	x.Splice(s)
 	return
 }
 
+// GetOnion returns nil because there is no onion inside.
 func (x *Ad) GetOnion() interface{} { return nil }
 
+// Len returns the length of the binary encoded Ad.
+//
+// This gives different values depending on how many services are listed.
 func (x *Ad) Len() int { return ad.Len + len(x.Services)*ServiceLen + slice.Uint32Len }
 
+// Magic is the identifier indicating an Ad is encoded in the following bytes.
 func (x *Ad) Magic() string { return "" }
 
+// Sign the Ad with the provided private key. It must match the embedded ad.Ad Key.
 func (x *Ad) Sign(prv *crypto.Prv) (e error) {
 	s := splice.New(x.Len())
 	if e = x.Encode(s); fails(e) {
@@ -111,15 +123,18 @@ func (x *Ad) Sign(prv *crypto.Prv) (e error) {
 	return nil
 }
 
+// Splice serializes an Ad into a splice.Splice.
 func (x *Ad) Splice(s *splice.Splice) {
 	x.SpliceNoSig(s)
 	s.Signature(x.Sig)
 }
 
+// SpliceNoSig serializes the Ad but stops at the signature.
 func (x *Ad) SpliceNoSig(s *splice.Splice) {
 	ServiceSplice(s, x.ID, x.Key, x.Services, x.Expiry)
 }
 
+// Validate checks the signature matches the public key of the Ad.
 func (x *Ad) Validate() (valid bool) {
 	s := splice.New(intro.Len - magic.Len)
 	x.SpliceNoSig(s)
@@ -134,6 +149,7 @@ func (x *Ad) Validate() (valid bool) {
 	return false
 }
 
+// ServiceSplice creates the message part up to the signature for an Ad.
 func ServiceSplice(s *splice.Splice, id nonce.ID, key *crypto.Pub, services []Service, expiry time.Time) {
 
 	s.Magic(Magic).
@@ -148,6 +164,7 @@ func ServiceSplice(s *splice.Splice, id nonce.ID, key *crypto.Pub, services []Se
 	s.Time(expiry)
 }
 
-func init() { reg.Register(Magic, serviceAdGen) }
+func init() { reg.Register(Magic, Gen) }
 
-func serviceAdGen() coding.Codec { return &Ad{} }
+// Gen is the factory function for an Ad.
+func Gen() coding.Codec { return &Ad{} }
