@@ -8,12 +8,12 @@ import (
 
 	"github.com/VividCortex/ewma"
 	"github.com/gookit/color"
+	"github.com/indra-labs/indra/pkg/codec/reg"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/engine/packet"
 	"github.com/indra-labs/indra/pkg/engine/transport"
-	"github.com/indra-labs/indra/pkg/onions/reg"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/cryptorand"
 	"github.com/indra-labs/indra/pkg/util/qu"

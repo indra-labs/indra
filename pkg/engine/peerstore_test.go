@@ -2,12 +2,12 @@ package engine
 
 import (
 	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/pkg/codec/ad/addresses"
+	"github.com/indra-labs/indra/pkg/codec/ad/intro"
+	"github.com/indra-labs/indra/pkg/codec/ad/load"
+	"github.com/indra-labs/indra/pkg/codec/ad/peer"
+	"github.com/indra-labs/indra/pkg/codec/ad/services"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/onions/ad/addresses"
-	"github.com/indra-labs/indra/pkg/onions/ad/intro"
-	"github.com/indra-labs/indra/pkg/onions/ad/load"
-	"github.com/indra-labs/indra/pkg/onions/ad/peer"
-	"github.com/indra-labs/indra/pkg/onions/ad/services"
 	"github.com/indra-labs/indra/pkg/util/multi"
 	"github.com/indra-labs/indra/pkg/util/splice"
 	"net/netip"
@@ -65,7 +65,7 @@ func TestEngine_PeerStore(t *testing.T) {
 	time.Sleep(time.Second)
 	newIntroAd := intro.New(nonce.NewID(),
 		engines[0].Mgr().GetLocalNodeIdentityPrv(),
-		engines[0].Mgr().GetLocalNodeAddress(),
+		engines[0].Mgr().GetLocalNode().Identity.Pub,
 		20000, 443,
 		time.Now().Add(time.Hour*24*7))
 	si := splice.New(newIntroAd.Len())

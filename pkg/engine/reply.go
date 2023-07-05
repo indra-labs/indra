@@ -1,11 +1,11 @@
 package engine
 
 import (
+	"github.com/indra-labs/indra/pkg/codec/onion/exit"
+	"github.com/indra-labs/indra/pkg/codec/ont"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	"github.com/indra-labs/indra/pkg/hidden"
-	"github.com/indra-labs/indra/pkg/onions/exit"
-	"github.com/indra-labs/indra/pkg/onions/ont"
 )
 
 // MakeReplyHeader constructs a reply header for hidden service messages.

@@ -3,10 +3,10 @@ package engine
 import (
 	"fmt"
 	"github.com/gookit/color"
+	"github.com/indra-labs/indra/pkg/codec/onion/session"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/node"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
-	"github.com/indra-labs/indra/pkg/onions/session"
 	"github.com/indra-labs/indra/pkg/util/cryptorand"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/lightningnetwork/lnd/lnwire"

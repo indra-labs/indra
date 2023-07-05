@@ -2,12 +2,12 @@
 package hidden
 
 import (
+	"github.com/indra-labs/indra/pkg/codec/ad/intro"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/ciph"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	"github.com/indra-labs/indra/pkg/engine/consts"
 	"github.com/indra-labs/indra/pkg/engine/services"
-	"github.com/indra-labs/indra/pkg/onions/ad/intro"
-	"github.com/indra-labs/indra/pkg/onions/consts"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"

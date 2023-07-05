@@ -9,9 +9,9 @@ package based32
 import (
 	"encoding/base32"
 	"fmt"
-	"github.com/indra-labs/indra/pkg/constant"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/util/b32"
 	"github.com/indra-labs/indra/pkg/util/b32/codec"
 )
 
@@ -19,7 +19,7 @@ var (
 	// Codec provides the encoder/decoder implementation created by makeCodec.
 	Codec = makeCodec(
 		"Base32Check",
-		constant.Based32Ciphers,
+		b32.Based32Ciphers,
 		"",
 	)
 	log   = log2.GetLogger()

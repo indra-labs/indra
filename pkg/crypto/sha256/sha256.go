@@ -6,8 +6,8 @@ package sha256
 import (
 	"encoding/base32"
 	"encoding/hex"
-	"github.com/indra-labs/indra/pkg/constant"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/util/b32"
 	"github.com/minio/sha256-simd"
 )
 
@@ -19,7 +19,7 @@ var (
 	// extraneous characters after 52 digits from padding and do not need check
 	// bytes as they are compact large numbers for logs and message digests for
 	// other things.
-	enc   = base32.NewEncoding(constant.Based32Ciphers).EncodeToString
+	enc   = base32.NewEncoding(b32.Based32Ciphers).EncodeToString
 	log   = log2.GetLogger()
 	fails = log.E.Chk
 )

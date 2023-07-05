@@ -2,6 +2,8 @@ package engine
 
 import (
 	"context"
+	"github.com/indra-labs/indra/pkg/codec/ont"
+	"github.com/indra-labs/indra/pkg/codec/reg"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/ads"
@@ -12,8 +14,6 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/tpt"
 	"github.com/indra-labs/indra/pkg/engine/transport"
 	"github.com/indra-labs/indra/pkg/hidden"
-	"github.com/indra-labs/indra/pkg/onions/ont"
-	"github.com/indra-labs/indra/pkg/onions/reg"
 	"github.com/indra-labs/indra/pkg/util/qu"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"

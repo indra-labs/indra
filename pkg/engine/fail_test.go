@@ -5,6 +5,10 @@ package engine
 import (
 	"context"
 	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/pkg/codec/onion/ready"
+	"github.com/indra-labs/indra/pkg/codec/onion/response"
+	"github.com/indra-labs/indra/pkg/codec/onion/whisper"
+	"github.com/indra-labs/indra/pkg/codec/ont"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
@@ -12,10 +16,6 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/services"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	"github.com/indra-labs/indra/pkg/engine/transport"
-	"github.com/indra-labs/indra/pkg/onions/message"
-	"github.com/indra-labs/indra/pkg/onions/ont"
-	"github.com/indra-labs/indra/pkg/onions/ready"
-	"github.com/indra-labs/indra/pkg/onions/response"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/cryptorand"
 	"github.com/indra-labs/indra/pkg/util/qu"
@@ -165,8 +165,8 @@ func TestEngine_Message(t *testing.T) {
 	msg, _, _ := tests.GenMessage(256, "hidden service message test")
 	wg.Add(1)
 	counter.Inc()
-	var ms *message.Message
-	client.SendMessage(&message.Message{
+	var ms *whisper.Message
+	client.SendMessage(&whisper.Message{
 		Address: rd.Address,
 		ID:      nonce.NewID(),
 		Re:      rd.ID,
@@ -175,7 +175,7 @@ func TestEngine_Message(t *testing.T) {
 		Payload: msg,
 	}, func(id nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
 		log.D.S("request success", id, ifc)
-		ms = ifc.(*message.Message)
+		ms = ifc.(*whisper.Message)
 		counter.Dec()
 		wg.Done()
 		return
@@ -183,7 +183,7 @@ func TestEngine_Message(t *testing.T) {
 	wg.Wait()
 	wg.Add(1)
 	counter.Inc()
-	client.SendMessage(&message.Message{
+	client.SendMessage(&whisper.Message{
 		Address: ms.Address,
 		ID:      nonce.NewID(),
 		Re:      ms.ID,

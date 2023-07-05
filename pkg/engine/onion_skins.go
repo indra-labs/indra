@@ -1,6 +1,22 @@
 package engine
 
 import (
+	"github.com/indra-labs/indra/pkg/codec/ad/intro"
+	"github.com/indra-labs/indra/pkg/codec/onion/confirmation"
+	"github.com/indra-labs/indra/pkg/codec/onion/crypt"
+	"github.com/indra-labs/indra/pkg/codec/onion/end"
+	"github.com/indra-labs/indra/pkg/codec/onion/exit"
+	"github.com/indra-labs/indra/pkg/codec/onion/forward"
+	"github.com/indra-labs/indra/pkg/codec/onion/getbalance"
+	"github.com/indra-labs/indra/pkg/codec/onion/hiddenservice"
+	"github.com/indra-labs/indra/pkg/codec/onion/introquery"
+	"github.com/indra-labs/indra/pkg/codec/onion/ready"
+	"github.com/indra-labs/indra/pkg/codec/onion/response"
+	"github.com/indra-labs/indra/pkg/codec/onion/reverse"
+	"github.com/indra-labs/indra/pkg/codec/onion/route"
+	"github.com/indra-labs/indra/pkg/codec/onion/session"
+	"github.com/indra-labs/indra/pkg/codec/onion/whisper"
+	"github.com/indra-labs/indra/pkg/codec/ont"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/node"
@@ -8,22 +24,6 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	headers2 "github.com/indra-labs/indra/pkg/headers"
 	"github.com/indra-labs/indra/pkg/hidden"
-	"github.com/indra-labs/indra/pkg/onions/ad/intro"
-	"github.com/indra-labs/indra/pkg/onions/confirmation"
-	"github.com/indra-labs/indra/pkg/onions/crypt"
-	"github.com/indra-labs/indra/pkg/onions/end"
-	"github.com/indra-labs/indra/pkg/onions/exit"
-	"github.com/indra-labs/indra/pkg/onions/forward"
-	"github.com/indra-labs/indra/pkg/onions/getbalance"
-	"github.com/indra-labs/indra/pkg/onions/hiddenservice"
-	"github.com/indra-labs/indra/pkg/onions/introquery"
-	"github.com/indra-labs/indra/pkg/onions/message"
-	"github.com/indra-labs/indra/pkg/onions/ont"
-	"github.com/indra-labs/indra/pkg/onions/ready"
-	"github.com/indra-labs/indra/pkg/onions/response"
-	"github.com/indra-labs/indra/pkg/onions/reverse"
-	"github.com/indra-labs/indra/pkg/onions/route"
-	"github.com/indra-labs/indra/pkg/onions/session"
 	"github.com/indra-labs/indra/pkg/util/multi"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"net/netip"
@@ -274,7 +274,7 @@ func MakeSession(id nonce.ID, s [5]*session.Session,
 // Message constructs a hidden service message, used on both ends, with the
 // RoutingHeader received in the previosu message from the client or hidden
 // service.
-func (o Skins) Message(msg *message.Message, ks *crypto.KeySet,
+func (o Skins) Message(msg *whisper.Message, ks *crypto.KeySet,
 	p protocols.NetworkProtocols) Skins {
 
 	return append(o.

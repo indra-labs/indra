@@ -1,12 +1,12 @@
 package engine
 
 import (
-	"github.com/indra-labs/indra/pkg/onions/ad/intro"
-	"github.com/indra-labs/indra/pkg/onions/exit"
-	"github.com/indra-labs/indra/pkg/onions/getbalance"
-	"github.com/indra-labs/indra/pkg/onions/message"
-	"github.com/indra-labs/indra/pkg/onions/ont"
-	"github.com/indra-labs/indra/pkg/onions/reg"
+	"github.com/indra-labs/indra/pkg/codec/ad/intro"
+	"github.com/indra-labs/indra/pkg/codec/onion/exit"
+	"github.com/indra-labs/indra/pkg/codec/onion/getbalance"
+	"github.com/indra-labs/indra/pkg/codec/onion/whisper"
+	"github.com/indra-labs/indra/pkg/codec/ont"
+	"github.com/indra-labs/indra/pkg/codec/reg"
 	"github.com/indra-labs/indra/pkg/util/multi"
 	"net/netip"
 	"time"
@@ -71,7 +71,7 @@ func (ng *Engine) SendHiddenService(id nonce.ID, key *crypto.Prv, relayRate uint
 	if addr, e = multi.AddrToAddrPort(alice.Node.PickAddress(ng.Mgr().Protocols)); fails(e) {
 		return
 	}
-	in = intro.New(id, key, &addr, relayRate, port, expiry)
+	in = intro.New(id, key, bob.Node.Identity.Pub, relayRate, port, expiry)
 	o := MakeHiddenService(in, alice, bob, c, ng.KeySet, ng.Mgr().Protocols)
 	log.D.F("%s sending out hidden service onion %s",
 		ng.Mgr().GetLocalNodeAddressString(),
@@ -117,7 +117,7 @@ func (ng *Engine) SendIntroQuery(id nonce.ID, hsk *crypto.Pub,
 
 // SendMessage delivers a message to a hidden service for which we have an
 // existing routing header from a previous or initial message cycle.
-func (ng *Engine) SendMessage(mp *message.Message, hook responses.Callback) (id nonce.ID) {
+func (ng *Engine) SendMessage(mp *whisper.Message, hook responses.Callback) (id nonce.ID) {
 	// Add another two hops for security against unmasking.
 	preHops := []byte{0, 1}
 	oo := ng.Mgr().SelectHops(preHops, mp.Forwards[:], "sendmessage")

@@ -2,12 +2,12 @@ package dispatcher
 
 import (
 	"fmt"
+	"github.com/indra-labs/indra/pkg/codec"
+	"github.com/indra-labs/indra/pkg/codec/ont"
+	"github.com/indra-labs/indra/pkg/codec/reg"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
-	"github.com/indra-labs/indra/pkg/engine/coding"
-	"github.com/indra-labs/indra/pkg/onions/ont"
-	"github.com/indra-labs/indra/pkg/onions/reg"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
 )
@@ -70,7 +70,7 @@ func (a *Acknowledge) Encode(s *splice.Splice) (e error) {
 
 // AcknowledgeGen is a factory function that will be added to the registry for
 // recognition and generation.
-func AcknowledgeGen() coding.Codec { return &Acknowledge{&RxRecord{}} }
+func AcknowledgeGen() codec.Codec { return &Acknowledge{&RxRecord{}} }
 
 // GetOnion returns nil because there is no onion inside an Acknowledge.
 func (a *Acknowledge) GetOnion() interface{} { return nil }
@@ -84,7 +84,7 @@ func (a *Acknowledge) Len() int {
 func (a *Acknowledge) Magic() string { return AcknowledgeMagic }
 
 // InitRekeyGen is a factory function to generate a NewKey.
-func InitRekeyGen() coding.Codec { return &NewKey{} }
+func InitRekeyGen() codec.Codec { return &NewKey{} }
 
 // Decode a NewKey out of a splice with cursor pointing to the first byte after
 // the magic.
@@ -133,7 +133,7 @@ func (o *Onion) Encode(s *splice.Splice) (e error) {
 }
 
 // OnionGen is a factory function for creating a new Onion.
-func OnionGen() coding.Codec { return &Onion{} }
+func OnionGen() codec.Codec { return &Onion{} }
 
 // GetOnion invockes Unpack, which returns the onion.
 func (o *Onion) GetOnion() interface{} { return o.Unpack() }

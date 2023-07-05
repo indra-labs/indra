@@ -3,8 +3,8 @@ package nonce
 import (
 	"crypto/rand"
 	"encoding/base32"
-	"github.com/indra-labs/indra/pkg/constant"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
+	"github.com/indra-labs/indra/pkg/util/b32"
 	"sync"
 )
 
@@ -15,7 +15,7 @@ var (
 	// enc is a raw base32 encoder as IDs have a consistent set of extraneous
 	// characters after 13 digits and do not need check bytes as they are compact
 	// large numbers used as collision resistant nonces to identify items in lists.
-	enc  = base32.NewEncoding(constant.Based32Ciphers).EncodeToString
+	enc  = base32.NewEncoding(b32.Based32Ciphers).EncodeToString
 	idMx sync.Mutex
 	seed sha256.Hash
 )

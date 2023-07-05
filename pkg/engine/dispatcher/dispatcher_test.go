@@ -2,15 +2,15 @@ package dispatcher
 
 import (
 	"context"
+	"github.com/indra-labs/indra/pkg/codec/onion/confirmation"
+	"github.com/indra-labs/indra/pkg/codec/onion/response"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/pkg/codec/ont"
 	"github.com/indra-labs/indra/pkg/engine"
-	"github.com/indra-labs/indra/pkg/onions/confirmation"
-	"github.com/indra-labs/indra/pkg/onions/ont"
-	"github.com/indra-labs/indra/pkg/onions/response"
 
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
