@@ -71,7 +71,6 @@ func TestDispatcher(t *testing.T) {
 	d2 := NewDispatcher(<-l2.Accept(), ctx, ks)
 	var msgp1, msgp2 slice.Bytes
 	id1, id2 := nonce.NewID(), nonce.NewID()
-	var load1 byte = 128
 	// var load2 byte = 32
 	on1 := ont.Assemble(engine.Skins{
 		confirmation.New(id1)})

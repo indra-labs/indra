@@ -16,7 +16,6 @@ func TestOnions_Confirmation(t *testing.T) {
 		log2.SetLogLevel(log2.Debug)
 	}
 	id := nonce.NewID()
-	var load byte = 128
 	on := ont.Assemble([]ont.Onion{New(id)})
 	s := ont.Encode(on)
 	s.SetCursor(0)
@@ -38,10 +37,6 @@ func TestOnions_Confirmation(t *testing.T) {
 	}
 	if ci.ID != id {
 		t.Error("Keys did not decode correctly")
-		t.FailNow()
-	}
-	if ci.Load != load {
-		t.Error("load did not decode correctly")
 		t.FailNow()
 	}
 }
