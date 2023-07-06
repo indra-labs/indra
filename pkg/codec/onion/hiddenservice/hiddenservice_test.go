@@ -80,7 +80,7 @@ func TestOnions_HiddenService(t *testing.T) {
 	log.D.S("ep", ep)
 	in := intro.New(id, pr, slice.GenerateRandomAddrPortIPv6(),
 		20000, 80, time.Now().Add(time.Hour))
-	on := ont.Assemble([]ont.Onion{NewHiddenService(in, ep)})
+	on := ont.Assemble([]ont.Onion{New(in, ep)})
 	s := ont.Encode(on)
 	s.SetCursor(0)
 	var onc codec.Codec

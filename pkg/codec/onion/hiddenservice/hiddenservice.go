@@ -129,9 +129,9 @@ func (x *HiddenService) Magic() string { return Magic }
 // Wrap places another onion inside this one in its slot.
 func (x *HiddenService) Wrap(inner ont.Onion) { x.Onion = inner }
 
-// NewHiddenService generates a new HiddenService data structure and returns it
-// as an ont.Onion interface.
-func NewHiddenService(in *intro.Ad, point *exit.ExitPoint) ont.Onion {
+// New generates a new HiddenService data structure and returns it as an
+// ont.Onion interface.
+func New(in *intro.Ad, point *exit.ExitPoint) ont.Onion {
 	return &HiddenService{
 		Intro:   *in,
 		Ciphers: crypto.GenCiphers(point.Keys, point.ReturnPubs),

@@ -36,7 +36,7 @@ func TestOnions_IntroQuery(t *testing.T) {
 	}
 	id := nonce.NewID()
 	on := ont.Assemble([]ont.Onion{
-		NewIntroQuery(id, crypto.DerivePub(prv1), ep),
+		New(id, crypto.DerivePub(prv1), ep),
 		end.NewEnd(),
 	})
 	s := ont.Encode(on)

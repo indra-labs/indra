@@ -29,41 +29,46 @@ var (
 )
 
 const (
-	IntroQueryMagic = "intq"
-	IntroQueryLen   = magic.Len + nonce.IDLen + crypto.PubKeyLen +
+	Magic = "intq"
+	Len   = magic.Len + nonce.IDLen + crypto.PubKeyLen +
 		3*sha256.Len + nonce.IVLen*3
 )
 
+// IntroQuery is a query message to return the Intro for a given hidden service
+// key.
 type IntroQuery struct {
 	ID nonce.ID
+
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
 	crypto.Ciphers
+
 	// Nonces are the nonces to use with the cipher when creating the
 	// encryption for the reply message,
 	// they are common with the crypts in the header.
 	crypto.Nonces
-	// Port identifies the type of service as well as being the port used by
-	// the service to be relayed to. Notice there is no IP address, this is
-	// because Indranet only forwards to exits of decentralised services
-	// also running on the same machine. This service could be a proxy, of
-	// course, if configured this way. This could be done by tunneling from
-	// a local Socks5 proxy into Indranet and the exit node also having
-	// this.
+
+	// Key is the public key of the hidden service.
 	Key *crypto.Pub
+
+	// Onion contained in Introquery should be a RoutingHeader and cipher/nonce set.
 	ont.Onion
 }
 
-func (x *IntroQuery) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+// Account for an Introquery. In this case just the bytes size.
+func (x *IntroQuery) Account(res *sess.Data, sm *sess.Manager,
+	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
+
 	res.ID = x.ID
 	res.Billable = append(res.Billable, s.Header.Bytes)
 	skip = true
 	return
 }
 
+// Decode what should be an IntroQuery message from a splice.Splice.
 func (x *IntroQuery) Decode(s *splice.Splice) (e error) {
-	if e = magic.TooShort(s.Remaining(), IntroQueryLen-magic.Len,
-		IntroQueryMagic); fails(e) {
+	if e = magic.TooShort(s.Remaining(), Len-magic.Len,
+		Magic); fails(e) {
 		return
 	}
 	s.ReadID(&x.ID).ReadCiphers(&x.Ciphers).ReadNonces(&x.Nonces).
@@ -71,19 +76,23 @@ func (x *IntroQuery) Decode(s *splice.Splice) (e error) {
 	return
 }
 
+// Encode this IntroQuery into a splice.Splice's next bytes.
 func (x *IntroQuery) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.Key, x.Ciphers, x.Nonces,
 	)
 	return x.Onion.Encode(s.
-		Magic(IntroQueryMagic).
+		Magic(Magic).
 		ID(x.ID).Ciphers(x.Ciphers).Nonces(x.Nonces).
 		Pubkey(x.Key),
 	)
 }
 
-func (x *IntroQuery) GetOnion() interface{} { return x }
+// GetOnion returns the onion inside this IntroQuery message.
+func (x *IntroQuery) GetOnion() interface{} { return x.Onion }
 
+// Handle provides the relay switching logic for an engine handling an Introquery
+// message.
 func (x *IntroQuery) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 	ng.GetHidden().Lock()
 	log.D.Ln(ng.Mgr().GetLocalNodeAddressString(), "handling introquery", x.ID,
@@ -91,8 +100,8 @@ func (x *IntroQuery) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error
 	var ok bool
 	var il *intro.Ad
 	if il, ok = ng.GetHidden().KnownIntros[x.Key.ToBytes()]; !ok {
-		// if the reply is zeroes the querant knows it needs to retry at a
-		// different relay
+		// if the reply is zeroes the querant knows it needs to retry at a different
+		// relay
 		il = &intro.Ad{}
 		ng.GetHidden().Unlock()
 		log.E.Ln("intro not known")
@@ -115,11 +124,19 @@ func (x *IntroQuery) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error
 	return
 }
 
-func (x *IntroQuery) Len() int             { return IntroQueryLen + x.Onion.Len() }
-func (x *IntroQuery) Magic() string        { return IntroQueryMagic }
+// Len returns the length of the onion starting from this one (used to size a
+// Splice).
+func (x *IntroQuery) Len() int { return Len + x.Onion.Len() }
+
+// Magic bytes identifying a HiddenService message is up next.
+func (x *IntroQuery) Magic() string { return Magic }
+
+// Wrap places another onion inside this one in its slot.
 func (x *IntroQuery) Wrap(inner ont.Onion) { x.Onion = inner }
 
-func NewIntroQuery(id nonce.ID, hsk *crypto.Pub, exit *exit.ExitPoint) ont.Onion {
+// New generates a new IntroQuery data structure and returns it as an ont.Onion
+// interface.
+func New(id nonce.ID, hsk *crypto.Pub, exit *exit.ExitPoint) ont.Onion {
 	return &IntroQuery{
 		ID:      id,
 		Ciphers: crypto.GenCiphers(exit.Keys, exit.ReturnPubs),
@@ -129,5 +146,7 @@ func NewIntroQuery(id nonce.ID, hsk *crypto.Pub, exit *exit.ExitPoint) ont.Onion
 	}
 }
 
-func init()                      { reg.Register(IntroQueryMagic, introQueryGen) }
-func introQueryGen() codec.Codec { return &IntroQuery{} }
+// Gen is a factory function for an IntroQuery.
+func Gen() codec.Codec { return &IntroQuery{} }
+
+func init() { reg.Register(Magic, Gen) }

@@ -184,11 +184,11 @@ func (x *Route) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 			},
 		}
 		mr := []ont.Onion{
-			forward.NewForward(&addrs[3]),
+			forward.New(&addrs[3]),
 			crypt.New(ss[3].Header.Pub, ss[3].Payload.Pub, ng.Keyset().Next(), n[3], 0),
-			forward.NewForward(&addrs[4]),
+			forward.New(&addrs[4]),
 			crypt.New(ss[4].Header.Pub, ss[4].Payload.Pub, ng.Keyset().Next(), n[4], 0),
-			ready.NewReady(x.ID, x.HiddenService,
+			ready.New(x.ID, x.HiddenService,
 				x.RoutingHeaderBytes,
 				hidden.GetRoutingHeaderFromCursor(rHdr),
 				x.Ciphers,

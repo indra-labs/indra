@@ -78,7 +78,7 @@ func (o Skins) Exit(id nonce.ID, port uint16, payload slice.Bytes,
 }
 
 // Forward is a simple forwarding instruction, usually followed by a crypt for the recipient.
-func (o Skins) Forward(addr *netip.AddrPort) Skins { return append(o, forward.NewForward(addr)) }
+func (o Skins) Forward(addr *netip.AddrPort) Skins { return append(o, forward.New(addr)) }
 
 // ForwardCrypt is a forwarding and encryption layer for simple forwarding of a
 // message. Used with hidden service messages and pings for legs of the route
@@ -124,14 +124,14 @@ func (o Skins) GetBalance(id nonce.ID, ep *exit.ExitPoint) Skins {
 // HiddenService is a message that delivers an intro and a referral RoutingHeader
 // to enable a relay to introduce a client to a hidden service.
 func (o Skins) HiddenService(in *intro.Ad, point *exit.ExitPoint) Skins {
-	return append(o, hiddenservice.NewHiddenService(in, point))
+	return append(o, hiddenservice.New(in, point))
 }
 
 // IntroQuery is a message that carries a query for a hidden service with a given
 // public key, if the recipient has this intro, it returns it and the client can
 // then form a Route message to establish a connection to it.
 func (o Skins) IntroQuery(id nonce.ID, hsk *crypto.Pub, exit *exit.ExitPoint) Skins {
-	return append(o, introquery.NewIntroQuery(id, hsk, exit))
+	return append(o, introquery.New(id, hsk, exit))
 }
 
 // Reverse is a special variant of the Forward message that is only used in
@@ -310,7 +310,7 @@ func Ping(id nonce.ID, client *sessions.Data, s sessions.Circuit,
 func (o Skins) Ready(id nonce.ID, addr *crypto.Pub, fwHdr,
 	rvHdr hidden.RoutingHeaderBytes, fc, rc crypto.Ciphers, fn, rn crypto.Nonces) Skins {
 
-	return append(o, ready.NewReady(id, addr, fwHdr, rvHdr, fc, rc, fn, rn))
+	return append(o, ready.New(id, addr, fwHdr, rvHdr, fc, rc, fn, rn))
 }
 
 // Response constructs a message sent back from an Exit service to a client in

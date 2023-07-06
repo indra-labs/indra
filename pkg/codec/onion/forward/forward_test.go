@@ -33,7 +33,7 @@ func TestOnions_Forward(t *testing.T) {
 		port := uint16(rand.Uint32())
 		ap := netip.AddrPortFrom(adr, port)
 		on := ont.Assemble([]ont.Onion{
-			NewForward(&ap),
+			New(&ap),
 		})
 		s := ont.Encode(on)
 		s.SetCursor(0)

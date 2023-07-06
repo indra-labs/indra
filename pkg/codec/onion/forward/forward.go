@@ -24,15 +24,27 @@ var (
 )
 
 const (
-	ForwardMagic = "forw"
-	ForwardLen   = magic.Len + 1 + splice.AddrLen
+	Magic = "forw"
+	Len   = magic.Len + 1 + splice.AddrLen
 )
 
+// Forward is a simple forward of the remainder of the onion to a given address
+// and port. Note that we don't use the key, just the address. Relays can have
+// multiple addresses but for a given message, one of them is chosen.
+//
+// If a reply is required, the reverse.Reverse is used with a RoutingHeader.
+//
+// todo: currently clients expect that the different addresses are tunnels to the
+//
+//	same relay. They are considered to be the same physical connection with an
+//	extension and are weighted equally. Perhaps they should have bandwidth
+//	capacity indications?
 type Forward struct {
 	AddrPort *netip.AddrPort
 	ont.Onion
 }
 
+// Account for the Forward message is straightforward, message size/Mb/RelayRate.
 func (x *Forward) Account(res *sess.Data, sm *sess.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	res.Billable = append(res.Billable, s.Header.Bytes)
@@ -44,24 +56,28 @@ func (x *Forward) Account(res *sess.Data, sm *sess.Manager,
 	return
 }
 
+// Decode a Forward from a provided splice.Splice.
 func (x *Forward) Decode(s *splice.Splice) (e error) {
-	if e = magic.TooShort(s.Remaining(), ForwardLen-magic.Len,
-		ForwardMagic); fails(e) {
+	if e = magic.TooShort(s.Remaining(), Len-magic.Len,
+		Magic); fails(e) {
 		return
 	}
 	s.ReadAddrPort(&x.AddrPort)
 	return
 }
 
+// Encode a Forward into the next bytes of a splice.Splice.
 func (x *Forward) Encode(s *splice.Splice) error {
 	log.T.F("encoding %s %s", reflect.TypeOf(x),
 		x.AddrPort.String(),
 	)
-	return x.Onion.Encode(s.Magic(ForwardMagic).AddrPort(x.AddrPort))
+	return x.Onion.Encode(s.Magic(Magic).AddrPort(x.AddrPort))
 }
 
-func (x *Forward) GetOnion() interface{} { return x }
+// GetOnion returns the onion inside this Forward.
+func (x *Forward) GetOnion() interface{} { return x.Onion }
 
+// Handle is the relay logic for an engine handling a Forward message.
 func (x *Forward) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 	// Forward the whole buffer received onwards. Usually there will be a
 	// crypt.Layer under this which will be unwrapped by the receiver.
@@ -84,9 +100,19 @@ func (x *Forward) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 	return e
 }
 
-func (x *Forward) Len() int                     { return ForwardLen + x.Onion.Len() }
-func (x *Forward) Magic() string                { return ForwardMagic }
-func (x *Forward) Wrap(inner ont.Onion)         { x.Onion = inner }
-func NewForward(addr *netip.AddrPort) ont.Onion { return &Forward{AddrPort: addr, Onion: &end.End{}} }
-func forwardGen() codec.Codec                   { return &Forward{} }
-func init()                                     { reg.Register(ForwardMagic, forwardGen) }
+// Len returns the length of this Forward message.
+func (x *Forward) Len() int { return Len + x.Onion.Len() }
+
+// Magic is the identifying 4 byte string indicating an Forward message follows.
+func (x *Forward) Magic() string { return Magic }
+
+// Wrap puts another onion inside this Forward onion.
+func (x *Forward) Wrap(inner ont.Onion) { x.Onion = inner }
+
+// New creates a new Forward onion.
+func New(addr *netip.AddrPort) ont.Onion { return &Forward{AddrPort: addr, Onion: &end.End{}} }
+
+// Gen is a factory function for a Forward.
+func Gen() codec.Codec { return &Forward{} }
+
+func init() { reg.Register(Magic, Gen) }
