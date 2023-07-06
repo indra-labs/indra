@@ -33,18 +33,34 @@ const (
 	CryptMagic = "cryp"
 )
 
+// Crypt is an encrypted message, and forms the "skins" of the onions.
 type Crypt struct {
-	Depth                     int
+
+	// Depth is used with RoutingHeaders to indicate which of the 3 layers in a
+	// ReverseCrypt section.
+	Depth int
+
+	// ToHeaderPub, ToPayloadPub are the public keys of the session.
 	ToHeaderPub, ToPayloadPub *crypto.Pub
-	From                      *crypto.Prv
-	IV                        nonce.IV
+
+	// From is usually a one-time generated private key for which the public
+	// counterpart combined with the recipient's private key generates the same
+	// secret via ECDH.
+	From *crypto.Prv
+
+	// IV is the Initialization Vector for the AES-CTR encryption used in a Crypt.
+	IV nonce.IV
+
 	// The remainder here are for Decode.
+
+	// Cloak
 	Cloak   crypto.CloakedPubKey
 	ToPriv  *crypto.Prv
 	FromPub *crypto.Pub
 	ont.Onion
 }
 
+// Account attaches the session, which is tied to the keys used in the crypt, to the pending result.
 func (x *Crypt) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data,
 	last bool) (skip bool, sd *sessions.Data) {
 
@@ -61,6 +77,7 @@ func (x *Crypt) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data,
 	return
 }
 
+// Decode a splice.Splice's next bytes into a Crypt.
 func (x *Crypt) Decode(s *splice.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), consts.CryptLen-magic.Len,
 		CryptMagic); fails(e) {
@@ -78,6 +95,10 @@ func (x *Crypt) Decrypt(prk *crypto.Prv, s *splice.Splice) {
 		x.IV, s.GetRest())
 }
 
+// Encode a Crypt into a splice.Splice's next bytes.
+//
+// The crypt renders the inner contents first and once complete returns and
+// encrypts everything after the Crypt header.
 func (x *Crypt) Encode(s *splice.Splice) (e error) {
 	log.T.F("encoding %s %s %x %x", reflect.TypeOf(x),
 		x.ToHeaderPub, x.From.ToBytes(), x.IV,
@@ -120,8 +141,11 @@ func (x *Crypt) Encode(s *splice.Splice) (e error) {
 	return e
 }
 
+// GetOnion returns the layers inside the crypt..
 func (x *Crypt) GetOnion() interface{} { return x }
 
+// Handle provides relay and accounting processing logic for receiving a Crypt
+// message.
 func (x *Crypt) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 	hdr, _, _, identity := ng.Mgr().FindCloaked(x.Cloak)
 	if hdr == nil {
@@ -143,11 +167,17 @@ func (x *Crypt) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 	return e
 }
 
-func (x *Crypt) Len() int             { return consts.CryptLen + x.Onion.Len() }
-func (x *Crypt) Magic() string        { return CryptMagic }
+// Len returns the length of bytes required to encode the Crypt.
+func (x *Crypt) Len() int { return consts.CryptLen + x.Onion.Len() }
+
+// Magic bytes that identify this message
+func (x *Crypt) Magic() string { return CryptMagic }
+
+// Wrap inserts an onion inside a Crypt.
 func (x *Crypt) Wrap(inner ont.Onion) { x.Onion = inner }
 
-func NewCrypt(toHdr, toPld *crypto.Pub, from *crypto.Prv, iv nonce.IV,
+// New creates a new crypt message with an empty slot for more messages.
+func New(toHdr, toPld *crypto.Pub, from *crypto.Prv, iv nonce.IV,
 	depth int) ont.Onion {
 	return &Crypt{
 		Depth:        depth,
@@ -159,5 +189,7 @@ func NewCrypt(toHdr, toPld *crypto.Pub, from *crypto.Prv, iv nonce.IV,
 	}
 }
 
-func cryptGen() codec.Codec { return &Crypt{} }
-func init()                 { reg.Register(CryptMagic, cryptGen) }
+// Gen is a factory function to generate an Crypt.
+func Gen() codec.Codec { return &Crypt{} }
+
+func init() { reg.Register(CryptMagic, Gen) }

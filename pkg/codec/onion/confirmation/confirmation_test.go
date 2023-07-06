@@ -17,7 +17,7 @@ func TestOnions_Confirmation(t *testing.T) {
 	}
 	id := nonce.NewID()
 	var load byte = 128
-	on := ont.Assemble([]ont.Onion{NewConfirmation(id, load)})
+	on := ont.Assemble([]ont.Onion{New(id)})
 	s := ont.Encode(on)
 	s.SetCursor(0)
 	var onc codec.Codec

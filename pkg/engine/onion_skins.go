@@ -34,7 +34,7 @@ import (
 //}
 
 func (o Skins) Confirmation(id nonce.ID, load byte) Skins {
-	return append(o, confirmation.NewConfirmation(id, load))
+	return append(o, confirmation.New(id))
 }
 
 //func (o Skins) Delay(d time.Duration) Skins { return append(o, delay.NewDelay(d)) }
@@ -143,7 +143,7 @@ func (o Skins) Reverse(ip *netip.AddrPort) Skins { return append(o, reverse.NewR
 func (o Skins) Crypt(toHdr, toPld *crypto.Pub, from *crypto.Prv, iv nonce.IV,
 	depth int) Skins {
 
-	return append(o, crypt.NewCrypt(toHdr, toPld, from, iv, depth))
+	return append(o, crypt.New(toHdr, toPld, from, iv, depth))
 }
 
 // ReverseCrypt is a single layer of a RoutingHeader designating the session and relay for one of the hops in a Route.

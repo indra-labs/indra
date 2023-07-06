@@ -74,7 +74,7 @@ func TestDispatcher(t *testing.T) {
 	var load1 byte = 128
 	// var load2 byte = 32
 	on1 := ont.Assemble(engine.Skins{
-		confirmation.NewConfirmation(id1, load1)})
+		confirmation.New(id1)})
 	on2 := ont.Assemble(engine.Skins{
 		response.NewResponse(id2, 0, msg1, 0)})
 	s1 := ont.Encode(on1)

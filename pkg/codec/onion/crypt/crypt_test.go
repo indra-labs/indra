@@ -23,8 +23,8 @@ func TestOnions_SimpleCrypt(t *testing.T) {
 	prv1, prv2 := crypto.GetTwoPrvKeys()
 	pub1, pub2 := crypto.DerivePub(prv1), crypto.DerivePub(prv2)
 	on := ont.Assemble([]ont.Onion{
-		NewCrypt(pub1, pub2, prv2, n1, 0),
-		confirmation.NewConfirmation(n, 0),
+		New(pub1, pub2, prv2, n1, 0),
+		confirmation.New(n),
 	})
 	s := ont.Encode(on)
 	s.SetCursor(0)
