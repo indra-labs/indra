@@ -29,7 +29,11 @@ const (
 // Balance is the balance with an ID the client has a pending balance update
 // waiting on.
 type Balance struct {
+
+	// ID of the request this response relates to.
 	ID nonce.ID
+
+	// Amount current in the balance according to the relay.
 	lnwire.MilliSatoshi
 }
 
@@ -113,7 +117,7 @@ func (x *Balance) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 // Len returns the length of bytes required to encode the Balance.
 func (x *Balance) Len() int { return Len }
 
-// Magic bytes that identify this message
+// Magic bytes that identify this message.
 func (x *Balance) Magic() string { return Magic }
 
 // Wrap is a no-op because a Balance is terminal.

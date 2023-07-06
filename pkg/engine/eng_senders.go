@@ -34,7 +34,7 @@ func (ng *Engine) SendExit(port uint16, msg slice.Bytes, id nonce.ID,
 	se := ng.Mgr().SelectHops(hops, s, "exit")
 	var c sessions.Circuit
 	copy(c[:], se)
-	o := MakeExit(exit.ExitParams{port, msg, id, bob, alice, c, ng.KeySet}, ng.Mgr().Protocols)
+	o := MakeExit(exit.Params{port, msg, id, bob, alice, c, ng.KeySet}, ng.Mgr().Protocols)
 	res := PostAcctOnion(ng.Mgr(), o)
 	ng.Mgr().SendWithOneHook(c[0].Node.Addresses, res, hook, ng.Responses)
 }

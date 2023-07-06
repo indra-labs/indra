@@ -28,8 +28,8 @@ var (
 )
 
 const (
-	ExitMagic = "exit"
-	ExitLen   = magic.Len +
+	Magic = "exit"
+	Len   = magic.Len +
 		slice.Uint16Len +
 		3*sha256.Len +
 		slice.Uint32Len +
@@ -37,28 +37,37 @@ const (
 		nonce.IDLen
 )
 
+// Exit is a
 type Exit struct {
+
+	// ID is the identifier that will be embedded with the response to this message
+	// relayed from the exit service.
 	ID nonce.ID
+
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
 	// given order over the reply message from the service.
 	crypto.Ciphers
+
 	// Nonces are the nonces to use with the cipher when creating the
 	// encryption for the reply message,
 	// they are common with the crypts in the header.
 	crypto.Nonces
-	// Port identifies the type of service as well as being the port used by
-	// the service to be relayed to. Notice there is no IP address, this is
-	// because Indranet only forwards to exits of decentralised services
-	// also running on the same machine. This service could be a proxy, of
-	// course, if configured this way. This could be done by tunneling from
-	// a local Socks5 proxy into Indranet and the exit node also having
-	// this.
+
+	// Port identifies the type of service as well as being the port used by the
+	// service to be relayed to. This should be the well-known protocol associated
+	// with the port number, eg 80 for HTTP, 53 for DNS, etc.
 	Port uint16
+
 	// Bytes are the message to be passed to the exit service.
 	slice.Bytes
+
+	// Onion contains the rest of the message, in this case the reply RoutingHeader.
 	ont.Onion
 }
 
+// Account searches for the relevant service, applies the balance change to the
+// account that will be in effect when the response has arrived and delivery is
+// confirmed.
 func (x *Exit) Account(res *sess.Data, sm *sess.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	s.Node.Lock()
@@ -82,9 +91,10 @@ func (x *Exit) Account(res *sess.Data, sm *sess.Manager,
 	return
 }
 
+// Decode what should be an Exit message from a splice.Splice.
 func (x *Exit) Decode(s *splice.Splice) (e error) {
-	if e = magic.TooShort(s.Remaining(), ExitLen-magic.Len,
-		ExitMagic); fails(e) {
+	if e = magic.TooShort(s.Remaining(), Len-magic.Len,
+		Magic); fails(e) {
 		return
 	}
 	s.ReadID(&x.ID).
@@ -95,20 +105,24 @@ func (x *Exit) Decode(s *splice.Splice) (e error) {
 	return
 }
 
+// Encode this Exit into a splice.Splice's next bytes.
 func (x *Exit) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.Ciphers, x.Nonces, x.Port, x.Bytes.ToBytes(),
 	)
 	return x.Onion.Encode(s.
-		Magic(ExitMagic).
+		Magic(Magic).
 		ID(x.ID).Ciphers(x.Ciphers).Nonces(x.Nonces).
 		Uint16(x.Port).
 		Bytes(x.Bytes),
 	)
 }
 
-func (x *Exit) GetOnion() interface{} { return x }
+// GetOnion returns the onion inside this Exit message.
+func (x *Exit) GetOnion() interface{} { return x.Onion }
 
+// Handle provides the relay switching logic for an engine handling an Exit
+// message.
 func (x *Exit) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 	// payload is forwarded to a local port and the result is forwarded
 	// back with a reverse header.
@@ -157,10 +171,15 @@ func (x *Exit) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 	return
 }
 
-func (x *Exit) Len() int      { return ExitLen + x.Bytes.Len() + x.Onion.Len() }
-func (x *Exit) Magic() string { return ExitMagic }
+// Len returns the length of this Exit message (payload and return header Onion
+// included.
+func (x *Exit) Len() int { return Len + x.Bytes.Len() + x.Onion.Len() }
 
-type ExitParams struct {
+// Magic is the identifying 4 byte string indicating an Exit message follows.
+func (x *Exit) Magic() string { return Magic }
+
+// Params are the parameters to generate an Exit onion.
+type Params struct {
 	Port       uint16
 	Payload    slice.Bytes
 	ID         nonce.ID
@@ -168,20 +187,38 @@ type ExitParams struct {
 	S          sessions.Circuit
 	KS         *crypto.KeySet
 }
+
+// ExitPoint is the return routing parameters delivered inside an Exit onion.
 type ExitPoint struct {
+
+	// Routing contains all the information required to generate a RoutingHeader and
+	// cipher/nonce set.
 	*Routing
+
+	// ReturnPubs are the public keys of the session payload, which are not in the
+	// message but previously shared to create a session.
 	ReturnPubs crypto.Pubs
 }
 
+// Wrap puts another onion inside this Exit onion.
 func (x *Exit) Wrap(inner ont.Onion) { x.Onion = inner }
 
+// Routing is the sessions and keys required to generate a return RoutingHeader.
 type Routing struct {
+
+	// Sessions that the RoutingHeader is using.
 	Sessions [3]*sessions.Data
-	Keys     crypto.Privs
+
+	// Keys being used to form the other ECDH half for the encryption.
+	Keys crypto.Privs
+
+	// The three nonces that match up with each of the three session RoutingHeader
+	// Crypt nonces.
 	crypto.Nonces
 }
 
-func NewExit(id nonce.ID, port uint16, payload slice.Bytes,
+// New creates a new Exit onion.
+func New(id nonce.ID, port uint16, payload slice.Bytes,
 	ep *ExitPoint) ont.Onion {
 	return &Exit{
 		ID:      id,
@@ -193,5 +230,7 @@ func NewExit(id nonce.ID, port uint16, payload slice.Bytes,
 	}
 }
 
-func exitGen() codec.Codec { return &Exit{} }
-func init()                { reg.Register(ExitMagic, exitGen) }
+// Gen is a factory function for an Exit.
+func Gen() codec.Codec { return &Exit{} }
+
+func init() { reg.Register(Magic, Gen) }

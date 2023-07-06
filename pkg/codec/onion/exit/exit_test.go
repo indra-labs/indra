@@ -36,7 +36,7 @@ func TestOnions_Exit(t *testing.T) {
 		},
 		ReturnPubs: pubs,
 	}
-	on := ont.Assemble([]ont.Onion{NewExit(id, p, msg, ep)})
+	on := ont.Assemble([]ont.Onion{New(id, p, msg, ep)})
 	s := ont.Encode(on)
 	s.SetCursor(0)
 	var onc codec.Codec

@@ -53,10 +53,16 @@ type Crypt struct {
 
 	// The remainder here are for Decode.
 
-	// Cloak
-	Cloak   crypto.CloakedPubKey
-	ToPriv  *crypto.Prv
+	// Cloak is the obfuscated receiver key.
+	Cloak crypto.CloakedPubKey
+
+	// ToPriv is the private key the receiver knows.
+	ToPriv *crypto.Prv
+
+	// FromPub is the public key encoded into the Crypt header.
 	FromPub *crypto.Pub
+
+	// Onion contains the rest of the message.
 	ont.Onion
 }
 

@@ -28,6 +28,8 @@ const (
 //
 // If a reply is required there needs to be a RoutingHeader and cipher/nonce set.
 type Confirmation struct {
+
+	// ID of the request this response relates to.
 	ID nonce.ID
 }
 

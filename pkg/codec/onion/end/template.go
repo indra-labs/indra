@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	EndMagic = "!!!!"
-	EndLen   = 0
+	Magic = "!!!!"
+	Len   = 0
 )
 
 type End struct{}
@@ -27,8 +27,8 @@ func (x *End) Encode(s *splice.Splice) (e error)                           { ret
 func EndGen() codec.Codec                                                  { return &End{} }
 func (x *End) GetOnion() interface{}                                       { return x }
 func (x *End) Handle(s *splice.Splice, p ont.Onion, ni ont.Ngin) (e error) { return }
-func (x *End) Len() int                                                    { return EndLen }
-func (x *End) Magic() string                                               { return EndMagic }
+func (x *End) Len() int                                                    { return Len }
+func (x *End) Magic() string                                               { return Magic }
 func (x *End) Wrap(inner ont.Onion)                                        {}
 func NewEnd() *End                                                         { return &End{} }
-func init()                                                                { reg.Register(EndMagic, EndGen) }
+func init()                                                                { reg.Register(Magic, EndGen) }

@@ -74,7 +74,7 @@ func (o Skins) End() Skins {
 func (o Skins) Exit(id nonce.ID, port uint16, payload slice.Bytes,
 	ep *exit.ExitPoint) Skins {
 
-	return append(o, exit.NewExit(id, port, payload, ep))
+	return append(o, exit.New(id, port, payload, ep))
 }
 
 // Forward is a simple forwarding instruction, usually followed by a crypt for the recipient.
@@ -192,7 +192,7 @@ func (o Skins) RoutingHeader(r *exit.Routing,
 // The header remains a constant size and each node in the Reverse trims off
 // their section at the top, moves the next crypt header to the top and pads the
 // remainder with noise, so it always looks like the first hop.
-func MakeExit(p exit.ExitParams, np protocols.NetworkProtocols) Skins {
+func MakeExit(p exit.Params, np protocols.NetworkProtocols) Skins {
 	headers := headers2.GetHeaders(p.Alice, p.Bob, p.S, p.KS)
 	return Skins{}.
 		RoutingHeader(headers.Forward, np).

@@ -16,7 +16,7 @@ func TestOnions_Delay(t *testing.T) {
 		log2.SetLogLevel(log2.Debug)
 	}
 	dur := time.Second
-	on := ont.Assemble([]ont.Onion{NewDelay(dur)})
+	on := ont.Assemble([]ont.Onion{New(dur)})
 	s := ont.Encode(on)
 	s.SetCursor(0)
 	var onc codec.Codec

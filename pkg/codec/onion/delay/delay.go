@@ -22,39 +22,46 @@ var (
 )
 
 const (
-	DelayMagic = "dely"
-	DelayLen   = magic.Len + slice.Uint64Len
+	Magic = "dely"
+	Len   = magic.Len + slice.Uint64Len
 )
 
+// Delay is an instruction to hold a message for a specified time period before
+// forwarding.
 type Delay struct {
 	time.Duration
 	ont.Onion
 }
 
+// Account todo: record a decrement value based on a time coefficient of RelayRate.
 func (x *Delay) Account(res *sess.Data, sm *sess.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	return
 }
 
+// Decode a splice.Splice's next bytes into a Delay.
 func (x *Delay) Decode(s *splice.Splice) (e error) {
-	if e = magic.TooShort(s.Remaining(), DelayLen-magic.Len, DelayMagic); fails(e) {
+	if e = magic.TooShort(s.Remaining(), Len-magic.Len, Magic); fails(e) {
 		return
 	}
 	s.ReadDuration(&x.Duration)
 	return
 }
 
+// Encode a Delay into a splice.Splice's next bytes.
 func (x *Delay) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.Duration,
 	)
-	s.Magic(DelayMagic).Uint64(uint64(x.Duration))
+	s.Magic(Magic).Uint64(uint64(x.Duration))
 	if x.Onion != nil {
 		e = x.Onion.Encode(s)
 	}
 	return
 }
 
+// Handle provides relay and accounting processing logic for receiving a Delay
+// message.
 func (x *Delay) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 	// this is a message to hold the message in the buffer until a duration
 	// elapses. The accounting for the remainder of the message adds a
@@ -68,9 +75,19 @@ func (x *Delay) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 	return
 }
 
-func (x *Delay) Len() int                { return DelayLen + x.Onion.Len() }
-func (x *Delay) Magic() string           { return DelayMagic }
-func (x *Delay) Wrap(inner ont.Onion)    { x.Onion = inner }
-func NewDelay(d time.Duration) ont.Onion { return &Delay{Duration: d, Onion: &end.End{}} }
-func delayGen() codec.Codec              { return &Delay{} }
-func init()                              { reg.Register(DelayMagic, delayGen) }
+// Len returns the length of bytes required to encode this Delay.
+func (x *Delay) Len() int { return Len + x.Onion.Len() }
+
+// Magic bytes that identify this message.
+func (x *Delay) Magic() string { return Magic }
+
+// Wrap an Onion inside this Delay.
+func (x *Delay) Wrap(inner ont.Onion) { x.Onion = inner }
+
+// New creates a new Delay as an ont.Onion.
+func New(d time.Duration) ont.Onion { return &Delay{Duration: d, Onion: &end.End{}} }
+
+// Gen is a factory function for a Delay.
+func Gen() codec.Codec { return &Delay{} }
+
+func init() { reg.Register(Magic, Gen) }
