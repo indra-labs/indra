@@ -118,8 +118,8 @@ func (x *Exit) Encode(s *splice.Splice) (e error) {
 	)
 }
 
-// GetOnion returns the onion inside this Exit message.
-func (x *Exit) GetOnion() interface{} { return x.Onion }
+// Unwrap returns the onion inside this Exit message.
+func (x *Exit) Unwrap() interface{} { return x.Onion }
 
 // Handle provides the relay switching logic for an engine handling an Exit
 // message.

@@ -486,9 +486,9 @@ func TestDispatcher_Rekey(t *testing.T) {
 	var msgp1, msgp2 slice.Bytes
 	id1, id2 := nonce.NewID(), nonce.NewID()
 	on1 := ont.Assemble(Skins{
-		response.NewResponse(id1, 0, msg1, 0)})
+		response.New(id1, 0, msg1, 0)})
 	on2 := ont.Assemble(Skins{
-		response.NewResponse(id2, 0, msg2, 0)})
+		response.New(id2, 0, msg2, 0)})
 	s1 := ont.Encode(on1)
 	s2 := ont.Encode(on2)
 	x1 := s1.GetAll()

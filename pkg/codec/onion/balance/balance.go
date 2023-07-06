@@ -69,8 +69,8 @@ func (x *Balance) Encode(s *splice.Splice) (e error) {
 	return
 }
 
-// GetOnion returns nothing because there isn't an onion inside a Balance.
-func (x *Balance) GetOnion() interface{} { return nil }
+// Unwrap returns nothing because there isn't an onion inside a Balance.
+func (x *Balance) Unwrap() interface{} { return nil }
 
 // Handle provides relay and accounting processing logic for receiving a Balance
 // message.

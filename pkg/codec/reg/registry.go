@@ -22,13 +22,19 @@ var (
 var reg = newRegistry()
 
 type (
+	// CodecGenerators is the map of generators that have been registered.
 	CodecGenerators map[string]func() codec.Codec
-	registry        struct {
+
+	// registry is a factory constructor registry used with Magic bytes to enable
+	// decoding of encoded message onions.
+	registry struct {
 		sync.Mutex
 		CodecGenerators
 	}
 )
 
+// MakeCodec is a simple function to find a Codec factory function and return its
+// output.
 func MakeCodec(magic string) (cdc codec.Codec) {
 	var in func() codec.Codec
 	var ok bool
@@ -38,6 +44,8 @@ func MakeCodec(magic string) (cdc codec.Codec) {
 	return
 }
 
+// Recognise selects a factory function and steps the cursor forward after the
+// Magic to be ready to call the Decode method on the Codec inside.
 func Recognise(s *splice.Splice) (cdc codec.Codec) {
 	reg.Lock()
 	defer reg.Unlock()
@@ -58,6 +66,7 @@ func Recognise(s *splice.Splice) (cdc codec.Codec) {
 	return
 }
 
+// Register adds a new factory constructor function associated with a provided Magic bytes.
 func Register(magicString string, cdc func() codec.Codec) {
 	reg.Lock()
 	defer reg.Unlock()

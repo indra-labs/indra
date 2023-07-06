@@ -76,7 +76,7 @@ func TestDispatcher(t *testing.T) {
 	on1 := ont.Assemble(engine.Skins{
 		confirmation.New(id1)})
 	on2 := ont.Assemble(engine.Skins{
-		response.NewResponse(id2, 0, msg1, 0)})
+		response.New(id2, 0, msg1, 0)})
 	s1 := ont.Encode(on1)
 	s2 := ont.Encode(on2)
 	x1 := s1.GetAll()

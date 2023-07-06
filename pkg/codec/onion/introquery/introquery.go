@@ -88,8 +88,8 @@ func (x *IntroQuery) Encode(s *splice.Splice) (e error) {
 	)
 }
 
-// GetOnion returns the onion inside this IntroQuery message.
-func (x *IntroQuery) GetOnion() interface{} { return x.Onion }
+// Unwrap returns the onion inside this IntroQuery message.
+func (x *IntroQuery) Unwrap() interface{} { return x.Onion }
 
 // Handle provides the relay switching logic for an engine handling an Introquery
 // message.

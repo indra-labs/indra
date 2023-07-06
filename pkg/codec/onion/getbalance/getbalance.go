@@ -77,7 +77,7 @@ func (x *GetBalance) Encode(s *splice.Splice) (e error) {
 	)
 }
 
-func (x *GetBalance) GetOnion() interface{} { return x }
+func (x *GetBalance) Unwrap() interface{} { return x }
 
 func (x *GetBalance) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 	log.T.S(x)

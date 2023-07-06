@@ -25,7 +25,7 @@ func TestOnions_Response(t *testing.T) {
 	}
 	port := uint16(cryptorand.IntN(65536))
 	on := ont.Assemble([]ont.Onion{
-		NewResponse(id, port, msg, 0),
+		New(id, port, msg, 0),
 		end.NewEnd(),
 	})
 	s := ont.Encode(on)

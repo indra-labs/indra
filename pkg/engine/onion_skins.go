@@ -136,7 +136,7 @@ func (o Skins) IntroQuery(id nonce.ID, hsk *crypto.Pub, exit *exit.ExitPoint) Sk
 
 // Reverse is a special variant of the Forward message that is only used in
 // groups of three to create a RoutingHeader;
-func (o Skins) Reverse(ip *netip.AddrPort) Skins { return append(o, reverse.NewReverse(ip)) }
+func (o Skins) Reverse(ip *netip.AddrPort) Skins { return append(o, reverse.New(ip)) }
 
 // Crypt is a layer providing the recipient cloaked address, one-time sender
 // private key and nonce needed to decrypt the remainder of the onion message.
@@ -316,12 +316,12 @@ func (o Skins) Ready(id nonce.ID, addr *crypto.Pub, fwHdr,
 // Response constructs a message sent back from an Exit service to a client in
 // response to an Exit message, containing a request.
 func (o Skins) Response(id nonce.ID, res slice.Bytes, port uint16, load byte) Skins {
-	return append(o, response.NewResponse(id, port, res, load))
+	return append(o, response.New(id, port, res, load))
 }
 
 // Route constructs a new Route message to establish a hidden service connection.
 func (o Skins) Route(id nonce.ID, k *crypto.Pub, ks *crypto.KeySet, ep *exit.ExitPoint) Skins {
-	return append(o, route.NewRoute(id, k, ks, ep))
+	return append(o, route.New(id, k, ks, ep))
 }
 
 // Session generates a message layer carrying the two private keys of a session.

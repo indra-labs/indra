@@ -25,39 +25,51 @@ var (
 )
 
 const (
-	ReverseMagic = "rvrs"
+	Magic = "rvrs"
 )
 
+// Reverse is a part of the 3 layer relay RoutingHeader which provides the next
+// address to forward to.
 type Reverse struct {
+
+	// AddrPort of the relay to forward this message.
 	AddrPort *netip.AddrPort
+
+	// Onion contained inside this message.
 	ont.Onion
 }
 
-func NewReverse(ip *netip.AddrPort) ont.Onion {
+// New creates a new Reverse onion.
+func New(ip *netip.AddrPort) ont.Onion {
 	return &Reverse{AddrPort: ip, Onion: end.NewEnd()}
 }
 
+// Account for the reverse message - note that the actual size being carried is
+// computed at the end of the circuit with the returned
+// Response/Confirmation/Message.
 func (x *Reverse) Account(res *sess.Data, sm *sess.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	res.Billable = append(res.Billable, s.Header.Bytes)
 	return
 }
 
+// Decode a Reverse from a provided splice.Splice.
 func (x *Reverse) Decode(s *splice.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), consts.ReverseLen-magic.Len,
-		ReverseMagic); fails(e) {
+		Magic); fails(e) {
 		return
 	}
 	s.ReadAddrPort(&x.AddrPort)
 	return
 }
 
+// Encode a Reverse into the next bytes of a splice.Splice.
 func (x *Reverse) Encode(s *splice.Splice) (e error) {
 	log.T.Ln("encoding", reflect.TypeOf(x), x.AddrPort)
 	if x.AddrPort == nil {
 		s.Advance(consts.ReverseLen, "reverse")
 	} else {
-		s.Magic(ReverseMagic).AddrPort(x.AddrPort)
+		s.Magic(Magic).AddrPort(x.AddrPort)
 	}
 	if x.Onion != nil {
 		e = x.Onion.Encode(s)
@@ -65,8 +77,12 @@ func (x *Reverse) Encode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Reverse) GetOnion() interface{} { return x }
+// Unwrap returns the onion inside this Reverse.
+func (x *Reverse) Unwrap() interface{} { return x.Onion }
 
+// Handle is the relay logic for an engine handling a Reverse message.
+//
+// This is where the 3 layer RoutingHeader is processed.
 func (x *Reverse) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 	if x.AddrPort.String() == ng.Mgr().GetLocalNodeAddress().String() {
 		in := reg2.Recognise(s)
@@ -102,7 +118,7 @@ func (x *Reverse) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 			ciph.Encipher(ciph.GetBlock(pld, on.FromPub, "reverse payload"),
 				on.IV, s.GetFrom(last))
 		}
-		if string(s.GetRange(start, start+magic.Len)) != ReverseMagic {
+		if string(s.GetRange(start, start+magic.Len)) != Magic {
 			// It's for us!
 			log.T.S("handling response")
 			ng.HandleMessage(splice.BudgeUp(s.SetCursor(last)), on)
@@ -124,8 +140,16 @@ func (x *Reverse) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 	return e
 }
 
-func (x *Reverse) Len() int             { return consts.ReverseLen + x.Onion.Len() }
-func (x *Reverse) Magic() string        { return ReverseMagic }
+// Len returns the length of this Reverse message.
+func (x *Reverse) Len() int { return consts.ReverseLen + x.Onion.Len() }
+
+// Magic is the identifying 4 byte string indicating a Reverse message follows.
+func (x *Reverse) Magic() string { return Magic }
+
+// Wrap puts another onion inside this Reverse onion.
 func (x *Reverse) Wrap(inner ont.Onion) { x.Onion = inner }
-func init()                             { reg2.Register(ReverseMagic, reverseGen) }
-func reverseGen() codec.Codec           { return &Reverse{} }
+
+func init() { reg2.Register(Magic, Gen) }
+
+// Gen is a factory function for a Reverse.
+func Gen() codec.Codec { return &Reverse{} }

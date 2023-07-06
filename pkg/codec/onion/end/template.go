@@ -25,7 +25,7 @@ func (x *End) Account(res *sess.Data, sm *sess.Manager,
 func (x *End) Decode(s *splice.Splice) (e error)                           { return }
 func (x *End) Encode(s *splice.Splice) (e error)                           { return }
 func EndGen() codec.Codec                                                  { return &End{} }
-func (x *End) GetOnion() interface{}                                       { return x }
+func (x *End) Unwrap() interface{}                                         { return x }
 func (x *End) Handle(s *splice.Splice, p ont.Onion, ni ont.Ngin) (e error) { return }
 func (x *End) Len() int                                                    { return Len }
 func (x *End) Magic() string                                               { return Magic }

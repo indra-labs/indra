@@ -39,6 +39,11 @@ const (
 		ReplyCiphersLen
 )
 
+// Message is the generic, peer to peer, bidirectional messade type for between a
+// client and a hidden service.
+//
+// The message format is the same for both sides, as the connection is maintained
+// by each side forwarding a new return path each message they send.
 type Message struct {
 	Forwards        [2]*sessions.Data
 	Address         *crypto.Pub
@@ -53,6 +58,9 @@ func NewMessage() (msg *Message) {
 	return
 }
 
+// Account for the Message. The client obviously doesn't do anything with this.
+//
+// todo: how does hidden service bill? We need to establish hidden service session type.
 func (x *Message) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	res.ID = x.ID
 	res.Billable = append(res.Billable, s.Header.Bytes)
@@ -60,6 +68,7 @@ func (x *Message) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data, la
 	return
 }
 
+// Decode a Message from a provided splice.Splice.
 func (x *Message) Decode(s *splice.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), MessageLen-magic.Len,
 		MessageMagic); fails(e) {
@@ -75,6 +84,7 @@ func (x *Message) Decode(s *splice.Splice) (e error) {
 	return
 }
 
+// Encode a Message into the next bytes of a splice.Splice.
 func (x *Message) Encode(s *splice.Splice) (e error) {
 	log.T.F("encoding %s %x %x %v %s", reflect.TypeOf(x),
 		x.ID, x.Re, x.Address, spew.Sdump(x.Forward, x.Return,
@@ -97,16 +107,25 @@ func (x *Message) Encode(s *splice.Splice) (e error) {
 	return
 }
 
-func MessageGen() codec.Codec            { return &Message{} }
-func (x *Message) GetOnion() interface{} { return x }
+func Gen() codec.Codec { return &Message{} }
 
+// Unwrap is a no-op because there is no onion inside a Message, only the reply parameters.
+func (x *Message) Unwrap() interface{} { return nil }
+
+// Handle is the relay logic for an engine handling a Message.
 func (x *Message) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
-	// Forward payload out to service port.
+	// The hook in Pending should be the delivery of the reply to the client handler.
 	_, e = ng.Pending().ProcessAndDelete(x.ID, x, s.GetAll())
 	return
 }
 
-func (x *Message) Len() int             { return MessageLen + x.Payload.Len() }
-func (x *Message) Magic() string        { return MessageMagic }
+// Len returns the length of this Message.
+func (x *Message) Len() int { return MessageLen + x.Payload.Len() }
+
+// Magic is the identifying 4 byte string indicating a Message follows.
+func (x *Message) Magic() string { return MessageMagic }
+
+// Wrap is a no-op because there is no further onion inside a Message, only reply parameters.
 func (x *Message) Wrap(inner ont.Onion) {}
-func init()                             { reg.Register(MessageMagic, MessageGen) }
+
+func init() { reg.Register(MessageMagic, Gen) }

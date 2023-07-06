@@ -147,8 +147,8 @@ func (x *Crypt) Encode(s *splice.Splice) (e error) {
 	return e
 }
 
-// GetOnion returns the layers inside the crypt..
-func (x *Crypt) GetOnion() interface{} { return x }
+// Unwrap returns the layers inside the crypt..
+func (x *Crypt) Unwrap() interface{} { return x }
 
 // Handle provides relay and accounting processing logic for receiving a Crypt
 // message.
@@ -161,7 +161,7 @@ func (x *Crypt) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 	x.ToPriv = hdr
 	x.Decrypt(hdr, s)
 	if identity {
-		if string(s.GetRest()[:magic.Len]) != session.SessionMagic {
+		if string(s.GetRest()[:magic.Len]) != session.Magic {
 			log.T.Ln("dropping message due to identity key with" +
 				" no following session")
 			return e

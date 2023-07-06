@@ -72,8 +72,8 @@ func (a *Acknowledge) Encode(s *splice.Splice) (e error) {
 // recognition and generation.
 func AcknowledgeGen() codec.Codec { return &Acknowledge{&RxRecord{}} }
 
-// GetOnion returns nil because there is no onion inside an Acknowledge.
-func (a *Acknowledge) GetOnion() interface{} { return nil }
+// Unwrap returns nil because there is no onion inside an Acknowledge.
+func (a *Acknowledge) Unwrap() interface{} { return nil }
 
 // Len returns the length of an Acknowledge message in bytes.
 func (a *Acknowledge) Len() int {
@@ -106,8 +106,8 @@ func (k *NewKey) Encode(s *splice.Splice) (e error) {
 	return
 }
 
-// GetOnion returns nil because there is no onion inside an NewKey.
-func (k *NewKey) GetOnion() interface{} { return nil }
+// Unwrap returns nil because there is no onion inside an NewKey.
+func (k *NewKey) Unwrap() interface{} { return nil }
 
 // Len returns the length of an NewKey message in bytes.
 func (k *NewKey) Len() int { return 4 + crypto.PubKeyLen }
@@ -135,8 +135,8 @@ func (o *Onion) Encode(s *splice.Splice) (e error) {
 // OnionGen is a factory function for creating a new Onion.
 func OnionGen() codec.Codec { return &Onion{} }
 
-// GetOnion invockes Unpack, which returns the onion.
-func (o *Onion) GetOnion() interface{} { return o.Unpack() }
+// Unwrap invockes Unpack, which returns the onion.
+func (o *Onion) Unwrap() interface{} { return o.Unpack() }
 
 func (o *Onion) Len() int {
 	return 4 + len(o.Bytes) + 4

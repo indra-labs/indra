@@ -152,7 +152,7 @@ func (ng *Engine) HandleMessage(s *splice.Splice, pr ont.Onion) {
 		if pr != nil && on.Magic() != pr.Magic() {
 			log.D.S("", s.GetAll().ToBytes())
 		}
-		m := on.GetOnion()
+		m := on.Unwrap()
 		if m == nil {
 			log.D.Ln("did not get onion")
 			return

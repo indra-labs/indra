@@ -96,8 +96,8 @@ func (x *HiddenService) Encode(s *splice.Splice) (e error) {
 	return x.Onion.Encode(s.Ciphers(x.Ciphers).Nonces(x.Nonces))
 }
 
-// GetOnion returns the inner onion or remaining parts of the message prototype.
-func (x *HiddenService) GetOnion() interface{} { return x }
+// Unwrap returns the inner onion or remaining parts of the message prototype.
+func (x *HiddenService) Unwrap() interface{} { return x }
 
 // Handle defines how the ont.Ngin should deal with this onion type.
 func (x *HiddenService) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {

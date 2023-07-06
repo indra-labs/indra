@@ -32,7 +32,7 @@ func TestOnions_Reverse(t *testing.T) {
 		}
 		port := uint16(rand.Uint32())
 		ap := netip.AddrPortFrom(adr, port)
-		on := ont.Assemble([]ont.Onion{NewReverse(&ap)})
+		on := ont.Assemble([]ont.Onion{New(&ap)})
 		s := ont.Encode(on)
 		s.SetCursor(0)
 		var onr codec.Codec

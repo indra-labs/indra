@@ -14,7 +14,7 @@ func TestOnions_Session(t *testing.T) {
 	if indra.CI == "false" {
 		log2.SetLogLevel(log2.Debug)
 	}
-	sess := NewSession(1)
+	sess := New(1)
 	ss := sess.(*Session)
 	s := ont.Encode(sess)
 	s.SetCursor(0)

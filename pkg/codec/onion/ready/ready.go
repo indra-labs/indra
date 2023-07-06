@@ -82,8 +82,8 @@ func (x *Ready) Encode(s *splice.Splice) (e error) {
 	return
 }
 
-// GetOnion is a no-op because there is no onion inside a Ready message.
-func (x *Ready) GetOnion() interface{} { return nil }
+// Unwrap is a no-op because there is no onion inside a Ready message.
+func (x *Ready) Unwrap() interface{} { return nil }
 
 // Handle provides the relay switching logic for an engine handling an Ready
 // message.

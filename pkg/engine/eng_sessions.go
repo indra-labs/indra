@@ -39,7 +39,7 @@ func (ng *Engine) BuyNewSessions(amount lnwire.MilliSatoshi,
 	conf := nonce.NewID()
 	var s [5]*session.Session
 	for i := range s {
-		s[i] = session.NewSession(byte(i)).(*session.Session)
+		s[i] = session.New(byte(i)).(*session.Session)
 	}
 	var confirmChans [5]chan bool
 	var pendingConfirms int

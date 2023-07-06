@@ -21,32 +21,45 @@ var (
 )
 
 const (
-	ResponseMagic = "resp"
-	ResponseLen   = magic.Len +
+	Magic = "resp"
+	Len   = magic.Len +
 		slice.Uint32Len +
 		slice.Uint16Len +
 		nonce.IDLen + 1
 )
 
+// Response is a reply to an Exit message.
 type Response struct {
-	ID   nonce.ID
+
+	// ID of the Exit message.
+	ID nonce.ID
+
+	// Port of the Exit service.
 	Port uint16
+
+	// Load of the Exit relay.
 	Load byte
+
+	// Bytes of the Response to the Exit request message.
 	slice.Bytes
 }
 
-func NewResponse(id nonce.ID, port uint16, res slice.Bytes, load byte) ont.Onion {
+func New(id nonce.ID, port uint16, res slice.Bytes, load byte) ont.Onion {
 	return &Response{ID: id, Port: port, Bytes: res, Load: load}
 }
 
+// Account for an Response.
+//
+// TODO: this is supposed to affect half the exit fee and the two hops following.
 func (x *Response) Account(res *sess.Data, sm *sess.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	return
 }
 
+// Decode what should be an Response message from a splice.Splice.
 func (x *Response) Decode(s *splice.Splice) (e error) {
-	if e = magic.TooShort(s.Remaining(), ResponseLen-magic.Len,
-		ResponseMagic); fails(e) {
+	if e = magic.TooShort(s.Remaining(), Len-magic.Len,
+		Magic); fails(e) {
 		return
 	}
 	s.
@@ -57,11 +70,12 @@ func (x *Response) Decode(s *splice.Splice) (e error) {
 	return
 }
 
+// Encode this Response into a splice.Splice's next bytes.
 func (x *Response) Encode(s *splice.Splice) (e error) {
 	log.T.Ln("encoding", reflect.TypeOf(x)) // x.Keys, x.Port, x.Load, x.Bytes.ToBytes(),
 
 	s.
-		Magic(ResponseMagic).
+		Magic(Magic).
 		ID(x.ID).
 		Uint16(x.Port).
 		Byte(x.Load).
@@ -69,8 +83,12 @@ func (x *Response) Encode(s *splice.Splice) (e error) {
 	return
 }
 
-func (x *Response) GetOnion() interface{} { return x }
+// Unwrap is a no-op because there is no onion inside a Response (that we
+// concern ourselves with).
+func (x *Response) Unwrap() interface{} { return x }
 
+// Handle provides the relay switching logic for an engine handling an Response
+// message.
 func (x *Response) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 	pending := ng.Pending().Find(x.ID)
 	log.T.F("searching for pending Keys %s", x.ID)
@@ -103,8 +121,18 @@ func (x *Response) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) 
 	return
 }
 
-func (x *Response) Len() int             { return ResponseLen + len(x.Bytes) }
-func (x *Response) Magic() string        { return ResponseMagic }
+// Len returns the length of the onion starting from this one (used to size a
+// Splice).
+func (x *Response) Len() int { return Len + len(x.Bytes) }
+
+// Magic bytes identifying a HiddenService message is up next.
+func (x *Response) Magic() string { return Magic }
+
+// Wrap places another onion inside this one in its slot. Which isn't going to
+// happen.
 func (x *Response) Wrap(inner ont.Onion) {}
-func init()                              { reg.Register(ResponseMagic, responseGen) }
-func responseGen() codec.Codec           { return &Response{} }
+
+// Gen is a factory function for an IntroQuery.
+func Gen() codec.Codec { return &Response{} }
+
+func init() { reg.Register(Magic, Gen) }

@@ -15,5 +15,5 @@ type Codec interface {
 	Encode(s *splice.Splice) (e error)
 	Decode(s *splice.Splice) (e error)
 	Len() int
-	GetOnion() interface{}
+	Unwrap() interface{}
 }

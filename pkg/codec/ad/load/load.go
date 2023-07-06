@@ -77,8 +77,8 @@ func (x *Ad) Encode(s *splice.Splice) (e error) {
 	return
 }
 
-// GetOnion returns nil because there is no onion inside an Ad.
-func (x *Ad) GetOnion() interface{} { return nil }
+// Unwrap returns nil because there is no onion inside an Ad.
+func (x *Ad) Unwrap() interface{} { return nil }
 
 // Len is the number of bytes required for the binary encoded form of an Ad.
 func (x *Ad) Len() int { return Len }

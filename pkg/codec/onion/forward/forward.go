@@ -74,8 +74,8 @@ func (x *Forward) Encode(s *splice.Splice) error {
 	return x.Onion.Encode(s.Magic(Magic).AddrPort(x.AddrPort))
 }
 
-// GetOnion returns the onion inside this Forward.
-func (x *Forward) GetOnion() interface{} { return x.Onion }
+// Unwrap returns the onion inside this Forward.
+func (x *Forward) Unwrap() interface{} { return x.Onion }
 
 // Handle is the relay logic for an engine handling a Forward message.
 func (x *Forward) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {

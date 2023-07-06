@@ -57,8 +57,8 @@ func (x *Confirmation) Encode(s *splice.Splice) (e error) {
 	return
 }
 
-// GetOnion returns nothing because there isn't an onion inside a Confirmation.
-func (x *Confirmation) GetOnion() interface{} { return nil }
+// Unwrap returns nothing because there isn't an onion inside a Confirmation.
+func (x *Confirmation) Unwrap() interface{} { return nil }
 
 // Handle searches for a pending response and if it matches, runs the stored
 // callbacks attached to it.

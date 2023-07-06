@@ -43,26 +43,50 @@ const (
 		3*nonce.IVLen
 )
 
+// Route is a message to establish a connection to a HiddenService.
 type Route struct {
+
+	// HiddenService is the public key of the hidden service.
 	HiddenService *crypto.Pub
+
+	// HiddenCloaked is the cloaked key generated to conceal the session identity.
 	HiddenCloaked crypto.CloakedPubKey
-	Sender        *crypto.Prv
-	SenderPub     *crypto.Pub
+
+	// Sender is the ephemeral sender private key for this message.
+	Sender *crypto.Prv
+
+	// SenderPub is the key used by the receiver with their session private keys to
+	// decrypt the message payload.
+	SenderPub *crypto.Pub
+
+	// IV is the initialization vector for the encryption to be used.
 	nonce.IV
 	// ------- the rest is encrypted to the HiddenService/Sender keys.
+
+	//ID is a unique
+	// identifier for the Ready message to enable the client to identify quickly
+	// which hidden service has become ready.
 	ID nonce.ID
-	// Ciphers is a set of 3 symmetric ciphers that are to be used in their
-	// given order over the reply message from the service.
+
+	// Ciphers is a set of 3 symmetric ciphers that are to be used in their given
+	// order over the reply message from the service.
 	Ciphers crypto.Ciphers
-	// Nonces are the nonces to use with the cipher when creating the
-	// encryption for the reply message,
-	// they are common with the crypts in the header.
+
+	// Nonces are the nonces to use with the cipher when creating the encryption for
+	// the reply message, they are common with the crypts in the header.
 	crypto.Nonces
+
+	// RoutingHeaderBytes are the three layer routing header that will be used for
+	// the reply from the client.
 	hidden.RoutingHeaderBytes
+
+	// Onion contains the rest of the message.
 	ont.Onion
 }
 
-func NewRoute(id nonce.ID, k *crypto.Pub, ks *crypto.KeySet,
+// New creates a new Route message to send to an introducer relay to establish a
+// connection to a HiddenService.
+func New(id nonce.ID, k *crypto.Pub, ks *crypto.KeySet,
 	ep *exit.ExitPoint) ont.Onion {
 	oo := &Route{
 		HiddenService: k,
@@ -78,6 +102,8 @@ func NewRoute(id nonce.ID, k *crypto.Pub, ks *crypto.KeySet,
 	return oo
 }
 
+// Account for the Route message. Basically standard relay fee for the
+// Introducer.
 func (x *Route) Account(res *sess.Data, sm *sess.Manager,
 	s *sessions.Data, last bool) (skip bool, sd *sessions.Data) {
 	copy(res.ID[:], x.ID[:])
@@ -85,6 +111,7 @@ func (x *Route) Account(res *sess.Data, sm *sess.Manager,
 	return
 }
 
+// Decode a Route from a provided splice.Splice.
 func (x *Route) Decode(s *splice.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), RouteLen-magic.Len,
 		RouteMagic); fails(e) {
@@ -106,6 +133,7 @@ func (x *Route) Decrypt(prk *crypto.Prv, s *splice.Splice) {
 	hidden.ReadRoutingHeader(s, &x.RoutingHeaderBytes)
 }
 
+// Encode a Route into the next bytes of a splice.Splice.
 func (x *Route) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.ID, x.HiddenService, x.Sender, x.IV, x.Ciphers, x.Nonces,
@@ -129,8 +157,11 @@ func (x *Route) Encode(s *splice.Splice) (e error) {
 	return
 }
 
-func RouteGen() codec.Codec            { return &Route{} }
-func (x *Route) GetOnion() interface{} { return x }
+// Gen is a factory function for a Route.
+func Gen() codec.Codec { return &Route{} }
+
+// Unwrap returns the onion inside this Route.
+func (x *Route) Unwrap() interface{} { return nil }
 
 func (x *Route) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 	log.D.Ln(ng.Mgr().GetLocalNodeAddressString(), "handling route")
@@ -165,11 +196,11 @@ func (x *Route) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 			addrs[i], e = multi.AddrToAddrPort(rt.Sessions[i].Node.PickAddress(ng.Mgr().Protocols))
 		}
 		rh := []ont.Onion{
-			reverse.NewReverse(&addrs[0]),
+			reverse.New(&addrs[0]),
 			crypt.New(rt.Sessions[0].Header.Pub, rt.Sessions[0].Payload.Pub, rt.Keys[0], rt.Nonces[0], 3),
-			reverse.NewReverse(&addrs[1]),
+			reverse.New(&addrs[1]),
 			crypt.New(rt.Sessions[1].Header.Pub, rt.Sessions[1].Payload.Pub, rt.Keys[1], rt.Nonces[1], 2),
-			reverse.NewReverse(&addrs[2]),
+			reverse.New(&addrs[2]),
 			crypt.New(rt.Sessions[2].Header.Pub, rt.Sessions[2].Payload.Pub, rt.Keys[2], rt.Nonces[2], 1),
 		}
 		//.RoutingHeader(rt)
@@ -203,7 +234,13 @@ func (x *Route) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 	return
 }
 
-func (x *Route) Len() int             { return RouteLen + x.Onion.Len() }
-func (x *Route) Magic() string        { return RouteMagic }
+// Len returns the length of this Route message.
+func (x *Route) Len() int { return RouteLen + x.Onion.Len() }
+
+// Magic is the identifying 4 byte string indicating a Route message follows.
+func (x *Route) Magic() string { return RouteMagic }
+
+// Wrap puts another onion inside this Route onion.
 func (x *Route) Wrap(inner ont.Onion) { x.Onion = inner }
-func init()                           { reg.Register(RouteMagic, RouteGen) }
+
+func init() { reg.Register(RouteMagic, Gen) }
