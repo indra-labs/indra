@@ -35,6 +35,10 @@ const (
 	// tests.
 	LocalhostZeroIPv4TCP = "/ip4/127.0.0.1/tcp/0"
 
+	// LocalhostZeroIPv6TCP is the default localhost to bind to any address. Used in
+	// tests.
+	LocalhostZeroIPv6TCP = "/ip6/::1/tcp/0"
+
 	// LocalhostZeroIPv4QUIC - Don't use. Buffer problems on linux and fails on CI.
 	// LocalhostZeroIPv4QUIC = "/ip4/127.0.0.1/udp/0/quic"
 
@@ -198,10 +202,10 @@ func (l *Listener) ProtocolsAvailable() (p protocols.NetworkProtocols) {
 		return protocols.IP4 | protocols.IP6
 	}
 	for _, v := range l.Host.Addrs() {
-		if _, e := v.ValueForProtocol(multiaddr.P_IP4); fails(e) {
+		if _, e := v.ValueForProtocol(multiaddr.P_IP4); e != nil {
 			p &= protocols.IP4
 		}
-		if _, e := v.ValueForProtocol(multiaddr.P_IP4); fails(e) {
+		if _, e := v.ValueForProtocol(multiaddr.P_IP4); e != nil {
 			p &= protocols.IP6
 		}
 	}

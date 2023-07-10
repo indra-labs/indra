@@ -2,7 +2,6 @@ package engine
 
 import (
 	"context"
-	"errors"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/node"
@@ -10,23 +9,14 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/tpt"
 	"github.com/indra-labs/indra/pkg/engine/transport"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/util/multi"
 	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/multiformats/go-multiaddr"
 	"net/netip"
-	"os"
 )
 
 var (
 	log   = log2.GetLogger()
 	fails = log.E.Chk
 )
-
-// CreateNMockCircuits creates an arbitrary number of mock circuits from the given specification.
-func CreateNMockCircuits(nCirc int, nReturns int,
-	ctx context.Context) (cl []*Engine, e error) {
-	return createNMockCircuits(false, nCirc, nReturns, ctx)
-}
 
 // CreateNMockCircuitsWithSessions creates an arbitrary number of mock circuits
 // from the given specification, with an arbitrary number of mock sessions.
@@ -88,54 +78,6 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 			}
 			cl[i].Mgr().AddNodes(nodes[j])
 		}
-	}
-	return
-}
-
-// CreateMockEngine creates an indra Engine with a random localhost listener.
-func CreateMockEngine(seed, dataPath string) (ng *Engine, cancel func(), e error) {
-	defer func(f *error) {
-		if *f != nil {
-			fails(os.RemoveAll(dataPath))
-		}
-	}(&e)
-	var ctx context.Context
-	ctx, cancel = context.WithCancel(context.Background())
-	var keys []*crypto.Keys
-	var k *crypto.Keys
-	if k, e = crypto.GenerateKeys(); fails(e) {
-		return
-	}
-	keys = append(keys, k)
-	var l *transport.Listener
-	if l, e = transport.NewListener([]string{seed},
-		[]string{transport.LocalhostZeroIPv4TCP}, dataPath, k, ctx,
-		transport.DefaultMTU); fails(e) {
-		return
-	}
-	if l == nil {
-		cancel()
-		return nil, nil, errors.New("got nil listener")
-	}
-	sa := transport.GetHostAddress(l.Host)
-	var ap netip.AddrPort
-	var ma multiaddr.Multiaddr
-	if ma, e = multiaddr.NewMultiaddr(sa); fails(e) {
-		return
-	}
-	if ap, e = multi.AddrToAddrPort(ma); fails(e) {
-		return
-	}
-	var nod *node.Node
-	if nod, _ = node.NewNode([]*netip.AddrPort{&ap}, k, nil, 50000); fails(e) {
-		return
-	}
-	if ng, e = New(Params{
-		Transport: transport.NewDuplexByteChan(transport.ConnBufs),
-		Listener:  l,
-		Keys:      k,
-		Node:      nod,
-	}); fails(e) {
 	}
 	return
 }

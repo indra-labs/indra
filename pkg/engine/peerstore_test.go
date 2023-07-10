@@ -11,46 +11,29 @@ import (
 	"github.com/indra-labs/indra/pkg/util/multi"
 	"github.com/indra-labs/indra/pkg/util/splice"
 	"net/netip"
-	"os"
 	"testing"
 	"time"
 
-	"github.com/indra-labs/indra/pkg/engine/transport"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 )
 
+func pauza() { time.Sleep(time.Second / 4) }
+
 func TestEngine_PeerStore(t *testing.T) {
 	if indra.CI == "false" {
-		log2.SetLogLevel(log2.Debug)
+		log2.SetLogLevel(log2.Trace)
 	}
-	const nTotal = 26
-	var cancel func()
+	const nTotal = 10
 	var e error
 	var engines []*Engine
-	var seed string
-	for i := 0; i < nTotal; i++ {
-		dataPath, err := os.MkdirTemp(os.TempDir(), "badger")
-		if err != nil {
-			t.FailNow()
-		}
-		var eng *Engine
-		if eng, cancel, e = CreateMockEngine(seed, dataPath); fails(e) {
-			return
-		}
-		engines = append(engines, eng)
-		if i == 0 {
-			seed = transport.GetHostAddress(eng.Listener.Host)
-		}
-		defer os.RemoveAll(dataPath)
-		go eng.Start()
-	}
-	time.Sleep(time.Second)
+	engines, _, e = CreateAndStartMockEngines(nTotal)
 	adz := engines[0].Listener.Host.Addrs()
 	addrs := make([]*netip.AddrPort, len(adz))
 	for i := range adz {
 		addy, _ := multi.AddrToAddrPort(adz[i])
 		addrs[i] = &addy
 	}
+	pauza()
 	newAddressAd := addresses.New(nonce.NewID(),
 		engines[0].Mgr().GetLocalNodeIdentityPrv(),
 		addrs,
@@ -62,7 +45,7 @@ func TestEngine_PeerStore(t *testing.T) {
 	if e = engines[0].SendAd(sa.GetAll()); fails(e) {
 		t.FailNow()
 	}
-	time.Sleep(time.Second)
+	pauza()
 	newIntroAd := intro.New(nonce.NewID(),
 		engines[0].Mgr().GetLocalNodeIdentityPrv(),
 		engines[0].Mgr().GetLocalNode().Identity.Pub,
@@ -75,7 +58,7 @@ func TestEngine_PeerStore(t *testing.T) {
 	if e = engines[0].SendAd(si.GetAll()); fails(e) {
 		t.FailNow()
 	}
-	time.Sleep(time.Second)
+	pauza()
 	newLoadAd := load.New(nonce.NewID(),
 		engines[0].Mgr().GetLocalNodeIdentityPrv(),
 		17,
@@ -87,7 +70,7 @@ func TestEngine_PeerStore(t *testing.T) {
 	if e = engines[0].SendAd(sl.GetAll()); fails(e) {
 		t.FailNow()
 	}
-	time.Sleep(time.Second)
+	pauza()
 	newPeerAd := peer.New(nonce.NewID(),
 		engines[0].Mgr().GetLocalNodeIdentityPrv(),
 		20000,
@@ -100,10 +83,10 @@ func TestEngine_PeerStore(t *testing.T) {
 	if e = engines[0].SendAd(sp.GetAll()); fails(e) {
 		t.FailNow()
 	}
-	time.Sleep(time.Second * 1)
+	pauza()
 	newServiceAd := services.New(nonce.NewID(),
 		engines[0].Mgr().GetLocalNodeIdentityPrv(),
-		[]services.Service{{20000, 54321}},
+		[]services.Service{{20000, 54321}, {10000, 42221}},
 		time.Now().Add(time.Hour*24*7))
 	ss := splice.New(newServiceAd.Len())
 	if e = newServiceAd.Encode(ss); fails(e) {
@@ -112,9 +95,9 @@ func TestEngine_PeerStore(t *testing.T) {
 	if e = engines[0].SendAd(ss.GetAll()); fails(e) {
 		t.FailNow()
 	}
-	time.Sleep(time.Second)
-	cancel()
+	pauza()
 	for i := range engines {
 		engines[i].Shutdown()
 	}
+	pauza()
 }

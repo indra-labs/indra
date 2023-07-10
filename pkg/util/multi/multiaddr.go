@@ -23,7 +23,7 @@ func AddrToAddrPort(ma multiaddr.Multiaddr) (ap netip.AddrPort, e error) {
 	}
 	var addrStr string
 	var is6 bool
-	if addrStr, e = ma.ValueForProtocol(multiaddr.P_IP4); fails(e) {
+	if addrStr, e = ma.ValueForProtocol(multiaddr.P_IP4); e != nil {
 		if addrStr, e = ma.ValueForProtocol(multiaddr.P_IP6); fails(e) {
 			return
 		} else {

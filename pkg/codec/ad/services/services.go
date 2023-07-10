@@ -73,10 +73,12 @@ func New(id nonce.ID, key *crypto.Prv, services []Service,
 
 // Decode an Ad out of the next bytes of a splice.Splice.
 func (x *Ad) Decode(s *splice.Splice) (e error) {
-	var i, count uint32
+	log.D.S("decoding")
+	var i, count uint16
 	s.ReadID(&x.ID).
 		ReadPubkey(&x.Key).
-		ReadUint32(&count)
+		ReadUint16(&count)
+	log.D.Ln("found services:", count)
 	x.Services = make([]Service, count)
 	for ; i < count; i++ {
 		s.ReadUint16(&x.Services[i].Port).
@@ -155,7 +157,7 @@ func ServiceSplice(s *splice.Splice, id nonce.ID, key *crypto.Pub, services []Se
 	s.Magic(Magic).
 		ID(id).
 		Pubkey(key).
-		Uint32(uint32(len(services)))
+		Uint16(uint16(len(services)))
 	for i := range services {
 		s.
 			Uint16(services[i].Port).

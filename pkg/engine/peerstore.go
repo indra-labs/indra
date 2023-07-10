@@ -94,6 +94,7 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 	if e = c.Decode(s); fails(e) {
 		return
 	}
+	log.D.S("decoded", c)
 	var ok bool
 	switch c.(type) {
 	case *addresses.Ad:
@@ -174,6 +175,7 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 		}
 	case *services.Ad:
 		log.D.Ln("received", reflect.TypeOf(c), "from gossip network")
+		log.D.S("message", c)
 		var sa *services.Ad
 		if sa, ok = c.(*services.Ad); !ok {
 			return fmt.Errorf(ErrWrongTypeDecode,

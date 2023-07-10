@@ -19,7 +19,7 @@ func TestServiceAd(t *testing.T) {
 	var e error
 	pr, _, _ := crypto.NewSigner()
 	id := nonce.NewID()
-	sv := New(id, pr, []Service{{80, 50000}, {443, 50000}}, time.Now().Add(time.Hour))
+	sv := New(id, pr, []Service{{80, 62346}, {443, 42216}}, time.Now().Add(time.Hour))
 	log.D.S("service", sv)
 	s := splice.New(sv.Len())
 	if e = sv.Encode(s); fails(e) {

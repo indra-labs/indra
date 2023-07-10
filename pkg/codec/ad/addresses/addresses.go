@@ -24,7 +24,7 @@ var (
 )
 
 const (
-	Magic   = "svad"
+	Magic   = "adad"
 	AddrLen = splice.AddrLen
 )
 
@@ -69,10 +69,10 @@ func New(id nonce.ID, key *crypto.Prv, addrs []*netip.AddrPort,
 
 // Decode a splice.Splice's next bytes into an Ad.
 func (x *Ad) Decode(s *splice.Splice) (e error) {
-	var i, count uint32
+	var i, count uint16
 	s.ReadID(&x.ID).
 		ReadPubkey(&x.Key).
-		ReadUint32(&count)
+		ReadUint16(&count)
 	x.Addresses = make([]*netip.AddrPort, count)
 	for ; i < count; i++ {
 		addy := &netip.AddrPort{}
@@ -96,7 +96,9 @@ func (x *Ad) Unwrap() interface{} { return nil }
 
 // Len returns the length of bytes required to encode the Ad, based on the number
 // of Addresses inside it.
-func (x *Ad) Len() int { return ad.Len + len(x.Addresses)*AddrLen + slice.Uint32Len + 2 }
+func (x *Ad) Len() int {
+	return ad.Len + len(x.Addresses)*(1+AddrLen) + slice.Uint16Len
+}
 
 // Magic bytes that identify this message
 func (x *Ad) Magic() string { return Magic }
@@ -152,7 +154,7 @@ func Splice(s *splice.Splice, id nonce.ID, key *crypto.Pub,
 	s.Magic(Magic).
 		ID(id).
 		Pubkey(key).
-		Uint32(uint32(len(addrs)))
+		Uint16(uint16(len(addrs)))
 	for i := range addrs {
 		s.AddrPort(addrs[i])
 	}
