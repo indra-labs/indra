@@ -165,9 +165,11 @@ func (ng *Engine) HandleMessage(s *splice.Splice, pr ont.Onion) {
 
 // Handler is the main select switch for handling events for the Engine.
 func (ng *Engine) Handler() (terminate bool) {
+
 	log.T.C(func() string {
 		return ng.Mgr().GetLocalNodeAddressString() + " awaiting message"
 	})
+
 	var prev ont.Onion
 	select {
 	case <-ng.ctx.Done():

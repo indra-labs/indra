@@ -25,6 +25,13 @@ func CreateNMockCircuitsWithSessions(nCirc int, nReturns int,
 	return createNMockCircuits(true, nCirc, nReturns, ctx)
 }
 
+// CreateNMockCircuits creates an arbitrary number of mock circuits
+// from the given specification, with an arbitrary number of mock sessions.
+func CreateNMockCircuits(nCirc int, nReturns int,
+	ctx context.Context) (cl []*Engine, e error) {
+	return createNMockCircuits(false, nCirc, nReturns, ctx)
+}
+
 func createNMockCircuits(inclSessions bool, nCircuits int,
 	nReturnSessions int, ctx context.Context) (cl []*Engine, e error) {
 	nTotal := 1 + nCircuits*5

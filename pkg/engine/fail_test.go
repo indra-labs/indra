@@ -2,6 +2,21 @@
 
 package engine
 
+import (
+	"context"
+	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	"github.com/indra-labs/indra/pkg/engine/sessions"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/util/cryptorand"
+	"github.com/indra-labs/indra/pkg/util/qu"
+	"github.com/indra-labs/indra/pkg/util/slice"
+	"go.uber.org/atomic"
+	"sync"
+	"testing"
+	"time"
+)
+
 //func TestEngine_Message(t *testing.T) {
 //	if indra.CI == "false" {
 //		log2.SetLogLevel(log2.Info)
@@ -668,112 +683,112 @@ package engine
 //	}
 //}
 
-//func TestClient_SendSessionKeys(t *testing.T) {
-//	if indra.CI == "false" {
-//		log2.SetLogLevel(log2.Debug)
-//	}
-//	var clients []*Engine
-//	var e error
-//	ctx, cancel := context.WithCancel(context.Background())
-//	if clients, e = CreateNMockCircuits(2, 2, ctx); fails(e) {
-//		t.Error(e)
-//		t.FailNow()
-//	}
-//	// Start up the clients.
-//	for _, v := range clients {
-//		go v.Start()
-//	}
-//	var wg sync.WaitGroup
-//	var counter atomic.Int32
-//	quit := qu.T()
-//	go func() {
-//		select {
-//		case <-time.After(time.Second * 6):
-//		case <-quit:
-//			return
-//		}
-//		for i := 0; i < int(counter.Load()); i++ {
-//			wg.Done()
-//		}
-//		t.Error("SendSessionKeys test failed")
-//		quit.Q()
-//	}()
-//	for i := 0; i < 10; i++ {
-//		log.D.Ln("buying sessions", i)
-//		wg.Add(1)
-//		counter.Inc()
-//		e = clients[0].BuyNewSessions(1000000, func() {
-//			wg.Done()
-//			counter.Dec()
-//		})
-//		if fails(e) {
-//			wg.Done()
-//			counter.Dec()
-//		}
-//		wg.Wait()
-//		for j := range clients[0].Mgr().CircuitCache {
-//			log.D.F("%d %s %v", i, j, clients[0].Mgr().CircuitCache[j])
-//		}
-//		quit.Q()
-//	}
-//	for _, v := range clients {
-//		v.Shutdown()
-//	}
-//	cancel()
-//}
+func TestClient_SendSessionKeys(t *testing.T) {
+	if indra.CI == "false" {
+		log2.SetLogLevel(log2.Debug)
+	}
+	var clients []*Engine
+	var e error
+	ctx, cancel := context.WithCancel(context.Background())
+	if clients, e = CreateNMockCircuits(2, 2, ctx); fails(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	// Start up the clients.
+	for _, v := range clients {
+		go v.Start()
+	}
+	var wg sync.WaitGroup
+	var counter atomic.Int32
+	quit := qu.T()
+	go func() {
+		select {
+		case <-time.After(time.Second * 6):
+		case <-quit:
+			return
+		}
+		for i := 0; i < int(counter.Load()); i++ {
+			wg.Done()
+		}
+		t.Error("SendSessionKeys test failed")
+		quit.Q()
+	}()
+	for i := 0; i < 10; i++ {
+		log.D.Ln("buying sessions", i)
+		wg.Add(1)
+		counter.Inc()
+		e = clients[0].BuyNewSessions(1000000, func() {
+			wg.Done()
+			counter.Dec()
+		})
+		if fails(e) {
+			wg.Done()
+			counter.Dec()
+		}
+		wg.Wait()
+		for j := range clients[0].Mgr().CircuitCache {
+			log.D.F("%d %s %v", i, j, clients[0].Mgr().CircuitCache[j])
+		}
+		quit.Q()
+	}
+	for _, v := range clients {
+		v.Shutdown()
+	}
+	cancel()
+}
 
-//func TestClient_SendGetBalance(t *testing.T) {
-//	if indra.CI == "false" {
-//		log2.SetLogLevel(log2.Trace)
-//	}
-//	var clients []*Engine
-//	var e error
-//	ctx, cancel := context.WithCancel(context.Background())
-//	if clients, e = CreateNMockCircuitsWithSessions(4, 4,
-//		ctx); fails(e) {
-//		t.Error(e)
-//		t.FailNow()
-//	}
-//	client := clients[0]
-//	log.D.Ln("client", client.Mgr().GetLocalNodeAddressString())
-//	// Start up the clients.
-//	for _, v := range clients {
-//		go v.Start()
-//	}
-//	quit := qu.T()
-//	var wg sync.WaitGroup
-//	go func() {
-//		select {
-//		case <-time.After(5 * time.Second):
-//		case <-quit:
-//			return
-//		}
-//		cancel()
-//		quit.Q()
-//		t.Error("SendGetBalance test failed")
-//	}()
-//	i := 0
-//	wg.Add(1)
-//	returnHops := client.Mgr().GetSessionsAtHop(5)
-//	var returner *sessions.Data
-//	if len(returnHops) > 1 {
-//		cryptorand.Shuffle(len(returnHops), func(i, j int) {
-//			returnHops[i], returnHops[j] = returnHops[j],
-//				returnHops[i]
-//		})
-//	}
-//	returner = returnHops[0]
-//	clients[0].SendGetBalance(returner, clients[0].Mgr().Sessions[i],
-//		func(cf nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
-//			log.D.Ln("success")
-//			wg.Done()
-//			quit.Q()
-//			return
-//		})
-//	wg.Wait()
-//	quit.Q()
-//	cancel()
-//	for _, v := range clients {
-//		v.Shutdown()
-//	}
-//}
+func TestClient_SendGetBalance(t *testing.T) {
+	if indra.CI == "false" {
+		log2.SetLogLevel(log2.Trace)
+	}
+	var clients []*Engine
+	var e error
+	ctx, cancel := context.WithCancel(context.Background())
+	if clients, e = CreateNMockCircuitsWithSessions(4, 4,
+		ctx); fails(e) {
+		t.Error(e)
+		t.FailNow()
+	}
+	client := clients[0]
+	log.D.Ln("client", client.Mgr().GetLocalNodeAddressString())
+	// Start up the clients.
+	for _, v := range clients {
+		go v.Start()
+	}
+	quit := qu.T()
+	var wg sync.WaitGroup
+	go func() {
+		select {
+		case <-time.After(5 * time.Second):
+		case <-quit:
+			return
+		}
+		cancel()
+		quit.Q()
+		t.Error("SendGetBalance test failed")
+	}()
+	i := 0
+	wg.Add(1)
+	returnHops := client.Mgr().GetSessionsAtHop(5)
+	var returner *sessions.Data
+	if len(returnHops) > 1 {
+		cryptorand.Shuffle(len(returnHops), func(i, j int) {
+			returnHops[i], returnHops[j] = returnHops[j],
+				returnHops[i]
+		})
+	}
+	returner = returnHops[0]
+	clients[0].SendGetBalance(returner, clients[0].Mgr().Sessions[i],
+		func(cf nonce.ID, ifc interface{}, b slice.Bytes) (e error) {
+			log.D.Ln("success")
+			wg.Done()
+			quit.Q()
+			return
+		})
+	wg.Wait()
+	quit.Q()
+	cancel()
+	for _, v := range clients {
+		v.Shutdown()
+	}
+}

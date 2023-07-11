@@ -13,14 +13,14 @@ import (
 )
 
 // CreateMockEngine creates an indra Engine with a random localhost listener.
-func CreateMockEngine(seed, dataPath string) (ng *Engine, cancel func(), e error) {
+func CreateMockEngine(seed, dataPath string, ctx context.Context,
+) (ng *Engine, cancel func(), e error) {
+
 	defer func(f *error) {
 		if *f != nil {
 			fails(os.RemoveAll(dataPath))
 		}
 	}(&e)
-	var ctx context.Context
-	ctx, cancel = context.WithCancel(context.Background())
 	var keys []*crypto.Keys
 	var k *crypto.Keys
 	if k, e = crypto.GenerateKeys(); fails(e) {
@@ -60,29 +60,31 @@ func CreateMockEngine(seed, dataPath string) (ng *Engine, cancel func(), e error
 	return
 }
 
-func CreateAndStartMockEngines(n int) (engines []*Engine, cleanup func(), e error) {
+func CreateAndStartMockEngines(n int, ctx context.Context) (engines []*Engine,
+	cleanup func(), e error) {
+
 	cleanup = func() {}
 	var seed string
+	dataPath := make([]string, n)
 	for i := 0; i < n; i++ {
-		dataPath, err := os.MkdirTemp(os.TempDir(), "badger")
-		if err != nil {
-			cleanup()
+		dataPath[i], e = os.MkdirTemp(os.TempDir(), "badger")
+		if e != nil {
 			return
 		}
 		var eng *Engine
-		if eng, _, e = CreateMockEngine(seed, dataPath); fails(e) {
-			cleanup()
+		if eng, _, e = CreateMockEngine(seed, dataPath[i], ctx); fails(e) {
 			return
 		}
 		engines = append(engines, eng)
 		if i == 0 {
 			seed = transport.GetHostAddress(eng.Listener.Host)
 		}
-		cleanup = func() {
-			cleanup()
-			fails(os.RemoveAll(dataPath))
-		}
 		go eng.Start()
+	}
+	cleanup = func() {
+		for i := range engines {
+			engines[i].Shutdown()
+		}
 	}
 	return
 }
