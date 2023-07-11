@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"context"
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/codec/ad/addresses"
 	"github.com/indra-labs/indra/pkg/codec/ad/intro"
@@ -18,18 +17,17 @@ import (
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 )
 
-func pauza() { time.Sleep(time.Second / 4) }
+func pauza() { time.Sleep(time.Second / 2) }
 
 func TestEngine_PeerStore(t *testing.T) {
 	if indra.CI == "false" {
 		log2.SetLogLevel(log2.Trace)
 	}
-	const nTotal = 10
+	const nTotal = 30
 	var e error
 	var engines []*Engine
 	var cleanup func()
-	ctx, cancel := context.WithCancel(context.Background())
-	engines, cleanup, e = CreateAndStartMockEngines(nTotal, ctx)
+	engines, cleanup, e = CreateAndStartMockEngines(nTotal)
 	adz := engines[0].Listener.Host.Addrs()
 	addrs := make([]*netip.AddrPort, len(adz))
 	for i := range adz {
@@ -99,7 +97,6 @@ func TestEngine_PeerStore(t *testing.T) {
 		t.FailNow()
 	}
 	pauza()
-	cancel()
-	pauza()
 	cleanup()
+	pauza()
 }
