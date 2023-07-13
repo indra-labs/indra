@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/codec/ad/addresses"
 	"github.com/indra-labs/indra/pkg/codec/ad/intro"
@@ -27,7 +28,8 @@ func TestEngine_PeerStore(t *testing.T) {
 	var e error
 	var engines []*Engine
 	var cleanup func()
-	engines, cleanup, e = CreateAndStartMockEngines(nTotal)
+	ctx, _ := context.WithCancel(context.Background())
+	engines, cleanup, e = CreateAndStartMockEngines(nTotal, 0, ctx)
 	adz := engines[0].Listener.Host.Addrs()
 	addrs := make([]*netip.AddrPort, len(adz))
 	for i := range adz {

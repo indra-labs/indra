@@ -2,7 +2,6 @@ package engine
 
 import (
 	"context"
-	"errors"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/engine/node"
 	"github.com/indra-labs/indra/pkg/engine/transport"
@@ -13,14 +12,13 @@ import (
 )
 
 // CreateMockEngine creates an indra Engine with a random localhost listener.
-func CreateMockEngine(seed, dataPath string) (ng *Engine, cancel func(), e error) {
+func CreateMockEngine(seed, dataPath string, ctx context.Context) (ng *Engine) {
+	var e error
 	defer func(f *error) {
 		if *f != nil {
 			fails(os.RemoveAll(dataPath))
 		}
 	}(&e)
-	var ctx context.Context
-	ctx, cancel = context.WithCancel(context.Background())
 	var keys []*crypto.Keys
 	var k *crypto.Keys
 	if k, e = crypto.GenerateKeys(); fails(e) {
@@ -34,10 +32,9 @@ func CreateMockEngine(seed, dataPath string) (ng *Engine, cancel func(), e error
 		return
 	}
 	if l == nil {
-		cancel()
-		return nil, nil, errors.New("got nil listener")
+		panic("maybe you have no network device?")
 	}
-	sa := transport.GetHostAddress(l.Host)
+	sa := transport.GetHostFirstMultiaddr(l.Host)
 	var ap netip.AddrPort
 	var ma multiaddr.Multiaddr
 	if ma, e = multiaddr.NewMultiaddr(sa); fails(e) {
@@ -60,7 +57,8 @@ func CreateMockEngine(seed, dataPath string) (ng *Engine, cancel func(), e error
 	return
 }
 
-func CreateAndStartMockEngines(n int) (engines []*Engine, cleanup func(), e error) {
+func CreateAndStartMockEngines(n, sessions int, ctx context.Context) (engines []*Engine, cleanup func(), e error) {
+
 	cleanup = func() {}
 	var seed string
 	dataPath := make([]string, n)
@@ -70,12 +68,12 @@ func CreateAndStartMockEngines(n int) (engines []*Engine, cleanup func(), e erro
 			return
 		}
 		var eng *Engine
-		if eng, _, e = CreateMockEngine(seed, dataPath[i]); fails(e) {
+		if eng = CreateMockEngine(seed, dataPath[i], ctx); fails(e) {
 			return
 		}
 		engines = append(engines, eng)
 		if i == 0 {
-			seed = transport.GetHostAddress(eng.Listener.Host)
+			seed = transport.GetHostFirstMultiaddr(eng.Listener.Host)
 		}
 		go eng.Start()
 	}
@@ -90,6 +88,9 @@ func CreateAndStartMockEngines(n int) (engines []*Engine, cleanup func(), e erro
 				fails(os.RemoveAll(dataPath[i]))
 			}
 		}
+	}
+	if sessions > 0 {
+
 	}
 	return
 }

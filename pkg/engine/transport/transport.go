@@ -183,18 +183,38 @@ type (
 	}
 )
 
-// GetHostAddress returns the multiaddr string encoding of a host.Host's network listener.
-func GetHostAddress(ha host.Host) string {
+// GetHostFirstMultiaddr returns the multiaddr string encoding of a host.Host's network listener.
+func GetHostFirstMultiaddr(ha host.Host) string {
 	hostAddr, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/p2p/%s",
 		ha.ID().String()))
 	addr := ha.Addrs()[0]
 	return addr.Encapsulate(hostAddr).String()
 }
 
-// GetHostOnlyAddress returns the multiaddr string without the p2p key.
-func GetHostOnlyAddress(ha host.Host) string {
+// GetHostOnlyFirstMultiaddr returns the multiaddr string without the p2p key.
+func GetHostOnlyFirstMultiaddr(ha host.Host) string {
 	addr := ha.Addrs()[0]
 	return addr.String()
+}
+
+// GetHostMultiaddrs returns the multiaddr strings encoding of a host.Host's network listener.
+//
+// This includes (the repeated) p2p key sections of the peer identity key.
+func GetHostMultiaddrs(ha host.Host) (addrs []string) {
+	hostAddr, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/p2p/%s",
+		ha.ID().String()))
+	for _, v := range ha.Addrs() {
+		addrs = append(addrs, v.Encapsulate(hostAddr).String())
+	}
+	return
+}
+
+// GetHostOnlyMultiaddrs returns the multiaddr string without the p2p key.
+func GetHostOnlyMultiaddrs(ha host.Host) (addrs []string) {
+	for _, v := range ha.Addrs() {
+		addrs = append(addrs, v.String())
+	}
+	return
 }
 
 func (l *Listener) ProtocolsAvailable() (p protocols.NetworkProtocols) {
@@ -265,7 +285,7 @@ func (l *Listener) Dial(multiAddr string) (d *Conn) {
 	l.Lock()
 	l.connections[multiAddr] = d
 	l.Unlock()
-	hostAddress := GetHostOnlyAddress(d.Host)
+	hostAddress := GetHostOnlyFirstMultiaddr(d.Host)
 	go func() {
 		var e error
 		for {
@@ -343,7 +363,7 @@ func (l *Listener) handle(s network.Stream) {
 		if n, e = s.Read(b); fails(e) {
 			return
 		}
-		log.T.S(blue(GetHostOnlyAddress(l.
+		log.T.S(blue(GetHostOnlyFirstMultiaddr(l.
 			Host)) + " read " + fmt.Sprint(n) + " bytes from listener",
 		// b[:n].ToBytes(),
 		)

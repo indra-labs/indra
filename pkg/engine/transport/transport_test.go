@@ -38,7 +38,7 @@ func TestNewListener(t *testing.T) {
 	if err != nil {
 		t.FailNow()
 	}
-	l2, e = NewListener([]string{GetHostAddress(l1.Host)},
+	l2, e = NewListener([]string{GetHostFirstMultiaddr(l1.Host)},
 		[]string{LocalhostZeroIPv4TCP}, dataPath, k2, ctx, DefaultMTU)
 	if fails(e) {
 		t.FailNow()
@@ -47,8 +47,8 @@ func TestNewListener(t *testing.T) {
 	_ = msg2
 	msg1, _, e = tests.GenMessage(32, "REQUEST")
 	msg2, _, e = tests.GenMessage(32, "RESPONSE")
-	hn1 := GetHostAddress(l2.Host)
-	hn2 := GetHostAddress(l1.Host)
+	hn1 := GetHostFirstMultiaddr(l2.Host)
+	hn2 := GetHostFirstMultiaddr(l1.Host)
 	d1 := l1.Dial(hn1)
 	d2 := l2.Dial(hn2)
 	c1, c2 := l1.GetConnRecv(hn1), l2.GetConnRecv(hn2)

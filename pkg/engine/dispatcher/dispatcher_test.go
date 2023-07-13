@@ -52,7 +52,7 @@ func TestDispatcher(t *testing.T) {
 	if err != nil {
 		t.FailNow()
 	}
-	l2, e = transport.NewListener([]string{transport.GetHostAddress(l1.Host)},
+	l2, e = transport.NewListener([]string{transport.GetHostFirstMultiaddr(l1.Host)},
 		[]string{transport.LocalhostZeroIPv4TCP}, dataPath, k2, ctx,
 		transport.DefaultMTU)
 	if fails(e) {
@@ -63,7 +63,7 @@ func TestDispatcher(t *testing.T) {
 	msg1, _, e = tests.GenMessage(8192, "REQUEST")
 	msg2, _, e = tests.GenMessage(4096, "RESPONSE")
 	_, _ = msg1, msg2
-	hn1 := transport.GetHostAddress(l2.Host)
+	hn1 := transport.GetHostFirstMultiaddr(l2.Host)
 	// hn2 := transport.GetHostAddress(l1.Host)
 	var ks *crypto.KeySet
 	_, ks, e = crypto.NewSigner()
