@@ -84,7 +84,7 @@ func (x *Reverse) Unwrap() interface{} { return x.Onion }
 //
 // This is where the 3 layer RoutingHeader is processed.
 func (x *Reverse) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
-	if x.AddrPort.String() == ng.Mgr().GetLocalNodeAddress().String() {
+	if ng.Mgr().MatchesLocalNodeAddress(x.AddrPort) {
 		in := reg2.Recognise(s)
 		if e = in.Decode(s); fails(e) {
 			return e

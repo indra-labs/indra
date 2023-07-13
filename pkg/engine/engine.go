@@ -101,10 +101,10 @@ func New(p Params) (ng *Engine, e error) {
 // Shutdown triggers the shutdown of the client and the Cleanup before
 // finishing.
 func (ng *Engine) Shutdown() {
-	log.T.Ln("shutting down", ng.Mgr().GetLocalNodeAddress().String())
 	if ng.ShuttingDown.Load() {
 		return
 	}
+	log.T.Ln("shutting down", ng.Mgr().GetLocalNodeAddress().String())
 	ng.ShuttingDown.Store(true)
 	ng.Cleanup()
 	ng.cancel()

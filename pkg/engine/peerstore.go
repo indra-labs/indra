@@ -62,7 +62,6 @@ func (ng *Engine) RunAdHandler(handler func(p *pubsub.Message) (e error)) {
 			if m, e = ng.sub.Next(ng.ctx); e != nil {
 				continue
 			}
-			log.D.Ln("received message from gossip network")
 			if e = handler(m); fails(e) {
 				continue
 			}
@@ -94,11 +93,10 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 	if e = c.Decode(s); fails(e) {
 		return
 	}
-	log.D.S("decoded", c)
 	var ok bool
 	switch c.(type) {
 	case *addresses.Ad:
-		log.D.Ln("received", reflect.TypeOf(c), "from gossip network")
+		log.D.Ln(ng.Listener.Host.Addrs()[0].String()+" received", reflect.TypeOf(c), "from gossip network")
 		var addr *addresses.Ad
 		if addr, ok = c.(*addresses.Ad); !ok {
 			return fmt.Errorf(ErrWrongTypeDecode,
@@ -107,7 +105,6 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 			return errors.New("addr ad failed validation")
 		}
 		// If we got to here now we can add to the PeerStore.
-		log.D.S("new ad for address:", c)
 		var id peer.ID
 		if id, e = peer.IDFromPublicKey(addr.Key); fails(e) {
 			return
@@ -117,7 +114,7 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 			return
 		}
 	case *intro.Ad:
-		log.D.Ln("received", reflect.TypeOf(c), "from gossip network")
+		log.D.Ln(ng.Listener.Host.Addrs()[0].String()+" received", reflect.TypeOf(c), "from gossip network")
 		var intr *intro.Ad
 		if intr, ok = c.(*intro.Ad); !ok {
 			return fmt.Errorf(ErrWrongTypeDecode,
@@ -126,7 +123,6 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 			return errors.New("intro ad failed validation")
 		}
 		// If we got to here now we can add to the PeerStore.
-		log.D.S("new ad for intro:", c)
 		var id peer.ID
 		if id, e = peer.IDFromPublicKey(intr.Key); fails(e) {
 			return
@@ -136,7 +132,7 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 			return
 		}
 	case *load.Ad:
-		log.D.Ln("received", reflect.TypeOf(c), "from gossip network")
+		log.D.Ln(ng.Listener.Host.Addrs()[0].String()+" received", reflect.TypeOf(c), "from gossip network")
 		var lod *load.Ad
 		if lod, ok = c.(*load.Ad); !ok {
 			return fmt.Errorf(ErrWrongTypeDecode,
@@ -145,7 +141,6 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 			return errors.New("load ad failed validation")
 		}
 		// If we got to here now we can add to the PeerStore.
-		log.D.S("new ad for load:", c)
 		var id peer.ID
 		if id, e = peer.IDFromPublicKey(lod.Key); fails(e) {
 			return
@@ -155,7 +150,7 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 			return
 		}
 	case *peer2.Ad:
-		log.D.Ln("received", reflect.TypeOf(c), "from gossip network")
+		log.D.Ln(ng.Listener.Host.Addrs()[0].String()+" received", reflect.TypeOf(c), "from gossip network")
 		var pa *peer2.Ad
 		if pa, ok = c.(*peer2.Ad); !ok {
 			return fmt.Errorf(ErrWrongTypeDecode,
@@ -164,7 +159,6 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 			return errors.New("peer ad failed validation")
 		}
 		// If we got to here now we can add to the PeerStore.
-		log.D.S("new ad for peer:", c)
 		var id peer.ID
 		if id, e = peer.IDFromPublicKey(pa.Key); fails(e) {
 			return
@@ -174,8 +168,7 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 			return
 		}
 	case *services.Ad:
-		log.D.Ln("received", reflect.TypeOf(c), "from gossip network")
-		log.D.S("message", c)
+		log.D.Ln(ng.Listener.Host.Addrs()[0].String()+" received", reflect.TypeOf(c), "from gossip network")
 		var sa *services.Ad
 		if sa, ok = c.(*services.Ad); !ok {
 			return fmt.Errorf(ErrWrongTypeDecode,
@@ -184,7 +177,6 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 			return errors.New("services ad failed validation")
 		}
 		// If we got to here now we can add to the PeerStore.
-		log.D.S("new ad for services:", c)
 		var id peer.ID
 		if id, e = peer.IDFromPublicKey(sa.Key); fails(e) {
 			return

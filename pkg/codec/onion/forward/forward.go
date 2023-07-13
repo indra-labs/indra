@@ -79,12 +79,13 @@ func (x *Forward) Unwrap() interface{} { return x.Onion }
 
 // Handle is the relay logic for an engine handling a Forward message.
 func (x *Forward) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
-	// Forward the whole buffer received onwards. Usually there will be a
-	// crypt.Layer under this which will be unwrapped by the receiver.
-	if x.AddrPort.String() == ng.Mgr().GetLocalNodeAddress().String() {
+	// Forward the whole buffer received onwards. Usually there will be a crypt.Layer
+	// under this which will be unwrapped by the receiver.
+	if ng.Mgr().MatchesLocalNodeAddress(x.AddrPort) {
 		// it is for us, we want to unwrap the next part.
 		ng.HandleMessage(splice.BudgeUp(s), x)
 	} else {
+		// accounting on the relevant session and then forward the message.
 		switch on1 := p.(type) {
 		case *crypt.Crypt:
 			sess := ng.Mgr().FindSessionByHeader(on1.ToPriv)

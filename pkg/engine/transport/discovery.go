@@ -66,6 +66,8 @@ func Discover(ctx context.Context, h host.Host, dht *dht.IpfsDHT,
 		if _, e = disco.Advertise(ctx, rendezvous[i].String()); e != nil {
 		}
 	}
+	if e = Tick(h, rendezvous, peers, disco, ctx); fails(e) {
+	}
 	ticker := time.NewTicker(time.Second * 1)
 	defer ticker.Stop()
 	for {
@@ -73,28 +75,37 @@ func Discover(ctx context.Context, h host.Host, dht *dht.IpfsDHT,
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			for i := range rendezvous {
-				if peers, e = disco.FindPeers(ctx,
-					rendezvous[i].String()); fails(e) {
-					return
-				}
-			}
-			for p := range peers {
-				if p.ID == h.ID() {
-					continue
-				}
-				if h.Network().Connectedness(p.ID) !=
-					network.Connected {
-
-					if _, e = h.Network().DialPeer(ctx,
-						p.ID); fails(e) {
-
-						continue
-					}
-					log.T.Ln(h.Addrs()[0].String(), "Connected to peer",
-						blue(p.Addrs[0]))
-				}
+			if e = Tick(h, rendezvous, peers, disco, ctx); fails(e) {
 			}
 		}
 	}
+}
+
+func Tick(h host.Host, rendezvous []multiaddr.Multiaddr,
+	peers <-chan peer.AddrInfo, disco *routing.RoutingDiscovery,
+	ctx context.Context) (e error) {
+
+	for i := range rendezvous {
+		if peers, e = disco.FindPeers(ctx,
+			rendezvous[i].String()); fails(e) {
+			return
+		}
+	}
+	for p := range peers {
+		if p.ID == h.ID() {
+			continue
+		}
+		if h.Network().Connectedness(p.ID) !=
+			network.Connected {
+
+			if _, e = h.Network().DialPeer(ctx,
+				p.ID); fails(e) {
+
+				continue
+			}
+			log.T.Ln(h.Addrs()[0].String(), "Connected to peer",
+				blue(p.Addrs[0]))
+		}
+	}
+	return
 }

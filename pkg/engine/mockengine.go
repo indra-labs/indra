@@ -57,7 +57,7 @@ func CreateMockEngine(seed, dataPath string, ctx context.Context) (ng *Engine) {
 	return
 }
 
-func CreateAndStartMockEngines(n, sessions int, ctx context.Context) (engines []*Engine, cleanup func(), e error) {
+func CreateAndStartMockEngines(n int, ctx context.Context) (engines []*Engine, cleanup func(), e error) {
 
 	cleanup = func() {}
 	var seed string
@@ -88,9 +88,6 @@ func CreateAndStartMockEngines(n, sessions int, ctx context.Context) (engines []
 				fails(os.RemoveAll(dataPath[i]))
 			}
 		}
-	}
-	if sessions > 0 {
-
 	}
 	return
 }

@@ -401,7 +401,7 @@ func (sm *Manager) ForEachNode(fn func(n *node.Node) bool) {
 // GetLocalNode returns the engine's local Node.
 func (sm *Manager) GetLocalNode() *node.Node { return sm.nodes[0] }
 
-// GetLocalNodeAddress returns an Addresse of the local node. This is done randomly. Only addresses of the types configured in the manager (default is the same as the default gateway's interfaces. IPv4 and maybe IPv6.
+// GetLocalNodeAddress returns an Address of the local node. This is done randomly. Only addresses of the types configured in the manager (default is the same as the default gateway's interfaces. IPv4 and maybe IPv6.
 func (sm *Manager) GetLocalNodeAddress() (addr *netip.AddrPort) {
 	//sm.Lock()
 	//defer sm.Unlock()
@@ -414,6 +414,22 @@ func (sm *Manager) GetLocalNodeAddress() (addr *netip.AddrPort) {
 		shuf[i], shuf[j] = shuf[j], shuf[i]
 	})
 	addr = shuf[0]
+	return
+}
+
+// GetLocalNodeAddresses returns the addresses of the local node.
+func (sm *Manager) GetLocalNodeAddresses() (addr []*netip.AddrPort) {
+	//sm.Lock()
+	//defer sm.Unlock()
+	return sm.GetLocalNode().Addresses
+}
+
+func (sm *Manager) MatchesLocalNodeAddress(ap *netip.AddrPort) (is bool) {
+	for _, v := range sm.GetLocalNode().Addresses {
+		if *ap == *v {
+			return true
+		}
+	}
 	return
 }
 

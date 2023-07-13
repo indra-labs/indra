@@ -13,7 +13,6 @@ import (
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
-	"reflect"
 	"time"
 )
 
@@ -80,7 +79,6 @@ func (x *Ad) Decode(s *splice.Splice) (e error) {
 
 // Encode an Ad into the next bytes of a splice.Splice.
 func (x *Ad) Encode(s *splice.Splice) (e error) {
-	log.T.S("encoding", reflect.TypeOf(x), x)
 	x.Splice(s)
 	return
 }

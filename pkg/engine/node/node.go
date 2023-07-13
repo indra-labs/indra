@@ -36,7 +36,7 @@ type Node struct {
 	ID nonce.ID
 
 	// Mutex to stop concurrent read/write.
-	sync.Mutex
+	*sync.Mutex
 
 	// Addresses is the network addresses a node is listening to.
 	//
@@ -71,6 +71,7 @@ func NewNode(addr []*netip.AddrPort, keys *crypto.Keys, tpt tpt.Transport,
 	id = nonce.NewID()
 	n = &Node{
 		ID:        id,
+		Mutex:     &sync.Mutex{},
 		Addresses: addr,
 		Identity:  keys,
 		RelayRate: relayRate,
