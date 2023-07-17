@@ -215,6 +215,19 @@ func (sb SigBytes) Recover(hash sha256.Hash) (p *Pub, e error) {
 	return
 }
 
+func (sb SigBytes) MatchesPubkey(hash sha256.Hash,
+	pk *Pub) (match bool) {
+
+	key, e := sb.Recover(hash)
+	if fails(e) {
+		return false
+	}
+	if key.Equals(pk) {
+		return true
+	}
+	return false
+}
+
 // SigBytes is an ECDSA BIP62 formatted compact signature which allows the
 // recovery of the public key from the signature.
 type SigBytes [SigLen]byte

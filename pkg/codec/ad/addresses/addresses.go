@@ -25,7 +25,7 @@ var (
 
 const (
 	Magic   = "adad"
-	AddrLen = splice.AddrLen
+	AddrLen = ad.Len + splice.AddrLen
 )
 
 // Ad stores a specification for the fee rate and the service ports of a set of
@@ -114,8 +114,11 @@ func (x *Ad) Sign(prv *crypto.Prv) (e error) {
 		return
 	}
 	if len(b) != crypto.SigLen {
-		return fmt.Errorf("signature incorrect length, got %d expected %d",
+
+		e = fmt.Errorf("signature incorrect length, got %d expected %d",
 			len(b), crypto.SigLen)
+		fails(e)
+		//return
 	}
 	copy(x.Sig[:], b)
 	return nil
@@ -137,14 +140,7 @@ func (x *Ad) Validate() (valid bool) {
 	s := splice.New(intro.Len - magic.Len)
 	x.SpliceNoSig(s)
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
-	key, e := x.Sig.Recover(hash)
-	if fails(e) {
-		return false
-	}
-	if key.Equals(x.Key) {
-		return true
-	}
-	return false
+	return x.Sig.MatchesPubkey(hash, x.Key) && x.Expiry.After(time.Now())
 }
 
 // Splice is a function that serializes the parts of an Ad.

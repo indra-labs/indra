@@ -405,7 +405,8 @@ func (sm *Manager) GetLocalNode() *node.Node { return sm.nodes[0] }
 func (sm *Manager) GetLocalNodeAddress() (addr *netip.AddrPort) {
 	//sm.Lock()
 	//defer sm.Unlock()
-	addys := sm.nodes[0].Addresses
+	addys := sm.nodes[0].
+		Addresses
 	shuf := make([]*netip.AddrPort, len(addys))
 	for i := range addys {
 		shuf[i] = addys[i]
@@ -625,8 +626,11 @@ func (sm *Manager) UpdateSessionCache() {
 }
 
 // NewSessionManager creates a new session manager.
-func NewSessionManager(protocols protocols.NetworkProtocols) *Manager {
+func NewSessionManager(protocols protocols.NetworkProtocols,
+	n *node.Node) *Manager {
+
 	return &Manager{
+		nodes:           []*node.Node{n},
 		CircuitCache:    make(CircuitCache),
 		PendingPayments: make(payments.PendingPayments, 0),
 		Protocols:       protocols,

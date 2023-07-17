@@ -95,14 +95,7 @@ func (x *Ad) Validate() bool {
 	s := splice.New(Len - magic.Len)
 	x.SpliceNoSig(s)
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
-	key, e := x.Sig.Recover(hash)
-	if fails(e) {
-		return false
-	}
-	if key.Equals(x.Key) && x.Expiry.After(time.Now()) {
-		return true
-	}
-	return false
+	return x.Sig.MatchesPubkey(hash, x.Key) && x.Expiry.After(time.Now())
 }
 
 // IntroSplice creates the message part up to the signature for an Ad.

@@ -75,9 +75,10 @@ func New(p Params) (ng *Engine, e error) {
 		Responses: &responses.Pending{},
 		KeySet:    ks,
 		Listener:  p.Listener,
-		manager:   sess.NewSessionManager(p.Listener.ProtocolsAvailable()),
-		h:         hidden.NewHiddenRouting(),
-		Pause:     qu.T(),
+		manager: sess.NewSessionManager(p.Listener.ProtocolsAvailable(),
+			p.Node),
+		h:     hidden.NewHiddenRouting(),
+		Pause: qu.T(),
 	}
 	if p.Listener != nil && p.Listener.Host != nil {
 		if ng.PubSub, ng.topic, ng.sub, e = SetupGossip(ctx, p.Listener.Host, cancel); fails(e) {
@@ -88,8 +89,43 @@ func New(p Params) (ng *Engine, e error) {
 		cancel()
 		return
 	}
+	if e = ng.NodeAds.Services.Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
+		cancel()
+		return
+	}
+	if e = ng.NodeAds.Peer.Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
+		cancel()
+		return
+	}
+	if e = ng.NodeAds.Load.Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
+		cancel()
+		return
+	}
+	if e = ng.NodeAds.Address.Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
+		cancel()
+		return
+	}
 	ng.Mgr().AddNodes(append([]*node.Node{p.Node}, p.Nodes...)...)
-	// Add return sessions for receiving responses, ideally more of these
+	if ng.NodeAds, e = ads.GenerateAds(p.Node, 25); fails(e) {
+		cancel()
+		return
+	}
+	if e = ng.NodeAds.Services.Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
+		cancel()
+		return
+	}
+	if e = ng.NodeAds.Peer.Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
+		cancel()
+		return
+	}
+	if e = ng.NodeAds.Load.Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
+		cancel()
+		return
+	}
+	if e = ng.NodeAds.Address.Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
+		cancel()
+		return
+	} // Add return sessions for receiving responses, ideally more of these
 	// will be generated during operation and rotated out over time.
 	for i := 0; i < p.NReturnSessions; i++ {
 		ng.Mgr().AddSession(sessions.NewSessionData(nonce.NewID(), p.Node, 0,

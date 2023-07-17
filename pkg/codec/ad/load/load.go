@@ -2,6 +2,7 @@
 package load
 
 import (
+	"fmt"
 	"github.com/indra-labs/indra/pkg/codec"
 	"github.com/indra-labs/indra/pkg/codec/ad"
 	"github.com/indra-labs/indra/pkg/codec/reg"
@@ -59,6 +60,23 @@ func New(id nonce.ID, key *crypto.Prv, load byte,
 	return
 }
 
+func (x *Ad) Sign(prv *crypto.Prv) (e error) {
+	s := splice.New(x.Len())
+	x.SpliceNoSig(s)
+	var b []byte
+	if b, e = prv.Sign(s.GetUntil(s.GetCursor())); fails(e) {
+		return
+	}
+	if len(b) != crypto.SigLen {
+		e = fmt.Errorf("signature incorrect length, got %d expected %d",
+			len(b), crypto.SigLen)
+		fails(e)
+		//return
+	}
+	copy(x.Sig[:], b[:])
+	return nil
+}
+
 // Decode unpacks a binary encoded form of the Ad and populates itself.
 func (x *Ad) Decode(s *splice.Splice) (e error) {
 	s.ReadID(&x.ID).
@@ -101,14 +119,7 @@ func (x *Ad) Validate() (valid bool) {
 	s := splice.New(x.Len() - magic.Len)
 	x.SpliceNoSig(s)
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
-	key, e := x.Sig.Recover(hash)
-	if fails(e) {
-		return false
-	}
-	if key.Equals(x.Key) && x.Expiry.After(time.Now()) {
-		return true
-	}
-	return false
+	return x.Sig.MatchesPubkey(hash, x.Key) && x.Expiry.After(time.Now())
 }
 
 // Splice the Ad into a splice.Splice.

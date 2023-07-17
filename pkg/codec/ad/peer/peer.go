@@ -2,6 +2,7 @@
 package peer
 
 import (
+	"fmt"
 	"github.com/indra-labs/indra/pkg/codec"
 	"github.com/indra-labs/indra/pkg/codec/ad"
 	"github.com/indra-labs/indra/pkg/codec/ad/intro"
@@ -93,11 +94,26 @@ func (x *Ad) Len() int { return Len }
 func (x *Ad) Magic() string { return "" }
 
 func (x *Ad) Sign(prv *crypto.Prv) (e error) {
+	//s := splice.New(x.Len())
+	//x.SpliceNoSig(s)
+	//var b crypto.SigBytes
+	//if b, e = crypto.Sign(prv,
+	//	sha256.Single(s.GetUntil(s.GetCursor()))); fails(e) {
+	//	return
+	//}
+	//copy(x.Sig[:], b[:])
+	//return nil
 	s := splice.New(x.Len())
 	x.SpliceNoSig(s)
-	var b crypto.SigBytes
-	if b, e = crypto.Sign(prv, sha256.Single(s.GetUntil(s.GetCursor()))); fails(e) {
+	var b []byte
+	if b, e = prv.Sign(s.GetUntil(s.GetCursor())); fails(e) {
 		return
+	}
+	if len(b) != crypto.SigLen {
+		e = fmt.Errorf("signature incorrect length, got %d expected %d",
+			len(b), crypto.SigLen)
+		fails(e)
+		//return
 	}
 	copy(x.Sig[:], b[:])
 	return nil
@@ -119,14 +135,7 @@ func (x *Ad) Validate() (valid bool) {
 	s := splice.New(intro.Len - magic.Len)
 	x.SpliceNoSig(s)
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
-	key, e := x.Sig.Recover(hash)
-	if fails(e) {
-		return false
-	}
-	if key.Equals(x.Key) {
-		return true
-	}
-	return false
+	return x.Sig.MatchesPubkey(hash, x.Key) && x.Expiry.After(time.Now())
 }
 
 // Splice serializes an Ad into a splice.Splice.

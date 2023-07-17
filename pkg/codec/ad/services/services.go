@@ -23,8 +23,10 @@ var (
 )
 
 const (
-	Magic      = "svad"
-	ServiceLen = slice.Uint16Len + slice.Uint32Len
+	Magic = "svad"
+	Len   = ad.Len +
+		slice.Uint16Len +
+		slice.Uint32Len
 )
 
 type Service struct {
@@ -100,7 +102,7 @@ func (x *Ad) Unwrap() interface{} { return nil }
 // Len returns the length of the binary encoded Ad.
 //
 // This gives different values depending on how many services are listed.
-func (x *Ad) Len() int { return ad.Len + len(x.Services)*ServiceLen + slice.Uint32Len }
+func (x *Ad) Len() int { return ad.Len + len(x.Services)*Len + slice.Uint32Len }
 
 // Magic is the identifier indicating an Ad is encoded in the following bytes.
 func (x *Ad) Magic() string { return "" }
@@ -115,9 +117,11 @@ func (x *Ad) Sign(prv *crypto.Prv) (e error) {
 	if b, e = prv.Sign(s.GetUntil(s.GetCursor())); fails(e) {
 		return
 	}
-	if len(b) != crypto.SigLen {
-		return fmt.Errorf("signature incorrect length, got %d expected %d",
+	if len(b) != Len {
+		e = fmt.Errorf("signature incorrect length, got %d expected %d",
 			len(b), crypto.SigLen)
+		fails(e)
+		//return
 	}
 	copy(x.Sig[:], b)
 	return nil
@@ -139,14 +143,7 @@ func (x *Ad) Validate() (valid bool) {
 	s := splice.New(intro.Len - magic.Len)
 	x.SpliceNoSig(s)
 	hash := sha256.Single(s.GetUntil(s.GetCursor()))
-	key, e := x.Sig.Recover(hash)
-	if fails(e) {
-		return false
-	}
-	if key.Equals(x.Key) {
-		return true
-	}
-	return false
+	return x.Sig.MatchesPubkey(hash, x.Key) && x.Expiry.After(time.Now())
 }
 
 // ServiceSplice creates the message part up to the signature for an Ad.
