@@ -54,28 +54,41 @@ func GetMultiaddrs(n *node.Node) (ma []multiaddr.Multiaddr, e error) {
 	return
 }
 
-// GenerateAds takes a node.Node and creates the NodeAds matching it.
-func GenerateAds(n *node.Node, ld byte) (na *NodeAds, e error) {
-	expiry := time.Now().Add(DefaultAdExpiry)
-	var svcs []services2.Service
+func GetServices(n *node.Node) (svcs []services2.Service) {
 	for i := range n.Services {
 		svcs = append(svcs, services2.Service{
 			Port:      n.Services[i].Port,
 			RelayRate: n.Services[i].RelayRate,
 		})
 	}
+	return
+}
+
+func GetAddresses(n *node.Node) (aps []*netip.AddrPort, e error) {
 	var ma []multiaddr.Multiaddr
 	if ma, e = GetMultiaddrs(n); fails(e) {
 		return
 	}
-	addrPorts := make([]*netip.AddrPort, len(ma))
+	aps = make([]*netip.AddrPort, len(ma))
 	for i := range ma {
-		var addy netip.AddrPort
-		if addy, e = multi.AddrToAddrPort(ma[i]); fails(e) {
+		var a netip.AddrPort
+		if a, e = multi.AddrToAddrPort(ma[i]); fails(e) {
 			return
 		}
-		addrPorts[i] = &addy
+		aps[i] = &a
 	}
+	return
+}
+
+// GenerateAds takes a node.Node and creates the NodeAds matching it.
+func GenerateAds(n *node.Node, ld byte) (na *NodeAds, e error) {
+	expiry := time.Now().Add(DefaultAdExpiry)
+	s := GetServices(n)
+	ma, e := GetAddresses(n)
+	if fails(e) {
+		return
+	}
+	aps := make([]*netip.AddrPort, len(ma))
 	na = &NodeAds{
 		Peer: &peer.Ad{
 			Ad: ad.Ad{
@@ -91,7 +104,7 @@ func GenerateAds(n *node.Node, ld byte) (na *NodeAds, e error) {
 				Key:    n.Identity.Pub,
 				Expiry: expiry,
 			},
-			Addresses: addrPorts,
+			Addresses: aps,
 		},
 		Services: &services2.Ad{
 			Ad: ad.Ad{
@@ -99,7 +112,7 @@ func GenerateAds(n *node.Node, ld byte) (na *NodeAds, e error) {
 				Key:    n.Identity.Pub,
 				Expiry: expiry,
 			},
-			Services: svcs,
+			Services: s,
 		},
 		Load: &load.Ad{
 			Ad: ad.Ad{

@@ -10,6 +10,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"reflect"
+	"time"
 
 	"github.com/indra-labs/indra/pkg/codec/ad/addresses"
 	"github.com/indra-labs/indra/pkg/codec/ad/intro"
@@ -74,6 +75,79 @@ func (ng *Engine) RunAdHandler(handler func(p *pubsub.Message) (e error)) {
 		}
 		return
 	}(ng)
+
+	go func(ng *Engine) {
+		log.D.Ln("checking and updating peer information ads")
+		// First time we want to do the thing straight away and update the peers
+		// with a new ads.NodeAds.
+		ng.gossip(time.NewTicker(time.Second))
+		// Then after this we check once a second
+	}(ng)
+}
+
+func (ng *Engine) gossip(tick *time.Ticker) {
+	now := time.Now()
+out:
+	for {
+		// Check for already generated NodeAds, and make them first time if
+		// needed.
+		na := ng.NodeAds
+		log.D.S(ng.Mgr().GetLocalNodeAddresses()[0].String() + " gossip tick")
+		switch {
+		case na.Address == nil:
+			log.D.Ln("updating peer address")
+
+			fallthrough
+
+		case na.Load == nil:
+			log.D.Ln("updating peer load")
+
+			fallthrough
+
+		case na.Peer == nil:
+			log.D.Ln("updating peer ad")
+
+			fallthrough
+
+		case na.Services == nil &&
+			// But only if we have any services:
+			len(ng.Mgr().GetLocalNode().Services) > 0:
+			log.D.Ln("updating services")
+
+			fallthrough
+			// Next, check each entry has not expired:
+
+		case na.Address.Expiry.Before(now):
+			log.D.Ln("updating expired peer address")
+
+			fallthrough
+
+		case na.Load.Expiry.Before(now):
+			log.D.Ln("updating expired load ad")
+
+			fallthrough
+
+		case na.Peer.Expiry.Before(now):
+			log.D.Ln("updating peer ad")
+
+			fallthrough
+
+		case na.Services.Expiry.Before(now):
+			log.D.Ln("updating peer services")
+
+		}
+		// Then, lastly, check if the ad content has changed due to
+		// reconfiguration or other reasons such as a more substantial amount of
+		// load or drop in load, or changed IP addresses.
+
+		// After all that is done, check if we are shutting down, if so exit.
+		select {
+		case <-ng.ctx.Done():
+			break out
+		case <-tick.C:
+		}
+	}
+
 }
 
 // ErrWrongTypeDecode indicates a message has the wrong magic.

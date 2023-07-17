@@ -174,10 +174,10 @@ func (ng *Engine) Handler() (terminate bool) {
 		ng.Shutdown()
 		return true
 	case c := <-ng.Listener.Accept():
-		go func() {
-			log.D.Ln("new connection inbound (TODO):", c.Host.Addrs())
-			_ = c
-		}()
+		//go func() {
+		log.D.Ln("new connection inbound (TODO):", c.Host.Addrs())
+		_ = c
+		//}()
 	case b := <-ng.Mgr().ReceiveToLocalNode():
 		s := splice.Load(b, slice.NewCursor())
 		ng.HandleMessage(s, prev)
