@@ -2,14 +2,11 @@
 package load
 
 import (
-	"fmt"
 	"github.com/indra-labs/indra/pkg/codec"
 	"github.com/indra-labs/indra/pkg/codec/ad"
 	"github.com/indra-labs/indra/pkg/codec/reg"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
-	"github.com/indra-labs/indra/pkg/engine/magic"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/splice"
 	"time"
@@ -39,10 +36,10 @@ var _ codec.Codec = &Ad{}
 
 // New creates a new Ad.
 func New(id nonce.ID, key *crypto.Prv, load byte,
-	expiry time.Time) (sv *Ad) {
+	expiry time.Time) (loAd *Ad) {
 
 	k := crypto.DerivePub(key)
-	sv = &Ad{
+	loAd = &Ad{
 		Ad: ad.Ad{
 			ID:     id,
 			Key:    k,
@@ -50,31 +47,12 @@ func New(id nonce.ID, key *crypto.Prv, load byte,
 		},
 		Load: load,
 	}
-	s := splice.New(sv.Len())
-	sv.SpliceNoSig(s)
-	hash := sha256.Single(s.GetUntil(s.GetCursor()))
-	var e error
-	if sv.Sig, e = crypto.Sign(key, hash); fails(e) {
-		return nil
-	}
-	return
-}
-
-func (x *Ad) Sign(prv *crypto.Prv) (e error) {
-	s := splice.New(x.Len())
-	x.SpliceNoSig(s)
-	var b []byte
-	if b, e = prv.Sign(s.GetUntil(s.GetCursor())); fails(e) {
+	log.T.S("address ad", loAd)
+	if e := loAd.Sign(key); fails(e) {
 		return
 	}
-	if len(b) != crypto.SigLen {
-		e = fmt.Errorf("signature incorrect length, got %d expected %d",
-			len(b), crypto.SigLen)
-		fails(e)
-		//return
-	}
-	copy(x.Sig[:], b[:])
-	return nil
+	log.T.S("signed", loAd)
+	return
 }
 
 // Decode unpacks a binary encoded form of the Ad and populates itself.
@@ -114,12 +92,25 @@ func (x *Ad) SpliceNoSig(s *splice.Splice) {
 	Splice(s, x.ID, x.Key, x.Load, x.Expiry)
 }
 
+func (x *Ad) Sign(prv *crypto.Prv) (e error) {
+	s := splice.New(x.Len())
+	x.SpliceNoSig(s)
+	log.T.S("message", s.GetUntilCursor().ToBytes())
+	var b []byte
+	if b, e = prv.Sign(s.GetUntil(s.GetCursor())); fails(e) {
+		return
+	}
+	log.T.S("signature", b)
+	copy(x.Sig[:], b)
+	return nil
+}
+
 // Validate returns true if the signature matches the public key.
 func (x *Ad) Validate() (valid bool) {
-	s := splice.New(x.Len() - magic.Len)
+	s := splice.New(x.Len())
 	x.SpliceNoSig(s)
-	hash := sha256.Single(s.GetUntil(s.GetCursor()))
-	return x.Sig.MatchesPubkey(hash, x.Key) && x.Expiry.After(time.Now())
+	return x.Sig.MatchesPubkey(s.GetUntilCursor(), x.Key) &&
+		x.Expiry.After(time.Now())
 }
 
 // Splice the Ad into a splice.Splice.

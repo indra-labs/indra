@@ -41,7 +41,7 @@ func TestNew(t *testing.T) {
 		t.Error("did not unwrap expected type")
 		t.FailNow()
 	}
-	log.D.S(ad)
+	log.T.S(ad)
 	if ad.ID != aa.ID {
 		t.Errorf("ID did not decode correctly")
 		t.FailNow()

@@ -1,9 +1,8 @@
 package crypto
 
 import (
-	"fmt"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4/schnorr"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	crypto_pb "github.com/libp2p/go-libp2p/core/crypto/pb"
@@ -53,10 +52,30 @@ func (p *Prv) Raw() ([]byte, error) {
 
 // Sign is an implementation of the libp2p crypto.PrivKey interface, allowing the
 // Indra keys to be used by libp2p as peer identity keys.
-func (p *Prv) Sign(bytes []byte) ([]byte, error) {
+func (p *Prv) Sign(bytes []byte) (b []byte, e error) {
 	hash := sha256.Single(bytes)
-	s := ecdsa.Sign((*secp256k1.PrivateKey)(p), hash[:])
-	return s.Serialize(), nil
+	//s := ecdsa.Sign((*secp256k1.PrivateKey)(p), hash[:])
+	var s *schnorr.Signature
+	s, e = schnorr.Sign((*secp256k1.PrivateKey)(p), hash[:])
+	var sig SigBytes
+	copy(sig[:], s.Serialize())
+	return sig[:], e
+}
+
+// Verify is an implementation of the libp2p crypto.PkbKey interface, allowing
+// the Indra keys to be used by libp2p as peer identity keys.
+//
+// The output of Sign above and the bytes of the message are the required inputs.
+func (k *Pub) Verify(data []byte, sigBytes []byte) (is bool,
+	e error) {
+
+	var sig *schnorr.Signature
+	if sig, e = schnorr.ParseSignature(sigBytes); fails(e) {
+		return
+	}
+	sigB := sha256.Single(data)
+	is = sig.Verify(sigB[:], (*secp256k1.PublicKey)(k))
+	return
 }
 
 // Type is an implementation of the libp2p crypto.Key interface, allowing the
@@ -100,22 +119,4 @@ func (k *Pub) Raw() ([]byte, error) {
 // Indra keys to be used by libp2p as peer identity keys.
 func (k *Pub) Type() crypto_pb.KeyType {
 	return crypto_pb.KeyType_Secp256k1
-}
-
-// Verify is an implementation of the libp2p crypto.PkbKey interface, allowing the
-// Indra keys to be used by libp2p as peer identity keys.
-func (k *Pub) Verify(data []byte, sigBytes []byte) (is bool,
-	e error) {
-
-	var s SigBytes
-	if len(sigBytes) != len(s) {
-		return false, fmt.Errorf("length mismatch")
-	}
-	copy(s[:], sigBytes[:])
-	hash := sha256.Single(data)
-	var pk *Pub
-	if pk, e = s.Recover(hash); fails(e) {
-		return false, e
-	}
-	return pk.ToBytes().Equals(k.ToBytes()), nil
 }

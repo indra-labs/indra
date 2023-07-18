@@ -35,7 +35,7 @@ func TestServiceAd(t *testing.T) {
 		t.Error("did not decode")
 		t.FailNow()
 	}
-	log.D.S(onc)
+	log.T.S(onc)
 	var svcAd *Ad
 	var ok bool
 	if svcAd, ok = onc.(*Ad); !ok {

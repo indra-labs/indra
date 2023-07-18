@@ -2,7 +2,6 @@
 package peer
 
 import (
-	"fmt"
 	"github.com/indra-labs/indra/pkg/codec"
 	"github.com/indra-labs/indra/pkg/codec/ad"
 	"github.com/indra-labs/indra/pkg/codec/ad/intro"
@@ -10,7 +9,6 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
-	"github.com/indra-labs/indra/pkg/engine/magic"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
@@ -42,7 +40,7 @@ var _ codec.Codec = &Ad{}
 
 // New creates a new Ad and signs it with the provided private key.
 func New(id nonce.ID, key *crypto.Prv, relayRate uint32,
-	expiry time.Time) (sv *Ad) {
+	expiry time.Time) (peerAd *Ad) {
 
 	s := splice.New(intro.Len)
 	k := crypto.DerivePub(key)
@@ -53,18 +51,20 @@ func New(id nonce.ID, key *crypto.Prv, relayRate uint32,
 	if sign, e = crypto.Sign(key, hash); fails(e) {
 		return nil
 	}
-	sv = &Ad{
+	peerAd = &Ad{
 		Ad: ad.Ad{
 			ID:     id,
 			Key:    k,
-			Expiry: time.Now().Add(ad.TTL),
+			Expiry: time.Now().Add(time.Hour * 3),
 			Sig:    sign,
 		},
 		RelayRate: relayRate,
 	}
-	if e = sv.Sign(key); fails(e) {
+	log.T.S("address ad", peerAd)
+	if e = peerAd.Sign(key); fails(e) {
 		return nil
 	}
+	log.T.S("signed", peerAd)
 	return
 }
 
@@ -94,29 +94,22 @@ func (x *Ad) Len() int { return Len }
 func (x *Ad) Magic() string { return "" }
 
 func (x *Ad) Sign(prv *crypto.Prv) (e error) {
-	//s := splice.New(x.Len())
-	//x.SpliceNoSig(s)
-	//var b crypto.SigBytes
-	//if b, e = crypto.Sign(prv,
-	//	sha256.Single(s.GetUntil(s.GetCursor()))); fails(e) {
-	//	return
-	//}
-	//copy(x.Sig[:], b[:])
-	//return nil
 	s := splice.New(x.Len())
 	x.SpliceNoSig(s)
 	var b []byte
-	if b, e = prv.Sign(s.GetUntil(s.GetCursor())); fails(e) {
+	if b, e = prv.Sign(s.GetUntilCursor()); fails(e) {
 		return
 	}
-	if len(b) != crypto.SigLen {
-		e = fmt.Errorf("signature incorrect length, got %d expected %d",
-			len(b), crypto.SigLen)
-		fails(e)
-		//return
-	}
 	copy(x.Sig[:], b[:])
-	return nil
+	return
+}
+
+// Validate checks the signature matches the public key of the Ad.
+func (x *Ad) Validate() (valid bool) {
+	s := splice.New(x.Len())
+	x.SpliceNoSig(s)
+	return x.Sig.MatchesPubkey(s.GetUntilCursor(), x.Key) &&
+		x.Expiry.After(time.Now())
 }
 
 // Splice serializes an Ad into a splice.Splice.
@@ -128,14 +121,6 @@ func (x *Ad) Splice(s *splice.Splice) {
 // SpliceNoSig serializes the Ad but stops at the signature.
 func (x *Ad) SpliceNoSig(s *splice.Splice) {
 	Splice(s, x.ID, x.Key, x.RelayRate, x.Expiry)
-}
-
-// Validate checks the signature matches the public key of the Ad.
-func (x *Ad) Validate() (valid bool) {
-	s := splice.New(intro.Len - magic.Len)
-	x.SpliceNoSig(s)
-	hash := sha256.Single(s.GetUntil(s.GetCursor()))
-	return x.Sig.MatchesPubkey(hash, x.Key) && x.Expiry.After(time.Now())
 }
 
 // Splice serializes an Ad into a splice.Splice.

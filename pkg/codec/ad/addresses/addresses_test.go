@@ -61,7 +61,7 @@ func TestNew(t *testing.T) {
 		t.Errorf("expiry did not decode correctly")
 		t.FailNow()
 	}
-	log.D.S(ad)
+	log.D.S("received", ad)
 	if ad.ID != aa.ID {
 		t.Errorf("ID did not decode correctly")
 		t.FailNow()

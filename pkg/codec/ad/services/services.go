@@ -2,15 +2,11 @@
 package services
 
 import (
-	"fmt"
 	"github.com/indra-labs/indra/pkg/codec"
 	"github.com/indra-labs/indra/pkg/codec/ad"
-	"github.com/indra-labs/indra/pkg/codec/ad/intro"
 	"github.com/indra-labs/indra/pkg/codec/reg"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
-	"github.com/indra-labs/indra/pkg/engine/magic"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
@@ -52,10 +48,10 @@ var _ codec.Codec = &Ad{}
 
 // New creates a new Ad and signs it.
 func New(id nonce.ID, key *crypto.Prv, services []Service,
-	expiry time.Time) (sv *Ad) {
+	expiry time.Time) (svcAd *Ad) {
 
 	k := crypto.DerivePub(key)
-	sv = &Ad{
+	svcAd = &Ad{
 		Ad: ad.Ad{
 			ID:     id,
 			Key:    k,
@@ -63,13 +59,11 @@ func New(id nonce.ID, key *crypto.Prv, services []Service,
 		},
 		Services: services,
 	}
-	s := splice.New(intro.Len)
-	sv.SpliceNoSig(s)
-	hash := sha256.Single(s.GetUntil(s.GetCursor()))
-	var e error
-	if sv.Sig, e = crypto.Sign(key, hash); fails(e) {
+	log.T.S("services ad", svcAd)
+	if e := svcAd.Sign(key); fails(e) {
 		return nil
 	}
+	log.T.S("signed", svcAd)
 	return
 }
 
@@ -110,21 +104,20 @@ func (x *Ad) Magic() string { return "" }
 // Sign the Ad with the provided private key. It must match the embedded ad.Ad Key.
 func (x *Ad) Sign(prv *crypto.Prv) (e error) {
 	s := splice.New(x.Len())
-	if e = x.Encode(s); fails(e) {
-		return
-	}
+	x.SpliceNoSig(s)
 	var b []byte
-	if b, e = prv.Sign(s.GetUntil(s.GetCursor())); fails(e) {
+	if b, e = prv.Sign(s.GetUntilCursor()); fails(e) {
 		return
 	}
-	if len(b) != Len {
-		e = fmt.Errorf("signature incorrect length, got %d expected %d",
-			len(b), crypto.SigLen)
-		fails(e)
-		//return
-	}
-	copy(x.Sig[:], b)
-	return nil
+	copy(x.Sig[:], b[:])
+	return
+}
+
+// Validate checks the signature matches the public key of the Ad.
+func (x *Ad) Validate() (valid bool) {
+	s := splice.New(x.Len())
+	x.SpliceNoSig(s)
+	return x.Sig.MatchesPubkey(s.GetUntilCursor(), x.Key) && x.Expiry.After(time.Now())
 }
 
 // Splice serializes an Ad into a splice.Splice.
@@ -136,14 +129,6 @@ func (x *Ad) Splice(s *splice.Splice) {
 // SpliceNoSig serializes the Ad but stops at the signature.
 func (x *Ad) SpliceNoSig(s *splice.Splice) {
 	ServiceSplice(s, x.ID, x.Key, x.Services, x.Expiry)
-}
-
-// Validate checks the signature matches the public key of the Ad.
-func (x *Ad) Validate() (valid bool) {
-	s := splice.New(intro.Len - magic.Len)
-	x.SpliceNoSig(s)
-	hash := sha256.Single(s.GetUntil(s.GetCursor()))
-	return x.Sig.MatchesPubkey(hash, x.Key) && x.Expiry.After(time.Now())
 }
 
 // ServiceSplice creates the message part up to the signature for an Ad.

@@ -33,9 +33,8 @@ const (
 	// key, 33 bytes with a 2 or 3 prefix to signify the sign of the key.
 	PubKeyLen = secp256k1.PubKeyBytesLenCompressed
 
-	// SigLen is the length of the signatures used in Indra, compact keys that can
-	// have the public key extracted from them.
-	SigLen = 65
+	// SigLen is the length of a standard secp256k1 schnorr signature
+	SigLen = 64
 )
 
 var (
@@ -215,17 +214,12 @@ func (sb SigBytes) Recover(hash sha256.Hash) (p *Pub, e error) {
 	return
 }
 
-func (sb SigBytes) MatchesPubkey(hash sha256.Hash,
-	pk *Pub) (match bool) {
+func (sb SigBytes) MatchesPubkey(bytes []byte, pk *Pub) (match bool) {
 
-	key, e := sb.Recover(hash)
-	if fails(e) {
-		return false
-	}
-	if key.Equals(pk) {
-		return true
-	}
-	return false
+	var e error
+	match, e = pk.Verify(bytes, sb[:])
+	fails(e)
+	return match
 }
 
 // SigBytes is an ECDSA BIP62 formatted compact signature which allows the

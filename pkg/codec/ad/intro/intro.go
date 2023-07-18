@@ -10,7 +10,6 @@ import (
 
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/engine/magic"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
@@ -87,19 +86,29 @@ func (x *Ad) Splice(s *splice.Splice) {
 
 // SpliceNoSig serializes the Ad but stops at the signature.
 func (x *Ad) SpliceNoSig(s *splice.Splice) {
-	IntroSplice(s, x.ID, x.Key, x.Introducer, x.RelayRate, x.Port, x.Expiry)
+	Splice(s, x.ID, x.Key, x.Introducer, x.RelayRate, x.Port, x.Expiry)
+}
+
+func (x *Ad) Sign(prv *crypto.Prv) (e error) {
+	s := splice.New(x.Len())
+	x.SpliceNoSig(s)
+	var b []byte
+	if b, e = prv.Sign(s.GetUntilCursor()); fails(e) {
+		return
+	}
+	copy(x.Sig[:], b[:])
+	return
 }
 
 // Validate checks the signature matches the public key of the Ad.
 func (x *Ad) Validate() bool {
-	s := splice.New(Len - magic.Len)
+	s := splice.New(x.Len())
 	x.SpliceNoSig(s)
-	hash := sha256.Single(s.GetUntil(s.GetCursor()))
-	return x.Sig.MatchesPubkey(hash, x.Key) && x.Expiry.After(time.Now())
+	return x.Sig.MatchesPubkey(s.GetUntilCursor(), x.Key) && x.Expiry.After(time.Now())
 }
 
-// IntroSplice creates the message part up to the signature for an Ad.
-func IntroSplice(
+// Splice creates the message part up to the signature for an Ad.
+func Splice(
 	s *splice.Splice,
 	id nonce.ID,
 	key *crypto.Pub,
@@ -126,11 +135,11 @@ func New(
 	relayRate uint32,
 	port uint16,
 	expires time.Time,
-) (in *Ad) {
+) (introAd *Ad) {
 
 	pk := crypto.DerivePub(key)
 
-	in = &Ad{
+	introAd = &Ad{
 		Ad: ad.Ad{
 			ID:     id,
 			Key:    pk,
@@ -140,14 +149,13 @@ func New(
 		RelayRate:  relayRate,
 		Port:       port,
 	}
-	s := splice.New(in.Len())
-	in.SpliceNoSig(s)
-	hash := sha256.Single(s.GetUntil(s.GetCursor()))
-	var e error
-	if in.Sig, e = crypto.Sign(key, hash); fails(e) {
+	log.T.S("services ad", introAd)
+	if e := introAd.Sign(key); fails(e) {
 		return nil
 	}
+	log.T.S("signed", introAd)
 	return
+
 }
 
 func init() { reg.Register(Magic, Gen) }

@@ -209,6 +209,10 @@ func (s *Splice) GetUntil(p int) slice.Bytes {
 	return s.b[:p]
 }
 
+func (s *Splice) GetUntilCursor() slice.Bytes {
+	return s.GetUntil(s.GetCursor())
+}
+
 func (s *Splice) Hash(h sha256.Hash) *Splice {
 	copy(s.b[*s.c:s.c.Inc(sha256.Len)], h[:])
 	s.Segments = append(s.Segments,

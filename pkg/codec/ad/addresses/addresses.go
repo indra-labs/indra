@@ -2,15 +2,11 @@
 package addresses
 
 import (
-	"fmt"
 	"github.com/indra-labs/indra/pkg/codec"
 	"github.com/indra-labs/indra/pkg/codec/ad"
-	"github.com/indra-labs/indra/pkg/codec/ad/intro"
 	"github.com/indra-labs/indra/pkg/codec/reg"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
-	"github.com/indra-labs/indra/pkg/engine/magic"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
@@ -24,21 +20,22 @@ var (
 )
 
 const (
-	Magic   = "adad"
-	AddrLen = ad.Len + splice.AddrLen
+	Magic = "adad"
+	Len   = ad.Len + splice.AddrLen
 )
 
 // Ad stores a specification for the fee rate and the service ports of a set of
 // services being offered at a relay
 //
 // These must be a well known port to match with a type of service, eg 80 for
-// web, 53 for DNS, 8333 for bitcoin p2p, 8334 for bitcoin JSONRPC... For simplicity.
+// web, 53 for DNS, 8333 for bitcoin p2p, 8334 for bitcoin JSONRPC... For
+// simplicity.
 type Ad struct {
 
 	// Embed ad.Ad for the common fields
 	ad.Ad
 
-	// Addresses that the peer can be reached on (though may not be listeners).
+	// Addresses that the peer can be reached on.
 	Addresses []*netip.AddrPort
 }
 
@@ -46,10 +43,10 @@ var _ codec.Codec = &Ad{}
 
 // New creates a new addresses.Ad.
 func New(id nonce.ID, key *crypto.Prv, addrs []*netip.AddrPort,
-	expiry time.Time) (sv *Ad) {
+	expiry time.Time) (addrAd *Ad) {
 
 	k := crypto.DerivePub(key)
-	sv = &Ad{
+	addrAd = &Ad{
 		Ad: ad.Ad{
 			ID:     id,
 			Key:    k,
@@ -57,13 +54,11 @@ func New(id nonce.ID, key *crypto.Prv, addrs []*netip.AddrPort,
 		},
 		Addresses: addrs,
 	}
-	s := splice.New(intro.Len)
-	sv.SpliceNoSig(s)
-	hash := sha256.Single(s.GetUntil(s.GetCursor()))
-	var e error
-	if sv.Sig, e = crypto.Sign(key, hash); fails(e) {
-		return nil
+	log.T.S("address ad", addrAd)
+	if e := addrAd.Sign(key); fails(e) {
+		return
 	}
+	log.T.S("signed", addrAd)
 	return
 }
 
@@ -97,7 +92,7 @@ func (x *Ad) Unwrap() interface{} { return nil }
 // Len returns the length of bytes required to encode the Ad, based on the number
 // of Addresses inside it.
 func (x *Ad) Len() int {
-	return ad.Len + len(x.Addresses)*(1+AddrLen) + slice.Uint16Len
+	return ad.Len + len(x.Addresses)*(1+Len) + slice.Uint16Len
 }
 
 // Magic bytes that identify this message
@@ -106,22 +101,23 @@ func (x *Ad) Magic() string { return Magic }
 // Sign the encoded form of the bytes in order to authorise it.
 func (x *Ad) Sign(prv *crypto.Prv) (e error) {
 	s := splice.New(x.Len())
-	if e = x.Encode(s); fails(e) {
-		return
-	}
+	x.SpliceNoSig(s)
+	log.T.S("message", s.GetUntilCursor().ToBytes())
 	var b []byte
 	if b, e = prv.Sign(s.GetUntil(s.GetCursor())); fails(e) {
 		return
 	}
-	if len(b) != crypto.SigLen {
-
-		e = fmt.Errorf("signature incorrect length, got %d expected %d",
-			len(b), crypto.SigLen)
-		fails(e)
-		//return
-	}
+	log.T.S("signature", b)
 	copy(x.Sig[:], b)
 	return nil
+}
+
+// Validate checks that the signature matches the public key.
+func (x *Ad) Validate() (valid bool) {
+	s := splice.New(x.Len())
+	x.SpliceNoSig(s)
+	return x.Sig.MatchesPubkey(s.GetUntilCursor(), x.Key) &&
+		x.Expiry.After(time.Now())
 }
 
 // Splice together an Ad.
@@ -133,14 +129,6 @@ func (x *Ad) Splice(s *splice.Splice) {
 // SpliceNoSig splices until the signature.
 func (x *Ad) SpliceNoSig(s *splice.Splice) {
 	Splice(s, x.ID, x.Key, x.Addresses, x.Expiry)
-}
-
-// Validate checks that the signature matches the public key.
-func (x *Ad) Validate() (valid bool) {
-	s := splice.New(intro.Len - magic.Len)
-	x.SpliceNoSig(s)
-	hash := sha256.Single(s.GetUntil(s.GetCursor()))
-	return x.Sig.MatchesPubkey(hash, x.Key) && x.Expiry.After(time.Now())
 }
 
 // Splice is a function that serializes the parts of an Ad.

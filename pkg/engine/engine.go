@@ -150,7 +150,7 @@ func (ng *Engine) Shutdown() {
 func (ng *Engine) Start() {
 	log.T.Ln("starting engine")
 	if ng.sub != nil {
-		log.T.Ln("starting gossip handling")
+		log.T.Ln(ng.Listener.Host.Addrs(), "starting gossip handling")
 		ng.RunAdHandler(ng.HandleAd)
 	}
 	for {
@@ -201,9 +201,7 @@ func (ng *Engine) HandleMessage(s *splice.Splice, pr ont.Onion) {
 
 // Handler is the main select switch for handling events for the Engine.
 func (ng *Engine) Handler() (terminate bool) {
-	log.T.C(func() string {
-		return ng.Mgr().GetLocalNodeAddressString() + " awaiting message"
-	})
+	log.T.Ln(ng.Listener.Host.Addrs(), " awaiting message")
 	var prev ont.Onion
 	select {
 	case <-ng.ctx.Done():

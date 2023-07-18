@@ -77,7 +77,7 @@ func (ng *Engine) RunAdHandler(handler func(p *pubsub.Message) (e error)) {
 	}(ng)
 
 	go func(ng *Engine) {
-		log.D.Ln("checking and updating peer information ads")
+		log.D.Ln(ng.Listener.Host.Addrs(), "checking and updating peer information ads")
 		// First time we want to do the thing straight away and update the peers
 		// with a new ads.NodeAds.
 		ng.gossip(time.NewTicker(time.Second))
@@ -92,7 +92,7 @@ out:
 		// Check for already generated NodeAds, and make them first time if
 		// needed.
 		na := ng.NodeAds
-		log.D.S(ng.Mgr().GetLocalNodeAddresses()[0].String() + " gossip tick")
+		log.D.Ln(ng.Listener.Host.Addrs(), "gossip tick")
 		switch {
 		case na.Address == nil:
 			log.D.Ln("updating peer address")
