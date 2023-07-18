@@ -47,7 +47,7 @@ func New(id nonce.ID, key *crypto.Prv, load byte,
 		},
 		Load: load,
 	}
-	log.T.S("address ad", loAd)
+	log.T.S("load ad", loAd)
 	if e := loAd.Sign(key); fails(e) {
 		return
 	}

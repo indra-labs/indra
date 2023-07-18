@@ -60,7 +60,7 @@ func New(id nonce.ID, key *crypto.Prv, relayRate uint32,
 		},
 		RelayRate: relayRate,
 	}
-	log.T.S("address ad", peerAd)
+	log.T.S("peer ad", peerAd)
 	if e = peerAd.Sign(key); fails(e) {
 		return nil
 	}
