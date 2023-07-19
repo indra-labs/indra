@@ -113,7 +113,7 @@ func TestEngine_PeerStoreDiscovery(t *testing.T) {
 		t.FailNow()
 	}
 	_ = engines
-	time.Sleep(time.Second * 5)
+	time.Sleep(time.Second * 3)
 	cleanup()
 	pauza()
 }

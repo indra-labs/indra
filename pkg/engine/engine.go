@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"github.com/indra-labs/indra/pkg/ad"
 	"github.com/indra-labs/indra/pkg/codec/ont"
 	"github.com/indra-labs/indra/pkg/codec/reg"
 	"github.com/indra-labs/indra/pkg/crypto"
@@ -80,14 +81,20 @@ func New(p Params) (ng *Engine, e error) {
 		h:     hidden.NewHiddenRouting(),
 		Pause: qu.T(),
 	}
+	ng.Mgr().AddNodes(append([]*node.Node{p.Node}, p.Nodes...)...)
 	if p.Listener != nil && p.Listener.Host != nil {
 		if ng.PubSub, ng.topic, ng.sub, e = SetupGossip(ctx, p.Listener.Host, cancel); fails(e) {
 			return
 		}
 	}
+	na := ng.NodeAds
+	a := []ad.Ad{na.Address, na.Load, na.Peer, na.Services}
 	if ng.NodeAds, e = ads.GenerateAds(p.Node, 25); fails(e) {
 		cancel()
 		return
+	}
+	for i := range a {
+		_ = a[i]
 	}
 	if e = ng.NodeAds.Services.Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
 		cancel()
@@ -125,7 +132,10 @@ func New(p Params) (ng *Engine, e error) {
 	if e = ng.NodeAds.Address.Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
 		cancel()
 		return
-	} // Add return sessions for receiving responses, ideally more of these
+	}
+	// First NodeAds after boot needs to be immediately gossiped:
+
+	// Add return sessions for receiving responses, ideally more of these
 	// will be generated during operation and rotated out over time.
 	for i := 0; i < p.NReturnSessions; i++ {
 		ng.Mgr().AddSession(sessions.NewSessionData(nonce.NewID(), p.Node, 0,
@@ -208,10 +218,10 @@ func (ng *Engine) Handler() (terminate bool) {
 		ng.Shutdown()
 		return true
 	case c := <-ng.Listener.Accept():
-		//go func() {
+		// go func() {
 		log.D.Ln("new connection inbound (TODO):", c.Host.Addrs())
 		_ = c
-		//}()
+		// }()
 	case b := <-ng.Mgr().ReceiveToLocalNode():
 		s := splice.Load(b, slice.NewCursor())
 		ng.HandleMessage(s, prev)

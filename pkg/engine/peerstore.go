@@ -48,6 +48,20 @@ func (ng *Engine) SendAd(a slice.Bytes) (e error) {
 	return ng.topic.Publish(ng.ctx, a)
 }
 
+// SendAds dispatches all ads in NodeAds. Primarily called at startup.
+func (ng *Engine) SendAds() (e error) {
+	na := ng.NodeAds
+	ads := []ad.Ad{na.Address, na.Load, na.Peer, na.Services}
+	for i := range ads {
+		s := splice.New(ads[i].Len())
+		ads[i].Encode(s)
+		if e = ng.topic.Publish(ng.ctx, s.GetAll()); fails(e) {
+			return
+		}
+	}
+	return
+}
+
 // RunAdHandler listens to the gossip and dispatches messages to be handled and
 // update the peerstore.
 func (ng *Engine) RunAdHandler(handler func(p *pubsub.Message) (e error)) {
@@ -87,8 +101,16 @@ func (ng *Engine) RunAdHandler(handler func(p *pubsub.Message) (e error)) {
 
 func (ng *Engine) gossip(tick *time.Ticker) {
 	now := time.Now()
+	first := true
 out:
 	for {
+		if first {
+			first = false
+			// Send out all ads because we are starting up.
+			ng.SendAds()
+			// As all ads are sent we can return to the head of the loop.
+			continue
+		}
 		// Check for already generated NodeAds, and make them first time if
 		// needed.
 		na := ng.NodeAds
@@ -139,7 +161,11 @@ out:
 		// Then, lastly, check if the ad content has changed due to
 		// reconfiguration or other reasons such as a more substantial amount of
 		// load or drop in load, or changed IP addresses.
+		if first {
+			first = false
+			// Send out all ads because we are starting up.
 
+		}
 		// After all that is done, check if we are shutting down, if so exit.
 		select {
 		case <-ng.ctx.Done():

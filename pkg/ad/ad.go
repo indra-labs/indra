@@ -3,8 +3,8 @@ package ad
 
 import (
 	"github.com/indra-labs/indra/pkg/codec"
+	"github.com/indra-labs/indra/pkg/crypto"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/util/splice"
 )
 
 var (
@@ -16,6 +16,6 @@ var (
 // libp2p host inside an indra engine.
 type Ad interface {
 	codec.Codec
-	Splice(s *splice.Splice)
+	Sign(key *crypto.Prv) (e error)
 	Validate() bool
 }
