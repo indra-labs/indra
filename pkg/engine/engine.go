@@ -2,7 +2,7 @@ package engine
 
 import (
 	"context"
-	"github.com/indra-labs/indra/pkg/ad"
+	"github.com/indra-labs/indra/pkg/cert"
 	"github.com/indra-labs/indra/pkg/codec/ont"
 	"github.com/indra-labs/indra/pkg/codec/reg"
 	"github.com/indra-labs/indra/pkg/crypto"
@@ -88,7 +88,7 @@ func New(p Params) (ng *Engine, e error) {
 		}
 	}
 	na := ng.NodeAds
-	a := []ad.Ad{na.Address, na.Load, na.Peer, na.Services}
+	a := []cert.Act{na.Address, na.Load, na.Peer, na.Services}
 	if ng.NodeAds, e = ads.GenerateAds(p.Node, 25); fails(e) {
 		cancel()
 		return

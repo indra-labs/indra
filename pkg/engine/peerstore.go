@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/indra-labs/indra/pkg/ad"
+	"github.com/indra-labs/indra/pkg/cert"
 	"github.com/indra-labs/indra/pkg/codec/ad/load"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -51,7 +51,7 @@ func (ng *Engine) SendAd(a slice.Bytes) (e error) {
 // SendAds dispatches all ads in NodeAds. Primarily called at startup.
 func (ng *Engine) SendAds() (e error) {
 	na := ng.NodeAds
-	ads := []ad.Ad{na.Address, na.Load, na.Peer, na.Services}
+	ads := []cert.Act{na.Address, na.Load, na.Peer, na.Services}
 	for i := range ads {
 		s := splice.New(ads[i].Len())
 		ads[i].Encode(s)
@@ -292,7 +292,7 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 // GetPeerRecord queries the peerstore for an ad from a given peer.ID and the ad
 // type key. The ad type keys are the same as the Magic of each ad type, to be
 // simple.
-func (ng *Engine) GetPeerRecord(id peer.ID, key string) (add ad.Ad, e error) {
+func (ng *Engine) GetPeerRecord(id peer.ID, key string) (add cert.Act, e error) {
 	var a interface{}
 	if a, e = ng.Listener.Host.Peerstore().Get(id, key); fails(e) {
 		return
@@ -315,8 +315,8 @@ func (ng *Engine) GetPeerRecord(id peer.ID, key string) (add ad.Ad, e error) {
 	if e = c.Decode(s); fails(e) {
 		return
 	}
-	if add, ok = c.(ad.Ad); !ok {
-		e = errors.New(key + " peer record did not decode as Ad")
+	if add, ok = c.(cert.Act); !ok {
+		e = errors.New(key + " peer record did not decode as Act")
 	}
 	return
 }
