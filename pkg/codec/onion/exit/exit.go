@@ -3,9 +3,9 @@ package exit
 
 import (
 	"github.com/indra-labs/indra/pkg/codec"
+	"github.com/indra-labs/indra/pkg/codec/onion/cores/end"
+	"github.com/indra-labs/indra/pkg/codec/onion/cores/response"
 	"github.com/indra-labs/indra/pkg/codec/onion/crypt"
-	"github.com/indra-labs/indra/pkg/codec/onion/end"
-	"github.com/indra-labs/indra/pkg/codec/onion/response"
 	"github.com/indra-labs/indra/pkg/codec/ont"
 	"github.com/indra-labs/indra/pkg/codec/reg"
 	"github.com/indra-labs/indra/pkg/crypto"

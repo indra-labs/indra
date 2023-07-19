@@ -2,20 +2,20 @@ package engine
 
 import (
 	"github.com/indra-labs/indra/pkg/codec/ad/intro"
-	"github.com/indra-labs/indra/pkg/codec/onion/confirmation"
+	"github.com/indra-labs/indra/pkg/codec/onion/cores/confirmation"
+	"github.com/indra-labs/indra/pkg/codec/onion/cores/end"
+	"github.com/indra-labs/indra/pkg/codec/onion/cores/response"
 	"github.com/indra-labs/indra/pkg/codec/onion/crypt"
-	"github.com/indra-labs/indra/pkg/codec/onion/end"
 	"github.com/indra-labs/indra/pkg/codec/onion/exit"
 	"github.com/indra-labs/indra/pkg/codec/onion/forward"
 	"github.com/indra-labs/indra/pkg/codec/onion/getbalance"
-	"github.com/indra-labs/indra/pkg/codec/onion/hiddenservice"
-	"github.com/indra-labs/indra/pkg/codec/onion/introquery"
-	"github.com/indra-labs/indra/pkg/codec/onion/ready"
-	"github.com/indra-labs/indra/pkg/codec/onion/response"
+	"github.com/indra-labs/indra/pkg/codec/onion/hidden/introquery"
+	"github.com/indra-labs/indra/pkg/codec/onion/hidden/ready"
+	"github.com/indra-labs/indra/pkg/codec/onion/hidden/route"
+	hiddenservice "github.com/indra-labs/indra/pkg/codec/onion/hidden/services"
+	"github.com/indra-labs/indra/pkg/codec/onion/hidden/whisper"
 	"github.com/indra-labs/indra/pkg/codec/onion/reverse"
-	"github.com/indra-labs/indra/pkg/codec/onion/route"
 	"github.com/indra-labs/indra/pkg/codec/onion/session"
-	"github.com/indra-labs/indra/pkg/codec/onion/whisper"
 	"github.com/indra-labs/indra/pkg/codec/ont"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
@@ -29,15 +29,15 @@ import (
 	"net/netip"
 )
 
-//func (o Skins) Balance(id nonce.ID, amt lnwire.MilliSatoshi) Skins {
+// func (o Skins) Balance(id nonce.ID, amt lnwire.MilliSatoshi) Skins {
 //	return append(o, balance.NewBalance(id, amt))
-//}
+// }
 
 func (o Skins) Confirmation(id nonce.ID, load byte) Skins {
 	return append(o, confirmation.New(id))
 }
 
-//func (o Skins) Delay(d time.Duration) Skins { return append(o, delay.NewDelay(d)) }
+// func (o Skins) Delay(d time.Duration) Skins { return append(o, delay.NewDelay(d)) }
 
 type (
 	// Skins is a slice of onions that can be assembled into a message.
@@ -162,7 +162,7 @@ func (o Skins) ReverseCrypt(s *sessions.Data, k *crypto.Prv, n nonce.IV,
 		//
 		// The absense of a reachable protocol should preclude calling this method
 		// anyway. That is a contract. Make note in type definition.
-		//return o
+		// return o
 		e = nil
 	}
 	return o.Reverse(&addr).Crypt(s.Header.Pub, s.Payload.Pub, k, n,
@@ -211,7 +211,7 @@ func MakeGetBalance(p getbalance.GetBalanceParams,
 		RoutingHeader(headers.Return, np)
 }
 
-// MakeHiddenService constructs a hiddenservice message for designating
+// MakeHiddenService constructs a services message for designating
 // introducers to refer clients to hidden services.
 func MakeHiddenService(in *intro.Ad, alice, bob *sessions.Data,
 	c sessions.Circuit, ks *crypto.KeySet,

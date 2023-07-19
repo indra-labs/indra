@@ -2,7 +2,7 @@ package response
 
 import (
 	"github.com/indra-labs/indra/pkg/codec"
-	"github.com/indra-labs/indra/pkg/codec/onion/end"
+	"github.com/indra-labs/indra/pkg/codec/onion/cores/end"
 	"github.com/indra-labs/indra/pkg/codec/ont"
 	"github.com/indra-labs/indra/pkg/codec/reg"
 	"testing"

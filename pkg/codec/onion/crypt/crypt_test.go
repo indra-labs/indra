@@ -3,7 +3,7 @@ package crypt
 import (
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/codec"
-	"github.com/indra-labs/indra/pkg/codec/onion/confirmation"
+	"github.com/indra-labs/indra/pkg/codec/onion/cores/confirmation"
 	"github.com/indra-labs/indra/pkg/codec/ont"
 	"github.com/indra-labs/indra/pkg/codec/reg"
 	"testing"

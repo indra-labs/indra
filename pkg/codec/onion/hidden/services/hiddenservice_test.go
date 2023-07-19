@@ -1,6 +1,6 @@
 //go:build failingtests
 
-package hiddenservice
+package services
 
 import (
 	"context"

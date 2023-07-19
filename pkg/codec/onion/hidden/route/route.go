@@ -4,11 +4,11 @@ package route
 import (
 	"crypto/cipher"
 	"github.com/indra-labs/indra/pkg/codec"
+	"github.com/indra-labs/indra/pkg/codec/onion/cores/end"
 	"github.com/indra-labs/indra/pkg/codec/onion/crypt"
-	"github.com/indra-labs/indra/pkg/codec/onion/end"
 	"github.com/indra-labs/indra/pkg/codec/onion/exit"
 	"github.com/indra-labs/indra/pkg/codec/onion/forward"
-	"github.com/indra-labs/indra/pkg/codec/onion/ready"
+	"github.com/indra-labs/indra/pkg/codec/onion/hidden/ready"
 	"github.com/indra-labs/indra/pkg/codec/onion/reverse"
 	"github.com/indra-labs/indra/pkg/codec/ont"
 	"github.com/indra-labs/indra/pkg/codec/reg"
@@ -63,7 +63,7 @@ type Route struct {
 	nonce.IV
 	// ------- the rest is encrypted to the HiddenService/Sender keys.
 
-	//ID is a unique
+	// ID is a unique
 	// identifier for the Ready message to enable the client to identify quickly
 	// which hidden service has become ready.
 	ID nonce.ID
@@ -203,7 +203,7 @@ func (x *Route) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 			reverse.New(&addrs[2]),
 			crypt.New(rt.Sessions[2].Header.Pub, rt.Sessions[2].Payload.Pub, rt.Keys[2], rt.Nonces[2], 1),
 		}
-		//.RoutingHeader(rt)
+		// .RoutingHeader(rt)
 		rHdr := ont.Encode(ont.Assemble(rh))
 		rHdr.SetCursor(0)
 		ep := exit.ExitPoint{

@@ -4,7 +4,7 @@ import (
 	"github.com/indra-labs/indra/pkg/codec/ad/intro"
 	"github.com/indra-labs/indra/pkg/codec/onion/exit"
 	"github.com/indra-labs/indra/pkg/codec/onion/getbalance"
-	"github.com/indra-labs/indra/pkg/codec/onion/whisper"
+	"github.com/indra-labs/indra/pkg/codec/onion/hidden/whisper"
 	"github.com/indra-labs/indra/pkg/codec/ont"
 	"github.com/indra-labs/indra/pkg/codec/reg"
 	"github.com/indra-labs/indra/pkg/util/multi"
@@ -55,7 +55,7 @@ func (ng *Engine) SendGetBalance(alice, bob *sessions.Data, hook responses.Callb
 	ng.Mgr().SendWithOneHook(c[0].Node.Addresses, res, hook, ng.Responses)
 }
 
-// SendHiddenService dispatches a hiddenservice message, providing a relay the
+// SendHiddenService dispatches a services message, providing a relay the
 // ability to refer clients to the hidden service and initiate connections.
 func (ng *Engine) SendHiddenService(id nonce.ID, key *crypto.Prv, relayRate uint32,
 	port uint16, expiry time.Time, alice, bob *sessions.Data, svc *services.Service,

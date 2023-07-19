@@ -2,8 +2,8 @@ package dispatcher
 
 import (
 	"context"
-	"github.com/indra-labs/indra/pkg/codec/onion/confirmation"
-	"github.com/indra-labs/indra/pkg/codec/onion/response"
+	"github.com/indra-labs/indra/pkg/codec/onion/cores/confirmation"
+	"github.com/indra-labs/indra/pkg/codec/onion/cores/response"
 	"os"
 	"testing"
 	"time"
