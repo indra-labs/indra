@@ -27,7 +27,7 @@ var (
 // Hidden services introduction advertisement is an example of the hidden
 // service attesting to the provision of the referral messages found in the
 // package: pkg/codec/onion/hidden/services - These are expected to become far
-// more numerous than peer advertisments as they effectively designate a
+// more numerous than peer advertisements as they effectively designate a
 // listening server. These can be spam-controlled by having peers poke at the
 // service and dropping non-working intros and thus potentially leading to the
 // hidden service intro being evicted from the collective peerstore.
