@@ -15,11 +15,13 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/tpt"
 	"github.com/indra-labs/indra/pkg/engine/transport"
 	"github.com/indra-labs/indra/pkg/hidden"
+	"github.com/indra-labs/indra/pkg/util/multi"
 	"github.com/indra-labs/indra/pkg/util/qu"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"go.uber.org/atomic"
+	"net/netip"
 )
 
 const (
@@ -56,7 +58,7 @@ type (
 		Listener        *transport.Listener
 		Keys            *crypto.Keys
 		Node            *node.Node
-		Nodes           []*node.Node
+		Nodes           []*node.Node // this is here for mocks primarily.
 		NReturnSessions int
 	}
 )
@@ -69,6 +71,21 @@ func New(p Params) (ng *Engine, e error) {
 	if _, ks, e = crypto.NewSigner(); fails(e) {
 		return
 	}
+	// The internal node 0 needs its address from the Listener:
+	log.T.S("addresses", p.Node.Addresses)
+	addrs := p.Listener.Host.Addrs()
+out:
+	for i := range addrs {
+		var ap netip.AddrPort
+		ap, e = multi.AddrToAddrPort(addrs[i])
+		for i := range p.Node.Addresses {
+			if ap.String() == p.Node.Addresses[i].String() {
+				continue out
+			}
+		}
+		p.Node.Addresses = append(p.Node.Addresses, &ap)
+	}
+	log.D.S("addresses", p.Node.Addresses)
 	ctx, cancel := context.WithCancel(context.Background())
 	ng = &Engine{
 		ctx:       ctx,
@@ -87,51 +104,18 @@ func New(p Params) (ng *Engine, e error) {
 			return
 		}
 	}
+	if ng.NodeAds, e = ads.GenerateAds(p.Node, 25); fails(e) {
+		cancel()
+		return
+	}
 	na := ng.NodeAds
+	log.T.S("na", na)
 	a := []cert.Act{na.Address, na.Load, na.Peer, na.Services}
-	if ng.NodeAds, e = ads.GenerateAds(p.Node, 25); fails(e) {
-		cancel()
-		return
-	}
 	for i := range a {
-		_ = a[i]
-	}
-	if e = ng.NodeAds.Services.Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
-		cancel()
-		return
-	}
-	if e = ng.NodeAds.Peer.Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
-		cancel()
-		return
-	}
-	if e = ng.NodeAds.Load.Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
-		cancel()
-		return
-	}
-	if e = ng.NodeAds.Address.Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
-		cancel()
-		return
-	}
-	ng.Mgr().AddNodes(append([]*node.Node{p.Node}, p.Nodes...)...)
-	if ng.NodeAds, e = ads.GenerateAds(p.Node, 25); fails(e) {
-		cancel()
-		return
-	}
-	if e = ng.NodeAds.Services.Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
-		cancel()
-		return
-	}
-	if e = ng.NodeAds.Peer.Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
-		cancel()
-		return
-	}
-	if e = ng.NodeAds.Load.Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
-		cancel()
-		return
-	}
-	if e = ng.NodeAds.Address.Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
-		cancel()
-		return
+		if e = a[i].Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
+			cancel()
+			return
+		}
 	}
 	// First NodeAds after boot needs to be immediately gossiped:
 

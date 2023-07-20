@@ -92,7 +92,7 @@ func (x *HiddenService) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
 		x.Intro.ID, x.Intro.Key, x.Intro.Introducer, x.Ciphers, x.Nonces, x.RoutingHeaderBytes,
 	)
-	x.Intro.Splice(s.Magic(Magic))
+	x.Intro.Encode(s.Magic(Magic))
 	return x.Onion.Encode(s.Ciphers(x.Ciphers).Nonces(x.Nonces))
 }
 
