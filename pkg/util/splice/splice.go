@@ -64,7 +64,6 @@ func NewFrom(b slice.Bytes) (splicer *Splice) {
 }
 
 func (s *Splice) AddrPort(a *netip.AddrPort) *Splice {
-	log.T.S("addrPort", a)
 	if a == nil {
 		log.D.Ln("addrport is NIL! (maybe Listener is not yet initialized?)")
 		s.Advance(AddrLen, "nil Addresses")

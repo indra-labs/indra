@@ -87,7 +87,6 @@ func (l *Listener) Tick(h host.Host, rendezvous []multiaddr.Multiaddr,
 	peers <-chan peer.AddrInfo, disco *routing.RoutingDiscovery,
 	ctx context.Context) (e error) {
 
-	log.T.Ln()
 	for i := range rendezvous {
 		if peers, e = disco.FindPeers(ctx,
 			rendezvous[i].String()); fails(e) {

@@ -191,6 +191,11 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 		log.E.Ln("received slice of no length")
 		return
 	}
+	if p.ReceivedFrom == ng.Listener.Host.ID() {
+		// Not sure why the Next function delivers these but they are not
+		// needed.
+		return
+	}
 	s := splice.NewFrom(p.Data)
 	c := reg.Recognise(s)
 	if c == nil {
@@ -202,8 +207,6 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 	var ok bool
 	switch c.(type) {
 	case *addresses.Ad:
-		log.D.Ln(ng.LogEntry(fmt.Sprint("received ", reflect.TypeOf(c),
-			" from gossip network")))
 		var addr *addresses.Ad
 		if addr, ok = c.(*addresses.Ad); !ok {
 			return fmt.Errorf(ErrWrongTypeDecode,
@@ -211,6 +214,12 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 		} else if !addr.Validate() {
 			return errors.New("addr ad failed validation")
 		}
+		// No need to store our own (why does pubsub do this?)
+		if addr.Key.Fingerprint() == ng.Listener.Pub.Fingerprint() {
+			break
+		}
+		log.D.Ln(ng.LogEntry("received"), reflect.TypeOf(c),
+			"from gossip network for node", addr.Key.Fingerprint())
 		// If we got to here now we can add to the PeerStore.
 		var id peer.ID
 		if id, e = peer.IDFromPublicKey(addr.Key); fails(e) {
@@ -229,6 +238,10 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 				intro.Magic, reflect.TypeOf(c).String())
 		} else if !intr.Validate() {
 			return errors.New("intro ad failed validation")
+		}
+		// We don't need to store introductions we are hosting again.
+		if intr.Introducer.Fingerprint() == ng.Listener.Pub.Fingerprint() {
+			break
 		}
 		log.D.Ln(ng.LogEntry("received"), reflect.TypeOf(c),
 			"from gossip network for node", intr.Key.Fingerprint())
@@ -249,6 +262,9 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 		} else if !lod.Validate() {
 			return errors.New("load ad failed validation")
 		}
+		if lod.Key.Fingerprint() == ng.Listener.Pub.Fingerprint() {
+			break
+		}
 		log.D.Ln(ng.LogEntry("received"), reflect.TypeOf(c),
 			"from gossip network for node", lod.Key.Fingerprint())
 		// If we got to here now we can add to the PeerStore.
@@ -258,7 +274,7 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 		}
 		log.T.Ln(ng.LogEntry("storing ad"))
 		if e = ng.Listener.Host.
-			Peerstore().Put(id, services.Magic, s.GetAll().ToBytes()); fails(e) {
+			Peerstore().Put(id, load.Magic, s.GetAll().ToBytes()); fails(e) {
 			return
 		}
 	case *peer2.Ad:
@@ -268,6 +284,9 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 				peer2.Magic, reflect.TypeOf(c).String())
 		} else if !pa.Validate() {
 			return errors.New("peer ad failed validation")
+		}
+		if pa.Key.Fingerprint() == ng.Listener.Pub.Fingerprint() {
+			break
 		}
 		log.D.Ln(ng.LogEntry("received"), reflect.TypeOf(c),
 			"from gossip network for node", pa.Key.Fingerprint())
@@ -287,6 +306,9 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 				services.Magic, reflect.TypeOf(c).String())
 		} else if !sa.Validate() {
 			return errors.New("services ad failed validation")
+		}
+		if sa.Key.Fingerprint() == ng.Listener.Pub.Fingerprint() {
+			break
 		}
 		log.D.Ln(ng.LogEntry("received"), reflect.TypeOf(c),
 			"from gossip network for node", sa.Key.Fingerprint())
@@ -335,15 +357,18 @@ func (ng *Engine) GetPeerRecord(id peer.ID, key string) (add cert.Act, e error) 
 	return
 }
 
+func (ng *Engine) IteratePeerRecords(func()) {
+
+}
+
 // ClearPeerRecord places an empty slice into a peer record by way of deleting it.
 //
-// todo: these should be purged from the peerstore in a GC pass.
+// todo: these should be purged from the peerstore in a GC pass. Expiry and storage limits...
 func (ng *Engine) ClearPeerRecord(id peer.ID, key string) (e error) {
 	if _, e = ng.Listener.Host.Peerstore().Get(id, key); fails(e) {
 		return
 	}
-	if e = ng.Listener.Host.
-		Peerstore().Put(id, key, []byte{}); fails(e) {
+	if e = ng.Listener.Host.Peerstore().Put(id, key, []byte{}); fails(e) {
 		return
 	}
 	return
