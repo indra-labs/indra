@@ -5,7 +5,6 @@
 
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://pkg.go.dev/github.com/indra-labs/indra)
 [![License: Unlicense](https://img.shields.io/badge/license-CC0-orange.svg)]([http://unlicense.org/](https://creativecommons.org/share-your-work/public-domain/cc0/))
-[![](https://img.shields.io/badge/chat-telegram-blue)](https://t.me/indranet)
 
 Lightning powered distributed virtual private network for anonymising traffic on
 decentralised protocol networks.
