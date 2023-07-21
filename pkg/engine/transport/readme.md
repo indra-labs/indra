@@ -10,4 +10,4 @@ multiple bound addresses.)
 
 ## License Notes
 
-`pstoreds` and `pstoremem' are under MIT license as seen at the [libp2p repository](https://github.com/libp2p/go-libp2p/LICENSE).
+`pstoreds` and `pstoremem` are under MIT license as seen at the [libp2p repository](https://github.com/libp2p/go-libp2p/LICENSE).
