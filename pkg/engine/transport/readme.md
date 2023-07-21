@@ -7,3 +7,7 @@ inbound connection. (todo: is there a proper interface with such a method?)
 (answer to todo: plans afoot to make it a standard net.Listener with the minor
 caveat that the `Addr` function only allows one address in return and we support
 multiple bound addresses.)
+
+## License Notes
+
+`pstoreds` and `pstoremem' are under MIT license as seen at the [libp2p repository](https://github.com/libp2p/go-libp2p/LICENSE).
