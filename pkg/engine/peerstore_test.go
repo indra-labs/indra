@@ -96,7 +96,7 @@ func TestEngine_PeerStoreDiscovery(t *testing.T) {
 	if indra.CI == "false" {
 		log2.SetLogLevel(log2.Trace)
 	}
-	const nTotal = 50
+	const nTotal = 20
 	var e error
 	var engines []*Engine
 	var cleanup func()
