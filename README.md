@@ -62,6 +62,13 @@ Indra makes it possible for anyone to offer this kind of outbound relaying servi
 
 Indra uses source routing, similar to the Lightning Network and an early but not really quite viable mixnet design called HORNET. The problem with source routed mixnets is that they are very vulnerable to spam. Indra eliminates this problem by no traffic being relayed without first paying a small forward payment to relays for this traffic, thus creating an economic disincentive for spam if the profit is below the routing fees.
 
+## Licence CC-0
+
+![http://creativecommons.org/publicdomain/zero/1.0/](http://i.creativecommons.org/p/zero/1.0/88x31.png)
+
+To the extent possible under law, https://github.com/indra-labs/indra has
+waived all copyright and related or neighboring rights to Indranet.
+
 # fin
 
 notes:
