@@ -1,5 +1,5 @@
-![Indra Routing Protocol Logo](docs/logo.png)
-
+[![Indra Routing Protocol Logo](docs/logo.svg)
+](https://github.com/orgs/indra-labs/projects/1/views/1)
 # Indranet
 
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://pkg.go.dev/github.com/indra-labs/indra)
@@ -26,7 +26,8 @@ we can get a landing page started.
 
 Even, if you just want to do the journalist thing with us and promote this
 project on social media, note that mostly we don't use them, other than 
-nostr and twitter. Just 
+nostr and twitter. Just make an issue, or contact us through other ways, we
+are most willing to do interviews to present our work.
 
 ## About
 
