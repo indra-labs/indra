@@ -79,7 +79,7 @@ func (c *Conn) GetMTU() int {
 // messages.
 func (c *Conn) GetRecv() tpt.Transport { return c.Transport.Receiver }
 
-// GetRemoteKey ruturns the current remote receiver public key we want to encrypt to (with ECDH).
+// GetRemoteKey returns the current remote receiver public key we want to encrypt to (with ECDH).
 func (c *Conn) GetRemoteKey() (remoteKey *crypto.Pub) {
 	c.Lock()
 	defer c.Unlock()
@@ -231,6 +231,23 @@ func (l *Listener) ProtocolsAvailable() (p protocols.NetworkProtocols) {
 	}
 	return
 }
+
+// TODO: the standard Listener interface really should be implemented here. The Conn already embeds its relevant interface.
+// func (l *Listener) Accept() (net.Conn, error) {
+// 	// TODO implement me
+// 	panic("implement me")
+// }
+//
+// func (l *Listener) Close() error {
+// 	// TODO implement me
+// 	panic("implement me")
+// }
+//
+// todo: this is not quite compatible with a listener having multiple bindings, and returning the zero would make no sense. First one only?
+// func (l *Listener) Addr() net.Addr {
+// 	// TODO implement me
+// 	panic("implement me")
+// }
 
 // Accept waits on inbound connections and hands them out to listeners on the
 // returned channel.
@@ -420,6 +437,7 @@ func NewListener(rendezvous, multiAddr []string, storePath string,
 	if store == nil {
 		return nil, errors.New("could not open database")
 	}
+	interrupt.AddHandler(closer)
 	var st peerstore.Peerstore
 	st, e = pstoreds.NewPeerstore(ctx, store, pstoreds.DefaultOpts())
 	if c.Host, e = libp2p.New(
@@ -427,12 +445,12 @@ func NewListener(rendezvous, multiAddr []string, storePath string,
 		libp2p.UserAgent(DefaultUserAgent),
 		libp2p.ListenAddrs(ma...),
 		libp2p.EnableHolePunching(),
-		//libp2p.Transport(libp2pquic.NewTransport),
+		// libp2p.Transport(libp2pquic.NewTransport),
 		libp2p.Transport(tcp.NewTCPTransport),
-		//libp2p.Transport(websocket.New),
-		//libp2p.Security(libp2ptls.ID, libp2ptls.New),
+		// libp2p.Transport(websocket.New),
+		// libp2p.Security(libp2ptls.ID, libp2ptls.New),
 		libp2p.Security(noise.ID, noise.New),
-		//libp2p.NoSecurity,
+		// libp2p.NoSecurity,
 		libp2p.Peerstore(st),
 	); fails(e) {
 		return
@@ -441,7 +459,7 @@ func NewListener(rendezvous, multiAddr []string, storePath string,
 	if c.DHT, e = NewDHT(ctx, c.Host, rdv); fails(e) {
 		return
 	}
-	go Discover(ctx, c.Host, c.DHT, rdv)
+	go c.Discover(ctx, c.Host, c.DHT, rdv)
 	c.Host.SetStreamHandler(IndraLibP2PID, c.handle)
 	return
 }

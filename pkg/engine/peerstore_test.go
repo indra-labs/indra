@@ -93,6 +93,16 @@ func pauza() {
 // }
 
 func TestEngine_PeerStoreDiscovery(t *testing.T) {
+	// This test doesn't have a concrete failure mode, as inevitably the nodes
+	// that start in the first half of the set, and the nodes in the second
+	// half, the latter may miss the former's advertisements. If the functions
+	// are broken this will fail however, as this is the conditions that trigger
+	// a failure.
+	//
+	// It is more for demonstration to see that the gossip is indeed propagating
+	// in the first round as nodes start up, and more comprehensive tests by
+	// nature need a lot more time and at least a second update of the full set
+	// to saturate all peers with their peers advertisements.
 	if indra.CI == "false" {
 		log2.SetLogLevel(log2.Trace)
 	}
@@ -104,8 +114,20 @@ func TestEngine_PeerStoreDiscovery(t *testing.T) {
 	if engines, cleanup, e = CreateAndStartMockEngines(nTotal, ctx); fails(e) {
 		t.FailNow()
 	}
-	_ = engines
 	time.Sleep(time.Second * 3)
+	// Send them all again after a bit to make sure everyone gets them.
+	for i := range engines {
+		if e = engines[i].SendAds(); fails(e) {
+			t.FailNow()
+		}
+	}
+	time.Sleep(time.Second * 3)
+	for i := range engines {
+		_ = i
+		// check that all peers now have nTotal-1 distinct peer ads (of all 4
+		// types)
+
+	}
 	cleanup()
 	pauza()
 }

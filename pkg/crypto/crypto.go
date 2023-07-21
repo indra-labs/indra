@@ -2,8 +2,9 @@ package crypto
 
 import (
 	"crypto/rand"
+	"encoding/base32"
 	"encoding/hex"
-	"strings"
+	"github.com/indra-labs/indra/pkg/util/b32"
 	"sync"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
@@ -255,8 +256,8 @@ type Pub secp256k1.PublicKey
 func (k *Pub) Fingerprint() (fp string) {
 	kk := k.ToBytes()
 	b := sha256.Single(kk[:])
-	all, _ := based32.Codec.Encode(b[:])
-	return strings.ToUpper(all[:8])
+	fp = base32.NewEncoding(b32.Based32Ciphers).EncodeToString(b[:5])
+	return
 }
 
 // PubFromBased32 decodes a Based32 encoded form of the Pub.
