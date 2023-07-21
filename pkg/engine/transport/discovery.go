@@ -22,6 +22,7 @@ func NewDHT(ctx context.Context, host host.Host,
 	}
 	options = append(options,
 		dht.ProtocolPrefix(IndraLibP2PID),
+		dht.EnableOptimisticProvide(),
 	)
 	if d, e = dht.New(ctx, host, options...); fails(e) {
 		return

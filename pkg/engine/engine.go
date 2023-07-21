@@ -72,7 +72,6 @@ func New(p Params) (ng *Engine, e error) {
 		return
 	}
 	// The internal node 0 needs its address from the Listener:
-	log.T.S("addresses", p.Node.Addresses)
 	addrs := p.Listener.Host.Addrs()
 out:
 	for i := range addrs {
@@ -85,7 +84,6 @@ out:
 		}
 		p.Node.Addresses = append(p.Node.Addresses, &ap)
 	}
-	log.D.S("addresses", p.Node.Addresses)
 	ctx, cancel := context.WithCancel(context.Background())
 	ng = &Engine{
 		ctx:       ctx,
@@ -100,7 +98,7 @@ out:
 	}
 	ng.Mgr().AddNodes(append([]*node.Node{p.Node}, p.Nodes...)...)
 	if p.Listener != nil && p.Listener.Host != nil {
-		if ng.PubSub, ng.topic, ng.sub, e = SetupGossip(ctx, p.Listener.Host, cancel); fails(e) {
+		if ng.PubSub, ng.topic, ng.sub, e = ng.SetupGossip(ctx, p.Listener.Host, cancel); fails(e) {
 			return
 		}
 	}
@@ -109,7 +107,6 @@ out:
 		return
 	}
 	na := ng.NodeAds
-	log.T.S("na", na)
 	a := []cert.Act{na.Address, na.Load, na.Peer, na.Services}
 	for i := range a {
 		if e = a[i].Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
@@ -118,7 +115,7 @@ out:
 		}
 	}
 	// First NodeAds after boot needs to be immediately gossiped:
-
+	ng.SendAds()
 	// Add return sessions for receiving responses, ideally more of these
 	// will be generated during operation and rotated out over time.
 	for i := 0; i < p.NReturnSessions; i++ {
@@ -144,7 +141,7 @@ func (ng *Engine) Shutdown() {
 func (ng *Engine) Start() {
 	log.T.Ln("starting engine")
 	if ng.sub != nil {
-		log.T.Ln(ng.Listener.Host.Addrs(), "starting gossip handling")
+		log.T.Ln(ng.LogEntry("starting gossip handling"))
 		ng.RunAdHandler(ng.HandleAd)
 	}
 	for {
@@ -195,7 +192,7 @@ func (ng *Engine) HandleMessage(s *splice.Splice, pr ont.Onion) {
 
 // Handler is the main select switch for handling events for the Engine.
 func (ng *Engine) Handler() (terminate bool) {
-	log.T.Ln(ng.Listener.Host.Addrs(), " awaiting message")
+	log.T.Ln(ng.LogEntry("awaiting message"))
 	var prev ont.Onion
 	select {
 	case <-ng.ctx.Done():

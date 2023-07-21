@@ -89,7 +89,6 @@ func GenerateAds(n *node.Node, ld byte) (na *NodeAds, e error) {
 	if fails(e) {
 		return
 	}
-	log.T.S("ma", ma)
 	na = &NodeAds{
 		Peer: &peer.Ad{
 			Ad: ad.Ad{

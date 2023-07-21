@@ -277,9 +277,9 @@ func (s *Splice) Pubkey(from *crypto.Pub) *Splice {
 func (s *Splice) ReadAddrPort(ap **netip.AddrPort) *Splice {
 	*ap = &netip.AddrPort{}
 	apLen := s.b[*s.c]
-	log.T.Ln("apLen", apLen)
+	// log.T.Ln("apLen", apLen)
 	apBytes := s.b[s.c.Inc(1):s.c.Inc(AddrLen)]
-	log.T.S("addrport", apBytes.ToBytes())
+	// log.T.S("addrport", apBytes.ToBytes())
 	if s.E = (*ap).UnmarshalBinary(apBytes[:apLen]); fails(s.E) {
 	}
 	s.Segments = append(s.Segments,
