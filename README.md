@@ -70,7 +70,7 @@ To the extent possible under law, the Authors of the content hosted at
 https://github.com/indra-labs/indra have waived all copyright and 
 related or neighboring rights to The Indranet Protocol.*
 
-###### * except where a folder and its subfolders contain a different license.
+###### * except where a folder contains a different license, and to all folders until another, etc.
 
 # fin
 
