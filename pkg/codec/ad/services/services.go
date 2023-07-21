@@ -84,9 +84,11 @@ func (x *Ad) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-// Encode an Ad into the next bytes of a splice.Splice.
+// Encode an Ad into a splice.Splice's next bytes. It is assumed the
+// signature has been generated, or it would be an invalid Ad.
 func (x *Ad) Encode(s *splice.Splice) (e error) {
-	x.Splice(s)
+	x.SpliceNoSig(s)
+	s.Signature(x.Sig)
 	return
 }
 
@@ -120,19 +122,13 @@ func (x *Ad) Validate() (valid bool) {
 	return x.Sig.MatchesPubkey(s.GetUntilCursor(), x.Key) && x.Expiry.After(time.Now())
 }
 
-// Splice serializes an Ad into a splice.Splice.
-func (x *Ad) Splice(s *splice.Splice) {
-	x.SpliceNoSig(s)
-	s.Signature(x.Sig)
-}
-
 // SpliceNoSig serializes the Ad but stops at the signature.
 func (x *Ad) SpliceNoSig(s *splice.Splice) {
-	ServiceSplice(s, x.ID, x.Key, x.Services, x.Expiry)
+	Splice(s, x.ID, x.Key, x.Services, x.Expiry)
 }
 
-// ServiceSplice creates the message part up to the signature for an Ad.
-func ServiceSplice(s *splice.Splice, id nonce.ID, key *crypto.Pub, services []Service, expiry time.Time) {
+// Splice creates the message part up to the signature for an Ad.
+func Splice(s *splice.Splice, id nonce.ID, key *crypto.Pub, services []Service, expiry time.Time) {
 
 	s.Magic(Magic).
 		ID(id).

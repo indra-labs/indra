@@ -80,9 +80,11 @@ func (x *Ad) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-// Encode an Ad into a splice.Splice's next bytes.
+// Encode an Ad into a splice.Splice's next bytes. It is assumed the
+// signature has been generated, or it would be an invalid Ad.
 func (x *Ad) Encode(s *splice.Splice) (e error) {
-	x.Splice(s)
+	x.SpliceNoSig(s)
+	s.Signature(x.Sig)
 	return
 }
 
@@ -118,12 +120,6 @@ func (x *Ad) Validate() (valid bool) {
 	x.SpliceNoSig(s)
 	return x.Sig.MatchesPubkey(s.GetUntilCursor(), x.Key) &&
 		x.Expiry.After(time.Now())
-}
-
-// Splice together an Ad.
-func (x *Ad) Splice(s *splice.Splice) {
-	x.SpliceNoSig(s)
-	s.Signature(x.Sig)
 }
 
 // SpliceNoSig splices until the signature.

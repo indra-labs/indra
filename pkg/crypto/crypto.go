@@ -3,6 +3,7 @@ package crypto
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"strings"
 	"sync"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
@@ -246,6 +247,18 @@ func (p *Prv) Zero() { (*secp256k1.PrivateKey)(p).Zero() }
 // Pub is a public key.
 type Pub secp256k1.PublicKey
 
+// Fingerprint generates a compact and distinctive Based32 fingeprint to easily
+// distinguish between many peers at a glance.
+//
+// It is generated with a SHA256 hash of the identity key snipped to yield an 8
+// character string. The truncation is done after the string encoding.
+func (k *Pub) Fingerprint() (fp string) {
+	kk := k.ToBytes()
+	b := sha256.Single(kk[:])
+	all, _ := based32.Codec.Encode(b[:])
+	return strings.ToUpper(all[:8])
+}
+
 // PubFromBased32 decodes a Based32 encoded form of the Pub.
 func PubFromBased32(s string) (k *Pub, e error) {
 	ss := []byte(s)
@@ -262,6 +275,7 @@ func (k *Pub) ToBased32() (s string) {
 	b := k.ToBytes()
 	var e error
 	if s, e = based32.Codec.Encode(b[:]); fails(e) {
+		return e.Error()
 	}
 	ss := []byte(s)[3:]
 	return string(ss)

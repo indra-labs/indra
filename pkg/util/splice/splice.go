@@ -64,7 +64,9 @@ func NewFrom(b slice.Bytes) (splicer *Splice) {
 }
 
 func (s *Splice) AddrPort(a *netip.AddrPort) *Splice {
+	log.T.S("addrPort", a)
 	if a == nil {
+		log.D.Ln("addrport is NIL! (maybe Listener is not yet initialized?)")
 		s.Advance(AddrLen, "nil Addresses")
 		return s
 	}
@@ -275,7 +277,9 @@ func (s *Splice) Pubkey(from *crypto.Pub) *Splice {
 func (s *Splice) ReadAddrPort(ap **netip.AddrPort) *Splice {
 	*ap = &netip.AddrPort{}
 	apLen := s.b[*s.c]
+	// log.T.Ln("apLen", apLen)
 	apBytes := s.b[s.c.Inc(1):s.c.Inc(AddrLen)]
+	// log.T.S("addrport", apBytes.ToBytes())
 	if s.E = (*ap).UnmarshalBinary(apBytes[:apLen]); fails(s.E) {
 	}
 	s.Segments = append(s.Segments,
@@ -459,7 +463,7 @@ func (s *Splice) StoreCursor(c *int) *Splice {
 	return s
 }
 
-//func (s *Splice) String() (o string) {
+// func (s *Splice) String() (o string) {
 //	o = "splice:"
 //	seg := s.GetSlicesFromSegments()
 //	var prevString string
@@ -530,7 +534,7 @@ func (s *Splice) StoreCursor(c *int) *Splice {
 //		}
 //	}
 //	return
-//}
+// }
 
 func (s *Splice) Time(v time.Time) *Splice {
 	n := v.Unix()
@@ -566,11 +570,11 @@ func (s *Splice) Uint64(v uint64) *Splice {
 	return s
 }
 
-//func (s Segments) String() (o string) {
+// func (s Segments) String() (o string) {
 //	for i := range s {
 //		o += fmt.Sprintf("%s %d ", s[i].Name, s[i].Offset)
 //	}
 //	return
-//}
+// }
 
 func (s Segments) Swap(i, j int) { s[i], s[j] = s[j], s[i] }

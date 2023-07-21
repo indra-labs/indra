@@ -63,9 +63,11 @@ func (x *Ad) Decode(s *splice.Splice) (e error) {
 	return
 }
 
-// Encode an Ad into the next bytes of a splice.Splice.
+// Encode an Ad into the next bytes of a splice.Splice. It is assumed the
+// signature has been generated, or it would be an invalid Ad.
 func (x *Ad) Encode(s *splice.Splice) (e error) {
-	x.Splice(s)
+	x.SpliceNoSig(s)
+	s.Signature(x.Sig)
 	return
 }
 
@@ -77,12 +79,6 @@ func (x *Ad) Len() int { return Len }
 
 // Magic is the identifier indicating an Ad is encoded in the following bytes.
 func (x *Ad) Magic() string { return Magic }
-
-// Splice serializes an Ad into a splice.Splice.
-func (x *Ad) Splice(s *splice.Splice) {
-	x.SpliceNoSig(s)
-	s.Signature(x.Sig)
-}
 
 // SpliceNoSig serializes the Ad but stops at the signature.
 func (x *Ad) SpliceNoSig(s *splice.Splice) {

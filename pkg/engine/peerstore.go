@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/indra-labs/indra/pkg/ad"
+	"github.com/indra-labs/indra/pkg/cert"
 	"github.com/indra-labs/indra/pkg/codec/ad/load"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -23,7 +23,7 @@ import (
 
 // SetupGossip establishes a connection of a Host to the pubsub gossip network
 // used by Indra to propagate peer metadata.
-func SetupGossip(ctx context.Context, host host.Host,
+func (ng *Engine) SetupGossip(ctx context.Context, host host.Host,
 	cancel func()) (PubSub *pubsub.PubSub, topic *pubsub.Topic,
 	sub *pubsub.Subscription, e error) {
 
@@ -39,13 +39,29 @@ func SetupGossip(ctx context.Context, host host.Host,
 		cancel()
 		return
 	}
-	log.T.Ln("subscribed to", PubSubTopic, "topic on gossip network")
+	log.T.Ln(ng.LogEntry("subscribed to"), PubSubTopic,
+		"topic on gossip network")
 	return
 }
 
-// SendAd dispatches an encoded byte slice ostensibly of a peer advertisement to gossip to the rest of the network.
+// SendAd dispatches an encoded byte slice ostensibly of a peer advertisement to
+// gossip to the rest of the network.
 func (ng *Engine) SendAd(a slice.Bytes) (e error) {
 	return ng.topic.Publish(ng.ctx, a)
+}
+
+// SendAds dispatches all ads in NodeAds. Primarily called at startup.
+func (ng *Engine) SendAds() (e error) {
+	na := ng.NodeAds
+	ads := []cert.Act{na.Address, na.Load, na.Peer, na.Services}
+	for i := range ads {
+		s := splice.New(ads[i].Len())
+		ads[i].Encode(s)
+		if e = ng.topic.Publish(ng.ctx, s.GetAll()); fails(e) {
+			return
+		}
+	}
+	return
 }
 
 // RunAdHandler listens to the gossip and dispatches messages to be handled and
@@ -77,7 +93,7 @@ func (ng *Engine) RunAdHandler(handler func(p *pubsub.Message) (e error)) {
 	}(ng)
 
 	go func(ng *Engine) {
-		log.D.Ln(ng.Listener.Host.Addrs(), "checking and updating peer information ads")
+		log.D.Ln(ng.LogEntry("checking and updating peer information ads"))
 		// First time we want to do the thing straight away and update the peers
 		// with a new ads.NodeAds.
 		ng.gossip(time.NewTicker(time.Second))
@@ -85,61 +101,77 @@ func (ng *Engine) RunAdHandler(handler func(p *pubsub.Message) (e error)) {
 	}(ng)
 }
 
+// Fingerprint is a short identifier generated
+func (ng *Engine) Fingerprint() (fp string) {
+	return ng.Mgr().GetLocalNode().Identity.Pub.Fingerprint()
+}
+
+func (ng *Engine) LogEntry(s string) (entry string) {
+	return fmt.Sprint(ng.Fingerprint(), " ", s)
+}
+
 func (ng *Engine) gossip(tick *time.Ticker) {
 	now := time.Now()
+	first := true
 out:
 	for {
+		if first {
+			first = false
+			// Send out all ads because we are starting up.
+			ng.SendAds()
+			// As all ads are sent we can return to the head of the loop.
+			continue
+		}
 		// Check for already generated NodeAds, and make them first time if
 		// needed.
 		na := ng.NodeAds
-		log.D.Ln(ng.Listener.Host.Addrs(), "gossip tick")
+		log.D.Ln(ng.LogEntry("gossip tick"))
 		switch {
 		case na.Address == nil:
-			log.D.Ln("updating peer address")
+			log.D.Ln(ng.LogEntry("updating peer address"))
 
 			fallthrough
 
 		case na.Load == nil:
-			log.D.Ln("updating peer load")
+			log.D.Ln(ng.LogEntry("updating peer load"))
 
 			fallthrough
 
 		case na.Peer == nil:
-			log.D.Ln("updating peer ad")
+			log.D.Ln(ng.LogEntry("updating peer ad"))
 
 			fallthrough
 
 		case na.Services == nil &&
 			// But only if we have any services:
 			len(ng.Mgr().GetLocalNode().Services) > 0:
-			log.D.Ln("updating services")
+			log.D.Ln(ng.LogEntry("updating services"))
 
 			fallthrough
 			// Next, check each entry has not expired:
 
 		case na.Address.Expiry.Before(now):
-			log.D.Ln("updating expired peer address")
+			log.D.Ln(ng.LogEntry("updating expired peer address"))
 
 			fallthrough
 
 		case na.Load.Expiry.Before(now):
-			log.D.Ln("updating expired load ad")
+			log.D.Ln(ng.LogEntry("updating expired load ad"))
 
 			fallthrough
 
 		case na.Peer.Expiry.Before(now):
-			log.D.Ln("updating peer ad")
+			log.D.Ln(ng.LogEntry("updating peer ad"))
 
 			fallthrough
 
 		case na.Services.Expiry.Before(now):
-			log.D.Ln("updating peer services")
+			log.D.Ln(ng.LogEntry("updating peer services"))
 
 		}
 		// Then, lastly, check if the ad content has changed due to
 		// reconfiguration or other reasons such as a more substantial amount of
 		// load or drop in load, or changed IP addresses.
-
 		// After all that is done, check if we are shutting down, if so exit.
 		select {
 		case <-ng.ctx.Done():
@@ -170,7 +202,8 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 	var ok bool
 	switch c.(type) {
 	case *addresses.Ad:
-		log.D.Ln(ng.Listener.Host.Addrs()[0].String()+" received", reflect.TypeOf(c), "from gossip network")
+		log.D.Ln(ng.LogEntry(fmt.Sprint("received ", reflect.TypeOf(c),
+			" from gossip network")))
 		var addr *addresses.Ad
 		if addr, ok = c.(*addresses.Ad); !ok {
 			return fmt.Errorf(ErrWrongTypeDecode,
@@ -188,7 +221,6 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 			return
 		}
 	case *intro.Ad:
-		log.D.Ln(ng.Listener.Host.Addrs()[0].String()+" received", reflect.TypeOf(c), "from gossip network")
 		var intr *intro.Ad
 		if intr, ok = c.(*intro.Ad); !ok {
 			return fmt.Errorf(ErrWrongTypeDecode,
@@ -196,6 +228,8 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 		} else if !intr.Validate() {
 			return errors.New("intro ad failed validation")
 		}
+		log.D.Ln(ng.LogEntry("received"), reflect.TypeOf(c),
+			"from gossip network for node", intr.Key.Fingerprint())
 		// If we got to here now we can add to the PeerStore.
 		var id peer.ID
 		if id, e = peer.IDFromPublicKey(intr.Key); fails(e) {
@@ -206,7 +240,6 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 			return
 		}
 	case *load.Ad:
-		log.D.Ln(ng.Listener.Host.Addrs()[0].String()+" received", reflect.TypeOf(c), "from gossip network")
 		var lod *load.Ad
 		if lod, ok = c.(*load.Ad); !ok {
 			return fmt.Errorf(ErrWrongTypeDecode,
@@ -214,17 +247,19 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 		} else if !lod.Validate() {
 			return errors.New("load ad failed validation")
 		}
+		log.D.Ln(ng.LogEntry("received"), reflect.TypeOf(c),
+			"from gossip network for node", lod.Key.Fingerprint())
 		// If we got to here now we can add to the PeerStore.
 		var id peer.ID
 		if id, e = peer.IDFromPublicKey(lod.Key); fails(e) {
 			return
 		}
+		log.T.Ln(ng.LogEntry("storing ad"))
 		if e = ng.Listener.Host.
 			Peerstore().Put(id, services.Magic, s.GetAll().ToBytes()); fails(e) {
 			return
 		}
 	case *peer2.Ad:
-		log.D.Ln(ng.Listener.Host.Addrs()[0].String()+" received", reflect.TypeOf(c), "from gossip network")
 		var pa *peer2.Ad
 		if pa, ok = c.(*peer2.Ad); !ok {
 			return fmt.Errorf(ErrWrongTypeDecode,
@@ -232,6 +267,8 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 		} else if !pa.Validate() {
 			return errors.New("peer ad failed validation")
 		}
+		log.D.Ln(ng.LogEntry("received"), reflect.TypeOf(c),
+			"from gossip network for node", pa.Key.Fingerprint())
 		// If we got to here now we can add to the PeerStore.
 		var id peer.ID
 		if id, e = peer.IDFromPublicKey(pa.Key); fails(e) {
@@ -242,7 +279,6 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 			return
 		}
 	case *services.Ad:
-		log.D.Ln(ng.Listener.Host.Addrs()[0].String()+" received", reflect.TypeOf(c), "from gossip network")
 		var sa *services.Ad
 		if sa, ok = c.(*services.Ad); !ok {
 			return fmt.Errorf(ErrWrongTypeDecode,
@@ -250,6 +286,8 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 		} else if !sa.Validate() {
 			return errors.New("services ad failed validation")
 		}
+		log.D.Ln(ng.LogEntry("received"), reflect.TypeOf(c),
+			"from gossip network for node", sa.Key.Fingerprint())
 		// If we got to here now we can add to the PeerStore.
 		var id peer.ID
 		if id, e = peer.IDFromPublicKey(sa.Key); fails(e) {
@@ -266,7 +304,7 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 // GetPeerRecord queries the peerstore for an ad from a given peer.ID and the ad
 // type key. The ad type keys are the same as the Magic of each ad type, to be
 // simple.
-func (ng *Engine) GetPeerRecord(id peer.ID, key string) (add ad.Ad, e error) {
+func (ng *Engine) GetPeerRecord(id peer.ID, key string) (add cert.Act, e error) {
 	var a interface{}
 	if a, e = ng.Listener.Host.Peerstore().Get(id, key); fails(e) {
 		return
@@ -289,8 +327,8 @@ func (ng *Engine) GetPeerRecord(id peer.ID, key string) (add ad.Ad, e error) {
 	if e = c.Decode(s); fails(e) {
 		return
 	}
-	if add, ok = c.(ad.Ad); !ok {
-		e = errors.New(key + " peer record did not decode as Ad")
+	if add, ok = c.(cert.Act); !ok {
+		e = errors.New(key + " peer record did not decode as Act")
 	}
 	return
 }

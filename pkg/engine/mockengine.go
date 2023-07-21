@@ -27,8 +27,9 @@ func CreateMockEngine(seed, dataPath string, ctx context.Context) (ng *Engine) {
 	keys = append(keys, k)
 	var l *transport.Listener
 	if l, e = transport.NewListener([]string{seed},
-		[]string{transport.LocalhostZeroIPv4TCP, transport.LocalhostZeroIPv6TCP}, dataPath, k, ctx,
-		transport.DefaultMTU); fails(e) {
+		[]string{transport.LocalhostZeroIPv4TCP,
+			transport.LocalhostZeroIPv6TCP},
+		dataPath, k, ctx, transport.DefaultMTU); fails(e) {
 		return
 	}
 	if l == nil {

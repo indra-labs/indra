@@ -84,11 +84,11 @@ func GetAddresses(n *node.Node) (aps []*netip.AddrPort, e error) {
 func GenerateAds(n *node.Node, ld byte) (na *NodeAds, e error) {
 	expiry := time.Now().Add(DefaultAdExpiry)
 	s := GetServices(n)
-	ma, e := GetAddresses(n)
+	var ma []*netip.AddrPort
+	ma, e = GetAddresses(n)
 	if fails(e) {
 		return
 	}
-	aps := make([]*netip.AddrPort, len(ma))
 	na = &NodeAds{
 		Peer: &peer.Ad{
 			Ad: ad.Ad{
@@ -104,7 +104,7 @@ func GenerateAds(n *node.Node, ld byte) (na *NodeAds, e error) {
 				Key:    n.Identity.Pub,
 				Expiry: expiry,
 			},
-			Addresses: aps,
+			Addresses: ma,
 		},
 		Services: &services2.Ad{
 			Ad: ad.Ad{

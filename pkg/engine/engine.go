@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"github.com/indra-labs/indra/pkg/cert"
 	"github.com/indra-labs/indra/pkg/codec/ont"
 	"github.com/indra-labs/indra/pkg/codec/reg"
 	"github.com/indra-labs/indra/pkg/crypto"
@@ -14,11 +15,13 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/tpt"
 	"github.com/indra-labs/indra/pkg/engine/transport"
 	"github.com/indra-labs/indra/pkg/hidden"
+	"github.com/indra-labs/indra/pkg/util/multi"
 	"github.com/indra-labs/indra/pkg/util/qu"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"go.uber.org/atomic"
+	"net/netip"
 )
 
 const (
@@ -55,7 +58,7 @@ type (
 		Listener        *transport.Listener
 		Keys            *crypto.Keys
 		Node            *node.Node
-		Nodes           []*node.Node
+		Nodes           []*node.Node // this is here for mocks primarily.
 		NReturnSessions int
 	}
 )
@@ -67,6 +70,19 @@ func New(p Params) (ng *Engine, e error) {
 	var ks *crypto.KeySet
 	if _, ks, e = crypto.NewSigner(); fails(e) {
 		return
+	}
+	// The internal node 0 needs its address from the Listener:
+	addrs := p.Listener.Host.Addrs()
+out:
+	for i := range addrs {
+		var ap netip.AddrPort
+		ap, e = multi.AddrToAddrPort(addrs[i])
+		for i := range p.Node.Addresses {
+			if ap.String() == p.Node.Addresses[i].String() {
+				continue out
+			}
+		}
+		p.Node.Addresses = append(p.Node.Addresses, &ap)
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	ng = &Engine{
@@ -80,8 +96,9 @@ func New(p Params) (ng *Engine, e error) {
 		h:     hidden.NewHiddenRouting(),
 		Pause: qu.T(),
 	}
+	ng.Mgr().AddNodes(append([]*node.Node{p.Node}, p.Nodes...)...)
 	if p.Listener != nil && p.Listener.Host != nil {
-		if ng.PubSub, ng.topic, ng.sub, e = SetupGossip(ctx, p.Listener.Host, cancel); fails(e) {
+		if ng.PubSub, ng.topic, ng.sub, e = ng.SetupGossip(ctx, p.Listener.Host, cancel); fails(e) {
 			return
 		}
 	}
@@ -89,43 +106,17 @@ func New(p Params) (ng *Engine, e error) {
 		cancel()
 		return
 	}
-	if e = ng.NodeAds.Services.Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
-		cancel()
-		return
+	na := ng.NodeAds
+	a := []cert.Act{na.Address, na.Load, na.Peer, na.Services}
+	for i := range a {
+		if e = a[i].Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
+			cancel()
+			return
+		}
 	}
-	if e = ng.NodeAds.Peer.Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
-		cancel()
-		return
-	}
-	if e = ng.NodeAds.Load.Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
-		cancel()
-		return
-	}
-	if e = ng.NodeAds.Address.Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
-		cancel()
-		return
-	}
-	ng.Mgr().AddNodes(append([]*node.Node{p.Node}, p.Nodes...)...)
-	if ng.NodeAds, e = ads.GenerateAds(p.Node, 25); fails(e) {
-		cancel()
-		return
-	}
-	if e = ng.NodeAds.Services.Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
-		cancel()
-		return
-	}
-	if e = ng.NodeAds.Peer.Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
-		cancel()
-		return
-	}
-	if e = ng.NodeAds.Load.Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
-		cancel()
-		return
-	}
-	if e = ng.NodeAds.Address.Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
-		cancel()
-		return
-	} // Add return sessions for receiving responses, ideally more of these
+	// First NodeAds after boot needs to be immediately gossiped:
+	ng.SendAds()
+	// Add return sessions for receiving responses, ideally more of these
 	// will be generated during operation and rotated out over time.
 	for i := 0; i < p.NReturnSessions; i++ {
 		ng.Mgr().AddSession(sessions.NewSessionData(nonce.NewID(), p.Node, 0,
@@ -150,7 +141,7 @@ func (ng *Engine) Shutdown() {
 func (ng *Engine) Start() {
 	log.T.Ln("starting engine")
 	if ng.sub != nil {
-		log.T.Ln(ng.Listener.Host.Addrs(), "starting gossip handling")
+		log.T.Ln(ng.LogEntry("starting gossip handling"))
 		ng.RunAdHandler(ng.HandleAd)
 	}
 	for {
@@ -201,17 +192,17 @@ func (ng *Engine) HandleMessage(s *splice.Splice, pr ont.Onion) {
 
 // Handler is the main select switch for handling events for the Engine.
 func (ng *Engine) Handler() (terminate bool) {
-	log.T.Ln(ng.Listener.Host.Addrs(), " awaiting message")
+	log.T.Ln(ng.LogEntry("awaiting message"))
 	var prev ont.Onion
 	select {
 	case <-ng.ctx.Done():
 		ng.Shutdown()
 		return true
 	case c := <-ng.Listener.Accept():
-		//go func() {
+		// go func() {
 		log.D.Ln("new connection inbound (TODO):", c.Host.Addrs())
 		_ = c
-		//}()
+		// }()
 	case b := <-ng.Mgr().ReceiveToLocalNode():
 		s := splice.Load(b, slice.NewCursor())
 		ng.HandleMessage(s, prev)

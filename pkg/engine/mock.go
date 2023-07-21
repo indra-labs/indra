@@ -11,6 +11,7 @@ import (
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"net/netip"
+	"os"
 )
 
 var (
@@ -42,6 +43,7 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 	for i := range tpts {
 		tpts[i] = transport.NewSimDuplex(nTotal, ctx)
 	}
+	var seed string
 	for i := range nodes {
 		var id *crypto.Keys
 		if id, e = crypto.GenerateKeys(); fails(e) {
@@ -49,6 +51,25 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 		}
 		addr := slice.GenerateRandomAddrPortIPv4()
 		nodes[i], _ = node.NewNode([]*netip.AddrPort{addr}, id, tpts[i], 50000)
+		var l *transport.Listener
+		var dataPath string
+		dataPath, e = os.MkdirTemp(os.TempDir(), "badger")
+		if e != nil {
+			return
+		}
+		var k *crypto.Keys
+		if k, e = crypto.GenerateKeys(); fails(e) {
+			return
+		}
+		if l, e = transport.NewListener([]string{seed},
+			[]string{transport.LocalhostZeroIPv4TCP,
+				transport.LocalhostZeroIPv6TCP},
+			dataPath, k, ctx, transport.DefaultMTU); fails(e) {
+			return
+		}
+		if i == 0 {
+			seed = transport.GetHostFirstMultiaddr(l.Host)
+		}
 		if cl[i], e = New(Params{
 			Listener: &transport.Listener{
 				MTU: 1382,
