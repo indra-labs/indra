@@ -216,9 +216,11 @@ func (ng *Engine) HandleAd(p *pubsub.Message) (e error) {
 		if id, e = peer.IDFromPublicKey(addr.Key); fails(e) {
 			return
 		}
-		if e = ng.Listener.Host.
-			Peerstore().Put(id, addresses.Magic, s.GetAll().ToBytes()); fails(e) {
-			return
+		if id != ng.Listener.Host.ID() {
+			if e = ng.Listener.Host.
+				Peerstore().Put(id, addresses.Magic, s.GetAll().ToBytes()); fails(e) {
+				return
+			}
 		}
 	case *intro.Ad:
 		var intr *intro.Ad

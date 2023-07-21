@@ -96,7 +96,7 @@ func TestEngine_PeerStoreDiscovery(t *testing.T) {
 	if indra.CI == "false" {
 		log2.SetLogLevel(log2.Trace)
 	}
-	const nTotal = 10
+	const nTotal = 50
 	var e error
 	var engines []*Engine
 	var cleanup func()
@@ -105,7 +105,7 @@ func TestEngine_PeerStoreDiscovery(t *testing.T) {
 		t.FailNow()
 	}
 	_ = engines
-	time.Sleep(time.Second * 3)
+	time.Sleep(time.Second * 8)
 	cleanup()
 	pauza()
 }
