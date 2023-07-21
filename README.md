@@ -1,5 +1,5 @@
-![Indra Routing Protocol Logo](docs/logo.png)
-
+[![Indra Routing Protocol Logo](docs/logo.svg)
+](https://github.com/orgs/indra-labs/projects/1/views/1)
 # Indranet
 
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://pkg.go.dev/github.com/indra-labs/indra)
@@ -10,6 +10,24 @@ Lightning powered distributed virtual private network for anonymising traffic on
 decentralised protocol networks.
 
 [White Paper](docs/whitepaper.md)
+
+## Contributors Welcome
+
+File issues relating to what you want to work on, and we'll add you to the 
+team and set up your tasks on the kanban. 
+
+For now the Law is what @l0k18 and 
+@lyowhs say it is, but mainly just be nice and keep your inputs within the
+critical path towards release.
+
+Code, documentation, the white paper, logo 
+designs, whatever floats your boat. If you like and are good with Github Pages
+we can get a landing page started.
+
+Even, if you just want to do the journalist thing with us and promote this
+project on social media, note that mostly we don't use them, other than 
+nostr and twitter. Just make an issue, or contact us through other ways, we
+are most willing to do interviews to present our work.
 
 ## About
 
