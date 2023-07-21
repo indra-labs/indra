@@ -4,7 +4,7 @@
 # Indranet
 
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://pkg.go.dev/github.com/indra-labs/indra)
-[![License: Unlicense](https://img.shields.io/badge/license-CC0-orange.svg)]([http://unlicense.org/](https://creativecommons.org/share-your-work/public-domain/cc0/))
+[![License: CC0](https://img.shields.io/badge/license-CC0-orange.svg)]([http://unlicense.org/](https://creativecommons.org/share-your-work/public-domain/cc0/))
 
 Lightning powered distributed virtual private network for anonymising traffic on
 decentralised protocol networks.
@@ -65,17 +65,3 @@ Indra uses source routing, similar to the Lightning Network and an early but not
 ## License CC0
 
 ![http://creativecommons.org/publicdomain/zero/1.0/](http://i.creativecommons.org/p/zero/1.0/88x31.png)
-
-To the extent possible under law, the Authors of the content hosted at
-https://github.com/indra-labs/indra have waived all copyright and 
-related or neighboring rights to The Indranet Protocol.*
-
-###### * except where a folder contains a different license, and to all folders until another, etc.
-
-# fin
-
-notes:
-
-`([a-zA-z0-9\_\-\.][a-zA-z0-9\/\_\-\.]+)\:([0-9]+)` is a regex that matches the
-relative file paths in the log output. $1 and $2 from this are the relative path 
-and the line number.
