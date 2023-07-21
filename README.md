@@ -11,6 +11,23 @@ decentralised protocol networks.
 
 [White Paper](docs/whitepaper.md)
 
+## Contributors Welcome
+
+File issues relating to what you want to work on, and we'll add you to the 
+team and set up your tasks on the kanban. 
+
+For now the Law is what @l0k18 and 
+@lyowhs say it is, but mainly just be nice and keep your inputs within the
+critical path towards release.
+
+Code, documentation, the white paper, logo 
+designs, whatever floats your boat. If you like and are good with Github Pages
+we can get a landing page started.
+
+Even, if you just want to do the journalist thing with us and promote this
+project on social media, note that mostly we don't use them, other than 
+nostr and twitter. Just 
+
 ## About
 
 The ubiquitous use of encryption on the internet took some time to happen,
