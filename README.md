@@ -6,8 +6,7 @@
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://pkg.go.dev/github.com/indra-labs/indra)
 [![License: CC0](https://img.shields.io/badge/license-CC0-orange.svg)]([http://unlicense.org/](https://creativecommons.org/share-your-work/public-domain/cc0/))
 
-Lightning powered distributed virtual private network for anonymising traffic on
-decentralised protocol networks.
+Lightning powered distributed source routed relay network protocol.
 
 [White Paper](docs/whitepaper.md)
 
