@@ -32,17 +32,19 @@ func init() {
 	gob.Register(make(map[protocol.ID]struct{}))
 }
 
-// NewPeerMetadata creates a metadata store backed by a persistent db. It uses gob for serialisation.
+// NewPeerMetadata creates a metadata store backed by a persistent db. It uses
+// gob for serialisation.
 //
-// See `init()` to learn which types are registered by default. Modules wishing to store
-// values of other types will need to `gob.Register()` them explicitly, or else callers
-// will receive runtime errors.
+// See `init()` to learn which types are registered by default. Modules wishing
+// to store values of other types will need to `gob.Register()` them explicitly,
+// or else callers will receive runtime errors.
 func NewPeerMetadata(_ context.Context, store ds.Datastore, _ Options) (*dsPeerMetadata, error) {
 	return &dsPeerMetadata{store}, nil
 }
 
 func (pm *dsPeerMetadata) Get(p peer.ID, key string) (interface{}, error) {
-	k := pmBase.ChildString(base32.RawStdEncoding.EncodeToString([]byte(p))).ChildString(key)
+	k := pmBase.ChildString(base32.RawStdEncoding.EncodeToString([]byte(p))).
+		ChildString(key)
 	value, err := pm.ds.Get(context.TODO(), k)
 	if err != nil {
 		if err == ds.ErrNotFound {
@@ -59,7 +61,8 @@ func (pm *dsPeerMetadata) Get(p peer.ID, key string) (interface{}, error) {
 }
 
 func (pm *dsPeerMetadata) Put(p peer.ID, key string, val interface{}) error {
-	k := pmBase.ChildString(base32.RawStdEncoding.EncodeToString([]byte(p))).ChildString(key)
+	k := pmBase.ChildString(base32.RawStdEncoding.EncodeToString([]byte(p))).
+		ChildString(key)
 	var buf pool.Buffer
 	if err := gob.NewEncoder(&buf).Encode(&val); err != nil {
 		return err
@@ -69,11 +72,13 @@ func (pm *dsPeerMetadata) Put(p peer.ID, key string, val interface{}) error {
 
 func (pm *dsPeerMetadata) RemovePeer(p peer.ID) {
 	result, err := pm.ds.Query(context.TODO(), query.Query{
-		Prefix:   pmBase.ChildString(base32.RawStdEncoding.EncodeToString([]byte(p))).String(),
+		Prefix: pmBase.ChildString(base32.RawStdEncoding.
+			EncodeToString([]byte(p))).String(),
 		KeysOnly: true,
 	})
 	if err != nil {
-		log.Warnw("querying datastore when removing peer failed", "peer", p, "error", err)
+		log.Warnw("querying datastore when removing peer failed", "peer", p,
+			"error", err)
 		return
 	}
 	for entry := range result.Next() {

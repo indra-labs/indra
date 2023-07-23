@@ -88,7 +88,9 @@ func (pb *memoryProtoBook) internProtocol(proto protocol.ID) protocol.ID {
 	return proto
 }
 
-func (pb *memoryProtoBook) SetProtocols(p peer.ID, protos ...protocol.ID) error {
+func (pb *memoryProtoBook) SetProtocols(p peer.ID,
+	protos ...protocol.ID) error {
+
 	if len(protos) > pb.maxProtos {
 		return errTooManyProtocols
 	}
@@ -106,7 +108,9 @@ func (pb *memoryProtoBook) SetProtocols(p peer.ID, protos ...protocol.ID) error 
 	return nil
 }
 
-func (pb *memoryProtoBook) AddProtocols(p peer.ID, protos ...protocol.ID) error {
+func (pb *memoryProtoBook) AddProtocols(p peer.ID,
+	protos ...protocol.ID) error {
+
 	s := pb.segments.get(p)
 	s.Lock()
 	defer s.Unlock()

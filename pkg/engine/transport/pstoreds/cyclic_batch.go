@@ -11,11 +11,12 @@ import (
 // how many operations are queued in a cyclic batch before we flush it.
 var defaultOpsPerCyclicBatch = 20
 
-// cyclicBatch buffers ds write operations and automatically flushes them after defaultOpsPerCyclicBatch (20) have been
-// queued. An explicit `Commit()` closes this cyclic batch, erroring all further operations.
+// cyclicBatch buffers ds write operations and automatically flushes them after
+// defaultOpsPerCyclicBatch (20) have been queued. An explicit `Commit()` closes
+// this cyclic batch, erroring all further operations.
 //
-// It is similar to go-ds autobatch, but it's driven by an actual Batch facility offered by the
-// ds.
+// It is similar to go-ds autobatch, but it's driven by an actual Batch facility
+// offered by the ds.
 type cyclicBatch struct {
 	threshold int
 	ds.Batch

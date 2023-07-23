@@ -22,9 +22,9 @@ var _ peerstore.Peerstore = &pstoremem{}
 
 type Option interface{}
 
-// NewPeerstore creates an in-memory thread-safe collection of peers.
-// It's the caller's responsibility to call RemovePeer to ensure
-// that memory consumption of the peerstore doesn't grow unboundedly.
+// NewPeerstore creates an in-memory thread-safe collection of peers. It's the
+// caller's responsibility to call RemovePeer to ensure that memory consumption
+// of the peerstore doesn't grow unboundedly.
 func NewPeerstore(opts ...Option) (ps *pstoremem, err error) {
 	ab := NewAddrBook()
 	defer func() {

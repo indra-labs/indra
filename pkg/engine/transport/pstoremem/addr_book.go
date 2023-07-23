@@ -38,15 +38,17 @@ type addrSegment struct {
 	sync.RWMutex
 
 	// Use pointers to save memory. Maps always leave some fraction of their
-	// space unused. storing the *values* directly in the map will
-	// drastically increase the space waste. In our case, by 6x.
+	// space unused. storing the *values* directly in the map will drastically
+	// increase the space waste. In our case, by 6x.
 	addrs map[peer.ID]map[string]*expiringAddr
 
 	signedPeerRecords map[peer.ID]*peerRecordState
 }
 
 func (segments *addrSegments) get(p peer.ID) *addrSegment {
-	if len(p) == 0 { // it's not terribly useful to use an empty peer ID, but at least we should not panic
+	// it's not terribly useful to use an empty peer ID, but at least we should
+	// not panic
+	if len(p) == 0 {
 		return segments[0]
 	}
 	return segments[uint8(p[len(p)-1])]
@@ -168,14 +170,18 @@ func (mab *memoryAddrBook) PeersWithAddrs() peer.IDSlice {
 }
 
 // AddAddr calls AddAddrs(p, []ma.Multiaddr{addr}, ttl)
-func (mab *memoryAddrBook) AddAddr(p peer.ID, addr ma.Multiaddr, ttl time.Duration) {
+func (mab *memoryAddrBook) AddAddr(p peer.ID, addr ma.Multiaddr,
+	ttl time.Duration) {
+
 	mab.AddAddrs(p, []ma.Multiaddr{addr}, ttl)
 }
 
 // AddAddrs gives memoryAddrBook addresses to use, with a given ttl
 // (time-to-live), after which the address is no longer valid.
 // This function never reduces the TTL or expiration of an address.
-func (mab *memoryAddrBook) AddAddrs(p peer.ID, addrs []ma.Multiaddr, ttl time.Duration) {
+func (mab *memoryAddrBook) AddAddrs(p peer.ID, addrs []ma.Multiaddr,
+	ttl time.Duration) {
+
 	// if we have a valid peer record, ignore unsigned addrs
 	// peerRec := mab.GetPeerRecord(p)
 	// if peerRec != nil {
@@ -187,7 +193,9 @@ func (mab *memoryAddrBook) AddAddrs(p peer.ID, addrs []ma.Multiaddr, ttl time.Du
 // ConsumePeerRecord adds addresses from a signed peer.PeerRecord (contained in
 // a record.Envelope), which will expire after the given TTL.
 // See https://godoc.org/github.com/libp2p/go-libp2p/core/peerstore#CertifiedAddrBook for more details.
-func (mab *memoryAddrBook) ConsumePeerRecord(recordEnvelope *record.Envelope, ttl time.Duration) (bool, error) {
+func (mab *memoryAddrBook) ConsumePeerRecord(recordEnvelope *record.Envelope,
+	ttl time.Duration) (bool, error) {
+
 	r, err := recordEnvelope.Record()
 	if err != nil {
 		return false, err
@@ -224,7 +232,9 @@ func (mab *memoryAddrBook) addAddrs(p peer.ID, addrs []ma.Multiaddr, ttl time.Du
 	mab.addAddrsUnlocked(s, p, addrs, ttl, false)
 }
 
-func (mab *memoryAddrBook) addAddrsUnlocked(s *addrSegment, p peer.ID, addrs []ma.Multiaddr, ttl time.Duration, signed bool) {
+func (mab *memoryAddrBook) addAddrsUnlocked(s *addrSegment, p peer.ID,
+	addrs []ma.Multiaddr, ttl time.Duration, signed bool) {
+
 	// if ttl is zero, exit. nothing to do.
 	if ttl <= 0 {
 		return
@@ -245,7 +255,8 @@ func (mab *memoryAddrBook) addAddrsUnlocked(s *addrSegment, p peer.ID, addrs []m
 			continue
 		}
 		if addrPid != "" && addrPid != p {
-			log.Warnf("Was passed p2p address with a different peerId. found: %s, expected: %s", addrPid, p)
+			log.Warnf("Was passed p2p address with a "+
+				"different peerId. found: %s, expected: %s", addrPid, p)
 			continue
 		}
 		// find the highest TTL and Expiry time between
@@ -257,7 +268,8 @@ func (mab *memoryAddrBook) addAddrsUnlocked(s *addrSegment, p peer.ID, addrs []m
 			amap[string(addr.Bytes())] = entry
 			mab.subManager.BroadcastAddr(p, addr)
 		} else {
-			// update ttl & exp to whichever is greater between new and existing entry
+			// update ttl & exp to whichever is greater between new and existing
+			// entry
 			if ttl > a.TTL {
 				a.TTL = ttl
 			}
@@ -269,13 +281,17 @@ func (mab *memoryAddrBook) addAddrsUnlocked(s *addrSegment, p peer.ID, addrs []m
 }
 
 // SetAddr calls mgr.SetAddrs(p, addr, ttl)
-func (mab *memoryAddrBook) SetAddr(p peer.ID, addr ma.Multiaddr, ttl time.Duration) {
+func (mab *memoryAddrBook) SetAddr(p peer.ID, addr ma.Multiaddr,
+	ttl time.Duration) {
+
 	mab.SetAddrs(p, []ma.Multiaddr{addr}, ttl)
 }
 
 // SetAddrs sets the ttl on addresses. This clears any TTL there previously.
 // This is used when we receive the best estimate of the validity of an address.
-func (mab *memoryAddrBook) SetAddrs(p peer.ID, addrs []ma.Multiaddr, ttl time.Duration) {
+func (mab *memoryAddrBook) SetAddrs(p peer.ID, addrs []ma.Multiaddr,
+	ttl time.Duration) {
+
 	s := mab.segments.get(p)
 	s.Lock()
 	defer s.Unlock()
@@ -294,7 +310,8 @@ func (mab *memoryAddrBook) SetAddrs(p peer.ID, addrs []ma.Multiaddr, ttl time.Du
 			continue
 		}
 		if addrPid != "" && addrPid != p {
-			log.Warnf("was passed p2p address with a different peerId, found: %s wanted: %s", addrPid, p)
+			log.Warnf("was passed p2p address with a different "+
+				"peerId, found: %s wanted: %s", addrPid, p)
 			continue
 		}
 		aBytes := addr.Bytes()
@@ -312,7 +329,9 @@ func (mab *memoryAddrBook) SetAddrs(p peer.ID, addrs []ma.Multiaddr, ttl time.Du
 
 // UpdateAddrs updates the addresses associated with the given peer that have
 // the given oldTTL to have the given newTTL.
-func (mab *memoryAddrBook) UpdateAddrs(p peer.ID, oldTTL time.Duration, newTTL time.Duration) {
+func (mab *memoryAddrBook) UpdateAddrs(p peer.ID, oldTTL time.Duration,
+	newTTL time.Duration) {
+
 	s := mab.segments.get(p)
 	s.Lock()
 	defer s.Unlock()
@@ -344,7 +363,9 @@ func (mab *memoryAddrBook) Addrs(p peer.ID) []ma.Multiaddr {
 	return validAddrs(mab.clock.Now(), s.addrs[p])
 }
 
-func validAddrs(now time.Time, amap map[string]*expiringAddr) []ma.Multiaddr {
+func validAddrs(now time.Time,
+	amap map[string]*expiringAddr) []ma.Multiaddr {
+
 	good := make([]ma.Multiaddr, 0, len(amap))
 	if amap == nil {
 		return good
@@ -392,7 +413,9 @@ func (mab *memoryAddrBook) ClearAddrs(p peer.ID) {
 
 // AddrStream returns a channel on which all new addresses discovered for a
 // given peer ID will be published.
-func (mab *memoryAddrBook) AddrStream(ctx context.Context, p peer.ID) <-chan ma.Multiaddr {
+func (mab *memoryAddrBook) AddrStream(ctx context.Context,
+	p peer.ID) <-chan ma.Multiaddr {
+
 	s := mab.segments.get(p)
 	s.RLock()
 	defer s.RUnlock()
@@ -418,9 +441,9 @@ func (s *addrSub) pubAddr(a ma.Multiaddr) {
 	}
 }
 
-// An abstracted, pub-sub manager for address streams. Extracted from
-// memoryAddrBook in order to support additional implementations.
 type AddrSubManager struct {
+	// An abstracted, pub-sub manager for address streams. Extracted from
+	// memoryAddrBook in order to support additional implementations.
 	mu   sync.RWMutex
 	subs map[peer.ID][]*addrSub
 }
@@ -432,8 +455,8 @@ func NewAddrSubManager() *AddrSubManager {
 	}
 }
 
-// Used internally by the address stream coroutine to remove a subscription
-// from the manager.
+// Used internally by the address stream coroutine to remove a subscription from
+// the manager.
 func (mgr *AddrSubManager) removeSub(p peer.ID, s *addrSub) {
 	mgr.mu.Lock()
 	defer mgr.mu.Unlock()
@@ -471,7 +494,9 @@ func (mgr *AddrSubManager) BroadcastAddr(p peer.ID, addr ma.Multiaddr) {
 
 // AddrStream creates a new subscription for a given peer ID, pre-populating the
 // channel with any addresses we might already have on file.
-func (mgr *AddrSubManager) AddrStream(ctx context.Context, p peer.ID, initial []ma.Multiaddr) <-chan ma.Multiaddr {
+func (mgr *AddrSubManager) AddrStream(ctx context.Context, p peer.ID,
+	initial []ma.Multiaddr) <-chan ma.Multiaddr {
+
 	sub := &addrSub{pubch: make(chan ma.Multiaddr), ctx: ctx}
 	out := make(chan ma.Multiaddr)
 

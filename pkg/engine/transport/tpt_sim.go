@@ -7,15 +7,15 @@ import (
 )
 
 type (
-	// ByteChan is the most primitive form of an atomic FIFO queue used to dispatch
-	// jobs to a network I/O handler.
+	// ByteChan is the most primitive form of an atomic FIFO queue used to
+	// dispatch jobs to a network I/O handler.
 	ByteChan chan slice.Bytes
 
-	// DuplexByteChan is intended to be connected up in chains with other processing
-	// steps as a pipeline. The send and receive functions send bytes to their
-	// respective send and receive channels, and the processing is added by a
-	// consuming type by listening to the send channel for requests to send, and
-	// forwarding data from the upstream to the recieve channel.
+	// DuplexByteChan is intended to be connected up in chains with other
+	// processing steps as a pipeline. The send and receive functions send bytes
+	// to their respective send and receive channels, and the processing is
+	// added by a consuming type by listening to the send channel for requests
+	// to send, and forwarding data from the upstream to the recieve channel.
 	DuplexByteChan struct {
 		// Receiver and Sender can send and receive in parallel.
 		Receiver, Sender tpt.Transport

@@ -19,28 +19,32 @@ import (
 
 // Configuration object for the peerstore.
 type Options struct {
-	// The size of the in-memory cache. A value of 0 or lower disables the cache.
+	// The size of the in-memory cache. A value of 0 or lower disables the
+	// cache.
 	CacheSize uint
 
 	// MaxProtocols is the maximum number of protocols we store for one peer.
 	MaxProtocols int
 
-	// Sweep interval to purge expired addresses from the datastore. If this is a zero value, GC will not run
-	// automatically, but it'll be available on demand via explicit calls.
+	// Sweep interval to purge expired addresses from the datastore. If this is
+	// a zero value, GC will not run automatically, but it'll be available on
+	// demand via explicit calls.
 	GCPurgeInterval time.Duration
 
-	// Interval to renew the GC lookahead window. If this is a zero value, lookahead will be disabled and we'll
-	// traverse the entire datastore for every purge cycle.
+	// Interval to renew the GC lookahead window. If this is a zero value,
+	// lookahead will be disabled and we'll traverse the entire datastore for
+	// every purge cycle.
 	GCLookaheadInterval time.Duration
 
-	// Initial delay before GC processes start. Intended to give the system breathing room to fully boot
-	// before starting GC.
+	// Initial delay before GC processes start. Intended to give the system
+	// breathing room to fully boot before starting GC.
 	GCInitialDelay time.Duration
 
 	Clock clock
 }
 
-// DefaultOpts returns the default options for a persistent peerstore, with the full-purge GC algorithm:
+// DefaultOpts returns the default options for a persistent peerstore, with the
+// full-purge GC algorithm:
 //
 // * Cache size: 1024.
 // * MaxProtocols: 1024.
@@ -70,9 +74,10 @@ type pstoreds struct {
 var _ peerstore.Peerstore = &pstoreds{}
 
 // NewPeerstore creates a peerstore backed by the provided persistent datastore.
-// It's the caller's responsibility to call RemovePeer to ensure
-// that memory consumption of the peerstore doesn't grow unboundedly.
-func NewPeerstore(ctx context.Context, store ds.Batching, opts Options) (*pstoreds, error) {
+// It's the caller's responsibility to call RemovePeer to ensure that memory
+// consumption of the peerstore doesn't grow unboundedly.
+func NewPeerstore(ctx context.Context, store ds.Batching,
+	opts Options) (*pstoreds, error) {
 	addrBook, err := NewAddrBook(ctx, store, opts)
 	if err != nil {
 		return nil, err
@@ -88,7 +93,8 @@ func NewPeerstore(ctx context.Context, store ds.Batching, opts Options) (*pstore
 		return nil, err
 	}
 
-	protoBook, err := NewProtoBook(peerMetadata, WithMaxProtocols(opts.MaxProtocols))
+	protoBook, err := NewProtoBook(peerMetadata,
+		WithMaxProtocols(opts.MaxProtocols))
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +109,9 @@ func NewPeerstore(ctx context.Context, store ds.Batching, opts Options) (*pstore
 }
 
 // uniquePeerIds extracts and returns unique peer IDs from database keys.
-func uniquePeerIds(ds ds.Datastore, prefix ds.Key, extractor func(result query.Result) string) (peer.IDSlice, error) {
+func uniquePeerIds(ds ds.Datastore, prefix ds.Key,
+	extractor func(result query.Result) string) (peer.IDSlice, error) {
+
 	var (
 		q       = query.Query{Prefix: prefix.String(), KeysOnly: true}
 		results query.Results

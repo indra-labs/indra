@@ -14,7 +14,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var lookaheadQuery = query.Query{Prefix: gcLookaheadBase.String(), KeysOnly: true}
+var lookaheadQuery = query.Query{
+	Prefix:   gcLookaheadBase.String(),
+	KeysOnly: true,
+}
 
 type testProbe struct {
 	t  *testing.T
@@ -22,7 +25,8 @@ type testProbe struct {
 }
 
 func (tp *testProbe) countLookaheadEntries() (i int) {
-	results, err := tp.ab.(*dsAddrBook).ds.Query(context.Background(), lookaheadQuery)
+	results, err := tp.ab.(*dsAddrBook).ds.Query(context.Background(),
+		lookaheadQuery)
 	if err != nil {
 		tp.t.Fatal(err)
 	}
@@ -58,7 +62,8 @@ func TestGCLookahead(t *testing.T) {
 	ids := test.GeneratePeerIDs(10)
 	addrs := test.GenerateAddrs(100)
 
-	// lookahead is 10 seconds, so these entries will be outside the lookahead window.
+	// lookahead is 10 seconds, so these entries will be outside the lookahead
+	// window.
 	ab.AddAddrs(ids[0], addrs[:10], time.Hour)
 	ab.AddAddrs(ids[1], addrs[10:20], time.Hour)
 	ab.AddAddrs(ids[2], addrs[20:30], time.Hour)
@@ -68,7 +73,8 @@ func TestGCLookahead(t *testing.T) {
 		t.Errorf("expected no GC lookahead entries, got: %v", i)
 	}
 
-	// change addresses of a peer to have TTL 1 second, placing them in the lookahead window.
+	// change addresses of a peer to have TTL 1 second, placing them in the
+	// lookahead window.
 	ab.UpdateAddrs(ids[1], time.Hour, time.Second)
 
 	// Purge the cache, to exercise a different path in the lookahead cycle.
@@ -79,7 +85,8 @@ func TestGCLookahead(t *testing.T) {
 		t.Errorf("expected 1 GC lookahead entry, got: %v", i)
 	}
 
-	// change addresses of another to have TTL 5 second, placing them in the lookahead window.
+	// change addresses of another to have TTL 5 second, placing them in the
+	// lookahead window.
 	ab.UpdateAddrs(ids[2], time.Hour, 5*time.Second)
 	gc.populateLookahead()
 	if i := tp.countLookaheadEntries(); i != 2 {
@@ -118,7 +125,8 @@ func TestGCPurging(t *testing.T) {
 	ab.AddAddrs(ids[0], addrs[20:30], 10*time.Second)
 	ab.AddAddrs(ids[1], addrs[50:60], 10*time.Second)
 
-	// this is inside the window, but it will survive the purges we do in the test.
+	// this is inside the window, but it will survive the purges we do in the
+	// test.
 	ab.AddAddrs(ids[3], addrs[70:80], 15*time.Second)
 
 	gc.populateLookahead()
@@ -150,7 +158,8 @@ func TestGCPurging(t *testing.T) {
 		t.Errorf("expected 1 entries in database, got: %v", i)
 	}
 	if p := ab.PeersWithAddrs()[0]; p != ids[3] {
-		t.Errorf("expected remaining peer to be #3, got: %v, expected: %v", p, ids[3])
+		t.Errorf("expected remaining peer to be #3, got: %v, expected: %v",
+			p, ids[3])
 	}
 }
 
@@ -182,7 +191,9 @@ func TestGCDelay(t *testing.T) {
 
 	// after the initial delay has passed.
 	clk.Add(3 * time.Second)
-	require.Eventually(t, func() bool { return tp.countLookaheadEntries() == 1 }, 3000*time.Millisecond, 10*time.Millisecond, "expected 1 lookahead entry")
+	require.Eventually(t, func() bool {
+		return tp.countLookaheadEntries() == 1
+	}, 3000*time.Millisecond, 10*time.Millisecond, "expected 1 lookahead entry")
 }
 
 func TestGCLookaheadDisabled(t *testing.T) {

@@ -31,12 +31,12 @@ import (
 )
 
 const (
-	// LocalhostZeroIPv4TCP is the default localhost to bind to any address. Used in
-	// tests.
+	// LocalhostZeroIPv4TCP is the default localhost to bind to any address.
+	// Used in tests.
 	LocalhostZeroIPv4TCP = "/ip4/127.0.0.1/tcp/0"
 
-	// LocalhostZeroIPv6TCP is the default localhost to bind to any address. Used in
-	// tests.
+	// LocalhostZeroIPv6TCP is the default localhost to bind to any address.
+	// Used in tests.
 	LocalhostZeroIPv6TCP = "/ip6/::1/tcp/0"
 
 	// LocalhostZeroIPv4QUIC - Don't use. Buffer problems on linux and fails on CI.
@@ -75,11 +75,12 @@ func (c *Conn) GetMTU() int {
 	return c.MTU
 }
 
-// GetRecv returns the Transport that is functioning as receiver, used to receive
-// messages.
+// GetRecv returns the Transport that is functioning as receiver, used to
+// receive messages.
 func (c *Conn) GetRecv() tpt.Transport { return c.Transport.Receiver }
 
-// GetRemoteKey returns the current remote receiver public key we want to encrypt to (with ECDH).
+// GetRemoteKey returns the current remote receiver public key we want to
+// encrypt to (with ECDH).
 func (c *Conn) GetRemoteKey() (remoteKey *crypto.Pub) {
 	c.Lock()
 	defer c.Unlock()
@@ -97,9 +98,9 @@ func (c *Conn) SetMTU(mtu int) {
 	c.Unlock()
 }
 
-// SetRemoteKey changes the key that should be used with ECDH to generate message
-// encryption secrets. This will be called in response to the other side sending
-// a key change message.
+// SetRemoteKey changes the key that should be used with ECDH to generate
+// message encryption secrets. This will be called in response to the other side
+// sending a key change message.
 func (c *Conn) SetRemoteKey(remoteKey *crypto.Pub) {
 	c.Lock()
 	c.RemoteKey = remoteKey
@@ -112,30 +113,30 @@ type (
 	// services and relays providing access to them.
 	Listener struct {
 
-		// The DHT is used by peer discovery and peer information gossip to provide
-		// information to clients to enable them to set up sessions and then send traffic
-		// through them.
+		// The DHT is used by peer discovery and peer information gossip to
+		// provide information to clients to enable them to set up sessions and
+		// then send traffic through them.
 		DHT *dht.IpfsDHT
 
-		// MTU is the size of the packets that should be used by the dispatcher, which
-		// should be the same as the Path MTU between the node and its routeable internet
-		// address.
+		// MTU is the size of the packets that should be used by the dispatcher,
+		// which should be the same as the Path MTU between the node and its
+		// routeable internet address.
 		MTU int
 
-		// Host is the libp2p peer management system and provides access to all the
-		// connectivity and related services provided by libp2p.
+		// Host is the libp2p peer management system and provides access to all
+		// the connectivity and related services provided by libp2p.
 		Host host.Host
 
-		// connections are the list of currently open connections being handled by the
-		// Listener.
+		// connections are the list of currently open connections being handled
+		// by the Listener.
 		connections map[string]*Conn
 
-		// newConns is a channel that new inbound connections are dispatched to for a
-		// handler to be assigned.
+		// newConns is a channel that new inbound connections are dispatched to
+		// for a handler to be assigned.
 		newConns chan *Conn
 
-		// Keys are this node's identity keys, used for identification and authentication
-		// of peer advertisements.
+		// Keys are this node's identity keys, used for identification and
+		// authentication of peer advertisements.
 		*crypto.Keys
 
 		// Context here allows listener processes to be signalled to shut down.
@@ -145,8 +146,8 @@ type (
 		sync.Mutex
 	}
 
-	// Conn is a wrapper around the bidirectional connection established between two
-	// peers via the libp2p API.
+	// Conn is a wrapper around the bidirectional connection established between
+	// two peers via the libp2p API.
 	Conn struct {
 
 		// Conn is the actual network connection, which is a ReaderWriterCloser.
@@ -160,7 +161,8 @@ type (
 		// todo: this is also handled by the dispatcher for key changes etc?
 		RemoteKey *crypto.Pub
 
-		// MultiAddr is the multiaddr.Multiaddr of the other side of the connection.
+		// MultiAddr is the multiaddr.Multiaddr of the other side of the
+		// connection.
 		MultiAddr multiaddr.Multiaddr
 
 		// Host is the libp2p host implementing the Conn.
@@ -171,8 +173,8 @@ type (
 		// todo: isn't the Conn supposed to do this also???
 		rw *bufio.ReadWriter
 
-		// Transport is the duplex channel that is given to calling code to dispatch
-		// messages through the Conn.
+		// Transport is the duplex channel that is given to calling code to
+		// dispatch messages through the Conn.
 		Transport *DuplexByteChan
 
 		// Mutex to prevent concurrent read/write of shared data.
@@ -183,7 +185,8 @@ type (
 	}
 )
 
-// GetHostFirstMultiaddr returns the multiaddr string encoding of a host.Host's network listener.
+// GetHostFirstMultiaddr returns the multiaddr string encoding of a host.Host's
+// network listener.
 func GetHostFirstMultiaddr(ha host.Host) string {
 	hostAddr, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/p2p/%s",
 		ha.ID().String()))
@@ -197,7 +200,8 @@ func GetHostOnlyFirstMultiaddr(ha host.Host) string {
 	return addr.String()
 }
 
-// GetHostMultiaddrs returns the multiaddr strings encoding of a host.Host's network listener.
+// GetHostMultiaddrs returns the multiaddr strings encoding of a host.Host's
+// network listener.
 //
 // This includes (the repeated) p2p key sections of the peer identity key.
 func GetHostMultiaddrs(ha host.Host) (addrs []string) {

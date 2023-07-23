@@ -39,7 +39,9 @@ type dsProtoBook struct {
 
 var _ pstore.ProtoBook = (*dsProtoBook)(nil)
 
-func NewProtoBook(meta pstore.PeerMetadata, opts ...ProtoBookOption) (*dsProtoBook, error) {
+func NewProtoBook(meta pstore.PeerMetadata,
+	opts ...ProtoBookOption) (*dsProtoBook, error) {
+
 	pb := &dsProtoBook{
 		meta: meta,
 		segments: func() (ret protoSegments) {
@@ -114,7 +116,9 @@ func (pb *dsProtoBook) GetProtocols(p peer.ID) ([]protocol.ID, error) {
 	return res, nil
 }
 
-func (pb *dsProtoBook) SupportsProtocols(p peer.ID, protos ...protocol.ID) ([]protocol.ID, error) {
+func (pb *dsProtoBook) SupportsProtocols(p peer.ID,
+	protos ...protocol.ID) ([]protocol.ID, error) {
+
 	s := pb.segments.get(p)
 	s.RLock()
 	defer s.RUnlock()
@@ -134,7 +138,9 @@ func (pb *dsProtoBook) SupportsProtocols(p peer.ID, protos ...protocol.ID) ([]pr
 	return res, nil
 }
 
-func (pb *dsProtoBook) FirstSupportedProtocol(p peer.ID, protos ...protocol.ID) (protocol.ID, error) {
+func (pb *dsProtoBook) FirstSupportedProtocol(p peer.ID,
+	protos ...protocol.ID) (protocol.ID, error) {
+
 	s := pb.segments.get(p)
 	s.RLock()
 	defer s.RUnlock()
@@ -152,7 +158,9 @@ func (pb *dsProtoBook) FirstSupportedProtocol(p peer.ID, protos ...protocol.ID) 
 	return "", nil
 }
 
-func (pb *dsProtoBook) RemoveProtocols(p peer.ID, protos ...protocol.ID) error {
+func (pb *dsProtoBook) RemoveProtocols(p peer.ID,
+	protos ...protocol.ID) error {
+
 	s := pb.segments.get(p)
 	s.Lock()
 	defer s.Unlock()
@@ -174,7 +182,9 @@ func (pb *dsProtoBook) RemoveProtocols(p peer.ID, protos ...protocol.ID) error {
 	return pb.meta.Put(p, "protocols", pmap)
 }
 
-func (pb *dsProtoBook) getProtocolMap(p peer.ID) (map[protocol.ID]struct{}, error) {
+func (pb *dsProtoBook) getProtocolMap(p peer.ID) (map[protocol.ID]struct{},
+error) {
+
 	iprotomap, err := pb.meta.Get(p, "protocols")
 	switch err {
 	default:

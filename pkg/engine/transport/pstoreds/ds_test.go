@@ -92,10 +92,12 @@ func BenchmarkDsPeerstore(b *testing.B) {
 
 	for name, dsFactory := range dstores {
 		b.Run(name, func(b *testing.B) {
-			pt.BenchmarkPeerstore(b, peerstoreFactory(b, dsFactory, caching), "Caching")
+			pt.BenchmarkPeerstore(b, peerstoreFactory(b, dsFactory, caching),
+				"Caching")
 		})
 		b.Run(name, func(b *testing.B) {
-			pt.BenchmarkPeerstore(b, peerstoreFactory(b, dsFactory, cacheless), "Cacheless")
+			pt.BenchmarkPeerstore(b, peerstoreFactory(b, dsFactory, cacheless),
+				"Cacheless")
 		})
 	}
 }
@@ -131,7 +133,8 @@ func leveldbStore(tb testing.TB) (ds.Batching, func()) {
 	return store, closer
 }
 
-func peerstoreFactory(tb testing.TB, storeFactory datastoreFactory, opts Options) pt.PeerstoreFactory {
+func peerstoreFactory(tb testing.TB, storeFactory datastoreFactory,
+	opts Options) pt.PeerstoreFactory {
 	return func() (pstore.Peerstore, func()) {
 		store, storeCloseFn := storeFactory(tb)
 		ps, err := NewPeerstore(context.Background(), store, opts)
@@ -146,7 +149,8 @@ func peerstoreFactory(tb testing.TB, storeFactory datastoreFactory, opts Options
 	}
 }
 
-func addressBookFactory(tb testing.TB, storeFactory datastoreFactory, opts Options) pt.AddrBookFactory {
+func addressBookFactory(tb testing.TB, storeFactory datastoreFactory,
+	opts Options) pt.AddrBookFactory {
 	return func() (pstore.AddrBook, func()) {
 		store, closeFunc := storeFactory(tb)
 		ab, err := NewAddrBook(context.Background(), store, opts)
@@ -161,7 +165,8 @@ func addressBookFactory(tb testing.TB, storeFactory datastoreFactory, opts Optio
 	}
 }
 
-func keyBookFactory(tb testing.TB, storeFactory datastoreFactory, opts Options) pt.KeyBookFactory {
+func keyBookFactory(tb testing.TB, storeFactory datastoreFactory,
+	opts Options) pt.KeyBookFactory {
 	return func() (pstore.KeyBook, func()) {
 		store, storeCloseFn := storeFactory(tb)
 		kb, err := NewKeyBook(context.Background(), store, opts)
