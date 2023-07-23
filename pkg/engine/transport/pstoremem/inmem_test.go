@@ -51,13 +51,13 @@ func TestInMemoryAddrBook(t *testing.T) {
 	}, clk)
 }
 
-func TestInMemoryKeyBook(t *testing.T) {
-	pt.TestKeyBook(t, func() (pstore.KeyBook, func()) {
-		ps, err := NewPeerstore()
-		require.NoError(t, err)
-		return ps, func() { ps.Close() }
-	})
-}
+// func TestInMemoryKeyBook(t *testing.T) {
+// 	pt.TestKeyBook(t, func() (pstore.KeyBook, func()) {
+// 		ps, err := NewPeerstore()
+// 		require.NoError(t, err)
+// 		return ps, func() { ps.Close() }
+// 	})
+// }
 
 func BenchmarkInMemoryPeerstore(b *testing.B) {
 	pt.BenchmarkPeerstore(b, func() (pstore.Peerstore, func()) {

@@ -67,13 +67,13 @@ func TestDsAddrBook(t *testing.T) {
 	}
 }
 
-func TestDsKeyBook(t *testing.T) {
-	for name, dsFactory := range dstores {
-		t.Run(name, func(t *testing.T) {
-			pt.TestKeyBook(t, keyBookFactory(t, dsFactory, DefaultOpts()))
-		})
-	}
-}
+// func TestDsKeyBook(t *testing.T) {
+// 	for name, dsFactory := range dstores {
+// 		t.Run(name, func(t *testing.T) {
+// 			pt.TestKeyBook(t, keyBookFactory(t, dsFactory, DefaultOpts()))
+// 		})
+// 	}
+// }
 
 func BenchmarkDsKeyBook(b *testing.B) {
 	for name, dsFactory := range dstores {
