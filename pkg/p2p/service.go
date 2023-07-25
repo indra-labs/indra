@@ -34,10 +34,10 @@ func init() {
 // Run is the main entrypoint for the seed p2p service.
 func Run() {
 
-	//storage.Update(func(txn *badger.Txn) error {
+	// storage.Update(func(txn *badger.Txn) error {
 	//	txn.Delete([]byte(storeKeyKey))
 	//	return nil
-	//})
+	// })
 
 	configure()
 
@@ -61,9 +61,12 @@ func Run() {
 		la = append(la, listenAddresses[i].String())
 	}
 	var list *transport.Listener
+	store, closer := transport.BadgerStore(dataPath)
+	if store == nil {
+		panic("could not open database")
+	}
 	list, e = transport.NewListener(netParams.GetSeedsMultiAddrStrings(),
-		la, dataPath, keys, ctx,
-		transport.DefaultMTU)
+		la, keys, store, closer, ctx, transport.DefaultMTU)
 	l = append(l, list)
 	p2pHost = list.Host
 	log.I.Ln("starting p2p server")

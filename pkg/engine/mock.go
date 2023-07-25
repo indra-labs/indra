@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"errors"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/node"
@@ -61,10 +62,15 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 		if k, e = crypto.GenerateKeys(); fails(e) {
 			return
 		}
+		store, closer := transport.BadgerStore(dataPath)
+		if store == nil {
+			return nil, errors.New("could not open database")
+		}
 		if l, e = transport.NewListener([]string{seed},
 			[]string{transport.LocalhostZeroIPv4TCP,
 				transport.LocalhostZeroIPv6TCP},
-			dataPath, k, ctx, transport.DefaultMTU); fails(e) {
+			k, store, closer, ctx, transport.DefaultMTU); fails(e) {
+
 			return
 		}
 		if i == 0 {

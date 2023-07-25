@@ -38,7 +38,9 @@ func init() {
 // See `init()` to learn which types are registered by default. Modules wishing
 // to store values of other types will need to `gob.Register()` them explicitly,
 // or else callers will receive runtime errors.
-func NewPeerMetadata(_ context.Context, store ds.Datastore, _ Options) (*dsPeerMetadata, error) {
+func NewPeerMetadata(_ context.Context, store ds.Datastore,
+	_ Options) (*dsPeerMetadata, error) {
+
 	return &dsPeerMetadata{store}, nil
 }
 

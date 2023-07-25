@@ -3,10 +3,10 @@ package transport
 import (
 	"bufio"
 	"context"
-	"errors"
 	"fmt"
 	"github.com/gookit/color"
 	"github.com/indra-labs/indra/pkg/engine/protocols"
+	"github.com/indra-labs/indra/pkg/engine/transport/pstoreds"
 	"github.com/ipfs/go-datastore"
 	badger "github.com/ipfs/go-ds-badger"
 	"github.com/libp2p/go-libp2p"
@@ -15,7 +15,6 @@ import (
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/peerstore"
-	"github.com/libp2p/go-libp2p/p2p/host/peerstore/pstoreds"
 	"github.com/libp2p/go-libp2p/p2p/security/noise"
 	"github.com/libp2p/go-libp2p/p2p/transport/tcp"
 	"github.com/multiformats/go-multiaddr"
@@ -408,9 +407,9 @@ func (l *Listener) handle(s network.Stream) {
 }
 
 // NewListener creates a new Listener with the given parameters.
-func NewListener(rendezvous, multiAddr []string, storePath string,
-	keys *crypto.Keys, ctx context.Context, mtu int) (c *Listener,
-	e error) {
+func NewListener(rendezvous, multiAddr []string,
+	keys *crypto.Keys, store datastore.Batching, closer func(),
+	ctx context.Context, mtu int) (c *Listener, e error) {
 
 	c = &Listener{
 		Keys:        keys,
@@ -436,10 +435,6 @@ func NewListener(rendezvous, multiAddr []string, storePath string,
 			}
 			rdv = append(rdv, r)
 		}
-	}
-	store, closer := BadgerStore(storePath)
-	if store == nil {
-		return nil, errors.New("could not open database")
 	}
 	interrupt.AddHandler(closer)
 	var st peerstore.Peerstore
@@ -470,13 +465,13 @@ func NewListener(rendezvous, multiAddr []string, storePath string,
 
 // BadgerStore creates a new badger database backed persistence engine for keys
 // and values used in the peer information database.
-func BadgerStore(dataPath string) (datastore.Batching, func()) {
+func BadgerStore(dataPath string) (store datastore.Batching, closer func()) {
 	log.T.Ln("dataPath", dataPath)
 	store, err := badger.NewDatastore(dataPath, nil)
 	if fails(err) {
 		return nil, func() {}
 	}
-	closer := func() {
+	closer = func() {
 		store.Close()
 	}
 	return store, closer

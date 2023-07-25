@@ -25,11 +25,16 @@ func CreateMockEngine(seed, dataPath string, ctx context.Context) (ng *Engine) {
 		return
 	}
 	keys = append(keys, k)
+	store, closer := transport.BadgerStore(dataPath)
+	if store == nil {
+		log.E.Ln("could not open database")
+		return nil
+	}
 	var l *transport.Listener
 	if l, e = transport.NewListener([]string{seed},
 		[]string{transport.LocalhostZeroIPv4TCP,
-			transport.LocalhostZeroIPv6TCP},
-		dataPath, k, ctx, transport.DefaultMTU); fails(e) {
+			transport.LocalhostZeroIPv6TCP}, k, store, closer, ctx,
+		transport.DefaultMTU); fails(e) {
 		return
 	}
 	if l == nil {
@@ -58,7 +63,8 @@ func CreateMockEngine(seed, dataPath string, ctx context.Context) (ng *Engine) {
 	return
 }
 
-func CreateAndStartMockEngines(n int, ctx context.Context) (engines []*Engine, cleanup func(), e error) {
+func CreateAndStartMockEngines(n int, ctx context.Context) (engines []*Engine,
+	cleanup func(), e error) {
 
 	cleanup = func() {}
 	var seed string
