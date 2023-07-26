@@ -104,14 +104,14 @@ func TestEngine_PeerStoreDiscovery(t *testing.T) {
 	if engines, cleanup, e = CreateAndStartMockEngines(nTotal, ctx); fails(e) {
 		t.FailNow()
 	}
-	time.Sleep(time.Second * 3)
+	time.Sleep(time.Second * 2)
 	// Send them all again after a bit to make sure everyone gets them.
 	for i := range engines {
 		if e = engines[i].SendAds(); fails(e) {
 			t.FailNow()
 		}
 	}
-	time.Sleep(time.Second * 3)
+	time.Sleep(time.Second * 2)
 	for i := range engines {
 		_ = i
 		// check that all peers now have nTotal-1 distinct peer ads (of all 4

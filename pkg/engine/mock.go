@@ -20,6 +20,8 @@ var (
 	fails = log.E.Chk
 )
 
+// todo: none of this is in use anymore.
+
 // CreateNMockCircuitsWithSessions creates an arbitrary number of mock circuits
 // from the given specification, with an arbitrary number of mock sessions.
 func CreateNMockCircuitsWithSessions(nCirc int, nReturns int,
@@ -44,7 +46,7 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 	for i := range tpts {
 		tpts[i] = transport.NewSimDuplex(nTotal, ctx)
 	}
-	var seed string
+	var seeds []string
 	for i := range nodes {
 		var id *crypto.Keys
 		if id, e = crypto.GenerateKeys(); fails(e) {
@@ -66,7 +68,7 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 		if store == nil {
 			return nil, errors.New("could not open database")
 		}
-		if l, e = transport.NewListener([]string{seed},
+		if l, e = transport.NewListener(seeds,
 			[]string{transport.LocalhostZeroIPv4TCP,
 				transport.LocalhostZeroIPv6TCP},
 			k, store, closer, ctx, transport.DefaultMTU); fails(e) {
@@ -74,7 +76,7 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 			return
 		}
 		if i == 0 {
-			seed = transport.GetHostFirstMultiaddr(l.Host)
+			seeds = transport.GetHostMultiaddrs(l.Host)
 		}
 		if cl[i], e = New(Params{
 			Listener: &transport.Listener{

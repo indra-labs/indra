@@ -4,10 +4,8 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"github.com/gookit/color"
 	"github.com/indra-labs/indra/pkg/engine/protocols"
 	"github.com/indra-labs/indra/pkg/engine/transport/pstoreds"
-	"github.com/ipfs/go-datastore"
 	badger "github.com/ipfs/go-ds-badger"
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
@@ -20,91 +18,14 @@ import (
 	"github.com/multiformats/go-multiaddr"
 	"sync"
 
-	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/engine/tpt"
 	"github.com/indra-labs/indra/pkg/interrupt"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/qu"
 	"github.com/indra-labs/indra/pkg/util/slice"
 )
 
-const (
-	// LocalhostZeroIPv4TCP is the default localhost to bind to any address.
-	// Used in tests.
-	LocalhostZeroIPv4TCP = "/ip4/127.0.0.1/tcp/0"
-
-	// LocalhostZeroIPv6TCP is the default localhost to bind to any address.
-	// Used in tests.
-	LocalhostZeroIPv6TCP = "/ip6/::1/tcp/0"
-
-	// LocalhostZeroIPv4QUIC - Don't use. Buffer problems on linux and fails on CI.
-	// LocalhostZeroIPv4QUIC = "/ip4/127.0.0.1/udp/0/quic"
-
-	// DefaultMTU is the default maximum size for a packet.
-	DefaultMTU = 1382
-
-	// ConnBufs is the number of buffers to use in message dispatch channels.
-	ConnBufs = 8192
-
-	// IndraLibP2PID is the indra protocol identifier.
-	IndraLibP2PID = "/indra/relay/" + indra.SemVer
-)
-
-var (
-	DefaultUserAgent = "/indra:" + indra.SemVer + "/"
-
-	blue  = color.Blue.Sprint
-	log   = log2.GetLogger()
-	fails = log.E.Chk
-)
-
-// SetUserAgent changes the user agent. Note that this will only have an effect
-// before a new listener is created.
-func SetUserAgent(s string) {
-	DefaultUserAgent = "/indra " + indra.SemVer + " " + s + "/"
-}
-
 // concurrent safe accessors:
-
-// GetMTU returns the Maximum Transmission Unit (MTU) of the Conn.
-func (c *Conn) GetMTU() int {
-	c.Lock()
-	defer c.Unlock()
-	return c.MTU
-}
-
-// GetRecv returns the Transport that is functioning as receiver, used to
-// receive messages.
-func (c *Conn) GetRecv() tpt.Transport { return c.Transport.Receiver }
-
-// GetRemoteKey returns the current remote receiver public key we want to
-// encrypt to (with ECDH).
-func (c *Conn) GetRemoteKey() (remoteKey *crypto.Pub) {
-	c.Lock()
-	defer c.Unlock()
-	return c.RemoteKey
-}
-
-// GetSend returns the Transport that is functioning as sender, used to send
-// messages.
-func (c *Conn) GetSend() tpt.Transport { return c.Transport.Sender }
-
-// SetMTU defines the size of the packets messages will be segmented into.
-func (c *Conn) SetMTU(mtu int) {
-	c.Lock()
-	c.MTU = mtu
-	c.Unlock()
-}
-
-// SetRemoteKey changes the key that should be used with ECDH to generate
-// message encryption secrets. This will be called in response to the other side
-// sending a key change message.
-func (c *Conn) SetRemoteKey(remoteKey *crypto.Pub) {
-	c.Lock()
-	c.RemoteKey = remoteKey
-	c.Unlock()
-}
 
 type (
 	// Listener is a libp2p connected network transport with a DHT and peer
@@ -147,78 +68,8 @@ type (
 
 	// Conn is a wrapper around the bidirectional connection established between
 	// two peers via the libp2p API.
-	Conn struct {
 
-		// Conn is the actual network connection, which is a ReaderWriterCloser.
-		network.Conn
-
-		// MTU is the size of packet segments handled on the connection.
-		MTU int
-
-		// RemoteKey is the receiver public key messages should be encrypted to.
-		//
-		// todo: this is also handled by the dispatcher for key changes etc?
-		RemoteKey *crypto.Pub
-
-		// MultiAddr is the multiaddr.Multiaddr of the other side of the
-		// connection.
-		MultiAddr multiaddr.Multiaddr
-
-		// Host is the libp2p host implementing the Conn.
-		Host host.Host
-
-		// rw is the read-write interface to the Conn.
-		//
-		// todo: isn't the Conn supposed to do this also???
-		rw *bufio.ReadWriter
-
-		// Transport is the duplex channel that is given to calling code to
-		// dispatch messages through the Conn.
-		Transport *DuplexByteChan
-
-		// Mutex to prevent concurrent read/write of shared data.
-		sync.Mutex
-
-		// C can be closed to shut down the connection, and closes the Conn.
-		qu.C
-	}
 )
-
-// GetHostFirstMultiaddr returns the multiaddr string encoding of a host.Host's
-// network listener.
-func GetHostFirstMultiaddr(ha host.Host) string {
-	hostAddr, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/p2p/%s",
-		ha.ID().String()))
-	addr := ha.Addrs()[0]
-	return addr.Encapsulate(hostAddr).String()
-}
-
-// GetHostOnlyFirstMultiaddr returns the multiaddr string without the p2p key.
-func GetHostOnlyFirstMultiaddr(ha host.Host) string {
-	addr := ha.Addrs()[0]
-	return addr.String()
-}
-
-// GetHostMultiaddrs returns the multiaddr strings encoding of a host.Host's
-// network listener.
-//
-// This includes (the repeated) p2p key sections of the peer identity key.
-func GetHostMultiaddrs(ha host.Host) (addrs []string) {
-	hostAddr, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/p2p/%s",
-		ha.ID().String()))
-	for _, v := range ha.Addrs() {
-		addrs = append(addrs, v.Encapsulate(hostAddr).String())
-	}
-	return
-}
-
-// GetHostOnlyMultiaddrs returns the multiaddr string without the p2p key.
-func GetHostOnlyMultiaddrs(ha host.Host) (addrs []string) {
-	for _, v := range ha.Addrs() {
-		addrs = append(addrs, v.String())
-	}
-	return
-}
 
 func (l *Listener) ProtocolsAvailable() (p protocols.NetworkProtocols) {
 	if l == nil || l.Host == nil {
@@ -408,7 +259,7 @@ func (l *Listener) handle(s network.Stream) {
 
 // NewListener creates a new Listener with the given parameters.
 func NewListener(rendezvous, multiAddr []string,
-	keys *crypto.Keys, store datastore.Batching, closer func(),
+	keys *crypto.Keys, store *badger.Datastore, closer func(),
 	ctx context.Context, mtu int) (c *Listener, e error) {
 
 	c = &Listener{
@@ -461,18 +312,4 @@ func NewListener(rendezvous, multiAddr []string,
 	go c.Discover(ctx, c.Host, c.DHT, rdv)
 	c.Host.SetStreamHandler(IndraLibP2PID, c.handle)
 	return
-}
-
-// BadgerStore creates a new badger database backed persistence engine for keys
-// and values used in the peer information database.
-func BadgerStore(dataPath string) (store datastore.Batching, closer func()) {
-	log.T.Ln("dataPath", dataPath)
-	store, err := badger.NewDatastore(dataPath, nil)
-	if fails(err) {
-		return nil, func() {}
-	}
-	closer = func() {
-		store.Close()
-	}
-	return store, closer
 }
