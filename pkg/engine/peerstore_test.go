@@ -100,8 +100,8 @@ func TestEngine_PeerStoreDiscovery(t *testing.T) {
 	var e error
 	var engines []*Engine
 	var cleanup func()
-	ctx, _ := context.WithCancel(context.Background())
-	if engines, cleanup, e = CreateAndStartMockEngines(nTotal, ctx); fails(e) {
+	ctx, cancel := context.WithCancel(context.Background())
+	if engines, cleanup, e = CreateAndStartMockEngines(nTotal, ctx, cancel); fails(e) {
 		t.FailNow()
 	}
 	time.Sleep(time.Second * 2)
