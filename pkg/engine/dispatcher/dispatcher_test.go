@@ -48,7 +48,7 @@ func TestDispatcher(t *testing.T) {
 	}
 	l1, e = transport.NewListener([]string{""},
 		[]string{transport.LocalhostZeroIPv4TCP},
-		k1, store, closer, ctx, transport.DefaultMTU)
+		k1, store, closer, ctx, transport.DefaultMTU, cancel)
 	if fails(e) {
 		t.FailNow()
 	}
@@ -62,13 +62,13 @@ func TestDispatcher(t *testing.T) {
 	}
 	l1, e = transport.NewListener([]string{""},
 		[]string{transport.LocalhostZeroIPv4TCP},
-		k1, store, closer, ctx, transport.DefaultMTU)
+		k1, store, closer, ctx, transport.DefaultMTU, cancel)
 	if fails(e) {
 		t.FailNow()
 	}
 	l2, e = transport.NewListener([]string{transport.GetHostFirstMultiaddr(l1.Host)},
-		[]string{transport.LocalhostZeroIPv4TCP}, k2, store, closer,
-		ctx, transport.DefaultMTU)
+		[]string{transport.LocalhostZeroIPv4TCP}, k2, store, closer, ctx,
+		transport.DefaultMTU, cancel)
 	if fails(e) {
 		t.FailNow()
 	}

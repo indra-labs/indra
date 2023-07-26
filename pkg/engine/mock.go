@@ -71,7 +71,7 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 		if l, e = transport.NewListener(seeds,
 			[]string{transport.LocalhostZeroIPv4TCP,
 				transport.LocalhostZeroIPv6TCP},
-			k, store, closer, ctx, transport.DefaultMTU); fails(e) {
+			k, store, closer, ctx, transport.DefaultMTU, nil); fails(e) {
 
 			return
 		}

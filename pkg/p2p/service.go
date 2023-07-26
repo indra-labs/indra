@@ -66,7 +66,7 @@ func Run() {
 		panic("could not open database")
 	}
 	list, e = transport.NewListener(netParams.GetSeedsMultiAddrStrings(),
-		la, keys, store, closer, ctx, transport.DefaultMTU)
+		la, keys, store, closer, ctx, transport.DefaultMTU, cancel)
 	l = append(l, list)
 	p2pHost = list.Host
 	log.I.Ln("starting p2p server")

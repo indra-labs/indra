@@ -33,8 +33,8 @@ func TestNewListener(t *testing.T) {
 	if store == nil {
 		t.Fatal("could not open database")
 	}
-	l1, e = NewListener([]string{""}, []string{LocalhostZeroIPv4TCP},
-		k1, store, closer, ctx, DefaultMTU)
+	l1, e = NewListener([]string{""}, []string{LocalhostZeroIPv4TCP}, k1, store,
+		closer, ctx, DefaultMTU, cancel)
 	if fails(e) {
 		t.FailNow()
 	}
@@ -47,8 +47,8 @@ func TestNewListener(t *testing.T) {
 		t.Fatal("could not open database")
 	}
 	l2, e = NewListener([]string{GetHostFirstMultiaddr(l1.Host)},
-		[]string{LocalhostZeroIPv4TCP}, k2, store, closer,
-		ctx, DefaultMTU)
+		[]string{LocalhostZeroIPv4TCP}, k2, store, closer, ctx, DefaultMTU,
+		cancel)
 	if fails(e) {
 		t.FailNow()
 	}

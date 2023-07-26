@@ -12,7 +12,9 @@ import (
 )
 
 // CreateMockEngine creates an indra Engine with a random localhost listener.
-func CreateMockEngine(seed []string, dataPath string, ctx context.Context) (ng *Engine) {
+func CreateMockEngine(seed []string, dataPath string,
+	ctx context.Context, cancel context.CancelFunc) (ng *Engine) {
+
 	var e error
 	defer func(f *error) {
 		if *f != nil {
@@ -34,7 +36,7 @@ func CreateMockEngine(seed []string, dataPath string, ctx context.Context) (ng *
 	if l, e = transport.NewListener(seed,
 		[]string{transport.LocalhostZeroIPv4TCP,
 			transport.LocalhostZeroIPv6TCP}, k, store, closer, ctx,
-		transport.DefaultMTU); fails(e) {
+		transport.DefaultMTU, cancel); fails(e) {
 		return
 	}
 	if l == nil {
@@ -63,8 +65,8 @@ func CreateMockEngine(seed []string, dataPath string, ctx context.Context) (ng *
 	return
 }
 
-func CreateAndStartMockEngines(n int, ctx context.Context) (engines []*Engine,
-	cleanup func(), e error) {
+func CreateAndStartMockEngines(n int, ctx context.Context,
+	cancel context.CancelFunc) (engines []*Engine, cleanup func(), e error) {
 
 	cleanup = func() {}
 	var seed []string
@@ -75,7 +77,7 @@ func CreateAndStartMockEngines(n int, ctx context.Context) (engines []*Engine,
 			return
 		}
 		var eng *Engine
-		if eng = CreateMockEngine(seed, dataPath[i], ctx); fails(e) {
+		if eng = CreateMockEngine(seed, dataPath[i], ctx, cancel); fails(e) {
 			return
 		}
 		engines = append(engines, eng)

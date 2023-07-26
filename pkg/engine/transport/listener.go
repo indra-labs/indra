@@ -62,6 +62,9 @@ type (
 		// Context here allows listener processes to be signalled to shut down.
 		context.Context
 
+		// This shuts down this and all child goroutines.
+		context.CancelFunc
+
 		// Mutex because any number of threads can be handling Listener work.
 		sync.Mutex
 	}
@@ -71,44 +74,83 @@ type (
 
 )
 
+// NewListener creates a new Listener with the given parameters.
+func NewListener(rendezvous, multiAddr []string, keys *crypto.Keys, store *badger.Datastore, closer func(), ctx context.Context, mtu int, cancel context.CancelFunc) (c *Listener, e error) {
+
+	c = &Listener{
+		Keys:        keys,
+		MTU:         mtu,
+		connections: make(map[string]*Conn),
+		newConns:    make(chan *Conn, ConnBufs),
+		Context:     ctx,
+		CancelFunc:  cancel,
+	}
+	var ma []multiaddr.Multiaddr
+	for i := range multiAddr {
+		var m multiaddr.Multiaddr
+		if m, e = multiaddr.NewMultiaddr(multiAddr[i]); fails(e) {
+			return
+		}
+		ma = append(ma, m)
+	}
+	var rdv []multiaddr.Multiaddr
+	if rendezvous != nil || len(rendezvous) > 0 {
+		for i := range rendezvous {
+			var r multiaddr.Multiaddr
+			if r, e = multiaddr.NewMultiaddr(rendezvous[i]); e != nil {
+				continue
+			}
+			rdv = append(rdv, r)
+		}
+	}
+	interrupt.AddHandler(closer)
+	var st peerstore.Peerstore
+	st, e = pstoreds.NewPeerstore(ctx, store, pstoreds.DefaultOpts())
+	if c.Host, e = libp2p.New(
+		libp2p.Identity(keys.Prv),
+		libp2p.UserAgent(DefaultUserAgent),
+		libp2p.ListenAddrs(ma...),
+		libp2p.EnableHolePunching(),
+		// libp2p.Transport(libp2pquic.NewTransport),
+		libp2p.Transport(tcp.NewTCPTransport),
+		// libp2p.Transport(websocket.New),
+		// libp2p.Security(libp2ptls.ID, libp2ptls.New),
+		libp2p.Security(noise.ID, noise.New),
+		// libp2p.NoSecurity,
+		libp2p.Peerstore(st),
+	); fails(e) {
+		return
+	}
+	interrupt.AddHandler(closer)
+	if c.DHT, e = NewDHT(ctx, c.Host, rdv); fails(e) {
+		return
+	}
+	go c.Discover(ctx, c.Host, c.DHT, rdv)
+	c.Host.SetStreamHandler(IndraLibP2PID, c.handle)
+	return
+}
+
 func (l *Listener) ProtocolsAvailable() (p protocols.NetworkProtocols) {
 	if l == nil || l.Host == nil {
 		return protocols.IP4 | protocols.IP6
 	}
 	for _, v := range l.Host.Addrs() {
-		if _, e := v.ValueForProtocol(multiaddr.P_IP4); e != nil {
+		if _, e := v.ValueForProtocol(multiaddr.P_IP4); e == nil {
 			p &= protocols.IP4
 		}
-		if _, e := v.ValueForProtocol(multiaddr.P_IP4); e != nil {
+		if _, e := v.ValueForProtocol(multiaddr.P_IP4); e == nil {
 			p &= protocols.IP6
 		}
 	}
 	return
 }
 
-// TODO: the standard Listener interface really should be implemented here. The Conn already embeds its relevant interface.
-// func (l *Listener) Accept() (net.Conn, error) {
-// 	// TODO implement me
-// 	panic("implement me")
-// }
-//
-// func (l *Listener) Close() error {
-// 	// TODO implement me
-// 	panic("implement me")
-// }
-//
-// todo: this is not quite compatible with a listener having multiple bindings, and returning the zero would make no sense. First one only?
-// func (l *Listener) Addr() net.Addr {
-// 	// TODO implement me
-// 	panic("implement me")
-// }
-
 // Accept waits on inbound connections and hands them out to listeners on the
 // returned channel.
 func (l *Listener) Accept() <-chan *Conn { return l.newConns }
 
 // AddConn adds a new connection, including dispatching it to any callers of
-// Accept.
+// GetNewConnChan.
 func (l *Listener) AddConn(d *Conn) {
 	l.newConns <- d
 	l.Lock()
@@ -255,61 +297,4 @@ func (l *Listener) handle(s network.Stream) {
 		}
 		nc.Transport.Receiver.Send(b[:n])
 	}
-}
-
-// NewListener creates a new Listener with the given parameters.
-func NewListener(rendezvous, multiAddr []string,
-	keys *crypto.Keys, store *badger.Datastore, closer func(),
-	ctx context.Context, mtu int) (c *Listener, e error) {
-
-	c = &Listener{
-		Keys:        keys,
-		MTU:         mtu,
-		connections: make(map[string]*Conn),
-		newConns:    make(chan *Conn, ConnBufs),
-		Context:     ctx,
-	}
-	var ma []multiaddr.Multiaddr
-	for i := range multiAddr {
-		var m multiaddr.Multiaddr
-		if m, e = multiaddr.NewMultiaddr(multiAddr[i]); fails(e) {
-			return
-		}
-		ma = append(ma, m)
-	}
-	var rdv []multiaddr.Multiaddr
-	if rendezvous != nil || len(rendezvous) > 0 {
-		for i := range rendezvous {
-			var r multiaddr.Multiaddr
-			if r, e = multiaddr.NewMultiaddr(rendezvous[i]); e != nil {
-				continue
-			}
-			rdv = append(rdv, r)
-		}
-	}
-	interrupt.AddHandler(closer)
-	var st peerstore.Peerstore
-	st, e = pstoreds.NewPeerstore(ctx, store, pstoreds.DefaultOpts())
-	if c.Host, e = libp2p.New(
-		libp2p.Identity(keys.Prv),
-		libp2p.UserAgent(DefaultUserAgent),
-		libp2p.ListenAddrs(ma...),
-		libp2p.EnableHolePunching(),
-		// libp2p.Transport(libp2pquic.NewTransport),
-		libp2p.Transport(tcp.NewTCPTransport),
-		// libp2p.Transport(websocket.New),
-		// libp2p.Security(libp2ptls.ID, libp2ptls.New),
-		libp2p.Security(noise.ID, noise.New),
-		// libp2p.NoSecurity,
-		libp2p.Peerstore(st),
-	); fails(e) {
-		return
-	}
-	interrupt.AddHandler(closer)
-	if c.DHT, e = NewDHT(ctx, c.Host, rdv); fails(e) {
-		return
-	}
-	go c.Discover(ctx, c.Host, c.DHT, rdv)
-	c.Host.SetStreamHandler(IndraLibP2PID, c.handle)
-	return
 }
