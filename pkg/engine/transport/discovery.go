@@ -2,7 +2,9 @@ package transport
 
 import (
 	"context"
+	"github.com/indra-labs/indra/pkg/crypto"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
+	ic "github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -39,8 +41,7 @@ func NewDHT(ctx context.Context, host host.Host,
 		wg.Add(1)
 		go func() {
 			if e := host.Connect(ctx, *peerinfo); fails(e) {
-				log.D.F("Error while connecting to node %q",
-					peerinfo)
+				log.D.F("Error while connecting to node %q", peerinfo)
 				wg.Done()
 				return
 			}
@@ -57,7 +58,7 @@ func NewDHT(ctx context.Context, host host.Host,
 
 // Discover uses the DHT to share and distribute peer lists between nodes on
 // Indranet.
-func Discover(ctx context.Context, h host.Host, dht *dht.IpfsDHT,
+func (l *Listener) Discover(ctx context.Context, h host.Host, dht *dht.IpfsDHT,
 	rendezvous []multiaddr.Multiaddr) {
 
 	var disco = routing.NewRoutingDiscovery(dht)
@@ -67,7 +68,7 @@ func Discover(ctx context.Context, h host.Host, dht *dht.IpfsDHT,
 		if _, e = disco.Advertise(ctx, rendezvous[i].String()); e != nil {
 		}
 	}
-	if e = Tick(h, rendezvous, peers, disco, ctx); fails(e) {
+	if e = l.Tick(h, rendezvous, peers, disco, ctx); fails(e) {
 	}
 	ticker := time.NewTicker(time.Second * 1)
 	defer ticker.Stop()
@@ -76,13 +77,13 @@ func Discover(ctx context.Context, h host.Host, dht *dht.IpfsDHT,
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			if e = Tick(h, rendezvous, peers, disco, ctx); fails(e) {
+			if e = l.Tick(h, rendezvous, peers, disco, ctx); fails(e) {
 			}
 		}
 	}
 }
 
-func Tick(h host.Host, rendezvous []multiaddr.Multiaddr,
+func (l *Listener) Tick(h host.Host, rendezvous []multiaddr.Multiaddr,
 	peers <-chan peer.AddrInfo, disco *routing.RoutingDiscovery,
 	ctx context.Context) (e error) {
 
@@ -104,8 +105,29 @@ func Tick(h host.Host, rendezvous []multiaddr.Multiaddr,
 
 				continue
 			}
-			log.T.Ln(h.Addrs()[0].String(), "Connected to peer",
-				blue(p.Addrs[0]))
+			var them, us ic.PubKey
+			if them, e = p.ID.ExtractPublicKey(); fails(e) {
+				continue
+			}
+			if us, e = h.ID().ExtractPublicKey(); fails(e) {
+				continue
+			}
+			var themR, usR []byte
+			if themR, e = them.Raw(); fails(e) {
+				continue
+			}
+			if usR, e = us.Raw(); fails(e) {
+				continue
+			}
+			var theirPubkey, ourPubkey *crypto.Pub
+			if theirPubkey, e = crypto.PubFromBytes(themR); fails(e) {
+				continue
+			}
+			if ourPubkey, e = crypto.PubFromBytes(usR); fails(e) {
+				continue
+			}
+			log.T.Ln(ourPubkey.Fingerprint(), "Connected to peer",
+				theirPubkey.Fingerprint())
 		}
 	}
 	return

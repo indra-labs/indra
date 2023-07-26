@@ -29,8 +29,8 @@ func TestNewListener(t *testing.T) {
 	if err != nil {
 		t.FailNow()
 	}
-	l1, e = NewListener([]string{""}, []string{LocalhostZeroIPv4TCP}, dataPath, k1,
-		ctx, DefaultMTU)
+	l1, e = NewListener([]string{""}, []string{LocalhostZeroIPv4TCP}, dataPath,
+		k1, ctx, DefaultMTU)
 	if fails(e) {
 		t.FailNow()
 	}
