@@ -4,7 +4,9 @@
 
 ## Hidden Services
 
-### Creating a hidden service
+### 1. Creating a hidden service
+
+In this process, an intro, which is advertised, and the intro route, which is held, provides a way for a client to contact the hidden service via a temporary proxy called an "Introducer":
 
 ```sequence
 Note left of alice: intro ->
@@ -18,10 +20,12 @@ dave-->charlie: gossip [intro]
 dave-->eve: gossip [intro]
 dave-->bob: gossip [intro]
 ```
-### Requesting connection from Introducer (Routing Request)
+### 2. Requesting connection from Introducer (Routing Request)
+
+The client uses the information from the intro, attaches a reply routing header, which includes ciphers and nonces for a two key ECDH cryptosystem used to return a reply. The routing request is bundled inside the intro route reply header, and sent on, following the path prescribed by the hidden service when the introduction was created.
 
 ```sequence
-Note left of eve: routing request [reply header A] ->
+Note left of eve: routing request [reply header alice] ->
 eve-->bob: forward
 bob-->charlie: forward
 charlie-->alice: forward
@@ -33,7 +37,9 @@ bob-->eve: forward
 note left of eve: received ready
 ```
 
-### Request/Response Cycle
+### 3. Request/Response Cycle
+
+Once the receiver has the 'ready' signal, it can then begin a process of request and response wherein each reply carries the reply route header for the return path. If a message fails the protocol assumes that old keys should be available for a few cycles after the current one for this case so the connection can resume rather than forcing the client back to step one.
 
 ```sequence
 Note left of faith: forward(faith,alice)[request[reply faith]] ->
