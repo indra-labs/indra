@@ -90,9 +90,11 @@ func (x *HiddenService) Decode(s *splice.Splice) (e error) {
 // Encode a HiddenService into a the next bytes of a Splice.
 func (x *HiddenService) Encode(s *splice.Splice) (e error) {
 	log.T.S("encoding", reflect.TypeOf(x),
-		x.Intro.ID, x.Intro.Key, x.Intro.Introducer, x.Ciphers, x.Nonces, x.RoutingHeaderBytes,
+		x.Intro.GetID, x.Intro.Key, x.Intro.Introducer, x.Ciphers, x.Nonces, x.RoutingHeaderBytes,
 	)
-	x.Intro.Encode(s.Magic(Magic))
+	if e = x.Intro.Encode(s.Magic(Magic)); fails(e) {
+		return
+	}
 	return x.Onion.Encode(s.Ciphers(x.Ciphers).Nonces(x.Nonces))
 }
 

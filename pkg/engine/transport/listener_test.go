@@ -2,7 +2,9 @@ package transport
 
 import (
 	"context"
+	"crypto/rand"
 	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"os"
 	"testing"
 	"time"
@@ -29,7 +31,9 @@ func TestNewListener(t *testing.T) {
 	if err != nil {
 		t.FailNow()
 	}
-	store, closer := BadgerStore(dataPath)
+	secret := sha256.New()
+	rand.Read(secret[:])
+	store, closer := BadgerStore(dataPath, secret[:])
 	if store == nil {
 		t.Fatal("could not open database")
 	}
@@ -42,7 +46,9 @@ func TestNewListener(t *testing.T) {
 	if err != nil {
 		t.FailNow()
 	}
-	store, closer = BadgerStore(dataPath)
+	secret = sha256.New()
+	rand.Read(secret[:])
+	store, closer = BadgerStore(dataPath, secret[:])
 	if store == nil {
 		t.Fatal("could not open database")
 	}

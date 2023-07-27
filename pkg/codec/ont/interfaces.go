@@ -84,7 +84,7 @@ type Onion interface {
 		last bool) (skip bool, sd *sessions.Data)
 }
 
-// Encode is the generic encoder for an onion, all onions can be encoded with it.
+// Encode is the generic encoder for a Codec, all can be encoded with it.
 func Encode(d Codec) (s *splice.Splice) {
 	s = splice.New(d.Len())
 	fails(d.Encode(s))

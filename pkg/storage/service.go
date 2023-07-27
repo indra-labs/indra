@@ -11,7 +11,7 @@ import (
 var (
 	fileName = "indra.db"
 	db       *badger.DB
-	opts     badger.Options
+	opts     *badger.Options
 	running  sync.Mutex
 )
 
@@ -51,8 +51,9 @@ signals:
 	}
 
 	log.I.Ln("running garbage collection before ready")
-	db.RunValueLogGC(0.5)
-
+	if e := db.RunValueLogGC(0.5); e != nil {
+		log.D.Ln(e.Error())
+	}
 	log.I.Ln("storage is ready")
 	isReadyChan <- true
 }

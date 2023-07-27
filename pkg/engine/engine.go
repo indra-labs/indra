@@ -2,7 +2,6 @@ package engine
 
 import (
 	"context"
-	"github.com/indra-labs/indra/pkg/cert"
 	"github.com/indra-labs/indra/pkg/codec/ont"
 	"github.com/indra-labs/indra/pkg/codec/reg"
 	"github.com/indra-labs/indra/pkg/crypto"
@@ -106,8 +105,7 @@ out:
 		cancel()
 		return
 	}
-	na := ng.NodeAds
-	a := []cert.Act{na.Address, na.Load, na.Peer, na.Services}
+	a := ng.NodeAds.GetAsCerts()
 	for i := range a {
 		if e = a[i].Sign(ng.Mgr().GetLocalNodeIdentityPrv()); fails(e) {
 			cancel()
@@ -131,7 +129,7 @@ func (ng *Engine) Shutdown() {
 	if ng.ShuttingDown.Load() {
 		return
 	}
-	log.T.Ln("shutting down", ng.Mgr().GetLocalNodeAddress().String())
+	log.T.Ln(ng.LogEntry("shutting down"))
 	ng.ShuttingDown.Store(true)
 	ng.Cleanup()
 	ng.cancel()

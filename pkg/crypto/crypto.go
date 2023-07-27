@@ -248,11 +248,11 @@ func (p *Prv) Zero() { (*secp256k1.PrivateKey)(p).Zero() }
 // Pub is a public key.
 type Pub secp256k1.PublicKey
 
-// Fingerprint generates a compact and distinctive Based32 fingeprint to easily
+// Fingerprint generates a compact and distinctive Based32 fingerprint to easily
 // distinguish between many peers at a glance.
 //
-// It is generated with a SHA256 hash of the identity key snipped to yield an 8
-// character string. The truncation is done after the string encoding.
+// It is generated with a SHA256 hash of the identity key snipped at 40 bits (5
+// bytes) to yield an 8 character Based32 string fingerprint.
 func (k *Pub) Fingerprint() (fp string) {
 	kk := k.ToBytes()
 	b := sha256.Single(kk[:])

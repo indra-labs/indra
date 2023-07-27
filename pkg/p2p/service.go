@@ -2,7 +2,9 @@ package p2p
 
 import (
 	"context"
+	"crypto/rand"
 	"github.com/indra-labs/indra/pkg/cfg"
+	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/engine/transport"
 	"github.com/indra-labs/indra/pkg/interrupt"
 	"github.com/indra-labs/indra/pkg/p2p/metrics"
@@ -61,7 +63,9 @@ func Run() {
 		la = append(la, listenAddresses[i].String())
 	}
 	var list *transport.Listener
-	store, closer := transport.BadgerStore(dataPath)
+	secret := sha256.New()
+	rand.Read(secret[:])
+	store, closer := transport.BadgerStore(dataPath, secret[:])
 	if store == nil {
 		panic("could not open database")
 	}

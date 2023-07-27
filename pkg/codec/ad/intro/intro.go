@@ -6,6 +6,7 @@ import (
 	"github.com/indra-labs/indra/pkg/codec/ad"
 	"github.com/indra-labs/indra/pkg/codec/reg"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/libp2p/go-libp2p/core/peer"
 	"time"
 
 	"github.com/indra-labs/indra/pkg/crypto"
@@ -44,6 +45,14 @@ type Ad struct {
 }
 
 var _ codec.Codec = &Ad{}
+
+func (x *Ad) PubKey() (key *crypto.Pub) { return x.Key }
+func (x *Ad) Fingerprint() (pf string)  { return x.Key.Fingerprint() }
+func (x *Ad) Expired() (is bool)        { return x.Expiry.Before(time.Now()) }
+
+func (x *Ad) GetID() (id peer.ID, e error) {
+	return peer.IDFromPublicKey(x.Key)
+}
 
 // Decode an Ad out of the next bytes of a splice.Splice.
 func (x *Ad) Decode(s *splice.Splice) (e error) {

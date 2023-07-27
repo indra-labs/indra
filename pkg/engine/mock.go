@@ -2,9 +2,11 @@ package engine
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/engine/node"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	"github.com/indra-labs/indra/pkg/engine/tpt"
@@ -64,7 +66,9 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 		if k, e = crypto.GenerateKeys(); fails(e) {
 			return
 		}
-		store, closer := transport.BadgerStore(dataPath)
+		secret := sha256.New()
+		rand.Read(secret[:])
+		store, closer := transport.BadgerStore(dataPath, secret[:])
 		if store == nil {
 			return nil, errors.New("could not open database")
 		}

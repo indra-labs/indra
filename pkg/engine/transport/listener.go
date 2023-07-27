@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	badger "github.com/indra-labs/go-ds-badger3"
 	"github.com/indra-labs/indra/pkg/engine/protocols"
 	"github.com/indra-labs/indra/pkg/engine/transport/pstoreds"
-	badger "github.com/ipfs/go-ds-badger"
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -33,6 +33,12 @@ type (
 	// services and relays providing access to them.
 	Listener struct {
 
+		// Keys are this node's identity keys, used for identification and
+		// authentication of peer advertisements.
+		*crypto.Keys
+
+		*badger.Datastore
+
 		// The DHT is used by peer discovery and peer information gossip to
 		// provide information to clients to enable them to set up sessions and
 		// then send traffic through them.
@@ -55,10 +61,6 @@ type (
 		// for a handler to be assigned.
 		newConns chan *Conn
 
-		// Keys are this node's identity keys, used for identification and
-		// authentication of peer advertisements.
-		*crypto.Keys
-
 		// Context here allows listener processes to be signalled to shut down.
 		context.Context
 
@@ -75,9 +77,12 @@ type (
 )
 
 // NewListener creates a new Listener with the given parameters.
-func NewListener(rendezvous, multiAddr []string, keys *crypto.Keys, store *badger.Datastore, closer func(), ctx context.Context, mtu int, cancel context.CancelFunc) (c *Listener, e error) {
+func NewListener(rendezvous, multiAddr []string, keys *crypto.Keys,
+	store *badger.Datastore, closer func(), ctx context.Context, mtu int,
+	cancel context.CancelFunc) (c *Listener, e error) {
 
 	c = &Listener{
+		Datastore:   store,
 		Keys:        keys,
 		MTU:         mtu,
 		connections: make(map[string]*Conn),

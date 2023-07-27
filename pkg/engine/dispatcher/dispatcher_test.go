@@ -2,8 +2,10 @@ package dispatcher
 
 import (
 	"context"
+	"crypto/rand"
 	"github.com/indra-labs/indra/pkg/codec/onion/cores/confirmation"
 	"github.com/indra-labs/indra/pkg/codec/onion/cores/response"
+	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"os"
 	"testing"
 	"time"
@@ -42,7 +44,9 @@ func TestDispatcher(t *testing.T) {
 	if err != nil {
 		t.FailNow()
 	}
-	store, closer := transport.BadgerStore(dataPath)
+	secret := sha256.New()
+	rand.Read(secret[:])
+	store, closer := transport.BadgerStore(dataPath, secret[:])
 	if store == nil {
 		t.Fatal("could not open database")
 	}
@@ -56,7 +60,9 @@ func TestDispatcher(t *testing.T) {
 	if err != nil {
 		t.FailNow()
 	}
-	store, closer = transport.BadgerStore(dataPath)
+	secret = sha256.New()
+	rand.Read(secret[:])
+	store, closer = transport.BadgerStore(dataPath, secret[:])
 	if store == nil {
 		t.Fatal("could not open database")
 	}

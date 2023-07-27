@@ -40,8 +40,8 @@ func NewDHT(ctx context.Context, host host.Host,
 		}
 		wg.Add(1)
 		go func() {
-			if e := host.Connect(ctx, *peerinfo); fails(e) {
-				log.D.F("Error while connecting to node %q", peerinfo)
+			if e := host.Connect(ctx, *peerinfo); e != nil {
+				log.T.F("Error while connecting to node %q", peerinfo)
 				wg.Done()
 				return
 			}
@@ -68,7 +68,7 @@ func (l *Listener) Discover(ctx context.Context, h host.Host, dht *dht.IpfsDHT,
 		if _, e = disco.Advertise(ctx, rendezvous[i].String()); e != nil {
 		}
 	}
-	if e = l.Tick(h, rendezvous, peers, disco, ctx); fails(e) {
+	if e = l.Tick(h, rendezvous, peers, disco, ctx); e != nil {
 	}
 	ticker := time.NewTicker(time.Second * 1)
 	defer ticker.Stop()
@@ -101,7 +101,7 @@ func (l *Listener) Tick(h host.Host, rendezvous []multiaddr.Multiaddr,
 			network.Connected {
 
 			if _, e = h.Network().DialPeer(ctx,
-				p.ID); fails(e) {
+				p.ID); e != nil {
 
 				continue
 			}

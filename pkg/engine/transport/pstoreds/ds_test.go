@@ -10,8 +10,8 @@ import (
 	pt "github.com/libp2p/go-libp2p/p2p/host/peerstore/test"
 
 	mockClock "github.com/benbjohnson/clock"
+	badger "github.com/indra-labs/go-ds-badger3"
 	ds "github.com/ipfs/go-datastore"
-	badger "github.com/ipfs/go-ds-badger"
 	leveldb "github.com/ipfs/go-ds-leveldb"
 	"github.com/stretchr/testify/require"
 )

@@ -2,7 +2,10 @@ package engine
 
 import (
 	"context"
+	"crypto/rand"
+	badger "github.com/indra-labs/go-ds-badger3"
 	"github.com/indra-labs/indra/pkg/crypto"
+	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/engine/node"
 	"github.com/indra-labs/indra/pkg/engine/transport"
 	"github.com/indra-labs/indra/pkg/util/multi"
@@ -12,26 +15,31 @@ import (
 )
 
 // CreateMockEngine creates an indra Engine with a random localhost listener.
-func CreateMockEngine(seed []string, dataPath string,
-	ctx context.Context, cancel context.CancelFunc) (ng *Engine) {
+func CreateMockEngine(seed []string, dataPath string, ctx context.Context, cancel context.CancelFunc) (ng *Engine, store *badger.Datastore, closer func()) {
 
-	var e error
+	var (
+		e    error
+		keys []*crypto.Keys
+		k    *crypto.Keys
+	)
 	defer func(f *error) {
 		if *f != nil {
 			fails(os.RemoveAll(dataPath))
 		}
 	}(&e)
-	var keys []*crypto.Keys
-	var k *crypto.Keys
 	if k, e = crypto.GenerateKeys(); fails(e) {
 		return
 	}
 	keys = append(keys, k)
-	store, closer := transport.BadgerStore(dataPath)
+
+	secret := sha256.New()
+	rand.Read(secret[:])
+	store, closer = transport.BadgerStore(dataPath, secret[:])
 	if store == nil {
 		log.E.Ln("could not open database")
-		return nil
+		return nil, store, closer
 	}
+
 	var l *transport.Listener
 	if l, e = transport.NewListener(seed,
 		[]string{transport.LocalhostZeroIPv4TCP,
@@ -42,15 +50,19 @@ func CreateMockEngine(seed []string, dataPath string,
 	if l == nil {
 		panic("maybe you have no network device?")
 	}
+
 	sa := transport.GetHostFirstMultiaddr(l.Host)
-	var ap netip.AddrPort
+
 	var ma multiaddr.Multiaddr
 	if ma, e = multiaddr.NewMultiaddr(sa); fails(e) {
 		return
 	}
+
+	var ap netip.AddrPort
 	if ap, e = multi.AddrToAddrPort(ma); fails(e) {
 		return
 	}
+
 	var nod *node.Node
 	if nod, _ = node.NewNode([]*netip.AddrPort{&ap}, k, nil, 50000); fails(e) {
 		return
@@ -66,9 +78,9 @@ func CreateMockEngine(seed []string, dataPath string,
 }
 
 func CreateAndStartMockEngines(n int, ctx context.Context,
-	cancel context.CancelFunc) (engines []*Engine, cleanup func(), e error) {
+	cancel context.CancelFunc) (engines []*Engine, closer func(), e error) {
 
-	cleanup = func() {}
+	closer = func() {}
 	var seed []string
 	dataPath := make([]string, n)
 	for i := 0; i < n; i++ {
@@ -77,7 +89,7 @@ func CreateAndStartMockEngines(n int, ctx context.Context,
 			return
 		}
 		var eng *Engine
-		if eng = CreateMockEngine(seed, dataPath[i], ctx, cancel); fails(e) {
+		if eng, _, _ = CreateMockEngine(seed, dataPath[i], ctx, cancel); fails(e) {
 			return
 		}
 		engines = append(engines, eng)
@@ -86,7 +98,7 @@ func CreateAndStartMockEngines(n int, ctx context.Context,
 		}
 		go eng.Start()
 	}
-	cleanup = func() {
+	closer = func() {
 		for i := range engines {
 			if engines[i] != nil {
 				engines[i].Shutdown()

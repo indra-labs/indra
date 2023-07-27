@@ -10,6 +10,7 @@ import (
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
+	"github.com/libp2p/go-libp2p/core/peer"
 	"net/netip"
 	"time"
 )
@@ -62,6 +63,14 @@ func New(id nonce.ID, key *crypto.Prv, addrs []*netip.AddrPort,
 	return
 }
 
+func (x *Ad) PubKey() (key *crypto.Pub) { return x.Key }
+func (x *Ad) Fingerprint() (pf string)  { return x.Key.Fingerprint() }
+func (x *Ad) Expired() (is bool)        { return x.Expiry.Before(time.Now()) }
+
+func (x *Ad) GetID() (id peer.ID, e error) {
+	return peer.IDFromPublicKey(x.Key)
+}
+
 // Decode a splice.Splice's next bytes into an Ad.
 func (x *Ad) Decode(s *splice.Splice) (e error) {
 	var i, count uint16
@@ -94,7 +103,8 @@ func (x *Ad) Unwrap() interface{} { return nil }
 // Len returns the length of bytes required to encode the Ad, based on the number
 // of Addresses inside it.
 func (x *Ad) Len() int {
-	return ad.Len + len(x.Addresses)*(1+Len) + slice.Uint16Len
+	l := ad.Len + len(x.Addresses)*(1+splice.AddrLen) + slice.Uint16Len
+	return l
 }
 
 // Magic bytes that identify this message

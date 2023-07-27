@@ -2,11 +2,17 @@
 
 This is an implementation of typical network handling features, a listener,
 which has an `Accept` method that returns a channel that will pick up a new
-inbound connection. (todo: is there a proper interface with such a method?)
+inbound connection.
 
-(answer to todo: plans afoot to make it a standard net.Listener with the minor
-caveat that the `Addr` function only allows one address in return and we support
-multiple bound addresses.)
+## Warning
+
+`pstoreds` and `pstoremem` both store the `libp2p.Host`'s private key in
+cleartext. Consequently it is necessary to ensure to use `options.Default()` and
+use an encryption key with it. The key has to be kept hot for ads, for finding
+the LN node being controlled by Indra, and sending/receiving payments.
+
+todo: need a key change protocol for this identity key that handles session
+migration correctly.
 
 ## License Notes
 

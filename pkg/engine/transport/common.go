@@ -3,9 +3,10 @@ package transport
 import (
 	"fmt"
 	"github.com/gookit/color"
+	badger "github.com/indra-labs/go-ds-badger3"
 	"github.com/indra-labs/indra"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/ipfs/go-ds-badger"
+	"github.com/indra-labs/indra/pkg/util/options"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/multiformats/go-multiaddr"
 )
@@ -83,10 +84,32 @@ func GetHostOnlyMultiaddrs(ha host.Host) (addrs []string) {
 }
 
 // BadgerStore creates a new badger database backed persistence engine for keys
-// and values used in the peer information database.
-func BadgerStore(dataPath string) (store *badger.Datastore, closer func()) {
+// and values used in the peer information database, basically keeps a
+// collection of all received advertisments on the network keyed to their public
+// key.
+//
+// This database includes a data structure that maps and records history related
+// to:
+//
+//   - keys of hidden connections - having several past versions can help avoid
+//     needing to find an introducer again.
+//   - keys of relay to relay and client to relay connections receiver public
+//     keys.
+//
+// This database must be encrypted as the data stored in it includes the
+// libp2p.Host private key.
+func BadgerStore(dataPath string,
+	cipher []byte) (store *badger.Datastore,
+	closer func()) {
+
+	if cipher == nil {
+		panic("DANGER: database is being created without encryption")
+	}
+
 	log.T.Ln("dataPath", dataPath)
-	store, err := badger.NewDatastore(dataPath, nil)
+	o := options.Default(dataPath, cipher[:])
+	opts := &badger.Options{Options: *o}
+	store, err := badger.NewDatastore(dataPath, opts)
 	if fails(err) {
 		return nil, func() {}
 	}
