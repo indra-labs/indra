@@ -68,6 +68,8 @@ In this phase, Alice, who wants to receive inbound connections via a hidden serv
 
 As introducer, Dave will now gossip the `intro` over the gossip network (Kademlia DHT Pub/Sub), and everyone will have this intro or be able to query neighbours in case they didn't receive it.
 
+![hidden service introduction](./hidden1.svg)
+
 ```sequence
 Title: Creating a hidden service
 Note over Alice: "hidden service"\nforward Alice\n[intro route]\n[intro Alice]\n->
@@ -97,6 +99,8 @@ Dave then wraps up the route request and reply messages in the `intro route` it 
 Alice then will receive the route request, with Faith's reply packet. Alice places her forward prefix, in case Faith also controls the first hop and thus would unmask Alice. This prefix is required in all messages in addition to the 3 hop reply in order to prevent either party unmasking each other.
 
 This is not required for the first two steps of this part of the protocol because everyone knows the introducer, and neither client nor server would gain anything by controlling the adjacent hops on Dave's end of the path (last inbound, first outbound). But an attacker would want to attempt to unmask Alice, or a malicious hidden service would try to unmask Faith, and both cases are covered by each side adding their own two hops prior to the provided reply path.
+
+![Routing Request](./hidden2.svg)
 
 ```sequence
 Title: Routing Request (establishing connection to hidden service)
@@ -133,6 +137,8 @@ Once the receiver has the 'ready' signal, it can then begin a process of request
 If a message fails the the parties keep past keys to decrypt latent messages or if it appears the outbound message may have got lost to retry a message using an older key since the key change message may have failed to get across before it arrived in the receiver's buffer.
 
 Engineering more reliability into this requires the use of split/join message layers and layer two error correction compositions.
+
+![Request/Response Cycle](./hidden3.svg)
 
 ```sequence
 Title: Hidden Service Request and Response
