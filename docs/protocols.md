@@ -1,8 +1,66 @@
 # protocols
 
+## Public Services (Layer 1)
+
+#### Client Side Location Confidentiality
+
+### 1. Session Initiation Protocol
+
+Forming the first layer of the Indra protocol is the simple parts of peer to peer communication and the construction of routing paths from gossiped network peer metadata, and the provision of the primary clearnet service, the `Exit`. An exit is basically a proxying request, and just as simple forwarding has a fee rate, exit services, called `Services` are charged at different rates, and on both relay and client side the accounting is done independently and in case of transmit failure or a long time offline clients can also query balances.
+
+The primary facility given by the `Exit` is client side anonymity. The relays cannot directly determine from where the requests originate. Since this would otherwise be a spam magnet, none of these requests are fulfilled without the client first establishing session. Thus, the first protocol to discuss is the first step, paying for and confirming a session.
+
+![session purchase flow](./session.svg)
+
+```sequence
+Title: Session Purchase Flow
+Note over Dave: Gossip Services Ad
+Dave-->Charlie: 
+Dave-->Bob:
+Dave-->Alice: 
+Note over Alice: Generate New\nSession Keys\n[header/payload]\nHash->Preimage
+Alice-->Bob: LN keysend\n[Preimage]
+Bob-->Charlie: LN keysend\n[Preimage]
+Charlie-->Dave: LN keysend\n[Preimage]
+Note over Dave: Pending Session\nPreimage/Balance <-\ninitial purchase\nif top-up:\nprotocol complete
+Note over Alice: <- Send out Session
+Alice-->Bob: forward\n[session Dave]
+Bob-->Charlie: forward\n[session Dave]
+Charlie-->Dave: forward\n[session Dave]
+Note over Dave: Session Keys Received\n(Must Match Preimage)\n-> Session Ready <-
+
+```
+
+At this point, Alice now can send forwarding and exit messages to Dave until they consume the balance of milliSats remaining on the session.
+
+Note that generally nodes create 5 separate sessions per relay, not all at once, but they are easily strung together as a forward message to send out to any number of relays one has paid for sessions with, to provide the matching keys that are concatenated and hashed to generate the Preimage.
+
+Also, it is currently idiom in the protocol implementation to count the position in a 5 hop round trip to isolate sessions to their given hop position when purchased. The first and last hops see the client's IP address, so it would leak information for the client to ever use these sessions that associate to their identity as a peer for other hops in the path.
+
+### Exits
+
+#### Tunnels out of Indra
+
+The tunnels out of the Indranet are called "Services". These are essentially anything whatsoever, but are confined to a 16 bit well known port to designate the protocol involved. This also includes Indra itself, which allows what we are calling "Path Punching", which is looping out of Indra and back into Indra. So as a default all nodes provide an exit path to act as a client of the relay.
+
+This provides flexibility for client applications that may want to construct more complex paths while masquerading as relay traffic yet being exit traffic. Of course client applications could instead generate nonstandard length onions, for whatever reason. In the Lightning Network these long paths are based on the state channel availability, whereas with Indra it is network connectivity and thus all paths are available to use.
+
+As has been discussed at great length in many writers words about the Tor network, the combinatorial mathematics of cloaking paths has a rapid loss of latency in exchange for a marginal increase in anonymity. Generally detection avoidance strategies on mixnets is best done by adding latency, or proliferating decoy traffic.
+
+Decoy traffic will be discussed in later sections as there will be a reciprocal protocol for peers to perform decoy traffic. These decoys will require some method of checking the peer is in fact reciprocating, which will be visible in their peer to peer decoy sessions with each other. For the most part, having coincident timing and traffic volume emanating from a relay halves the chances of the right path being followed and thus reduces by a factor of 8 after 3 hops with decoying. Decoying is critical to enabling a low latency mixnet. Timing attacks get easier the lower the latency of the communication cycles.
+
+```sequence
+Title: Exit Protocol
+Alice-->Bob: insert thing here
+```
 
 
-## Hidden Services
+
+# Private Services (Layer 2)
+
+#### Server Side Location Confidentiality
+
+Indra's default mode of operation is providing client side anonymity, for which the source routing model is very suited. But sometimes the service needs to also be private, and for this, further protocols are required to advertise the services without revealing the host. For reasons of logic and easier understanding, these are grouped under Layer 2, where the primitives and simplest client-side anonymity protocols are Layer 1.
 
 ### 1. Creating a hidden service
 
