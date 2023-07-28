@@ -1,1 +1,1374 @@
-<svg height="970.0000190734863" version="1.1" width="1075.5312786102295" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="overflow: hidden; position: relative; top: -0.587524px; color: rgb(51, 51, 51);"><desc style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Created with Raphaël 2.2.0</desc><defs style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"><marker id="raphael-marker-endblock55-obj0n15j" markerHeight="5" markerWidth="5" orient="auto" refX="2.5" refY="2.5" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"><use href="#raphael-marker-block" transform="rotate(180 2.5 2.5) scale(1,1)" stroke-width="1.0000" fill="currentColor" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></use></marker><marker id="raphael-marker-endblock55-objyo6oq" markerHeight="5" markerWidth="5" orient="auto" refX="2.5" refY="2.5" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"><use href="#raphael-marker-block" transform="rotate(180 2.5 2.5) scale(1,1)" stroke-width="1.0000" fill="currentColor" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></use></marker><marker id="raphael-marker-endblock55-obje1o2s" markerHeight="5" markerWidth="5" orient="auto" refX="2.5" refY="2.5" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"><use href="#raphael-marker-block" transform="rotate(180 2.5 2.5) scale(1,1)" stroke-width="1.0000" fill="currentColor" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></use></marker><marker id="raphael-marker-endblock55-objyc0z1" markerHeight="5" markerWidth="5" orient="auto" refX="2.5" refY="2.5" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"><use href="#raphael-marker-block" transform="rotate(180 2.5 2.5) scale(1,1)" stroke-width="1.0000" fill="currentColor" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></use></marker><marker id="raphael-marker-endblock55-objtln99" markerHeight="5" markerWidth="5" orient="auto" refX="2.5" refY="2.5" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"><use href="#raphael-marker-block" transform="rotate(180 2.5 2.5) scale(1,1)" stroke-width="1.0000" fill="currentColor" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></use></marker><marker id="raphael-marker-endblock55-objthq81" markerHeight="5" markerWidth="5" orient="auto" refX="2.5" refY="2.5" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"><use href="#raphael-marker-block" transform="rotate(180 2.5 2.5) scale(1,1)" stroke-width="1.0000" fill="currentColor" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></use></marker><marker id="raphael-marker-endblock55-objilkga" markerHeight="5" markerWidth="5" orient="auto" refX="2.5" refY="2.5" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"><use href="#raphael-marker-block" transform="rotate(180 2.5 2.5) scale(1,1)" stroke-width="1.0000" fill="currentColor" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></use></marker><marker id="raphael-marker-endblock55-objidl37" markerHeight="5" markerWidth="5" orient="auto" refX="2.5" refY="2.5" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"><use href="#raphael-marker-block" transform="rotate(180 2.5 2.5) scale(1,1)" stroke-width="1.0000" fill="currentColor" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></use></marker><marker id="raphael-marker-endblock55-objthtnx" markerHeight="5" markerWidth="5" orient="auto" refX="2.5" refY="2.5" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"><use href="#raphael-marker-block" transform="rotate(180 2.5 2.5) scale(1,1)" stroke-width="1.0000" fill="currentColor" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></use></marker><marker id="raphael-marker-endblock55-obj7ymvv" markerHeight="5" markerWidth="5" orient="auto" refX="2.5" refY="2.5" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"><use href="#raphael-marker-block" transform="rotate(180 2.5 2.5) scale(1,1)" stroke-width="1.0000" fill="currentColor" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></use></marker><path stroke-linecap="round" d="M5,0 0,2.5 5,5z" id="raphael-marker-block" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path></defs><rect x="10" y="10" width="347.1499938964844" height="29.200000762939453" rx="0" ry="0" fill="none" stroke="currentColor" stroke-width="2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="15" y="15" width="337.1499938964844" height="19.200000762939453" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="183.5749969482422" y="24.600000381469727" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="5.59999942779541" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Hidden Service Request and Response</tspan></text><rect x="53.16250038146973" y="49.20000076293945" width="68.17499923706055" height="39.20000076293945" rx="0" ry="0" fill="none" stroke="currentColor" stroke-width="2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="63.16250228881836" y="59.20000076293945" width="48.17499923706055" height="19.200000762939453" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="87.25" y="68.80000114440918" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="5.599998474121094" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Faith</tspan></text><rect x="53.16250038146973" y="910.8000183105469" width="68.17499923706055" height="39.20000076293945" rx="0" ry="0" fill="none" stroke="currentColor" stroke-width="2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="63.16250228881836" y="920.7999877929688" width="48.17499923706055" height="19.200000762939453" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="87.25" y="930.4000186920166" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="5.600006103515625" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Faith</tspan></text><path fill="none" stroke="currentColor" d="M87.25,88.4000015258789L87.25,910.8000183105469" stroke-width="2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><rect x="208.03750324249268" y="49.20000076293945" width="48.89999961853027" height="39.20000076293945" rx="0" ry="0" fill="none" stroke="currentColor" stroke-width="2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="218.03750610351562" y="59.20000076293945" width="28.899999618530273" height="19.200000762939453" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="232.4875030517578" y="68.80000114440918" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="5.599998474121094" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Eve</tspan></text><rect x="208.03750324249268" y="910.8000183105469" width="48.89999961853027" height="39.20000076293945" rx="0" ry="0" fill="none" stroke="currentColor" stroke-width="2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="218.03750610351562" y="920.7999877929688" width="28.899999618530273" height="19.200000762939453" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="232.4875030517578" y="930.4000186920166" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="5.600006103515625" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Eve</tspan></text><path fill="none" stroke="currentColor" d="M232.4875030517578,88.4000015258789L232.4875030517578,910.8000183105469" stroke-width="2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><rect x="348.45625495910645" y="49.20000076293945" width="58.53750228881836" height="39.20000076293945" rx="0" ry="0" fill="none" stroke="currentColor" stroke-width="2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="358.4562683105469" y="59.20000076293945" width="38.53750228881836" height="19.200000762939453" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="377.7250061035156" y="68.80000114440918" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="5.599998474121094" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Dave</tspan></text><rect x="348.45625495910645" y="910.8000183105469" width="58.53750228881836" height="39.20000076293945" rx="0" ry="0" fill="none" stroke="currentColor" stroke-width="2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="358.4562683105469" y="920.7999877929688" width="38.53750228881836" height="19.200000762939453" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="377.7250061035156" y="930.4000186920166" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="5.600006103515625" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Dave</tspan></text><path fill="none" stroke="currentColor" d="M377.7250061035156,88.4000015258789L377.7250061035156,910.8000183105469" stroke-width="2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><rect x="479.24375915527344" y="49.20000076293945" width="87.4375" height="39.20000076293945" rx="0" ry="0" fill="none" stroke="currentColor" stroke-width="2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="489.2437438964844" y="59.20000076293945" width="67.4375" height="19.200000762939453" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="522.9625091552734" y="68.80000114440918" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="5.599998474121094" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Charlie</tspan></text><rect x="479.24375915527344" y="910.8000183105469" width="87.4375" height="39.20000076293945" rx="0" ry="0" fill="none" stroke="currentColor" stroke-width="2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="489.2437438964844" y="920.7999877929688" width="67.4375" height="19.200000762939453" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="522.9625091552734" y="930.4000186920166" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="5.600006103515625" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Charlie</tspan></text><path fill="none" stroke="currentColor" d="M522.9625091552734,88.4000015258789L522.9625091552734,910.8000183105469" stroke-width="2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><rect x="701.5375185012817" y="49.20000076293945" width="48.89999961853027" height="39.20000076293945" rx="0" ry="0" fill="none" stroke="currentColor" stroke-width="2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="711.5375366210938" y="59.20000076293945" width="28.899999618530273" height="19.200000762939453" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="725.9875183105469" y="68.80000114440918" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="5.599998474121094" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Bob</tspan></text><rect x="701.5375185012817" y="910.8000183105469" width="48.89999961853027" height="39.20000076293945" rx="0" ry="0" fill="none" stroke="currentColor" stroke-width="2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="711.5375366210938" y="920.7999877929688" width="28.899999618530273" height="19.200000762939453" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="725.9875183105469" y="930.4000186920166" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="5.600006103515625" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Bob</tspan></text><path fill="none" stroke="currentColor" d="M725.9875183105469,88.4000015258789L725.9875183105469,910.8000183105469" stroke-width="2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><rect x="894.92502784729" y="49.20000076293945" width="68.17499923706055" height="39.20000076293945" rx="0" ry="0" fill="none" stroke="currentColor" stroke-width="2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="904.9249877929688" y="59.20000076293945" width="48.17499923706055" height="19.200000762939453" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="929.0125274658203" y="68.80000114440918" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="5.599998474121094" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Alice</tspan></text><rect x="894.92502784729" y="910.8000183105469" width="68.17499923706055" height="39.20000076293945" rx="0" ry="0" fill="none" stroke="currentColor" stroke-width="2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="904.9249877929688" y="920.7999877929688" width="48.17499923706055" height="19.200000762939453" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="929.0125274658203" y="930.4000186920166" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="5.600006103515625" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Alice</tspan></text><path fill="none" stroke="currentColor" d="M929.0125274658203,88.4000015258789L929.0125274658203,910.8000183105469" stroke-width="2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><rect x="10" y="108.4000015258789" width="154.5" height="86.80000305175781" rx="0" ry="0" fill="none" stroke="currentColor" stroke-width="2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="15" y="113.4000015258789" width="144.5" height="76.79999542236328" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="87.25" y="151.8000030517578" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="-23.199996948242188" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">forward [Alice]</tspan><tspan dy="19.2" x="87.25" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">request faith</tspan><tspan dy="19.2" x="87.25" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">[reply faith]</tspan><tspan dy="19.2" x="87.25" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">-&gt;</tspan></text><rect x="97.25" y="210.60000610351562" width="125.23750305175781" height="19.200000762939453" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="159.8687515258789" y="220.20000457763672" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="5.600004196166992" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">forward Faith</tspan></text><path fill="none" stroke="currentColor" d="M87.25,234.40000534057617C87.25,234.40000534057617,201.94953181949677,234.40000534057617,227.4880994511816,234.40000534057617" stroke-width="2" marker-end="url(#raphael-marker-endblock55-obj0n15j)" stroke-dasharray="6,2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><rect x="242.4875030517578" y="249.8000030517578" width="125.23750305175781" height="19.200000762939453" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="305.1062545776367" y="259.4000053405762" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="5.600008010864258" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">forward Faith</tspan></text><path fill="none" stroke="currentColor" d="M232.4875030517578,273.6000061035156C232.4875030517578,273.6000061035156,347.1870348712546,273.6000061035156,372.7256025029394,273.6000061035156" stroke-width="2" marker-end="url(#raphael-marker-endblock55-objyo6oq)" stroke-dasharray="6,2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><rect x="77.25" y="293.6000061035156" width="310.4750061035156" height="29.200000762939453" rx="0" ry="0" fill="none" stroke="currentColor" stroke-width="2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="107.2562484741211" y="298.6000061035156" width="250.46250915527344" height="19.200000762939453" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="232.4875030517578" y="308.20000648498535" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="5.600006103515625" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Faith's Forward Prefix --&gt;</tspan></text><rect x="387.7250061035156" y="338.20001220703125" width="125.23750305175781" height="19.200000762939453" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="450.34375762939453" y="347.8000068664551" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="5.599969863891602" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">forward Alice</tspan></text><path fill="none" stroke="currentColor" d="M377.7250061035156,362.00000762939453C377.7250061035156,362.00000762939453,492.4245379230124,362.00000762939453,517.9631055546972,362.00000762939453" stroke-width="2" marker-end="url(#raphael-marker-endblock55-obje1o2s)" stroke-dasharray="6,2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><rect x="532.9625854492188" y="377.3999938964844" width="183.02500915527344" height="19.200000762939453" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="624.4750137329102" y="387.00000762939453" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="5.59998893737793" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">forward reply Alice</tspan></text><path fill="none" stroke="currentColor" d="M522.9625091552734,401.200008392334C522.9625091552734,401.200008392334,689.7945802475797,401.200008392334,720.9941326051741,401.200008392334" stroke-width="2" marker-end="url(#raphael-marker-endblock55-objyc0z1)" stroke-dasharray="6,2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><rect x="735.9874877929688" y="416.6000061035156" width="183.02500915527344" height="19.200000762939453" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="827.5000228881836" y="426.200008392334" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="5.600008010864258" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">forward reply Alice</tspan></text><path fill="none" stroke="currentColor" d="M725.9875183105469,440.40000915527344C725.9875183105469,440.40000915527344,892.8195894028531,440.40000915527344,924.0191417604475,440.40000915527344" stroke-width="2" marker-end="url(#raphael-marker-endblock55-objtln99)" stroke-dasharray="6,2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><rect x="367.7250061035156" y="460.40000915527344" width="571.2875213623047" height="29.200000762939453" rx="0" ry="0" fill="none" stroke="currentColor" stroke-width="2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="542.5875244140625" y="465.3999938964844" width="221.5625" height="19.200000762939453" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="653.368766784668" y="475.00000953674316" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="5.5999908447265625" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">Alices's Reply Path --&gt;</tspan></text><rect x="856.5812759399414" y="509.6000099182129" width="144.8625030517578" height="86.80000305175781" rx="0" ry="0" fill="none" stroke="currentColor" stroke-width="2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="861.5812377929688" y="514.6000366210938" width="134.86248779296875" height="76.79998779296875" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="929.0125274658203" y="553.0000114440918" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="-23.200000762939453" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">forward[Faith]</tspan><tspan dy="19.2" x="929.0125274658203" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">response Alice</tspan><tspan dy="19.2" x="929.0125274658203" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">[reply Alice]</tspan><tspan dy="19.2" x="929.0125274658203" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">&lt;-</tspan></text><rect x="764.8812866210938" y="611.7999877929688" width="125.23750305175781" height="19.200000762939453" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="827.5000228881836" y="621.4000129699707" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="5.600000381469727" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">forward Alice</tspan></text><path fill="none" stroke="currentColor" d="M929.0125274658203,635.6000137329102C929.0125274658203,635.6000137329102,762.1804563735141,635.6000137329102,730.9809040159197,635.6000137329102" stroke-width="2" marker-end="url(#raphael-marker-endblock55-objthq81)" stroke-dasharray="6,2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><rect x="561.8563232421875" y="651" width="125.23750305175781" height="19.200000762939453" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="624.4750137329102" y="660.6000137329102" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="5.59992790222168" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">forward Alice</tspan></text><path fill="none" stroke="currentColor" d="M725.9875183105469,674.8000144958496C725.9875183105469,674.8000144958496,559.1554472182406,674.8000144958496,527.9558948606463,674.8000144958496" stroke-width="2" marker-end="url(#raphael-marker-endblock55-objilkga)" stroke-dasharray="6,2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><rect x="512.9625091552734" y="694.8000144958496" width="426.0500183105469" height="29.200000762939453" rx="0" ry="0" fill="none" stroke="currentColor" stroke-width="2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="600.75634765625" y="699.7999877929688" width="250.46250915527344" height="19.200000762939453" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="725.9875183105469" y="709.4000148773193" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="5.600002288818359" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">&lt;-- Alice's Forward Prefix</tspan></text><rect x="387.7250061035156" y="739.4000854492188" width="125.23750305175781" height="19.200000762939453" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="450.34375762939453" y="749.0000152587891" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="5.600027084350586" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">forward Faith</tspan></text><path fill="none" stroke="currentColor" d="M522.9625091552734,763.2000160217285C522.9625091552734,763.2000160217285,408.26297733577667,763.2000160217285,382.72440970409184,763.2000160217285" stroke-width="2" marker-end="url(#raphael-marker-endblock55-objidl37)" stroke-dasharray="6,2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><rect x="242.4875030517578" y="778.6000366210938" width="125.23750305175781" height="19.200000762939453" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="305.1062545776367" y="788.2000160217285" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="5.600015640258789" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">forward Faith</tspan></text><path fill="none" stroke="currentColor" d="M377.7250061035156,802.400016784668C377.7250061035156,802.400016784668,263.02547428401886,802.400016784668,237.48690665233403,802.400016784668" stroke-width="2" marker-end="url(#raphael-marker-endblock55-objthtnx)" stroke-dasharray="6,2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><rect x="97.25" y="817.7999877929688" width="125.23750305175781" height="19.200000762939453" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="159.8687515258789" y="827.400016784668" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="5.600004196166992" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">forward Faith</tspan></text><path fill="none" stroke="currentColor" d="M232.4875030517578,841.6000175476074C232.4875030517578,841.6000175476074,117.78797123226104,841.6000175476074,92.24940360057622,841.6000175476074" stroke-width="2" marker-end="url(#raphael-marker-endblock55-obj7ymvv)" stroke-dasharray="6,2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path><rect x="77.25" y="861.6000175476074" width="455.71250915527344" height="29.200000762939453" rx="0" ry="0" fill="none" stroke="currentColor" stroke-width="2" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><rect x="199.1437530517578" y="866.6000366210938" width="211.9250030517578" height="19.200000762939453" rx="0" ry="0" fill="none" stroke="none" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></rect><text x="305.1062545776367" y="876.2000179290771" text-anchor="middle" font-family="Andale Mono, monospace" font-size="16px" stroke="none" fill="currentColor" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"><tspan dy="5.600017547607422" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">&lt;-- Alice's Reply Path</tspan></text></svg>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   height="970.0000190734863"
+   version="1.1"
+   width="1075.5312786102295"
+   style="overflow: hidden; position: relative; top: -0.587524px; color: rgb(51, 51, 51);"
+   id="svg2099"
+   sodipodi:docname="hidden3.svg"
+   inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)">
+  <metadata
+     id="metadata2103">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="2520"
+     inkscape:window-height="1405"
+     id="namedview2101"
+     showgrid="false"
+     inkscape:zoom="0.97319588"
+     inkscape:cx="578.79076"
+     inkscape:cy="563.89687"
+     inkscape:window-x="40"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg2099" />
+  <desc
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="desc1808">Created with Raphaël 2.2.0</desc>
+  <defs
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="defs1841">
+    <marker
+       id="raphael-marker-endblock55-obj0n15j"
+       markerHeight="5"
+       markerWidth="5"
+       orient="auto"
+       refX="2.5"
+       refY="2.5"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">
+      <use
+         href="#raphael-marker-block"
+         transform="rotate(180 2.5 2.5) scale(1,1)"
+         stroke-width="1.0000"
+         fill="currentColor"
+         stroke="none"
+         style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+         id="use1810" />
+    </marker>
+    <marker
+       id="raphael-marker-endblock55-objyo6oq"
+       markerHeight="5"
+       markerWidth="5"
+       orient="auto"
+       refX="2.5"
+       refY="2.5"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">
+      <use
+         href="#raphael-marker-block"
+         transform="rotate(180 2.5 2.5) scale(1,1)"
+         stroke-width="1.0000"
+         fill="currentColor"
+         stroke="none"
+         style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+         id="use1813" />
+    </marker>
+    <marker
+       id="raphael-marker-endblock55-obje1o2s"
+       markerHeight="5"
+       markerWidth="5"
+       orient="auto"
+       refX="2.5"
+       refY="2.5"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">
+      <use
+         href="#raphael-marker-block"
+         transform="rotate(180 2.5 2.5) scale(1,1)"
+         stroke-width="1.0000"
+         fill="currentColor"
+         stroke="none"
+         style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+         id="use1816" />
+    </marker>
+    <marker
+       id="raphael-marker-endblock55-objyc0z1"
+       markerHeight="5"
+       markerWidth="5"
+       orient="auto"
+       refX="2.5"
+       refY="2.5"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">
+      <use
+         href="#raphael-marker-block"
+         transform="rotate(180 2.5 2.5) scale(1,1)"
+         stroke-width="1.0000"
+         fill="currentColor"
+         stroke="none"
+         style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+         id="use1819" />
+    </marker>
+    <marker
+       id="raphael-marker-endblock55-objtln99"
+       markerHeight="5"
+       markerWidth="5"
+       orient="auto"
+       refX="2.5"
+       refY="2.5"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">
+      <use
+         href="#raphael-marker-block"
+         transform="rotate(180 2.5 2.5) scale(1,1)"
+         stroke-width="1.0000"
+         fill="currentColor"
+         stroke="none"
+         style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+         id="use1822" />
+    </marker>
+    <marker
+       id="raphael-marker-endblock55-objthq81"
+       markerHeight="5"
+       markerWidth="5"
+       orient="auto"
+       refX="2.5"
+       refY="2.5"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">
+      <use
+         href="#raphael-marker-block"
+         transform="rotate(180 2.5 2.5) scale(1,1)"
+         stroke-width="1.0000"
+         fill="currentColor"
+         stroke="none"
+         style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+         id="use1825" />
+    </marker>
+    <marker
+       id="raphael-marker-endblock55-objilkga"
+       markerHeight="5"
+       markerWidth="5"
+       orient="auto"
+       refX="2.5"
+       refY="2.5"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">
+      <use
+         href="#raphael-marker-block"
+         transform="rotate(180 2.5 2.5) scale(1,1)"
+         stroke-width="1.0000"
+         fill="currentColor"
+         stroke="none"
+         style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+         id="use1828" />
+    </marker>
+    <marker
+       id="raphael-marker-endblock55-objidl37"
+       markerHeight="5"
+       markerWidth="5"
+       orient="auto"
+       refX="2.5"
+       refY="2.5"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">
+      <use
+         href="#raphael-marker-block"
+         transform="rotate(180 2.5 2.5) scale(1,1)"
+         stroke-width="1.0000"
+         fill="currentColor"
+         stroke="none"
+         style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+         id="use1831" />
+    </marker>
+    <marker
+       id="raphael-marker-endblock55-objthtnx"
+       markerHeight="5"
+       markerWidth="5"
+       orient="auto"
+       refX="2.5"
+       refY="2.5"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">
+      <use
+         href="#raphael-marker-block"
+         transform="rotate(180 2.5 2.5) scale(1,1)"
+         stroke-width="1.0000"
+         fill="currentColor"
+         stroke="none"
+         style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+         id="use1834" />
+    </marker>
+    <marker
+       id="raphael-marker-endblock55-obj7ymvv"
+       markerHeight="5"
+       markerWidth="5"
+       orient="auto"
+       refX="2.5"
+       refY="2.5"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">
+      <use
+         href="#raphael-marker-block"
+         transform="rotate(180 2.5 2.5) scale(1,1)"
+         stroke-width="1.0000"
+         fill="currentColor"
+         stroke="none"
+         style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+         id="use1837" />
+    </marker>
+    <path
+       stroke-linecap="round"
+       d="M5,0 0,2.5 5,5z"
+       id="raphael-marker-block"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);" />
+  </defs>
+  <rect
+     x="10"
+     y="10"
+     width="347.1499938964844"
+     height="29.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="currentColor"
+     stroke-width="2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1843" />
+  <rect
+     x="15"
+     y="15"
+     width="337.1499938964844"
+     height="19.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1845" />
+  <text
+     x="183.5749969482422"
+     y="24.600000381469727"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text1849">
+    <tspan
+       dy="5.59999942779541"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan1847">Hidden Service Request and Response</tspan>
+  </text>
+  <rect
+     x="53.16250038146973"
+     y="49.20000076293945"
+     width="68.17499923706055"
+     height="39.20000076293945"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="currentColor"
+     stroke-width="2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1851" />
+  <rect
+     x="63.16250228881836"
+     y="59.20000076293945"
+     width="48.17499923706055"
+     height="19.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1853" />
+  <text
+     x="87.25"
+     y="68.80000114440918"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text1857">
+    <tspan
+       dy="5.599998474121094"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan1855">Faith</tspan>
+  </text>
+  <rect
+     x="53.16250038146973"
+     y="910.8000183105469"
+     width="68.17499923706055"
+     height="39.20000076293945"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="currentColor"
+     stroke-width="2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1859" />
+  <rect
+     x="63.16250228881836"
+     y="920.7999877929688"
+     width="48.17499923706055"
+     height="19.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1861" />
+  <text
+     x="87.25"
+     y="930.4000186920166"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text1865">
+    <tspan
+       dy="5.600006103515625"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan1863">Faith</tspan>
+  </text>
+  <path
+     fill="none"
+     stroke="currentColor"
+     d="M87.25,88.4000015258789L87.25,910.8000183105469"
+     stroke-width="2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="path1867" />
+  <rect
+     x="208.03750324249268"
+     y="49.20000076293945"
+     width="48.89999961853027"
+     height="39.20000076293945"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="currentColor"
+     stroke-width="2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1869" />
+  <rect
+     x="218.03750610351562"
+     y="59.20000076293945"
+     width="28.899999618530273"
+     height="19.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1871" />
+  <text
+     x="232.4875030517578"
+     y="68.80000114440918"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text1875">
+    <tspan
+       dy="5.599998474121094"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan1873">Eve</tspan>
+  </text>
+  <rect
+     x="208.03750324249268"
+     y="910.8000183105469"
+     width="48.89999961853027"
+     height="39.20000076293945"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="currentColor"
+     stroke-width="2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1877" />
+  <rect
+     x="218.03750610351562"
+     y="920.7999877929688"
+     width="28.899999618530273"
+     height="19.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1879" />
+  <text
+     x="232.4875030517578"
+     y="930.4000186920166"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text1883">
+    <tspan
+       dy="5.600006103515625"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan1881">Eve</tspan>
+  </text>
+  <path
+     fill="none"
+     stroke="currentColor"
+     d="M232.4875030517578,88.4000015258789L232.4875030517578,910.8000183105469"
+     stroke-width="2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="path1885" />
+  <rect
+     x="348.45625495910645"
+     y="49.20000076293945"
+     width="58.53750228881836"
+     height="39.20000076293945"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="currentColor"
+     stroke-width="2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1887" />
+  <rect
+     x="358.4562683105469"
+     y="59.20000076293945"
+     width="38.53750228881836"
+     height="19.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1889" />
+  <text
+     x="377.7250061035156"
+     y="68.80000114440918"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text1893">
+    <tspan
+       dy="5.599998474121094"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan1891">Dave</tspan>
+  </text>
+  <rect
+     x="348.45625495910645"
+     y="910.8000183105469"
+     width="58.53750228881836"
+     height="39.20000076293945"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="currentColor"
+     stroke-width="2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1895" />
+  <rect
+     x="358.4562683105469"
+     y="920.7999877929688"
+     width="38.53750228881836"
+     height="19.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1897" />
+  <text
+     x="377.7250061035156"
+     y="930.4000186920166"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text1901">
+    <tspan
+       dy="5.600006103515625"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan1899">Dave</tspan>
+  </text>
+  <path
+     fill="none"
+     stroke="currentColor"
+     d="M377.7250061035156,88.4000015258789L377.7250061035156,910.8000183105469"
+     stroke-width="2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="path1903" />
+  <rect
+     x="479.24375915527344"
+     y="49.20000076293945"
+     width="87.4375"
+     height="39.20000076293945"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="currentColor"
+     stroke-width="2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1905" />
+  <rect
+     x="489.2437438964844"
+     y="59.20000076293945"
+     width="67.4375"
+     height="19.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1907" />
+  <text
+     x="522.9625091552734"
+     y="68.80000114440918"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text1911">
+    <tspan
+       dy="5.599998474121094"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan1909">Charlie</tspan>
+  </text>
+  <rect
+     x="479.24375915527344"
+     y="910.8000183105469"
+     width="87.4375"
+     height="39.20000076293945"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="currentColor"
+     stroke-width="2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1913" />
+  <rect
+     x="489.2437438964844"
+     y="920.7999877929688"
+     width="67.4375"
+     height="19.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1915" />
+  <text
+     x="522.9625091552734"
+     y="930.4000186920166"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text1919">
+    <tspan
+       dy="5.600006103515625"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan1917">Charlie</tspan>
+  </text>
+  <path
+     fill="none"
+     stroke="currentColor"
+     d="M522.9625091552734,88.4000015258789L522.9625091552734,910.8000183105469"
+     stroke-width="2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="path1921" />
+  <rect
+     x="701.5375185012817"
+     y="49.20000076293945"
+     width="48.89999961853027"
+     height="39.20000076293945"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="currentColor"
+     stroke-width="2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1923" />
+  <rect
+     x="711.5375366210938"
+     y="59.20000076293945"
+     width="28.899999618530273"
+     height="19.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1925" />
+  <text
+     x="725.9875183105469"
+     y="68.80000114440918"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text1929">
+    <tspan
+       dy="5.599998474121094"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan1927">Bob</tspan>
+  </text>
+  <rect
+     x="701.5375185012817"
+     y="910.8000183105469"
+     width="48.89999961853027"
+     height="39.20000076293945"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="currentColor"
+     stroke-width="2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1931" />
+  <rect
+     x="711.5375366210938"
+     y="920.7999877929688"
+     width="28.899999618530273"
+     height="19.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1933" />
+  <text
+     x="725.9875183105469"
+     y="930.4000186920166"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text1937">
+    <tspan
+       dy="5.600006103515625"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan1935">Bob</tspan>
+  </text>
+  <path
+     fill="none"
+     stroke="currentColor"
+     d="M725.9875183105469,88.4000015258789L725.9875183105469,910.8000183105469"
+     stroke-width="2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="path1939" />
+  <rect
+     x="894.92502784729"
+     y="49.20000076293945"
+     width="68.17499923706055"
+     height="39.20000076293945"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="currentColor"
+     stroke-width="2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1941" />
+  <rect
+     x="904.9249877929688"
+     y="59.20000076293945"
+     width="48.17499923706055"
+     height="19.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1943" />
+  <text
+     x="929.0125274658203"
+     y="68.80000114440918"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text1947">
+    <tspan
+       dy="5.599998474121094"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan1945">Alice</tspan>
+  </text>
+  <rect
+     x="894.92502784729"
+     y="910.8000183105469"
+     width="68.17499923706055"
+     height="39.20000076293945"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="currentColor"
+     stroke-width="2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1949" />
+  <rect
+     x="904.9249877929688"
+     y="920.7999877929688"
+     width="48.17499923706055"
+     height="19.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1951" />
+  <text
+     x="929.0125274658203"
+     y="930.4000186920166"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text1955">
+    <tspan
+       dy="5.600006103515625"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan1953">Alice</tspan>
+  </text>
+  <path
+     fill="none"
+     stroke="currentColor"
+     d="M929.0125274658203,88.4000015258789L929.0125274658203,910.8000183105469"
+     stroke-width="2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="path1957" />
+  <rect
+     x="10"
+     y="108.4000015258789"
+     width="154.5"
+     height="86.80000305175781"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="currentColor"
+     stroke-width="2"
+     style="-webkit-tap-highlight-color:rgba(0, 0, 0, 0);fill:#ffffff"
+     id="rect1959" />
+  <rect
+     x="15"
+     y="113.4000015258789"
+     width="144.5"
+     height="76.79999542236328"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1961" />
+  <text
+     x="87.25"
+     y="151.8000030517578"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text1971">
+    <tspan
+       dy="-23.199996948242188"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan1963">forward [Alice]</tspan>
+    <tspan
+       dy="19.2"
+       x="87.25"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan1965">request faith</tspan>
+    <tspan
+       dy="19.2"
+       x="87.25"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan1967">[reply faith]</tspan>
+    <tspan
+       dy="19.2"
+       x="87.25"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan1969">-&gt;</tspan>
+  </text>
+  <rect
+     x="97.25"
+     y="210.60000610351562"
+     width="125.23750305175781"
+     height="19.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1973" />
+  <text
+     x="159.8687515258789"
+     y="220.20000457763672"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text1977">
+    <tspan
+       dy="5.600004196166992"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan1975">forward Faith</tspan>
+  </text>
+  <path
+     fill="none"
+     stroke="currentColor"
+     d="M87.25,234.40000534057617C87.25,234.40000534057617,201.94953181949677,234.40000534057617,227.4880994511816,234.40000534057617"
+     stroke-width="2"
+     marker-end="url(#raphael-marker-endblock55-obj0n15j)"
+     stroke-dasharray="6,2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="path1979" />
+  <rect
+     x="242.4875030517578"
+     y="249.8000030517578"
+     width="125.23750305175781"
+     height="19.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1981" />
+  <text
+     x="305.1062545776367"
+     y="259.4000053405762"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text1985">
+    <tspan
+       dy="5.600008010864258"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan1983">forward Faith</tspan>
+  </text>
+  <path
+     fill="none"
+     stroke="currentColor"
+     d="M232.4875030517578,273.6000061035156C232.4875030517578,273.6000061035156,347.1870348712546,273.6000061035156,372.7256025029394,273.6000061035156"
+     stroke-width="2"
+     marker-end="url(#raphael-marker-endblock55-objyo6oq)"
+     stroke-dasharray="6,2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="path1987" />
+  <rect
+     x="77.25"
+     y="293.6000061035156"
+     width="310.4750061035156"
+     height="29.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="currentColor"
+     stroke-width="2"
+     style="-webkit-tap-highlight-color:rgba(0, 0, 0, 0);fill:#ffffff"
+     id="rect1989" />
+  <rect
+     x="107.2562484741211"
+     y="298.6000061035156"
+     width="250.46250915527344"
+     height="19.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1991" />
+  <text
+     x="232.4875030517578"
+     y="308.20000648498535"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text1995">
+    <tspan
+       dy="5.600006103515625"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan1993">Faith's Forward Prefix --&gt;</tspan>
+  </text>
+  <rect
+     x="387.7250061035156"
+     y="338.20001220703125"
+     width="125.23750305175781"
+     height="19.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect1997" />
+  <text
+     x="450.34375762939453"
+     y="347.8000068664551"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text2001">
+    <tspan
+       dy="5.599969863891602"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan1999">forward Alice</tspan>
+  </text>
+  <path
+     fill="none"
+     stroke="currentColor"
+     d="M377.7250061035156,362.00000762939453C377.7250061035156,362.00000762939453,492.4245379230124,362.00000762939453,517.9631055546972,362.00000762939453"
+     stroke-width="2"
+     marker-end="url(#raphael-marker-endblock55-obje1o2s)"
+     stroke-dasharray="6,2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="path2003" />
+  <rect
+     x="532.9625854492188"
+     y="377.3999938964844"
+     width="183.02500915527344"
+     height="19.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect2005" />
+  <text
+     x="624.4750137329102"
+     y="387.00000762939453"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text2009">
+    <tspan
+       dy="5.59998893737793"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan2007">forward reply Alice</tspan>
+  </text>
+  <path
+     fill="none"
+     stroke="currentColor"
+     d="M522.9625091552734,401.200008392334C522.9625091552734,401.200008392334,689.7945802475797,401.200008392334,720.9941326051741,401.200008392334"
+     stroke-width="2"
+     marker-end="url(#raphael-marker-endblock55-objyc0z1)"
+     stroke-dasharray="6,2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="path2011" />
+  <rect
+     x="735.9874877929688"
+     y="416.6000061035156"
+     width="183.02500915527344"
+     height="19.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect2013" />
+  <text
+     x="827.5000228881836"
+     y="426.200008392334"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text2017">
+    <tspan
+       dy="5.600008010864258"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan2015">forward reply Alice</tspan>
+  </text>
+  <path
+     fill="none"
+     stroke="currentColor"
+     d="M725.9875183105469,440.40000915527344C725.9875183105469,440.40000915527344,892.8195894028531,440.40000915527344,924.0191417604475,440.40000915527344"
+     stroke-width="2"
+     marker-end="url(#raphael-marker-endblock55-objtln99)"
+     stroke-dasharray="6,2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="path2019" />
+  <rect
+     x="367.7250061035156"
+     y="460.40000915527344"
+     width="571.2875213623047"
+     height="29.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="currentColor"
+     stroke-width="2"
+     style="-webkit-tap-highlight-color:rgba(0, 0, 0, 0);fill:#ffffff"
+     id="rect2021" />
+  <rect
+     x="542.5875244140625"
+     y="465.3999938964844"
+     width="221.5625"
+     height="19.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect2023" />
+  <text
+     x="653.368766784668"
+     y="475.00000953674316"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text2027">
+    <tspan
+       dy="5.5999908447265625"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan2025">Alices's Reply Path --&gt;</tspan>
+  </text>
+  <rect
+     x="856.5812759399414"
+     y="509.6000099182129"
+     width="144.8625030517578"
+     height="86.80000305175781"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="currentColor"
+     stroke-width="2"
+     style="-webkit-tap-highlight-color:rgba(0, 0, 0, 0);fill:#ffffff"
+     id="rect2029" />
+  <rect
+     x="861.5812377929688"
+     y="514.6000366210938"
+     width="134.86248779296875"
+     height="76.79998779296875"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect2031" />
+  <text
+     x="929.0125274658203"
+     y="553.0000114440918"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text2041">
+    <tspan
+       dy="-23.200000762939453"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan2033">forward[Faith]</tspan>
+    <tspan
+       dy="19.2"
+       x="929.0125274658203"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan2035">response Alice</tspan>
+    <tspan
+       dy="19.2"
+       x="929.0125274658203"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan2037">[reply Alice]</tspan>
+    <tspan
+       dy="19.2"
+       x="929.0125274658203"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan2039">&lt;-</tspan>
+  </text>
+  <rect
+     x="764.8812866210938"
+     y="611.7999877929688"
+     width="125.23750305175781"
+     height="19.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect2043" />
+  <text
+     x="827.5000228881836"
+     y="621.4000129699707"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text2047">
+    <tspan
+       dy="5.600000381469727"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan2045">forward Alice</tspan>
+  </text>
+  <path
+     fill="none"
+     stroke="currentColor"
+     d="M929.0125274658203,635.6000137329102C929.0125274658203,635.6000137329102,762.1804563735141,635.6000137329102,730.9809040159197,635.6000137329102"
+     stroke-width="2"
+     marker-end="url(#raphael-marker-endblock55-objthq81)"
+     stroke-dasharray="6,2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="path2049" />
+  <rect
+     x="561.8563232421875"
+     y="651"
+     width="125.23750305175781"
+     height="19.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect2051" />
+  <text
+     x="624.4750137329102"
+     y="660.6000137329102"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text2055">
+    <tspan
+       dy="5.59992790222168"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan2053">forward Alice</tspan>
+  </text>
+  <path
+     fill="none"
+     stroke="currentColor"
+     d="M725.9875183105469,674.8000144958496C725.9875183105469,674.8000144958496,559.1554472182406,674.8000144958496,527.9558948606463,674.8000144958496"
+     stroke-width="2"
+     marker-end="url(#raphael-marker-endblock55-objilkga)"
+     stroke-dasharray="6,2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="path2057" />
+  <rect
+     x="512.9625091552734"
+     y="694.8000144958496"
+     width="426.0500183105469"
+     height="29.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="currentColor"
+     stroke-width="2"
+     style="-webkit-tap-highlight-color:rgba(0, 0, 0, 0);fill:#ffffff"
+     id="rect2059" />
+  <rect
+     x="600.75634765625"
+     y="699.7999877929688"
+     width="250.46250915527344"
+     height="19.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect2061" />
+  <text
+     x="725.9875183105469"
+     y="709.4000148773193"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text2065">
+    <tspan
+       dy="5.600002288818359"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan2063">&lt;-- Alice's Forward Prefix</tspan>
+  </text>
+  <rect
+     x="387.7250061035156"
+     y="739.4000854492188"
+     width="125.23750305175781"
+     height="19.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect2067" />
+  <text
+     x="450.34375762939453"
+     y="749.0000152587891"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text2071">
+    <tspan
+       dy="5.600027084350586"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan2069">forward Faith</tspan>
+  </text>
+  <path
+     fill="none"
+     stroke="currentColor"
+     d="M522.9625091552734,763.2000160217285C522.9625091552734,763.2000160217285,408.26297733577667,763.2000160217285,382.72440970409184,763.2000160217285"
+     stroke-width="2"
+     marker-end="url(#raphael-marker-endblock55-objidl37)"
+     stroke-dasharray="6,2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="path2073" />
+  <rect
+     x="242.4875030517578"
+     y="778.6000366210938"
+     width="125.23750305175781"
+     height="19.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect2075" />
+  <text
+     x="305.1062545776367"
+     y="788.2000160217285"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text2079">
+    <tspan
+       dy="5.600015640258789"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan2077">forward Faith</tspan>
+  </text>
+  <path
+     fill="none"
+     stroke="currentColor"
+     d="M377.7250061035156,802.400016784668C377.7250061035156,802.400016784668,263.02547428401886,802.400016784668,237.48690665233403,802.400016784668"
+     stroke-width="2"
+     marker-end="url(#raphael-marker-endblock55-objthtnx)"
+     stroke-dasharray="6,2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="path2081" />
+  <rect
+     x="97.25"
+     y="817.7999877929688"
+     width="125.23750305175781"
+     height="19.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect2083" />
+  <text
+     x="159.8687515258789"
+     y="827.400016784668"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text2087">
+    <tspan
+       dy="5.600004196166992"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan2085">forward Faith</tspan>
+  </text>
+  <path
+     fill="none"
+     stroke="currentColor"
+     d="M232.4875030517578,841.6000175476074C232.4875030517578,841.6000175476074,117.78797123226104,841.6000175476074,92.24940360057622,841.6000175476074"
+     stroke-width="2"
+     marker-end="url(#raphael-marker-endblock55-obj7ymvv)"
+     stroke-dasharray="6,2"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="path2089" />
+  <rect
+     x="77.25"
+     y="861.6000175476074"
+     width="455.71250915527344"
+     height="29.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="currentColor"
+     stroke-width="2"
+     style="-webkit-tap-highlight-color:rgba(0, 0, 0, 0);fill:#ffffff"
+     id="rect2091" />
+  <rect
+     x="199.1437530517578"
+     y="866.6000366210938"
+     width="211.9250030517578"
+     height="19.200000762939453"
+     rx="0"
+     ry="0"
+     fill="none"
+     stroke="none"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     id="rect2093" />
+  <text
+     x="305.1062545776367"
+     y="876.2000179290771"
+     text-anchor="middle"
+     font-family="Andale Mono, monospace"
+     font-size="16px"
+     stroke="none"
+     fill="currentColor"
+     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-family: &quot;Andale Mono&quot;, monospace; font-size: 16px;"
+     id="text2097">
+    <tspan
+       dy="5.600017547607422"
+       style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+       id="tspan2095">&lt;-- Alice's Reply Path</tspan>
+  </text>
+</svg>
