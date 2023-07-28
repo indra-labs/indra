@@ -10,7 +10,7 @@ Forming the first layer of the Indra protocol is the simple parts of peer to pee
 
 The primary facility given by the `Exit` is client side anonymity. The relays cannot directly determine from where the requests originate. Since this would otherwise be a spam magnet, none of these requests are fulfilled without the client first establishing session. Thus, the first protocol to discuss is the first step, paying for and confirming a session.
 
-![session purchase flow](./session.svg)
+![session purchase flow](./session.png)
 
 ```sequence
 Title: Session Purchase Flow
@@ -68,7 +68,7 @@ In this phase, Alice, who wants to receive inbound connections via a hidden serv
 
 As introducer, Dave will now gossip the `intro` over the gossip network (Kademlia DHT Pub/Sub), and everyone will have this intro or be able to query neighbours in case they didn't receive it.
 
-![hidden service introduction](./hidden1.svg)
+![hidden service introduction](./hidden1.png)
 
 ```sequence
 Title: Creating a hidden service
@@ -100,7 +100,7 @@ Alice then will receive the route request, with Faith's reply packet. Alice plac
 
 This is not required for the first two steps of this part of the protocol because everyone knows the introducer, and neither client nor server would gain anything by controlling the adjacent hops on Dave's end of the path (last inbound, first outbound). But an attacker would want to attempt to unmask Alice, or a malicious hidden service would try to unmask Faith, and both cases are covered by each side adding their own two hops prior to the provided reply path.
 
-![Routing Request](./hidden2.svg)
+![Routing Request](./hidden2.png)
 
 ```sequence
 Title: Routing Request (establishing connection to hidden service)
@@ -138,7 +138,7 @@ If a message fails the the parties keep past keys to decrypt latent messages or 
 
 Engineering more reliability into this requires the use of split/join message layers and layer two error correction compositions.
 
-![Request/Response Cycle](./hidden3.svg)
+![Request/Response Cycle](./hidden3.png)
 
 ```sequence
 Title: Hidden Service Request and Response
