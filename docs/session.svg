@@ -34,15 +34,15 @@
      guidetolerance="10"
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
-     inkscape:window-width="1920"
-     inkscape:window-height="1045"
+     inkscape:window-width="2520"
+     inkscape:window-height="1405"
      id="namedview4713"
      showgrid="false"
      inkscape:zoom="0.7945425"
      inkscape:cx="127.09804"
      inkscape:cy="347.36971"
-     inkscape:window-x="389"
-     inkscape:window-y="1440"
+     inkscape:window-x="40"
+     inkscape:window-y="0"
      inkscape:window-maximized="1"
      inkscape:current-layer="svg4711" />
   <desc
@@ -964,7 +964,7 @@
      fill="none"
      stroke="currentColor"
      stroke-width="2"
-     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     style="-webkit-tap-highlight-color:rgba(0, 0, 0, 0);fill:#ffffff"
      id="rect4661" />
   <rect
      x="489.2250061035156"

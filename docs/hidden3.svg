@@ -358,7 +358,7 @@
      fill="none"
      stroke="currentColor"
      stroke-width="2"
-     style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"
+     style="-webkit-tap-highlight-color:rgba(0, 0, 0, 0);fill:#ffffff"
      id="rect6626" />
   <rect
      x="315.6499938964844"
