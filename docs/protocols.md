@@ -6,76 +6,97 @@
 
 ### 1. Creating a hidden service
 
-In this process, an intro, which is advertised, and the intro route, which is held, provides a way for a client to contact the hidden service via a temporary proxy called an "Introducer":
+In this phase, Alice, who wants to receive inbound connections via a hidden service, sends out an introduction request to Dave, who will serve as introducer, via a 3 hop forward path.
 
-![creating hidden service sequence diagram as svg](./hidden1.svg)
+As introducer, Dave will now gossip the `intro` over the gossip network (Kademlia DHT Pub/Sub), and everyone will have this intro or be able to query neighbours in case they didn't receive it.
 
 ```sequence
 Title: Creating a hidden service
-Note over Alice: [intro route]\n[intro]\n"hidden service"\n->
-Alice-->Bob: forward 1\n[Alice]
-Bob-->Charlie: forward 1\n[Alice]
-Charlie-->Dave: forward 1\n[Alice]
-note over Dave: ->\n[intro]\n[intro route]\n"introducer"
-Dave-->Charlie: gossip [intro]
-Dave-->Eve: gossip [intro]
-Dave-->Bob: gossip [intro]
-Dave-->Faith: gossip [intro]
-note over Bob,Faith: all received [intro] 
-note over Dave: can introduce
+Note over Alice: "hidden service"\nforward Alice\n[intro route]\n[intro Alice]\n->
+Alice-->Bob: forward\n[Alice]
+Bob-->Charlie: forward\n[Alice]
+Charlie-->Dave: forward\n[Alice]
+note over Alice,Dave: forward Alice ->
+note over Dave: ->\n[intro Alice]\n[intro route Alice]\n"introducer"
+note over Alice,Faith: <- Dave gossip [intro Alice] ->
 ```
 At this point Bob, Charlie and Eve now know about Alice's hidden service 
 
 ### 2. Requesting connection from Introducer (Routing Request)
 
-The client uses the information from the intro, attaches a reply routing header, which includes ciphers and nonces for a two key ECDH cryptosystem used to return a reply. The routing request is bundled inside the intro route reply header, and sent on, following the path prescribed by the hidden service when the introduction was created.
+Faith has acquired an `intro` by some means and wishes to establish a connection to the hidden service. 
 
-![requesting connection from introducer sequence diagram as svg](./hidden2.svg)
+She forwards a route request, with an attached reply header to route a reply back to her, to Dave, the introducer for this illustration.
+
+Dave then wraps up the route request and reply messages in the `intro route` it received along with the `intro`, which is used to forward one (1) request back to the hidden service.
+
+> !!!! Here it might be good to mention that there is a flood attack vector here with creating unlimited numbers of `intro route`/`intro` over the gossip network. This, and the current lack of accounting for traffic to hidden services are both intertwined elements that fix this vulnerability. Nodes simply will require a high fee to accept an introduction, big enough that the spam use case is linearly more expensive than honest use.
+>
+> For the MVP this functionality will not be implemented, but we are already aware of it and will complete this after MVP.
+>
+> Also note there is no risk here of these 3 `intro route` packages being an avenue to unmasking, though in the request/response cycle this requires two forwards from the sender to ensure the receiver is not trying to unmask the client.
+
+Alice then will receive the route request, with Faith's reply packet. Alice places her forward prefix, in case Faith also controls the first hop and thus would unmask Alice. This prefix is required in all messages in addition to the 3 hop reply in order to prevent either party unmasking each other.
+
+This is not required for the first two steps of this part of the protocol because everyone knows the introducer, and neither client nor server would gain anything by controlling the adjacent hops on Dave's end of the path (last inbound, first outbound). But an attacker would want to attempt to unmask Alice, or a malicious hidden service would try to unmask Faith, and both cases are covered by each side adding their own two hops prior to the provided reply path.
 
 ```sequence
 Title: Routing Request (establishing connection to hidden service)
-Note over Faith: route\n[reply Faith]\n->
-Faith-->Eve: forward\n(Faith)
-Eve-->Bob: forward\n(Faith)
-Bob-->Dave: forward\n(Faith)
-Note over Faith,Dave: forward Faith
-note over Dave: ->\nroute\n[reply Faith]\n[intro route]
-Dave-->Charlie: forward\n[intro route]
-Charlie-->Gavin: forward\n[intro route]
-Gavin-->Alice: forward\n[intro route]
-Note over Dave,Alice: intro route
-note over Alice: <- ready\n[reply Faith]\n[reply Alice]
-Alice-->Bob: forward\n(Faith)
-Bob-->Eve: forward\n(Faith)
-Eve-->Faith: forward\n(Faith)
-note over Faith,Alice: reply Faith
-note over Faith: <-\n[ready]\n[reply Alice]
-note over Faith,Alice: <- connection established ->
+Note over Faith: forward->Dave\n[route request Alice]\n[reply Faith]
+Faith-->Eve: forward\n[Faith]
+Eve-->Bob: forward\n[Faith]
+Bob-->Dave: forward\n[Faith]
+Note over Faith,Dave: forward->Dave
+note over Dave: -> intro route Alice\n[route request Alice]\n[reply Faith]
+Dave-->Charlie: intro route\n[Alice]
+Charlie-->Gavin: intro route\n[Alice]
+Gavin-->Alice: intro route\n[Alice]
+Note over Dave,Alice: intro route Alice ->
+Note over Faith,Alice: intro route Alice via Dave ->
+note right of Alice: -> route request Alice\n[reply Faith]
+note over Alice: forward Alice\n[Faith<-reply]\n[ready]\n[reply Alice]
+Alice-->Charlie: forward\n[Alice]
+Charlie-->Dave: forward\n[Alice]
+note over Alice,Dave: <- prefix Alice
+Dave-->Bob: forward\n[Faith]
+Bob-->Eve: forward\n[Faith]
+Eve-->Faith: forward\n[Faith]
+note over Dave, Faith: <- forward path Faith
+note over Faith,Alice: <- ready reply Alice to Faith
+note over Faith: <-\nready\n[reply Alice]
+Faith -> Alice: connection established
+Alice -> Faith:
 ```
 
 ### 3. Request/Response Cycle
 
-Once the receiver has the 'ready' signal, it can then begin a process of request and response wherein each reply carries the reply route header for the return path. If a message fails the protocol assumes that old keys should be available for a few cycles after the current one for this case so the connection can resume rather than forcing the client back to step one.
+Once the receiver has the 'ready' signal, it can then begin a process of request and response wherein each reply carries the reply route header for the return path.
 
-![request/response cycle sequence diagram as svg](./hidden3.svg)
+If a message fails the the parties keep past keys to decrypt latent messages or if it appears the outbound message may have got lost to retry a message using an older key since the key change message may have failed to get across before it arrived in the receiver's buffer.
+
+Engineering more reliability into this requires the use of split/join message layers and layer two error correction compositions.
 
 ```sequence
 Title: Hidden Service Request and Response
-Note over Faith: forward [Alice]\nrequest faith\n[reply faith]\n->
-Faith-->Eve: forward Faith
-Eve-->Dave: forward Faith
+Note over Faith: forward->Dave\n[reply Alice]\n[request Faith]\n[reply Faith]\n->
+Faith-->Eve: forward\n[Faith]
+Eve-->Dave: forward\n[Faith]
 Note over Faith,Dave: Faith's Forward Prefix -->
-Dave-->Charlie: forward Alice
-Charlie-->Bob: forward reply Alice
-Bob-->Alice: forward reply Alice
+Dave-->Charlie: forward\n[reply Alice]
+Charlie-->Bob: forward\n[reply Alice]
+Bob-->Alice: forward\n[reply Alice]
 Note over Dave,Alice: Alices's Reply Path -->
-Note over Alice: forward[Faith]\nresponse Alice\n[reply Alice]\n<-
-Alice-->Bob: forward Alice
-Bob-->Charlie: forward Alice
+Note right of Alice: -> request Faith\n[reply Alice]
+Note Over Faith,Alice: message round 1 (request from hidden client)
+Note over Alice: forward Alice\n[forward Faith]\n[response Alice]\n[reply Alice]\n<-
+Alice-->Bob: forward\n[Alice]
+Bob-->Charlie: forward\n[Alice]
 Note over Alice,Charlie: <-- Alice's Forward Prefix
-Charlie-->Dave: forward Faith
-Dave-->Eve: forward Faith
-Eve-->Faith: forward Faith
-Note over Charlie,Faith: <-- Alice's Reply Path
+Charlie-->Dave: forward\n[reply Faith]
+Dave-->Eve: forward\n[reply Faith]
+Eve-->Faith: forward\n[reply Faith]
+Note over Charlie,Faith: <-- Faith's Reply Path
+Note left of Faith: <-\nresponse Alice\n[reply Alice]
+Note Over Faith,Alice: message round 2 (reply from hidden service)
 ```
 
