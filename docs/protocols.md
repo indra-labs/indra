@@ -8,7 +8,7 @@
 
 In this process, an intro, which is advertised, and the intro route, which is held, provides a way for a client to contact the hidden service via a temporary proxy called an "Introducer":
 
-![creating hidden service sequence diagram as svg](/src/github.com/indra-labs/indra/docs/hidden1.svg)
+![creating hidden service sequence diagram as svg](./hidden1.svg)
 
 ```sequence
 Title: Creating a hidden service
@@ -30,7 +30,7 @@ At this point Bob, Charlie and Eve now know about Alice's hidden service
 
 The client uses the information from the intro, attaches a reply routing header, which includes ciphers and nonces for a two key ECDH cryptosystem used to return a reply. The routing request is bundled inside the intro route reply header, and sent on, following the path prescribed by the hidden service when the introduction was created.
 
-![requesting connection from introducer sequence diagram as svg](/src/github.com/indra-labs/indra/docs/hidden2.svg)
+![requesting connection from introducer sequence diagram as svg](./hidden2.svg)
 
 ```sequence
 Title: Routing Request (establishing connection to hidden service)
@@ -56,6 +56,8 @@ note over Faith,Alice: <- connection established ->
 ### 3. Request/Response Cycle
 
 Once the receiver has the 'ready' signal, it can then begin a process of request and response wherein each reply carries the reply route header for the return path. If a message fails the protocol assumes that old keys should be available for a few cycles after the current one for this case so the connection can resume rather than forcing the client back to step one.
+
+![request/response cycle sequence diagram as svg](./hidden3.svg)
 
 ```sequence
 Title: Hidden Service Request and Response
