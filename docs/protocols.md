@@ -8,6 +8,11 @@ Several novel cryptographic protocols are used in Indra, they need to be underst
 
 **Crypt** is the generic name given to the data structure used in Indra to divide the layers of messages from access to unintended users. It provides some kind of clue about the way to decrypt the data, and the random nonces used in it.
 
+```mermaid
+```
+
+
+
 Header and Payload keys are a pair of private keys delivered in a Session message, which the hash of the concatenation of the keys is the preimage used to pay for it, thus identifying with the payment the keys. 
 
 It seems a bit odd to be sending private keys to a counterparty in a protocol, but for this case, it serves as authentication for triggering the accounting of the relay work done, and the use of the two keys will be explained in a moment how this is used to enable replies via source routing.
@@ -66,30 +71,46 @@ Forming the first layer of the Indra protocol is the simple parts of peer to pee
 
 The primary facility given by the `Exit` is client side anonymity. The relays cannot directly determine from where the requests originate. Since this would otherwise be a spam magnet, none of these requests are fulfilled without the client first establishing session. Thus, the first protocol to discuss is the first step, paying for and confirming a session.
 
-![session purchase flow](./session.png)
-
-```sequence
-Title: Session Purchase Flow
-Note over Dave: Gossip Services Ad
-Dave-->Charlie: 
-Dave-->Bob:
-Dave-->Alice: 
-Note over Alice: Generate New\nSession Keys\n[header/payload]\nHash->Preimage
-Alice-->Bob: LN keysend\n[Preimage]
-Bob-->Charlie: LN keysend\n[Preimage]
-Charlie-->Dave: LN keysend\n[Preimage]
-Note over Dave: Pending Session\nPreimage/Balance <-\ninitial purchase\nif top-up:\nprotocol complete
-Note over Alice: <- Send out Session
-Alice-->Bob: forward\n[session Dave]
-Bob-->Charlie: forward\n[session Dave]
-Charlie-->Dave: forward\n[session Dave]
-Note over Dave: Session Keys Received\n(Must Match Preimage)\n-> Session Ready <-
-
+```mermaid
+sequenceDiagram
+participant Alice
+participant Bob
+participant Charlie
+participant Dave
+rect rgb(240, 240, 240)
+    activate Dave
+    note over Dave: gossip peer metadata
+    Dave--)Charlie: 
+    Dave--)Bob: 
+    Dave--)Alice: 
+    deactivate Dave
+    activate Alice
+    rect rgb(255, 255, 255)
+        note over Alice: [generate session keys]
+        note over Alice: LN payment and preimage
+        Alice-->>Bob: 
+        Bob-->>Charlie: 
+        Charlie-->>Dave: 
+        activate Dave
+        note over Dave: receive payment
+        note over Dave: [awaiting session keys]
+        deactivate Dave
+        note over Alice: send session keys
+        Alice--)Bob: 
+        deactivate Alice
+        Bob--)Charlie: 
+        Charlie--)Dave: 
+        activate Dave
+        note over Dave: receive session keys
+        note over Dave: [session confirmed]
+        deactivate Dave
+    end
+end
 ```
 
 At this point, Alice now can send forwarding and exit messages to Dave until they consume the balance of milliSats remaining on the session.
 
-Note that generally nodes create 5 separate sessions per relay, not all at once, but they are easily strung together as a forward message to send out to any number of relays one has paid for sessions with, to provide the matching keys that are concatenated and hashed to generate the Preimage.
+Note that generally nodes create 5 separate sessions per relay, not all at once, but they are easily strung together as a forward message to send out to any number of relays one has paid for sessions with, to provide the matching keys that are concatenated and hashed to generate the preimage.
 
 Also, it is currently idiom in the protocol implementation to count the position in a 5 hop round trip to isolate sessions to their given hop position when purchased. The first and last hops see the client's IP address, so it would leak information for the client to ever use these sessions that associate to their identity as a peer for other hops in the path.
 
@@ -115,23 +136,54 @@ Decoy traffic will be discussed in later sections as there will be a reciprocal 
 
 #### Exit Protocol (Tunnelling)
 
-```sequence
-Title: Exit Protocol
-Note over Alice: forward\n[exit Dave]\n[request Alice]\n[reply Alice]\n->
-Alice-->Bob: forward Dave
-Bob-->Charlie: forward Dave
-Charlie-->Dave: forward Dave
-Note over Dave: ->\nexit\nrequest Alice\n[reply Alice]
-Dave-->Service: request Alice
-Service-->Dave: response
-Note over Dave: reply Alice\n[response Dave]\n<-
-Dave-->Charlie: reply Alice
-Charlie-->Bob: reply Alice
-Bob-->Alice: reply Alice
-Note over Alice: <-\nresponse Dave
+```mermaid
+sequenceDiagram
+participant Alice
+participant Bob
+participant Charlie
+participant Dave
+participant Service
+rect rgb(240, 240, 240)
+    	activate Alice
+        rect rgb(255, 255, 255)
+		note over Alice: forward
+		note over Alice: [exit Dave]
+  	 	note over Alice: [request Alice]
+  	  	note over Alice: [reply Alice]
+	end
+    Alice--)Bob: 
+    deactivate Alice
+    Bob--)Charlie: 
+    activate Dave
+    Charlie--)Dave: 
+    rect rgb(255, 255, 255)
+        note over Dave: -> exit
+        note over Dave: request Alice
+		note over Dave: [reply Alice]
+        Dave--)Service: request Alice
+        deactivate Dave
+       activate Service	
+   		rect rgb(240,240,240)
+               note over Service: process request
+            Service--)Dave: response Dave
+            deactivate Service
+			activate Dave
+        end
+    	note over Dave: reply Alice
+        activate Alice 
+        note over Dave: [response Dave]
+    end
+    Dave--)Charlie: 
+    deactivate Dave
+    Charlie--)Bob: 
+    activate Alice
+	Bob--)Alice: 
+    rect rgb(255, 255, 255)
+        note over Alice: response Dave
+    end
+    deactivate Alice
+end
 ```
-
-
 
 # Private Services (Layer 2)
 
@@ -145,18 +197,44 @@ In this phase, Alice, who wants to receive inbound connections via a hidden serv
 
 As introducer, Dave will now gossip the `intro` over the gossip network (Kademlia DHT Pub/Sub), and everyone will have this intro or be able to query neighbours in case they didn't receive it.
 
-![hidden service introduction](./hidden1.png)
+```mermaid
+sequenceDiagram
+participant Alice
+participant Bob
+participant Charlie
+participant Dave
+participant Faith
+rect rgb(240, 240, 240)
+    activate Alice
+    note over Alice: "hidden service"
+    rect rgb(255, 255, 255)
+        note over Alice: forward
+        note over Alice: [intro route Alice]
+        note over Alice: [intro Alice]
+    end
+    Alice--)Bob: 
+    deactivate Alice
+    Bob--)Charlie: 
+    Charlie--)Dave: 
+    activate Dave
+    rect rgb(255, 255, 255)
+        note over Dave: -> intro Alice
+        note over Dave: intro route Alice
+    end
+    rect rgb(255, 255, 255)
+    	note over Dave: gossip peer metadata
+        Dave--)Charlie: 
+        Dave--)Faith: 
+        Dave--)Alice: 
+        Dave--)Bob: 
+    end
+end
+deactivate Dave
 
-```sequence
-Title: Creating a hidden service
-Note over Alice: "hidden service"\nforward Alice\n[intro route]\n[intro Alice]\n->
-Alice-->Bob: forward\n[Alice]
-Bob-->Charlie: forward\n[Alice]
-Charlie-->Dave: forward\n[Alice]
-note over Alice,Dave: forward Alice ->
-note over Dave: ->\n[intro Alice]\n[intro route Alice]\n"introducer"
-note over Alice,Faith: <- Dave gossip [intro Alice] ->
+
+
 ```
+
 At this point Bob, Charlie and Eve now know about Alice's hidden service 
 
 ### 2. Requesting connection from Introducer (Routing Request)
