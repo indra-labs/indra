@@ -77,35 +77,51 @@ participant Alice
 participant Bob
 participant Charlie
 participant Dave
+participant Eve
+participant Faith
 rect rgb(240, 240, 240)
     activate Dave
     note over Dave: gossip peer metadata
     Dave--)Charlie: 
+    Dave--)Eve: 
 	Dave--)Bob: 
+	Dave--)Faith: 
     Dave--)Alice: 
 	deactivate Dave
 	activate Alice
     rect rgb(255, 255, 255)
         note over Alice: [generate session keys]
         note over Alice: LN payment and preimage
+        activate Bob
 		Alice-->>Bob: 
         deactivate Alice
-        Bob-->>Charlie: LN payment ->
+        activate Charlie
+        Bob-->>Charlie: 
+        deactivate Bob
         Charlie-->>Dave: 
+        deactivate Charlie
         activate Dave
         note over Dave: receive payment
         note over Dave: [awaiting session keys]
+        activate Charlie
         Dave-->>Charlie: 
         deactivate Dave
-        Charlie-->>Bob: <- LN confirmation
+        Charlie-->>Bob: 
+          activate Bob
+          deactivate Charlie
         Bob-->>Alice: 
-	    activate Alice
+		deactivate Bob
+        activate Alice
         note over Alice: send session keys
+        activate Bob
         Alice--)Bob: 
         deactivate Alice
+        activate Charlie
         Bob--)Charlie: 
+        deactivate Bob
         Charlie--)Dave: 
         activate Dave
+        deactivate Charlie
         note over Dave: receive session keys
         note over Dave: [session confirmed]
         deactivate Dave
@@ -156,11 +172,15 @@ rect rgb(240, 240, 240)
   	 	note over Alice: [request Alice]
   	  	note over Alice: [reply Alice]
 	end
+	activate Bob
     Alice--)Bob: 
     deactivate Alice
+    activate Charlie
     Bob--)Charlie: 
+    deactivate Bob
     activate Dave
     Charlie--)Dave: 
+    deactivate Charlie
     rect rgb(255, 255, 255)
         note over Dave: -> exit
         note over Dave: request Alice
@@ -177,12 +197,16 @@ rect rgb(240, 240, 240)
     	note over Dave: reply Alice
         activate Alice 
         note over Dave: [response Dave]
+    	activate Charlie
     end
+    activate Bob
     Dave--)Charlie: 
     deactivate Dave
     Charlie--)Bob: 
     activate Alice
+    deactivate Charlie
 	Bob--)Alice: 
+    deactivate Bob
     rect rgb(255, 255, 255)
         note over Alice: response Dave
     end
@@ -208,6 +232,7 @@ participant Alice
 participant Bob
 participant Charlie
 participant Dave
+participant Eve
 participant Faith
 rect rgb(240, 240, 240)
     activate Alice
@@ -217,22 +242,28 @@ rect rgb(240, 240, 240)
         note over Alice: [intro route Alice]
         note over Alice: [intro Alice]
     end
+    activate Bob
     Alice--)Bob: 
     deactivate Alice
+    activate Charlie
     Bob--)Charlie: 
-    Charlie--)Dave: 
+    deactivate Bob
     activate Dave
+    Charlie--)Dave: 
+    deactivate Charlie
     rect rgb(255, 255, 255)
         note over Dave: -> intro Alice
         note over Dave: intro route Alice
     end
     rect rgb(255, 255, 255)
-    	note over Dave: gossip peer metadata
+    	note over Dave: gossip intro Alice
         Dave--)Charlie: 
         Dave--)Faith: 
-        Dave--)Alice: 
         Dave--)Bob: 
+        Dave--)Eve: 
+        Dave--)Alice: 
     end
+    note over Dave: "introducer"
 end
 deactivate Dave
 
@@ -260,34 +291,82 @@ Alice then will receive the route request, with Faith's reply packet. Alice plac
 
 This is not required for the first two steps of this part of the protocol because everyone knows the introducer, and neither client nor server would gain anything by controlling the adjacent hops on Dave's end of the path (last inbound, first outbound). But an attacker would want to attempt to unmask Alice, or a malicious hidden service would try to unmask Faith, and both cases are covered by each side adding their own two hops prior to the provided reply path.
 
-![Routing Request](./hidden2.png)
-
-```sequence
-Title: Routing Request (establishing connection to hidden service)
-Note over Faith: forward->Dave\n[route request Alice]\n[reply Faith]
-Faith-->Eve: forward\n[Faith]
-Eve-->Bob: forward\n[Faith]
-Bob-->Dave: forward\n[Faith]
-Note over Faith,Dave: forward->Dave
-note over Dave: -> intro route Alice\n[route request Alice]\n[reply Faith]
-Dave-->Charlie: intro route\n[Alice]
-Charlie-->Gavin: intro route\n[Alice]
-Gavin-->Alice: intro route\n[Alice]
-Note over Dave,Alice: intro route Alice ->
-Note over Faith,Alice: intro route Alice via Dave ->
-note right of Alice: -> route request Alice\n[reply Faith]
-note over Alice: forward Alice\n[Faith<-reply]\n[ready]\n[reply Alice]
-Alice-->Charlie: forward\n[Alice]
-Charlie-->Dave: forward\n[Alice]
-note over Alice,Dave: <- prefix Alice
-Dave-->Bob: forward\n[Faith]
-Bob-->Eve: forward\n[Faith]
-Eve-->Faith: forward\n[Faith]
-note over Dave, Faith: <- forward path Faith
-note over Faith,Alice: <- ready reply Alice to Faith
-note over Faith: <-\nready\n[reply Alice]
-Faith -> Alice: connection established
-Alice -> Faith:
+```mermaid
+sequenceDiagram
+actor Alice
+participant Bob
+participant Charlie
+participant Dave
+participant Eve
+actor Faith
+participant Gavin
+rect rgb(240,240,240)
+	activate Faith
+	note over Faith: "routing request"
+	rect rgb(256,256,256)
+		note over Faith: forward -> Dave
+		note over Faith: [route request -> Alice]
+		note over Faith: [reply Faith]
+		activate Bob
+        Faith--)Bob: 
+        deactivate Faith
+        activate Charlie
+        Bob--)Charlie: 
+        deactivate Bob
+        activate Dave
+        Charlie--)Dave: 
+	end
+	deactivate Charlie
+    note over Dave: route request -> Alice
+    rect rgb(256,256,256)
+    	note over Dave: intro route Alice
+    	note over Dave: [reply Faith]
+    	activate Eve
+        Dave--)Eve: 
+        deactivate Dave
+		activate Gavin
+        Eve--)Gavin: 
+        deactivate Eve
+        Gavin--)Alice: 
+        deactivate Gavin
+        	activate Alice
+    end
+    note over Alice: intro route Alice
+    rect rgb(256,256,256)
+        note over Alice: reply faith
+        note over Alice: +[ready Alice]
+        note over Alice: +[reply Alice]
+    end
+     activate Bob
+       Alice--)Bob: 
+        deactivate Alice
+       rect rgb(256,256,256)
+     activate Charlie
+        Bob--)Charlie: 
+        deactivate Bob
+        note over Bob,Charlie: Alice Forward Prefix
+    end
+    rect rgb(240,240,240)
+        activate Dave
+        Charlie--)Dave: 
+        deactivate Charlie
+        activate Eve
+        rect rgb(256,256,256)
+            Dave--)Eve: 
+            deactivate Dave
+            activate Faith
+            Eve--)Faith: 
+            deactivate Eve
+            note over Dave,Faith: reply Faith
+        end
+        rect rgb(256,256,256)
+            note over Faith: ready Alice
+            note over Faith: reply Alice
+        end
+    end
+    note over Faith: connection established to Alice
+    deactivate Faith
+end
 ```
 
 ### 3. Request/Response Cycle
@@ -298,30 +377,87 @@ If a message fails the the parties keep past keys to decrypt latent messages or 
 
 Engineering more reliability into this requires the use of split/join message layers and layer two error correction compositions.
 
-![Request/Response Cycle](./hidden3.png)
+```mermaid
+sequenceDiagram
+actor Alice
+participant Bob
+participant Charlie
+participant Dave
+participant Eve
+actor Faith
 
-```sequence
-Title: Hidden Service Request and Response
-Note over Faith: forward->Dave\n[reply Alice]\n[request Faith]\n[reply Faith]\n->
-Faith-->Eve: forward\n[Faith]
-Eve-->Dave: forward\n[Faith]
-Note over Faith,Dave: Faith's Forward Prefix -->
-Dave-->Charlie: forward\n[reply Alice]
-Charlie-->Bob: forward\n[reply Alice]
-Bob-->Alice: forward\n[reply Alice]
-Note over Dave,Alice: Alices's Reply Path -->
-Note right of Alice: -> request Faith\n[reply Alice]
-Note Over Faith,Alice: message round 1 (request from hidden client)
-Note over Alice: forward Alice\n[forward Faith]\n[response Alice]\n[reply Alice]\n<-
-Alice-->Bob: forward\n[Alice]
-Bob-->Charlie: forward\n[Alice]
-Note over Alice,Charlie: <-- Alice's Forward Prefix
-Charlie-->Dave: forward\n[reply Faith]
-Dave-->Eve: forward\n[reply Faith]
-Eve-->Faith: forward\n[reply Faith]
-Note over Charlie,Faith: <-- Faith's Reply Path
-Note left of Faith: <-\nresponse Alice\n[reply Alice]
-Note Over Faith,Alice: message round 2 (reply from hidden service)
+note over Faith: start
+activate Faith
+rect rgb(240,240,240)
+ 	rect rgb(256,256,256)
+        note over Faith: forward prefix Faith
+        note over Faith: [forward -> Alice]
+        note over Faith: +[request Faith]
+        note over Faith: +[reply Faith]  
+    end
+	activate Eve
+	Faith--)Eve: 
+    deactivate Faith
+	rect rgb(256,256,256)
+		activate Dave
+        Eve--)Dave: 
+        deactivate Eve
+        note over Dave,Eve: Alice Forward Prefix
+    end
+    activate Charlie
+    Dave--)Charlie: 
+	deactivate Dave
+	rect rgb(256,256,256)
+		activate Bob
+		Charlie--)Bob: 
+		deactivate Charlie
+		activate Alice
+		Bob--)Alice: 
+		deactivate Bob
+        note over Alice,Charlie: forward -> Alice
+		note over Alice: request Faith
+		note over Alice: reply Faith
+    end
+end
+note over Alice,Faith: request Alice <- Faith
+rect rgb(240,240,240)
+
+ 	rect rgb(256,256,256)
+        note over Alice: forward prefix Alice
+        note over Alice: [reply Faith]
+        note over Alice: +[response Alice]
+        note over Alice: +[reply Alice]  
+    end
+	activate Bob
+	Alice--)Bob: 
+    deactivate Alice
+	rect rgb(256,256,256)
+		activate Charlie
+        Bob--)Charlie: 
+        deactivate Bob
+        note over Bob,Charlie: Faith Forward Prefix
+    end
+    activate Dave
+    Charlie--)Dave: 
+  	deactivate Charlie
+	rect rgb(256,256,256)
+		activate Eve
+		Dave--)Eve: 
+		deactivate Dave
+		activate Faith
+		Eve--)Faith: 
+		deactivate Eve
+        note over Dave,Faith: forward -> Faith
+    end
+    rect rgb(256,256,256) 
+		note over Faith: response Alice
+		note over Faith: reply Alice
+    end
+
+end
+note over Alice,Faith: response Alice -> Faith
+deactivate Faith
+
 ```
 
 ## Troubleshooting Protocols
