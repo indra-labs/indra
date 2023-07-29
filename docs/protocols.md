@@ -81,20 +81,25 @@ rect rgb(240, 240, 240)
     activate Dave
     note over Dave: gossip peer metadata
     Dave--)Charlie: 
-    Dave--)Bob: 
+	Dave--)Bob: 
     Dave--)Alice: 
-    deactivate Dave
-    activate Alice
+	deactivate Dave
+	activate Alice
     rect rgb(255, 255, 255)
         note over Alice: [generate session keys]
         note over Alice: LN payment and preimage
-        Alice-->>Bob: 
-        Bob-->>Charlie: 
+		Alice-->>Bob: 
+        deactivate Alice
+        Bob-->>Charlie: LN payment ->
         Charlie-->>Dave: 
         activate Dave
         note over Dave: receive payment
         note over Dave: [awaiting session keys]
+        Dave-->>Charlie: 
         deactivate Dave
+        Charlie-->>Bob: <- LN confirmation
+        Bob-->>Alice: 
+	    activate Alice
         note over Alice: send session keys
         Alice--)Bob: 
         deactivate Alice
