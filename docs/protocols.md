@@ -8,12 +8,7 @@ Several novel cryptographic protocols are used in Indra, they need to be underst
 
 **Crypt** is the generic name given to the data structure used in Indra to divide the layers of messages from access to unintended users. It provides some kind of clue about the way to decrypt the data, and the random nonces used in it.
 
-```mermaid
-```
-
-
-
-Header and Payload keys are a pair of private keys delivered in a Session message, which the hash of the concatenation of the keys is the preimage used to pay for it, thus identifying with the payment the keys. 
+**Header** and **Payload** keys are a pair of private keys delivered in a **Session** message, which the hash of the concatenation of the keys is the preimage used to pay for it, thus identifying with the payment the keys. 
 
 It seems a bit odd to be sending private keys to a counterparty in a protocol, but for this case, it serves as authentication for triggering the accounting of the relay work done, and the use of the two keys will be explained in a moment how this is used to enable replies via source routing.
 
@@ -214,7 +209,7 @@ rect rgb(240, 240, 240)
 end
 ```
 
-# Private Services (Layer 2)
+## Private Services (Layer 2)
 
 #### Server Side Location Confidentiality
 
