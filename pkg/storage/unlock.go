@@ -2,17 +2,15 @@ package storage
 
 import (
 	"github.com/dgraph-io/badger/v3"
+	"github.com/indra-labs/indra/pkg/util/options"
 	"github.com/spf13/viper"
 )
 
 func attempt_unlock() (isUnlocked bool, err error) {
 
-	opts = badger.DefaultOptions(viper.GetString(storeFilePathFlag))
-	opts.Logger = nil
-	opts.IndexCacheSize = 128 << 20
-	opts.EncryptionKey = key.Bytes()
+	opts = options.Default(viper.GetString(storeFilePathFlag), key[:])
 
-	if db, err = badger.Open(opts); err != nil {
+	if db, err = badger.Open(*opts); err != nil {
 
 		db = nil
 

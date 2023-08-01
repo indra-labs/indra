@@ -12,6 +12,7 @@ import (
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
+	"github.com/libp2p/go-libp2p/core/peer"
 	"time"
 )
 
@@ -37,6 +38,14 @@ type Ad struct {
 }
 
 var _ codec.Codec = &Ad{}
+
+func (x *Ad) PubKey() (key *crypto.Pub) { return x.Key }
+func (x *Ad) Fingerprint() (pf string)  { return x.Key.Fingerprint() }
+func (x *Ad) Expired() (is bool)        { return x.Expiry.Before(time.Now()) }
+
+func (x *Ad) GetID() (id peer.ID, e error) {
+	return peer.IDFromPublicKey(x.Key)
+}
 
 // New creates a new Ad and signs it with the provided private key.
 func New(id nonce.ID, key *crypto.Prv, relayRate uint32,

@@ -3,6 +3,7 @@ package ads
 
 import (
 	"errors"
+	"github.com/indra-labs/indra/pkg/cert"
 	"github.com/indra-labs/indra/pkg/codec/ad"
 	"github.com/indra-labs/indra/pkg/codec/ad/addresses"
 	"github.com/indra-labs/indra/pkg/codec/ad/load"
@@ -40,6 +41,10 @@ type NodeAds struct {
 	Address  *addresses.Ad
 	Services *services2.Ad
 	Load     *load.Ad
+}
+
+func (na *NodeAds) GetAsCerts() (ads []cert.Act) {
+	return []cert.Act{na.Address, na.Load, na.Peer, na.Services}
 }
 
 // GetMultiaddrs returns a node's listener addresses.

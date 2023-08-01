@@ -2,7 +2,10 @@ package engine
 
 import (
 	"context"
+	"crypto/rand"
+	badger "github.com/indra-labs/go-ds-badger3"
 	"github.com/indra-labs/indra/pkg/crypto"
+	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/engine/node"
 	"github.com/indra-labs/indra/pkg/engine/transport"
 	"github.com/indra-labs/indra/pkg/util/multi"
@@ -12,38 +15,54 @@ import (
 )
 
 // CreateMockEngine creates an indra Engine with a random localhost listener.
-func CreateMockEngine(seed, dataPath string, ctx context.Context) (ng *Engine) {
-	var e error
+func CreateMockEngine(seed []string, dataPath string, ctx context.Context, cancel context.CancelFunc) (ng *Engine, store *badger.Datastore, closer func()) {
+
+	var (
+		e    error
+		keys []*crypto.Keys
+		k    *crypto.Keys
+	)
 	defer func(f *error) {
 		if *f != nil {
 			fails(os.RemoveAll(dataPath))
 		}
 	}(&e)
-	var keys []*crypto.Keys
-	var k *crypto.Keys
 	if k, e = crypto.GenerateKeys(); fails(e) {
 		return
 	}
 	keys = append(keys, k)
+
+	secret := sha256.New()
+	rand.Read(secret[:])
+	store, closer = transport.BadgerStore(dataPath, secret[:])
+	if store == nil {
+		log.E.Ln("could not open database")
+		return nil, store, closer
+	}
+
 	var l *transport.Listener
-	if l, e = transport.NewListener([]string{seed},
+	if l, e = transport.NewListener(seed,
 		[]string{transport.LocalhostZeroIPv4TCP,
-			transport.LocalhostZeroIPv6TCP},
-		dataPath, k, ctx, transport.DefaultMTU); fails(e) {
+			transport.LocalhostZeroIPv6TCP}, k, store, closer, ctx,
+		transport.DefaultMTU, cancel); fails(e) {
 		return
 	}
 	if l == nil {
 		panic("maybe you have no network device?")
 	}
+
 	sa := transport.GetHostFirstMultiaddr(l.Host)
-	var ap netip.AddrPort
+
 	var ma multiaddr.Multiaddr
 	if ma, e = multiaddr.NewMultiaddr(sa); fails(e) {
 		return
 	}
+
+	var ap netip.AddrPort
 	if ap, e = multi.AddrToAddrPort(ma); fails(e) {
 		return
 	}
+
 	var nod *node.Node
 	if nod, _ = node.NewNode([]*netip.AddrPort{&ap}, k, nil, 50000); fails(e) {
 		return
@@ -58,10 +77,11 @@ func CreateMockEngine(seed, dataPath string, ctx context.Context) (ng *Engine) {
 	return
 }
 
-func CreateAndStartMockEngines(n int, ctx context.Context) (engines []*Engine, cleanup func(), e error) {
+func CreateAndStartMockEngines(n int, ctx context.Context,
+	cancel context.CancelFunc) (engines []*Engine, closer func(), e error) {
 
-	cleanup = func() {}
-	var seed string
+	closer = func() {}
+	var seed []string
 	dataPath := make([]string, n)
 	for i := 0; i < n; i++ {
 		dataPath[i], e = os.MkdirTemp(os.TempDir(), "badger")
@@ -69,16 +89,16 @@ func CreateAndStartMockEngines(n int, ctx context.Context) (engines []*Engine, c
 			return
 		}
 		var eng *Engine
-		if eng = CreateMockEngine(seed, dataPath[i], ctx); fails(e) {
+		if eng, _, _ = CreateMockEngine(seed, dataPath[i], ctx, cancel); fails(e) {
 			return
 		}
 		engines = append(engines, eng)
 		if i == 0 {
-			seed = transport.GetHostFirstMultiaddr(eng.Listener.Host)
+			seed = transport.GetHostMultiaddrs(eng.Listener.Host)
 		}
 		go eng.Start()
 	}
-	cleanup = func() {
+	closer = func() {
 		for i := range engines {
 			if engines[i] != nil {
 				engines[i].Shutdown()

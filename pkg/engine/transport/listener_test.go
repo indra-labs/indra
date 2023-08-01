@@ -2,7 +2,9 @@ package transport
 
 import (
 	"context"
+	"crypto/rand"
 	"github.com/indra-labs/indra"
+	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"os"
 	"testing"
 	"time"
@@ -29,8 +31,14 @@ func TestNewListener(t *testing.T) {
 	if err != nil {
 		t.FailNow()
 	}
-	l1, e = NewListener([]string{""}, []string{LocalhostZeroIPv4TCP}, dataPath,
-		k1, ctx, DefaultMTU)
+	secret := sha256.New()
+	rand.Read(secret[:])
+	store, closer := BadgerStore(dataPath, secret[:])
+	if store == nil {
+		t.Fatal("could not open database")
+	}
+	l1, e = NewListener([]string{""}, []string{LocalhostZeroIPv4TCP}, k1, store,
+		closer, ctx, DefaultMTU, cancel)
 	if fails(e) {
 		t.FailNow()
 	}
@@ -38,8 +46,15 @@ func TestNewListener(t *testing.T) {
 	if err != nil {
 		t.FailNow()
 	}
+	secret = sha256.New()
+	rand.Read(secret[:])
+	store, closer = BadgerStore(dataPath, secret[:])
+	if store == nil {
+		t.Fatal("could not open database")
+	}
 	l2, e = NewListener([]string{GetHostFirstMultiaddr(l1.Host)},
-		[]string{LocalhostZeroIPv4TCP}, dataPath, k2, ctx, DefaultMTU)
+		[]string{LocalhostZeroIPv4TCP}, k2, store, closer, ctx, DefaultMTU,
+		cancel)
 	if fails(e) {
 		t.FailNow()
 	}

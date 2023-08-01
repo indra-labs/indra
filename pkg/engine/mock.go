@@ -2,8 +2,11 @@ package engine
 
 import (
 	"context"
+	"crypto/rand"
+	"errors"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/engine/node"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	"github.com/indra-labs/indra/pkg/engine/tpt"
@@ -18,6 +21,8 @@ var (
 	log   = log2.GetLogger()
 	fails = log.E.Chk
 )
+
+// todo: none of this is in use anymore.
 
 // CreateNMockCircuitsWithSessions creates an arbitrary number of mock circuits
 // from the given specification, with an arbitrary number of mock sessions.
@@ -43,7 +48,7 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 	for i := range tpts {
 		tpts[i] = transport.NewSimDuplex(nTotal, ctx)
 	}
-	var seed string
+	var seeds []string
 	for i := range nodes {
 		var id *crypto.Keys
 		if id, e = crypto.GenerateKeys(); fails(e) {
@@ -61,14 +66,21 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 		if k, e = crypto.GenerateKeys(); fails(e) {
 			return
 		}
-		if l, e = transport.NewListener([]string{seed},
+		secret := sha256.New()
+		rand.Read(secret[:])
+		store, closer := transport.BadgerStore(dataPath, secret[:])
+		if store == nil {
+			return nil, errors.New("could not open database")
+		}
+		if l, e = transport.NewListener(seeds,
 			[]string{transport.LocalhostZeroIPv4TCP,
 				transport.LocalhostZeroIPv6TCP},
-			dataPath, k, ctx, transport.DefaultMTU); fails(e) {
+			k, store, closer, ctx, transport.DefaultMTU, nil); fails(e) {
+
 			return
 		}
 		if i == 0 {
-			seed = transport.GetHostFirstMultiaddr(l.Host)
+			seeds = transport.GetHostMultiaddrs(l.Host)
 		}
 		if cl[i], e = New(Params{
 			Listener: &transport.Listener{

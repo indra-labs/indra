@@ -11,7 +11,6 @@ import (
 	"github.com/indra-labs/indra/pkg/codec"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/splice"
-	"reflect"
 	"sync"
 )
 
@@ -58,10 +57,10 @@ func Recognise(s *splice.Splice) (cdc codec.Codec) {
 			spew.Sdump(s.GetUntil(s.GetCursor()).ToBytes()),
 			spew.Sdump(s.GetFrom(s.GetCursor()).ToBytes()),
 		)
-	} else {
-		log.T.F("recognised magic %s for type %v",
-			color.Red.Sprint(magic),
-			color.Green.Sprint(reflect.TypeOf(cdc)))
+		// } else {
+		// 	log.T.F("recognised magic %s for type %v",
+		// 		color.Red.Sprint(magic),
+		// 		color.Green.Sprint(reflect.TypeOf(cdc)))
 	}
 	return
 }

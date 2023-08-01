@@ -2,11 +2,12 @@ package engine
 
 import (
 	"context"
+	"github.com/dgraph-io/badger/v3"
 	"github.com/indra-labs/indra"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"strings"
 	"testing"
 	"time"
-
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
 )
 
 func pauza() {
@@ -94,14 +95,18 @@ func pauza() {
 
 func TestEngine_PeerStoreDiscovery(t *testing.T) {
 	if indra.CI == "false" {
-		log2.SetLogLevel(log2.Trace)
+		// log2.SetLogLevel(log2.Trace)
 	}
 	const nTotal = 10
-	var e error
-	var engines []*Engine
-	var cleanup func()
-	ctx, _ := context.WithCancel(context.Background())
-	if engines, cleanup, e = CreateAndStartMockEngines(nTotal, ctx); fails(e) {
+	var (
+		e       error
+		engines []*Engine
+		cleanup func()
+	)
+	ctx, cancel := context.WithCancel(context.Background())
+	if engines, cleanup, e = CreateAndStartMockEngines(nTotal, ctx,
+		cancel); fails(e) {
+
 		t.FailNow()
 	}
 	time.Sleep(time.Second * 3)
@@ -112,11 +117,42 @@ func TestEngine_PeerStoreDiscovery(t *testing.T) {
 		}
 	}
 	time.Sleep(time.Second * 3)
-	for i := range engines {
-		_ = i
+	if indra.CI == "false" {
+		log2.SetLogLevel(log2.Debug)
+	}
+	var ec int
+	entryCount := &ec
+	for _, v := range engines {
 		// check that all peers now have nTotal-1 distinct peer ads (of all 4
 		// types)
-
+		e = v.PeerstoreView(func(txn *badger.Txn) error {
+			defer txn.Discard()
+			opts := badger.DefaultIteratorOptions
+			it := txn.NewIterator(opts)
+			defer it.Close()
+			var val []byte
+			var adCount int
+			for it.Rewind(); it.Valid(); it.Next() {
+				k := string(it.Item().Key())
+				if !strings.HasSuffix(k, "ad") {
+					continue
+				}
+				val, e = it.Item().ValueCopy(nil)
+				log.T.S(v.LogEntry("item "+k), val)
+				adCount++
+			}
+			log.T.Ln("adCount", adCount)
+			if adCount == (nTotal-1)*4 {
+				*entryCount++
+			}
+			return nil
+		})
+	}
+	if *entryCount != nTotal {
+		t.Error("nodes did not gossip completely to each other, only",
+			*entryCount, "nodes ad sets counted, not the expected",
+			nTotal)
+		t.FailNow()
 	}
 	cleanup()
 	pauza()

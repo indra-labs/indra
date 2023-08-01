@@ -2,7 +2,9 @@ package p2p
 
 import (
 	"context"
+	"crypto/rand"
 	"github.com/indra-labs/indra/pkg/cfg"
+	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/engine/transport"
 	"github.com/indra-labs/indra/pkg/interrupt"
 	"github.com/indra-labs/indra/pkg/p2p/metrics"
@@ -34,10 +36,10 @@ func init() {
 // Run is the main entrypoint for the seed p2p service.
 func Run() {
 
-	//storage.Update(func(txn *badger.Txn) error {
+	// storage.Update(func(txn *badger.Txn) error {
 	//	txn.Delete([]byte(storeKeyKey))
 	//	return nil
-	//})
+	// })
 
 	configure()
 
@@ -61,9 +63,14 @@ func Run() {
 		la = append(la, listenAddresses[i].String())
 	}
 	var list *transport.Listener
+	secret := sha256.New()
+	rand.Read(secret[:])
+	store, closer := transport.BadgerStore(dataPath, secret[:])
+	if store == nil {
+		panic("could not open database")
+	}
 	list, e = transport.NewListener(netParams.GetSeedsMultiAddrStrings(),
-		la, dataPath, keys, ctx,
-		transport.DefaultMTU)
+		la, keys, store, closer, ctx, transport.DefaultMTU, cancel)
 	l = append(l, list)
 	p2pHost = list.Host
 	log.I.Ln("starting p2p server")

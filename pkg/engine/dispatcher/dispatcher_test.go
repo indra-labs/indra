@@ -2,8 +2,10 @@ package dispatcher
 
 import (
 	"context"
+	"crypto/rand"
 	"github.com/indra-labs/indra/pkg/codec/onion/cores/confirmation"
 	"github.com/indra-labs/indra/pkg/codec/onion/cores/response"
+	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"os"
 	"testing"
 	"time"
@@ -42,9 +44,15 @@ func TestDispatcher(t *testing.T) {
 	if err != nil {
 		t.FailNow()
 	}
+	secret := sha256.New()
+	rand.Read(secret[:])
+	store, closer := transport.BadgerStore(dataPath, secret[:])
+	if store == nil {
+		t.Fatal("could not open database")
+	}
 	l1, e = transport.NewListener([]string{""},
 		[]string{transport.LocalhostZeroIPv4TCP},
-		dataPath, k1, ctx, transport.DefaultMTU)
+		k1, store, closer, ctx, transport.DefaultMTU, cancel)
 	if fails(e) {
 		t.FailNow()
 	}
@@ -52,9 +60,21 @@ func TestDispatcher(t *testing.T) {
 	if err != nil {
 		t.FailNow()
 	}
+	secret = sha256.New()
+	rand.Read(secret[:])
+	store, closer = transport.BadgerStore(dataPath, secret[:])
+	if store == nil {
+		t.Fatal("could not open database")
+	}
+	l1, e = transport.NewListener([]string{""},
+		[]string{transport.LocalhostZeroIPv4TCP},
+		k1, store, closer, ctx, transport.DefaultMTU, cancel)
+	if fails(e) {
+		t.FailNow()
+	}
 	l2, e = transport.NewListener([]string{transport.GetHostFirstMultiaddr(l1.Host)},
-		[]string{transport.LocalhostZeroIPv4TCP}, dataPath, k2, ctx,
-		transport.DefaultMTU)
+		[]string{transport.LocalhostZeroIPv4TCP}, k2, store, closer, ctx,
+		transport.DefaultMTU, cancel)
 	if fails(e) {
 		t.FailNow()
 	}

@@ -78,6 +78,7 @@ var _ peerstore.Peerstore = &pstoreds{}
 // consumption of the peerstore doesn't grow unboundedly.
 func NewPeerstore(ctx context.Context, store ds.Batching,
 	opts Options) (*pstoreds, error) {
+
 	addrBook, err := NewAddrBook(ctx, store, opts)
 	if err != nil {
 		return nil, err
