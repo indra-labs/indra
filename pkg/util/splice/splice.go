@@ -9,8 +9,10 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	magic2 "github.com/indra-labs/indra/pkg/engine/magic"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/util/multi"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/lightningnetwork/lnd/lnwire"
+	"github.com/multiformats/go-multiaddr"
 	"net"
 	"net/netip"
 	"sort"
@@ -77,6 +79,43 @@ func (s *Splice) AddrPort(a *netip.AddrPort) *Splice {
 	copy(s.b[s.c.Inc(1):s.c.Inc(AddrLen)], ap)
 	s.Segments = append(s.Segments,
 		NameOffset{Offset: int(*s.c), Name: color.Yellow.Sprint(a.String())})
+	return s
+}
+
+func (s *Splice) ReadAddrPort(ap **netip.AddrPort) *Splice {
+	*ap = &netip.AddrPort{}
+	apLen := s.b[*s.c]
+	// log.T.Ln("apLen", apLen)
+	apBytes := s.b[s.c.Inc(1):s.c.Inc(AddrLen)]
+	// log.T.S("addrport", apBytes.ToBytes())
+	if s.E = (*ap).UnmarshalBinary(apBytes[:apLen]); fails(s.E) {
+	}
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c),
+			Name: color.Yellow.Sprint((*ap).String())})
+	return s
+}
+
+func (s *Splice) Multiaddr(a multiaddr.Multiaddr,
+	defaultPort uint16) *Splice {
+
+	b, e := multi.AddrToBytes(a, defaultPort)
+	if fails(e) {
+		return s
+	}
+	s.Byte(byte(len(b))).Bytes(b)
+	return s
+}
+
+func (s *Splice) ReadMultiaddr(a *multiaddr.Multiaddr) *Splice {
+	var b byte
+	var e error
+	s.ReadByte(&b)
+	bb := s.GetRange(s.GetCursor(), s.Advance(int(b), "multiaddr"))
+	*a, e = multi.BytesToMultiaddr(bb)
+	if fails(e) {
+		return s
+	}
 	return s
 }
 
@@ -270,20 +309,6 @@ func (s *Splice) Pubkey(from *crypto.Pub) *Splice {
 	copy(s.b[*s.c:s.c.Inc(crypto.PubKeyLen)], pubKey[:])
 	s.Segments = append(s.Segments,
 		NameOffset{Offset: int(*s.c), Name: "pubkey"})
-	return s
-}
-
-func (s *Splice) ReadAddrPort(ap **netip.AddrPort) *Splice {
-	*ap = &netip.AddrPort{}
-	apLen := s.b[*s.c]
-	// log.T.Ln("apLen", apLen)
-	apBytes := s.b[s.c.Inc(1):s.c.Inc(AddrLen)]
-	// log.T.S("addrport", apBytes.ToBytes())
-	if s.E = (*ap).UnmarshalBinary(apBytes[:apLen]); fails(s.E) {
-	}
-	s.Segments = append(s.Segments,
-		NameOffset{Offset: int(*s.c),
-			Name: color.Yellow.Sprint((*ap).String())})
 	return s
 }
 
