@@ -4,9 +4,7 @@ package multi
 import (
 	"errors"
 	"fmt"
-	"github.com/indra-labs/indra/pkg/crypto"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
 	"net/netip"
 )
@@ -57,20 +55,6 @@ func AddrFromAddrPort(ap netip.AddrPort) (ma multiaddr.Multiaddr, e error) {
 	return
 }
 
-func AddKeyToMultiaddr(in multiaddr.Multiaddr, pub *crypto.Pub) (ma multiaddr.Multiaddr) {
-	var pid peer.ID
-	var e error
-	if pid, e = peer.IDFromPublicKey(pub); fails(e) {
-		return
-	}
-	var k multiaddr.Multiaddr
-	if k, e = multiaddr.NewMultiaddr("/p2p/" + pid.String()); fails(e) {
-		return
-	}
-	ma = in.Encapsulate(k)
-	return
-}
-
 // AddrToBytes takes a multiaddr, strips the ip4/ip6/dns address and port out of
 // it, and recombines it to generate a binary form of the essential network
 // address element of a multiaddr.
@@ -81,41 +65,55 @@ func AddKeyToMultiaddr(in multiaddr.Multiaddr, pub *crypto.Pub) (ma multiaddr.Mu
 func AddrToBytes(ma multiaddr.Multiaddr, defaultPort uint16) (b []byte,
 	e error) {
 
-	// First, read out the values encoded for each of the relevant IP and port
-	// in the value.
-	var ip, port string
-	ip, e = ma.ValueForProtocol(multiaddr.P_IP4)
-	if e != nil || ip == "" {
-		ip, e = ma.ValueForProtocol(multiaddr.P_IP6)
-		if e != nil || ip == "" {
-			ip, e = ma.ValueForProtocol(multiaddr.P_DNS)
+	var reassembled []multiaddr.Multiaddr
+	pieces := multiaddr.Split(ma)
+
+	var portFound, firstAddr bool
+	for _, v := range pieces {
+		switch {
+		case v.Protocols()[0].Code == multiaddr.P_TCP:
+
+			// This should be the port
+			reassembled = append(reassembled, v)
+			portFound = true
+
+		case v.Protocols()[0].Code == multiaddr.P_DNS ||
+			v.Protocols()[0].Code == multiaddr.P_IP4 ||
+			v.Protocols()[0].Code == multiaddr.P_IP6:
+
+			// This is the address
+			reassembled = append(reassembled, v)
+			firstAddr = true
 		}
-	}
-	if fails(e) || ip == "" {
-		// There must be DNS, ip4 or ip6 addresses for this field.
-		return
-	}
-	port, e = ma.ValueForProtocol(multiaddr.P_TCP)
-	if fails(e) {
-		return
-	}
-	// If the port is missing, replace it with the defaultPort.
-	if port == "" {
-		var pma multiaddr.Multiaddr
-		pma, e = multiaddr.NewMultiaddr(fmt.Sprintf("/tcp/%d",
-			defaultPort))
-		if fails(e) {
-			// This shouldn't happen.
-			return
+		if portFound && firstAddr {
+			// we have all we need, the multiaddr should not have more than one
+			// of each type.
+			break
 		}
-		port, _ = pma.ValueForProtocol(multiaddr.P_TCP)
 	}
 
-	// Assemble the address and port, and then return the binary form.
-	var mip, port2 multiaddr.Multiaddr
-	mip, e = multiaddr.NewMultiaddr(ip)
-	port2, e = multiaddr.NewMultiaddr(port)
-	return mip.Encapsulate(port2).MarshalBinary()
+	// If there isn't a port, add the default port for the network.
+	if !portFound {
+
+		m, e := multiaddr.NewMultiaddr(fmt.Sprintf("/tcp/%d",
+			defaultPort))
+
+		if fails(e) {
+			panic(e)
+		}
+
+		reassembled = append(reassembled, m)
+	}
+
+	// If there is no address return this as an error.
+	if !firstAddr {
+		e = fmt.Errorf("multiaddr %v does not have an address",
+			ma)
+		return
+	}
+
+	// We can now assume we have two members in `reassembled`
+	return reassembled[0].Encapsulate(reassembled[1]).MarshalBinary()
 }
 
 // BytesToMultiaddr will usually be operating on an encoded value produced by

@@ -14,13 +14,11 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/tpt"
 	"github.com/indra-labs/indra/pkg/engine/transport"
 	"github.com/indra-labs/indra/pkg/hidden"
-	"github.com/indra-labs/indra/pkg/util/multi"
 	"github.com/indra-labs/indra/pkg/util/qu"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"go.uber.org/atomic"
-	"net/netip"
 )
 
 const (
@@ -72,16 +70,8 @@ func New(p Params) (ng *Engine, e error) {
 	}
 	// The internal node 0 needs its address from the Listener:
 	addrs := p.Listener.Host.Addrs()
-out:
 	for i := range addrs {
-		var ap netip.AddrPort
-		ap, e = multi.AddrToAddrPort(addrs[i])
-		for i := range p.Node.Addresses {
-			if ap.String() == p.Node.Addresses[i].String() {
-				continue out
-			}
-		}
-		p.Node.Addresses = append(p.Node.Addresses, &ap)
+		p.Node.Addresses = append(p.Node.Addresses, addrs[i])
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	ng = &Engine{
@@ -113,7 +103,9 @@ out:
 		}
 	}
 	// First NodeAds after boot needs to be immediately gossiped:
-	ng.SendAds()
+	if fails(ng.SendAds()) {
+		return
+	}
 	// Add return sessions for receiving responses, ideally more of these
 	// will be generated during operation and rotated out over time.
 	for i := 0; i < p.NReturnSessions; i++ {

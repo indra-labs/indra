@@ -2,11 +2,9 @@ package sess
 
 import (
 	"errors"
-	"github.com/indra-labs/indra/pkg/util/cryptorand"
-	"github.com/indra-labs/indra/pkg/util/multi"
-	"net/netip"
-
 	"github.com/gookit/color"
+	"github.com/indra-labs/indra/pkg/util/cryptorand"
+	"github.com/multiformats/go-multiaddr"
 
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	"github.com/indra-labs/indra/pkg/engine/node"
@@ -16,7 +14,7 @@ import (
 )
 
 // Send a message to a peer via their Addresses.
-func (sm *Manager) Send(addr *netip.AddrPort, s *splice.Splice) {
+func (sm *Manager) Send(addr multiaddr.Multiaddr, s *splice.Splice) {
 	// first search if we already have the node available with connection open.
 	as := addr.String()
 	sm.ForEachNode(func(n *node.Node) bool {
@@ -47,7 +45,7 @@ func (sm *Manager) Send(addr *netip.AddrPort, s *splice.Splice) {
 // SendWithOneHook is used for onions with only one confirmation hook. Usually
 // as returned from PostAcctOnion this is the last, confirmation or response
 // layer in an onion.Skins.
-func (sm *Manager) SendWithOneHook(ap []*netip.AddrPort,
+func (sm *Manager) SendWithOneHook(ap []multiaddr.Multiaddr,
 	res *Data, responseHook responses.Callback, p *responses.Pending) {
 
 	if responseHook == nil {
@@ -56,12 +54,8 @@ func (sm *Manager) SendWithOneHook(ap []*netip.AddrPort,
 			return errors.New("nil response hook")
 		}
 	}
-	var addr netip.AddrPort
-	var e error
-	if addr, e = multi.AddrToAddrPort(sm.nodes[0].PickAddress(sm.Protocols)); fails(e) {
-		// only in tests this condition happens, normally.
-		e = nil
-	}
+	var addr multiaddr.Multiaddr
+	addr = sm.nodes[0].PickAddress(sm.Protocols)
 	p.Add(responses.ResponseParams{
 		ID:       res.ID,
 		SentSize: res.B.Len(),
@@ -74,5 +68,5 @@ func (sm *Manager) SendWithOneHook(ap []*netip.AddrPort,
 	)
 	log.T.Ln(sm.GetLocalNodeAddressString(), "sending out onion", res.ID,
 		"to", color.Yellow.Sprint(addr.String()))
-	sm.Send(&addr, splice.Load(res.B, slice.NewCursor()))
+	sm.Send(addr, splice.Load(res.B, slice.NewCursor()))
 }

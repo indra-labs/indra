@@ -2,6 +2,7 @@
 package reverse
 
 import (
+	"github.com/indra-labs/indra/pkg/cfg"
 	"github.com/indra-labs/indra/pkg/codec"
 	"github.com/indra-labs/indra/pkg/codec/onion/cores/end"
 	"github.com/indra-labs/indra/pkg/codec/onion/crypt"
@@ -13,9 +14,10 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/util/multi"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
-	"net/netip"
+	"github.com/multiformats/go-multiaddr"
 	"reflect"
 )
 
@@ -33,15 +35,15 @@ const (
 type Reverse struct {
 
 	// AddrPort of the relay to forward this message.
-	AddrPort *netip.AddrPort
+	Multiaddr multiaddr.Multiaddr
 
 	// Onion contained inside this message.
 	ont.Onion
 }
 
 // New creates a new Reverse onion.
-func New(ip *netip.AddrPort) ont.Onion {
-	return &Reverse{AddrPort: ip, Onion: end.NewEnd()}
+func New(ip multiaddr.Multiaddr) ont.Onion {
+	return &Reverse{Multiaddr: ip, Onion: end.NewEnd()}
 }
 
 // Account for the reverse message - note that the actual size being carried is
@@ -59,17 +61,18 @@ func (x *Reverse) Decode(s *splice.Splice) (e error) {
 		Magic); fails(e) {
 		return
 	}
-	s.ReadAddrPort(&x.AddrPort)
+	s.ReadMultiaddr(&x.Multiaddr)
 	return
 }
 
 // Encode a Reverse into the next bytes of a splice.Splice.
 func (x *Reverse) Encode(s *splice.Splice) (e error) {
-	log.T.Ln("encoding", reflect.TypeOf(x), x.AddrPort)
-	if x.AddrPort == nil {
+	log.T.Ln("encoding", reflect.TypeOf(x), x.Multiaddr)
+	if x.Multiaddr == nil {
 		s.Advance(consts.ReverseLen, "reverse")
 	} else {
-		s.Magic(Magic).AddrPort(x.AddrPort)
+		s.Magic(Magic).
+			Multiaddr(x.Multiaddr, cfg.GetCurrentDefaultPort())
 	}
 	if x.Onion != nil {
 		e = x.Onion.Encode(s)
@@ -84,7 +87,7 @@ func (x *Reverse) Unwrap() interface{} { return x.Onion }
 //
 // This is where the 3 layer RoutingHeader is processed.
 func (x *Reverse) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
-	if ng.Mgr().MatchesLocalNodeAddress(x.AddrPort) {
+	if ng.Mgr().MatchesLocalNodeAddress(x.Multiaddr) {
 		in := reg2.Recognise(s)
 		if e = in.Decode(s); fails(e) {
 			return e
@@ -133,7 +136,7 @@ func (x *Reverse) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 	} else if p != nil {
 		// we need to forward this message onion.
 		log.T.Ln(ng.Mgr().GetLocalNodeAddressString(), "forwarding reverse")
-		ng.Mgr().Send(x.AddrPort, s)
+		ng.Mgr().Send(x.Multiaddr, s)
 	} else {
 		log.E.Ln("we do not forward nonsense! scoff! snort!")
 	}
@@ -141,7 +144,12 @@ func (x *Reverse) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 }
 
 // Len returns the length of this Reverse message.
-func (x *Reverse) Len() int { return consts.ReverseLen + x.Onion.Len() }
+func (x *Reverse) Len() int {
+	b, _ := multi.AddrToBytes(x.Multiaddr,
+		cfg.GetCurrentDefaultPort())
+
+	return len(b) + 5 + x.Onion.Len()
+}
 
 // Magic is the identifying 4 byte string indicating a Reverse message follows.
 func (x *Reverse) Magic() string { return Magic }

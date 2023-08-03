@@ -15,9 +15,8 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/payments"
 	"github.com/indra-labs/indra/pkg/engine/services"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/util/multi"
+	"github.com/indra-labs/indra/pkg/util/multikey"
 	"github.com/multiformats/go-multiaddr"
-	"net/netip"
 	"time"
 )
 
@@ -49,12 +48,8 @@ func (na *NodeAds) GetAsCerts() (ads []cert.Act) {
 
 // GetMultiaddrs returns a node's listener addresses.
 func GetMultiaddrs(n *node.Node) (ma []multiaddr.Multiaddr, e error) {
-	for i := range n.Addresses {
-		var aa multiaddr.Multiaddr
-		if aa, e = multi.AddrFromAddrPort(*n.Addresses[i]); fails(e) {
-			return
-		}
-		ma = append(ma, multi.AddKeyToMultiaddr(aa, n.Identity.Pub))
+	for _, aa := range n.Addresses {
+		ma = append(ma, multikey.AddKeyToMultiaddr(aa, n.Identity.Pub))
 	}
 	return
 }
@@ -69,28 +64,12 @@ func GetServices(n *node.Node) (svcs []services2.Service) {
 	return
 }
 
-func GetAddresses(n *node.Node) (aps []*netip.AddrPort, e error) {
-	var ma []multiaddr.Multiaddr
-	if ma, e = GetMultiaddrs(n); fails(e) {
-		return
-	}
-	aps = make([]*netip.AddrPort, len(ma))
-	for i := range ma {
-		var a netip.AddrPort
-		if a, e = multi.AddrToAddrPort(ma[i]); fails(e) {
-			return
-		}
-		aps[i] = &a
-	}
-	return
-}
-
 // GenerateAds takes a node.Node and creates the NodeAds matching it.
 func GenerateAds(n *node.Node, ld byte) (na *NodeAds, e error) {
 	expiry := time.Now().Add(DefaultAdExpiry)
 	s := GetServices(n)
-	var ma []*netip.AddrPort
-	ma, e = GetAddresses(n)
+	var ma []multiaddr.Multiaddr
+	ma, e = GetMultiaddrs(n)
 	if fails(e) {
 		return
 	}

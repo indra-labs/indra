@@ -4,6 +4,8 @@ import (
 	"github.com/indra-labs/indra/pkg/codec"
 	"github.com/indra-labs/indra/pkg/codec/ont"
 	"github.com/indra-labs/indra/pkg/codec/reg"
+	"github.com/indra-labs/indra/pkg/util/multi"
+	"github.com/multiformats/go-multiaddr"
 	"math/rand"
 	"net"
 	"net/netip"
@@ -32,7 +34,12 @@ func TestOnions_Reverse(t *testing.T) {
 		}
 		port := uint16(rand.Uint32())
 		ap := netip.AddrPortFrom(adr, port)
-		on := ont.Assemble([]ont.Onion{New(&ap)})
+		var ma multiaddr.Multiaddr
+		var e error
+		if ma, e = multi.AddrFromAddrPort(ap); fails(e) {
+			t.FailNow()
+		}
+		on := ont.Assemble([]ont.Onion{New(ma)})
 		s := ont.Encode(on)
 		s.SetCursor(0)
 		var onr codec.Codec
@@ -51,8 +58,8 @@ func TestOnions_Reverse(t *testing.T) {
 				reflect.TypeOf(onr))
 			t.FailNow()
 		}
-		if cf.AddrPort.String() != ap.String() {
-			log.I.S(cf.AddrPort, ap)
+		if cf.Multiaddr.String() != ma.String() {
+			log.I.S(cf.Multiaddr, ap)
 			t.Error("reverse Addresses did not unwrap correctly")
 			t.FailNow()
 		}

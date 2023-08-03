@@ -96,6 +96,21 @@ func (s *Splice) ReadAddrPort(ap **netip.AddrPort) *Splice {
 	return s
 }
 
+func (s *Splice) RawBytes(b []byte) *Splice {
+	copy(s.b[*s.c:s.c.Inc(len(b))], b)
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "raw bytes"})
+	return s
+}
+
+func (s *Splice) ReadRawBytes(b *slice.Bytes) *Splice {
+	bytesLen := slice.DecodeUint32(s.b[*s.c:s.c.Inc(slice.Uint32Len)])
+	*b = s.b[*s.c:s.c.Inc(bytesLen)]
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "raw bytes"})
+	return s
+}
+
 func (s *Splice) Multiaddr(a multiaddr.Multiaddr,
 	defaultPort uint16) *Splice {
 
@@ -103,7 +118,7 @@ func (s *Splice) Multiaddr(a multiaddr.Multiaddr,
 	if fails(e) {
 		return s
 	}
-	s.Byte(byte(len(b))).Bytes(b)
+	s.Byte(byte(len(b))).RawBytes(b)
 	return s
 }
 
@@ -131,18 +146,6 @@ func (s *Splice) Byte(b byte) *Splice {
 	s.c.Inc(1)
 	s.Segments = append(s.Segments,
 		NameOffset{Offset: int(*s.c), Name: "byte"})
-	return s
-}
-
-func (s *Splice) Bytes(b []byte) *Splice {
-	bytesLen := slice.NewUint32()
-	slice.EncodeUint32(bytesLen, len(b))
-	copy(s.b[*s.c:s.c.Inc(slice.Uint32Len)], bytesLen)
-	s.Segments = append(s.Segments,
-		NameOffset{Offset: int(*s.c), Name: "32 bit length"})
-	copy(s.b[*s.c:s.c.Inc(len(b))], b)
-	s.Segments = append(s.Segments,
-		NameOffset{Offset: int(*s.c), Name: "bytes"})
 	return s
 }
 
@@ -317,6 +320,18 @@ func (s *Splice) ReadByte(b *byte) *Splice {
 	s.c.Inc(1)
 	s.Segments = append(s.Segments,
 		NameOffset{Offset: int(*s.c), Name: "byte"})
+	return s
+}
+
+func (s *Splice) Bytes(b []byte) *Splice {
+	bytesLen := slice.NewUint32()
+	slice.EncodeUint32(bytesLen, len(b))
+	copy(s.b[*s.c:s.c.Inc(slice.Uint32Len)], bytesLen)
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "32 bit length"})
+	copy(s.b[*s.c:s.c.Inc(len(b))], b)
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "bytes"})
 	return s
 }
 

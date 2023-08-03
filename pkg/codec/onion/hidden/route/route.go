@@ -21,9 +21,8 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	"github.com/indra-labs/indra/pkg/hidden"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/util/multi"
 	"github.com/indra-labs/indra/pkg/util/splice"
-	"net/netip"
+	"github.com/multiformats/go-multiaddr"
 	"reflect"
 )
 
@@ -191,16 +190,17 @@ func (x *Route) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 			Keys:     crypto.Privs{rvKeys[0], rvKeys[1], rvKeys[2]},
 			Nonces:   crypto.Nonces{n[0], n[1], n[2]},
 		}
-		var addrs [5]netip.AddrPort
+		var addrs [5]multiaddr.Multiaddr
 		for i := range addrs {
-			addrs[i], e = multi.AddrToAddrPort(rt.Sessions[i].Node.PickAddress(ng.Mgr().Protocols))
+			addrs[i] = rt.Sessions[i].Node.
+				PickAddress(ng.Mgr().Protocols)
 		}
 		rh := []ont.Onion{
-			reverse.New(&addrs[0]),
+			reverse.New(addrs[0]),
 			crypt.New(rt.Sessions[0].Header.Pub, rt.Sessions[0].Payload.Pub, rt.Keys[0], rt.Nonces[0], 3),
-			reverse.New(&addrs[1]),
+			reverse.New(addrs[1]),
 			crypt.New(rt.Sessions[1].Header.Pub, rt.Sessions[1].Payload.Pub, rt.Keys[1], rt.Nonces[1], 2),
-			reverse.New(&addrs[2]),
+			reverse.New(addrs[2]),
 			crypt.New(rt.Sessions[2].Header.Pub, rt.Sessions[2].Payload.Pub, rt.Keys[2], rt.Nonces[2], 1),
 		}
 		// .RoutingHeader(rt)
@@ -215,9 +215,9 @@ func (x *Route) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 			},
 		}
 		mr := []ont.Onion{
-			forward.New(&addrs[3]),
+			forward.New(addrs[3]),
 			crypt.New(ss[3].Header.Pub, ss[3].Payload.Pub, ng.Keyset().Next(), n[3], 0),
-			forward.New(&addrs[4]),
+			forward.New(addrs[4]),
 			crypt.New(ss[4].Header.Pub, ss[4].Payload.Pub, ng.Keyset().Next(), n[4], 0),
 			ready.New(x.ID, x.HiddenService,
 				x.RoutingHeaderBytes,

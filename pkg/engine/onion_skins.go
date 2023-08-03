@@ -24,9 +24,8 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	headers2 "github.com/indra-labs/indra/pkg/headers"
 	"github.com/indra-labs/indra/pkg/hidden"
-	"github.com/indra-labs/indra/pkg/util/multi"
 	"github.com/indra-labs/indra/pkg/util/slice"
-	"net/netip"
+	"github.com/multiformats/go-multiaddr"
 )
 
 // func (o Skins) Balance(id nonce.ID, amt lnwire.MilliSatoshi) Skins {
@@ -78,19 +77,16 @@ func (o Skins) Exit(id nonce.ID, port uint16, payload slice.Bytes,
 }
 
 // Forward is a simple forwarding instruction, usually followed by a crypt for the recipient.
-func (o Skins) Forward(addr *netip.AddrPort) Skins { return append(o, forward.New(addr)) }
+func (o Skins) Forward(addr multiaddr.Multiaddr) Skins {
+	return append(o, forward.New(addr))
+}
 
 // ForwardCrypt is a forwarding and encryption layer for simple forwarding of a
 // message. Used with hidden service messages and pings for legs of the route
 // that do not need to carry a reply.
 func (o Skins) ForwardCrypt(s *sessions.Data, k *crypto.Prv, n nonce.IV, p protocols.NetworkProtocols) Skins {
 	ma := s.Node.PickAddress(p)
-	addr, e := multi.AddrToAddrPort(ma)
-	if fails(e) {
-		// report error but pass through the receiver.
-		return o
-	}
-	return o.Forward(&addr).Crypt(s.Header.Pub, s.Payload.Pub, k,
+	return o.Forward(ma).Crypt(s.Header.Pub, s.Payload.Pub, k,
 		n, 0)
 }
 
@@ -101,15 +97,7 @@ func (o Skins) ForwardSession(s *node.Node,
 	p protocols.NetworkProtocols) Skins {
 
 	ma := s.PickAddress(p)
-	addr, e := multi.AddrToAddrPort(ma)
-	if fails(e) {
-		// report error but pass through the receiver.
-		//
-		// The absense of a reachable protocol should preclude calling this method
-		// anyway. That is a contract. Make note in type definition.
-		return o
-	}
-	return o.Forward(&addr).
+	return o.Forward(ma).
 		Crypt(s.Identity.Pub, nil, k, n, 0).
 		Session(sess)
 }
@@ -136,7 +124,9 @@ func (o Skins) IntroQuery(id nonce.ID, hsk *crypto.Pub, exit *exit.ExitPoint) Sk
 
 // Reverse is a special variant of the Forward message that is only used in
 // groups of three to create a RoutingHeader;
-func (o Skins) Reverse(ip *netip.AddrPort) Skins { return append(o, reverse.New(ip)) }
+func (o Skins) Reverse(ip multiaddr.Multiaddr) Skins {
+	return append(o, reverse.New(ip))
+}
 
 // Crypt is a layer providing the recipient cloaked address, one-time sender
 // private key and nonce needed to decrypt the remainder of the onion message.
@@ -156,16 +146,7 @@ func (o Skins) ReverseCrypt(s *sessions.Data, k *crypto.Prv, n nonce.IV,
 		return
 	}
 	ma := s.Node.PickAddress(p)
-	addr, e := multi.AddrToAddrPort(ma)
-	if fails(e) {
-		// report error but pass through the receiver.
-		//
-		// The absense of a reachable protocol should preclude calling this method
-		// anyway. That is a contract. Make note in type definition.
-		// return o
-		e = nil
-	}
-	return o.Reverse(&addr).Crypt(s.Header.Pub, s.Payload.Pub, k, n,
+	return o.Reverse(ma).Crypt(s.Header.Pub, s.Payload.Pub, k, n,
 		seq)
 }
 

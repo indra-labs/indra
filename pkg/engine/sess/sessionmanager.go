@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/indra-labs/indra/pkg/engine/protocols"
 	"github.com/indra-labs/indra/pkg/util/cryptorand"
+	"github.com/multiformats/go-multiaddr"
 	"net/netip"
 	"sync"
 
@@ -402,12 +403,12 @@ func (sm *Manager) ForEachNode(fn func(n *node.Node) bool) {
 func (sm *Manager) GetLocalNode() *node.Node { return sm.nodes[0] }
 
 // GetLocalNodeAddress returns an Address of the local node. This is done randomly. Only addresses of the types configured in the manager (default is the same as the default gateway's interfaces. IPv4 and maybe IPv6.
-func (sm *Manager) GetLocalNodeAddress() (addr *netip.AddrPort) {
-	//sm.Lock()
-	//defer sm.Unlock()
+func (sm *Manager) GetLocalNodeAddress() (addr multiaddr.Multiaddr) {
+	// sm.Lock()
+	// defer sm.Unlock()
 	addys := sm.nodes[0].
 		Addresses
-	shuf := make([]*netip.AddrPort, len(addys))
+	shuf := make([]multiaddr.Multiaddr, len(addys))
 	for i := range addys {
 		shuf[i] = addys[i]
 	}
@@ -419,15 +420,15 @@ func (sm *Manager) GetLocalNodeAddress() (addr *netip.AddrPort) {
 }
 
 // GetLocalNodeAddresses returns the addresses of the local node.
-func (sm *Manager) GetLocalNodeAddresses() (addr []*netip.AddrPort) {
-	//sm.Lock()
-	//defer sm.Unlock()
+func (sm *Manager) GetLocalNodeAddresses() (addr []multiaddr.Multiaddr) {
+	// sm.Lock()
+	// defer sm.Unlock()
 	return sm.GetLocalNode().Addresses
 }
 
-func (sm *Manager) MatchesLocalNodeAddress(ap *netip.AddrPort) (is bool) {
+func (sm *Manager) MatchesLocalNodeAddress(ap multiaddr.Multiaddr) (is bool) {
 	for _, v := range sm.GetLocalNode().Addresses {
-		if *ap == *v {
+		if ap.Equal(v) {
 			return true
 		}
 	}
@@ -579,14 +580,14 @@ func (sm *Manager) SetLocalNode(n *node.Node) {
 }
 
 // AddLocalNodeAddress changes the local node address.
-func (sm *Manager) AddLocalNodeAddress(addr *netip.AddrPort) {
+func (sm *Manager) AddLocalNodeAddress(addr multiaddr.Multiaddr) {
 	sm.Lock()
 	defer sm.Unlock()
 	sm.GetLocalNode().Addresses = append(sm.GetLocalNode().Addresses, addr)
 }
 
 // AddLocalNodeAddresses changes the local node address.
-func (sm *Manager) AddLocalNodeAddresses(addr []*netip.AddrPort) {
+func (sm *Manager) AddLocalNodeAddresses(addr []multiaddr.Multiaddr) {
 	sm.Lock()
 	defer sm.Unlock()
 	for i := range addr {
@@ -595,12 +596,12 @@ func (sm *Manager) AddLocalNodeAddresses(addr []*netip.AddrPort) {
 }
 
 // RemoveLocalNodeAddress removes a local node address.
-func (sm *Manager) RemoveLocalNodeAddress(addr *netip.AddrPort) {
+func (sm *Manager) RemoveLocalNodeAddress(addr multiaddr.Multiaddr) {
 	sm.Lock()
 	defer sm.Unlock()
-	tmp := make([]*netip.AddrPort, len(sm.nodes[0].Addresses))
+	tmp := make([]multiaddr.Multiaddr, len(sm.nodes[0].Addresses))
 	for _, v := range sm.GetLocalNode().Addresses {
-		if *v != *addr {
+		if v.Equal(addr) {
 			tmp = append(tmp, v)
 		}
 	}
