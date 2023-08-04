@@ -105,6 +105,9 @@ func (x *Forward) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 
 // Len returns the length of this Forward message.
 func (x *Forward) Len() int {
+
+	codec.MustNotBeNil(x)
+
 	b, _ := multi.AddrToBytes(x.Multiaddr,
 		cfg.GetCurrentDefaultPort())
 	return magic.Len +

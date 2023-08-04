@@ -123,7 +123,12 @@ func (x *HiddenService) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e er
 
 // Len returns the length of the onion starting from this one (used to size a
 // Splice).
-func (x *HiddenService) Len() int { return Len + x.Onion.Len() }
+func (x *HiddenService) Len() int {
+
+	codec.MustNotBeNil(x)
+
+	return Len + x.Onion.Len()
+}
 
 // Magic bytes identifying a HiddenService message is up next.
 func (x *HiddenService) Magic() string { return Magic }

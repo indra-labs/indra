@@ -174,7 +174,12 @@ func (x *Crypt) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 }
 
 // Len returns the length of bytes required to encode the Crypt.
-func (x *Crypt) Len() int { return consts.CryptLen + x.Onion.Len() }
+func (x *Crypt) Len() int {
+
+	codec.MustNotBeNil(x)
+
+	return consts.CryptLen + x.Onion.Len()
+}
 
 // Magic bytes that identify this message
 func (x *Crypt) Magic() string { return CryptMagic }

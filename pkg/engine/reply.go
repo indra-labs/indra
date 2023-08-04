@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"github.com/indra-labs/indra/pkg/codec"
 	"github.com/indra-labs/indra/pkg/codec/onion/exit"
 	"github.com/indra-labs/indra/pkg/codec/ont"
 	"github.com/indra-labs/indra/pkg/crypto"
@@ -21,7 +22,7 @@ func MakeReplyHeader(ng *Engine) (returnHeader *hidden.ReplyHeader) {
 		Nonces:   crypto.Nonces{n[0], n[1], n[2]},
 	}
 	rh := Skins{}.RoutingHeader(rt, ng.Mgr().Protocols)
-	rHdr := ont.Encode(ont.Assemble(rh))
+	rHdr := codec.Encode(ont.Assemble(rh))
 	rHdr.SetCursor(0)
 	ep := exit.ExitPoint{
 		Routing: rt,

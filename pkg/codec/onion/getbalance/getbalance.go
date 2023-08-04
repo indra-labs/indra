@@ -100,7 +100,7 @@ func (x *GetBalance) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error
 	}
 	log.D.Ln("session found", x.ID)
 	header := hidden.GetRoutingHeaderFromCursor(s)
-	rbb := hidden.FormatReply(header, x.Ciphers, x.Nonces, ont.Encode(bal).GetAll())
+	rbb := hidden.FormatReply(header, x.Ciphers, x.Nonces, codec.Encode(bal).GetAll())
 	rb := append(rbb.GetAll(), slice.NoisePad(714-rbb.Len())...)
 	switch on1 := p.(type) {
 	case *crypt.Crypt:
@@ -119,13 +119,19 @@ func (x *GetBalance) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error
 		}
 		return false
 	})
-	rbb = hidden.FormatReply(header, x.Ciphers, x.Nonces, ont.Encode(bal).GetAll())
+	rbb = hidden.FormatReply(header, x.Ciphers, x.Nonces, codec.Encode(bal).GetAll())
 	rb = append(rbb.GetAll(), slice.NoisePad(714-len(rb))...)
 	ng.HandleMessage(splice.Load(rb, slice.NewCursor()), x)
 	return
 }
 
-func (x *GetBalance) Len() int      { return GetBalanceLen + x.Onion.Len() }
+func (x *GetBalance) Len() int {
+
+	codec.MustNotBeNil(x)
+
+	return GetBalanceLen + x.Onion.Len()
+}
+
 func (x *GetBalance) Magic() string { return GetBalanceMagic }
 
 type GetBalanceParams struct {

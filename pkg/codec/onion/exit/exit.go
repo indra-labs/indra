@@ -140,7 +140,7 @@ func (x *Exit) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 	case <-timer.C:
 	}
 	// We need to wrap the result in a message crypt.
-	res := ont.Encode(&response.Response{
+	res := codec.Encode(&response.Response{
 		ID:    x.ID,
 		Port:  x.Port,
 		Load:  byte(ng.GetLoad()),
@@ -173,7 +173,12 @@ func (x *Exit) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 
 // Len returns the length of this Exit message (payload and return header Onion
 // included.
-func (x *Exit) Len() int { return Len + x.Bytes.Len() + x.Onion.Len() }
+func (x *Exit) Len() int {
+
+	codec.MustNotBeNil(x)
+
+	return Len + x.Bytes.Len() + x.Onion.Len()
+}
 
 // Magic is the identifying 4 byte string indicating an Exit message follows.
 func (x *Exit) Magic() string { return Magic }

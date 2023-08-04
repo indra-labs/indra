@@ -104,6 +104,9 @@ func (x *Ad) Unwrap() interface{} { return nil }
 // Len returns the length of bytes required to encode the Ad, based on the number
 // of Addresses inside it.
 func (x *Ad) Len() int {
+
+	codec.MustNotBeNil(x)
+
 	l := ad.Len + slice.Uint16Len
 	// Generate the addresses to get their data length:
 	for _, v := range x.Addresses {

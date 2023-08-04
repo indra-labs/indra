@@ -34,7 +34,7 @@ func TestOnions_GetBalance(t *testing.T) {
 		ReturnPubs: pubs,
 	}
 	on := ont.Assemble([]ont.Onion{NewGetBalance(id, ep)})
-	s := ont.Encode(on)
+	s := codec.Encode(on)
 	s.SetCursor(0)
 	var onc codec.Codec
 	if onc = reg.Recognise(s); onc == nil {

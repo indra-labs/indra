@@ -130,7 +130,12 @@ func (x *Message) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 }
 
 // Len returns the length of this Message.
-func (x *Message) Len() int { return MessageLen + x.Payload.Len() }
+func (x *Message) Len() int {
+
+	codec.MustNotBeNil(x)
+
+	return MessageLen + x.Payload.Len()
+}
 
 // Magic is the identifying 4 byte string indicating a Message follows.
 func (x *Message) Magic() string { return MessageMagic }

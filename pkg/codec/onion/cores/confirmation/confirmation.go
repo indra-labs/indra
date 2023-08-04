@@ -70,7 +70,12 @@ func (x *Confirmation) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e err
 }
 
 // Len returns the length of bytes required to encode the Confirmation.
-func (x *Confirmation) Len() int { return Len }
+func (x *Confirmation) Len() int {
+
+	codec.MustNotBeNil(x)
+
+	return Len
+}
 
 // Magic bytes that identify this message
 func (x *Confirmation) Magic() string { return Magic }

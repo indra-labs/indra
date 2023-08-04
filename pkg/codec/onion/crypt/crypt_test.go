@@ -26,7 +26,7 @@ func TestOnions_SimpleCrypt(t *testing.T) {
 		New(pub1, pub2, prv2, n1, 0),
 		confirmation.New(n),
 	})
-	s := ont.Encode(on)
+	s := codec.Encode(on)
 	s.SetCursor(0)
 	log.D.S("encoded, encrypted onion:\n", s.GetAll().ToBytes())
 	var oncr codec.Codec

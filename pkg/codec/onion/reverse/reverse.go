@@ -145,6 +145,9 @@ func (x *Reverse) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 
 // Len returns the length of this Reverse message.
 func (x *Reverse) Len() int {
+
+	codec.MustNotBeNil(x)
+
 	b, _ := multi.AddrToBytes(x.Multiaddr,
 		cfg.GetCurrentDefaultPort())
 

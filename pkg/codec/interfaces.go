@@ -28,10 +28,19 @@ type Codec interface {
 	Decode(s *splice.Splice) (e error)
 
 	// Len returns the number of bytes required to encode this Codec message (including Magic).
+	//
+	// This function must panic if called on a nil pointer as unconfigured
+	// messages cannot yield a valid length value in many cases.
 	Len() int
 
 	// Unwrap gives access to any further layers embedded inside this (specifically, the Onion inside).
 	Unwrap() interface{}
+}
+
+func MustNotBeNil(c Codec) {
+	if c == nil {
+		panic("cannot compute length without struct fields")
+	}
 }
 
 // Encode is the generic encoder for a Codec, all can be encoded with it.

@@ -77,6 +77,9 @@ func (a *Acknowledge) Unwrap() interface{} { return nil }
 
 // Len returns the length of an Acknowledge message in bytes.
 func (a *Acknowledge) Len() int {
+
+	codec.MustNotBeNil(a)
+
 	return 4 + nonce.IDLen + sha256.Len + 5*slice.Uint64Len
 }
 
@@ -110,7 +113,12 @@ func (k *NewKey) Encode(s *splice.Splice) (e error) {
 func (k *NewKey) Unwrap() interface{} { return nil }
 
 // Len returns the length of an NewKey message in bytes.
-func (k *NewKey) Len() int { return 4 + crypto.PubKeyLen }
+func (k *NewKey) Len() int {
+
+	codec.MustNotBeNil(k)
+
+	return 4 + crypto.PubKeyLen
+}
 
 // Magic is the identifying 4 byte prefix of an NewKey in binary form.
 func (k *NewKey) Magic() string { return NewKeyMagic }
@@ -139,6 +147,9 @@ func OnionGen() codec.Codec { return &Onion{} }
 func (o *Onion) Unwrap() interface{} { return o.Unpack() }
 
 func (o *Onion) Len() int {
+
+	codec.MustNotBeNil(o)
+
 	return 4 + len(o.Bytes) + 4
 }
 func (o *Onion) Magic() string { return OnionMagic }

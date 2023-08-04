@@ -40,7 +40,7 @@ func TestOnions_Reverse(t *testing.T) {
 			t.FailNow()
 		}
 		on := ont.Assemble([]ont.Onion{New(ma)})
-		s := ont.Encode(on)
+		s := codec.Encode(on)
 		s.SetCursor(0)
 		var onr codec.Codec
 		if onr = reg.Recognise(s); onr == nil {

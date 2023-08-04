@@ -204,7 +204,7 @@ func (x *Route) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 			crypt.New(rt.Sessions[2].Header.Pub, rt.Sessions[2].Payload.Pub, rt.Keys[2], rt.Nonces[2], 1),
 		}
 		// .RoutingHeader(rt)
-		rHdr := ont.Encode(ont.Assemble(rh))
+		rHdr := codec.Encode(ont.Assemble(rh))
 		rHdr.SetCursor(0)
 		ep := exit.ExitPoint{
 			Routing: rt,
@@ -228,7 +228,7 @@ func (x *Route) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 				ep.Nonces),
 		}
 		assembled := ont.Assemble(mr)
-		reply := ont.Encode(assembled)
+		reply := codec.Encode(assembled)
 		ng.HandleMessage(reply, x)
 	}
 	return

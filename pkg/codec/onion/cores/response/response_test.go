@@ -28,7 +28,7 @@ func TestOnions_Response(t *testing.T) {
 		New(id, port, msg, 0),
 		end.NewEnd(),
 	})
-	s := ont.Encode(on)
+	s := codec.Encode(on)
 	s.SetCursor(0)
 	var onc codec.Codec
 	if onc = reg.Recognise(s); onc == nil {

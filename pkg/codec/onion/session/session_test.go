@@ -3,7 +3,6 @@ package session
 import (
 	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/codec"
-	"github.com/indra-labs/indra/pkg/codec/ont"
 	"github.com/indra-labs/indra/pkg/codec/reg"
 	"testing"
 
@@ -16,7 +15,7 @@ func TestOnions_Session(t *testing.T) {
 	}
 	sess := New(1)
 	ss := sess.(*Session)
-	s := ont.Encode(sess)
+	s := codec.Encode(sess)
 	s.SetCursor(0)
 	var onc codec.Codec
 	if onc = reg.Recognise(s); onc == nil {

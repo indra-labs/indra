@@ -126,7 +126,12 @@ func (x *IntroQuery) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error
 
 // Len returns the length of the onion starting from this one (used to size a
 // Splice).
-func (x *IntroQuery) Len() int { return Len + x.Onion.Len() }
+func (x *IntroQuery) Len() int {
+
+	codec.MustNotBeNil(x)
+
+	return Len + x.Onion.Len()
+}
 
 // Magic bytes identifying a HiddenService message is up next.
 func (x *IntroQuery) Magic() string { return Magic }
