@@ -29,10 +29,20 @@ var (
 )
 
 const (
-	MessageMagic    = "whis"
+	MessageMagic = "whis"
+
+	// ReplyCiphersLen is
+	//
+	// Deprecated: this is now a variable length structure, Reverse is being
+	// obsoleted in favour of Offset.
 	ReplyCiphersLen = 2*consts.RoutingHeaderLen +
 		6*sha256.Len +
 		6*nonce.IVLen
+
+	// MessageLen is
+	//
+	// Deprecated: this is now a variable length structure, Reverse is being
+	// obsoleted in favour of Offset.
 	MessageLen = magic.Len +
 		2*nonce.IDLen +
 		2*consts.RoutingHeaderLen +

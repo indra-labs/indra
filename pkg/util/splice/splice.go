@@ -19,6 +19,9 @@ import (
 	"time"
 )
 
+// AddrLen is
+//
+// Deprecated: this is now a variable length structure.
 const AddrLen = net.IPv6len + 2
 
 var (
