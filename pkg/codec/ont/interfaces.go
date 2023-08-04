@@ -2,6 +2,7 @@
 package ont
 
 import (
+	"github.com/indra-labs/indra/pkg/codec"
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/engine/responses"
 	"github.com/indra-labs/indra/pkg/engine/sess"
@@ -15,27 +16,6 @@ var (
 	log   = log2.GetLogger()
 	fails = log.E.Chk
 )
-
-// Codec is a unit of data that can be read and written from a binary form. All
-// Onion are Codec but not all Codec are Onion. Codec is also used for the
-// Dispatcher's message headers.
-type Codec interface {
-
-	// Magic is a 4 byte string identifying the type of the following message bytes.
-	Magic() string
-
-	// Encode uses the Codec's contents to encode into the splice.Splice next bytes.
-	Encode(s *splice.Splice) (e error)
-
-	// Decode reads in the data in the next bytes of the splice.Splice to populate this Codec.
-	Decode(s *splice.Splice) (e error)
-
-	// Len returns the number of bytes required to encode this Codec message (including Magic).
-	Len() int
-
-	// Unwrap gives access to any further layers embedded inside this (specifically, the Onion inside).
-	Unwrap() interface{}
-}
 
 // Ngin is the generic interface for onion encoders to access the engine without
 // tying the dependencies together.
@@ -71,7 +51,7 @@ type Ngin interface {
 // a set of processing instructions for the data in them, and, if relevant,
 // how to account for them in sessions.
 type Onion interface {
-	Codec
+	codec.Codec
 
 	// Wrap places another onion inside this onion's inner layer.
 	Wrap(inner Onion)
@@ -82,13 +62,6 @@ type Onion interface {
 	// Account sets up the bandwidth accounting for sending out an Onion.
 	Account(res *sess.Data, sm *sess.Manager, s *sessions.Data,
 		last bool) (skip bool, sd *sessions.Data)
-}
-
-// Encode is the generic encoder for a Codec, all can be encoded with it.
-func Encode(d Codec) (s *splice.Splice) {
-	s = splice.New(d.Len())
-	fails(d.Encode(s))
-	return
 }
 
 // Assemble takes a slice and inserts the tail into the onion of the head until
