@@ -18,7 +18,7 @@ func TooShort(got, found int, magic string) (e error) {
 	if got >= found {
 		return
 	}
-	e = fmt.Errorf(ErrTooShort, magic, got, found)
+	e = fmt.Errorf(ErrTooShort, magic, found, got)
 	return
 
 }

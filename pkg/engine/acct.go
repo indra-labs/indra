@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"github.com/indra-labs/indra/pkg/codec"
 	"github.com/indra-labs/indra/pkg/codec/onion/crypt"
 	"github.com/indra-labs/indra/pkg/codec/ont"
 	"github.com/indra-labs/indra/pkg/engine/sess"
@@ -13,7 +14,7 @@ import (
 func PostAcctOnion(sm *sess.Manager, o Skins) (res *sess.Data) {
 	res = &sess.Data{}
 	assembled := ont.Assemble(o)
-	sp := ont.Encode(assembled)
+	sp := codec.Encode(assembled)
 	res.B = sp.GetAll()
 	// do client accounting
 	skip := false

@@ -126,6 +126,9 @@ func (hr *Hidden) DeleteKnownIntro(key crypto.PubBytes) (
 }
 
 // RoutingHeaderBytes is a raw bytes form of a 3 layer RoutingHeader.
+//
+// Deprecated: This needs to be an alias for []byte as the structure is variable
+// length.
 type RoutingHeaderBytes [consts.RoutingHeaderLen]byte
 
 // Services is a map of local hidden services keyed to their public key.
@@ -266,8 +269,8 @@ type MyIntros map[crypto.PubBytes]*Introduction
 type ReplyHeader struct {
 
 	// RoutingHeaderBytes contains the 3 layer RoutingHeader that holds the path
-	// instructions in three progressively encrypted layers in reverse order so to be
-	// unwrapped progressively.
+	// instructions in three progressively encrypted layers in reverse order so
+	// to be unwrapped progressively.
 	RoutingHeaderBytes
 
 	// Ciphers is a set of 3 symmetric ciphers that are to be used in their

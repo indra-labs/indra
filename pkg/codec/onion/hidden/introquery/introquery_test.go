@@ -39,7 +39,7 @@ func TestOnions_IntroQuery(t *testing.T) {
 		New(id, crypto.DerivePub(prv1), ep),
 		end.NewEnd(),
 	})
-	s := ont.Encode(on)
+	s := codec.Encode(on)
 	s.SetCursor(0)
 	var onc codec.Codec
 	if onc = reg.Recognise(s); onc == nil {

@@ -1,17 +1,32 @@
 package cfg
 
 import (
-	"github.com/multiformats/go-multiaddr"
-	"os"
-
 	"github.com/indra-labs/indra/pkg/node"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/multiformats/go-multiaddr"
+	"go.uber.org/atomic"
+	"strconv"
 )
 
 var (
 	log   = log2.GetLogger()
 	check = log.E.Chk
+
+	current atomic.String
 )
+
+func init() {
+	// Set default so all code has *something* to use (mainly for tests).
+	current.Store(TestNet)
+}
+
+// CurrentNetworkParams is set by the controlling server, but we set it to
+// default at initialisation. There is no reason for this to not be a
+// singleton variable. There should only be writes to this variable before
+// startup.
+func CurrentNetworkParams() *Params {
+	return SelectNetworkParams(current.Load())
+}
 
 const (
 	// MainNet is the identifier string for the main production network.
@@ -34,21 +49,42 @@ type Params struct {
 	// DefaultPort is the default port for p2p listening
 	DefaultPort string
 
-	// DNSSeedAddresses is a list of DNS hostnames used to bootstrap a new node on the network
+	// DNSSeedAddresses is a list of DNS hostnames used to bootstrap a new node
+	// on the network. todo: maybe DNS should not be assumed, this puts ICANN in control...
 	DNSSeedAddresses []*SeedAddress
 }
 
-// SelectNetworkParams returns the network parameters associated with the network name.
+// SelectNetworkParams returns the network parameters associated with the
+// network name.
+//
+// This should not be set except at startup.
 func SelectNetworkParams(network string) *Params {
 
 	if nw, ok := params[network]; ok {
+
 		return nw
 	}
 	panic("invalid network, exiting...")
 
-	os.Exit(1)
-
 	return nil
+}
+
+func SetNetworkParams(network string) {
+
+	if _, ok := params[network]; ok {
+		current.Store(network)
+	}
+	panic("invalid network, exiting...")
+}
+
+func GetCurrentNetworkParams() *Params {
+	return SelectNetworkParams(current.Load())
+}
+
+func GetCurrentDefaultPort() uint16 {
+	v, _ := strconv.Atoi(SelectNetworkParams(current.Load()).
+		DefaultPort)
+	return uint16(v)
 }
 
 // ParseSeedMultiAddresses returns the addresses of the seeds as a slice of multiaddr.Multiaddr.
@@ -60,7 +96,10 @@ func (p *Params) ParseSeedMultiAddresses() (addresses []multiaddr.Multiaddr, err
 
 	for _, addr := range p.DNSSeedAddresses {
 
-		if adr, err = multiaddr.NewMultiaddr("/dns4/" + addr.DNSAddress + "/tcp/" + p.DefaultPort + "/p2p/" + addr.ID); check(err) {
+		if adr, err = multiaddr.NewMultiaddr("/dns4/" +
+			addr.DNSAddress + "/tcp/" + p.DefaultPort + "/p2p/" +
+			addr.ID); check(err) {
+
 			return
 		}
 

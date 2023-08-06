@@ -86,7 +86,12 @@ func (x *Ad) Encode(s *splice.Splice) (e error) {
 func (x *Ad) Unwrap() interface{} { return nil }
 
 // Len is the number of bytes required for the binary encoded form of an Ad.
-func (x *Ad) Len() int { return Len }
+func (x *Ad) Len() int {
+
+	codec.MustNotBeNil(x)
+
+	return Len
+}
 
 // Magic is the identifying 4 byte string used to mark the beginning of a message
 // and designate the type.

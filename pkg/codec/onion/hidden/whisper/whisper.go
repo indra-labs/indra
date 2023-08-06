@@ -29,10 +29,20 @@ var (
 )
 
 const (
-	MessageMagic    = "whis"
+	MessageMagic = "whis"
+
+	// ReplyCiphersLen is
+	//
+	// Deprecated: this is now a variable length structure, Reverse is being
+	// obsoleted in favour of Offset.
 	ReplyCiphersLen = 2*consts.RoutingHeaderLen +
 		6*sha256.Len +
 		6*nonce.IVLen
+
+	// MessageLen is
+	//
+	// Deprecated: this is now a variable length structure, Reverse is being
+	// obsoleted in favour of Offset.
 	MessageLen = magic.Len +
 		2*nonce.IDLen +
 		2*consts.RoutingHeaderLen +
@@ -120,7 +130,12 @@ func (x *Message) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 }
 
 // Len returns the length of this Message.
-func (x *Message) Len() int { return MessageLen + x.Payload.Len() }
+func (x *Message) Len() int {
+
+	codec.MustNotBeNil(x)
+
+	return MessageLen + x.Payload.Len()
+}
 
 // Magic is the identifying 4 byte string indicating a Message follows.
 func (x *Message) Magic() string { return MessageMagic }

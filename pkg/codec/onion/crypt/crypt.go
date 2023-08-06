@@ -153,6 +153,9 @@ func (x *Crypt) Unwrap() interface{} { return x }
 // Handle provides relay and accounting processing logic for receiving a Crypt
 // message.
 func (x *Crypt) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
+
+	// todo: get the payload key also, and read ahead for an offset, and apply
+
 	hdr, _, _, identity := ng.Mgr().FindCloaked(x.Cloak)
 	if hdr == nil {
 		log.T.Ln("no matching key found from cloaked key")
@@ -166,15 +169,19 @@ func (x *Crypt) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 				" no following session")
 			return e
 		}
-		ng.HandleMessage(splice.BudgeUp(s), x)
-		return e
 	}
+
 	ng.HandleMessage(splice.BudgeUp(s), x)
 	return e
 }
 
 // Len returns the length of bytes required to encode the Crypt.
-func (x *Crypt) Len() int { return consts.CryptLen + x.Onion.Len() }
+func (x *Crypt) Len() int {
+
+	codec.MustNotBeNil(x)
+
+	return consts.CryptLen + x.Onion.Len()
+}
 
 // Magic bytes that identify this message
 func (x *Crypt) Magic() string { return CryptMagic }

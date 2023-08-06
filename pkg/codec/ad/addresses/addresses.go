@@ -2,6 +2,7 @@
 package addresses
 
 import (
+	"github.com/indra-labs/indra/pkg/cfg"
 	"github.com/indra-labs/indra/pkg/codec"
 	"github.com/indra-labs/indra/pkg/codec/ad"
 	"github.com/indra-labs/indra/pkg/codec/reg"
@@ -11,7 +12,7 @@ import (
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
 	"github.com/libp2p/go-libp2p/core/peer"
-	"net/netip"
+	"github.com/multiformats/go-multiaddr"
 	"time"
 )
 
@@ -22,7 +23,6 @@ var (
 
 const (
 	Magic = "adad"
-	Len   = ad.Len + splice.AddrLen
 )
 
 // Ad stores a specification for the fee rate and the service ports of a set of
@@ -37,13 +37,13 @@ type Ad struct {
 	ad.Ad
 
 	// Addresses that the peer can be reached on.
-	Addresses []*netip.AddrPort
+	Addresses []multiaddr.Multiaddr
 }
 
 var _ codec.Codec = &Ad{}
 
 // New creates a new addresses.Ad.
-func New(id nonce.ID, key *crypto.Prv, addrs []*netip.AddrPort,
+func New(id nonce.ID, key *crypto.Prv, addrs []multiaddr.Multiaddr,
 	expiry time.Time) (addrAd *Ad) {
 
 	k := crypto.DerivePub(key)
@@ -77,10 +77,10 @@ func (x *Ad) Decode(s *splice.Splice) (e error) {
 	s.ReadID(&x.ID).
 		ReadPubkey(&x.Key).
 		ReadUint16(&count)
-	x.Addresses = make([]*netip.AddrPort, count)
+	x.Addresses = make([]multiaddr.Multiaddr, count)
 	for ; i < count; i++ {
-		addy := &netip.AddrPort{}
-		s.ReadAddrPort(&addy)
+		var addy multiaddr.Multiaddr
+		s.ReadMultiaddr(&addy)
 		x.Addresses[i] = addy
 	}
 	s.
@@ -103,7 +103,23 @@ func (x *Ad) Unwrap() interface{} { return nil }
 // Len returns the length of bytes required to encode the Ad, based on the number
 // of Addresses inside it.
 func (x *Ad) Len() int {
-	l := ad.Len + len(x.Addresses)*(1+splice.AddrLen) + slice.Uint16Len
+
+	codec.MustNotBeNil(x)
+
+	l := ad.Len + slice.Uint16Len
+	// Generate the addresses to get their data length:
+	// for _, v := range x.Addresses {
+	// var b []byte
+	// var e error
+	// b, e = multi.AddrToBytes(v, cfg.GetCurrentDefaultPort())
+	// if fails(e) {
+	// 	panic(e)
+	// }
+	// log.D.S("bytes", b)
+	// l += 21 // len(b) + 1
+	// }
+	l += 21 * len(x.Addresses)
+	// log.D.Ln(l)
 	return l
 }
 
@@ -139,16 +155,23 @@ func (x *Ad) SpliceNoSig(s *splice.Splice) {
 
 // Splice is a function that serializes the parts of an Ad.
 func Splice(s *splice.Splice, id nonce.ID, key *crypto.Pub,
-	addrs []*netip.AddrPort, expiry time.Time) {
+	addrs []multiaddr.Multiaddr, expiry time.Time) {
 
-	s.Magic(Magic).
-		ID(id).
-		Pubkey(key).
-		Uint16(uint16(len(addrs)))
+	// log.D.Ln("spliced", s.GetCursor())
+	s.Magic(Magic)
+	// log.D.Ln("spliced", s.GetCursor(), "magic")
+	s.ID(id)
+	// log.D.Ln("spliced", s.GetCursor(), "ID")
+	s.Pubkey(key)
+	// log.D.Ln("spliced", s.GetCursor(), "pubkey")
+	s.Uint16(uint16(len(addrs)))
+	// log.D.Ln("spliced", s.GetCursor(), "addrlen")
 	for i := range addrs {
-		s.AddrPort(addrs[i])
+		s.Multiaddr(addrs[i], cfg.GetCurrentDefaultPort())
+		// log.D.Ln("addresses", s.GetCursor(), "addr", i)
 	}
 	s.Time(expiry)
+	// log.D.Ln("spliced", s.GetCursor(), "bytes")
 }
 
 func init() { reg.Register(Magic, Gen) }

@@ -76,7 +76,12 @@ func (x *Delay) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 }
 
 // Len returns the length of bytes required to encode this Delay.
-func (x *Delay) Len() int { return Len + x.Onion.Len() }
+func (x *Delay) Len() int {
+
+	codec.MustNotBeNil(x)
+
+	return Len + x.Onion.Len()
+}
 
 // Magic bytes that identify this message.
 func (x *Delay) Magic() string { return Magic }

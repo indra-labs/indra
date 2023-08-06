@@ -127,7 +127,12 @@ func (x *Session) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 }
 
 // Len returns the length of this Session message.
-func (x *Session) Len() int { return Len + x.Onion.Len() }
+func (x *Session) Len() int {
+
+	codec.MustNotBeNil(x)
+
+	return Len + x.Onion.Len()
+}
 
 // Magic is the identifying 4 byte string indicating a Session message follows.
 func (x *Session) Magic() string { return Magic }

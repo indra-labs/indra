@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/util/multi"
+	"github.com/multiformats/go-multiaddr"
 	"net/netip"
 	"reflect"
 	"unsafe"
@@ -219,7 +221,7 @@ func (b Bytes) ToU64Slice() (u U64Slice) {
 	return
 }
 
-func GenerateRandomAddrPortIPv4() (ap *netip.AddrPort) {
+func GenerateRandomAddrPortIPv4() (ap multiaddr.Multiaddr) {
 	a := netip.AddrPort{}
 	b := make([]byte, 7)
 	_, e := rand.Read(b)
@@ -229,7 +231,8 @@ func GenerateRandomAddrPortIPv4() (ap *netip.AddrPort) {
 	port := DecodeUint16(b[5:7])
 	str := fmt.Sprintf("%d.%d.%d.%d:%d", b[1], b[2], b[3], b[4], port)
 	a, e = netip.ParseAddrPort(str)
-	return &a
+	ap, e = multi.AddrFromAddrPort(a)
+	return ap
 }
 
 func GenerateRandomAddrPortIPv6() (ap *netip.AddrPort) {

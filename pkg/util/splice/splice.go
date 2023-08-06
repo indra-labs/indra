@@ -9,14 +9,19 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	magic2 "github.com/indra-labs/indra/pkg/engine/magic"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"github.com/indra-labs/indra/pkg/util/multi"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/lightningnetwork/lnd/lnwire"
+	"github.com/multiformats/go-multiaddr"
 	"net"
 	"net/netip"
 	"sort"
 	"time"
 )
 
+// AddrLen is
+//
+// Deprecated: this is now a variable length structure.
 const AddrLen = net.IPv6len + 2
 
 var (
@@ -55,7 +60,8 @@ func Load(b slice.Bytes, c *slice.Cursor) (splicer *Splice) {
 }
 
 func New(length int) (splicer *Splice) {
-	splicer = &Splice{make(slice.Bytes, length), slice.NewCursor(), Segments{}, nil}
+	splicer = &Splice{make(slice.Bytes, length), slice.NewCursor(), Segments{},
+		nil}
 	return
 }
 
@@ -80,6 +86,68 @@ func (s *Splice) AddrPort(a *netip.AddrPort) *Splice {
 	return s
 }
 
+func (s *Splice) ReadAddrPort(ap **netip.AddrPort) *Splice {
+	*ap = &netip.AddrPort{}
+	apLen := s.b[*s.c]
+	// log.T.Ln("apLen", apLen)
+	apBytes := s.b[s.c.Inc(1):s.c.Inc(AddrLen)]
+	// log.T.S("addrport", apBytes.ToBytes())
+	if s.E = (*ap).UnmarshalBinary(apBytes[:apLen]); fails(s.E) {
+	}
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c),
+			Name: color.Yellow.Sprint((*ap).String())})
+	return s
+}
+
+func (s *Splice) RawBytes(b []byte) *Splice {
+	copy(s.b[*s.c:s.c.Inc(len(b))], b)
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "raw bytes"})
+	return s
+}
+
+func (s *Splice) ReadRawBytes(b *slice.Bytes) *Splice {
+	bytesLen := slice.DecodeUint32(s.b[*s.c:s.c.Inc(slice.Uint32Len)])
+	*b = s.b[*s.c:s.c.Inc(bytesLen)]
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "raw bytes"})
+	return s
+}
+
+func (s *Splice) Multiaddr(a multiaddr.Multiaddr,
+	defaultPort uint16) *Splice {
+
+	b, e := multi.AddrToBytes(a, defaultPort)
+	if fails(e) {
+		return s
+	}
+	s.Byte(byte(len(b)))
+	pad := 20 - len(b)
+	if pad > 0 {
+		bt := slice.NewBytes(20)
+		copy(bt, b)
+		b = bt
+	}
+	s.RawBytes(b)
+	return s
+}
+
+func (s *Splice) ReadMultiaddr(a *multiaddr.Multiaddr) *Splice {
+	var b byte
+	var e error
+	s.ReadByte(&b)
+	bb := s.GetRange(s.GetCursor(), s.Advance(int(b), "multiaddr"))
+	if 20-b > 0 {
+		s.Advance(20-int(b), "pad")
+	}
+	*a, e = multi.BytesToMultiaddr(bb)
+	if fails(e) {
+		return s
+	}
+	return s
+}
+
 func (s *Splice) Advance(n int, name string) int {
 	s.c.Inc(n)
 	s.Segments = append(s.Segments,
@@ -92,18 +160,6 @@ func (s *Splice) Byte(b byte) *Splice {
 	s.c.Inc(1)
 	s.Segments = append(s.Segments,
 		NameOffset{Offset: int(*s.c), Name: "byte"})
-	return s
-}
-
-func (s *Splice) Bytes(b []byte) *Splice {
-	bytesLen := slice.NewUint32()
-	slice.EncodeUint32(bytesLen, len(b))
-	copy(s.b[*s.c:s.c.Inc(slice.Uint32Len)], bytesLen)
-	s.Segments = append(s.Segments,
-		NameOffset{Offset: int(*s.c), Name: "32 bit length"})
-	copy(s.b[*s.c:s.c.Inc(len(b))], b)
-	s.Segments = append(s.Segments,
-		NameOffset{Offset: int(*s.c), Name: "bytes"})
 	return s
 }
 
@@ -273,25 +329,23 @@ func (s *Splice) Pubkey(from *crypto.Pub) *Splice {
 	return s
 }
 
-func (s *Splice) ReadAddrPort(ap **netip.AddrPort) *Splice {
-	*ap = &netip.AddrPort{}
-	apLen := s.b[*s.c]
-	// log.T.Ln("apLen", apLen)
-	apBytes := s.b[s.c.Inc(1):s.c.Inc(AddrLen)]
-	// log.T.S("addrport", apBytes.ToBytes())
-	if s.E = (*ap).UnmarshalBinary(apBytes[:apLen]); fails(s.E) {
-	}
-	s.Segments = append(s.Segments,
-		NameOffset{Offset: int(*s.c),
-			Name: color.Yellow.Sprint((*ap).String())})
-	return s
-}
-
 func (s *Splice) ReadByte(b *byte) *Splice {
 	*b = s.b[*s.c]
 	s.c.Inc(1)
 	s.Segments = append(s.Segments,
 		NameOffset{Offset: int(*s.c), Name: "byte"})
+	return s
+}
+
+func (s *Splice) Bytes(b []byte) *Splice {
+	bytesLen := slice.NewUint32()
+	slice.EncodeUint32(bytesLen, len(b))
+	copy(s.b[*s.c:s.c.Inc(slice.Uint32Len)], bytesLen)
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "32 bit length"})
+	copy(s.b[*s.c:s.c.Inc(len(b))], b)
+	s.Segments = append(s.Segments,
+		NameOffset{Offset: int(*s.c), Name: "bytes"})
 	return s
 }
 

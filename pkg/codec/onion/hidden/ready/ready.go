@@ -95,7 +95,12 @@ func (x *Ready) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 }
 
 // Len returns the length of the onion starting from this one.
-func (x *Ready) Len() int { return Len }
+func (x *Ready) Len() int {
+
+	codec.MustNotBeNil(x)
+
+	return Len
+}
 
 // Magic bytes identifying a HiddenService message is up next.
 func (x *Ready) Magic() string { return Magic }

@@ -3,6 +3,7 @@ package dispatcher
 import (
 	"context"
 	"crypto/rand"
+	"github.com/indra-labs/indra/pkg/codec"
 	"github.com/indra-labs/indra/pkg/codec/onion/cores/confirmation"
 	"github.com/indra-labs/indra/pkg/codec/onion/cores/response"
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
@@ -96,8 +97,8 @@ func TestDispatcher(t *testing.T) {
 		confirmation.New(id1)})
 	on2 := ont.Assemble(engine.Skins{
 		response.New(id2, 0, msg1, 0)})
-	s1 := ont.Encode(on1)
-	s2 := ont.Encode(on2)
+	s1 := codec.Encode(on1)
+	s2 := codec.Encode(on2)
 	x1 := s1.GetAll()
 	x2 := s2.GetAll()
 	xx1 := &Onion{x1}

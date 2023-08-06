@@ -17,7 +17,7 @@ func TestOnions_Confirmation(t *testing.T) {
 	}
 	id := nonce.NewID()
 	on := ont.Assemble([]ont.Onion{New(id)})
-	s := ont.Encode(on)
+	s := codec.Encode(on)
 	s.SetCursor(0)
 	var onc codec.Codec
 	if onc = reg.Recognise(s); onc == nil {

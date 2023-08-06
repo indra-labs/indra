@@ -107,7 +107,12 @@ func (x *Ad) Unwrap() interface{} { return nil }
 // Len returns the length of the binary encoded Ad.
 //
 // This gives different values depending on how many services are listed.
-func (x *Ad) Len() int { return ad.Len + len(x.Services)*Len + slice.Uint32Len }
+func (x *Ad) Len() int {
+
+	codec.MustNotBeNil(x)
+
+	return ad.Len + len(x.Services)*Len + slice.Uint32Len
+}
 
 // Magic is the identifier indicating an Ad is encoded in the following bytes.
 func (x *Ad) Magic() string { return "" }

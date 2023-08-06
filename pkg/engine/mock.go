@@ -13,7 +13,7 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/transport"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/slice"
-	"net/netip"
+	"github.com/multiformats/go-multiaddr"
 	"os"
 )
 
@@ -55,7 +55,7 @@ func createNMockCircuits(inclSessions bool, nCircuits int,
 			return
 		}
 		addr := slice.GenerateRandomAddrPortIPv4()
-		nodes[i], _ = node.NewNode([]*netip.AddrPort{addr}, id, tpts[i], 50000)
+		nodes[i], _ = node.NewNode([]multiaddr.Multiaddr{addr}, id, tpts[i], 50000)
 		var l *transport.Listener
 		var dataPath string
 		dataPath, e = os.MkdirTemp(os.TempDir(), "badger")

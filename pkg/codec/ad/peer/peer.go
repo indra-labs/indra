@@ -99,7 +99,12 @@ func (x *Ad) Encode(s *splice.Splice) (e error) {
 func (x *Ad) Unwrap() interface{} { return nil }
 
 // Len returns the length of the binary encoded Ad.
-func (x *Ad) Len() int { return Len }
+func (x *Ad) Len() int {
+
+	codec.MustNotBeNil(x)
+
+	return Len
+}
 
 // Magic is the identifier indicating an Ad is encoded in the following bytes.
 func (x *Ad) Magic() string { return "" }

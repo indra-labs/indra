@@ -8,9 +8,7 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/indra-labs/indra/pkg/engine/node"
 	"github.com/indra-labs/indra/pkg/engine/transport"
-	"github.com/indra-labs/indra/pkg/util/multi"
 	"github.com/multiformats/go-multiaddr"
-	"net/netip"
 	"os"
 )
 
@@ -58,13 +56,8 @@ func CreateMockEngine(seed []string, dataPath string, ctx context.Context, cance
 		return
 	}
 
-	var ap netip.AddrPort
-	if ap, e = multi.AddrToAddrPort(ma); fails(e) {
-		return
-	}
-
 	var nod *node.Node
-	if nod, _ = node.NewNode([]*netip.AddrPort{&ap}, k, nil, 50000); fails(e) {
+	if nod, _ = node.NewNode([]multiaddr.Multiaddr{ma}, k, nil, 50000); fails(e) {
 		return
 	}
 	if ng, e = New(Params{
