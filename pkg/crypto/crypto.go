@@ -19,11 +19,11 @@ import (
 
 const (
 	// BlindLen is the length of the blinding factor in bytes for a Cloak.
-	BlindLen = 3
+	BlindLen = 4
 
 	// HashLen is the length from the hash of the key with the Blinder appended to
 	// the Cloak.
-	HashLen = 5
+	HashLen = 4
 
 	// CloakLen is the sum of the Blinder truncated hash from blinder and public key.
 	CloakLen = BlindLen + HashLen
@@ -41,11 +41,12 @@ const (
 
 var (
 	// The key types must satisfy these interfaces for libp2p.
-	_, _  crypto.Key     = &Prv{}, &Pub{}
-	_     crypto.PubKey  = &Pub{}
-	_     crypto.PrivKey = &Prv{}
-	fails                = log.E.Chk
-	log                  = log2.GetLogger()
+	_, _ crypto.Key     = &Prv{}, &Pub{}
+	_    crypto.PubKey  = &Pub{}
+	_    crypto.PrivKey = &Prv{}
+
+	fails = log.E.Chk
+	log   = log2.GetLogger()
 )
 
 // Blinder is the bytes concatenated after a key to generate the Cloak hash.

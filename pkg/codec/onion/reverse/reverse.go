@@ -32,6 +32,8 @@ const (
 
 // Reverse is a part of the 3 layer relay RoutingHeader which provides the next
 // address to forward to.
+//
+// Deprecated: In process of obsoleting this and replacing with offset
 type Reverse struct {
 
 	// AddrPort of the relay to forward this message.

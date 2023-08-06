@@ -54,7 +54,7 @@ func TestOnions_Forward(t *testing.T) {
 		}
 		var cf *Forward
 		if cf, ok = onr.(*Forward); !ok {
-			t.Error("did not unwrap expected type expected *Reverse got",
+			t.Error("did not unwrap expected type expected *Forward got",
 				reflect.TypeOf(onr))
 			t.FailNow()
 		}
