@@ -60,7 +60,8 @@ func Load(b slice.Bytes, c *slice.Cursor) (splicer *Splice) {
 }
 
 func New(length int) (splicer *Splice) {
-	splicer = &Splice{make(slice.Bytes, length), slice.NewCursor(), Segments{}, nil}
+	splicer = &Splice{make(slice.Bytes, length), slice.NewCursor(), Segments{},
+		nil}
 	return
 }
 
@@ -121,7 +122,14 @@ func (s *Splice) Multiaddr(a multiaddr.Multiaddr,
 	if fails(e) {
 		return s
 	}
-	s.Byte(byte(len(b))).RawBytes(b)
+	s.Byte(byte(len(b)))
+	pad := 20 - len(b)
+	if pad > 0 {
+		bt := slice.NewBytes(20)
+		copy(bt, b)
+		b = bt
+	}
+	s.RawBytes(b)
 	return s
 }
 
@@ -130,6 +138,9 @@ func (s *Splice) ReadMultiaddr(a *multiaddr.Multiaddr) *Splice {
 	var e error
 	s.ReadByte(&b)
 	bb := s.GetRange(s.GetCursor(), s.Advance(int(b), "multiaddr"))
+	if 20-b > 0 {
+		s.Advance(20-int(b), "pad")
+	}
 	*a, e = multi.BytesToMultiaddr(bb)
 	if fails(e) {
 		return s

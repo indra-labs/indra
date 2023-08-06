@@ -14,7 +14,6 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/util/multi"
 	"github.com/indra-labs/indra/pkg/util/splice"
 	"github.com/multiformats/go-multiaddr"
 	"reflect"
@@ -112,11 +111,9 @@ func (x *Forward) Len() int {
 
 	codec.MustNotBeNil(x)
 
-	b, _ := multi.AddrToBytes(x.Multiaddr,
-		cfg.GetCurrentDefaultPort())
-	return magic.Len +
-		len(b) + 1 +
-		x.Onion.Len()
+	// b, _ := multi.AddrToBytes(x.Multiaddr,
+	// 	cfg.GetCurrentDefaultPort())
+	return magic.Len + 21 + x.Onion.Len()
 }
 
 // Magic is the identifying 4 byte string indicating an Forward message follows.

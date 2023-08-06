@@ -95,7 +95,7 @@ func pauza() {
 
 func TestEngine_PeerStoreDiscovery(t *testing.T) {
 	if indra.CI == "false" {
-		// log2.SetLogLevel(log2.Trace)
+		log2.SetLogLevel(log2.Trace)
 	}
 	const nTotal = 10
 	var (
@@ -125,13 +125,13 @@ func TestEngine_PeerStoreDiscovery(t *testing.T) {
 	for _, v := range engines {
 		// check that all peers now have nTotal-1 distinct peer ads (of all 4
 		// types)
+		var adCount int
 		e = v.PeerstoreView(func(txn *badger.Txn) error {
 			defer txn.Discard()
 			opts := badger.DefaultIteratorOptions
 			it := txn.NewIterator(opts)
 			defer it.Close()
 			var val []byte
-			var adCount int
 			for it.Rewind(); it.Valid(); it.Next() {
 				k := string(it.Item().Key())
 				if !strings.HasSuffix(k, "ad") {
@@ -147,6 +147,7 @@ func TestEngine_PeerStoreDiscovery(t *testing.T) {
 			}
 			return nil
 		})
+		log.D.Ln("entryCount", *entryCount, "adCount", adCount)
 	}
 	if *entryCount != nTotal {
 		t.Log("nodes did not gossip completely to each other, only",

@@ -9,7 +9,6 @@ import (
 	"github.com/indra-labs/indra/pkg/crypto"
 	"github.com/indra-labs/indra/pkg/crypto/nonce"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/util/multi"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -109,17 +108,18 @@ func (x *Ad) Len() int {
 
 	l := ad.Len + slice.Uint16Len
 	// Generate the addresses to get their data length:
-	for _, v := range x.Addresses {
-		var b []byte
-		var e error
-		b, e = multi.AddrToBytes(v, cfg.GetCurrentDefaultPort())
-		if fails(e) {
-			panic(e)
-		}
-		log.D.S("bytes", b)
-		l += len(b) + 1
-	}
-	log.D.Ln(l)
+	// for _, v := range x.Addresses {
+	// var b []byte
+	// var e error
+	// b, e = multi.AddrToBytes(v, cfg.GetCurrentDefaultPort())
+	// if fails(e) {
+	// 	panic(e)
+	// }
+	// log.D.S("bytes", b)
+	// l += 21 // len(b) + 1
+	// }
+	l += 21 * len(x.Addresses)
+	// log.D.Ln(l)
 	return l
 }
 
@@ -157,21 +157,21 @@ func (x *Ad) SpliceNoSig(s *splice.Splice) {
 func Splice(s *splice.Splice, id nonce.ID, key *crypto.Pub,
 	addrs []multiaddr.Multiaddr, expiry time.Time) {
 
-	log.D.Ln("spliced", s.GetCursor())
+	// log.D.Ln("spliced", s.GetCursor())
 	s.Magic(Magic)
-	log.D.Ln("spliced", s.GetCursor(), "magic")
+	// log.D.Ln("spliced", s.GetCursor(), "magic")
 	s.ID(id)
-	log.D.Ln("spliced", s.GetCursor(), "ID")
+	// log.D.Ln("spliced", s.GetCursor(), "ID")
 	s.Pubkey(key)
-	log.D.Ln("spliced", s.GetCursor(), "pubkey")
+	// log.D.Ln("spliced", s.GetCursor(), "pubkey")
 	s.Uint16(uint16(len(addrs)))
-	log.D.Ln("spliced", s.GetCursor(), "addrlen")
+	// log.D.Ln("spliced", s.GetCursor(), "addrlen")
 	for i := range addrs {
 		s.Multiaddr(addrs[i], cfg.GetCurrentDefaultPort())
-		log.D.Ln("addresses", s.GetCursor(), "addr", i)
+		// log.D.Ln("addresses", s.GetCursor(), "addr", i)
 	}
 	s.Time(expiry)
-	log.D.Ln("spliced", s.GetCursor(), "bytes")
+	// log.D.Ln("spliced", s.GetCursor(), "bytes")
 }
 
 func init() { reg.Register(Magic, Gen) }

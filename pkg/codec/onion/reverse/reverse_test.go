@@ -1,9 +1,11 @@
 package reverse
 
 import (
+	"github.com/indra-labs/indra"
 	"github.com/indra-labs/indra/pkg/codec"
 	"github.com/indra-labs/indra/pkg/codec/ont"
 	"github.com/indra-labs/indra/pkg/codec/reg"
+	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/indra-labs/indra/pkg/util/multi"
 	"github.com/multiformats/go-multiaddr"
 	"math/rand"
@@ -16,6 +18,9 @@ import (
 )
 
 func TestOnions_Reverse(t *testing.T) {
+	if indra.CI == "false" {
+		log2.SetLogLevel(log2.Trace)
+	}
 	ipSizes := []int{net.IPv4len, net.IPv6len}
 	for i := range ipSizes {
 		n := nonce.New()

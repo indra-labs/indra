@@ -14,7 +14,6 @@ import (
 	"github.com/indra-labs/indra/pkg/engine/sess"
 	"github.com/indra-labs/indra/pkg/engine/sessions"
 	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/util/multi"
 	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/indra-labs/indra/pkg/util/splice"
 	"github.com/multiformats/go-multiaddr"
@@ -150,10 +149,10 @@ func (x *Reverse) Len() int {
 
 	codec.MustNotBeNil(x)
 
-	b, _ := multi.AddrToBytes(x.Multiaddr,
-		cfg.GetCurrentDefaultPort())
+	// b, _ := multi.AddrToBytes(x.Multiaddr,
+	// 	cfg.GetCurrentDefaultPort())
 
-	return len(b) + 5 + x.Onion.Len()
+	return magic.Len + 21 + x.Onion.Len()
 }
 
 // Magic is the identifying 4 byte string indicating a Reverse message follows.

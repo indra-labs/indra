@@ -29,7 +29,9 @@ func TestNew(t *testing.T) {
 	}
 	aa := New(id, pr, []multiaddr.Multiaddr{ma4, ma6},
 		time.Now().Add(time.Hour*24*7))
-	s := splice.New(aa.Len())
+	l := aa.Len()
+	log.I.Ln("l", l)
+	s := splice.New(l)
 	if e = aa.Encode(s); fails(e) {
 		t.FailNow()
 	}
