@@ -20,6 +20,7 @@ var (
 
 // BlockFromHash creates an AES block cipher from an sha256.Hash.
 func BlockFromHash(h sha256.Hash) (block cipher.Block) {
+
 	// We can ignore the error because sha256.Hash is a valid key size.
 	block, _ = aes.NewCipher(h[:])
 	return
@@ -29,20 +30,23 @@ func BlockFromHash(h sha256.Hash) (block cipher.Block) {
 // and decrypts encrypted data. If the cipher.Block is nil, it panics (this
 // should never happen).
 func Encipher(blk cipher.Block, n nonce.IV, b []byte) {
+
 	if blk == nil {
 		panic("Encipher called without a block cipher provided")
+
 	} else {
 		cipher.NewCTR(blk, n[:]).XORKeyStream(b, b)
+
 	}
 }
 
 // GetBlock returns a block cipher with a secret generated from the provided
 // keys using ECDH.
-func GetBlock(from *crypto.Prv, to *crypto.Pub, note string) (block cipher.Block) {
+func GetBlock(from *crypto.Prv, to *crypto.Pub) (block cipher.Block) {
+
 	secret := crypto.ComputeSharedSecret(from, to)
-	// fb := from.ToBytes()
-	// log.T.Ln(note, "secret", color.Red.Sprint(enc(secret[:])[:52]), "<-",
-	// 	color.Blue.Sprint(enc(fb[:])[:52]), "+", to.ToBased32())
+
 	block, _ = aes.NewCipher(secret[:])
+
 	return
 }

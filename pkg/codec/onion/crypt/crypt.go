@@ -1,6 +1,6 @@
 // Package crypt is an onion message layer which specifies that subsequent content will be encrypted.
 //
-// The cloaked receiver key, and the ephemeral per-message/per-packet "from" keys are intended to be single use only (generated via scalar multiplication with pairs of secrets).
+// The cloaked receiver key, and the ephemeral per-message/per-packet "from" keys are intended to be single use only (generated via scalar sum with pairs of randomly generated secrets).
 //
 // todo: note reference of this algorithm.
 package crypt
@@ -30,7 +30,7 @@ var (
 )
 
 const (
-	CryptMagic = "cryp"
+	Magic = "cryp"
 )
 
 // Crypt is an encrypted message, and forms the "skins" of the onions.
@@ -75,6 +75,7 @@ func (x *Crypt) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data,
 		return
 	}
 	res.Sessions = append(res.Sessions, sd)
+
 	// The last hop needs no accounting as it's us!
 	if last {
 		res.Ret = sd.Header.Bytes
@@ -86,19 +87,24 @@ func (x *Crypt) Account(res *sess.Data, sm *sess.Manager, s *sessions.Data,
 // Decode a splice.Splice's next bytes into a Crypt.
 func (x *Crypt) Decode(s *splice.Splice) (e error) {
 	if e = magic.TooShort(s.Remaining(), consts.CryptLen-magic.Len,
-		CryptMagic); fails(e) {
+		Magic); fails(e) {
 
 		return
 	}
-	s.ReadIV(&x.IV).ReadCloak(&x.Cloak).ReadPubkey(&x.FromPub)
+	s.
+		ReadIV(&x.IV).
+		ReadCloak(&x.Cloak).
+		ReadPubkey(&x.FromPub)
 	return
 }
 
 // Decrypt requires the prv.Pub to be located from the Cloak, using the FromPub
 // key to derive the shared secret, and then decrypts the rest of the message.
 func (x *Crypt) Decrypt(prk *crypto.Prv, s *splice.Splice) {
-	ciph.Encipher(ciph.GetBlock(prk, x.FromPub, "decrypt crypt header"),
-		x.IV, s.GetRest())
+
+	c := ciph.GetBlock(prk, x.FromPub)
+
+	ciph.Encipher(c, x.IV, s.GetRest())
 }
 
 // Encode a Crypt into a splice.Splice's next bytes.
@@ -106,24 +112,31 @@ func (x *Crypt) Decrypt(prk *crypto.Prv, s *splice.Splice) {
 // The crypt renders the inner contents first and once complete returns and
 // encrypts everything after the Crypt header.
 func (x *Crypt) Encode(s *splice.Splice) (e error) {
+
 	log.T.F("encoding %s %s %x %x", reflect.TypeOf(x),
 		x.ToHeaderPub, x.From.ToBytes(), x.IV,
 	)
+
 	if x.ToHeaderPub == nil || x.From == nil {
 		s.Advance(consts.CryptLen, "crypt")
 		return
 	}
-	s.Magic(CryptMagic).
-		IV(x.IV).Cloak(x.ToHeaderPub).Pubkey(crypto.DerivePub(x.From))
+
+	s.Magic(Magic).
+		IV(x.IV).
+		Cloak(x.ToHeaderPub).
+		Pubkey(crypto.DerivePub(x.From))
+
 	// Then we can encrypt the message segment
 	var blk cipher.Block
-	if blk = ciph.GetBlock(x.From, x.ToHeaderPub,
-		"crypt header"); fails(e) {
+	if blk = ciph.GetBlock(x.From, x.ToHeaderPub); fails(e) {
 
 		panic(e)
 	}
+
 	start := s.GetCursor()
 	end := s.Len()
+
 	switch {
 	case x.Depth == 0:
 	case x.Depth > 0:
@@ -137,9 +150,9 @@ func (x *Crypt) Encode(s *splice.Splice) (e error) {
 		}
 	}
 	ciph.Encipher(blk, x.IV, s.GetRange(start, end))
+
 	if end != s.Len() {
-		if blk = ciph.GetBlock(x.From, x.ToPayloadPub,
-			"crypt payload"); fails(e) {
+		if blk = ciph.GetBlock(x.From, x.ToPayloadPub); fails(e) {
 			return
 		}
 		ciph.Encipher(blk, x.IV, s.GetFrom(end))
@@ -184,7 +197,7 @@ func (x *Crypt) Len() int {
 }
 
 // Magic bytes that identify this message
-func (x *Crypt) Magic() string { return CryptMagic }
+func (x *Crypt) Magic() string { return Magic }
 
 // Wrap inserts an onion inside a Crypt.
 func (x *Crypt) Wrap(inner ont.Onion) { x.Onion = inner }
@@ -205,4 +218,4 @@ func New(toHdr, toPld *crypto.Pub, from *crypto.Prv, iv nonce.IV,
 // Gen is a factory function to generate an Crypt.
 func Gen() codec.Codec { return &Crypt{} }
 
-func init() { reg.Register(CryptMagic, Gen) }
+func init() { reg.Register(Magic, Gen) }
