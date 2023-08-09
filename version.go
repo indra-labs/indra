@@ -19,11 +19,11 @@ const (
 	// URL is the git URL for the repository.
 	URL = "github.com/indra-labs/indra"
 	// GitRef is the gitref, as in refs/heads/branchname.
-	GitRef = "refs/heads/peerstore"
+	GitRef = "refs/heads/15"
 	// ParentGitCommit is the commit hash of the parent HEAD.
-	ParentGitCommit = "ccc276f67b42f2eaeeb10d8274d677749ffc7436"
+	ParentGitCommit = "742a44445cc6862042a76fdb02e64236fd4340bb"
 	// BuildTime stores the time when the current binary was built.
-	BuildTime = "2023-07-23T21:23:39+01:00"
+	BuildTime = "2023-08-09T21:04:58+01:00"
 	// SemVer lists the (latest) git tag on the release.
 	SemVer = "v0.1.20"
 	// Major is the major number from the tag.
