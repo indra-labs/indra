@@ -3,7 +3,7 @@
 
 # Indranet
 
-[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://pkg.go.dev/github.com/indra-labs/indra)
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://pkg.go.dev/git.indra-labs.org/dev/ind)
 [![License: CC0](https://img.shields.io/badge/license-CC0-orange.svg)]([http://unlicense.org/](https://creativecommons.org/share-your-work/public-domain/cc0/))
 
 Lightning powered distributed source routed relay network protocol.

@@ -4,11 +4,11 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
-	"github.com/indra-labs/indra"
+	"git.indra-labs.org/dev/ind"
 	"math/rand"
 	"testing"
-	
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
+
+	"git.indra-labs.org/dev/ind/pkg/crypto/sha256"
 )
 
 const (
@@ -17,7 +17,7 @@ const (
 )
 
 func TestCodec(t *testing.T) {
-	
+
 	// Generate 10 pseudorandom 64 bit values. We do this here rather than
 	// pre-generating this separately as ultimately it is the same thing, the
 	// same seed produces the same series of pseudorandom values, and the hashes
@@ -25,35 +25,35 @@ func TestCodec(t *testing.T) {
 	rand.Seed(seed)
 	seeds := make([]uint64, numKeys)
 	for i := range seeds {
-		
+
 		seeds[i] = rand.Uint64()
 	}
-	
+
 	// Convert the uint64 values to 8 byte long slices for the hash function.
 	seedBytes := make([][]byte, numKeys)
 	for i := range seedBytes {
-		
+
 		seedBytes[i] = make([]byte, 8)
 		binary.LittleEndian.PutUint64(seedBytes[i], seeds[i])
 	}
-	
+
 	// Generate hashes from the seeds
 	hashedSeeds := make([][]byte, numKeys)
-	
+
 	// Uncomment lines relating to this variable to regenerate expected data
 	// that will log to console during test run.
 	generated := "\nexpected := []string{\n"
-	
+
 	for i := range hashedSeeds {
-		
+
 		hashed := sha256.Single(seedBytes[i])
 		hashedSeeds[i] = hashed[:]
-		
+
 		generated += fmt.Sprintf("\t\"%x\",\n", hashedSeeds[i])
 	}
-	
+
 	generated += "}\n"
-	if indra.CI=="false" {
+	if indra.CI == "false" {
 		t.Log(generated)
 	}
 
@@ -91,11 +91,11 @@ func TestCodec(t *testing.T) {
 		"12b40270e989ddc550f74a2a66f6092903fe0ec075df2826148fa9080aa933b3",
 		"4db6259bb154e007bfe5be06a641bb3a797b4deaa9447d2f6d4deeed3f6ad07a",
 	}
-	
+
 	for i := range hashedSeeds {
-		
+
 		if expected[i] != hex.EncodeToString(hashedSeeds[i]) {
-			
+
 			t.Log("failed", i, "expected", expected[1], "found", hashedSeeds)
 			t.FailNow()
 		}
@@ -134,12 +134,12 @@ func TestCodec(t *testing.T) {
 		"aijliatq6ge63rkq76fcuzxwbeuqh9qoyb267kbgcsh2scakvez3g3n",
 		"ang3mjm3wfkoab694w9anjsbxm6hs72n6kuui9jpnvg763j9nlicwbv",
 	}
-	
+
 	encoded := "\nencodedStr := []string{\n"
-	
+
 	// Convert hashes to our base32 encoding format
 	for i := range hashedSeeds {
-		
+
 		// Note that we are slicing off a number of bytes at the end according
 		// to the sequence number to get different check byte lengths from a
 		// uniform original data. As such, this will be accounted for in the
@@ -157,18 +157,18 @@ func TestCodec(t *testing.T) {
 		}
 		encoded += "\t\"" + encode + "\",\n"
 	}
-	
+
 	encoded += "}\n"
-	if indra.CI=="false" {
+	if indra.CI == "false" {
 		t.Log(encoded)
 	}
 
 	// Next, decode the encodedStr above, which should be the output of the
 	// original generated seeds, with the index mod 5 truncations performed on
 	// each as was done to generate them.
-	
+
 	for i := range encodedStr {
-		
+
 		res, err := Codec.Decode(encodedStr[i])
 		if err != nil {
 			t.Fatalf("error: '%v'", err)

@@ -4,9 +4,9 @@
 //
 // todo: need to make cmd/bumper in use again so the below inaccurate git repo details are accurate.
 //
-// See [pkg/github.com/indra-labs/indra/cmd/indra] for the main server executable.
+// See [pkg/git.indra-labs.org/dev/ind/cmd/indra] for the main server executable.
 //
-// Put invocations to run all the generators in here check [pkg/github.com/indra-labs/indra/cmd/bumper] to add them, and they will automatically run with:
+// Put invocations to run all the generators in here check [pkg/git.indra-labs.org/dev/ind/cmd/bumper] to add them, and they will automatically run with:
 //
 // $ go generate .
 //
@@ -19,7 +19,7 @@ import "fmt"
 
 const (
 	// URL is the git URL for the repository.
-	URL = "github.com/indra-labs/indra"
+	URL = "git.indra-labs.org/dev/ind"
 	// GitRef is the gitref, as in refs/heads/branchname.
 	GitRef = "refs/heads/master"
 	// ParentGitCommit is the commit hash of the parent HEAD.

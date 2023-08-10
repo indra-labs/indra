@@ -3,15 +3,15 @@ package transport
 import (
 	"context"
 	"crypto/rand"
-	"github.com/indra-labs/indra"
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
+	"git.indra-labs.org/dev/ind"
+	"git.indra-labs.org/dev/ind/pkg/crypto/sha256"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/indra-labs/indra/pkg/crypto"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/util/tests"
+	"git.indra-labs.org/dev/ind/pkg/crypto"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/util/tests"
 )
 
 func TestNewListener(t *testing.T) {

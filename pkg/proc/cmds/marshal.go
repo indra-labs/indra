@@ -3,7 +3,7 @@ package cmds
 import (
 	"encoding"
 	"fmt"
-	path2 "github.com/indra-labs/indra/pkg/util/path"
+	path2 "git.indra-labs.org/dev/ind/pkg/util/path"
 	"io"
 	"os"
 	"sort"
@@ -12,13 +12,13 @@ import (
 
 	"github.com/naoina/toml"
 
-	"github.com/indra-labs/indra/pkg/proc/opts/duration"
-	"github.com/indra-labs/indra/pkg/proc/opts/float"
-	"github.com/indra-labs/indra/pkg/proc/opts/integer"
-	"github.com/indra-labs/indra/pkg/proc/opts/list"
-	"github.com/indra-labs/indra/pkg/proc/opts/meta"
-	"github.com/indra-labs/indra/pkg/proc/opts/text"
-	"github.com/indra-labs/indra/pkg/proc/opts/toggle"
+	"git.indra-labs.org/dev/ind/pkg/proc/opts/duration"
+	"git.indra-labs.org/dev/ind/pkg/proc/opts/float"
+	"git.indra-labs.org/dev/ind/pkg/proc/opts/integer"
+	"git.indra-labs.org/dev/ind/pkg/proc/opts/list"
+	"git.indra-labs.org/dev/ind/pkg/proc/opts/meta"
+	"git.indra-labs.org/dev/ind/pkg/proc/opts/text"
+	"git.indra-labs.org/dev/ind/pkg/proc/opts/toggle"
 )
 
 type Entry struct {

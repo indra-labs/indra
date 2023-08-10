@@ -4,8 +4,8 @@ package tests
 import (
 	"crypto/rand"
 
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/crypto/sha256"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 )
 
 var (

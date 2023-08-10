@@ -9,10 +9,10 @@ package based32
 import (
 	"encoding/base32"
 	"fmt"
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/util/b32"
-	"github.com/indra-labs/indra/pkg/util/b32/codec"
+	"git.indra-labs.org/dev/ind/pkg/crypto/sha256"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/util/b32"
+	"git.indra-labs.org/dev/ind/pkg/util/b32/codec"
 )
 
 var (

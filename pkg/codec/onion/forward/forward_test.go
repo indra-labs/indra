@@ -1,12 +1,12 @@
 package forward
 
 import (
-	"github.com/indra-labs/indra"
-	"github.com/indra-labs/indra/pkg/codec"
-	"github.com/indra-labs/indra/pkg/codec/ont"
-	"github.com/indra-labs/indra/pkg/codec/reg"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/util/multi"
+	"git.indra-labs.org/dev/ind"
+	"git.indra-labs.org/dev/ind/pkg/codec"
+	"git.indra-labs.org/dev/ind/pkg/codec/ont"
+	"git.indra-labs.org/dev/ind/pkg/codec/reg"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/util/multi"
 	"github.com/multiformats/go-multiaddr"
 	"math/rand"
 	"net"
@@ -14,7 +14,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
+	"git.indra-labs.org/dev/ind/pkg/crypto/nonce"
 )
 
 func TestOnions_Forward(t *testing.T) {

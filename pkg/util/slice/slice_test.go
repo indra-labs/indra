@@ -3,7 +3,7 @@ package slice
 import (
 	"crypto/rand"
 	"errors"
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
+	"git.indra-labs.org/dev/ind/pkg/crypto/sha256"
 	"testing"
 )
 

@@ -2,14 +2,14 @@ package dispatcher
 
 import (
 	"fmt"
-	"github.com/indra-labs/indra/pkg/codec"
-	"github.com/indra-labs/indra/pkg/codec/ont"
-	"github.com/indra-labs/indra/pkg/codec/reg"
-	"github.com/indra-labs/indra/pkg/crypto"
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
-	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/indra/pkg/util/splice"
+	"git.indra-labs.org/dev/ind/pkg/codec"
+	"git.indra-labs.org/dev/ind/pkg/codec/ont"
+	"git.indra-labs.org/dev/ind/pkg/codec/reg"
+	"git.indra-labs.org/dev/ind/pkg/crypto"
+	"git.indra-labs.org/dev/ind/pkg/crypto/nonce"
+	"git.indra-labs.org/dev/ind/pkg/crypto/sha256"
+	"git.indra-labs.org/dev/ind/pkg/util/slice"
+	"git.indra-labs.org/dev/ind/pkg/util/splice"
 )
 
 // Magic bytes message prefixes for Dispatcher messages.

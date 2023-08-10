@@ -1,9 +1,9 @@
 package sess
 
 import (
-	"github.com/indra-labs/indra/pkg/engine/node"
-	"github.com/indra-labs/indra/pkg/engine/sessions"
-	"github.com/indra-labs/indra/pkg/util/cryptorand"
+	"git.indra-labs.org/dev/ind/pkg/engine/node"
+	"git.indra-labs.org/dev/ind/pkg/engine/sessions"
+	"git.indra-labs.org/dev/ind/pkg/util/cryptorand"
 )
 
 // SelectHops picks out a set of sessions to use in a circuit.

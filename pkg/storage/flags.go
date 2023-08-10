@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"github.com/indra-labs/indra/pkg/util/appdata"
+	"git.indra-labs.org/dev/ind/pkg/util/appdata"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"path/filepath"

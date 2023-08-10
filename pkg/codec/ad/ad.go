@@ -4,10 +4,10 @@
 package ad
 
 import (
-	"github.com/indra-labs/indra/pkg/crypto"
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/engine/magic"
-	"github.com/indra-labs/indra/pkg/util/slice"
+	"git.indra-labs.org/dev/ind/pkg/crypto"
+	"git.indra-labs.org/dev/ind/pkg/crypto/nonce"
+	"git.indra-labs.org/dev/ind/pkg/engine/magic"
+	"git.indra-labs.org/dev/ind/pkg/util/slice"
 	"time"
 )
 

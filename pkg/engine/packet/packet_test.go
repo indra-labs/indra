@@ -4,10 +4,10 @@ import (
 	"crypto/rand"
 	"errors"
 	"testing"
-	
-	"github.com/indra-labs/indra/pkg/crypto"
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
+
+	"git.indra-labs.org/dev/ind/pkg/crypto"
+	"git.indra-labs.org/dev/ind/pkg/crypto/nonce"
+	"git.indra-labs.org/dev/ind/pkg/crypto/sha256"
 )
 
 func TestEncode_Decode(t *testing.T) {

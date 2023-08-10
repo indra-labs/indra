@@ -4,16 +4,16 @@ import (
 	"crypto/rand"
 	"encoding/base32"
 	"encoding/hex"
-	"github.com/indra-labs/indra/pkg/util/b32"
+	"git.indra-labs.org/dev/ind/pkg/util/b32"
 	"sync"
 
+	"git.indra-labs.org/dev/ind/pkg/crypto/sha256"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/util/b32/based32"
+	"git.indra-labs.org/dev/ind/pkg/util/slice"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 	"github.com/gookit/color"
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/util/b32/based32"
-	"github.com/indra-labs/indra/pkg/util/slice"
 	"github.com/libp2p/go-libp2p/core/crypto"
 )
 

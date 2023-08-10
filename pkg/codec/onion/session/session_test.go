@@ -1,12 +1,12 @@
 package session
 
 import (
-	"github.com/indra-labs/indra"
-	"github.com/indra-labs/indra/pkg/codec"
-	"github.com/indra-labs/indra/pkg/codec/reg"
+	"git.indra-labs.org/dev/ind"
+	"git.indra-labs.org/dev/ind/pkg/codec"
+	"git.indra-labs.org/dev/ind/pkg/codec/reg"
 	"testing"
 
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 )
 
 func TestOnions_Session(t *testing.T) {

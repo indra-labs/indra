@@ -2,7 +2,7 @@
 package codec
 
 import (
-	"github.com/indra-labs/indra/pkg/util/b32/codecer"
+	"git.indra-labs.org/dev/ind/pkg/util/b32/codecer"
 )
 
 // Codec is the collection of elements that creates a Human Readable Binary

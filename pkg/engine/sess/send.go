@@ -2,15 +2,15 @@ package sess
 
 import (
 	"errors"
+	"git.indra-labs.org/dev/ind/pkg/util/cryptorand"
 	"github.com/gookit/color"
-	"github.com/indra-labs/indra/pkg/util/cryptorand"
 	"github.com/multiformats/go-multiaddr"
 
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/engine/node"
-	"github.com/indra-labs/indra/pkg/engine/responses"
-	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/indra/pkg/util/splice"
+	"git.indra-labs.org/dev/ind/pkg/crypto/nonce"
+	"git.indra-labs.org/dev/ind/pkg/engine/node"
+	"git.indra-labs.org/dev/ind/pkg/engine/responses"
+	"git.indra-labs.org/dev/ind/pkg/util/slice"
+	"git.indra-labs.org/dev/ind/pkg/util/splice"
 )
 
 // Send a message to a peer via their Addresses.

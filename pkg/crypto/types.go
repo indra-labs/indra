@@ -1,9 +1,9 @@
 package crypto
 
 import (
+	"git.indra-labs.org/dev/ind/pkg/crypto/nonce"
+	"git.indra-labs.org/dev/ind/pkg/crypto/sha256"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
 )
 
 type (

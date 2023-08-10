@@ -2,12 +2,12 @@ package main
 
 import (
 	"errors"
-	"github.com/indra-labs/indra"
-	"github.com/indra-labs/indra/cmd/indra/client"
-	"github.com/indra-labs/indra/cmd/indra/relay"
-	"github.com/indra-labs/indra/cmd/indra/seed"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/util/appdata"
+	"git.indra-labs.org/dev/ind"
+	"git.indra-labs.org/dev/ind/cmd/indra/client"
+	"git.indra-labs.org/dev/ind/cmd/indra/relay"
+	"git.indra-labs.org/dev/ind/cmd/indra/seed"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/util/appdata"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"
@@ -82,7 +82,7 @@ func initLogging() {
 	}
 
 	log2.SetLogLevel(log2.GetLevelByString(viper.GetString("logs-level"), log2.Debug))
- }
+}
 
 func initConfig() {
 

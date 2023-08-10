@@ -8,7 +8,7 @@ import (
 
 	"github.com/libp2p/go-libp2p/core/host"
 
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 )
 
 var (

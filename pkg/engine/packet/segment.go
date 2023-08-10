@@ -3,9 +3,9 @@ package packet
 import (
 	"errors"
 	"fmt"
-	"github.com/indra-labs/indra/pkg/crypto"
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
-	"github.com/indra-labs/indra/pkg/util/slice"
+	"git.indra-labs.org/dev/ind/pkg/crypto"
+	"git.indra-labs.org/dev/ind/pkg/crypto/sha256"
+	"git.indra-labs.org/dev/ind/pkg/util/slice"
 	"github.com/templexxx/reedsolomon"
 	"sort"
 )

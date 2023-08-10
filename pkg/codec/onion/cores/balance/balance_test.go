@@ -1,16 +1,16 @@
 package balance
 
 import (
-	"github.com/indra-labs/indra"
-	"github.com/indra-labs/indra/pkg/codec"
-	"github.com/indra-labs/indra/pkg/codec/ont"
-	"github.com/indra-labs/indra/pkg/codec/reg"
+	"git.indra-labs.org/dev/ind"
+	"git.indra-labs.org/dev/ind/pkg/codec"
+	"git.indra-labs.org/dev/ind/pkg/codec/ont"
+	"git.indra-labs.org/dev/ind/pkg/codec/reg"
 	"testing"
 
 	"github.com/lightningnetwork/lnd/lnwire"
 
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/crypto/nonce"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 )
 
 func TestOnions_Balance(t *testing.T) {

@@ -1,26 +1,26 @@
 package engine
 
 import (
-	"github.com/indra-labs/indra/pkg/codec/ad/intro"
-	"github.com/indra-labs/indra/pkg/codec/onion/exit"
-	"github.com/indra-labs/indra/pkg/codec/onion/getbalance"
-	"github.com/indra-labs/indra/pkg/codec/onion/hidden/whisper"
-	"github.com/indra-labs/indra/pkg/codec/ont"
-	"github.com/indra-labs/indra/pkg/codec/reg"
-	"github.com/indra-labs/indra/pkg/util/multi"
+	"git.indra-labs.org/dev/ind/pkg/codec/ad/intro"
+	"git.indra-labs.org/dev/ind/pkg/codec/onion/exit"
+	"git.indra-labs.org/dev/ind/pkg/codec/onion/getbalance"
+	"git.indra-labs.org/dev/ind/pkg/codec/onion/hidden/whisper"
+	"git.indra-labs.org/dev/ind/pkg/codec/ont"
+	"git.indra-labs.org/dev/ind/pkg/codec/reg"
+	"git.indra-labs.org/dev/ind/pkg/util/multi"
 	"net/netip"
 	"time"
 
 	"github.com/gookit/color"
 
-	"github.com/indra-labs/indra/pkg/crypto"
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/engine/responses"
-	"github.com/indra-labs/indra/pkg/engine/services"
-	"github.com/indra-labs/indra/pkg/engine/sess"
-	"github.com/indra-labs/indra/pkg/engine/sessions"
-	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/indra/pkg/util/splice"
+	"git.indra-labs.org/dev/ind/pkg/crypto"
+	"git.indra-labs.org/dev/ind/pkg/crypto/nonce"
+	"git.indra-labs.org/dev/ind/pkg/engine/responses"
+	"git.indra-labs.org/dev/ind/pkg/engine/services"
+	"git.indra-labs.org/dev/ind/pkg/engine/sess"
+	"git.indra-labs.org/dev/ind/pkg/engine/sessions"
+	"git.indra-labs.org/dev/ind/pkg/util/slice"
+	"git.indra-labs.org/dev/ind/pkg/util/splice"
 )
 
 // SendExit constructs and dispatches an exit message containing the desired message for the service at the exit.

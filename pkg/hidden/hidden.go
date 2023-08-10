@@ -2,15 +2,15 @@
 package hidden
 
 import (
-	"github.com/indra-labs/indra/pkg/codec/ad/intro"
-	"github.com/indra-labs/indra/pkg/crypto"
-	"github.com/indra-labs/indra/pkg/crypto/ciph"
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/engine/consts"
-	"github.com/indra-labs/indra/pkg/engine/services"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/indra/pkg/util/splice"
+	"git.indra-labs.org/dev/ind/pkg/codec/ad/intro"
+	"git.indra-labs.org/dev/ind/pkg/crypto"
+	"git.indra-labs.org/dev/ind/pkg/crypto/ciph"
+	"git.indra-labs.org/dev/ind/pkg/crypto/nonce"
+	"git.indra-labs.org/dev/ind/pkg/engine/consts"
+	"git.indra-labs.org/dev/ind/pkg/engine/services"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/util/slice"
+	"git.indra-labs.org/dev/ind/pkg/util/splice"
 	"sync"
 )
 

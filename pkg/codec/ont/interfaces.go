@@ -2,14 +2,14 @@
 package ont
 
 import (
-	"github.com/indra-labs/indra/pkg/codec"
-	"github.com/indra-labs/indra/pkg/crypto"
-	"github.com/indra-labs/indra/pkg/engine/responses"
-	"github.com/indra-labs/indra/pkg/engine/sess"
-	"github.com/indra-labs/indra/pkg/engine/sessions"
-	"github.com/indra-labs/indra/pkg/hidden"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/util/splice"
+	"git.indra-labs.org/dev/ind/pkg/codec"
+	"git.indra-labs.org/dev/ind/pkg/crypto"
+	"git.indra-labs.org/dev/ind/pkg/engine/responses"
+	"git.indra-labs.org/dev/ind/pkg/engine/sess"
+	"git.indra-labs.org/dev/ind/pkg/engine/sessions"
+	"git.indra-labs.org/dev/ind/pkg/hidden"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/util/splice"
 )
 
 var (

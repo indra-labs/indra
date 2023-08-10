@@ -6,24 +6,24 @@
 package services
 
 import (
-	"github.com/indra-labs/indra/pkg/codec"
-	"github.com/indra-labs/indra/pkg/codec/ad/intro"
-	"github.com/indra-labs/indra/pkg/codec/onion/cores/end"
-	"github.com/indra-labs/indra/pkg/codec/onion/exit"
-	"github.com/indra-labs/indra/pkg/codec/ont"
-	"github.com/indra-labs/indra/pkg/codec/reg"
-	"github.com/indra-labs/indra/pkg/engine/consts"
-	"github.com/indra-labs/indra/pkg/hidden"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/codec"
+	"git.indra-labs.org/dev/ind/pkg/codec/ad/intro"
+	"git.indra-labs.org/dev/ind/pkg/codec/onion/cores/end"
+	"git.indra-labs.org/dev/ind/pkg/codec/onion/exit"
+	"git.indra-labs.org/dev/ind/pkg/codec/ont"
+	"git.indra-labs.org/dev/ind/pkg/codec/reg"
+	"git.indra-labs.org/dev/ind/pkg/engine/consts"
+	"git.indra-labs.org/dev/ind/pkg/hidden"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 	"reflect"
 
-	"github.com/indra-labs/indra/pkg/crypto"
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
-	"github.com/indra-labs/indra/pkg/engine/magic"
-	"github.com/indra-labs/indra/pkg/engine/sess"
-	"github.com/indra-labs/indra/pkg/engine/sessions"
-	"github.com/indra-labs/indra/pkg/util/splice"
+	"git.indra-labs.org/dev/ind/pkg/crypto"
+	"git.indra-labs.org/dev/ind/pkg/crypto/nonce"
+	"git.indra-labs.org/dev/ind/pkg/crypto/sha256"
+	"git.indra-labs.org/dev/ind/pkg/engine/magic"
+	"git.indra-labs.org/dev/ind/pkg/engine/sess"
+	"git.indra-labs.org/dev/ind/pkg/engine/sessions"
+	"git.indra-labs.org/dev/ind/pkg/util/splice"
 )
 
 var (

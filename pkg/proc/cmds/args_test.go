@@ -1,15 +1,15 @@
 package cmds
 
 import (
-	"github.com/indra-labs/indra"
+	"git.indra-labs.org/dev/ind"
 	"strings"
 	"testing"
-	
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
+
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 )
 
 func TestCommand_ParseCLIArgs(t *testing.T) {
-	if indra.CI=="false" {
+	if indra.CI == "false" {
 		log2.SetLogLevel(log2.Debug)
 	}
 	ec := GetExampleCommands()

@@ -6,11 +6,11 @@
 package reg
 
 import (
+	"git.indra-labs.org/dev/ind/pkg/codec"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/util/splice"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gookit/color"
-	"github.com/indra-labs/indra/pkg/codec"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/util/splice"
 	"sync"
 )
 

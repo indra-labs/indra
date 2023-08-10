@@ -3,12 +3,12 @@ package sessions
 
 import (
 	"fmt"
+	"git.indra-labs.org/dev/ind/pkg/crypto"
+	"git.indra-labs.org/dev/ind/pkg/crypto/nonce"
+	"git.indra-labs.org/dev/ind/pkg/crypto/sha256"
+	"git.indra-labs.org/dev/ind/pkg/engine/node"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 	"github.com/gookit/color"
-	"github.com/indra-labs/indra/pkg/crypto"
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
-	"github.com/indra-labs/indra/pkg/engine/node"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"github.com/lightningnetwork/lnd/lnwire"
 )
 

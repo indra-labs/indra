@@ -7,7 +7,7 @@ package nonce
 import (
 	"crypto/aes"
 	"crypto/rand"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 )
 
 // IVLen is the length of Initialization Vectors used in Indra.

@@ -1,17 +1,17 @@
 package app
 
 import (
-	"github.com/indra-labs/indra"
+	"git.indra-labs.org/dev/ind"
 	"os"
 	"strings"
 	"testing"
-	
-	"github.com/indra-labs/indra/pkg/proc/cmds"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
+
+	"git.indra-labs.org/dev/ind/pkg/proc/cmds"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 )
 
 func TestNew(t *testing.T) {
-	if indra.CI=="false" {
+	if indra.CI == "false" {
 		log2.SetLogLevel(log2.Debug)
 	}
 
@@ -27,8 +27,8 @@ func TestNew(t *testing.T) {
 	}
 	if e = os.RemoveAll(a.Command.Configs["DataDir"].
 		Expanded()); check(e) {
-		
+
 		t.FailNow()
 	}
-	
+
 }

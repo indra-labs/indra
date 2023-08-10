@@ -2,8 +2,8 @@ package transport
 
 import (
 	"context"
-	"github.com/indra-labs/indra/pkg/engine/tpt"
-	"github.com/indra-labs/indra/pkg/util/slice"
+	"git.indra-labs.org/dev/ind/pkg/engine/tpt"
+	"git.indra-labs.org/dev/ind/pkg/util/slice"
 )
 
 type (

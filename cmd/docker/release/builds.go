@@ -1,8 +1,8 @@
 package main
 
 import (
+	"git.indra-labs.org/dev/ind/pkg/docker"
 	"github.com/docker/docker/api/types"
-	"github.com/indra-labs/indra/pkg/docker"
 )
 
 var (

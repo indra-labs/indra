@@ -2,8 +2,8 @@
 package payments
 
 import (
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
+	"git.indra-labs.org/dev/ind/pkg/crypto/nonce"
+	"git.indra-labs.org/dev/ind/pkg/crypto/sha256"
 	"github.com/lightningnetwork/lnd/lnwire"
 )
 

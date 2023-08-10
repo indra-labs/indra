@@ -8,13 +8,13 @@ import (
 
 	"github.com/docker/docker/client"
 
-	"github.com/indra-labs/indra/pkg/docker"
-	"github.com/indra-labs/indra/pkg/proc/app"
-	"github.com/indra-labs/indra/pkg/proc/cmds"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/proc/opts/config"
-	"github.com/indra-labs/indra/pkg/proc/opts/meta"
-	"github.com/indra-labs/indra/pkg/proc/opts/toggle"
+	"git.indra-labs.org/dev/ind/pkg/docker"
+	"git.indra-labs.org/dev/ind/pkg/proc/app"
+	"git.indra-labs.org/dev/ind/pkg/proc/cmds"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/proc/opts/config"
+	"git.indra-labs.org/dev/ind/pkg/proc/opts/meta"
+	"git.indra-labs.org/dev/ind/pkg/proc/opts/toggle"
 
 	"os"
 	"time"

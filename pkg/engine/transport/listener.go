@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"git.indra-labs.org/dev/ind/pkg/engine/protocols"
+	"git.indra-labs.org/dev/ind/pkg/engine/transport/pstoreds"
 	badger "github.com/indra-labs/go-ds-badger3"
-	"github.com/indra-labs/indra/pkg/engine/protocols"
-	"github.com/indra-labs/indra/pkg/engine/transport/pstoreds"
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -18,11 +18,11 @@ import (
 	"github.com/multiformats/go-multiaddr"
 	"sync"
 
-	"github.com/indra-labs/indra/pkg/crypto"
-	"github.com/indra-labs/indra/pkg/engine/tpt"
-	"github.com/indra-labs/indra/pkg/interrupt"
-	"github.com/indra-labs/indra/pkg/util/qu"
-	"github.com/indra-labs/indra/pkg/util/slice"
+	"git.indra-labs.org/dev/ind/pkg/crypto"
+	"git.indra-labs.org/dev/ind/pkg/engine/tpt"
+	"git.indra-labs.org/dev/ind/pkg/interrupt"
+	"git.indra-labs.org/dev/ind/pkg/util/qu"
+	"git.indra-labs.org/dev/ind/pkg/util/slice"
 )
 
 // concurrent safe accessors:

@@ -3,7 +3,7 @@
 // This includes the port specification, the fee rate on the service, and the transport abstraction that opens a channel for messages to the service, or its listener depending on which side this structure is used.
 package services
 
-import "github.com/indra-labs/indra/pkg/engine/tpt"
+import "git.indra-labs.org/dev/ind/pkg/engine/tpt"
 
 type (
 	// Service is a specification for a publicly accessible service available at a

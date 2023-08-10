@@ -1,15 +1,15 @@
 package list
 
 import (
-	"github.com/indra-labs/indra/pkg/util/path"
+	"git.indra-labs.org/dev/ind/pkg/util/path"
 	"strings"
 
 	"go.uber.org/atomic"
 
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/proc/opts/config"
-	"github.com/indra-labs/indra/pkg/proc/opts/meta"
-	"github.com/indra-labs/indra/pkg/proc/opts/normalize"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/proc/opts/config"
+	"git.indra-labs.org/dev/ind/pkg/proc/opts/meta"
+	"git.indra-labs.org/dev/ind/pkg/proc/opts/normalize"
 )
 
 var (

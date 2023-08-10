@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/indra-labs/indra/pkg/docker"
+	"git.indra-labs.org/dev/ind/pkg/docker"
 	"github.com/docker/docker/api/types"
 )
 
@@ -90,7 +90,7 @@ var sourceConfigurations = []docker.BuildConfiguration{
 	//		},
 	//		BuildArgs: map[string]*string{
 	//			"sourcing_image":            strPtr(defaultBuilderContainer),
-	//			"source_release_url_prefix": strPtr("https://github.com/indra-labs/indra/releases/download"),
+	//			"source_release_url_prefix": strPtr("https://git.indra-labs.org/dev/ind/releases/download"),
 	//			"source_version":            strPtr("v0.1.10"),
 	//		},
 	//		SuppressOutput: false,

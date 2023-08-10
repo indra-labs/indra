@@ -2,11 +2,11 @@
 package seed
 
 import (
-	"github.com/indra-labs/indra/cmd/indra/seed/client"
-	"github.com/indra-labs/indra/pkg/p2p"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/rpc"
-	"github.com/indra-labs/indra/pkg/storage"
+	"git.indra-labs.org/dev/ind/cmd/indra/seed/client"
+	"git.indra-labs.org/dev/ind/pkg/p2p"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/rpc"
+	"git.indra-labs.org/dev/ind/pkg/storage"
 	"github.com/spf13/cobra"
 )
 

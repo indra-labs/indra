@@ -3,9 +3,9 @@ package seed
 
 import (
 	"context"
-	"github.com/indra-labs/indra/pkg/p2p"
-	"github.com/indra-labs/indra/pkg/rpc"
-	"github.com/indra-labs/indra/pkg/storage"
+	"git.indra-labs.org/dev/ind/pkg/p2p"
+	"git.indra-labs.org/dev/ind/pkg/rpc"
+	"git.indra-labs.org/dev/ind/pkg/storage"
 	"github.com/spf13/viper"
 	"github.com/tutorialedge/go-grpc-tutorial/chat"
 	"google.golang.org/grpc"

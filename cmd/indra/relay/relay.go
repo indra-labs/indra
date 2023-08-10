@@ -1,8 +1,8 @@
 package relay
 
 import (
-	"github.com/indra-labs/indra"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"git.indra-labs.org/dev/ind"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

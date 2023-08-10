@@ -6,7 +6,7 @@ package main
 import (
 	"os"
 
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 )
 
 var (

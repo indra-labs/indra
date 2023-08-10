@@ -7,8 +7,8 @@ import (
 	"runtime"
 	"testing"
 	"unicode"
-	
-	"github.com/indra-labs/indra/pkg/util/appdata"
+
+	"git.indra-labs.org/dev/ind/pkg/util/appdata"
 )
 
 // TestAppDataDir tests the API for Dir to ensure it gives expected results for various operating systems.

@@ -2,12 +2,12 @@ package packet
 
 import (
 	"errors"
-	"github.com/indra-labs/indra"
-	"github.com/indra-labs/indra/pkg/crypto"
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/util/tests"
+	"git.indra-labs.org/dev/ind"
+	"git.indra-labs.org/dev/ind/pkg/crypto"
+	"git.indra-labs.org/dev/ind/pkg/crypto/nonce"
+	"git.indra-labs.org/dev/ind/pkg/crypto/sha256"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/util/tests"
 	"math/rand"
 	"testing"
 )
@@ -46,7 +46,7 @@ func BenchmarkSplit(b *testing.B) {
 	//
 	// goos: linux
 	// goarch: amd64
-	// pkg: github.com/indra-labs/indra/pkg/packet
+	// pkg: git.indra-labs.org/dev/ind/pkg/packet
 	// cpu: AMD Ryzen 7 5800H with Radeon Graphics
 	// BenchmarkSplit
 	// BenchmarkSplit-16    	     157	   7670080 ns/op

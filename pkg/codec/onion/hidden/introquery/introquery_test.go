@@ -1,18 +1,18 @@
 package introquery
 
 import (
-	"github.com/indra-labs/indra"
-	"github.com/indra-labs/indra/pkg/codec"
-	"github.com/indra-labs/indra/pkg/codec/onion/cores/end"
-	"github.com/indra-labs/indra/pkg/codec/onion/exit"
-	"github.com/indra-labs/indra/pkg/codec/ont"
-	"github.com/indra-labs/indra/pkg/codec/reg"
+	"git.indra-labs.org/dev/ind"
+	"git.indra-labs.org/dev/ind/pkg/codec"
+	"git.indra-labs.org/dev/ind/pkg/codec/onion/cores/end"
+	"git.indra-labs.org/dev/ind/pkg/codec/onion/exit"
+	"git.indra-labs.org/dev/ind/pkg/codec/ont"
+	"git.indra-labs.org/dev/ind/pkg/codec/reg"
 	"testing"
 
-	"github.com/indra-labs/indra/pkg/crypto"
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/engine/sessions"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/crypto"
+	"git.indra-labs.org/dev/ind/pkg/crypto/nonce"
+	"git.indra-labs.org/dev/ind/pkg/engine/sessions"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 )
 
 func TestOnions_IntroQuery(t *testing.T) {

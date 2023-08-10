@@ -2,18 +2,18 @@ package cmds
 
 import (
 	"fmt"
-	"github.com/indra-labs/indra/pkg/util/path"
+	"git.indra-labs.org/dev/ind/pkg/util/path"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
 
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/proc/opts/config"
-	"github.com/indra-labs/indra/pkg/proc/opts/meta"
-	"github.com/indra-labs/indra/pkg/proc/opts/text"
-	"github.com/indra-labs/indra/pkg/proc/opts/toggle"
-	"github.com/indra-labs/indra/pkg/util/norm"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/proc/opts/config"
+	"git.indra-labs.org/dev/ind/pkg/proc/opts/meta"
+	"git.indra-labs.org/dev/ind/pkg/proc/opts/text"
+	"git.indra-labs.org/dev/ind/pkg/proc/opts/toggle"
+	"git.indra-labs.org/dev/ind/pkg/util/norm"
 )
 
 type Op func(c *Command, args []string) error

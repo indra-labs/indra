@@ -2,11 +2,11 @@
 package headers
 
 import (
-	"github.com/indra-labs/indra/pkg/codec/onion/exit"
-	"github.com/indra-labs/indra/pkg/crypto"
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/engine/sessions"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/codec/onion/exit"
+	"git.indra-labs.org/dev/ind/pkg/crypto"
+	"git.indra-labs.org/dev/ind/pkg/crypto/nonce"
+	"git.indra-labs.org/dev/ind/pkg/engine/sessions"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 )
 
 var (

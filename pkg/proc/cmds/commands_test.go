@@ -2,10 +2,10 @@ package cmds
 
 import (
 	"fmt"
-	"github.com/indra-labs/indra/pkg/util/path"
+	"git.indra-labs.org/dev/ind/pkg/util/path"
 	"testing"
 
-	"github.com/indra-labs/indra/pkg/proc/opts/config"
+	"git.indra-labs.org/dev/ind/pkg/proc/opts/config"
 )
 
 func TestCommand_Foreach(t *testing.T) {

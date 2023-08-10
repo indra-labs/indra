@@ -2,12 +2,12 @@ package log_test
 
 import (
 	"errors"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 	"testing"
 )
 
 var (
-	log = log2.GetLogger()
+	log   = log2.GetLogger()
 	fails = log.E.Chk
 )
 

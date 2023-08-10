@@ -5,15 +5,15 @@ import (
 	"encoding/base32"
 	"fmt"
 	"runtime"
-	
-	"github.com/indra-labs/indra/pkg/proc/opts/config"
-	"github.com/indra-labs/indra/pkg/proc/opts/duration"
-	"github.com/indra-labs/indra/pkg/proc/opts/float"
-	"github.com/indra-labs/indra/pkg/proc/opts/integer"
-	"github.com/indra-labs/indra/pkg/proc/opts/list"
-	"github.com/indra-labs/indra/pkg/proc/opts/meta"
-	"github.com/indra-labs/indra/pkg/proc/opts/text"
-	"github.com/indra-labs/indra/pkg/proc/opts/toggle"
+
+	"git.indra-labs.org/dev/ind/pkg/proc/opts/config"
+	"git.indra-labs.org/dev/ind/pkg/proc/opts/duration"
+	"git.indra-labs.org/dev/ind/pkg/proc/opts/float"
+	"git.indra-labs.org/dev/ind/pkg/proc/opts/integer"
+	"git.indra-labs.org/dev/ind/pkg/proc/opts/list"
+	"git.indra-labs.org/dev/ind/pkg/proc/opts/meta"
+	"git.indra-labs.org/dev/ind/pkg/proc/opts/text"
+	"git.indra-labs.org/dev/ind/pkg/proc/opts/toggle"
 )
 
 const lorem = `

@@ -2,9 +2,9 @@ package p2p
 
 import (
 	"errors"
+	"git.indra-labs.org/dev/ind/pkg/cfg"
+	"git.indra-labs.org/dev/ind/pkg/storage"
 	"github.com/dgraph-io/badger/v3"
-	"github.com/indra-labs/indra/pkg/cfg"
-	"github.com/indra-labs/indra/pkg/storage"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/spf13/viper"

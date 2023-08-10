@@ -4,17 +4,17 @@
 package forward
 
 import (
-	"github.com/indra-labs/indra/pkg/cfg"
-	"github.com/indra-labs/indra/pkg/codec"
-	"github.com/indra-labs/indra/pkg/codec/onion/cores/end"
-	"github.com/indra-labs/indra/pkg/codec/onion/crypt"
-	"github.com/indra-labs/indra/pkg/codec/ont"
-	"github.com/indra-labs/indra/pkg/codec/reg"
-	"github.com/indra-labs/indra/pkg/engine/magic"
-	"github.com/indra-labs/indra/pkg/engine/sess"
-	"github.com/indra-labs/indra/pkg/engine/sessions"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
-	"github.com/indra-labs/indra/pkg/util/splice"
+	"git.indra-labs.org/dev/ind/pkg/cfg"
+	"git.indra-labs.org/dev/ind/pkg/codec"
+	"git.indra-labs.org/dev/ind/pkg/codec/onion/cores/end"
+	"git.indra-labs.org/dev/ind/pkg/codec/onion/crypt"
+	"git.indra-labs.org/dev/ind/pkg/codec/ont"
+	"git.indra-labs.org/dev/ind/pkg/codec/reg"
+	"git.indra-labs.org/dev/ind/pkg/engine/magic"
+	"git.indra-labs.org/dev/ind/pkg/engine/sess"
+	"git.indra-labs.org/dev/ind/pkg/engine/sessions"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/util/splice"
 	"github.com/multiformats/go-multiaddr"
 	"reflect"
 )

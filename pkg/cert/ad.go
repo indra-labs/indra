@@ -2,8 +2,8 @@
 package cert
 
 import (
-	"github.com/indra-labs/indra/pkg/codec"
-	"github.com/indra-labs/indra/pkg/crypto"
+	"git.indra-labs.org/dev/ind/pkg/codec"
+	"git.indra-labs.org/dev/ind/pkg/crypto"
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 

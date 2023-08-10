@@ -1,8 +1,8 @@
 package cfg
 
 import (
-	"github.com/indra-labs/indra/pkg/node"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/node"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 	"github.com/multiformats/go-multiaddr"
 	"go.uber.org/atomic"
 	"strconv"

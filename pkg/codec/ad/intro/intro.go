@@ -2,18 +2,18 @@
 package intro
 
 import (
-	"github.com/indra-labs/indra/pkg/codec"
-	"github.com/indra-labs/indra/pkg/codec/ad"
-	"github.com/indra-labs/indra/pkg/codec/reg"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/codec"
+	"git.indra-labs.org/dev/ind/pkg/codec/ad"
+	"git.indra-labs.org/dev/ind/pkg/codec/reg"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"time"
 
-	"github.com/indra-labs/indra/pkg/crypto"
-	"github.com/indra-labs/indra/pkg/crypto/nonce"
-	"github.com/indra-labs/indra/pkg/engine/magic"
-	"github.com/indra-labs/indra/pkg/util/slice"
-	"github.com/indra-labs/indra/pkg/util/splice"
+	"git.indra-labs.org/dev/ind/pkg/crypto"
+	"git.indra-labs.org/dev/ind/pkg/crypto/nonce"
+	"git.indra-labs.org/dev/ind/pkg/engine/magic"
+	"git.indra-labs.org/dev/ind/pkg/util/slice"
+	"git.indra-labs.org/dev/ind/pkg/util/splice"
 )
 
 var (

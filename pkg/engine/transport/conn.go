@@ -2,9 +2,9 @@ package transport
 
 import (
 	"bufio"
-	"github.com/indra-labs/indra/pkg/crypto"
-	"github.com/indra-labs/indra/pkg/engine/tpt"
-	"github.com/indra-labs/indra/pkg/util/qu"
+	"git.indra-labs.org/dev/ind/pkg/crypto"
+	"git.indra-labs.org/dev/ind/pkg/engine/tpt"
+	"git.indra-labs.org/dev/ind/pkg/util/qu"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/multiformats/go-multiaddr"

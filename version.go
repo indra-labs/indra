@@ -2,9 +2,9 @@
 
 // Package indra is the root of the repository for the Indra distributed VPN, containing mainly the version information for included executables to use for information and identification on the network.
 //
-// See [pkg/github.com/indra-labs/indra/cmd/indra] for the main server executable.
+// See [pkg/git.indra-labs.org/dev/ind/cmd/indra] for the main server executable.
 //
-// Put invocations to run all the generators in here check [pkg/github.com/indra-labs/indra/cmd/bumper] to add them, and they will automatically run with:
+// Put invocations to run all the generators in here check [cmd/bumper] to add them, and they will automatically run with:
 //
 // $ go generate .
 //
@@ -17,7 +17,7 @@ import "fmt"
 
 const (
 	// URL is the git URL for the repository.
-	URL = "github.com/indra-labs/indra"
+	URL = "git.indra-labs.org/dev/ind"
 	// GitRef is the gitref, as in refs/heads/branchname.
 	GitRef = "refs/heads/peerstore"
 	// ParentGitCommit is the commit hash of the parent HEAD.

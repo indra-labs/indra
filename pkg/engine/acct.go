@@ -1,11 +1,11 @@
 package engine
 
 import (
-	"github.com/indra-labs/indra/pkg/codec"
-	"github.com/indra-labs/indra/pkg/codec/onion/crypt"
-	"github.com/indra-labs/indra/pkg/codec/ont"
-	"github.com/indra-labs/indra/pkg/engine/sess"
-	"github.com/indra-labs/indra/pkg/engine/sessions"
+	"git.indra-labs.org/dev/ind/pkg/codec"
+	"git.indra-labs.org/dev/ind/pkg/codec/onion/crypt"
+	"git.indra-labs.org/dev/ind/pkg/codec/ont"
+	"git.indra-labs.org/dev/ind/pkg/engine/sess"
+	"git.indra-labs.org/dev/ind/pkg/engine/sessions"
 )
 
 // PostAcctOnion takes a slice of Skins and calculates their costs and

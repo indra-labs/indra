@@ -2,9 +2,9 @@ package crypto
 
 import (
 	"testing"
-	
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
-	"github.com/indra-labs/indra/pkg/util/tests"
+
+	"git.indra-labs.org/dev/ind/pkg/crypto/sha256"
+	"git.indra-labs.org/dev/ind/pkg/util/tests"
 )
 
 // this just really demonstrates how the keys generated are not linkable.

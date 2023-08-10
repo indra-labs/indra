@@ -1,7 +1,7 @@
 package p2p
 
 import (
-	"github.com/indra-labs/indra/pkg/cfg"
+	"git.indra-labs.org/dev/ind/pkg/cfg"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/multiformats/go-multiaddr"
 )

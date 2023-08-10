@@ -1,8 +1,8 @@
 package multikey
 
 import (
-	"github.com/indra-labs/indra/pkg/crypto"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/crypto"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
 )

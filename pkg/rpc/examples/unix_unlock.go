@@ -2,8 +2,8 @@ package examples
 
 import (
 	"context"
-	"github.com/indra-labs/indra/pkg/rpc"
-	"github.com/indra-labs/indra/pkg/storage"
+	"git.indra-labs.org/dev/ind/pkg/rpc"
+	"git.indra-labs.org/dev/ind/pkg/storage"
 	"google.golang.org/grpc"
 	"os"
 )

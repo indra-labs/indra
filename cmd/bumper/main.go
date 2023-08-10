@@ -21,7 +21,7 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 )
 
 var (
@@ -186,9 +186,9 @@ func main() {
 
 // Package indra is the root of the repository for the Indra distributed VPN, containing mainly the version information for included executables to use for information and identification on the network.
 //
-// See [pkg/github.com/indra-labs/indra/cmd/indra] for the main server executable.
+// See [pkg/git.indra-labs.org/dev/ind/cmd/indra] for the main server executable.
 //
-// Put invocations to run all the generators in here check [pkg/github.com/indra-labs/indra/cmd/bumper] to add them, and they will automatically run with:
+// Put invocations to run all the generators in here check [pkg/git.indra-labs.org/dev/ind/cmd/bumper] to add them, and they will automatically run with:
 //
 // $ go generate .
 //

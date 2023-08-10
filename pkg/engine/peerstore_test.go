@@ -2,9 +2,9 @@ package engine
 
 import (
 	"context"
+	"git.indra-labs.org/dev/ind"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 	"github.com/dgraph-io/badger/v3"
-	"github.com/indra-labs/indra"
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
 	"strings"
 	"testing"
 	"time"

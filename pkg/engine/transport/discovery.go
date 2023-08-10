@@ -2,7 +2,7 @@ package transport
 
 import (
 	"context"
-	"github.com/indra-labs/indra/pkg/crypto"
+	"git.indra-labs.org/dev/ind/pkg/crypto"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	ic "github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/host"

@@ -3,11 +3,11 @@ package p2p
 import (
 	"context"
 	"crypto/rand"
-	"github.com/indra-labs/indra/pkg/cfg"
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
-	"github.com/indra-labs/indra/pkg/engine/transport"
-	"github.com/indra-labs/indra/pkg/interrupt"
-	"github.com/indra-labs/indra/pkg/p2p/metrics"
+	"git.indra-labs.org/dev/ind/pkg/cfg"
+	"git.indra-labs.org/dev/ind/pkg/crypto/sha256"
+	"git.indra-labs.org/dev/ind/pkg/engine/transport"
+	"git.indra-labs.org/dev/ind/pkg/interrupt"
+	"git.indra-labs.org/dev/ind/pkg/p2p/metrics"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/spf13/viper"
@@ -15,8 +15,8 @@ import (
 
 	"github.com/multiformats/go-multiaddr"
 
-	"github.com/indra-labs/indra"
-	crypto2 "github.com/indra-labs/indra/pkg/crypto"
+	"git.indra-labs.org/dev/ind"
+	crypto2 "git.indra-labs.org/dev/ind/pkg/crypto"
 )
 
 var (

@@ -1,9 +1,9 @@
 package crypto
 
 import (
+	"git.indra-labs.org/dev/ind/pkg/crypto/sha256"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/schnorr"
-	"github.com/indra-labs/indra/pkg/crypto/sha256"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	crypto_pb "github.com/libp2p/go-libp2p/core/crypto/pb"
 )

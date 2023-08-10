@@ -17,7 +17,7 @@ import (
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/moby/term"
 
-	log2 "github.com/indra-labs/indra/pkg/proc/log"
+	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 )
 
 var (
