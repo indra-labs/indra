@@ -125,7 +125,7 @@ func (x *Route) Decode(s *splice.Splice) (e error) {
 // Decrypt decrypts the rest of a message after the Route segment if the
 // recipient has the hidden service private key.
 func (x *Route) Decrypt(prk *crypto.Prv, s *splice.Splice) {
-	ciph.Encipher(ciph.GetBlock(prk, x.SenderPub, "route decrypt"), x.IV,
+	ciph.Encipher(ciph.GetBlock(prk, x.SenderPub), x.IV,
 		s.GetRest())
 	// And now we can see the reply field for the return trip.
 	s.ReadID(&x.ID).ReadCiphers(&x.Ciphers).ReadNonces(&x.Nonces)
@@ -149,7 +149,7 @@ func (x *Route) Encode(s *splice.Splice) (e error) {
 	}
 	var blk cipher.Block
 	// Encrypt the message!
-	if blk = ciph.GetBlock(x.Sender, x.HiddenService, "route"); fails(e) {
+	if blk = ciph.GetBlock(x.Sender, x.HiddenService); fails(e) {
 		return
 	}
 	ciph.Encipher(blk, x.IV, s.GetFrom(start))
@@ -197,11 +197,14 @@ func (x *Route) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 		}
 		rh := []ont.Onion{
 			reverse.New(addrs[0]),
-			crypt.New(rt.Sessions[0].Header.Pub, rt.Sessions[0].Payload.Pub, rt.Keys[0], rt.Nonces[0], 3),
+			crypt.New(rt.Sessions[0].Header.Pub, rt.Sessions[0].Payload.Pub,
+				rt.Keys[0], rt.Nonces[0], 3),
 			reverse.New(addrs[1]),
-			crypt.New(rt.Sessions[1].Header.Pub, rt.Sessions[1].Payload.Pub, rt.Keys[1], rt.Nonces[1], 2),
+			crypt.New(rt.Sessions[1].Header.Pub, rt.Sessions[1].Payload.Pub,
+				rt.Keys[1], rt.Nonces[1], 2),
 			reverse.New(addrs[2]),
-			crypt.New(rt.Sessions[2].Header.Pub, rt.Sessions[2].Payload.Pub, rt.Keys[2], rt.Nonces[2], 1),
+			crypt.New(rt.Sessions[2].Header.Pub, rt.Sessions[2].Payload.Pub,
+				rt.Keys[2], rt.Nonces[2], 1),
 		}
 		// .RoutingHeader(rt)
 		rHdr := codec.Encode(ont.Assemble(rh))
@@ -216,9 +219,11 @@ func (x *Route) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 		}
 		mr := []ont.Onion{
 			forward.New(addrs[3]),
-			crypt.New(ss[3].Header.Pub, ss[3].Payload.Pub, ng.Keyset().Next(), n[3], 0),
+			crypt.New(ss[3].Header.Pub, ss[3].Payload.Pub, ng.Keyset().Next(),
+				n[3], 0),
 			forward.New(addrs[4]),
-			crypt.New(ss[4].Header.Pub, ss[4].Payload.Pub, ng.Keyset().Next(), n[4], 0),
+			crypt.New(ss[4].Header.Pub, ss[4].Payload.Pub, ng.Keyset().Next(),
+				n[4], 0),
 			ready.New(x.ID, x.HiddenService,
 				x.RoutingHeaderBytes,
 				hidden.GetRoutingHeaderFromCursor(rHdr),

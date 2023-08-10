@@ -126,7 +126,7 @@ func DecodePacket(d []byte, from *crypto.Pub, to *crypto.Prv,
 	c := new(slice.Cursor)
 	copy(iv[:], d[c.Inc(4+crypto.PubKeyLen+crypto.CloakLen):c.Inc(nonce.IVLen)])
 	var blk cipher.Block
-	if blk = ciph.GetBlock(to, from, "packet decode"); fails(e) {
+	if blk = ciph.GetBlock(to, from); fails(e) {
 		return
 	}
 	// This decrypts the rest of the packet.
@@ -151,7 +151,7 @@ func DecodePacket(d []byte, from *crypto.Pub, to *crypto.Prv,
 // signature to the end.
 func EncodePacket(ep *PacketParams) (pkt []byte, e error) {
 	var blk cipher.Block
-	if blk = ciph.GetBlock(ep.From, ep.To, "packet encode"); fails(e) {
+	if blk = ciph.GetBlock(ep.From, ep.To); fails(e) {
 		return
 	}
 	nonc := nonce.New()
@@ -191,7 +191,8 @@ func EncodePacket(ep *PacketParams) (pkt []byte, e error) {
 // found, it is combined with the public key to generate the cipher and the
 // entire packet should then be decrypted, and the DecodePacket function will
 // then decode a OnionSkin.
-func GetKeysFromPacket(d []byte) (from *crypto.Pub, to crypto.CloakedPubKey, iv nonce.IV,
+func GetKeysFromPacket(d []byte) (from *crypto.Pub, to crypto.CloakedPubKey,
+	iv nonce.IV,
 	e error) {
 	pktLen := len(d)
 	if pktLen < Overhead {

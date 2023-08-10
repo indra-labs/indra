@@ -349,6 +349,38 @@ func (s *Splice) Bytes(b []byte) *Splice {
 	return s
 }
 
+const MaxUint24 = 1<<24 - 1
+
+// Offset writes a 24 bit value into the Splice. Used with the Crypt payload
+// cipher offset. A value over MaxUint24 is not recoverable so it will panic.
+func (s *Splice) Offset(o uint32) *Splice {
+
+	// This offset value being over MaxUint24 is a programmer error.
+	if o > MaxUint24 {
+		panic(fmt.Sprintf("payload cipher offset cannot be over %d", MaxUint24))
+	}
+	index := s.GetCursor()
+
+	// little endian, smallest byte first, bigger bytes after.
+	s.b[index] = byte(o)
+	s.b[index+1] = byte(o >> 8)
+	s.b[index+2] = byte(o >> 16)
+	s.Advance(3, "payload cipher offset")
+	return s
+}
+
+// ReadOffset decodes the offset and fills the integer with the uint24 value.
+func (s *Splice) ReadOffset(o *int) *Splice {
+
+	index := s.GetCursor()
+	// little endian, smallest byte first, bigger bytes after.
+	*o = int(s.b[index])
+	*o += int(s.b[index+1]) << 8
+	*o += int(s.b[index+2]) << 16
+	s.Advance(3, "payload cipher offset")
+	return s
+}
+
 func (s *Splice) ReadBytes(b *slice.Bytes) *Splice {
 	bytesLen := slice.DecodeUint32(s.b[*s.c:s.c.Inc(slice.Uint32Len)])
 	s.Segments = append(s.Segments,

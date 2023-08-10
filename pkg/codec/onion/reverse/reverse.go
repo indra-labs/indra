@@ -93,7 +93,7 @@ func (x *Reverse) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 		if e = in.Decode(s); fails(e) {
 			return e
 		}
-		if in.Magic() != crypt.CryptMagic {
+		if in.Magic() != crypt.Magic {
 			return e
 		}
 		on := in.(*crypt.Crypt)
@@ -111,7 +111,7 @@ func (x *Reverse) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 		on.ToPriv = hdr
 		// Decrypt using the Payload key and header nonce.
 		c := s.GetCursor()
-		ciph.Encipher(ciph.GetBlock(on.ToPriv, on.FromPub, "reverse header"),
+		ciph.Encipher(ciph.GetBlock(on.ToPriv, on.FromPub),
 			on.IV, s.GetRange(c, c+2*consts.ReverseCryptLen))
 		// shift the header segment upwards and pad the
 		// remainder.
@@ -119,7 +119,7 @@ func (x *Reverse) Handle(s *splice.Splice, p ont.Onion, ng ont.Ngin) (e error) {
 		s.CopyRanges(first, second, second, last)
 		s.CopyIntoRange(slice.NoisePad(consts.ReverseCryptLen), second, last)
 		if last != s.Len() {
-			ciph.Encipher(ciph.GetBlock(pld, on.FromPub, "reverse payload"),
+			ciph.Encipher(ciph.GetBlock(pld, on.FromPub),
 				on.IV, s.GetFrom(last))
 		}
 		if string(s.GetRange(start, start+magic.Len)) != Magic {
