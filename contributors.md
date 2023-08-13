@@ -95,14 +95,34 @@ if you adhere to a few rules:
   precise
   > names, and writing functions that should be broken into components.
 
-- ### Composition > Inheritance - Decompose interfaces, and consolidate repeating fields in structs.
+- ### `var` vs `:=` and tuple returns and whitespace - prefer function root declaration and defer declaration until would be used
 
-  > Interfaces and anonymous types allow Go to enable extension of existing code
-  without modification, without incurring the additional complexity of both
-  translating such nebulous and excessively complex designs that lead to long
-  compilation times or poor execution, or forcing us to specify the anonymous
-  field name (the type), and to the end user programmer, the interface tells
-  all, the details are not important if they are not impediments.
+  > This is a little complicated to explain, but like with preferring named
+  return values for quick mnemonic information value, and naked returns in
+  sub-20 line functions (which ideally most are).
+  >
+  > Basically, creating variables is a statement that performs the hopefully
+  stack
+  > variable initialisation, whether it is `var` or `:=` which is shorter
+  > than `var NAME TYPE = VALUE`.
+  >
+  > Declaring them inline in `if` and `for` blocks means they cannot be seen in
+  > the function root scope. Thus they should be declared in independent `var`
+  > declarations, and if an initial value is required, instead it can be created
+  > to assign this value after initialising.
+  >
+  > It is unlikely it is not optimised out often but it also helps eliminate the
+  > appearance of repeating symbol names that seem adjacent but are in different
+  > scopes. The error value particularly often can be confusing inside closures
+  in
+  > this way.
+  >
+  > A side note is that closures that are using a variable in scope, even the
+  > receiver, of the parent function, should explicitly convey it in a
+  parameter,
+  > and the automatic syntax colouring in most IDEs will use a different colour
+  > between the same name as well as having to specify the type and place the
+  > variable in the final function braces at the end of the closure.
 
 ## Interface Usage
 
@@ -125,6 +145,15 @@ a few references for the implementation and **presto chango**, new
 implementation
 slotted in.
 
+- ### Composition > Inheritance - Decompose interfaces, and consolidate repeating fields in structs.
+
+  > Interfaces and anonymous types allow Go to enable extension of existing code
+  without modification, without incurring the additional complexity of both
+  translating such nebulous and excessively complex designs that lead to long
+  compilation times or poor execution, or forcing us to specify the anonymous
+  field name (the type), and to the end user programmer, the interface tells
+  all, the details are not important if they are not impediments.
+
 - ### Create an interface for every type you will use a lot in other code early, if not right at the beginning.
 
   > This can save a lot of time caught in rabbitholes, it acts like guiderails.
@@ -142,7 +171,8 @@ slotted in.
 - ### Amend the interface when it appears that things initially thought internal are internal and need to be used as interfaces.
 
   > The signature of the need for an interface in Go is recurrance of parameters
-  > of functions, though the return values also. When it is a conflict between one
+  > of functions, though the return values also. When it is a conflict between
+  one
   > that returns no error, and one that returns an error, change all to the one
   > with the error as well as the return value. **These can get awkward, but
   > usually the worst of it is avoided by putting a string of error handling
