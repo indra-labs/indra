@@ -1,5 +1,6 @@
 # ⚠️ Indra has [moved](https://git.indra-labs.org/dev/ind) ⚠️ 
 
+###### This repository still receives updates but work and issues etc are at the new location.
 
 [![Indranet Logo](docs/logo.svg)
 ](https://github.com/orgs/indra-labs/projects/1/views/1)
