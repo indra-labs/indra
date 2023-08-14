@@ -1,4 +1,7 @@
-[![Indra Routing Protocol Logo](docs/logo.svg)
+# ⚠️ Indra has [moved](https://git.indra-labs.org/dev/ind) ⚠️ 
+
+
+[![Indranet Logo](docs/logo.svg)
 ](https://github.com/orgs/indra-labs/projects/1/views/1)
 
 # Indranet
