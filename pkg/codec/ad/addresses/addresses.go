@@ -32,10 +32,10 @@ const (
 // web, 53 for DNS, 8333 for bitcoin p2p, 8334 for bitcoin JSONRPC... For
 // simplicity.
 type Ad struct {
-
+	
 	// Embed ad.Ad for the common fields
 	ad.Ad
-
+	
 	// Addresses that the peer can be reached on.
 	Addresses []multiaddr.Multiaddr
 }
@@ -45,7 +45,7 @@ var _ codec.Codec = &Ad{}
 // New creates a new addresses.Ad.
 func New(id nonce.ID, key *crypto.Prv, addrs []multiaddr.Multiaddr,
 	expiry time.Time) (addrAd *Ad) {
-
+	
 	k := crypto.DerivePub(key)
 	addrAd = &Ad{
 		Ad: ad.Ad{
@@ -103,9 +103,9 @@ func (x *Ad) Unwrap() interface{} { return nil }
 // Len returns the length of bytes required to encode the Ad, based on the number
 // of Addresses inside it.
 func (x *Ad) Len() int {
-
+	
 	codec.MustNotBeNil(x)
-
+	
 	l := ad.Len + slice.Uint16Len
 	// Generate the addresses to get their data length:
 	// for _, v := range x.Addresses {
@@ -156,22 +156,22 @@ func (x *Ad) SpliceNoSig(s *splice.Splice) {
 // Splice is a function that serializes the parts of an Ad.
 func Splice(s *splice.Splice, id nonce.ID, key *crypto.Pub,
 	addrs []multiaddr.Multiaddr, expiry time.Time) {
-
-	// log.D.Ln("spliced", s.GetCursor())
+	
+	// log.D.Ln("spliced", s.GetPos())
 	s.Magic(Magic)
-	// log.D.Ln("spliced", s.GetCursor(), "magic")
+	// log.D.Ln("spliced", s.GetPos(), "magic")
 	s.ID(id)
-	// log.D.Ln("spliced", s.GetCursor(), "ID")
+	// log.D.Ln("spliced", s.GetPos(), "ID")
 	s.Pubkey(key)
-	// log.D.Ln("spliced", s.GetCursor(), "pubkey")
+	// log.D.Ln("spliced", s.GetPos(), "pubkey")
 	s.Uint16(uint16(len(addrs)))
-	// log.D.Ln("spliced", s.GetCursor(), "addrlen")
+	// log.D.Ln("spliced", s.GetPos(), "addrlen")
 	for i := range addrs {
 		s.Multiaddr(addrs[i], cfg.GetCurrentDefaultPort())
-		// log.D.Ln("addresses", s.GetCursor(), "addr", i)
+		// log.D.Ln("addresses", s.GetPos(), "addr", i)
 	}
 	s.Time(expiry)
-	// log.D.Ln("spliced", s.GetCursor(), "bytes")
+	// log.D.Ln("spliced", s.GetPos(), "bytes")
 }
 
 func init() { reg.Register(Magic, Gen) }
