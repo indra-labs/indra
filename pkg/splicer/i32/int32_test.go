@@ -15,7 +15,7 @@ func TestI(t *testing.T) {
 	bt := New()
 	bt.Put(int32(bits))
 	bt2 := New()
-	bt2.Decode(bt.Encode())
+	bt2.Write(bt.Read())
 	if bt.Get() != bt2.Get() {
 		t.Fail()
 	}

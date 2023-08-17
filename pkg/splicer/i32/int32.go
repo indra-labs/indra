@@ -12,11 +12,11 @@ func New() *I {
 }
 
 func (b *I) DecodeOne(by []byte) *I {
-	b.Decode(by)
+	b.Write(by)
 	return b
 }
 
-func (b *I) Decode(by []byte) (out []byte) {
+func (b *I) Write(by []byte) (out []byte) {
 	if len(by) >= 4 {
 		b.Bytes = []byte{by[0], by[1], by[2], by[3]}
 		if len(by) > 4 {
@@ -26,7 +26,7 @@ func (b *I) Decode(by []byte) (out []byte) {
 	return
 }
 
-func (b *I) Encode() []byte {
+func (b *I) Read() []byte {
 	return b.Bytes[:]
 }
 
