@@ -1,4 +1,4 @@
-package simplebuffer
+package splicer
 
 import (
 	"encoding/binary"
@@ -10,15 +10,17 @@ var (
 	fails = log.E.Chk
 )
 
-type Serializer interface {
+type Codec interface {
+	
 	// Encode returns the wire/storage form of the data
 	Encode() []byte
+	
 	// Decode stores the decoded data from the head of the slice and returns the
 	// remainder
 	Decode(b []byte) []byte
 }
 
-type Serializers []Serializer
+type Serializers []Codec
 
 type Container struct {
 	Data []byte

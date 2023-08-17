@@ -1,4 +1,4 @@
-package Int32
+package i32
 
 import (
 	"encoding/binary"
@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestInt32(t *testing.T) {
+func TestI(t *testing.T) {
 	by, err := hex.DecodeString("deadbeef")
 	if err != nil {
 		panic(err)
