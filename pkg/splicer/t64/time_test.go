@@ -1,4 +1,4 @@
-package time64
+package t64
 
 import (
 	indra "git.indra-labs.org/dev/ind"
@@ -23,7 +23,7 @@ func TestNew(t *testing.T) {
 	// Encode in the time value.
 	t1.Put(&nao)
 	
-	// Copy to other Stamp.
+	// Copy to other Time.
 	t2.Write(t1.Read())
 	
 	// Verify accessors work.
