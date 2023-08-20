@@ -12,10 +12,11 @@ TODO: perhaps the look-behind buffer should be as long as the cleartext messages
 
 ### Session
 
-| 1 | Session message magic bytes |
-| ----- | ------------------------------------------------------------ |
-| 2 | Header key (32 bytes)                         |
-| 3 | Payload key (32 bytes)                         |
+| Byte length | Name | Description |
+| ----- | ----- | ----- |
+| 4 | Magic | Sentinel marker for beginning/end of messages |
+| 32 | Header | Symmetric ECDH private key used in reply headers and simple forwards |
+| 32 | Payload | Symmetric ECDH private key used for encrypting response payloads |
 
 The session is the most important and primary message type in the sense that it must be delivered in order for a relay to be obliged to perform services for clients.
 
@@ -31,11 +32,14 @@ Sessions contain a **Header** key and a **Payload** key, which is described in t
 
 The session is a reference to a pre-paid balance, against which a bytes/time rate is applied to messages that are forwarded via the session. The session also can be alternatively billed on a different rate for **Exit** messages, as described below.
 
+These keys are not straight symmetric ciphers, they must be combined with a public key using ECDH, and for encryption the sender uses the session public key and generates a new private key for each message.
+
 ### Forward
 
-| 1 | Forward message magic bytes |
-| ----- | ------------------------------------------------------------ |
-| 2 | Relay Identity Public Key (33 bytes)                         |
+| Byte length | Name | Description |
+| ----- | ----- | ----- |
+| 4 | Magic | Sentinel marker for beginning/end of messages |
+| 33 | RelayID | Public identity key of relay to forward this message to |
 
 The number one task of Indranet relays is to accept a message, and forward it to another relay.
 
@@ -47,19 +51,15 @@ Relays must keep a database of metadata about relays that provides them with a m
 
 ### Crypt
 
-| 1 | Crypt message magic bytes  |
-| ----- | ------------------------------------------------------------ |
-| 2 | *Cloaked* * session **Header** public key (8 bytes, 4 bytes blinding factor, 4 bytes truncated hash of public key and blinding factor) |
-| 3 | Message public key (sender generated one-time)                                    |
-| 4 | Initialisation Vector (16 bytes standard AES high entropy random value) |
+| Byte length | Name | Description |
+| ----- | ----- | ----- |
+| 4 | Magic | Sentinel marker for beginning/end of messages |
+| 8 | Cloaked\* Header public key |Indicates to the valid receiver which public key is being used.|
+| 33 | Message public key | (sender generated one-time) |
+| 16 | Initialisation Vector | standard AES high entropy random value) |
+| 3 | Offset | 24 bit vector (up to 16Mb header) for beginning of payload (using Payload key from [Session](#session)) |
 
-The second most important message type in Indranet is the **Crypt**.
-
-The crypt is an encrypted message, consisting of a header containing a cloaked session key referring to the session private key, and the random seed value used to prevent the possibility of plaintext cryptanalysis attacks.
-
-The crypt specifies encryption that is used to "wrap" the remainder of a message so that only the intended recipient can see it, a combination of encryption and authentication rolled into one.
-
->  \* Cloaked means concealing the session key by taking a 4 byte random value, the **Blinding** factor, concatenating the public key after it, hashing the concatenated string, and then truncating the hash to 4 bytes, and concatenating it to the random value. 
+>  \* **Cloaked** means concealing the session key by taking a 4 byte random value, the **Blinding** factor, concatenating the public key after it, hashing the concatenated string, and then truncating the hash to 4 bytes, and concatenating it to the random value. 
 >
 > fingerprint = hash ( nonce | public key ) -> truncated to 4 bytes
 >
@@ -68,6 +68,12 @@ The crypt specifies encryption that is used to "wrap" the remainder of a message
 > The relay can then scan its session database by generating the same construction using the same method just described to determine if the candidate key matches.
 >
 > The reason for this is to prevent the relay from correlating two packets that it may be forwarding to the same next hop relay or client, as being related via the **Session**.
+
+The second most important message type in Indranet is the **Crypt**.
+
+The crypt is an encrypted message, consisting of a header containing a cloaked session key referring to the session private key, and the random seed value used to prevent the possibility of plaintext cryptanalysis attacks.
+
+The crypt specifies encryption that is used to "wrap" the remainder of a message so that only the intended recipient can see it, a combination of encryption and authentication rolled into one.
 
 ### Reply
 
@@ -83,16 +89,23 @@ The general design of the **Reply** message is a **Forward** message, designatin
 
 #### Header
 
-| 1 | Forward |
-| ----- | ------------------------------------------------------------ |
-| 2 | Crypt |
-| 3 | ... repeat 0 or more **Forward**, **Crypt** layers |
-| 4 | padding with length of a random number of extra **Forward/Crypt** layers |
-| **Extra Data** | |
-| 5 | Layer count (how many Ciphers and IVs needed) 16 bits (enough for the most ridiculously long headers) |
-| 6 | Ciphers |
-| 7 | Initialisation Vectors |
-| 8 | Sentinel |
+| Byte length | Name | Description |
+| ----- | ----- | ----- |
+| 2 | HeaderLength | Length of Header, after which Extra Data is found |
+| ... | Crypt | N layers of crypts |
+| ... | ... | repeat 0 or more **Forward**, **Crypt** and then optionally **Delay** and **Pad** layers |
+| ... | | padding with length of a random number of extra **Forward/Crypt** layers |
+
+#### Extra Data
+
+These are found directly appended to the end of the above header
+
+| Byte length | Name | Description |
+| -----| ----- | ----- |
+| 2 | Layer count | Number of Ciphers/IVs found in the following. |
+| 32 | Ciphers | Pre-generated symmetric ciphers created with Payload session key and the same public key found in the matching Header layer (hidden from Exit/Hidden Service via encryption) |
+| 16 | Initialisation Vectors | IVs that match the ones used in the header Crypt layers |
+| 4 | Sentinel | Magic bytes indicating the sender defined sentinel to place at the proper end of the response bundled using the Reply |
 
 #### Ciphers
 
@@ -112,13 +125,14 @@ If this recurs, the next ban score increase must be a multiple of the previous, 
 
 ### Exit
 
-
-| 1 | Exit magic bytes |
-| ----- | ------------------------------------------------------------ |
-| 2 | ID (64 bit nonce) used to identify pending response |
-| 3 | Exit port (well known port*) |
-| 4 | **Reply** |
-|  |  |
+| Byte length | Name | Description |
+| ----- | ----- | ----- |
+| 4 | Magic | Sentinel marker for beginning/end of messages |
+| 8 | ID |Database key for retrieving pending message|
+| 2 | Exit port | Well known port \* |
+| ... | Reply | Header, Ciphers and Initialisation Vectors for bundling Response |
+| 4 | Request Length | Length of data following that contains request |
+| ...  | Request | Message to forward to Service via local port forward |
 
 The Exit message is a request to tunnel a packet out of the Indra network.
 
@@ -132,20 +146,28 @@ Traffic that is forwarded to a *Service* is billed according to the average of t
 >
 > For example, proxy port numbers are arbitrary, but we might specify they are to always be, say, 8080 for a HTTP proxy, or 8004 for Socks 4A or 8005 for Socks 5, and so on. These will most likely be the loopback ports that are usually used or even specified in the protocol, even though for clearnet use such an open relay would be a security/spam risk, this is the purpose of Indra, and spam is controlled separately by the metering of data volume for relaying
 
+### Response
+
+Response is the message wrapper for the response from a Service.
+
 ### Delay
 
-| 1 | Delay magic bytes |
-| ----- | ------------------------------------------------------------ |
-| 2 | 32 bit value signifying milliseconds of delay |
+| Byte length | Name | Description |
+| ----- | ----- | ----- |
+| 4 | Magic | Sentinel marker for beginning/end of messages |
+| 4 | Delay | Number of seconds to hold message in cache before processing next message layer |
 
 In order to add some temporal jitter and to arbitrarily increase and decrease the size of the layers that are stacked at the head of messages, it is possible to add a specification that provides a millisecond precision 32 bit value specifying an amount of time to hold the message in the buffer before sending it.
 
-In order to facilitate this the relays must charge according to a coefficient multiplied by the time of delays against the message size. For this reason also, as will be explained with **Pad**, this is entirely under the control of the client for both reasons of securing anonymity as well as permitting applications to add these to messages for whatever purpose the application developer envisions, such as, potentially, storing data temporarily out of band for a prescribed amount of time as a form of "cloud storage".
+In order to facilitate this the relays must charge according to a coefficient multiplied by the time of delays against the message size.
+
+For this reason also, as will be explained with **Pad**, this is entirely under the control of the client for both reasons of securing anonymity as well as permitting applications to add these to messages for whatever purpose the application developer envisions, such as, potentially, storing data temporarily out of band for a prescribed amount of time as a form of "cloud storage".
 
 ### Pad (Increment/Decrement)
 
-| 1 | Pad magic bytes |
-| ----- | ------------------------------------------------------------ |
+| Byte length | Name | Description |
+| ----- | ----- | ----- |
+| 4 | Magic | Sentinel marker for beginning/end of messages |
 | 2 | 16 bit value signifying milliseconds of delay |
 
 Outside of the anonymity quality-of-service, reciprocating dummy traffic that peers will send to each other, using a scheme of fractional reserve for allowing temporal disjoint reciprocation, or whatever scheme ends up being used, the client needs to have control over how the size of their messages is altered deliberately in transit.
@@ -154,16 +176,6 @@ Outside of the anonymity quality-of-service, reciprocating dummy traffic that pe
 
 This is not, obviously, something that necessarily evil nodes are going to abide by, but any that don't, and add arbitrary pad and/or snip off sentinels the client expects will flag themselves as mischief makers, or at least, that mischief happened along the path, putting all nodes in the path under suspicion, for use of automatically detecting anomalous behaviour that repeats and may be abusive.
 
-### Dummy Traffic
-
-Dummy traffic is traffic generated between relays according to their configured allowance beyond their paid traffic relaying that is used to help improve the complexity of tracing the path of messages through their routes.
-
-This traffic is of no direct benefit to relays, but will default in configuration to some value like a 10% cut out of the defined bandwidth quota, which is defined by bytes/time, such as a typical alocation of 1 terabyte per month on a VPS.
-
-The dummy traffic is not just arbitrarily sent at random times, although it could be triggered by things such as a peer not having traffic routed through it, but the primary trigger for dummy traffic generation could be in response to client initiated traffic. 
-
-> todo: maybe this isn't needed at all, and needs to be client side configured only. This eliminates the complexity of an extra accounting system and moves the cost to the user who has the motivation to cloak their traffic better than other users in order to hide their message pathways more effectively, by increasing the combinatorial complexity of the path.
-
 ### Split
 
 Split is where the remainder of the message has 2 or more segments that each bear a header indicating a different destination. This could be used, for example, to create a liveness detection along an arbitrary route that conceals the return paths of this telemetry.
@@ -171,3 +183,13 @@ Split is where the remainder of the message has 2 or more segments that each bea
 ### Fork
 
 Fork is where the packet is sent to more than one destination, enabling multicast.
+
+### ~~Dummy Traffic~~
+
+~~Dummy traffic is traffic generated between relays according to their configured allowance beyond their paid traffic relaying that is used to help improve the complexity of tracing the path of messages through their routes.~~
+
+~~This traffic is of no direct benefit to relays, but will default in configuration to some value like a 10% cut out of the defined bandwidth quota, which is defined by bytes/time, such as a typical alocation of 1 terabyte per month on a VPS.~~
+
+~~The dummy traffic is not just arbitrarily sent at random times, although it could be triggered by things such as a peer not having traffic routed through it, but the primary trigger for dummy traffic generation could be in response to client initiated traffic.~~
+
+> ~~todo: maybe this isn't needed at all, and needs to be client side configured only. This eliminates the complexity of an extra accounting system and moves the cost to the user who has the motivation to cloak their traffic better than other users in order to hide their message pathways more effectively, by increasing the combinatorial complexity of the path.~~
