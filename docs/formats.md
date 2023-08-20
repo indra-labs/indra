@@ -8,7 +8,7 @@ Indranet's messages function in a similar manner to instructions in a scripting 
 
 TODO: perhaps the look-behind buffer should be as long as the cleartext messages, with chains of various message types is found, so that ordering is not so important as set associativity.
 
-## Top Level Message Types
+## Primitives
 
 ### Session
 
@@ -57,17 +57,19 @@ Relays must keep a database of metadata about relays that provides them with a m
 | 8 | Cloaked\* Header public key |Indicates to the valid receiver which public key is being used.|
 | 33 | Message public key | (sender generated one-time) |
 | 16 | Initialisation Vector | standard AES high entropy random value) |
-| 3 | Offset | 24 bit vector (up to 16Mb header) for beginning of payload (using Payload key from [Session](#session)) |
+| 3 | Offset *** | 24 bit vector (up to 16Mb header) for beginning of payload (using Payload key from [Session](#session)) |
 
 >  \* **Cloaked** means concealing the session key by taking a 4 byte random value, the **Blinding** factor, concatenating the public key after it, hashing the concatenated string, and then truncating the hash to 4 bytes, and concatenating it to the random value. 
 >
-> fingerprint = hash ( nonce | public key ) -> truncated to 4 bytes
+>  fingerprint = hash ( nonce | public key ) -> truncated to 4 bytes
 >
-> cloak = nonce | fingerprint
+>  cloak = nonce | fingerprint
 >
-> The relay can then scan its session database by generating the same construction using the same method just described to determine if the candidate key matches.
+>  The relay can then scan its session database by generating the same construction using the same method just described to determine if the candidate key matches.
 >
-> The reason for this is to prevent the relay from correlating two packets that it may be forwarding to the same next hop relay or client, as being related via the **Session**.
+>  The reason for this is to prevent the relay from correlating two packets that it may be forwarding to the same next hop relay or client, as being related via the **Session**.
+>
+>  ***  The Offset is encrypted as the first 3 bytes of the message, concealing from casual observation how deep the header is relative to the packet.
 
 The second most important message type in Indranet is the **Crypt**.
 
@@ -146,7 +148,25 @@ Traffic that is forwarded to a *Service* is billed according to the average of t
 >
 > For example, proxy port numbers are arbitrary, but we might specify they are to always be, say, 8080 for a HTTP proxy, or 8004 for Socks 4A or 8005 for Socks 5, and so on. These will most likely be the loopback ports that are usually used or even specified in the protocol, even though for clearnet use such an open relay would be a security/spam risk, this is the purpose of Indra, and spam is controlled separately by the metering of data volume for relaying
 
+### Request
+
+| Byte length | Name  | Description                                   |
+| ----------- | ----- | --------------------------------------------- |
+| 4           | Magic | Sentinel marker for beginning/end of messages |
+| 4 | Length | 32 bit value for the length of the message, ie, up to 4 gigabytes |
+| ... | Data | The content of the Request |
+
+> todo: maybe it should instead be 24 bits, ie 16 megabytes, more than large enough for a high throughput protocol.
+
+Request is exactly a standard request message for a server as found in all Client/Server protocols. It is simply a wrapper for an arbitrary payload of data.
+
 ### Response
+
+| Byte length | Name  | Description                                   |
+| ----------- | ----- | --------------------------------------------- |
+| 4           | Magic | Sentinel marker for beginning/end of messages |
+| 4 | Length | 32 bit value for the length of the message, ie, up to 4 gigabytes |
+| ... | Data | The content of the Response |
 
 Response is the message wrapper for the response from a Service.
 
@@ -155,7 +175,7 @@ Response is the message wrapper for the response from a Service.
 | Byte length | Name | Description |
 | ----- | ----- | ----- |
 | 4 | Magic | Sentinel marker for beginning/end of messages |
-| 4 | Delay | Number of seconds to hold message in cache before processing next message layer |
+| 4 | Delay | Number of milliseconds to hold message in cache before processing next message layer |
 
 In order to add some temporal jitter and to arbitrarily increase and decrease the size of the layers that are stacked at the head of messages, it is possible to add a specification that provides a millisecond precision 32 bit value specifying an amount of time to hold the message in the buffer before sending it.
 
@@ -178,18 +198,202 @@ This is not, obviously, something that necessarily evil nodes are going to abide
 
 ### Split
 
+| Byte length | Name | Description |
+| ----- | ----- | ----- |
+| 4 | Magic | Sentinel marker for beginning/end of messages |
+| 2 | Count | Indicates the number of splits following |
+| 4 | Offsets | *Count* number of 32 bit offset values marking the segments |
+| 33 | Destinations | Number of relay identity keys - this is 1 more than *Count* as the boundary of the last split is the end of the message. |
+| ... | Data | The segments that begin from the end of the Offsets/Destinations and continue until the end of the message. |
+
 Split is where the remainder of the message has 2 or more segments that each bear a header indicating a different destination. This could be used, for example, to create a liveness detection along an arbitrary route that conceals the return paths of this telemetry.
 
-### Fork
+Splits also make possible the fan-out/fan/in pattern for multipath messages.
 
-Fork is where the packet is sent to more than one destination, enabling multicast.
+#### Low Latency Mixnet "Lightning Bolts"
 
-### ~~Dummy Traffic~~
+One of the biggest difficulties with mixnets is that the lower the latency, the easier it is to correlate traffic paths as they flow through the network.
 
-~~Dummy traffic is traffic generated between relays according to their configured allowance beyond their paid traffic relaying that is used to help improve the complexity of tracing the path of messages through their routes.~~
+Defeating this attack can be achieved by adding **Split** messages fan out randomly to deliver empty or padding, so that at each hop, at least two different simultaneous transmissions take place.
 
-~~This traffic is of no direct benefit to relays, but will default in configuration to some value like a 10% cut out of the defined bandwidth quota, which is defined by bytes/time, such as a typical alocation of 1 terabyte per month on a VPS.~~
+These can be called Lightning Bolts since they propagate in a similar way as arcs of electricity across the sky and to the ground, forking towards equally conductive or from equally charged areas that merge or split.
 
-~~The dummy traffic is not just arbitrarily sent at random times, although it could be triggered by things such as a peer not having traffic routed through it, but the primary trigger for dummy traffic generation could be in response to client initiated traffic.~~
+The simulation of merging can even be created, as well, with forks that merge back together.
 
-> ~~todo: maybe this isn't needed at all, and needs to be client side configured only. This eliminates the complexity of an extra accounting system and moves the cost to the user who has the motivation to cloak their traffic better than other users in order to hide their message pathways more effectively, by increasing the combinatorial complexity of the path.~~
+## Network Intelligence 
+
+In source routing systems, the nodes that perform relaying services must advertise their existence and instructions on how to reach them.
+
+All advertisements contain the following 4 fields, and additional fields as required:
+
+### Ad Prototype
+
+| Byte length | Name | Description |
+| ----- | ----- | ----- |
+| 4 | Magic | Sentinel marker for beginning/end of messages |
+| 8 | ID | Random value that ensures the signature is never placed on the same hash |
+| 33 | Key | The public identity key of the relay providing relaying or other service |
+| 8 | Expiry | The timestamp after which the ad must be renewed as all peers will evict the record from their network intelligence database |
+| 64 | Signature | Schnorr signature that must match with the Key field above |
+
+These are the 4 essential elements in an ad, as shown above, and all the ads for both public and hidden services contain this. The signature, of course, is always at the end, but the order of the fields *could* be different.
+
+### Peer
+
+| Byte length | Name | Description |
+| ----- | ----- | ----- |
+| 4 | Magic | Sentinel marker for beginning/end of messages |
+| 8 | ID | Random value that ensures the signature is never placed on the same hash |
+| 33 | Key | The public identity key of the relay providing relaying or other service |
+| 8 | Expiry | The timestamp after which the ad must be renewed as all peers will evict the record from their network intelligence database |
+| 4 | RelayRate | The price, in MilliSatoshi, for a megabyte of data |
+| 64 | Signature | Schnorr signature that must match with the Key field above |
+
+
+Peer is simply the advertising of the identity of a peer. It contains only the public identity key, and the relay rate charged by it.
+
+### Addresses
+
+| Byte length | Name | Description |
+| ----- | ----- | ----- |
+| 4 | Magic | Sentinel marker for beginning/end of messages |
+| 8 | ID | Random value that ensures the signature is never placed on the same hash |
+| 33 | Key | The public identity key of the relay providing relaying or other service |
+| 8 | Expiry | The timestamp after which the ad must be renewed as all peers will evict the record from their network intelligence database |
+| 1 | Count | Number of addresses listed in this, maximum of 256, 0 being the first |
+| 8/20/? | Addresses | Network Addresses - variable length. IPv4 and IPv6 encoding lengths with 2 byte port numbers added |
+| 64 | Signature | Schnorr signature that must match with the Key field above |
+
+
+## Services
+
+The first type of service provided over Indranet is public **Services**. These are services that are advertised by relays, that designate routes that messages to them can tunnel out to, outside of Indranet.
+
+| Byte length | Name | Description |
+| ----- | ----- | ----- |
+| 4 | Magic | Sentinel marker for beginning/end of messages |
+| 8 | ID | Random value that ensures the signature is never placed on the same hash |
+| 33 | Key | The public identity key of the relay providing relaying or other service |
+| 8 | Expiry | The timestamp after which the ad must be renewed as all peers will evict the record from their network intelligence database |
+| 2 | Count | Number of services advertised, consists of Port and RelayRate |
+| 2 | Port | 16 bit port number of service, based on Well Known Port |
+| 4 | RelayRate | The cost in MilliSatoshi per megabyte of, the mean of request and response byte size |
+| 64 | Signature | Schnorr signature that must match with the Key field above |
+
+## Hidden Services
+
+Hidden services are a composition of Primitives that enables the initiation and message cycle of enabling bidirectional location obfuscation.
+
+It borrows a little from the hidden service negotiation protocol used by Tor, but the connection is maintained by the hidden server and hidden client directly, bypassing the bottleneck and small attack surface created by a mediated rendezvous connection.
+
+### Overview
+
+Prior to explaining the parts, it is necessary to list them, and this is best done as a numbered sequence, and the three parties involved we will use the common names used in cryptography that apply to this protocol.
+
+#### Alice
+
+Alice is the hidden service provider. Alice is generally the initiator in most scenarios described in cryptography.
+
+#### Bob
+
+Bob is the hidden client. Bob wants to talk to Alice, but doesn't know where she is picking up messages from.
+
+#### Faith
+
+Faith is often used as a trusted intermediary, however in this protocol she is serving in the role of an introducer, and her service is temporary.
+
+Note that currently there is no scheme for billing hidden service traffic, essentially the cost of relaying is borne equally by the hidden service and the hidden client. Faith is essentially paid for this service as the hidden service must have a session with her to do this. Each time a new introduction is received, she is paid.
+
+> note: in discussions of attacks on this protocol, the name **Eve** would be perfect as the placeholder for the attacker.
+
+### Hidden Service Protocol
+
+1. Alice wants to offer a hidden service, without disclosing to the network the location where the data is being processed or stored. This has especially got relevance to such services as trusted intermediaries, as a repository of secrets, even if encrypted, is a high value target for attackers.
+2. Alice generates an introduction message, which consists of her hidden identity key, and the identity key of the chosen intermediary, Faith, is part of this message.
+3. The second part of her message is secret, and consists of a **Reply** message, which will be used to forward a request to Alice. In order to prevent  gathering any information about this return path, each one is single use, and after an introduction is consumed, the introducer waits for a new one.
+4. The delivery of this introduction, and subsequent new Reply messages is done via an anonymised pathway that is typically 3 hops, but could be shorter or longer. *3 is just the magic number that is the maximum bang per buck for creating a path that can be difficult to trace, similar to how an extraction that takes 50% or better per pass exceeds 90% after 3. This is known as "The Rule of Three".*
+5. Faith broadcasts this introduction across the network, in part because when hidden clients request a connection, she gets paid for forwarding the request. 
+6. Because Faith has a privileged position as the go-between, where she is doing a one-time version of the Tor hidden service, Alice will rotate the set of introducers, that is, Alice will send out many of these public/private intro/reply messages to peers, thus serving to create a moving target for would-be attackers, and also, on the other side, Faith is the attack surface for attempts to unmask the identity and location of Alice.
+7. Bob receives the gossip about the various introducers related to the public identity key of Alice's hidden service, and wants to start a hidden conversation with her, without revealing his location either.
+8. Bob sends a request to Faith via an obfuscated multi-hop path, containing a **Reply** header, which is then forwarded back to Alice by Faith using the single use reply header she currently has for Alice.
+9. Alice then receives this request, and then constructs a two or more layer forwarding prefix to add an extra two or more hops on top of the path that was given by Bob, the reason being that Bob might control the first hop, and be trying to unmask Alice. In this way, he would be thwarted at such an attempt. This reply is called **Ready**, and is like the Clear To Send signal on a serial connection, this step in the process akin to the handshake of TCP or similar in that now both parties are ready to start a conversation.
+10. Bob then receives this message, which contains a Reply header from Alice, and Bob uses this, again with his own header prefix, to send a **Request** message, and wraps this in 2 or more hops to protect his location from the relay Alice provided in her **Reply**.
+11. This then gets back to Alice, who can then forward the **Request** on to the actual hidden service server, who then returns a reply and Alice then wraps this in her two or more forward layers, around Bob's **Reply** header and inside that, the **Response** from the hidden service.
+
+### Protocol Messages for Hidden Services
+
+Note that at all times, for reasons of eliminating the possibility of unmasking either end of a hidden connection, each side prefixes their messages with at least two hops in the path. This acts as a firewall against an evil counterparty controlling the relay at the top of the **Reply**.
+
+#### Intro
+
+| Byte length | Name | Description |
+| ----- | ----- | ----- |
+| 4 | Magic | Sentinel marker for beginning/end of messages |
+| 8 | Nonce | Random value that ensures the signature is always on a different hash |
+| 33 | Key \* | Public key of the hidden service identity, matching the Signature below |
+| 33 | Introducer | Public key of the relay that is serving as the introducer |
+| 8 | Expiry | The timestamp after which, by the clock of the introducer that the intro will be evicted from its network intelligence database |
+| 64 | Signature | Schnorr signature on the foregoing message that matches **Key** |
+
+The intro is the publicly visible document that contains a signed designation of the introducer (Faith) in the protocol.
+
+It is gossiped over the Publish/Subscribe system of Indra that propagates information about peers, their addresses, and their offered public services.
+
+> \* This key is encoded in the Indranet `Based32` encoding, which is 26 lower case latin letters and 234679, which are the least ambiguous 6 numbers out of the 10 arabic number ciphers. This custom encoding is used because it provides potential for later use of vanity addresses. But more than this... A note is required about this.
+> 
+#### *Rate Limiting Hidden Service Advertisements*
+
+Because there is no cost to generating, and a relatively low cost to publishing hidden services, in order to limit the amount of new hidden service addresses, they must contain a common 25 bit prefix that forms the word `indra`. Well, this is the provisional idea, it may need to be a longer prefix than this to be sufficiently limited in the context of possible ASIC devices for mining these keys. Currently the public key derivation operation is fairly expensive, very few Tor hidden services have more than 7 or 8 base32 characters.
+
+#### Introduction
+
+| Byte length | Name | Description |
+| ----- | ----- | ----- |
+| 4 | Magic | Sentinel marker for beginning/end of messages |
+| ... | Intro | The intro advertisement |
+| ... | Reply | The Reply message that the introducer returns a Route back with |
+
+Introduction is the message sent out by a hidden service, over a multi-hop path, to the Introducer they have chosen for a time to serve as introducer.
+
+The Intro is gossiped via the Publish Subscribe peer to peer protocol, and every time a client sends a Route request, the hidden service will send a new one, as it will refuse to accept the second one of these. 
+
+This prevents a race condition and the possible plaintext attack that the same cipher set might open up.
+
+#### Route
+
+| Byte length | Name | Description |
+| ----- | ----- | ----- |
+| 4 | Magic | Sentinel marker for beginning/end of messages |
+| 8 | ID | Random value used by the hidden client to identify the connection request |
+| ... | Reply | The path to send back the Ready signal |
+
+Route is essentially a connection request, after which the hidden client will excpect to receive a Ready message containing a new **Reply** header to send a **Request**.
+
+#### Ready
+
+| Byte length | Name | Description |
+| ----- | ----- | ----- |
+| 4 | Magic | Sentinel marker for beginning/end of messages |
+| 8 | ID | The random value that was sent in the request is returned with the reply for quick retrieval |
+| ... | Reply | The **Reply** header the hidden client can use to reply |
+
+The ready message essentially functions in the same way as a standard handshake acknowledgement, which establishes that both sides are ready to begin a conversation, and the first request may be sent.
+
+### Hidden Message Cycles
+
+Aside from the unmasking prevention prefixes, and the **Reply** headers, the pattern of **Request** and **Response** are the same as any client/server protocol.
+
+In order to maintain the connection, each side retains a number of prior **Reply** headers (3-5?) that were sent, and in the event of a transmission failure, the former, known successful **Reply** headers are retained for resending the message that did not get a reply. The TTL of such chatter is governed by the protocol that is being transported, on its "Application" layer, to use OSI layer cake nomenclature.
+
+In the event that the client consumes all of its cached past **Reply** headers for the service, it can simply search out, or just use, other **Intro** advertisements that it has received over the gossip network, and reestablish the connection.
+
+> todo: Reply headers probably need an expiry?
+
+## Example Custom Protocols
+
+> todo: some examples of other ways to use the primitives described in the foregoing, here are some headings:
+>
+> 1. Time Delay Data Storage
+> 2. Metered Network Access
+> 3. Paywalling access to content/databases/application
+> 4. Additionally maybe discuss various strategies for defining paths, most especially, forks. Oh, I will discuss that in a section above this.
