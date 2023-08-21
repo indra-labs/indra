@@ -1,12 +1,64 @@
 # Indranet Protocol Message Format
 
-In order to fully discover the ways in which data structures can be composed, it is important to elaborate the parts, and the many common patterns that these parts can be composed into, to ensure the part set is complete and sufficient to implement an open ended system that can adapt to uses that were not envisioned initially.
+The initial idea for Indranet was just as a replacement for the Tor network, but it quickly became obvious that it can be rethought as a generic, programmable relay network. 
 
-Indra is essentially a distributed computation system whose main task is relaying messages via compositions of layers of messages that are progressively unwrapped as they pass through the relays the client designated them to pass. Each message type functions like an API call, the most frequent and core instruction being to relay a message to another node.
+The specification is intended to be as open ended as possible and relays process messages without any limitations on how they can be constructed, so that developers can tailor them to their use case, and importantly, so that these different uses are not mutually exclusive.
 
-Indranet's messages function in a similar manner to instructions in a scripting language. They are processed in the narrow context of what parts of the message are visible to the relay, and sequential segments that can be seen by a relay are processed via internal processing and pass forward a look-behind in order to enable the relay to process a message in context of something else. Crypts, for example, are the way that session accounting is done, so messages that come after them can use this information to make decisions.
+## Glossary
 
-TODO: perhaps the look-behind buffer should be as long as the cleartext messages, with chains of various message types is found, so that ordering is not so important as set associativity.
+### Client
+
+Client is an application that constructs messages using this message format to have the data transported in the intended way across the network to its intended destination and back.
+
+### ECDH
+
+Elliptic Curve Diffie Hellman Key Exchange is a scheme that uses asymmetric (PKI) cryptography to enable two parties to create a shared symmetric encryption cipher (for AES encryption) over an insecure channel, without enabling eavesdroppers or other attackers to acquire this secret and compromise the privacy of their messages.
+
+### Header Key
+
+Used for the construction of simple [Forward](#forward), for [Reply](#reply) message construction, as contrasted with the [Payload](#payload) key, which is used for the separate segment of the message found after the [Crypt](#crypt) Offset.
+
+This is a 32 byte Elliptic Curve private key, used with other keys to generate symmetric encryption shared secrets using Elliptic Curve Diffie Hellman ([ECDH](#ECDH)) key agreement protocol, the same as the [Payload Key](#payload_key).
+
+### Payload Key
+
+After a [Crypt](#crypt) Offset number of bytes, which is the first 3 bytes encrypted by the [Header](#header) Key, this is the second key found in a [Session](#session), which enables the creation of a bidirectional message construction scheme that is controlled primarily by the client.
+
+### Relay
+
+An Indranet relay is a server that accepts payments via the custom configured Indra Lightning Network subnet, that has no routing fees due to the primary charging method of [Session](#session)s.
+
+### Sessions
+
+A session is a pre-paid balance denominated in MilliSatoshi, 1/1000th of a Satoshi, the primary unit of the Bitcoin ledger. Sessions are created by making a payment via LN to the relay's identity key (one key that is used by the [Relay](#relay), Lightning node and Bitcoin node) using Atomic Multi-Path payments, initiated by [Client](#client)s and constructed so as to hide the origin of the payment.
+
+### Preimage
+
+In the Lightning Network, payment contain a 32 byte hash value that associates with the payment a secondary piece of data used to prove/confirm the payment. In Indra, this data relates to the hash of the [Header](#header) and [Payload](#payload keys) of a [Session](#session).
+
+### Magic Bytes
+
+These are a string of plain ASCII characters (latin) of 8 bits per character, and 4 bytes long to ensure that random byte sequences are unlikely to occur in the positions that the Magic should appear. Primarily used to indicate the beginning of a message, at the front of packets and directly after previous messages. 
+
+These enable fast recognition of the encoding to be expected, and the fields that will be found within a message segment by relays.
+
+They are like the methods in an API, and are followed by the parameters that the API call requires.
+
+### Cloaked Key
+
+A Cloaked key is a way of indicating the use of a specific [Session's](#sessions) keys, specifically referring to the [Header key](#header).
+
+This is generated using a random blinding factor, that is concatenated with the public key and appended to the end of the blinding factor, as follows:
+
+```
+fingerprint = hash ( nonce | public key ) -> truncated to 4 bytes
+
+cloak = nonce | fingerprint
+```
+
+The relay can then scan its session database by generating the same construction using the same method just described to determine if the candidate key matches, as it iterates its [Sessions](#sessions) database.
+
+Cloaking prevents any relay other than the one that has the [Session](#session) gathering any information about the identity of a session connecting two or more messages sent by the same [Client](#client).
 
 ## Primitives
 
@@ -20,19 +72,11 @@ TODO: perhaps the look-behind buffer should be as long as the cleartext messages
 
 The session is the most important and primary message type in the sense that it must be delivered in order for a relay to be obliged to perform services for clients.
 
-The session message contains two symmetric encryption keys, one called the Header key and the other called the Payload key.
-
-As described elsewhere, this is to enable the construction of a pre-configured message encryption header which provides the instructions to place in front of a message, and the encryption keys to add the layers of encryption that contain the knowledge of the message pathway to the immediate origin and next destination, while making it very difficult to see any further than this without controlling all of the relays specified in the path.
-
-The session message is the only message type that Indranet relays will process a subsequent forward message without requiring a session to already exist, under the proviso that there is a received payment for which the preimage hash matches the hash of the pair of symmetric secret session keys that the client will use in the encryption of messages that will be forwarded by the relay.
-
-At the same time serving to both secure the message to be only readable by the authorised relay, and identifying the message so the session can be billed for.
-
 Sessions contain a **Header** key and a **Payload** key, which is described in the **Reply** section in the following.
 
-The session is a reference to a pre-paid balance, against which a bytes/time rate is applied to messages that are forwarded via the session. The session also can be alternatively billed on a different rate for **Exit** messages, as described below.
+The session is a reference to a pre-paid balance, against which a bytes/time rate is applied to messages that are forwarded via the session.
 
-These keys are not straight symmetric ciphers, they must be combined with a public key using ECDH, and for encryption the sender uses the session public key and generates a new private key for each message.
+The session also can be alternatively billed on a different rate for **Exit** messages, as described below.
 
 ### Forward
 
@@ -41,13 +85,9 @@ These keys are not straight symmetric ciphers, they must be combined with a publ
 | 4 | Magic | Sentinel marker for beginning/end of messages |
 | 33 | RelayID | Public identity key of relay to forward this message to |
 
-The number one task of Indranet relays is to accept a message, and forward it to another relay.
+The number one task of Indranet relays is to accept a message, and forward it to another relay. They do this only under the proviso that there is a session that has been established and paid for using the [Session](#session) 
 
-The Indra protocol is [connectionless](https://en.wikipedia.org/wiki/Connectionless_communication) because relays do not participate in making routing decisions.
-
-However, because it is necessary to enable arbitrary delay instructions, and because it can happen that clients are out of date with the state of the network, and such problems as congestion, network and software failure, and the changing of IP addresses, the forward needs to contain one primary data element, which is the identity public key of the relay.
-
-Relays must keep a database of metadata about relays that provides them with a mapping between these public identity keys and the current IP addresses that can be used to reach it.
+The Indra protocol is [connectionless](https://en.wikipedia.org/wiki/Connectionless_communication) because relays do not participate in making routing decisions, and thus also the low level network transport used does not have a handshake for the base case of relaying a message according to instructions in the decrypted part at the head of the message.
 
 ### Crypt
 
@@ -59,17 +99,7 @@ Relays must keep a database of metadata about relays that provides them with a m
 | 16 | Initialisation Vector | standard AES high entropy random value) |
 | 3 | Offset *** | 24 bit vector (up to 16Mb header) for beginning of payload (using Payload key from [Session](#session)) |
 
->  \* **Cloaked** means concealing the session key by taking a 4 byte random value, the **Blinding** factor, concatenating the public key after it, hashing the concatenated string, and then truncating the hash to 4 bytes, and concatenating it to the random value. 
->
->  fingerprint = hash ( nonce | public key ) -> truncated to 4 bytes
->
->  cloak = nonce | fingerprint
->
->  The relay can then scan its session database by generating the same construction using the same method just described to determine if the candidate key matches.
->
->  The reason for this is to prevent the relay from correlating two packets that it may be forwarding to the same next hop relay or client, as being related via the **Session**.
->
->  ***  The Offset is encrypted as the first 3 bytes of the message, concealing from casual observation how deep the header is relative to the packet.
+
 
 The second most important message type in Indranet is the **Crypt**.
 
