@@ -14,6 +14,123 @@ and binary encoding schemes, see the [Glossary](#glossary) for explanations.
 
 [TOC]
 
+## Cryptographic Algorithms
+
+### Cryptographic Hash Function
+
+SHA256
+
+This hash function is still considered to be secure, and in Indra it uses an
+AVX2 implementation on AMD64 platform, which is sufficiently fast.
+
+Blake 2 and 3 are trendy hash functions that claim higher performance, but real
+world performance is maybe 12% faster and has a shorter history and less
+attempts to break it.
+
+### Elliptic Curve Group
+
+secp256k1
+
+Again, it is trendy to use the Edwards 25519 curve, and that group has slightly
+better properties in it's symmetries, but this curve has not been broken after
+far more attempts, and is not used with a weak HD derivation algorithm, keys are
+only derived from fresh entropy.
+
+Indra does not have a wallet and keys are changed periodically as the number of
+signatures generated exceeds a conservative number.
+
+### EC Signatures
+
+For reasons of performance and data structure uniformity, Indra uses Schnorr
+signatures, which also provides a uniform size, and can be reduced in length
+from the standard 64 bytes to 48 bytes if the keys are changed more frequently
+and if desired can, like ECDSA signatures used in Bitcoin embed the public key
+where security reasons recommend cloaking it until after the cloaked form ("
+address") is signed and then won't be reused.
+
+### Cloaked Public Key Designation
+
+In order to prevent the correlation of packets to session public keys, Indra
+uses a construction of 4 byte random blinding factor, which is then concatenated
+at the end of the 33 byte public key, and the first 4 bytes of the SHA256 hash
+of this combined byte slice is appended to the blinding factor prefix.
+
+Only the relay who has the private key matching the public key in their session
+database can generate this matching value, any attacker cannot.
+
+Any [Crypt](#crypt) inadvertently delivered to a relay other than the one
+intended by the client will thus leak no information about the identity of the
+session, thus defeating attempts to correlate the session, and thus origin of a
+message, from evil relays seeing such messages passing through a common relay on
+their path.
+
+This is unlikely to happen anyway, as point to paint connections that pass
+through a relay are coming from potentially many different previous hops, and
+the use of a relay for different positions in a path are different sessions, as
+well.
+
+### AES-CTR Symmetric Encryption
+
+Integrity protection in Indra is separately provided by the network transport
+and thus the ECDH derived shared symmetric keys act as both encryption and via
+the Cloaked Public Keys, restrict access to message layers via session
+authentication, there is no HMAC required, nor checksumming in the layered
+message construction, Indra uses the Counter mode, CTR.
+
+In this mode the cipher stream is built from the symmetric key and IV, and is
+the fastest encryption mode where integrity and authentication are taken care of
+at a lower level.
+
+### Forward Error Correction
+
+Indra uses Reed Solomon FEC with a dynamic adjustment that aims to maintain a
+buffer against the need for retransmit, and starts with a conservatively high
+redundancy ratio that adjusts slowly downwards to prevent retransmit latency.
+
+## Field Types
+
+### Magic
+
+This is a 4 byte string, as 4 8-bit ASCII, usually resembling or containing the
+message type in human readable form.
+
+32 bit values like this are a common bit width for formatting sentinels that
+indicate that a specific message format follows.
+
+It is sufficiently long as to be unlikely to occur, let alone in the protocol
+specified position in the message bytes.
+
+### Private Key
+
+This is a 32 byte, 256 bit long random value, with the limitation of it being a
+member of the elliptic curve group secp256k1.
+
+### Public Key
+
+The public key is a standard 257 bit, 33 byte public key, the additional bit
+being the sign of coordinate of the key.
+
+### Cloaked Public Key
+
+As described elsewhere, the Cloaked Public Key is constructed using a 4 byte
+random blinding factor that is appended to the public key bytes, hashed, and the
+first 4 bytes of this hash are appended to the blinding factor.
+
+### Integers
+
+All standard integer types are supported, and are encoded with Little Endian
+byte ording that is native to most modern CPUs.
+
+In addition to the 8, 16, 32 and 64 bit values, which can also be signed, there
+is a 3 byte long, 24 bit value used in several messages for a maximum length of
+16 Megabytes, being a reasonable maximum message payload size.
+
+### Initialisation Vectors
+
+16 bytes long Initialisation Vectors, the most common standard AES encryption
+Initialisation Vectors are used in Indra for symmetric encryption
+using [ECDH](#ecdh) derived public/private keys.
+
 ## Primitives
 
 ### Session
@@ -77,10 +194,10 @@ authentication rolled into one.
 
 The `Offset` field is encrypted as the first 3 bytes of the encryption that uses
 the [Header](#header) key, indicates the point at which the use of this key ends
-and the second key, the [Payload](#payload)key is used for the remainder. If
+and the second key, the [Payload](#payload) key is used for the remainder. If
 this value is zero, there is no boundary and the Header key is to be used up to
 the end of the message. This value can refer to a distance that is beyond the
-end of the last parts of the [Reply](#reply)bundle, to defeat any estimation of
+end of the last parts of the [Reply](#reply) bundle, to defeat any estimation of
 the number of layers that it may contain.
 
 ### Reply
@@ -94,23 +211,26 @@ To enable this, there is the [Header](#header)/[Payload](#payload) key pair, the
 first is used on the header, and via the [Offset](#offset) field in
 
 > In order to prevent the depth of the chain of forwards from being visible to
-> relays, there must also be a random, arbitrary padding at the end of the header.
-> Initially a rigid design was intended to cloak this, hiding the position on the
+> relays, there must also be a random, arbitrary padding at the end of the
+> header.
+> Initially a rigid design was intended to cloak this, hiding the position on
+> the
 > path by it being moved upwards and padded back out for the next step, so a
 > random length of padding that varies enough to make it difficult to know how
 > many layers might be inside it must be used.
 >
 > Because, also, the size of the Forward and Crypt messages are fixed, this
-> header will be padded out as though there is one or several more layers than are
+> header will be padded out as though there is one or several more layers than
+> are
 > actually present, in order to obscure any information about the real length of
 > the path.
 
 #### Header
 
-| Byte length | Name   | Description                                                                                                                        |
-|-------------|--------|------------------------------------------------------------------------------------------------------------------------------------|
-| 2           | Length | Length of Header, after which Extra Data is found                                                                                  |
-| ...         | ...    | repeat 1 or more [Forward](#forward), [Crypt](#crypt) and then optionally [Delay](#delay), [Dummy](#dummy)  and [Pad](#pad) layers |
+| Byte length | Name   | Description                                                                                                                       |
+|-------------|--------|-----------------------------------------------------------------------------------------------------------------------------------|
+| 2           | Length | Length of Header, after which Extra Data is found                                                                                 |
+| ...         | ...    | repeat 1 or more [Forward](#forward), [Crypt](#crypt) and then optionally [Delay](#delay), [Dummy](#dummy) and [Pad](#pad) layers |
 
 #### Extra Data
 
@@ -180,8 +300,10 @@ message.
 > would normally be defined as they are not normally public.
 >
 > For example, proxy port numbers are arbitrary, but we might specify they are
-> to always be, say, 8080 for a HTTP proxy, or 8004 for Socks 4A or 8005 for Socks
-> 5, and so on. These will most likely be the loopback ports that are usually used
+> to always be, say, 8080 for a HTTP proxy, or 8004 for Socks 4A or 8005 for
+> Socks
+> 5, and so on. These will most likely be the loopback ports that are usually
+> used
 > or even specified in the protocol, even though for clearnet use such an open
 > relay would be a security/spam risk, this is the purpose of Indra, and spam is
 > controlled separately by the metering of data volume for relaying
@@ -687,7 +809,7 @@ and [Payload](#payload keys) of a [Session](#session).
 
 ### Magic Bytes
 
-These are a string of plain ASCII characters (latin) of 8 bits per character,
+These are a string of plain ASCII characters (Latin) of 8 bits per character,
 and 4 bytes long to ensure that random byte sequences are unlikely to occur in
 the positions that the Magic should appear. Primarily used to indicate the
 beginning of a message, at the front of packets and directly after previous
