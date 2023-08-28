@@ -12,13 +12,15 @@ different uses are not mutually exclusive.
 In this text there is quite a number of specialist terms related to cryptography
 and binary encoding schemes, see the [Glossary](#glossary) for explanations.
 
+## Contents
+
 [TOC]
 
 ## Cryptographic Algorithms
 
 ### Cryptographic Hash Function
 
-SHA256
+#### SHA256
 
 This hash function is still considered to be secure, and in Indra it uses an
 AVX2 implementation on AMD64 platform, which is sufficiently fast.
@@ -27,9 +29,11 @@ Blake 2 and 3 are trendy hash functions that claim higher performance, but real
 world performance is maybe 12% faster and has a shorter history and less
 attempts to break it.
 
+[⤴️](#contents)
+
 ### Elliptic Curve Group
 
-secp256k1
+#### secp256k1
 
 Again, it is trendy to use the Edwards 25519 curve, and that group has slightly
 better properties in it's symmetries, but this curve has not been broken after
@@ -39,7 +43,11 @@ only derived from fresh entropy.
 Indra does not have a wallet and keys are changed periodically as the number of
 signatures generated exceeds a conservative number.
 
+[⤴️](#contents)
+
 ### EC Signatures
+
+#### Schnorr
 
 For reasons of performance and data structure uniformity, Indra uses Schnorr
 signatures, which also provides a uniform size, and can be reduced in length
@@ -48,7 +56,9 @@ and if desired can, like ECDSA signatures used in Bitcoin embed the public key
 where security reasons recommend cloaking it until after the cloaked form ("
 address") is signed and then won't be reused.
 
-### Cloaked Public Key Designation
+[⤴️](#contents)
+
+### Cloaked Public Key
 
 In order to prevent the correlation of packets to session public keys, Indra
 uses a construction of 4 byte random blinding factor, which is then concatenated
@@ -69,17 +79,15 @@ through a relay are coming from potentially many different previous hops, and
 the use of a relay for different positions in a path are different sessions, as
 well.
 
-### AES-CTR Symmetric Encryption
+[⤴️](#contents)
 
-Integrity protection in Indra is separately provided by the network transport
-and thus the ECDH derived shared symmetric keys act as both encryption and via
-the Cloaked Public Keys, restrict access to message layers via session
-authentication, there is no HMAC required, nor checksumming in the layered
-message construction, Indra uses the Counter mode, CTR.
+### Symmetric Encryption
 
-In this mode the cipher stream is built from the symmetric key and IV, and is
-the fastest encryption mode where integrity and authentication are taken care of
-at a lower level.
+#### AES-CTR Block Cipher with Schnorr Signature MAC
+
+AES-CTR is a fast, block cipher method, with no authentication. Rather than use a plurality of authentication methods, and because Schnorr signatures are quite efficient, encryption of messages requires the inserting of the signature prior to the position indicated by the Offset of the [Crypt](#crypt), or in other words, at the end of the encrypted message.
+
+EC signatures are as strong authenticity protection as it is possible to achieve, not a lesser, weaker form like used in many HMACs. The signature is based on the hash of the message, and so the message checksum need not be independently made. Either the signature is valid on the message hash, or some part of it is corrupt and the whole message is rejected and if protocol allows it, a retransmit request would be sent to try again.
 
 ### Forward Error Correction
 
@@ -87,7 +95,9 @@ Indra uses Reed Solomon FEC with a dynamic adjustment that aims to maintain a
 buffer against the need for retransmit, and starts with a conservatively high
 redundancy ratio that adjusts slowly downwards to prevent retransmit latency.
 
-## Field Types
+[⤴️](#contents)
+
+### Field Types
 
 ### Magic
 
@@ -100,21 +110,29 @@ indicate that a specific message format follows.
 It is sufficiently long as to be unlikely to occur, let alone in the protocol
 specified position in the message bytes.
 
+[⤴️](#contents)
+
 ### Private Key
 
 This is a 32 byte, 256 bit long random value, with the limitation of it being a
 member of the elliptic curve group secp256k1.
+
+[⤴️](#contents)
 
 ### Public Key
 
 The public key is a standard 257 bit, 33 byte public key, the additional bit
 being the sign of coordinate of the key.
 
+[⤴️](#contents)
+
 ### Cloaked Public Key
 
 As described elsewhere, the Cloaked Public Key is constructed using a 4 byte
 random blinding factor that is appended to the public key bytes, hashed, and the
 first 4 bytes of this hash are appended to the blinding factor.
+
+[⤴️](#contents)
 
 ### Integers
 
@@ -124,6 +142,8 @@ byte ording that is native to most modern CPUs.
 In addition to the 8, 16, 32 and 64 bit values, which can also be signed, there
 is a 3 byte long, 24 bit value used in several messages for a maximum length of
 16 Megabytes, being a reasonable maximum message payload size.
+
+[⤴️](#contents)
 
 ### Initialisation Vectors
 
@@ -154,6 +174,8 @@ rate is applied to messages that are forwarded via the session.
 The session also can be alternatively billed on a different rate
 for [Exit](#exit) messages, as described elsewhere.
 
+[⤴️](#contents)
+
 ### Forward
 
 | Byte length | Name  | Description                                             |
@@ -171,6 +193,8 @@ because relays do not participate in making routing decisions, and thus also the
 low level network transport used does not have a handshake for the base case of
 relaying a message according to instructions in the decrypted part at the head
 of the message.
+
+[⤴️](#contents)
 
 ### Crypt
 
@@ -200,6 +224,8 @@ the end of the message. This value can refer to a distance that is beyond the
 end of the last parts of the [Reply](#reply) bundle, to defeat any estimation of
 the number of layers that it may contain.
 
+[⤴️](#contents)
+
 ### Reply
 
 In order to facilitate the return of an arbitrary blob of data as a reply to a
@@ -225,14 +251,18 @@ first is used on the header, and via the [Offset](#offset) field in
 > actually present, in order to obscure any information about the real length of
 > the path.
 
-#### Header
+[⤴️](#contents)
+
+### Header
 
 | Byte length | Name   | Description                                                                                                                       |
 |-------------|--------|-----------------------------------------------------------------------------------------------------------------------------------|
 | 2           | Length | Length of Header, after which Extra Data is found                                                                                 |
 | ...         | ...    | repeat 1 or more [Forward](#forward), [Crypt](#crypt) and then optionally [Delay](#delay), [Dummy](#dummy) and [Pad](#pad) layers |
 
-#### Extra Data
+[⤴️](#contents)
+
+### Extra Data
 
 These are found directly appended to the end of the above header
 
@@ -243,7 +273,9 @@ These are found directly appended to the end of the above header
 | 16          | IVs      | IVs that match the ones used in the header Crypt layers                                                                                                                      |
 | 4           | Sentinel | Magic bytes indicating the sender defined sentinel to place at the proper end of the response bundled using the Reply                                                        |
 
-#### Ciphers
+[⤴️](#contents)
+
+### Ciphers
 
 Sessions consist of two symmetric secret keys, the [Header](#header) and
 the [Payload](#payload) keys. The [Header](#header) key is used in the header
@@ -254,13 +286,17 @@ using ECDH on the one-time public key in the [Crypt](#crypt), and the
 session [Payload](#payload) key. The relay can thus encrypt an arbitrary message
 payload using this key
 
-#### Initialisation Vectors
+[⤴️](#contents)
+
+### Initialisation Vectors
 
 The IVs used with the ciphers above, and wrapped in the [Crypt](#crypt)
 messages, must be a separate set of IVs from the ones in the header. They must
 also be the same number as the [Ciphers](#ciphers).
 
-#### Sentinel
+[⤴️](#contents)
+
+### Sentinel
 
 A special, random string of bytes is provided alongside the pad length that is
 to be placed at the end of the padding, which when the reply is received, the
@@ -271,6 +307,8 @@ the client to deprecate the use of the exit node as a consequence.
 If this recurs, the next ban score increase must be a multiple of the previous,
 until the threshold for outright permanent banning shall be applied. This should
 only take at most 3 incidents to be certain there was no accident.
+
+[⤴️](#contents)
 
 ### Exit
 
@@ -308,6 +346,8 @@ message.
 > relay would be a security/spam risk, this is the purpose of Indra, and spam is
 > controlled separately by the metering of data volume for relaying
 
+[⤴️](#contents)
+
 ### Request
 
 | Byte length | Name   | Description                                                          |
@@ -324,6 +364,8 @@ Note that this, and the Response message are 24 bits and limit to 16 Megabytes
 in size. Messages containing payloads longer than this must be segmented at the
 application level.
 
+[⤴️](#contents)
+
 ### Response
 
 | Byte length | Name   | Description                                                          |
@@ -333,6 +375,8 @@ application level.
 | ...         | Data   | The content of the Response                                          |
 
 Response is the message wrapper for the response from a Service.
+
+[⤴️](#contents)
 
 ### Delay
 
@@ -356,6 +400,8 @@ as permitting applications to add these to messages for whatever purpose the
 application developer envisions, such as, potentially, storing data temporarily
 out of band for a prescribed amount of time as a form of "cloud storage".
 
+[⤴️](#contents)
+
 ### Pad (Increment/Decrement)
 
 | Byte length | Name       | Description                                                                                                      |
@@ -378,6 +424,8 @@ instructions and all nodes in the path will have a ban score increment the
 existence of which will prejudice greater ban scores if the error repeats in
 paths the relay is part of in future.
 
+[⤴️](#contents)
+
 ### Dummy
 
 | Byte length | Name   | Description                            |
@@ -393,6 +441,8 @@ dropped, but Dummy specifically is a request to accept and drop data.
 Because this is a receive, but not send, it is charged at half the RelayRate
 advertised by the relay, in the same way that Exit and Hidden Service Responses
 are computed by the average of the in and outbound data size.
+
+[⤴️](#contents)
 
 ### Split
 
@@ -413,7 +463,9 @@ Splits also make possible the fan-out/fan/in pattern for multipath messages.
 The actual instructions on where to forward the segments is at the head of each
 segment in cleartext.
 
-#### Low Latency Mixnet "Lightning Bolts"
+[⤴️](#contents)
+
+### Low Latency Mixnet "Lightning Bolts"
 
 One of the biggest difficulties with mixnets is that the lower the latency, the
 easier it is to correlate traffic paths as they flow through the network.
@@ -436,13 +488,17 @@ conductive or from equally charged areas that merge or split.
 The simulation of merging can even be created, as well, with forks that merge
 back together.
 
-## Network Intelligence
+[⤴️](#contents)
+
+### Network Intelligence
 
 In source routing systems, the nodes that perform relaying services must
 advertise their existence and instructions on how to reach them.
 
 All advertisements contain the following 4 fields, and additional fields as
 required:
+
+[⤴️](#contents)
 
 ### Ad Prototype
 
@@ -458,6 +514,8 @@ These are the 4 essential elements in an ad, as shown above, and all the ads for
 both public and hidden services contain this. The signature, of course, is
 always at the end, but the order of the fields *could* be different.
 
+[⤴️](#contents)
+
 ### Peer
 
 | Byte length | Name      | Description                                                                                                                                                                                                                             |
@@ -472,6 +530,8 @@ always at the end, but the order of the fields *could* be different.
 Peer is simply the advertising of the identity of a peer. It contains only the
 public identity key, and the relay rate charged by it.
 
+[⤴️](#contents)
+
 ### Addresses
 
 | Byte length | Name      | Description                                                                                                                  |
@@ -484,7 +544,9 @@ public identity key, and the relay rate charged by it.
 | 8/20/?      | Addresses | Network Addresses - variable length. IPv4 and IPv6 encoding lengths with 2 byte port numbers added                           |
 | 64          | Signature | Schnorr signature that must match with the Key field above                                                                   |
 
-## Services
+[⤴️](#contents)
+
+### Services
 
 The first type of service provided over Indranet is public **Services**. These
 are services that are advertised by relays, that designate routes that messages
@@ -501,7 +563,9 @@ to them can tunnel out to, outside of Indranet.
 | 4           | RelayRate | The cost in MilliSatoshi per megabyte of, the mean of request and response byte size                                         |
 | 64          | Signature | Schnorr signature that must match with the Key field above                                                                   |
 
-## Hidden Services
+[⤴️](#contents)
+
+### Hidden Services
 
 Hidden services are a composition of Primitives that enables the initiation and
 message cycle of enabling bidirectional location obfuscation.
@@ -540,6 +604,8 @@ received, she is paid.
 
 > note: in discussions of attacks on this protocol, the name **Eve** would be
 > perfect as the placeholder for the attacker.
+
+[⤴️](#contents)
 
 ### Hidden Service Protocol
 
@@ -592,6 +658,8 @@ received, she is paid.
     this in her two or more forward layers, around Bob's **Reply** header and
     inside that, the **Response** from the hidden service.
 
+[⤴️](#contents)
+
 ### Protocol Messages for Hidden Services
 
 Note that at all times, for reasons of eliminating the possibility of unmasking
@@ -623,7 +691,9 @@ information about peers, their addresses, and their offered public services.
 > required about this.
 >
 
-#### *Rate Limiting Hidden Service Advertisements*
+[⤴️](#contents)
+
+#### Rate Limiting Hidden Service Advertisements
 
 Because there is no cost to generating, and a relatively low cost to publishing
 hidden services, in order to limit the amount of new hidden service addresses,
@@ -633,6 +703,8 @@ sufficiently limited in the context of possible ASIC devices for mining these
 keys. Currently the public key derivation operation is fairly expensive, very
 few Tor hidden services have more than 7 or 8 base32 characters forming their "
 vanity" prefix.
+
+[⤴️](#contents)
 
 #### Introduction
 
@@ -652,6 +724,8 @@ it will refuse to accept the second one of these.
 This prevents a race condition and the possible plaintext attack that the same
 cipher set might open up.
 
+[⤴️](#contents)
+
 #### Route
 
 | Byte length | Name  | Description                                                               |
@@ -663,6 +737,8 @@ cipher set might open up.
 Route is essentially a connection request, after which the hidden client will
 excpect to receive a Ready message containing a new **Reply** header to send a *
 *Request**.
+
+[⤴️](#contents)
 
 #### Ready
 
@@ -676,7 +752,9 @@ The ready message essentially functions in the same way as a standard handshake
 acknowledgement, which establishes that both sides are ready to begin a
 conversation, and the first request may be sent.
 
-### Hidden Message Cycles
+[⤴️](#contents)
+
+#### Hidden Message Cycles
 
 Aside from the unmasking prevention prefixes, and the **Reply** headers, the
 pattern of **Request** and **Response** are the same as any client/server
@@ -696,7 +774,9 @@ connection.
 
 > todo: Reply headers probably need an expiry?
 
-## Example Custom Protocols
+[⤴️](#contents)
+
+#### Example Custom Protocols
 
 > todo: some examples of other ways to use the primitives described in the
 > foregoing, here are some headings:
@@ -709,7 +789,9 @@ connection.
 
 ## Glossary
 
-### Based32
+[⤴️](#contents)
+
+#### Based32
 
 Based32 is a variant of Base 32 encoding which provides all letters of the
 alphabet in lower case to make it possible to have any human readable segment
@@ -729,13 +811,17 @@ ambiguity between Z and 2, 5 and S, 6 and G. g and 9 are similar in some
 renderings, as can be 9 and q, but 0, 1, 5, 8 are the most ambiguous numbers
 alongside lower case Latin letters.
 
-### Client
+[⤴️](#contents)
+
+#### Client
 
 Client is an application that constructs messages using this message format to
 have the data transported in the intended way across the network to its intended
 destination and back.
 
-### ECDH
+[⤴️](#contents)
+
+#### ECDH
 
 Elliptic Curve Diffie Hellman Key Exchange is a scheme that uses asymmetric (
 Public Key Infrastructure) cryptography to enable two parties to create a shared
@@ -743,7 +829,9 @@ symmetric encryption cipher (for AES encryption) over an insecure channel,
 without enabling eavesdroppers or other attackers to acquire this secret and
 compromise the privacy of their messages.
 
-### Header Key
+[⤴️](#contents)
+
+#### Header Key
 
 Used for the construction of simple [Forward](#forward), for [Reply](#reply)
 message construction, as contrasted with the [Payload](#payload) key, which is
@@ -755,20 +843,26 @@ symmetric encryption shared secrets using Elliptic Curve Diffie
 Hellman ([ECDH](#ECDH)) key agreement protocol, the same as
 the [Payload Key](#payload_key).
 
-### Payload Key
+[⤴️](#contents)
+
+#### Payload Key
 
 After a [Crypt](#crypt) Offset number of bytes, which is the first 3 bytes
 encrypted by the [Header](#header) Key, this is the second key found in
 a [Session](#session), which enables the creation of a bidirectional message
 construction scheme that is controlled primarily by the client.
 
-### Initialisation Vector
+[⤴️](#contents)
+
+#### Initialisation Vector
 
 In order to prevent the repeat of generated encryption streams, every encrypted
 message must have a provided, cleartext prefix that is concatenated to the
 encryption secret to generate the beginning of the cipher stream/blocks.
 
-### Fingerprint
+[⤴️](#contents)
+
+#### Fingerprint
 
 A fingerprint is a shorter, usually derived value that makes it easier and
 faster to identify a longer string of bytes. An example of this is the RIPEMD160
@@ -777,7 +871,9 @@ generally done via SHA256 32 byte hash, that is truncated to a shorter length
 for the purpose. The Cloaked Key is an example of the use of this with
 a [Nonce](#nonce).
 
-### Nonce
+[⤴️](#contents)
+
+#### Nonce
 
 A random value used for various reasons in cryptography. It is critical these
 values are generated by a Cryptographically Secure Pseudo Random Number
@@ -785,13 +881,17 @@ Generator (CSPRNG) or entropy capture device, as patterns in these values can
 lead to plaintext cryptanalysis attacks that can uncover symmetric ciphers
 and/or private keys.
 
-### Relay
+[⤴️](#contents)
+
+#### Relay
 
 An Indranet relay is a server that accepts payments via the custom configured
 Indra Lightning Network sub-net, that has no routing fees due to the primary
 charging method of [Session](#session)s.
 
-### Sessions
+[⤴️](#contents)
+
+#### Sessions
 
 A session is a pre-paid balance denominated in MilliSatoshi, 1/1000th of a
 Satoshi, the primary unit of the Bitcoin ledger. Sessions are created by making
@@ -800,14 +900,18 @@ the [Relay](#relay), Lightning node and Bitcoin node) using Atomic Multi-Path
 payments, initiated by [Client](#client)s and constructed so as to hide the
 origin of the payment.
 
-### Preimage
+[⤴️](#contents)
+
+#### Preimage
 
 In the Lightning Network, payment contain a 32 byte hash value that associates
 with the payment a secondary piece of data used to prove/confirm the payment. In
 Indra, this data relates to the hash of the [Header](#header)
 and [Payload](#payload keys) of a [Session](#session).
 
-### Magic Bytes
+[⤴️](#contents)
+
+#### Magic Bytes
 
 These are a string of plain ASCII characters (Latin) of 8 bits per character,
 and 4 bytes long to ensure that random byte sequences are unlikely to occur in
@@ -821,7 +925,9 @@ that will be found within a message segment by relays.
 They are like the methods in an API, and are followed by the parameters that the
 API call requires.
 
-### Cloaked Key
+[⤴️](#contents)
+
+#### Cloaked Key
 
 A Cloaked key is a way of indicating the use of a
 specific [Session's](#sessions) keys, specifically referring to
