@@ -10,37 +10,6 @@ Lightning powered distributed source routed relay network protocol.
 
 [White Paper](docs/whitepaper.md)
 
-## Contributors Welcome
-
-File issues relating to what you want to work on, and we'll add you to the
-team and set up your tasks on the kanban.
-
-For now the Law is what @l0k18 and @lyowhs say it is, but mainly just be nice
-and keep your inputs within the critical path towards release.
-
-Code, documentation, the white paper, logo designs, whatever floats your boat.
-If you like and are good with Github Pages we can get a landing page started.
-
-Even, if you just want to do the journalist thing with us and promote this
-project on social media, note that mostly we don't use them, other than
-nostr and twitter. Just make an issue, or contact us through other ways, we
-are most willing to do interviews to present our work.
-
-## Ideas? Suggestions?
-
-There is the beginnings of a scheme for collaborative development of
-augmentations of the protocol available
-[here](https://github.com/indra-labs/iap). The first will be written soon, which
-will explain how to submit drafts, mostly just forking and making PRs and
-marking it with a big DRAFT label until it has been agreed by the community and
-developers if implementing it should happen.
-
-The RFC type model for community involvement has been very effective, and most
-especially, for projects that are not bound to any kind of registered
-corporative entity anywhere. We will not be registering unless there is very
-good reason. We want this to remain the property of the community of users,
-service providers and developers.
-
 ## About the Indra Network Protocol
 
 The ubiquitous use of encryption on the internet took some time to happen,
