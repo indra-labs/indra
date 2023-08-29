@@ -35,7 +35,7 @@ attempts to break it.
 
 #### secp256k1
 
-Again, it is trendy to use the Edwards 25519 curve, and that group has slightly
+It is trendy to use the Edwards 25519 curve, and that group has slightly
 better properties in it's symmetries, but this curve has not been broken after
 far more attempts, and is not used with a weak HD derivation algorithm, keys are
 only derived from fresh entropy.
@@ -97,7 +97,7 @@ redundancy ratio that adjusts slowly downwards to prevent retransmit latency.
 
 [⤴️](#contents)
 
-### Field Types
+## Field Types
 
 ### Magic
 
@@ -124,6 +124,10 @@ member of the elliptic curve group secp256k1.
 The public key is a standard 257 bit, 33 byte public key, the additional bit
 being the sign of coordinate of the key.
 
+#### Signature
+
+A standard 64 bit [Schnorr](#ec-signatures) signature.
+
 [⤴️](#contents)
 
 ### Cloaked Public Key
@@ -145,13 +149,31 @@ is a 3 byte long, 24 bit value used in several messages for a maximum length of
 
 [⤴️](#contents)
 
-### Initialisation Vectors
+### Initialisation Vector
 
 16 bytes long Initialisation Vectors, the most common standard AES encryption
 Initialisation Vectors are used in Indra for symmetric encryption
 using [ECDH](#ecdh) derived public/private keys.
 
-## Primitives
+⤴️
+
+### Symmetric Key
+
+A symmetric key is the secret, 32 bytes long, 256 bits, that is used with an [Initialisation Vector](#initialisation-vector) and a cipher. In Indra, as mentioned in the [Symmetric Encryption](#symmetric-encryption) glossary entry, this is used with AES-CTR block/stream cipher mode, and secured with a [Schnorr](#ec-signatures) signature.
+
+### ID
+
+ID is a random 64 bit, 8 byte long field that is used to identify a request so that it can be quickly retrieved from the pending responses, and anywhere that a signature needs to be made on data, to ensure the hash that is signed on is not repeated.
+
+### Timestamp
+
+Timestamps are 64 bit, unsigned integers that are interpreted as 64 bit Unix timestamps, the number of seconds since the first second of the year 1970.
+
+#### MilliSatoshi
+
+64 bit value representing 1/1000th of a Satoshi, being 1/100000000th (hundred millionth) of a bitcoin.
+
+## Message types
 
 ### Session
 
@@ -185,7 +207,7 @@ for [Exit](#exit) messages, as described elsewhere.
 
 The number one task of Indranet relays is to accept a message, and forward it to
 another relay. They do this only under the proviso that there is a session that
-has been established and paid for using the [Session](#session)
+has been established and paid for using the [Session](#session).
 
 The Indra protocol
 is [connectionless](https://en.wikipedia.org/wiki/Connectionless_communication)
@@ -245,13 +267,9 @@ first is used on the header, and via the [Offset](#offset) field in
 > random length of padding that varies enough to make it difficult to know how
 > many layers might be inside it must be used.
 >
-> Because, also, the size of the Forward and Crypt messages are fixed, this
-> header will be padded out as though there is one or several more layers than
-> are
-> actually present, in order to obscure any information about the real length of
-> the path.
-
-[⤴️](#contents)
+> This is now changed so that a random amount of padding is always added to the [Header](#header) segment of a message. The padding should be filled with noise, a hash chain is sufficient and efficient for this.
+>
+> [⤴️](#contents)
 
 ### Header
 
@@ -266,12 +284,11 @@ first is used on the header, and via the [Offset](#offset) field in
 
 These are found directly appended to the end of the above header
 
-| Byte length | Name     | Description                                                                                                                                                                  |
-|-------------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 2           | Count    | Number of Ciphers/IVs found in the following.                                                                                                                                |
-| 32          | Ciphers  | Pre-generated symmetric ciphers created with Payload session key and the same public key found in the matching Header layer (hidden from Exit/Hidden Service via encryption) |
-| 16          | IVs      | IVs that match the ones used in the header Crypt layers                                                                                                                      |
-| 4           | Sentinel | Magic bytes indicating the sender defined sentinel to place at the proper end of the response bundled using the Reply                                                        |
+| Byte length | Name     | Description                                                  |
+| ----------- | -------- | ------------------------------------------------------------ |
+| 2           | Count    | Number of Symmetric Keys/IVs found in the following.         |
+| 32          | Ciphers  | Pre-generated symmetric keys created using the Payload session key and the same public key found in the matching Header layer (hidden from Exit/Hidden Service via encryption) |
+| 16          | IVs      | IVs that match the ones used in the header Crypt layers      |
 
 [⤴️](#contents)
 
@@ -293,20 +310,6 @@ payload using this key
 The IVs used with the ciphers above, and wrapped in the [Crypt](#crypt)
 messages, must be a separate set of IVs from the ones in the header. They must
 also be the same number as the [Ciphers](#ciphers).
-
-[⤴️](#contents)
-
-### Sentinel
-
-A special, random string of bytes is provided alongside the pad length that is
-to be placed at the end of the padding, which when the reply is received, the
-client can see where the original message ending was, and thus the pad, which if
-it is a mismatch to what was prescribed, is a bannable offence that will cause
-the client to deprecate the use of the exit node as a consequence.
-
-If this recurs, the next ban score increase must be a multiple of the previous,
-until the threshold for outright permanent banning shall be applied. This should
-only take at most 3 incidents to be certain there was no accident.
 
 [⤴️](#contents)
 
@@ -422,25 +425,19 @@ as being the act of a given relay, but the client will recognise this as a sign
 that one of the hops in the path was processed not in accordance with the
 instructions and all nodes in the path will have a ban score increment the
 existence of which will prejudice greater ban scores if the error repeats in
-paths the relay is part of in future.
+paths the relay is part of in future. (todo: pending responses must include all pad instructions in a message so this can be checked.)
 
 [⤴️](#contents)
 
 ### Dummy
 
-| Byte length | Name   | Description                            |
-|-------------|--------|----------------------------------------|
-| 4           | Magic  | `dumm`                                 |
-| 3           | Length | The amount of random garbage following |
+| Byte length | Name   | Description |
+| ----------- | ------ | ----------- |
+| 4           | Magic  | `dumm`      |
+| ... | Destination | [Forward](#forward) header of destination for dummy message  |
+| ... | Crypt | Empty crypt |
 
-Dummy messages are messages that are the intentional delivery of data that is to
-be discarded. Because of anonymity, there is no way to attribute fault to
-erroneous forwarding if something other than Dummy appears and needs to be
-dropped, but Dummy specifically is a request to accept and drop data.
-
-Because this is a receive, but not send, it is charged at half the RelayRate
-advertised by the relay, in the same way that Exit and Hidden Service Responses
-are computed by the average of the in and outbound data size.
+This message doubles the relaying fee for the outbound byte count of the message that was received, to be filled with randomly generated bytes, using a [Hash Chain](#hash-chain) generator.
 
 [⤴️](#contents)
 
@@ -471,7 +468,7 @@ One of the biggest difficulties with mixnets is that the lower the latency, the
 easier it is to correlate traffic paths as they flow through the network.
 
 Defeating this attack can be achieved by adding [Split](#split) messages fan out
-randomly to deliver empty or padding, so that at each hop, at least two
+randomly [Dummy](#dummy) , so that at each hop, at least two
 different simultaneous transmissions take place.
 
 These forks should be constructed using [Dummy](#dummy) packets after
@@ -486,7 +483,7 @@ arcs of electricity across the sky and to the ground, forking towards equally
 conductive or from equally charged areas that merge or split.
 
 The simulation of merging can even be created, as well, with forks that merge
-back together.
+back together. This is achieved using [Dummy](#dummy) messages.
 
 [⤴️](#contents)
 
@@ -728,14 +725,14 @@ cipher set might open up.
 
 #### Route
 
-| Byte length | Name  | Description                                                               |
-|-------------|-------|---------------------------------------------------------------------------|
-| 4           | Magic | `rout`                                                                    |
+| Byte length | Name  | Description                                                  |
+| ----------- | ----- | ------------------------------------------------------------ |
+| 4           | Magic | `rout`                                                       |
 | 8           | ID    | Random value used by the hidden client to identify the connection request |
-| ...         | Reply | The path to send back the Ready signal                                    |
+| ...         | Reply | The path to send back the [Ready](#ready) signal             |
 
 Route is essentially a connection request, after which the hidden client will
-excpect to receive a Ready message containing a new **Reply** header to send a *
+expect to receive a [Ready](#ready) message containing a new **Reply** header to send a *
 *Request**.
 
 [⤴️](#contents)
@@ -771,8 +768,6 @@ In the event that the client consumes all of its cached past **Reply** headers
 for the service, it can simply search out, or just use, other **Intro**
 advertisements that it has received over the gossip network, and reestablish the
 connection.
-
-> todo: Reply headers probably need an expiry?
 
 [⤴️](#contents)
 
@@ -842,6 +837,10 @@ This is a 32 byte Elliptic Curve private key, used with other keys to generate
 symmetric encryption shared secrets using Elliptic Curve Diffie
 Hellman ([ECDH](#ECDH)) key agreement protocol, the same as
 the [Payload Key](#payload_key).
+
+#### Hash Chain
+
+A hash chain is a sequence of bytes that starts with the system entropy generated 32 bytes, and followed by the product of hashing the previous hash, and so on, and then, usually, trimmed to the specified length. This is a lower cost random stream used to pad messages so that it is not possible to determine what is message and what is padding.
 
 [⤴️](#contents)
 
