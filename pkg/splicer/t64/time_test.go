@@ -45,7 +45,7 @@ func TestNew(t *testing.T) {
 	// Test NewFrom correctly decodes and returns the trimmings.
 	b1 := t1.Read()
 	nb1, rem := NewFrom(append(b1, make([]byte, 5)...))
-	if len(rem) != 5 || rem == nil {
+	if rem == nil || len(rem) != 5 {
 		t.FailNow()
 	}
 	val := Assert(nb1)
