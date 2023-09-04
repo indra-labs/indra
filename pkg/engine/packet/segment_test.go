@@ -7,6 +7,7 @@ import (
 	"git.indra-labs.org/dev/ind/pkg/crypto/nonce"
 	"git.indra-labs.org/dev/ind/pkg/crypto/sha256"
 	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/util/ci"
 	"git.indra-labs.org/dev/ind/pkg/util/tests"
 	"math/rand"
 	"testing"
@@ -40,7 +41,7 @@ func BenchmarkSplit(b *testing.B) {
 		}
 		_ = splitted
 	}
-
+	
 	// Example benchmark results show about 10Mb/s/thread throughput
 	// handling 64Kb messages.
 	//
@@ -75,9 +76,7 @@ func TestRemovePacket(t *testing.T) {
 }
 
 func TestSplitJoin(t *testing.T) {
-	if indra.CI == "false" {
-		log2.SetLogLevel(log2.Debug)
-	}
+	ci.TraceIfNot()
 	msgSize := 1 << 19
 	segSize := 1382
 	var e error
@@ -137,9 +136,7 @@ func TestSplitJoin(t *testing.T) {
 }
 
 func TestSplitJoinFEC(t *testing.T) {
-	if indra.CI == "false" {
-		log2.SetLogLevel(log2.Debug)
-	}
+	ci.TraceIfNot()
 	msgSize := 1 << 18
 	segSize := 1382
 	var e error

@@ -1,20 +1,16 @@
 package delay
 
 import (
-	"git.indra-labs.org/dev/ind"
 	"git.indra-labs.org/dev/ind/pkg/codec"
 	"git.indra-labs.org/dev/ind/pkg/codec/ont"
 	"git.indra-labs.org/dev/ind/pkg/codec/reg"
+	"git.indra-labs.org/dev/ind/pkg/util/ci"
 	"testing"
 	"time"
-
-	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 )
 
 func TestOnions_Delay(t *testing.T) {
-	if indra.CI == "false" {
-		log2.SetLogLevel(log2.Debug)
-	}
+	ci.TraceIfNot()
 	dur := time.Second
 	on := ont.Assemble([]ont.Onion{New(dur)})
 	s := codec.Encode(on)
@@ -27,7 +23,7 @@ func TestOnions_Delay(t *testing.T) {
 	if e := onc.Decode(s); fails(e) {
 		t.Error("did not decode")
 		t.FailNow()
-
+		
 	}
 	var dl *Delay
 	var ok bool

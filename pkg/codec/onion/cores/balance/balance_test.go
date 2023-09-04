@@ -1,22 +1,19 @@
 package balance
 
 import (
-	"git.indra-labs.org/dev/ind"
 	"git.indra-labs.org/dev/ind/pkg/codec"
 	"git.indra-labs.org/dev/ind/pkg/codec/ont"
 	"git.indra-labs.org/dev/ind/pkg/codec/reg"
+	"git.indra-labs.org/dev/ind/pkg/util/ci"
 	"testing"
-
+	
 	"github.com/lightningnetwork/lnd/lnwire"
-
+	
 	"git.indra-labs.org/dev/ind/pkg/crypto/nonce"
-	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 )
 
 func TestOnions_Balance(t *testing.T) {
-	if indra.CI == "false" {
-		log2.SetLogLevel(log2.Debug)
-	}
+	ci.TraceIfNot()
 	id := nonce.NewID()
 	sats := lnwire.MilliSatoshi(10000)
 	on := ont.Assemble([]ont.Onion{New(id, sats)})

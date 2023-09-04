@@ -1,22 +1,19 @@
 package intro
 
 import (
-	"git.indra-labs.org/dev/ind"
 	"git.indra-labs.org/dev/ind/pkg/codec"
 	"git.indra-labs.org/dev/ind/pkg/codec/reg"
+	"git.indra-labs.org/dev/ind/pkg/util/ci"
 	"git.indra-labs.org/dev/ind/pkg/util/splice"
 	"testing"
 	"time"
-
+	
 	"git.indra-labs.org/dev/ind/pkg/crypto"
 	"git.indra-labs.org/dev/ind/pkg/crypto/nonce"
-	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 )
 
 func TestNew(t *testing.T) {
-	if indra.CI == "false" {
-		log2.SetLogLevel(log2.Trace)
-	}
+	ci.TraceIfNot()
 	var e error
 	pr, ks, _ := crypto.NewSigner()
 	introducer := ks.Next()

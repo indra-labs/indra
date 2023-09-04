@@ -1,25 +1,23 @@
 package services
 
 import (
-	"git.indra-labs.org/dev/ind"
 	"git.indra-labs.org/dev/ind/pkg/codec"
 	"git.indra-labs.org/dev/ind/pkg/codec/reg"
 	"git.indra-labs.org/dev/ind/pkg/crypto"
 	"git.indra-labs.org/dev/ind/pkg/crypto/nonce"
-	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/util/ci"
 	"git.indra-labs.org/dev/ind/pkg/util/splice"
 	"testing"
 	"time"
 )
 
 func TestServiceAd(t *testing.T) {
-	if indra.CI == "false" {
-		log2.SetLogLevel(log2.Trace)
-	}
+	ci.TraceIfNot()
 	var e error
 	pr, _, _ := crypto.NewSigner()
 	id := nonce.NewID()
-	sv := New(id, pr, []Service{{80, 62346}, {443, 42216}}, time.Now().Add(time.Hour))
+	sv := New(id, pr, []Service{{80, 62346}, {443, 42216}},
+		time.Now().Add(time.Hour))
 	log.D.S("service", sv)
 	s := splice.New(sv.Len())
 	if e = sv.Encode(s); fails(e) {
