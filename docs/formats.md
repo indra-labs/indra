@@ -124,7 +124,7 @@ member of the elliptic curve group secp256k1.
 The public key is a standard 257 bit, 33 byte public key, the additional bit
 being the sign of coordinate of the key.
 
-#### Signature
+### Signature
 
 A standard 64 bit [Schnorr](#ec-signatures) signature.
 
@@ -161,17 +161,25 @@ using [ECDH](#ecdh) derived public/private keys.
 
 A symmetric key is the secret, 32 bytes long, 256 bits, that is used with an [Initialisation Vector](#initialisation-vector) and a cipher. In Indra, as mentioned in the [Symmetric Encryption](#symmetric-encryption) glossary entry, this is used with AES-CTR block/stream cipher mode, and secured with a [Schnorr](#ec-signatures) signature.
 
+⤴️
+
 ### ID
 
 ID is a random 64 bit, 8 byte long field that is used to identify a request so that it can be quickly retrieved from the pending responses, and anywhere that a signature needs to be made on data, to ensure the hash that is signed on is not repeated.
+
+⤴️
 
 ### Timestamp
 
 Timestamps are 64 bit, unsigned integers that are interpreted as 64 bit Unix timestamps, the number of seconds since the first second of the year 1970.
 
-#### MilliSatoshi
+⤴️
+
+### MilliSatoshi
 
 64 bit value representing 1/1000th of a Satoshi, being 1/100000000th (hundred millionth) of a bitcoin.
+
+⤴️
 
 ## Message types
 
