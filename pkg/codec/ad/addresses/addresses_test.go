@@ -1,12 +1,11 @@
 package addresses
 
 import (
-	"git.indra-labs.org/dev/ind"
 	"git.indra-labs.org/dev/ind/pkg/codec"
 	"git.indra-labs.org/dev/ind/pkg/codec/reg"
 	"git.indra-labs.org/dev/ind/pkg/crypto"
 	"git.indra-labs.org/dev/ind/pkg/crypto/nonce"
-	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/util/ci"
 	"git.indra-labs.org/dev/ind/pkg/util/splice"
 	"github.com/multiformats/go-multiaddr"
 	"testing"
@@ -14,9 +13,7 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	if indra.CI == "false" {
-		log2.SetLogLevel(log2.Trace)
-	}
+	ci.TraceIfNot()
 	var e error
 	pr, _, _ := crypto.NewSigner()
 	id := nonce.NewID()

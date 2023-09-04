@@ -3,21 +3,18 @@ package transport
 import (
 	"context"
 	"crypto/rand"
-	"git.indra-labs.org/dev/ind"
 	"git.indra-labs.org/dev/ind/pkg/crypto/sha256"
+	"git.indra-labs.org/dev/ind/pkg/util/ci"
 	"os"
 	"testing"
 	"time"
-
+	
 	"git.indra-labs.org/dev/ind/pkg/crypto"
-	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 	"git.indra-labs.org/dev/ind/pkg/util/tests"
 )
 
 func TestNewListener(t *testing.T) {
-	if indra.CI == "false" {
-		log2.SetLogLevel(log2.Trace)
-	}
+	ci.TraceIfNot()
 	var e error
 	var l1, l2 *Listener
 	_ = l2

@@ -7,31 +7,28 @@ import (
 	"git.indra-labs.org/dev/ind/pkg/codec/onion/cores/confirmation"
 	"git.indra-labs.org/dev/ind/pkg/codec/onion/cores/response"
 	"git.indra-labs.org/dev/ind/pkg/crypto/sha256"
+	"git.indra-labs.org/dev/ind/pkg/util/ci"
 	"os"
 	"testing"
 	"time"
-
+	
 	"git.indra-labs.org/dev/ind"
 	"git.indra-labs.org/dev/ind/pkg/codec/ont"
 	"git.indra-labs.org/dev/ind/pkg/engine"
-
+	
 	"git.indra-labs.org/dev/ind/pkg/util/slice"
 	"git.indra-labs.org/dev/ind/pkg/util/splice"
-
+	
 	"git.indra-labs.org/dev/ind/pkg/crypto/nonce"
 	"git.indra-labs.org/dev/ind/pkg/engine/transport"
-
+	
 	"git.indra-labs.org/dev/ind/pkg/crypto"
-	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 	"git.indra-labs.org/dev/ind/pkg/util/tests"
 )
 
 func TestDispatcher(t *testing.T) {
 	t.Log(indra.CI)
-	if indra.CI == "false" {
-		log2.SetLogLevel(log2.Trace)
-		log.D.Ln("debug")
-	}
+	ci.TraceIfNot()
 	var e error
 	var l1, l2 *transport.Listener
 	_ = l2

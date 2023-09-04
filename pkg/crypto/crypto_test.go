@@ -2,17 +2,14 @@ package crypto
 
 import (
 	rand2 "crypto/rand"
-	"git.indra-labs.org/dev/ind"
+	"git.indra-labs.org/dev/ind/pkg/util/ci"
 	"testing"
-
+	
 	"git.indra-labs.org/dev/ind/pkg/crypto/sha256"
-	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 )
 
 func TestFromBased32(t *testing.T) {
-	if indra.CI == "false" {
-		log2.SetLogLevel(log2.Trace)
-	}
+	ci.TraceIfNot()
 	var rBytes sha256.Hash
 	var n int
 	var e error
@@ -28,7 +25,7 @@ func TestFromBased32(t *testing.T) {
 		if s, e = Sign(pr, rBytes); fails(e) {
 			t.FailNow()
 		}
-		//fmt.Println("sig", s)
+		// fmt.Println("sig", s)
 		var sb SigBytes
 		if sb, e = SigFromBased32(s.String()); fails(e) {
 			t.FailNow()

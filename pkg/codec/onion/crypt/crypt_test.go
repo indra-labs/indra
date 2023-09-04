@@ -1,22 +1,19 @@
 package crypt
 
 import (
-	"git.indra-labs.org/dev/ind"
 	"git.indra-labs.org/dev/ind/pkg/codec"
 	"git.indra-labs.org/dev/ind/pkg/codec/onion/cores/confirmation"
 	"git.indra-labs.org/dev/ind/pkg/codec/ont"
 	"git.indra-labs.org/dev/ind/pkg/codec/reg"
+	"git.indra-labs.org/dev/ind/pkg/util/ci"
 	"testing"
-
+	
 	"git.indra-labs.org/dev/ind/pkg/crypto"
 	"git.indra-labs.org/dev/ind/pkg/crypto/nonce"
-	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 )
 
 func TestOnions_SimpleCrypt(t *testing.T) {
-	if indra.CI == "false" {
-		log2.SetLogLevel(log2.Debug)
-	}
+	ci.TraceIfNot()
 	var e error
 	n := nonce.NewID()
 	n1 := nonce.New()

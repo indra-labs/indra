@@ -1,8 +1,8 @@
 package t64
 
 import (
-	indra "git.indra-labs.org/dev/ind"
 	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/util/ci"
 	"testing"
 	"time"
 )
@@ -13,9 +13,7 @@ var (
 )
 
 func TestNew(t *testing.T) {
-	if indra.CI == "false" {
-		log2.SetLogLevel(log2.Trace)
-	}
+	ci.TraceIfNot()
 	
 	t1, t2 := New(), New()
 	nao := time.Now()
