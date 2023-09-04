@@ -1,11 +1,9 @@
-///go:build failingtests
+// /go:build failingtests
 
 package engine
 
-//func TestEngine_Message(t *testing.T) {
-//	if indra.CI == "false" {
-//		log2.SetLogLevel(log2.Info)
-//	}
+// func TestEngine_Message(t *testing.T) {
+//		ci.TraceIfNot()
 //	var clients []*Engine
 //	var e error
 //	const nCircuits = 10
@@ -101,9 +99,7 @@ package engine
 //			break
 //		}
 //	}
-//	if indra.CI == "false" {
-//		log2.SetLogLevel(log2.Trace)
-//	}
+//		ci.TraceIfNot()
 //	wg.Add(1)
 //	counter.Inc()
 //	svc := &services.Service{
@@ -172,12 +168,10 @@ package engine
 //	quit.Q()
 //	cancel()
 //	log.W.Ln("fin")
-//}
+// }
 
-//func TestEngine_Route(t *testing.T) {
-//	if indra.CI == "false" {
-//		log2.SetLogLevel(log2.Debug)
-//	}
+// func TestEngine_Route(t *testing.T) {
+//	ci.TraceIfNot()
 //	runtime.GOMAXPROCS(1)
 //	var clients []*Engine
 //	var e error
@@ -293,9 +287,7 @@ package engine
 //		})
 //	wg.Wait()
 //	time.Sleep(time.Second)
-//	if indra.CI == "false" {
-//		log2.SetLogLevel(log2.Debug)
-//	}
+//		ci.TraceIfNot()
 //	wg.Add(1)
 //	counter.Inc()
 //	log.D.Ln("intro", ini.ID, ini.AddrPort.String(), ini.Key.ToBased32Abbreviated(),
@@ -311,12 +303,10 @@ package engine
 //	quit.Q()
 //	cancel()
 //	log.W.Ln("fin")
-//}
+// }
 
-//func TestEngine_SendHiddenService(t *testing.T) {
-//	if indra.CI == "false" {
-//		log2.SetLogLevel(log2.Debug)
-//	}
+// func TestEngine_SendHiddenService(t *testing.T) {
+//		ci.TraceIfNot()
 //	var clients []*Engine
 //	var e error
 //	const nCircuits = 10
@@ -361,9 +351,7 @@ package engine
 //		}
 //		wg.Wait()
 //	}
-//	if indra.CI == "false" {
-//		log2.SetLogLevel(log2.Debug)
-//	}
+//		ci.TraceIfNot()
 //	var idPrv *crypto.Prv
 //	if idPrv, e = crypto.GeneratePrvKey(); fails(e) {
 //		return
@@ -409,12 +397,10 @@ package engine
 //	time.Sleep(time.Second)
 //	quit.Q()
 //	cancel()
-//}
+// }
 
-//func TestDispatcher_Rekey(t *testing.T) {
-//	if indra.CI == "false" {
-//		log2.SetLogLevel(log2.Debug)
-//	}
+// func TestDispatcher_Rekey(t *testing.T) {
+//		ci.TraceIfNot()
 //	var e error
 //	var l1, l2 *transport.Listener
 //	_ = l2
@@ -512,12 +498,10 @@ package engine
 //	if succ != countTo*3 {
 //		t.Fatal("did not receive all messages correctly", succ, countTo*3)
 //	}
-//}
+// }
 
-//func TestClient_SendExit(t *testing.T) {
-//	if indra.CI == "false" {
-//		log2.SetLogLevel(log2.Debug)
-//	}
+// func TestClient_SendExit(t *testing.T) {
+//		ci.TraceIfNot()
 //	var clients []*Engine
 //	var e error
 //	ctx, cancel := context.WithCancel(context.Background())
@@ -557,7 +541,7 @@ package engine
 //		quit.Q()
 //		t.Error("Exit test failed")
 //	}()
-//out:
+// out:
 //	for i := 3; i < len(clients[0].Mgr().Sessions)-1; i++ {
 //		wg.Add(1)
 //		var msg slice.Bytes
@@ -613,12 +597,10 @@ package engine
 //	for _, v := range clients {
 //		v.Shutdown()
 //	}
-//}
+// }
 
-//func TestClient_SendPing(t *testing.T) {
-//	if indra.CI == "false" {
-//		log2.SetLogLevel(log2.Debug)
-//	}
+// func TestClient_SendPing(t *testing.T) {
+//		ci.TraceIfNot()
 //	var clients []*Engine
 //	var e error
 //	ctx, cancel := context.WithCancel(context.Background())
@@ -642,7 +624,7 @@ package engine
 //		quit.Q()
 //		t.Error("SendPing test failed")
 //	}()
-//out:
+// out:
 //	for i := 3; i < len(clients[0].Mgr().Sessions)-1; i++ {
 //		wg.Add(1)
 //		var c sessions.Circuit
@@ -666,12 +648,10 @@ package engine
 //	for _, v := range clients {
 //		v.Shutdown()
 //	}
-//}
+// }
 
-//func TestClient_SendSessionKeys(t *testing.T) {
-//	if indra.CI == "false" {
-//		log2.SetLogLevel(log2.Debug)
-//	}
+// func TestClient_SendSessionKeys(t *testing.T) {
+//		ci.TraceIfNot()
 //	var clients []*Engine
 //	var e error
 //	ctx, cancel := context.WithCancel(context.Background())
@@ -720,12 +700,10 @@ package engine
 //		v.Shutdown()
 //	}
 //	cancel()
-//}
+// }
 
-//func TestClient_SendGetBalance(t *testing.T) {
-//	if indra.CI == "false" {
-//		log2.SetLogLevel(log2.Trace)
-//	}
+// func TestClient_SendGetBalance(t *testing.T) {
+//		ci.TraceIfNot()
 //	var clients []*Engine
 //	var e error
 //	ctx, cancel := context.WithCancel(context.Background())
@@ -776,4 +754,4 @@ package engine
 //	for _, v := range clients {
 //		v.Shutdown()
 //	}
-//}
+// }

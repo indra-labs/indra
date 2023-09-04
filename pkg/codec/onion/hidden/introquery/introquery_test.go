@@ -1,25 +1,21 @@
 package introquery
 
 import (
-	"git.indra-labs.org/dev/ind"
 	"git.indra-labs.org/dev/ind/pkg/codec"
 	"git.indra-labs.org/dev/ind/pkg/codec/onion/cores/end"
 	"git.indra-labs.org/dev/ind/pkg/codec/onion/exit"
 	"git.indra-labs.org/dev/ind/pkg/codec/ont"
 	"git.indra-labs.org/dev/ind/pkg/codec/reg"
+	"git.indra-labs.org/dev/ind/pkg/util/ci"
 	"testing"
-
+	
 	"git.indra-labs.org/dev/ind/pkg/crypto"
 	"git.indra-labs.org/dev/ind/pkg/crypto/nonce"
 	"git.indra-labs.org/dev/ind/pkg/engine/sessions"
-	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 )
 
 func TestOnions_IntroQuery(t *testing.T) {
-	if indra.CI == "false" {
-		log2.SetLogLevel(log2.Trace)
-	}
-	log2.App.Store("")
+	ci.TraceIfNot()
 	var e error
 	prvs, pubs := crypto.GetCipherSet()
 	ciphers := crypto.GenCiphers(prvs, pubs)

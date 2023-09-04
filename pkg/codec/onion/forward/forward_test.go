@@ -1,11 +1,10 @@
 package forward
 
 import (
-	"git.indra-labs.org/dev/ind"
 	"git.indra-labs.org/dev/ind/pkg/codec"
 	"git.indra-labs.org/dev/ind/pkg/codec/ont"
 	"git.indra-labs.org/dev/ind/pkg/codec/reg"
-	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/util/ci"
 	"git.indra-labs.org/dev/ind/pkg/util/multi"
 	"github.com/multiformats/go-multiaddr"
 	"math/rand"
@@ -13,14 +12,12 @@ import (
 	"net/netip"
 	"reflect"
 	"testing"
-
+	
 	"git.indra-labs.org/dev/ind/pkg/crypto/nonce"
 )
 
 func TestOnions_Forward(t *testing.T) {
-	if indra.CI == "false" {
-		log2.SetLogLevel(log2.Trace)
-	}
+	ci.TraceIfNot()
 	ipSizes := []int{net.IPv6len, net.IPv4len}
 	for i := range ipSizes {
 		n := nonce.New()
@@ -57,7 +54,7 @@ func TestOnions_Forward(t *testing.T) {
 		if e := onr.Decode(s); fails(e) {
 			t.Error("did not decode")
 			t.FailNow()
-
+			
 		}
 		var cf *Forward
 		if cf, ok = onr.(*Forward); !ok {

@@ -1,18 +1,14 @@
 package session
 
 import (
-	"git.indra-labs.org/dev/ind"
 	"git.indra-labs.org/dev/ind/pkg/codec"
 	"git.indra-labs.org/dev/ind/pkg/codec/reg"
+	"git.indra-labs.org/dev/ind/pkg/util/ci"
 	"testing"
-
-	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 )
 
 func TestOnions_Session(t *testing.T) {
-	if indra.CI == "false" {
-		log2.SetLogLevel(log2.Debug)
-	}
+	ci.TraceIfNot()
 	sess := New(1)
 	ss := sess.(*Session)
 	s := codec.Encode(sess)
@@ -25,7 +21,7 @@ func TestOnions_Session(t *testing.T) {
 	if e := onc.Decode(s); fails(e) {
 		t.Error("did not decode")
 		t.FailNow()
-
+		
 	}
 	var ci *Session
 	var ok bool

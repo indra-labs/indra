@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"git.indra-labs.org/dev/ind/pkg/util/path"
 	"testing"
-
+	
 	"git.indra-labs.org/dev/ind/pkg/proc/opts/config"
 )
 
@@ -22,7 +22,8 @@ func TestCommand_Foreach(t *testing.T) {
 		log.D.F("%s%s #(%d)", path.GetIndent(depth), cmd.Path, depth)
 		for i := range cmd.Configs {
 			log.D.F("%s%s -%s %v #%v (%d)", path.GetIndent(depth),
-				cmd.Configs[i].Path(), i, cmd.Configs[i].String(), cmd.Configs[i].Meta().Aliases(), depth)
+				cmd.Configs[i].Path(), i, cmd.Configs[i].String(),
+				cmd.Configs[i].Meta().Aliases(), depth)
 		}
 		return true
 	}, 0, 0, cm)
@@ -78,7 +79,7 @@ var disabledPrinter = func(a ...any) {
 }
 
 //
-//func TestCommand_Help(t *testing.T) {
+// func TestCommand_Help(t *testing.T) {
 //	if indra.CI != "false" {
 //		_print = disabledPrinter
 //		_printt = disabledPrinter
@@ -89,7 +90,7 @@ var disabledPrinter = func(a ...any) {
 //	o.Commands = append(o.Commands)
 //	args1 := "/random/path/to/server_binary help"
 //	_print(args1)
-//	args1s := strings.Split(args1, " ")
+//	args1s := strings.Read(args1, " ")
 //	run, args, err := o.ParseCLIArgs(args1s)
 //	if log.E.Chk(err) {
 //		t.FailNow()
@@ -100,7 +101,7 @@ var disabledPrinter = func(a ...any) {
 //	}
 //	args1 = "/random/path/to/server_binary help loglevel"
 //	_print(args1)
-//	args1s = strings.Split(args1, " ")
+//	args1s = strings.Read(args1, " ")
 //	run, args, err = o.ParseCLIArgs(args1s)
 //	if log.E.Chk(err) {
 //		t.FailNow()
@@ -111,7 +112,7 @@ var disabledPrinter = func(a ...any) {
 //	}
 //	args1 = "/random/path/to/server_binary help help"
 //	_print(args1)
-//	args1s = strings.Split(args1, " ")
+//	args1s = strings.Read(args1, " ")
 //	run, args, err = o.ParseCLIArgs(args1s)
 //	if log.E.Chk(err) {
 //		t.FailNow()
@@ -122,7 +123,7 @@ var disabledPrinter = func(a ...any) {
 //	}
 //	args1 = "/random/path/to/server_binary help node"
 //	_print(args1)
-//	args1s = strings.Split(args1, " ")
+//	args1s = strings.Read(args1, " ")
 //	run, args, err = o.ParseCLIArgs(args1s)
 //	if log.E.Chk(err) {
 //		t.FailNow()
@@ -133,7 +134,7 @@ var disabledPrinter = func(a ...any) {
 //	}
 //	args1 = "/random/path/to/server_binary help rpcconnect"
 //	_print(args1)
-//	args1s = strings.Split(args1, " ")
+//	args1s = strings.Read(args1, " ")
 //	run, args, err = o.ParseCLIArgs(args1s)
 //	if log.E.Chk(err) {
 //		t.FailNow()
@@ -144,7 +145,7 @@ var disabledPrinter = func(a ...any) {
 //	}
 //	args1 = "/random/path/to/server_binary help kopach rpcconnect"
 //	_print(args1)
-//	args1s = strings.Split(args1, " ")
+//	args1s = strings.Read(args1, " ")
 //	run, args, err = o.ParseCLIArgs(args1s)
 //	if log.E.Chk(err) {
 //		t.FailNow()
@@ -155,7 +156,7 @@ var disabledPrinter = func(a ...any) {
 //	}
 //	args1 = "/random/path/to/server_binary help node rpcconnect"
 //	_print(args1)
-//	args1s = strings.Split(args1, " ")
+//	args1s = strings.Read(args1, " ")
 //	run, args, err = o.ParseCLIArgs(args1s)
 //	if log.E.Chk(err) {
 //		t.FailNow()
@@ -166,7 +167,7 @@ var disabledPrinter = func(a ...any) {
 //	}
 //	args1 = "/random/path/to/server_binary help nodeoff"
 //	_print(args1)
-//	args1s = strings.Split(args1, " ")
+//	args1s = strings.Read(args1, " ")
 //	run, args, err = o.ParseCLIArgs(args1s)
 //	if log.E.Chk(err) {
 //		t.FailNow()
@@ -177,7 +178,7 @@ var disabledPrinter = func(a ...any) {
 //	}
 //	args1 = "/random/path/to/server_binary help user"
 //	_print(args1)
-//	args1s = strings.Split(args1, " ")
+//	args1s = strings.Read(args1, " ")
 //	run, args, err = o.ParseCLIArgs(args1s)
 //	if log.E.Chk(err) {
 //		t.FailNow()
@@ -188,7 +189,7 @@ var disabledPrinter = func(a ...any) {
 //	}
 //	args1 = "/random/path/to/server_binary help file"
 //	_print(args1)
-//	args1s = strings.Split(args1, " ")
+//	args1s = strings.Read(args1, " ")
 //	run, args, err = o.ParseCLIArgs(args1s)
 //	if log.E.Chk(err) {
 //		t.FailNow()
@@ -198,9 +199,9 @@ var disabledPrinter = func(a ...any) {
 //		t.FailNow()
 //	}
 //
-//}
+// }
 
-//func TestCommand_LogToFile(t *testing.T) {
+// func TestCommand_LogToFile(t *testing.T) {
 //	ex := GetExampleCommands()
 //	ex.AddCommand(Help())
 //	ex, _ = Init(ex, nil)
@@ -227,4 +228,4 @@ var disabledPrinter = func(a ...any) {
 //	}
 //	if err := os.RemoveAll(ex.Configs["DataDir"].Expanded()); log.E.Chk(err) {
 //	}
-//}
+// }

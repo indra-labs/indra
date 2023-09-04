@@ -2,8 +2,7 @@ package engine
 
 import (
 	"context"
-	"git.indra-labs.org/dev/ind"
-	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
+	"git.indra-labs.org/dev/ind/pkg/util/ci"
 	"github.com/dgraph-io/badger/v3"
 	"strings"
 	"testing"
@@ -14,11 +13,8 @@ func pauza() {
 	time.Sleep(time.Second)
 }
 
-//
 // func TestEngine_PeerStore(t *testing.T) {
-// 	if indra.CI == "false" {
-// 		log2.SetLogLevel(log2.Trace)
-// 	}
+// 		ci.TraceIfNot()
 // 	const nTotal = 10
 // 	var e error
 // 	var engines []*Engine
@@ -94,9 +90,7 @@ func pauza() {
 // }
 
 func TestEngine_PeerStoreDiscovery(t *testing.T) {
-	if indra.CI == "false" {
-		log2.SetLogLevel(log2.Trace)
-	}
+	ci.TraceIfNot()
 	const nTotal = 10
 	var (
 		e       error
@@ -106,7 +100,7 @@ func TestEngine_PeerStoreDiscovery(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	if engines, cleanup, e = CreateAndStartMockEngines(nTotal, ctx,
 		cancel); fails(e) {
-
+		
 		t.FailNow()
 	}
 	time.Sleep(time.Second * 3)
@@ -117,9 +111,7 @@ func TestEngine_PeerStoreDiscovery(t *testing.T) {
 		}
 	}
 	time.Sleep(time.Second * 3)
-	if indra.CI == "false" {
-		log2.SetLogLevel(log2.Debug)
-	}
+	ci.TraceIfNot()
 	var ec int
 	entryCount := &ec
 	for _, v := range engines {
@@ -153,9 +145,7 @@ func TestEngine_PeerStoreDiscovery(t *testing.T) {
 		t.Log("nodes did not gossip completely to each other, only",
 			*entryCount, "nodes ad sets counted, not the expected",
 			nTotal)
-		if indra.CI == "false" {
-			t.FailNow()
-		}
+		ci.TraceIfNot()
 	}
 	cleanup()
 	pauza()

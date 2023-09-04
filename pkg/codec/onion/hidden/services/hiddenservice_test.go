@@ -4,7 +4,6 @@ package services
 
 import (
 	"context"
-	"git.indra-labs.org/dev/ind"
 	"git.indra-labs.org/dev/ind/pkg/codec"
 	intro "git.indra-labs.org/dev/ind/pkg/codec/ad/intro"
 	"git.indra-labs.org/dev/ind/pkg/codec/onion/exit"
@@ -17,17 +16,13 @@ import (
 	"git.indra-labs.org/dev/ind/pkg/engine/sessions"
 	"git.indra-labs.org/dev/ind/pkg/engine/transport"
 	headers2 "git.indra-labs.org/dev/ind/pkg/headers"
-	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 	"git.indra-labs.org/dev/ind/pkg/util/slice"
 	"testing"
 	"time"
 )
 
 func TestOnions_HiddenService(t *testing.T) {
-	if indra.CI == "false" {
-		t.Log("ci not enabled")
-		log2.SetLogLevel(log2.Trace)
-	}
+	ci.TraceIfNotCI()
 	var e error
 	n3 := crypto.Gen3Nonces()
 	id := nonce.NewID()
