@@ -2,11 +2,9 @@ package packet
 
 import (
 	"errors"
-	"git.indra-labs.org/dev/ind"
 	"git.indra-labs.org/dev/ind/pkg/crypto"
 	"git.indra-labs.org/dev/ind/pkg/crypto/nonce"
 	"git.indra-labs.org/dev/ind/pkg/crypto/sha256"
-	log2 "git.indra-labs.org/dev/ind/pkg/proc/log"
 	"git.indra-labs.org/dev/ind/pkg/util/ci"
 	"git.indra-labs.org/dev/ind/pkg/util/tests"
 	"math/rand"
