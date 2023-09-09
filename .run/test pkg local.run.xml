@@ -1,6 +1,5 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="test pkg local" type="GoTestRunConfiguration" factoryName="Go Test" singleton="false">
-    <module name="indra" />
     <working_directory value="$PROJECT_DIR$/pkg" />
     <go_parameters value="-v ./... -tags local -gcflags &quot;all=-trimpath=$PROJECT_DIR$&quot;" />
     <root_directory value="$PROJECT_DIR$" />

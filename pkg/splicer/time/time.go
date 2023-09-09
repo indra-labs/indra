@@ -1,15 +1,16 @@
-package t64
+package time
 
 import (
 	"encoding/binary"
 	"time"
 )
 
-const Len = 8
+const Len = 4
 
-// Time encodes a standard unix 64 bit, 1-second precision timestamp from a Go
-// t64.Time. Note that this omits the monotonic component, it uses the
-// time.Unix function to get the "wall clock" time.
+// Time encodes a 32 bit timestamp that represents the number of seconds since
+// 00:00 January 1, 1970, UTC. Or, basically, network time. The internet's point
+// to point average latency means that there is little sense in having finer
+// precision than this.
 type Time struct {
 	b []byte
 }
@@ -59,7 +60,7 @@ func (s *Time) Len() int { return len(s.b) }
 
 func (s *Time) Get() (v interface{}) {
 	if len(s.b) >= Len {
-		t := binary.BigEndian.Uint64(s.b[:Len])
+		t := binary.BigEndian.Uint32(s.b[:Len])
 		tv := time.Unix(int64(t), 0)
 		v = &tv
 	}
@@ -70,12 +71,13 @@ func (s *Time) Put(t interface{}) interface{} {
 	var tv *time.Time
 	var ok bool
 	if tv, ok = t.(*time.Time); ok {
-		binary.BigEndian.PutUint64(s.b[:], uint64(tv.Unix()))
+		binary.BigEndian.PutUint32(s.b[:Len], uint32(tv.Unix())/uint32(time.
+			Second))
 	}
 	return s
 }
 
-// Assert takes an interface and if it is a t64.Time, returns the time.Time
+// Assert takes an interface and if it is a duration.Time, returns the time.Time
 // value. If it is not the expected type, nil is returned.
 func Assert(v interface{}) (t *time.Time) {
 	var tv *Time

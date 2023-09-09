@@ -21,9 +21,9 @@ It differs from Flatbuffers in that it does not require any kind of parser, and 
 
 The reason for this type of progressive decoding is twofold:
 
-1. It eliminates the need to allocate any memory other than to decode the fields that are accessed, which populate a new variable corresponding to the binary form, and if the received message needs to be persisted or forwarded, it can be forwarded without any extra work.
+1. It eliminates the need to allocate any memory other than to decode the fields that are accessed, which populate a new variable corresponding to the binary form, and if the received message needs to be persisted or forwarded, it can be thus processed without any extra work.
 2. Because it is for a message relaying network and a strict policy of fail fast means that when messages are not valid, or not authorised, or other reasons that can be quickly determined, the time spent decoding is limited to only decoding the fields needed to pass through to further processing if needed, or able to be aborted and the buffer and the processing time given over to other messages, making the latency as low as possible.
 
-### Notes
+### Varints
 
-The existing, initial implementation was not well optimised for avoiding memory allocations in the encoding step, this needs to be properly handled - there could be some good reasons for creating a freelist for message buffers, perhaps several different sizes of buffer, or a single buffer with an allocation map and boundaries to avoid memory allocations after startup, and eliminate the need for GC processing of the network/codec buffers.
+While it would be possible to include this type, as can be seen looking through [../../docs/formats.md](../../docs/formats.md) there just isn't any real need for it, it would scarcely save any space.
