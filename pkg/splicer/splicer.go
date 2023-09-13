@@ -19,14 +19,14 @@ type Splice interface {
 	
 	// Len returns the number of bytes used to encode the Splice. This returns
 	// zero if no value has been encoded yet.
-	Len() int
+	Len() (l int)
 	
 	// Read returns the wire/storage form of the data.
-	Read() []byte
+	Read() (o []byte)
 	
 	// Write stores the decoded data from the head of the slice and returns the
 	// remainder. If the input bytes are not long enough, abort and return nil.
-	Write(b []byte) []byte
+	Write(b []byte) (o []byte)
 }
 
 // Accessor is a generic interface, for decoding and encoding runtime forms of
@@ -34,11 +34,17 @@ type Splice interface {
 // above.
 type Accessor interface {
 	
-	// Get returns the decoded value wrapped in an interface{}.
+	// Get returns the decoded value as a pointer wrapped in an interface{}.
 	Get() (v interface{})
 	
-	// Put
-	Put(v interface{}) interface{}
+	// Put inserts a pointer to a value that is expected to be the underlying
+	// type.
+	Put(v interface{}) (o interface{})
+}
+
+type SpliceAccessor interface {
+	Splice
+	Accessor
 }
 
 type Serializers []Splice

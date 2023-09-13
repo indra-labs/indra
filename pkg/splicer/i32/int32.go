@@ -18,6 +18,8 @@ func New() *S { return &S{b: make([]byte, Len)} }
 //
 // The remaining bytes, if any, are returned for further processing.
 func NewFrom(b []byte) (s *S, rem []byte) {
+	// If the bytes are less than Len the input is invalid and nil will be
+	// returned.
 	if len(b) < Len {
 		return
 	}
@@ -50,14 +52,20 @@ func (s *S) Write(by []byte) (out []byte) {
 func (s *S) Len() int { return len(s.b) }
 
 func (s *S) Get() (v interface{}) {
-	val := int32(binary.BigEndian.Uint32(s.b))
-	return &val
+	if len(s.b) >= Len {
+		val := int32(binary.BigEndian.Uint32(s.b))
+		return &val
+	}
+	return
 }
 
-func (s *S) Put(bits interface{}) interface{} {
+func (s *S) Put(v interface{}) interface{} {
+	if len(s.b) < Len {
+		s.b = make([]byte, Len)
+	}
 	var tv *int32
 	var ok bool
-	if tv, ok = bits.(*int32); ok {
+	if tv, ok = v.(*int32); ok {
 		binary.BigEndian.PutUint32(s.b[:Len], uint32(*tv))
 	}
 	return s
